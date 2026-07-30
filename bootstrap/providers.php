@@ -17,4 +17,6 @@ return [
     */
 
     App\Core\Providers\CoreServiceProvider::class,
+    
+    App\Modules\ModuleServiceProvider::class,
 ];
