@@ -39,3 +39,9 @@ Classe de base des services métier.
 ## Résultat
 
 Validé.
+
+BLOC-005
+BaseService
+
+Version : 1.0
+Statut : GELEE
