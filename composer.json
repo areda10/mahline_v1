@@ -71,6 +71,11 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "mahline:test": [
+            "@composer dump-autoload",
+            "@php artisan optimize:clear",
+            "@php artisan test"
         ]
     },
     "extra": {
