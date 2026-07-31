@@ -18,5 +18,5 @@ return [
 
     App\Core\Providers\CoreServiceProvider::class,
     
-    App\Modules\ModuleServiceProvider::class,
+    App\Core\Providers\DomainServiceProvider::class,
 ];
