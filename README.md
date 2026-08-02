@@ -1,59 +1,238 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MAHLINE Framework
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> Documentation officielle du framework **MAHLINE**
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+# Présentation
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+MAHLINE est un framework métier construit sur **Laravel 13** destiné au développement d'une plateforme de marketplace moderne, modulaire et évolutive.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Son objectif est de fournir une architecture robuste permettant de développer rapidement des applications métier tout en garantissant :
 
-## Learning Laravel
+* une architecture claire ;
+* une forte maintenabilité ;
+* une excellente testabilité ;
+* une documentation complète ;
+* une séparation stricte des responsabilités.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Vision
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Le framework est conçu autour des principes suivants :
 
-## Agentic Development
+* Architecture modulaire
+* Domain-Driven Design (DDD simplifié)
+* API First
+* SOLID
+* PSR-1 / PSR-4 / PSR-12
+* Typage strict
+* Forte couverture de tests
+* Documentation complète
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
-```bash
-composer require laravel/boost --dev
+# Architecture générale
 
-php artisan boost:install
+```text
+app/
+├── Core/
+├── Domains/
+└── Shared/
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Core
 
-## Contributing
+Le **Core** contient les composants techniques communs du framework.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Exemples :
 
-## Code of Conduct
+* Foundation
+* Providers
+* Contracts
+* Interfaces
+* Traits
+* Helpers
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Domains
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Les **Domains** regroupent toute la logique métier.
 
-## License
+Exemple :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-"# mahline_v1" 
+```text
+Domains/
+├── Identity
+├── Localization
+├── Catalog
+├── Inventory
+├── Sales
+├── Finance
+├── Communication
+├── Audit
+└── CMS
+```
+
+Chaque domaine est autonome et respecte les conventions du framework.
+
+---
+
+## Shared
+
+Le dossier **Shared** contient les composants réutilisables par plusieurs domaines.
+
+Exemples :
+
+* Traits
+* Enums
+* Validators
+* Rules
+* Collections
+* Casts
+* Helpers
+
+---
+
+# Documentation
+
+## Foundation
+
+La Foundation constitue le socle technique du framework.
+
+Documentation détaillée :
+
+```text
+docs/framework/foundation/
+```
+
+Composants :
+
+* BLOC-001 — Architecture Foundation
+* BLOC-002 — Conventions de développement
+* BLOC-003 — Organisation du Framework
+* BLOC-004 — BaseModel
+* BLOC-005 — BaseService
+* BLOC-006 — BaseAction
+* BLOC-007 — BaseDTO
+* BLOC-008 — BaseRequest
+* BLOC-009 — BaseResource
+* BLOC-010 — BasePolicy
+* BLOC-011 — BaseException
+* BLOC-012 — BaseValueObject
+
+---
+
+# Documents de référence
+
+Les documents principaux du framework sont :
+
+```text
+docs/framework/
+
+README.md
+FOUNDATION_V1.md
+ARCHITECTURE.md
+ARCHITECTURE_AUDIT.md
+ADR.md
+CODING_STANDARD.md
+NAMING_CONVENTIONS.md
+TESTING_STANDARD.md
+QUALITY_CHECKLIST.md
+```
+
+---
+
+# Standards techniques
+
+Le framework applique les standards suivants :
+
+* PHP 8.3+
+* Laravel 13
+* PSR-1
+* PSR-4
+* PSR-12
+* Typage strict (`declare(strict_types=1);`)
+
+---
+
+# Principes d'architecture
+
+Les principes fondamentaux sont :
+
+* Responsabilité unique (SRP)
+* Faible couplage
+* Forte cohésion
+* Architecture modulaire
+* API First
+* Une Action = un cas d'utilisation
+* Les Services contiennent la logique métier
+* Les DTO transportent les données
+* Les Resources gèrent la présentation
+* Les Policies gèrent les autorisations
+* Les Value Objects représentent les concepts métier
+
+---
+
+# Cycle de développement
+
+Chaque composant est développé selon le processus suivant :
+
+1. Conception
+2. Développement
+3. Tests
+4. Documentation
+5. Validation
+6. Gel
+
+Aucun composant n'est considéré comme terminé tant que ces six étapes ne sont pas complètes.
+
+---
+
+# État du projet
+
+## Foundation
+
+✅ Terminée
+
+## Shared
+
+🔄 À développer
+
+## Domains
+
+🔄 En préparation
+
+---
+
+# Feuille de route
+
+Les prochains domaines seront développés dans l'ordre suivant :
+
+1. Identity
+2. Localization
+3. Catalog
+4. Inventory
+5. Sales
+6. Finance
+7. Communication
+8. Audit
+9. CMS
+
+---
+
+# Licence
+
+Ce framework est développé dans le cadre du projet **MAHLINE**.
+
+Tous les développements doivent respecter les conventions et l'architecture définies dans cette documentation.
+
+---
+
+# Version
+
+**MAHLINE Framework V1.0**
+
+Statut : **Foundation officiellement gelée**
