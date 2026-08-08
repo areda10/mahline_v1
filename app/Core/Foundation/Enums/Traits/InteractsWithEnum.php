@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Core\Foundation\Enums\Traits;
 
+use App\Core\Foundation\Enums\Exceptions\InvalidEnumValueException;
 use BackedEnum;
-use ValueError;
 
 trait InteractsWithEnum
 {
@@ -21,28 +21,34 @@ trait InteractsWithEnum
 
     /**
      * Return all enum values.
+     *
+     * @return array<int, string|int>
      */
     public static function values(): array
     {
         return array_map(
-            static fn (BackedEnum $case) => $case->value,
+            static fn (BackedEnum $case): string|int => $case->value,
             self::cases()
         );
     }
 
     /**
      * Return all enum names.
+     *
+     * @return array<int, string>
      */
     public static function names(): array
     {
         return array_map(
-            static fn (BackedEnum $case) => $case->name,
+            static fn (BackedEnum $case): string => $case->name,
             self::cases()
         );
     }
 
     /**
      * Return [value => name].
+     *
+     * @return array<string|int, string>
      */
     public static function options(): array
     {
@@ -57,6 +63,8 @@ trait InteractsWithEnum
 
     /**
      * Alias of options().
+     *
+     * @return array<string|int, string>
      */
     public static function labels(): array
     {
@@ -144,11 +152,13 @@ trait InteractsWithEnum
 
     /**
      * Convert enum to array.
+     *
+     * @return array{name: string, value: string|int, label: string}
      */
     public function toArray(): array
     {
         return [
-            'name'  => $this->name,
+            'name' => $this->name,
             'value' => $this->value,
             'label' => $this->label(),
         ];
@@ -156,11 +166,13 @@ trait InteractsWithEnum
 
     /**
      * Convert all enum cases to array.
+     *
+     * @return array<int, array{name: string, value: string|int, label: string}>
      */
     public static function toArrayList(): array
     {
         return array_map(
-            static fn (self $case) => $case->toArray(),
+            static fn (self $case): array => $case->toArray(),
             self::cases()
         );
     }
