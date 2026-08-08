@@ -2,26 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Core\Database\Enums;
+namespace App\Core\Enums\Database;
 
 use App\Core\Foundation\Enums\BaseEnum;
+use App\Core\Foundation\Enums\Contracts\BaseEnumContract;
 
-enum ForeignKeyAction: string
+enum ForeignKeyAction: string implements BaseEnumContract
 {
     use BaseEnum;
 
-    case Cascade  = 'cascade';
-    case Restrict = 'restrict';
-    case NoAction = 'no action';
-    case SetNull  = 'set null';
+    case CASCADE = 'cascade';
 
-    public function label(): string
-    {
-        return match ($this) {
-            self::Cascade  => 'Cascade',
-            self::Restrict => 'Restrict',
-            self::NoAction => 'No Action',
-            self::SetNull  => 'Set Null',
-        };
-    }
+    case RESTRICT = 'restrict';
+
+    case SET_NULL = 'set_null';
+
+    case NO_ACTION = 'no_action';
 }
