@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,29 +13,56 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
+        Schema::create('users', function (Blueprint $table): void {
+            /*
+             * Primary Key
+             */
+            $table->ulidPrimary();
+
+            /*
+             * Identity
+             */
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('display_name');
+
+            /*
+             * Contact
+             */
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('telephone');
+
+            /*
+             * Authentication
+             */
             $table->string('password');
             $table->rememberToken();
-            $table->timestamps();
-        });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
+            /*
+             * User Status
+             */
+            $table->status();
 
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
+            /*
+             * Localization
+             */
+            $table->string('locale')->default('fr');
+            $table->string('timezone')->default('UTC');
+
+            /*
+             * Email verification
+             */
+            $table->timestamp('email_verified_at')->nullable();
+
+            /*
+             * Audit
+             */
+            $table->auditColumns();
+
+            /*
+             * Soft Delete
+             */
+            $table->softDeleteColumn();
         });
     }
 
@@ -43,7 +72,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
     }
 };
