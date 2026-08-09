@@ -28,12 +28,13 @@ final class DatabaseMacroServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        ColumnMacros::register();
+        /*ColumnMacros::register();
         AuditMacros::register();
         AuditActorMacros::register();
         ForeignKeyMacros::register();
         IndexMacros::register();
-        SoftDeleteMacros::register();
+        SoftDeleteMacros::register();*/
         BlueprintMacros::register();
+        
     }
 }
