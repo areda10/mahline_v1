@@ -16,7 +16,8 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    App\Core\Providers\CoreServiceProvider::class,
+    App\Core\Database\Providers\DatabaseMacroServiceProvider::class,
+    /*App\Core\Providers\CoreServiceProvider::class,
     
-    App\Core\Providers\DomainServiceProvider::class,
+    App\Core\Providers\DomainServiceProvider::class,*/
 ];
