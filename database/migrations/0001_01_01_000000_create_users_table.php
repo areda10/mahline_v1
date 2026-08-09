@@ -15,59 +15,116 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table): void {
             /*
-             * Primary Key
-             */
+            |--------------------------------------------------------------------------
+            | Identity
+            |--------------------------------------------------------------------------
+            */
+
             $table->ulidPrimary();
 
             /*
-             * Identity
-             */
+            |--------------------------------------------------------------------------
+            | Personal information
+            |--------------------------------------------------------------------------
+            */
+
             $table->string('first_name');
             $table->string('last_name');
             $table->string('display_name');
 
             /*
-             * Contact
-             */
+            |--------------------------------------------------------------------------
+            | Contact
+            |--------------------------------------------------------------------------
+            */
+
             $table->string('email')->unique();
             $table->string('telephone');
 
             /*
-             * Authentication
-             */
+            |--------------------------------------------------------------------------
+            | Authentication
+            |--------------------------------------------------------------------------
+            */
+
             $table->string('password');
             $table->rememberToken();
 
             /*
-             * User Status
-             */
+            |--------------------------------------------------------------------------
+            | Account status
+            |--------------------------------------------------------------------------
+            */
+
             $table->status();
 
             /*
-             * Localization
-             */
+            |--------------------------------------------------------------------------
+            | Localization
+            |--------------------------------------------------------------------------
+            */
+
             $table->string('locale')->default('fr');
             $table->string('timezone')->default('UTC');
 
             /*
-             * Email verification
-             */
+            |--------------------------------------------------------------------------
+            | Email verification
+            |--------------------------------------------------------------------------
+            */
+
             $table->timestamp('email_verified_at')->nullable();
 
             /*
-             * Audit
-             */
-            $table->auditColumns();
+            |--------------------------------------------------------------------------
+            | Audit timestamps
+            |--------------------------------------------------------------------------
+            */
 
-            /**
-             * Actor
-             */
+            $table->timestamps();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Audit actors
+            |--------------------------------------------------------------------------
+            */
+
             $table->auditActorColumns();
 
             /*
-             * Soft Delete
-             */
-            $table->softDeleteColumn();
+            |--------------------------------------------------------------------------
+            | Soft deletion
+            |--------------------------------------------------------------------------
+            */
+
+            $table->softDeletes();
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Password reset tokens
+        |--------------------------------------------------------------------------
+        */
+
+        Schema::create('password_reset_tokens', function (Blueprint $table): void {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sessions
+        |--------------------------------------------------------------------------
+        */
+
+        Schema::create('sessions', function (Blueprint $table): void {
+            $table->string('id')->primary();
+            $table->char('user_id', 26)->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
         });
     }
 
@@ -76,6 +133,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('users');
     }
 };
