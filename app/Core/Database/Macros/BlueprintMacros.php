@@ -13,6 +13,7 @@ final class BlueprintMacros
     {
         ColumnMacros::register();
         AuditMacros::register();
+        AuditActorMacros::register();
         ForeignKeyMacros::register();
         IndexMacros::register();
         SoftDeleteMacros::register();
