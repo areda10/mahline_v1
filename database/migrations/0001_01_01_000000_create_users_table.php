@@ -59,6 +59,11 @@ return new class extends Migration
              */
             $table->auditColumns();
 
+            /**
+             * Actor
+             */
+            $table->auditActorColumns();
+
             /*
              * Soft Delete
              */
