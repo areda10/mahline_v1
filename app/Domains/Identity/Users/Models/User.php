@@ -6,8 +6,10 @@ namespace App\Domains\Identity\Users\Models;
 
 use App\Core\Foundation\Enums\Identity\UserStatus;
 use App\Core\Foundation\Models\BaseModel;
+use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -56,5 +58,12 @@ final class User extends BaseModel implements AuthenticatableContract
             'password' => 'hashed',
             'deleted_at' => 'datetime',
         ];
+    }
+    /**
+     * Call factory
+     */
+    protected static function newFactory(): Factory
+    {
+        return UserFactory::new();
     }
 }
