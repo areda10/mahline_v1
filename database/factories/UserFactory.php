@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Core\Foundation\Enums\Identity\UserStatus;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -35,7 +35,7 @@ final class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'telephone' => fake()->numerify('+212 6########'),
             'password' => 'password',
-            'status' => UserStatus::ACTIVE,
+            'status' => UserStatus::Active,
             'locale' => 'fr',
             'timezone' => 'UTC',
             'email_verified_at' => now(),
