@@ -65,6 +65,8 @@ return new class extends Migration
 
             $table->string('browser', 100)->nullable();
 
+            $table->string('device', 100)->nullable();
+
             /*
              * ============================================================
              * AUTHENTICATION LIFECYCLE
