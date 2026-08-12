@@ -8,27 +8,24 @@ use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 final class SessionService extends BaseService
 {
+    public function __construct(
+        private readonly LoginHistoryService $loginHistoryService,
+    ) {
+    }
+
     /**
-     * Create a new authentication session for a user.
+     * Creates the active authentication session for a user.
      *
-     * MAHLINE authentication rule:
+     * MAHLINE rule:
      *
      * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
      *
-     * Therefore, when a user logs in from another device/browser:
-     *
-     * 1. The current active session is revoked.
-     * 2. The revocation reason is "new_login".
-     * 3. A new authentication session is created.
-     *
-     * The previous session is NOT deleted.
-     * It remains available as authentication history.
-     *
-     * The complete operation is executed inside a database transaction
-     * so that the user cannot end up with two active sessions.
+     * Therefore, an existing session is revoked before
+     * creating the new active session.
      */
     public function create(
         User $user,
@@ -36,6 +33,7 @@ final class SessionService extends BaseService
         ?string $ipAddress = null,
         ?string $userAgent = null,
         ?string $browser = null,
+        ?string $device = null,
     ): AuthenticationSession {
         return DB::transaction(function () use (
             $user,
@@ -43,72 +41,128 @@ final class SessionService extends BaseService
             $ipAddress,
             $userAgent,
             $browser,
+            $device,
         ): AuthenticationSession {
             /*
-             * Lock the user's active authentication session.
+             * Find the existing authentication session.
              *
-             * This prevents concurrent login requests from creating
-             * two active sessions for the same user.
+             * withTrashed() is intentionally used because the
+             * authentication session table uses soft deletes.
              */
-            $activeSession = AuthenticationSession::query()
+            $previousSession = AuthenticationSession::query()
+                ->withTrashed()
                 ->where('user_id', $user->getKey())
-                ->whereNull('revoked_at')
-                ->lockForUpdate()
                 ->first();
 
             /*
-             * A user may already have an active session.
-             *
-             * A new login replaces that session.
+             * A new login replaces the previous session.
              */
-            if ($activeSession !== null) {
-                $this->revoke(
-                    session: $activeSession,
-                    reason: 'new_login',
-                );
+            if ($previousSession !== null) {
+                if ($this->isActive($previousSession)) {
+                    $this->revoke(
+                        session: $previousSession,
+                        reason: 'new_login',
+                    );
+                }
+
+                /*
+                 * The unique user_id constraint means we cannot
+                 * insert another row for the same user while the
+                 * previous row still exists.
+                 *
+                 * Remove the previous row after recording its
+                 * revocation state.
+                 */
+                if ($previousSession->exists) {
+                    $previousSession->forceDelete();
+                }
             }
 
             /*
-             * Create the new active authentication session.
-             *
-             * The model generates its own ULID.
+             * Create the new authentication session.
              */
-            return AuthenticationSession::query()->create([
-                'user_id' => $user->getKey(),
+            $session = new AuthenticationSession();
 
-                'session_id' => $sessionId,
+            $session->user_id = $user->getKey();
+            $session->session_id = $sessionId;
+            $session->authenticated_at = now();
+            $session->last_activity_at = now();
+            $session->revoked_at = null;
+            $session->revocation_reason = null;
 
-                'ip_address' => $ipAddress,
+            /*
+             * Client information.
+             */
+            $session->ip_address = $ipAddress;
+            $session->user_agent = $userAgent;
+            $session->browser = $browser;
+            $session->device = $device;
 
-                'user_agent' => $userAgent,
+            $session->save();
 
-                'browser' => $browser,
+            /*
+             * Record successful authentication.
+             */
+            $this->loginHistoryService->recordSuccess(
+                user: $user,
+                session: $session,
+                ipAddress: $ipAddress,
+                userAgent: $userAgent,
+                browser: $browser,
+                device: $device,
+            );
 
-                'authenticated_at' => now(),
-
-                'last_activity_at' => now(),
-
-                'revoked_at' => null,
-
-                'revocation_reason' => null,
-            ]);
+            return $session;
         });
     }
 
     /**
-     * Revoke the current active session of a user.
-     *
-     * Returns true when an active session was found and revoked.
-     *
-     * Returns false when the user has no active authentication session.
+     * Determines whether an authentication session is active.
+     */
+    public function isActive(
+        AuthenticationSession $session,
+    ): bool {
+        return $session->revoked_at === null
+            && $session->deleted_at === null;
+    }
+
+    /**
+     * Revokes a specific authentication session.
+     */
+    public function revoke(
+        AuthenticationSession $session,
+        string $reason,
+    ): bool {
+        if (! $this->isActive($session)) {
+            return false;
+        }
+
+        $session->revoked_at = now();
+        $session->revocation_reason = $reason;
+
+        $session->save();
+
+        /*
+         * Record the lifecycle event.
+         */
+        $this->loginHistoryService->recordSessionRevoked(
+            user: $session->user,
+            session: $session,
+            reason: $reason,
+        );
+
+        return true;
+    }
+
+    /**
+     * Revokes the current authentication session of a user.
      */
     public function revokeForUser(
         User $user,
-        string $reason,
+        string $reason = 'logout',
     ): bool {
         $session = AuthenticationSession::query()
             ->where('user_id', $user->getKey())
-            ->whereNull('revoked_at')
             ->first();
 
         if ($session === null) {
@@ -122,74 +176,18 @@ final class SessionService extends BaseService
     }
 
     /**
-     * Revoke a specific authentication session.
-     *
-     * A session that has already been revoked cannot be revoked again.
-     *
-     * This protects the original revocation information.
-     */
-    public function revoke(
-        AuthenticationSession $session,
-        string $reason,
-    ): bool {
-        /*
-         * A revoked session cannot be revoked again.
-         */
-        if ($session->revoked_at !== null) {
-            return false;
-        }
-
-        /*
-         * Store the revocation timestamp and reason.
-         *
-         * The session remains in the database for authentication history.
-         */
-        $session->forceFill([
-            'revoked_at' => now(),
-            'revocation_reason' => $reason,
-        ]);
-
-        $session->save();
-
-        return true;
-    }
-
-    /**
-     * Update the last activity timestamp of an active session.
-     *
-     * Revoked sessions cannot become active again.
+     * Updates the last activity timestamp.
      */
     public function touch(
         AuthenticationSession $session,
     ): bool {
-        /*
-         * A revoked session must never receive activity updates.
-         */
         if (! $this->isActive($session)) {
             return false;
         }
 
-        $session->forceFill([
-            'last_activity_at' => now(),
-        ]);
-
+        $session->last_activity_at = now();
         $session->save();
 
         return true;
-    }
-
-    /**
-     * Determine whether an authentication session is currently active.
-     *
-     * A session is active only when:
-     *
-     * - it has not been revoked;
-     * - it has not been soft deleted.
-     */
-    public function isActive(
-        AuthenticationSession $session,
-    ): bool {
-        return $session->revoked_at === null
-            && $session->deleted_at === null;
     }
 }
