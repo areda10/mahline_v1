@@ -5,34 +5,36 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Core\Security\Services\PasswordService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 final class AuthenticationService extends BaseService
 {
     public function __construct(
-        private readonly PasswordService $passwordService,
         private readonly SessionService $sessionService,
         private readonly LoginHistoryService $loginHistoryService,
     ) {
     }
 
     /**
-     * Authenticates a user.
+     * Authenticate a user.
      *
-     * This service:
+     * Responsibilities:
      *
-     * 1. Finds the user.
-     * 2. Verifies that the account is active.
-     * 3. Verifies the password.
-     * 4. Delegates session creation to SessionService.
+     * 1. Find the user by email.
+     * 2. Verify that the account is active.
+     * 3. Verify the password.
+     * 4. Create the authentication session.
+     * 5. Record the successful login.
      *
-     * AuthenticationContext keeps the service independent
-     * from Laravel's HTTP Request.
+     * The service does not depend on Laravel's HTTP Request.
+     *
+     * AuthenticationContext transports all authentication
+     * and client information required by the authentication layer.
      *
      * @throws ModelNotFoundException
      * @throws RuntimeException
@@ -40,6 +42,9 @@ final class AuthenticationService extends BaseService
     public function authenticate(
         AuthenticationContext $context,
     ): User {
+        /*
+         * Find the user by email.
+         */
         $user = User::query()
             ->where('email', $context->email)
             ->first();
@@ -47,11 +52,15 @@ final class AuthenticationService extends BaseService
         /*
          * Unknown user.
          *
-         * We intentionally do not record the password.
+         * We still record the failed authentication attempt.
+         *
+         * The password is NEVER stored or logged.
          */
         if ($user === null) {
-            $this->loginHistoryService->recordFailed(
+            $this->loginHistoryService->recordFailure(
                 email: $context->email,
+                reason: 'user_not_found',
+                user: null,
                 ipAddress: $context->ipAddress,
                 userAgent: $context->userAgent,
                 browser: $context->browser,
@@ -59,15 +68,19 @@ final class AuthenticationService extends BaseService
             );
 
             throw (new ModelNotFoundException())
-                ->setModel(User::class, [$context->email]);
+                ->setModel(
+                    User::class,
+                    [$context->email],
+                );
         }
 
         /*
-         * Account must be active.
+         * The account must be active.
          */
         if (! $this->isAccountActive($user)) {
-            $this->loginHistoryService->recordFailed(
+            $this->loginHistoryService->recordFailure(
                 email: $context->email,
+                reason: 'account_not_active',
                 user: $user,
                 ipAddress: $context->ipAddress,
                 userAgent: $context->userAgent,
@@ -82,13 +95,19 @@ final class AuthenticationService extends BaseService
 
         /*
          * Verify the password.
+         *
+         * Hash::check() compares the supplied plain-text password
+         * with the hashed password stored in the database.
+         *
+         * The plain-text password is never persisted.
          */
-        if (! $this->passwordService->verify(
+        if (! Hash::check(
             $context->password,
             (string) $user->password,
         )) {
-            $this->loginHistoryService->recordFailed(
+            $this->loginHistoryService->recordFailure(
                 email: $context->email,
+                reason: 'invalid_credentials',
                 user: $user,
                 ipAddress: $context->ipAddress,
                 userAgent: $context->userAgent,
@@ -107,10 +126,30 @@ final class AuthenticationService extends BaseService
          * SessionService is responsible for enforcing:
          *
          * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+         *
+         * Therefore, if the user was already authenticated
+         * on another device/browser, the previous session
+         * is replaced/revoked according to SessionService's
+         * rules.
          */
-        $this->sessionService->create(
+        $session = $this->sessionService->create(
             user: $user,
             sessionId: $context->sessionId,
+            ipAddress: $context->ipAddress,
+            userAgent: $context->userAgent,
+            browser: $context->browser,
+            device: $context->device,
+        );
+
+        /*
+         * Record successful authentication.
+         *
+         * The LoginHistory entry references the newly created
+         * authentication session.
+         */
+        $this->loginHistoryService->recordSuccess(
+            user: $user,
+            session: $session,
             ipAddress: $context->ipAddress,
             userAgent: $context->userAgent,
             browser: $context->browser,
@@ -121,7 +160,7 @@ final class AuthenticationService extends BaseService
     }
 
     /**
-     * Determines whether the user account can authenticate.
+     * Determine whether the user account can authenticate.
      */
     private function isAccountActive(User $user): bool
     {
