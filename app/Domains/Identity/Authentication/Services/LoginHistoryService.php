@@ -93,7 +93,7 @@ final class LoginHistoryService extends BaseService
     /**
      * Record a session revocation.
      *
-     * Example:
+     * Typical reason:
      *
      * A user logs in from an iPhone while a session is already
      * active on Android. The Android session is revoked with
