@@ -45,6 +45,7 @@ final class AuthenticationRequest extends FormRequest
         return [
             'email.required' => 'Email is required.',
             'email.email' => 'The email address is invalid.',
+
             'password.required' => 'Password is required.',
             'password.min' => 'The password must contain at least 8 characters.',
         ];
