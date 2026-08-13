@@ -17,25 +17,24 @@ final class SessionService extends BaseService
     }
 
     /**
-     * Create or replace the authentication session of a user.
+     * Create a new authentication session.
      *
      * Architecture rule:
      *
      * ONE USER
      *      ↓
-     * ONE AUTHENTICATION SESSION
+     * ONE ACTIVE AUTHENTICATION SESSION
      *
-     * A second login does not create a second database row.
+     * A user may have several historical authentication
+     * sessions, but only one session can be active.
      *
-     * Instead, the existing authentication session is reused
-     * and its session information is replaced.
+     * When a new login occurs:
      *
-     * This guarantees:
+     * 1. The previous active session is revoked.
+     * 2. The revocation is recorded in LoginHistory.
+     * 3. A NEW AuthenticationSession row is created.
      *
-     * - one authentication_sessions row per user;
-     * - one active session per user;
-     * - stable authentication session primary key;
-     * - complete login history through LoginHistoryService.
+     * The previous session is therefore preserved as history.
      */
     public function create(
         User $user,
@@ -53,93 +52,91 @@ final class SessionService extends BaseService
             $browser,
             $device,
         ): AuthenticationSession {
+
             /*
-             * Search for the existing authentication session.
+             * Find the current active authentication session.
              *
-             * withTrashed() is intentionally used because the
-             * architecture uses SoftDeletes.
+             * We intentionally do not use withTrashed() here.
+             *
+             * A soft-deleted session is historical data and must
+             * never become the active session again.
              */
-            $session = AuthenticationSession::withTrashed()
+            $previousSession = AuthenticationSession::query()
                 ->where('user_id', $user->getKey())
+                ->whereNull('revoked_at')
                 ->first();
 
             /*
-             * First authentication for this user.
-             */
-            if ($session === null) {
-                $session = AuthenticationSession::query()->create([
-                    'user_id' => $user->getKey(),
-                    'session_id' => $sessionId,
-                    'ip_address' => $ipAddress,
-                    'user_agent' => $userAgent,
-                    'browser' => $browser,
-                    'device' => $device,
-                    'authenticated_at' => now(),
-                    'last_activity_at' => now(),
-                    'revoked_at' => null,
-                    'revocation_reason' => null,
-                ]);
-
-                return $session;
-            }
-
-            /*
-             * If the previous record was soft deleted, restore it.
+             * If an active session already exists, revoke it.
              *
-             * We reuse the existing row instead of creating another
-             * authentication session.
+             * The old row remains in the database.
              */
-            if ($session->trashed()) {
-                $session->restore();
-            }
+            if ($previousSession !== null) {
+                /*
+                 * Save the old session information BEFORE
+                 * changing anything.
+                 */
+                $previousIpAddress = $previousSession->ip_address;
+                $previousUserAgent = $previousSession->user_agent;
+                $previousBrowser = $previousSession->browser;
+                $previousDevice = $previousSession->device;
 
-            /*
-             * If an active session already exists, this is a
-             * new login from another browser/device/session.
-             *
-             * Record the previous session as revoked BEFORE
-             * replacing its values.
-             */
-            if ($this->isActive($session)) {
+                /*
+                 * Revoke the previous authentication session.
+                 */
+                $previousSession->revoked_at = now();
+                $previousSession->revocation_reason = 'new_login';
+
+                $previousSession->save();
+
+                /*
+                 * Record the session revocation in login history.
+                 */
                 $this->loginHistoryService->recordSessionRevoked(
                     user: $user,
-                    session: $session,
+                    session: $previousSession,
                     reason: 'new_login',
-                    ipAddress: $session->ip_address,
-                    userAgent: $session->user_agent,
-                    browser: $session->browser,
-                    device: $session->device,
+                    ipAddress: $previousIpAddress,
+                    userAgent: $previousUserAgent,
+                    browser: $previousBrowser,
+                    device: $previousDevice,
                 );
             }
 
             /*
-             * Reuse the same authentication_sessions row.
+             * Create a NEW authentication session.
              *
-             * This is important:
+             * IMPORTANT:
              *
-             * We DO NOT delete the previous row.
-             * We DO NOT create a second row.
+             * We deliberately create a new database row.
              *
-             * The primary key therefore remains stable.
+             * The previous authentication session must remain
+             * available as historical data.
              */
-            $session->session_id = $sessionId;
-            $session->ip_address = $ipAddress;
-            $session->user_agent = $userAgent;
-            $session->browser = $browser;
-            $session->device = $device;
-            $session->authenticated_at = now();
-            $session->last_activity_at = now();
+            $session = AuthenticationSession::query()->create([
+                'user_id' => $user->getKey(),
+
+                'session_id' => $sessionId,
+
+                'ip_address' => $ipAddress,
+
+                'user_agent' => $userAgent,
+
+                'browser' => $browser,
+
+                'device' => $device,
+
+                'authenticated_at' => now(),
+
+                'last_activity_at' => now(),
+
+                'revoked_at' => null,
+
+                'revocation_reason' => null,
+            ]);
 
             /*
-             * The new login makes the session active again.
-             */
-            $session->revoked_at = null;
-            $session->revocation_reason = null;
-
-            $session->save();
-
-            /*
-             * Return the fresh model.
+             * Return the newly created active session.
              */
             return $session->fresh();
         });
@@ -150,8 +147,8 @@ final class SessionService extends BaseService
      *
      * A session is active when:
      *
-     * - it has not been revoked;
-     * - it has not been soft deleted.
+     * - it is not soft deleted;
+     * - it has not been revoked.
      */
     public function isActive(
         AuthenticationSession $session,
@@ -166,19 +163,11 @@ final class SessionService extends BaseService
     public function current(
         User $user,
     ): ?AuthenticationSession {
-        $session = AuthenticationSession::query()
+        return AuthenticationSession::query()
             ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->latest('authenticated_at')
             ->first();
-
-        if ($session === null) {
-            return null;
-        }
-
-        if (! $this->isActive($session)) {
-            return null;
-        }
-
-        return $session;
     }
 
     /**
@@ -202,13 +191,15 @@ final class SessionService extends BaseService
 
     /**
      * Revoke a specific authentication session.
+     *
+     * A revoked session cannot be revoked again.
      */
     public function revoke(
         AuthenticationSession $session,
         string $reason = 'logout',
     ): bool {
         /*
-         * A revoked session cannot be revoked again.
+         * Do not revoke an already revoked or deleted session.
          */
         if (! $this->isActive($session)) {
             return false;
@@ -223,14 +214,14 @@ final class SessionService extends BaseService
         $session->save();
 
         /*
-         * LoginHistory is handled here for explicit revocation.
-         *
-         * The user relationship must exist for a valid
-         * authentication session.
+         * Retrieve the associated user.
          */
         $user = $session->user;
 
         if ($user !== null) {
+            /*
+             * Logout is recorded as a logout event.
+             */
             if ($reason === 'logout') {
                 $this->loginHistoryService->recordLogout(
                     user: $user,
@@ -241,6 +232,10 @@ final class SessionService extends BaseService
                     device: $session->device,
                 );
             } else {
+                /*
+                 * Other revocation reasons are recorded as
+                 * session_revoked.
+                 */
                 $this->loginHistoryService->recordSessionRevoked(
                     user: $user,
                     session: $session,
@@ -262,6 +257,9 @@ final class SessionService extends BaseService
     public function touch(
         AuthenticationSession $session,
     ): bool {
+        /*
+         * Only active sessions can receive activity updates.
+         */
         if (! $this->isActive($session)) {
             return false;
         }
