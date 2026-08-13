@@ -56,46 +56,29 @@ final class AuthenticationController extends BaseController
     }
 
     /**
-     * Authenticate a user.
+     * Authenticate the user.
      */
     public function login(
         AuthenticationRequest $request,
     ): JsonResponse {
         /*
-         * AuthenticationRequest has already validated
-         * the incoming data.
+         * Get the Laravel session identifier BEFORE
+         * authentication.
          *
-         * validated() already returns an array.
-         *
-         * IMPORTANT:
-         *
-         * Do not use:
-         *
-         * $request->validated()->all()
-         *
-         * because validated() returns an array.
-         */
-        $validated = $request->validated();
-
-        /*
-         * Regenerate the Laravel session before creating
-         * the AuthenticationContext.
-         *
-         * This prevents session fixation.
-         */
-        $request->session()->regenerate();
-
-        /*
-         * Get the final Laravel session identifier.
+         * This identifier is stored in the domain
+         * AuthenticationSession.
          */
         $sessionId = $request->session()->getId();
 
         /*
-         * Build the domain DTO.
+         * Build the domain authentication context.
+         *
+         * AuthenticationContext remains completely
+         * independent from the HTTP Request.
          */
         $context = new AuthenticationContext(
-            email: (string) $validated['email'],
-            password: (string) $validated['password'],
+            email: (string) $request->input('email'),
+            password: (string) $request->input('password'),
             sessionId: $sessionId,
             ipAddress: $request->ip(),
             userAgent: $request->userAgent(),
@@ -105,6 +88,12 @@ final class AuthenticationController extends BaseController
 
         /*
          * Delegate authentication to the domain service.
+         *
+         * SessionService is responsible for enforcing:
+         *
+         * ONE USER
+         *     ↓
+         * ONE ACTIVE AUTHENTICATION SESSION
          */
         try {
             $user = $this->authenticationService->authenticate(
@@ -135,9 +124,23 @@ final class AuthenticationController extends BaseController
         }
 
         /*
-         * Synchronize Laravel's authentication guard.
+         * Authenticate the user through Laravel's guard.
          */
         Auth::login($user);
+
+        /*
+         * Regenerate the Laravel session ID to prevent
+         * session fixation.
+         *
+         * IMPORTANT:
+         *
+         * The domain AuthenticationSession has already been
+         * created/revoked by SessionService.
+         *
+         * Therefore we do NOT call SessionService::create()
+         * again after this regeneration.
+         */
+        $request->session()->regenerate();
 
         /*
          * Retrieve the active domain authentication session.
@@ -167,12 +170,8 @@ final class AuthenticationController extends BaseController
     /**
      * Logout the currently authenticated user.
      */
-    public function logout(
-        Request $request,
-    ): JsonResponse {
-        /*
-         * Retrieve the authenticated user.
-         */
+    public function logout(Request $request): JsonResponse
+    {
         $user = Auth::user();
 
         if ($user === null) {
@@ -182,15 +181,15 @@ final class AuthenticationController extends BaseController
         }
 
         /*
-         * Retrieve the active authentication session before
-         * revoking it.
+         * Retrieve the current active domain session
+         * before revocation.
          */
         $authenticationSession = $this->sessionService->current(
             user: $user,
         );
 
         /*
-         * Revoke the domain authentication session.
+         * Revoke the active authentication session.
          */
         $revoked = $this->sessionService->revokeForUser(
             user: $user,
@@ -198,28 +197,15 @@ final class AuthenticationController extends BaseController
         );
 
         /*
-         * Record logout history.
+         * SessionService already handles the session
+         * revocation history.
          *
-         * SessionService records the revocation itself.
-         * This explicit logout event gives us a dedicated
-         * "logout" history event.
+         * Do not duplicate the history record here if
+         * SessionService is already responsible for it.
          */
-        if (
-            $revoked
-            && $authenticationSession !== null
-        ) {
-            $this->loginHistoryService->recordLogout(
-                user: $user,
-                session: $authenticationSession,
-                ipAddress: $request->ip(),
-                userAgent: $request->userAgent(),
-                browser: $this->detectBrowser($request),
-                device: $this->detectDevice($request),
-            );
-        }
 
         /*
-         * Logout from Laravel's authentication guard.
+         * Logout from Laravel.
          */
         Auth::logout();
 
@@ -229,7 +215,7 @@ final class AuthenticationController extends BaseController
         $request->session()->invalidate();
 
         /*
-         * Generate a new CSRF token.
+         * Regenerate CSRF token.
          */
         $request->session()->regenerateToken();
 
@@ -241,9 +227,8 @@ final class AuthenticationController extends BaseController
     /**
      * Detect the browser from the User-Agent.
      */
-    private function detectBrowser(
-        Request $request,
-    ): ?string {
+    private function detectBrowser(Request $request): ?string
+    {
         $userAgent = $request->userAgent();
 
         if ($userAgent === null) {
@@ -267,7 +252,6 @@ final class AuthenticationController extends BaseController
 
         if (
             str_contains($userAgent, 'OPR/')
-            || str_contains($userAgent, 'Opera/')
         ) {
             return 'Opera';
         }
@@ -296,9 +280,8 @@ final class AuthenticationController extends BaseController
     /**
      * Detect the client device from the User-Agent.
      */
-    private function detectDevice(
-        Request $request,
-    ): ?string {
+    private function detectDevice(Request $request): ?string
+    {
         $userAgent = $request->userAgent();
 
         if ($userAgent === null) {
