@@ -23,18 +23,26 @@ final class AuthenticationService extends BaseService
     /**
      * Authenticate a user.
      *
-     * Responsibilities:
+     * Authentication flow:
      *
      * 1. Find the user by email.
-     * 2. Verify that the account is active.
-     * 3. Verify the password.
-     * 4. Create the authentication session.
-     * 5. Record the successful login.
+     * 2. Record a failed attempt if the user does not exist.
+     * 3. Verify that the account is active.
+     * 4. Record a failed attempt if the account is inactive.
+     * 5. Verify the password.
+     * 6. Record a failed attempt if the password is invalid.
+     * 7. Create the authentication session.
+     * 8. Record the successful login.
      *
      * The service does not depend on Laravel's HTTP Request.
      *
-     * AuthenticationContext transports all authentication
-     * and client information required by the authentication layer.
+     * AuthenticationContext contains all information required
+     * to perform the authentication operation.
+     *
+     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+     *
+     * SessionService is responsible for replacing/revoking
+     * an existing active session when a new login occurs.
      *
      * @throws ModelNotFoundException
      * @throws RuntimeException
@@ -43,18 +51,26 @@ final class AuthenticationService extends BaseService
         AuthenticationContext $context,
     ): User {
         /*
-         * Find the user by email.
+         * ---------------------------------------------------------
+         * 1. Find the user.
+         * ---------------------------------------------------------
+         *
+         * We search by email only.
+         *
+         * The password is never logged or persisted.
          */
         $user = User::query()
             ->where('email', $context->email)
             ->first();
 
         /*
-         * Unknown user.
+         * ---------------------------------------------------------
+         * 2. Unknown user.
+         * ---------------------------------------------------------
          *
          * We still record the failed authentication attempt.
          *
-         * The password is NEVER stored or logged.
+         * user_id remains NULL because the account does not exist.
          */
         if ($user === null) {
             $this->loginHistoryService->recordFailure(
@@ -75,7 +91,11 @@ final class AuthenticationService extends BaseService
         }
 
         /*
-         * The account must be active.
+         * ---------------------------------------------------------
+         * 3. Verify account status.
+         * ---------------------------------------------------------
+         *
+         * Only ACTIVE users can authenticate.
          */
         if (! $this->isAccountActive($user)) {
             $this->loginHistoryService->recordFailure(
@@ -94,12 +114,15 @@ final class AuthenticationService extends BaseService
         }
 
         /*
-         * Verify the password.
+         * ---------------------------------------------------------
+         * 4. Verify password.
+         * ---------------------------------------------------------
          *
-         * Hash::check() compares the supplied plain-text password
-         * with the hashed password stored in the database.
+         * We use Laravel's Hash facade directly because
+         * MAHLINE currently does not have a PasswordService.
          *
-         * The plain-text password is never persisted.
+         * The plain-text password must NEVER be logged,
+         * persisted, or included in LoginHistory.
          */
         if (! Hash::check(
             $context->password,
@@ -121,16 +144,25 @@ final class AuthenticationService extends BaseService
         }
 
         /*
-         * Authentication succeeded.
+         * ---------------------------------------------------------
+         * 5. Authentication successful.
+         * ---------------------------------------------------------
          *
-         * SessionService is responsible for enforcing:
+         * SessionService handles the ONE USER → ONE ACTIVE
+         * AUTHENTICATED SESSION rule.
          *
-         * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+         * If another session already exists for this user:
          *
-         * Therefore, if the user was already authenticated
-         * on another device/browser, the previous session
-         * is replaced/revoked according to SessionService's
-         * rules.
+         * Android / Firefox
+         *        ↓
+         * existing session
+         *        ↓
+         * revoked with "new_login"
+         *        ↓
+         * new session created
+         *
+         * Therefore, a new login replaces the previous
+         * active authentication session.
          */
         $session = $this->sessionService->create(
             user: $user,
@@ -142,10 +174,14 @@ final class AuthenticationService extends BaseService
         );
 
         /*
-         * Record successful authentication.
+         * ---------------------------------------------------------
+         * 6. Record successful authentication.
+         * ---------------------------------------------------------
          *
-         * The LoginHistory entry references the newly created
-         * authentication session.
+         * LoginHistory stores the historical authentication event.
+         *
+         * The AuthenticationSession relation allows us to know
+         * which session produced this successful login.
          */
         $this->loginHistoryService->recordSuccess(
             user: $user,
@@ -156,11 +192,19 @@ final class AuthenticationService extends BaseService
             device: $context->device,
         );
 
+        /*
+         * ---------------------------------------------------------
+         * 7. Return authenticated user.
+         * ---------------------------------------------------------
+         */
         return $user;
     }
 
     /**
-     * Determine whether the user account can authenticate.
+     * Determine whether the user account is active.
+     *
+     * The domain enum is used here instead of comparing
+     * the database value manually.
      */
     private function isAccountActive(User $user): bool
     {
