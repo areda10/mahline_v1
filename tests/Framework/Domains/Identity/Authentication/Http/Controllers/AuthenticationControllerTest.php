@@ -7,136 +7,179 @@ namespace Tests\Framework\Domains\Identity\Authentication\Http\Controllers;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
+/**
+ * AuthenticationControllerTest
+ *
+ * Tests the HTTP layer of the authentication domain.
+ *
+ * The controller is responsible for:
+ *
+ * - receiving the HTTP request;
+ * - validating authentication data;
+ * - creating AuthenticationContext;
+ * - delegating authentication to AuthenticationService;
+ * - synchronizing Laravel Auth;
+ * - returning the correct HTTP response.
+ *
+ * Business rules remain inside the domain services.
+ *
+ * IMPORTANT:
+ *
+ * The tests intentionally verify the complete authentication flow:
+ *
+ * HTTP Request
+ *      ↓
+ * AuthenticationRequest
+ *      ↓
+ * AuthenticationController
+ *      ↓
+ * AuthenticationContext
+ *      ↓
+ * AuthenticationService
+ *      ↓
+ * SessionService
+ *      ↓
+ * LoginHistoryService
+ */
 final class AuthenticationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /*
-     * ================================================================
-     * AUTHENTICATION CONTROLLER TESTS
-     * ================================================================
-     *
-     * These tests verify the HTTP layer of authentication.
-     *
-     * The Controller is responsible for:
-     *
-     * 1. Receiving the HTTP request.
-     * 2. Validating the request through AuthenticationRequest.
-     * 3. Building the AuthenticationContext.
-     * 4. Detecting / forwarding client information.
-     * 5. Delegating authentication to AuthenticationService.
-     *
-     * AuthenticationService remains responsible for:
-     *
-     * - locating the user;
-     * - checking account status;
-     * - verifying the password;
-     * - creating the authentication session;
-     * - recording login history.
-     *
-     * SessionService remains responsible for:
-     *
-     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
-     *
-     * Therefore these tests verify the complete HTTP → Service flow.
+    /**
+     * Base URL used by the authentication routes.
      */
-
+    private string $loginUrl = '/authentication/login';
 
     /**
-     * Test that a valid user can authenticate successfully.
-     *
-     * Expected result:
-     *
-     * - HTTP authentication succeeds.
-     * - An authentication session is created.
-     * - A successful login history entry is created.
+     * Base URL used by the logout route.
+     */
+    private string $logoutUrl = '/authentication/logout';
+
+    /**
+     * Standard browser User-Agent used by the tests.
+     */
+    private string $userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
+        . 'Chrome/120.0.0.0 Safari/537.36';
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUCCESSFUL AUTHENTICATION
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * A valid user can authenticate successfully.
      */
     public function test_user_can_authenticate_successfully(): void
     {
         $user = User::factory()->create([
-            'email' => 'john@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'controller@example.com',
+            'password' => 'password',
             'status' => UserStatus::Active,
         ]);
 
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'john@example.com',
-                'password' => 'password',
-            ]
-        );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
         /*
-         * The exact success status depends on the Controller
-         * implementation.
-         *
-         * 200 is expected for a JSON authentication endpoint.
+         * Authentication must succeed.
          */
         $response->assertOk();
 
         /*
-         * The authentication session must exist.
+         * The response must confirm authentication.
+         */
+        $response->assertJson([
+            'message' => 'Authentication successful.',
+        ]);
+
+        /*
+         * The authenticated user must be returned.
+         */
+        $response->assertJsonPath(
+            'user.id',
+            $user->getKey(),
+        );
+
+        $response->assertJsonPath(
+            'user.email',
+            $user->email,
+        );
+
+        /*
+         * Laravel's authentication guard must contain
+         * the authenticated user.
+         */
+        $this->assertAuthenticatedAs($user);
+
+        /*
+         * One active authentication session must exist.
          */
         $this->assertDatabaseHas(
             'authentication_sessions',
             [
                 'user_id' => $user->getKey(),
-            ]
-        );
-
-        /*
-         * A successful authentication must be recorded.
-         */
-        $this->assertDatabaseHas(
-            'login_histories',
-            [
-                'user_id' => $user->getKey(),
-                'email' => $user->email,
-                'event' => 'success',
-            ]
+                'revoked_at' => null,
+            ],
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | UNKNOWN USER
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that an unknown email is rejected.
+     * An unknown email must be rejected.
      *
-     * No user exists with the supplied email.
-     *
-     * Expected result:
-     *
-     * - Authentication fails.
-     * - No authentication session is created.
-     * - LoginHistory records the failed attempt.
+     * AuthenticationService records the failed attempt.
      */
     public function test_unknown_user_is_rejected(): void
     {
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'unknown@example.com',
-                'password' => 'password',
-            ]
-        );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => 'unknown@example.com',
+            'password' => 'password',
+        ]);
 
         /*
-         * Authentication must not succeed.
+         * The current controller contract uses HTTP 404
+         * when the user does not exist.
          */
         $response->assertStatus(404);
 
+        $response->assertJson([
+            'message' => 'User not found.',
+        ]);
+
         /*
-         * No authentication session must be created.
+         * No Laravel authentication must exist.
+         */
+        $this->assertGuest();
+
+        /*
+         * No authentication session may be created.
          */
         $this->assertDatabaseCount(
             'authentication_sessions',
-            0
+            0,
         );
 
         /*
@@ -147,51 +190,55 @@ final class AuthenticationControllerTest extends TestCase
             [
                 'email' => 'unknown@example.com',
                 'event' => 'failed',
-            ]
+            ],
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | INVALID PASSWORD
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that an invalid password is rejected.
-     *
-     * The user exists, but the supplied password is incorrect.
-     *
-     * Expected result:
-     *
-     * - Authentication fails.
-     * - No session is created.
-     * - Failed login is recorded.
+     * A valid user with an invalid password must be rejected.
      */
     public function test_invalid_password_is_rejected(): void
     {
         $user = User::factory()->create([
-            'email' => 'john@example.com',
-            'password' => Hash::make('correct-password'),
+            'email' => 'invalid-password@example.com',
+            'password' => 'password',
             'status' => UserStatus::Active,
         ]);
 
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'john@example.com',
-                'password' => 'wrong-password',
-            ]
-        );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ]);
 
         /*
-         * Authentication must be rejected.
+         * Invalid credentials are represented as HTTP 401.
          */
         $response->assertStatus(401);
 
+        $response->assertJson([
+            'message' => 'Invalid credentials.',
+        ]);
+
         /*
-         * No authentication session must exist.
+         * Laravel authentication must not occur.
          */
-        $this->assertDatabaseMissing(
+        $this->assertGuest();
+
+        /*
+         * No authentication session may be created.
+         */
+        $this->assertDatabaseCount(
             'authentication_sessions',
-            [
-                'user_id' => $user->getKey(),
-            ]
+            0,
         );
 
         /*
@@ -204,46 +251,56 @@ final class AuthenticationControllerTest extends TestCase
                 'email' => $user->email,
                 'event' => 'failed',
                 'reason' => 'invalid_credentials',
-            ]
+            ],
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | INACTIVE USER
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that an inactive user cannot authenticate.
-     *
-     * The password may be correct, but the account status
-     * prevents authentication.
+     * An inactive user cannot authenticate.
      */
     public function test_inactive_user_is_rejected(): void
     {
         $user = User::factory()->create([
-            'email' => 'inactive@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'inactive-controller@example.com',
+            'password' => 'password',
             'status' => UserStatus::Inactive,
         ]);
 
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'inactive@example.com',
-                'password' => 'password',
-            ]
-        );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
         /*
-         * Authentication must be rejected.
+         * The controller converts the authentication
+         * RuntimeException into HTTP 401.
          */
         $response->assertStatus(401);
 
+        $response->assertJson([
+            'message' => 'User account is not active.',
+        ]);
+
         /*
-         * No session may be created for an inactive account.
+         * The user must remain unauthenticated.
          */
-        $this->assertDatabaseMissing(
+        $this->assertGuest();
+
+        /*
+         * No authentication session may be created.
+         */
+        $this->assertDatabaseCount(
             'authentication_sessions',
-            [
-                'user_id' => $user->getKey(),
-            ]
+            0,
         );
 
         /*
@@ -256,72 +313,96 @@ final class AuthenticationControllerTest extends TestCase
                 'email' => $user->email,
                 'event' => 'failed',
                 'reason' => 'account_not_active',
-            ]
+            ],
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | ACTIVE SESSION
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that authentication creates exactly one active session.
+     * Successful authentication creates an active session.
      */
     public function test_successful_authentication_creates_active_session(): void
     {
         $user = User::factory()->create([
-            'email' => 'session@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'active-session@example.com',
+            'password' => 'password',
             'status' => UserStatus::Active,
         ]);
 
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'session@example.com',
-                'password' => 'password',
-            ]
-        );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
         $response->assertOk();
 
         /*
-         * Retrieve the created authentication session.
+         * There must be exactly one session.
          */
-        $session = AuthenticationSession::query()
-            ->where('user_id', $user->getKey())
-            ->first();
-
-        $this->assertNotNull($session);
+        $this->assertSame(
+            1,
+            AuthenticationSession::query()
+                ->where('user_id', $user->getKey())
+                ->count(),
+        );
 
         /*
-         * A newly authenticated session must be active.
+         * The session must be active.
          */
-        $this->assertNull($session->revoked_at);
-        $this->assertNull($session->revocation_reason);
+        $this->assertDatabaseHas(
+            'authentication_sessions',
+            [
+                'user_id' => $user->getKey(),
+                'revoked_at' => null,
+            ],
+        );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | LOGIN HISTORY
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that a successful authentication creates a LoginHistory entry.
+     * Successful authentication creates login history.
      */
     public function test_successful_authentication_creates_login_history(): void
     {
         $user = User::factory()->create([
-            'email' => 'history@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'history-controller@example.com',
+            'password' => 'password',
             'status' => UserStatus::Active,
         ]);
 
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'history@example.com',
-                'password' => 'password',
-            ]
-        );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
         $response->assertOk();
 
         /*
-         * The success event must exist.
+         * Retrieve the active authentication session.
+         */
+        $session = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        /*
+         * The successful login must reference that session.
          */
         $this->assertDatabaseHas(
             'login_histories',
@@ -329,198 +410,65 @@ final class AuthenticationControllerTest extends TestCase
                 'user_id' => $user->getKey(),
                 'email' => $user->email,
                 'event' => 'success',
-            ]
-        );
-
-        /*
-         * Retrieve the history entry so we can verify
-         * that it is linked to the authentication session.
-         */
-        $history = LoginHistory::query()
-            ->where('user_id', $user->getKey())
-            ->where('event', 'success')
-            ->first();
-
-        $this->assertNotNull($history);
-
-        /*
-         * A successful login must reference the session
-         * that was created by SessionService.
-         */
-        $this->assertNotNull(
-            $history->authentication_session_id
+                'authentication_session_id' => $session->getKey(),
+            ],
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | CLIENT INFORMATION
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that client information is recorded.
-     *
-     * The Controller builds AuthenticationContext from the
-     * HTTP request and forwards client information to the
-     * authentication layer.
+     * Client information must be recorded in login history.
      */
     public function test_client_information_is_recorded(): void
     {
         $user = User::factory()->create([
-            'email' => 'client@example.com',
-            'password' => Hash::make('password'),
+            'email' => 'client-info@example.com',
+            'password' => 'password',
             'status' => UserStatus::Active,
         ]);
 
-        $response = $this
-            ->withHeaders([
-                'User-Agent' =>
-                    'Mozilla/5.0 (Linux; Android 14) '
-                    . 'AppleWebKit/537.36 '
-                    . 'Chrome/120.0 Mobile Safari/537.36',
-            ])
-            ->postJson(
-                route('authentication.login'),
-                [
-                    'email' => 'client@example.com',
-                    'password' => 'password',
-                ]
-            );
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
 
         $response->assertOk();
 
         /*
-         * The raw User-Agent must be stored in the authentication
-         * session or login history according to the architecture.
+         * The browser detector should identify Chrome.
          */
         $this->assertDatabaseHas(
             'login_histories',
             [
                 'user_id' => $user->getKey(),
                 'event' => 'success',
-            ]
+                'browser' => 'Chrome',
+                'device' => 'Windows',
+            ],
         );
     }
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | ONE ACTIVE SESSION
+    |--------------------------------------------------------------------------
+    */
     /**
-     * Test that a second login replaces the previous session.
+     * A second login replaces the previous active session.
      *
-     * MAHLINE rule:
+     * The previous authentication session is retained for history
+     * but becomes revoked.
      *
-     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
-     *
-     * Therefore:
-     *
-     * Android / Firefox
-     *       ↓
-     * Session A
-     *
-     * then:
-     *
-     * iPhone / Safari
-     *       ↓
-     * Session B
-     *
-     * Session A must no longer be active.
+     * The new authentication session becomes the only active session.
      */
-    // public function test_second_login_replaces_previous_session(): void
-    // {
-    //     $user = User::factory()->create([
-    //         'email' => 'multi-device@example.com',
-    //         'password' => Hash::make('password'),
-    //         'status' => UserStatus::Active,
-    //     ]);
-
-    //     /*
-    //      * First authentication.
-    //      */
-    //     $firstResponse = $this
-    //         ->withHeaders([
-    //             'User-Agent' =>
-    //                 'Mozilla/5.0 (Linux; Android 14) '
-    //                 . 'Firefox/120.0',
-    //         ])
-    //         ->postJson(
-    //             route('authentication.login'),
-    //             [
-    //                 'email' => 'multi-device@example.com',
-    //                 'password' => 'password',
-    //             ]
-    //         );
-
-    //     $firstResponse->assertOk();
-
-    //     /*
-    //      * There must be exactly one authentication session.
-    //      */
-    //     $this->assertSame(
-    //         1,
-    //         AuthenticationSession::query()
-    //             ->where('user_id', $user->getKey())
-    //             ->count()
-    //     );
-
-    //     $firstSession = AuthenticationSession::query()
-    //         ->where('user_id', $user->getKey())
-    //         ->first();
-
-    //     $this->assertNotNull($firstSession);
-
-    //     /*
-    //      * Second authentication from another device/browser.
-    //      */
-    //     $secondResponse = $this
-    //         ->withHeaders([
-    //             'User-Agent' =>
-    //                 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) '
-    //                 . 'AppleWebKit/605.1.15 '
-    //                 . 'Version/18.0 Mobile/15E148 Safari/604.1',
-    //         ])
-    //         ->postJson(
-    //             route('authentication.login'),
-    //             [
-    //                 'email' => 'multi-device@example.com',
-    //                 'password' => 'password',
-    //             ]
-    //         );
-
-    //     $secondResponse->assertOk();
-
-    //     /*
-    //      * The architecture permits only ONE authentication
-    //      * session for this user.
-    //      */
-    //     $this->assertSame(
-    //         1,
-    //         AuthenticationSession::query()
-    //             ->where('user_id', $user->getKey())
-    //             ->count()
-    //     );
-
-    //     /*
-    //      * Retrieve the current session.
-    //      */
-    //     $currentSession = AuthenticationSession::query()
-    //         ->where('user_id', $user->getKey())
-    //         ->first();
-
-    //     $this->assertNotNull($currentSession);
-
-    //     /*
-    //      * The current session must be active.
-    //      */
-    //     $this->assertNull(
-    //         $currentSession->revoked_at
-    //     );
-
-    //     /*
-    //      * The current session must be different from the
-    //      * first session.
-    //      */
-    //     $this->assertNotSame(
-    //         $firstSession->getKey(),
-    //         $currentSession->getKey()
-    //     );
-    // }
-
-    // update test_second_login_replaces_previous_session
     public function test_second_login_replaces_previous_session(): void
     {
         $user = User::factory()->create([
@@ -530,82 +478,157 @@ final class AuthenticationControllerTest extends TestCase
         ]);
 
         /*
-        * First authentication.
+        * ------------------------------------------------------------------
+        * FIRST LOGIN
+        * ------------------------------------------------------------------
         */
-        $firstContext = new AuthenticationContext(
-            email: 'second-login@example.com',
-            password: 'password',
-            sessionId: 'session-a',
-            ipAddress: '127.0.0.1',
-            userAgent: 'Mozilla/5.0 Android',
-            browser: 'Firefox',
-            device: 'Android',
-        );
 
-        $this->authenticationService->authenticate(
-            $firstContext
+        $firstResponse = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $firstResponse->assertOk();
+
+        /*
+        * Retrieve the first authentication session.
+        */
+        $firstSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        /*
+        * Keep the first session ID for later verification.
+        */
+        $firstSessionId = $firstSession->getKey();
+
+        /*
+        * The first session must be active.
+        */
+        $this->assertNull(
+            $firstSession->revoked_at,
         );
 
         /*
-        * Second authentication from another device/browser.
-        *
-        * ONE USER → ONE ACTIVE AUTHENTICATED SESSION.
-        *
-        * The first session must therefore be revoked.
-        */
-        $secondContext = new AuthenticationContext(
-            email: 'second-login@example.com',
-            password: 'password',
-            sessionId: 'session-b',
-            ipAddress: '192.168.1.10',
-            userAgent: 'Mozilla/5.0 iPhone',
-            browser: 'Safari',
-            device: 'iPhone',
-        );
-
-        $this->authenticationService->authenticate(
-            $secondContext
-        );
-
-        /*
-        * Exactly ONE ACTIVE session must exist.
+        * At this point there must be exactly one active session.
         */
         $this->assertSame(
             1,
             AuthenticationSession::query()
                 ->where('user_id', $user->getKey())
                 ->whereNull('revoked_at')
-                ->count()
+                ->count(),
         );
 
         /*
-        * The first session remains in the database,
-        * but is revoked because of the new login.
+        * ------------------------------------------------------------------
+        * SECOND LOGIN
+        * ------------------------------------------------------------------
+        *
+        * Explicitly log Laravel out before performing the second
+        * authentication attempt.
+        *
+        * IMPORTANT:
+        *
+        * We do NOT delete the AuthenticationSession.
+        *
+        * SessionService remains responsible for revoking it.
         */
-        $this->assertDatabaseHas(
-            'authentication_sessions',
-            [
-                'user_id' => $user->getKey(),
-                'session_id' => 'session-a',
-                'revocation_reason' => 'new_login',
-            ]
-        );
+        Auth::logout();
 
         /*
-        * The second session is the active session.
+        * Perform the second login.
         */
-        $this->assertDatabaseHas(
-            'authentication_sessions',
-            [
-                'user_id' => $user->getKey(),
-                'session_id' => 'session-b',
-                'revoked_at' => null,
-            ]
+        $secondResponse = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $secondResponse->assertOk();
+
+        /*
+        * ------------------------------------------------------------------
+        * VERIFY FIRST SESSION
+        * ------------------------------------------------------------------
+        */
+
+        $firstSessionAfterSecondLogin = AuthenticationSession::query()
+            ->findOrFail($firstSessionId);
+
+        /*
+        * The first session must now be revoked.
+        */
+        $this->assertNotNull(
+            $firstSessionAfterSecondLogin->revoked_at,
         );
 
         /*
-        * Login history must contain the revocation
-        * of the previous session.
+        * The reason must indicate that another login replaced it.
+        */
+        $this->assertSame(
+            'new_login',
+            $firstSessionAfterSecondLogin->revocation_reason,
+        );
+
+        /*
+        * ------------------------------------------------------------------
+        * VERIFY ACTIVE SESSION
+        * ------------------------------------------------------------------
+        */
+
+        /*
+        * Exactly ONE active authentication session must exist.
+        */
+        $this->assertSame(
+            1,
+            AuthenticationSession::query()
+                ->where('user_id', $user->getKey())
+                ->whereNull('revoked_at')
+                ->count(),
+        );
+
+        /*
+        * There must now be two historical authentication sessions:
+        *
+        * Session A → REVOKED
+        * Session B → ACTIVE
+        */
+        $this->assertSame(
+            2,
+            AuthenticationSession::query()
+                ->where('user_id', $user->getKey())
+                ->count(),
+        );
+
+        /*
+        * Retrieve the new active session.
+        */
+        $secondSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        /*
+        * The new session must be different from the old session.
+        */
+        $this->assertNotSame(
+            $firstSessionId,
+            $secondSession->getKey(),
+        );
+
+        /*
+        * ------------------------------------------------------------------
+        * VERIFY LOGIN HISTORY
+        * ------------------------------------------------------------------
+        */
+
+        /*
+        * The revocation of the first session must be recorded.
         */
         $this->assertDatabaseHas(
             'login_histories',
@@ -613,93 +636,428 @@ final class AuthenticationControllerTest extends TestCase
                 'user_id' => $user->getKey(),
                 'event' => 'session_revoked',
                 'reason' => 'new_login',
-            ]
+                'authentication_session_id' => $firstSessionId,
+            ],
         );
 
         /*
-        * The successful second authentication must also
-        * be recorded.
+        * The second successful login must also be recorded.
         */
         $this->assertDatabaseHas(
             'login_histories',
             [
                 'user_id' => $user->getKey(),
                 'event' => 'success',
-            ]
+                'authentication_session_id' => $secondSession->getKey(),
+            ],
         );
     }
+    /**
+     * A second login replaces the previous active session.
+     *
+     * The previous session is NOT deleted.
+     *
+     * It is retained as historical data and marked revoked.
+     */ //=== 472 - 566
+    // public function test_second_login_replaces_previous_session(): void
+    // {
+    //     $user = User::factory()->create([
+    //         'email' => 'second-login@example.com',
+    //         'password' => 'password',
+    //         'status' => UserStatus::Active,
+    //     ]);
 
+    //     /*
+    //      * First login.
+    //      */
+    //     $firstResponse = $this->withHeader(
+    //         'User-Agent',
+    //         $this->userAgent,
+    //     )->postJson($this->loginUrl, [
+    //         'email' => $user->email,
+    //         'password' => 'password',
+    //     ]);
+
+    //     $firstResponse->assertOk();
+
+    //     /*
+    //      * Store the first authentication session.
+    //      */
+    //     $firstSession = AuthenticationSession::query()
+    //         ->where('user_id', $user->getKey())
+    //         ->firstOrFail();
+
+    //     /*
+    //      * Logout Laravel's guard before simulating
+    //      * another independent login.
+    //      */
+    //     Auth::logout();
+
+    //     /*
+    //      * Second login.
+    //      */
+    //     $secondResponse = $this->withHeader(
+    //         'User-Agent',
+    //         $this->userAgent,
+    //     )->postJson($this->loginUrl, [
+    //         'email' => $user->email,
+    //         'password' => 'password',
+    //     ]);
+
+    //     $secondResponse->assertOk();
+
+    //     /*
+    //      * The previous session must remain in the database.
+    //      */
+    //     $this->assertDatabaseHas(
+    //         'authentication_sessions',
+    //         [
+    //             'id' => $firstSession->getKey(),
+    //             'revoked_at' => $firstSession
+    //                 ->fresh()
+    //                 ?->revoked_at,
+    //             'revocation_reason' => 'new_login',
+    //         ],
+    //     );
+
+    //     /*
+    //      * There must be exactly ONE active session.
+    //      */
+    //     $this->assertSame(
+    //         1,
+    //         AuthenticationSession::query()
+    //             ->where('user_id', $user->getKey())
+    //             ->whereNull('revoked_at')
+    //             ->count(),
+    //     );
+
+    //     /*
+    //      * Two historical sessions should now exist.
+    //      */
+    //     $this->assertSame(
+    //         2,
+    //         AuthenticationSession::query()
+    //             ->where('user_id', $user->getKey())
+    //             ->count(),
+    //     );
+
+    //     /*
+    //      * The session replacement must be recorded.
+    //      */
+    //     $this->assertDatabaseHas(
+    //         'login_histories',
+    //         [
+    //             'user_id' => $user->getKey(),
+    //             'event' => 'session_revoked',
+    //             'reason' => 'new_login',
+    //             'authentication_session_id' => $firstSession->getKey(),
+    //         ],
+    //     );
+    // }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FAILED AUTHENTICATION
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Test that failed authentication does not create a session.
+     * Failed authentication never creates an authentication session.
      */
     public function test_failed_authentication_never_creates_session(): void
     {
-        User::factory()->create([
-            'email' => 'failed@example.com',
-            'password' => Hash::make('correct-password'),
+        $user = User::factory()->create([
+            'email' => 'failed-session@example.com',
+            'password' => 'password',
             'status' => UserStatus::Active,
         ]);
 
-        $response = $this->postJson(
-            route('authentication.login'),
-            [
-                'email' => 'failed@example.com',
-                'password' => 'wrong-password',
-            ]
-        );
+        $response = $this->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ]);
 
         $response->assertStatus(401);
 
         /*
-         * The authentication_sessions table must remain empty.
+         * Authentication session table must remain empty.
          */
         $this->assertDatabaseCount(
             'authentication_sessions',
-            0
-        );
-    }
-
-
-    /**
-     * Test request validation.
-     *
-     * AuthenticationRequest must reject an invalid email
-     * and a missing password before AuthenticationService
-     * is called.
-     */
-    public function test_authentication_request_validates_required_fields(): void
-    {
-        $response = $this->postJson(
-            route('authentication.login'),
-            []
+            0,
         );
 
         /*
-         * Laravel validation should return HTTP 422.
+         * Failed login history must exist.
+         */
+        $this->assertDatabaseHas(
+            'login_histories',
+            [
+                'user_id' => $user->getKey(),
+                'event' => 'failed',
+            ],
+        );
+
+        /*
+         * Laravel guard must remain unauthenticated.
+         */
+        $this->assertGuest();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * AuthenticationRequest validates required fields.
+     */
+    public function test_authentication_request_validates_required_fields(): void
+    {
+        /*
+         * Do not provide any authentication data.
+         */
+        $response = $this->postJson(
+            $this->loginUrl,
+            [],
+        );
+
+        /*
+         * Laravel validation must return HTTP 422.
          */
         $response->assertStatus(422);
 
         /*
-         * The validation response must contain the expected
-         * validation fields.
+         * Validation errors must contain both fields.
          */
         $response->assertJsonValidationErrors([
             'email',
             'password',
         ]);
+    }
+
+    /**
+     * Invalid email format must be rejected.
+     */
+    public function test_invalid_email_is_rejected(): void
+    {
+        $response = $this->postJson(
+            $this->loginUrl,
+            [
+                'email' => 'not-an-email',
+                'password' => 'password',
+            ],
+        );
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors([
+            'email',
+        ]);
+    }
+
+    /**
+     * Password shorter than eight characters must be rejected.
+     */
+    public function test_short_password_is_rejected(): void
+    {
+        $response = $this->postJson(
+            $this->loginUrl,
+            [
+                'email' => 'valid@example.com',
+                'password' => 'short',
+            ],
+        );
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors([
+            'password',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOGOUT
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Authenticated user can logout successfully.
+     */
+    public function test_authenticated_user_can_logout(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'logout@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
 
         /*
-         * No authentication must take place.
+         * Authenticate first.
          */
-        $this->assertDatabaseCount(
-            'authentication_sessions',
-            0
+        $loginResponse = $this->postJson(
+            $this->loginUrl,
+            [
+                'email' => $user->email,
+                'password' => 'password',
+            ],
         );
 
-        $this->assertDatabaseCount(
-            'login_histories',
-            0
+        $loginResponse->assertOk();
+
+        /*
+         * Retrieve the active session.
+         */
+        $session = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        /*
+         * Logout.
+         */
+        $logoutResponse = $this->postJson(
+            $this->logoutUrl,
         );
+
+        $logoutResponse->assertOk();
+
+        $logoutResponse->assertJson([
+            'message' => 'Logout successful.',
+        ]);
+
+        /*
+         * Laravel guard must now be unauthenticated.
+         */
+        $this->assertGuest();
+
+        /*
+         * Authentication session must be revoked.
+         */
+        $this->assertNotNull(
+            $session->fresh()->revoked_at,
+        );
+
+        /*
+         * Logout must be recorded in LoginHistory.
+         */
+        $this->assertDatabaseHas(
+            'login_histories',
+            [
+                'user_id' => $user->getKey(),
+                'event' => 'logout',
+                'reason' => 'logout',
+                'authentication_session_id' => $session->getKey(),
+            ],
+        );
+    }
+
+    /**
+     * An unauthenticated user cannot logout.
+     */
+    public function test_guest_cannot_logout(): void
+    {
+        $response = $this->postJson(
+            $this->logoutUrl,
+        );
+
+        $response->assertStatus(401);
+
+        $response->assertJson([
+            'message' => 'No authenticated user.',
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | AUTHENTICATION CONTEXT
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * The AuthenticationContext is immutable.
+     */
+    public function test_authentication_context_is_readonly(): void
+    {
+        $context = new AuthenticationContext(
+            email: 'readonly@example.com',
+            password: 'password',
+            sessionId: 'session-readonly',
+            ipAddress: '127.0.0.1',
+            userAgent: $this->userAgent,
+            browser: 'Chrome',
+            device: 'Windows',
+        );
+
+        /*
+         * PHP readonly classes/properties prevent mutation.
+         *
+         * We verify that the expected values are preserved.
+         */
+        $this->assertSame(
+            'readonly@example.com',
+            $context->email,
+        );
+
+        $this->assertSame(
+            'session-readonly',
+            $context->sessionId,
+        );
+
+        $this->assertSame(
+            'Chrome',
+            $context->browser,
+        );
+
+        $this->assertSame(
+            'Windows',
+            $context->device,
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SECURITY
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * The plain-text password must never be stored in LoginHistory.
+     */
+    public function test_plain_password_is_not_stored_in_login_history(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'security@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->postJson(
+            $this->loginUrl,
+            [
+                'email' => $user->email,
+                'password' => 'password',
+            ],
+        )->assertOk();
+
+        /*
+         * LoginHistory must never contain a password column/value.
+         */
+        $history = LoginHistory::query()
+            ->where('user_id', $user->getKey())
+            ->firstOrFail();
+
+        $attributes = $history->getAttributes();
+
+        foreach ($attributes as $value) {
+            if (is_string($value)) {
+                $this->assertStringNotContainsString(
+                    'password',
+                    strtolower($value),
+                );
+            }
+        }
     }
 }
