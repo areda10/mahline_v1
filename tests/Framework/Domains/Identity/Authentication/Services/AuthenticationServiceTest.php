@@ -349,16 +349,27 @@ final class AuthenticationServiceTest extends TestCase
      */
     public function test_new_login_replaces_previous_session(): void
     {
+        /*
+        * ================================================================
+        * ARRANGE
+        * ================================================================
+        *
+        * Create one user.
+        */
         $user = User::factory()->create([
-            'email' => 'john@example.com',
+            'email' => 'session-replacement@example.com',
             'password' => 'password',
         ]);
 
         /*
-         * First login: Android / Firefox.
-         */
+        * First authentication context.
+        *
+        * Simulates:
+        *
+        * Android + Firefox
+        */
         $firstContext = new AuthenticationContext(
-            email: 'john@example.com',
+            email: 'session-replacement@example.com',
             password: 'password',
             sessionId: 'session-android',
             ipAddress: '127.0.0.1',
@@ -367,64 +378,158 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Android',
         );
 
+        /*
+        * ================================================================
+        * ACT
+        * ================================================================
+        *
+        * First login.
+        */
         $this->authenticationService->authenticate(
             $firstContext
         );
 
         /*
-         * Second login: iPhone / Safari.
-         */
+        * Retrieve the first authentication session.
+        */
+        $firstSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->where('session_id', 'session-android')
+            ->firstOrFail();
+
+        /*
+        * The first session must initially be active.
+        */
+        $this->assertNull(
+            $firstSession->revoked_at
+        );
+
+        /*
+        * Second authentication context.
+        *
+        * Simulates:
+        *
+        * iPhone + Safari
+        */
         $secondContext = new AuthenticationContext(
-            email: 'john@example.com',
+            email: 'session-replacement@example.com',
             password: 'password',
             sessionId: 'session-iphone',
-            ipAddress: '192.168.1.10',
+            ipAddress: '127.0.0.2',
             userAgent: 'Mozilla/5.0 iPhone',
             browser: 'Safari',
             device: 'iPhone',
         );
 
+        /*
+        * Second login.
+        *
+        * SessionService must revoke the first session and create
+        * the new active session.
+        */
         $this->authenticationService->authenticate(
             $secondContext
         );
 
         /*
-         * There must still be only ONE authentication session
-         * for this user.
-         */
+        * ================================================================
+        * ASSERT
+        * ================================================================
+        *
+        * Refresh the first session from the database.
+        */
+        $firstSession->refresh();
+
+        /*
+        * The first session must still exist.
+        *
+        * We keep it as authentication history.
+        */
+        $this->assertTrue(
+            AuthenticationSession::query()
+                ->whereKey($firstSession->getKey())
+                ->exists()
+        );
+
+        /*
+        * The first session must now be revoked.
+        */
+        $this->assertNotNull(
+            $firstSession->revoked_at
+        );
+
+        /*
+        * The reason must indicate that a new login replaced it.
+        */
+        $this->assertSame(
+            'new_login',
+            $firstSession->revocation_reason
+        );
+
+        /*
+        * The second session must exist.
+        */
+        $secondSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->where('session_id', 'session-iphone')
+            ->firstOrFail();
+
+        /*
+        * The second session must be active.
+        */
+        $this->assertNull(
+            $secondSession->revoked_at
+        );
+
+        /*
+        * ================================================================
+        * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+        * ================================================================
+        *
+        * IMPORTANT:
+        *
+        * There are now TWO session records:
+        *
+        *     Android → revoked
+        *     iPhone  → active
+        *
+        * Therefore total session count = 2.
+        *
+        * What must equal 1 is the number of ACTIVE sessions.
+        */
         $this->assertSame(
             1,
+            AuthenticationSession::query()
+                ->where('user_id', $user->getKey())
+                ->whereNull('revoked_at')
+                ->count()
+        );
+
+        /*
+        * Verify that two historical records exist.
+        */
+        $this->assertSame(
+            2,
             AuthenticationSession::query()
                 ->where('user_id', $user->getKey())
                 ->count()
         );
 
         /*
-         * The new iPhone session must be the active session.
-         */
+        * ================================================================
+        * LOGIN HISTORY
+        * ================================================================
+        *
+        * The replacement of the first session must also be recorded.
+        */
         $this->assertDatabaseHas(
-            'authentication_sessions',
+            'login_histories',
             [
                 'user_id' => $user->getKey(),
-                'session_id' => 'session-iphone',
-                'revoked_at' => null,
+                'event' => 'session_revoked',
+                'reason' => 'new_login',
+                'authentication_session_id' => $firstSession->getKey(),
             ]
-        );
-
-        /*
-         * The previous Android session must no longer be active.
-         *
-         * Depending on the implementation of SessionService,
-         * the previous record may be soft deleted/revoked.
-         */
-        $activeSessions = AuthenticationSession::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('revoked_at')
-            ->count();
-
-        $this->assertSame(
-            1,
-            $activeSessions
         );
     }
 
