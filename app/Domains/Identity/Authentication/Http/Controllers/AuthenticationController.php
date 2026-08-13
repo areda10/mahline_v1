@@ -10,11 +10,32 @@ use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use RuntimeException;
 
+/**
+ * Authentication Controller.
+ *
+ * Responsible only for the HTTP layer of authentication.
+ *
+ * The controller:
+ *
+ * - receives the HTTP request;
+ * - validates the authentication data;
+ * - builds AuthenticationContext;
+ * - delegates authentication to AuthenticationService;
+ * - synchronizes Laravel Auth;
+ * - returns the HTTP response.
+ *
+ * Business rules remain inside domain services.
+ *
+ * Architecture rule:
+ *
+ * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ */
 final class AuthenticationController extends BaseController
 {
     public function __construct(
@@ -25,87 +46,176 @@ final class AuthenticationController extends BaseController
     }
 
     /**
-     * Display the login form.
+     * Display the authentication endpoint.
      */
-    public function showLoginForm(): View
+    public function showLogin(): JsonResponse
     {
-        return view('auth.login');
+        return response()->json([
+            'message' => 'Authentication endpoint.',
+        ]);
     }
 
     /**
-     * Authenticate the user.
+     * Authenticate a user.
      */
-    public function authenticate(
+    public function login(
         AuthenticationRequest $request,
-    ): RedirectResponse {
+    ): JsonResponse {
         /*
-         * Build the authentication context.
+         * AuthenticationRequest has already validated
+         * the incoming data.
          *
-         * The service layer remains independent from
-         * Laravel's HTTP Request.
+         * validated() already returns an array.
+         *
+         * IMPORTANT:
+         *
+         * Do not use:
+         *
+         * $request->validated()->all()
+         *
+         * because validated() returns an array.
+         */
+        $validated = $request->validated();
+
+        /*
+         * Regenerate the Laravel session before creating
+         * the AuthenticationContext.
+         *
+         * This prevents session fixation.
+         */
+        $request->session()->regenerate();
+
+        /*
+         * Get the final Laravel session identifier.
+         */
+        $sessionId = $request->session()->getId();
+
+        /*
+         * Build the domain DTO.
          */
         $context = new AuthenticationContext(
-            email: $request->validated('email'),
-            password: $request->validated('password'),
-            sessionId: $request->session()->getId(),
+            email: (string) $validated['email'],
+            password: (string) $validated['password'],
+            sessionId: $sessionId,
             ipAddress: $request->ip(),
             userAgent: $request->userAgent(),
-            browser: $this->detectBrowser($request->userAgent()),
-            device: $this->detectDevice($request->userAgent()),
+            browser: $this->detectBrowser($request),
+            device: $this->detectDevice($request),
         );
 
         /*
-         * Authenticate the user through the domain service.
+         * Delegate authentication to the domain service.
          */
-        $user = $this->authenticationService->authenticate(
-            context: $context,
-        );
+        try {
+            $user = $this->authenticationService->authenticate(
+                context: $context,
+            );
+        } catch (ModelNotFoundException) {
+            /*
+             * Unknown email.
+             *
+             * AuthenticationService has already recorded
+             * the failed attempt.
+             */
+            return response()->json([
+                'message' => 'User not found.',
+            ], 404);
+        } catch (RuntimeException $exception) {
+            /*
+             * Known authentication failure.
+             *
+             * Examples:
+             *
+             * - invalid credentials
+             * - inactive account
+             */
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 401);
+        }
 
         /*
-         * Authenticate the user in Laravel's guard.
+         * Synchronize Laravel's authentication guard.
          */
         Auth::login($user);
 
         /*
-         * Regenerate the Laravel session ID after authentication
-         * to prevent session fixation.
+         * Retrieve the active domain authentication session.
          */
-        $request->session()->regenerate();
+        $authenticationSession = $this->sessionService->current(
+            user: $user,
+        );
 
-        return redirect()->intended('/');
+        return response()->json([
+            'message' => 'Authentication successful.',
+
+            'user' => [
+                'id' => $user->getKey(),
+                'email' => $user->email,
+                'display_name' => $user->display_name,
+                'status' => $user->status,
+            ],
+
+            'session' => [
+                'id' => $authenticationSession?->getKey(),
+                'authenticated_at' => $authenticationSession?->authenticated_at,
+                'last_activity_at' => $authenticationSession?->last_activity_at,
+            ],
+        ], 200);
     }
 
     /**
      * Logout the currently authenticated user.
      */
-    public function logout(Request $request): RedirectResponse
-    {
-        $user = $request->user();
+    public function logout(
+        Request $request,
+    ): JsonResponse {
+        /*
+         * Retrieve the authenticated user.
+         */
+        $user = Auth::user();
 
-        if ($user !== null) {
-            /*
-             * Revoke the MAHLINE authentication session.
-             */
-            $session = $this->sessionService->findActiveForUser($user);
+        if ($user === null) {
+            return response()->json([
+                'message' => 'No authenticated user.',
+            ], 401);
+        }
 
-            if ($session !== null) {
-                $this->sessionService->revoke(
-                    session: $session,
-                    reason: 'logout',
-                );
+        /*
+         * Retrieve the active authentication session before
+         * revoking it.
+         */
+        $authenticationSession = $this->sessionService->current(
+            user: $user,
+        );
 
-                /*
-                 * Record logout in login history.
-                 */
-                $this->loginHistoryService->recordLogout(
-                    user: $user,
-                    session: $session,
-                    ipAddress: $request->ip(),
-                    userAgent: $request->userAgent(),
-                    browser: $this->detectBrowser($request->userAgent()),
-                    device: $this->detectDevice($request->userAgent()),
-                );
-            }
+        /*
+         * Revoke the domain authentication session.
+         */
+        $revoked = $this->sessionService->revokeForUser(
+            user: $user,
+            reason: 'logout',
+        );
+
+        /*
+         * Record logout history.
+         *
+         * SessionService records the revocation itself.
+         * This explicit logout event gives us a dedicated
+         * "logout" history event.
+         */
+        if (
+            $revoked
+            && $authenticationSession !== null
+        ) {
+            $this->loginHistoryService->recordLogout(
+                user: $user,
+                session: $authenticationSession,
+                ipAddress: $request->ip(),
+                userAgent: $request->userAgent(),
+                browser: $this->detectBrowser($request),
+                device: $this->detectDevice($request),
+            );
         }
 
         /*
@@ -114,54 +224,117 @@ final class AuthenticationController extends BaseController
         Auth::logout();
 
         /*
-         * Invalidate the HTTP session.
+         * Invalidate the Laravel session.
          */
         $request->session()->invalidate();
 
         /*
-         * Regenerate the CSRF token.
+         * Generate a new CSRF token.
          */
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return response()->json([
+            'message' => 'Logout successful.',
+        ], 200);
     }
 
     /**
      * Detect the browser from the User-Agent.
-     *
-     * This is intentionally kept simple for the first version.
      */
-    private function detectBrowser(?string $userAgent): ?string
-    {
+    private function detectBrowser(
+        Request $request,
+    ): ?string {
+        $userAgent = $request->userAgent();
+
         if ($userAgent === null) {
             return null;
         }
 
-        return match (true) {
-            str_contains($userAgent, 'Firefox') => 'Firefox',
-            str_contains($userAgent, 'Edg') => 'Edge',
-            str_contains($userAgent, 'Chrome') => 'Chrome',
-            str_contains($userAgent, 'Safari') => 'Safari',
-            default => 'Unknown',
-        };
+        /*
+         * Edge must be checked before Chrome because
+         * Edge User-Agent strings contain Chrome.
+         */
+        if (
+            str_contains($userAgent, 'Edg/')
+            || str_contains($userAgent, 'Edge/')
+        ) {
+            return 'Edge';
+        }
+
+        if (str_contains($userAgent, 'Firefox/')) {
+            return 'Firefox';
+        }
+
+        if (
+            str_contains($userAgent, 'OPR/')
+            || str_contains($userAgent, 'Opera/')
+        ) {
+            return 'Opera';
+        }
+
+        if (
+            str_contains($userAgent, 'Chrome/')
+            && ! str_contains($userAgent, 'Edg/')
+        ) {
+            return 'Chrome';
+        }
+
+        if (
+            str_contains($userAgent, 'Safari/')
+            && ! str_contains($userAgent, 'Chrome/')
+        ) {
+            return 'Safari';
+        }
+
+        if (str_contains($userAgent, 'MSIE')) {
+            return 'Internet Explorer';
+        }
+
+        return 'Unknown';
     }
 
     /**
-     * Detect the client device.
+     * Detect the client device from the User-Agent.
      */
-    private function detectDevice(?string $userAgent): ?string
-    {
+    private function detectDevice(
+        Request $request,
+    ): ?string {
+        $userAgent = $request->userAgent();
+
         if ($userAgent === null) {
             return null;
         }
 
-        return match (true) {
-            str_contains($userAgent, 'iPhone') => 'iPhone',
-            str_contains($userAgent, 'Android') => 'Android',
-            str_contains($userAgent, 'iPad') => 'iPad',
-            str_contains($userAgent, 'Windows') => 'Windows',
-            str_contains($userAgent, 'Macintosh') => 'Mac',
-            default => 'Unknown',
-        };
+        if (str_contains($userAgent, 'iPhone')) {
+            return 'iPhone';
+        }
+
+        if (str_contains($userAgent, 'iPad')) {
+            return 'iPad';
+        }
+
+        if (str_contains($userAgent, 'Android')) {
+            return 'Android';
+        }
+
+        if (
+            str_contains($userAgent, 'Windows NT')
+            || str_contains($userAgent, 'Windows')
+        ) {
+            return 'Windows';
+        }
+
+        if (
+            str_contains($userAgent, 'Macintosh')
+            || str_contains($userAgent, 'Mac OS X')
+        ) {
+            return 'macOS';
+        }
+
+        if (str_contains($userAgent, 'Linux')) {
+            return 'Linux';
+        }
+
+        return 'Unknown';
     }
 }
