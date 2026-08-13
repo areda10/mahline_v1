@@ -10,6 +10,19 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Authentication sessions are stored as security history.
+     *
+     * MAHLINE policy:
+     *
+     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+     *
+     * Important:
+     * A user may have multiple historical sessions.
+     * However, only one session may be active at a time.
+     *
+     * SessionService is responsible for revoking the previous
+     * active session before creating a new one.
      */
     public function up(): void
     {
@@ -25,39 +38,47 @@ return new class extends Migration
 
             /*
              * ============================================================
-             * USER
+             * AUTHENTICATED USER
              * ============================================================
              *
-             * The authenticated user associated with this session.
+             * The user who owns this authentication session.
              *
-             * One user can have multiple historical sessions,
-             * but only ONE session can be active at a time.
+             * A user can have multiple historical sessions:
+             *
+             *     Session A → revoked
+             *     Session B → revoked
+             *     Session C → active
+             *
+             * SessionService guarantees that only one session is
+             * active at any given time.
              */
             $table->char('user_id', 26);
 
             /*
              * ============================================================
-             * LARAVEL SESSION
+             * LARAVEL SESSION IDENTIFIER
              * ============================================================
              *
-             * Identifier of the Laravel authentication session.
+             * Identifier of the Laravel application session.
              *
-             * It must be globally unique.
+             * It must be unique because two authentication-session
+             * records must never reference the same Laravel session.
              */
             $table->string('session_id', 255)->unique();
 
             /*
              * ============================================================
-             * DEVICE / CLIENT INFORMATION
+             * CLIENT INFORMATION
              * ============================================================
              *
-             * These fields allow MAHLINE to keep track of the
-             * device/browser used during authentication.
+             * These fields allow MAHLINE to identify the client used
+             * during authentication.
              *
              * Example:
              *
-             * Android + Firefox
-             * iPhone + Safari
+             *     IP       : 192.168.1.10
+             *     Browser  : Firefox
+             *     Device   : Android
              */
             $table->string('ip_address', 45)->nullable();
 
@@ -74,33 +95,38 @@ return new class extends Migration
              */
 
             /*
-             * Date/time at which authentication was established.
+             * Date/time at which authentication succeeded.
              */
             $table->timestamp('authenticated_at');
 
             /*
-             * Last activity detected for this session.
+             * Last activity detected for this authentication session.
+             *
+             * Nullable because it may not yet have been updated after
+             * the initial authentication.
              */
             $table->timestamp('last_activity_at')->nullable();
 
             /*
-             * Date/time at which this session was revoked.
+             * Date/time at which the session was revoked.
              *
-             * NULL = session has not been revoked.
+             * NULL = currently active.
+             *
+             * NOT NULL = revoked.
              */
             $table->timestamp('revoked_at')->nullable();
 
             /*
              * ============================================================
-             * REVOCATION
+             * REVOCATION INFORMATION
              * ============================================================
              *
              * Examples:
              *
-             * - new_login
-             * - logout
-             * - expired
-             * - security
+             *     new_login
+             *     logout
+             *     expired
+             *     security
              */
             $table->string('revocation_reason', 100)->nullable();
 
@@ -109,8 +135,8 @@ return new class extends Migration
              * AUDIT ACTORS
              * ============================================================
              *
-             * Every MAHLINE table includes audit actor columns
-             * according to the database architecture standard.
+             * MAHLINE audit standard:
+             * all domain tables contain audit actor columns.
              */
             $table->char('created_by', 26)->nullable();
 
@@ -128,11 +154,10 @@ return new class extends Migration
              * SOFT DELETE
              * ============================================================
              *
-             * Historical authentication sessions are normally kept.
+             * Authentication history must normally remain available.
              *
-             * Soft deletion is available for administrative/data
-             * lifecycle operations without physically destroying
-             * the record immediately.
+             * Soft deletion allows technical deletion without
+             * physically destroying the historical record.
              */
             $table->softDeletes();
 
@@ -140,6 +165,9 @@ return new class extends Migration
              * ============================================================
              * FOREIGN KEY
              * ============================================================
+             *
+             * If a user is permanently removed, all associated
+             * authentication sessions are removed as well.
              */
             $table
                 ->foreign('user_id')
@@ -152,19 +180,28 @@ return new class extends Migration
              * INDEXES
              * ============================================================
              *
-             * We deliberately DO NOT use:
+             * IMPORTANT:
+             *
+             * We intentionally DO NOT use:
              *
              *     $table->unique('user_id');
              *
-             * because that would allow only one row per user,
-             * including revoked historical sessions.
+             * because a user must be allowed to have historical
+             * authentication sessions.
              *
-             * MAHLINE must preserve authentication history.
+             * Example:
+             *
+             *     User 01
+             *       ├── Session A → revoked
+             *       ├── Session B → revoked
+             *       └── Session C → active
+             *
+             * SessionService guarantees the ONE ACTIVE SESSION rule.
              */
             $table->index('user_id');
 
             /*
-             * Used to find the current active session.
+             * Used to find the active session of a user.
              */
             $table->index([
                 'user_id',
@@ -172,14 +209,19 @@ return new class extends Migration
             ]);
 
             /*
-             * Used for session activity management.
+             * Used for activity-related queries.
              */
             $table->index('last_activity_at');
 
             /*
-             * Used for revocation/history queries.
+             * Used for revocation/security queries.
              */
             $table->index('revoked_at');
+
+            /*
+             * Used for historical authentication queries.
+             */
+            $table->index('authenticated_at');
         });
     }
 
