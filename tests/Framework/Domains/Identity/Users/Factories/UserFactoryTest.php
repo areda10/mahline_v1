@@ -55,7 +55,7 @@ final class UserFactoryTest extends TestCase
         $user = User::factory()->create();
 
         $this->assertSame(
-            UserStatus::ACTIVE,
+            UserStatus::Active,
             $user->status
         );
     }
