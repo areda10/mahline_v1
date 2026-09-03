@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Users\Factories;
 
-use App\Core\Foundation\Enums\Identity\UserStatus;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
