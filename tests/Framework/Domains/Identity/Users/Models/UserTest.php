@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Users\Models;
 
-use App\Core\Foundation\Enums\Identity\UserStatus;
+
 use App\Core\Foundation\Models\BaseModel;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
