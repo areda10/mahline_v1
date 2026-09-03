@@ -151,7 +151,7 @@ final class MigrationHelperTest extends TestCase
         $this->assertNotNull($state);
 
         $this->assertSame(
-            "'pending'",
+            'pending',
             $state['default']
         );
     }
