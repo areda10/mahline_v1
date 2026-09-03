@@ -815,26 +815,22 @@ final class AuthenticationControllerTest extends TestCase
      */
     public function test_authentication_request_validates_required_fields(): void
     {
-        /*
-         * Do not provide any authentication data.
-         */
         $response = $this->postJson(
             $this->loginUrl,
             [],
         );
 
-        /*
-         * Laravel validation must return HTTP 422.
-         */
         $response->assertStatus(422);
 
-        /*
-         * Validation errors must contain both fields.
-         */
-        $response->assertJsonValidationErrors([
-            'email',
-            'password',
-        ]);
+        $response->assertJsonPath(
+            'errors.email',
+            fn ($errors) => is_array($errors) && $errors !== [],
+        );
+
+        $response->assertJsonPath(
+            'errors.password',
+            fn ($errors) => is_array($errors) && $errors !== [],
+        );
     }
 
     /**
@@ -852,9 +848,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertStatus(422);
 
-        $response->assertJsonValidationErrors([
-            'email',
-        ]);
+        $response->assertJsonPath(
+            'errors.email',
+            fn ($errors) => is_array($errors) && $errors !== [],
+        );
     }
 
     /**
@@ -872,9 +869,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertStatus(422);
 
-        $response->assertJsonValidationErrors([
-            'password',
-        ]);
+        $response->assertJsonPath(
+            'errors.password',
+            fn ($errors) => is_array($errors) && $errors !== [],
+        );
     }
 
     /*
