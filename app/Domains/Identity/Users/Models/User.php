@@ -6,12 +6,14 @@ namespace App\Domains\Identity\Users\Models;
 
 
 use App\Core\Foundation\Models\BaseModel;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class User extends BaseModel implements AuthenticatableContract
@@ -66,5 +68,18 @@ final class User extends BaseModel implements AuthenticatableContract
     protected static function newFactory(): Factory
     {
         return UserFactory::new();
+    }
+
+    /** 
+     * Relation btw User and Role
+    */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Role::class,
+            'user_role',
+            'user_id',
+            'role_id',
+        );
     }
 }

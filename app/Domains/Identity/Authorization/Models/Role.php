@@ -6,6 +6,7 @@ namespace App\Domains\Identity\Authorization\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -26,6 +27,19 @@ final class Role extends BaseModel
             'role_permission',
             'role_id',
             'permission_id',
+        );
+    }
+
+    /**
+     * Relation btw Role and User
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'user_role',
+            'role_id',
+            'user_id',
         );
     }
 }
