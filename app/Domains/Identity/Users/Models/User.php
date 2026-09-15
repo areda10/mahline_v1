@@ -7,6 +7,7 @@ namespace App\Domains\Identity\Users\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
 use App\Domains\Identity\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class User extends BaseModel implements AuthenticatableContract
 {
     use Authenticatable;
+    use HasAuthorization;
     use HasFactory;
     use SoftDeletes;
 
