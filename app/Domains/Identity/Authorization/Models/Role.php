@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authorization\Models;
 
 use App\Core\Foundation\Models\BaseModel;
+use App\Domains\Identity\Authorization\Models\Permission;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Role extends BaseModel
@@ -16,4 +18,14 @@ final class Role extends BaseModel
     protected $casts = [
         'is_active' => 'boolean',
     ];
+    
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Permission::class,
+            'role_permission',
+            'role_id',
+            'permission_id',
+        );
+    }
 }
