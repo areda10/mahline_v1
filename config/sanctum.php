@@ -38,6 +38,8 @@ return [
     */
 
     'guard' => ['web'],
+    
+    'personal_access_token_model' => App\Domains\Identity\Authentication\Models\PersonalAccessToken::class,
 
     /*
     |--------------------------------------------------------------------------
