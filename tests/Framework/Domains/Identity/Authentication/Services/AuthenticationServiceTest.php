@@ -8,6 +8,7 @@ use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -679,5 +680,60 @@ final class AuthenticationServiceTest extends TestCase
             'correct-password',
             $historyData
         );
+    }
+
+    public function test_login_from_phone_revokes_previous_computer_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'user@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        /*
+        * First authentication: computer.
+        */
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: 'user@example.com',
+                password: 'password',
+                sessionId: 'computer-session-001',
+                ipAddress: '192.168.1.10',
+                userAgent: 'Mozilla/5.0 Chrome',
+                browser: 'Chrome',
+                device: 'Computer',
+            ),
+        );
+
+        $computerSession = AuthenticationSession::query()
+            ->where('user_id', $user->id)
+            ->where('session_id', 'computer-session-001')
+            ->firstOrFail();
+
+        /*
+        * Second authentication: phone.
+        */
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: 'user@example.com',
+                password: 'password',
+                sessionId: 'phone-session-001',
+                ipAddress: '192.168.1.20',
+                userAgent: 'Mozilla/5.0 Mobile Safari',
+                browser: 'Safari',
+                device: 'Phone',
+            ),
+        );
+
+        $computerSession->refresh();
+
+        $phoneSession = AuthenticationSession::query()
+            ->where('user_id', $user->id)
+            ->where('session_id', 'phone-session-001')
+            ->firstOrFail();
+
+        $this->assertFalse($computerSession->isActive());
+        $this->assertTrue($phoneSession->isActive());
+        $this->assertNotNull($computerSession->revoked_at);
     }
 }

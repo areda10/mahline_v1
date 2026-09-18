@@ -834,4 +834,107 @@ final class SessionServiceTest extends TestCase
 
         $this->assertTrue(true);
     }
+    public function test_new_login_from_phone_revokes_previous_computer_session(): void
+    {
+        $user = User::factory()->create();
+
+        /*
+        * First login: computer.
+        */
+        $computerSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'computer-session-001',
+            ipAddress: '192.168.1.10',
+            userAgent: 'Mozilla/5.0 Chrome',
+            browser: 'Chrome',
+            device: 'Computer',
+        );
+
+        /*
+        * Second login: phone.
+        */
+        $phoneSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'phone-session-001',
+            ipAddress: '192.168.1.20',
+            userAgent: 'Mozilla/5.0 Mobile Safari',
+            browser: 'Safari',
+            device: 'Phone',
+        );
+
+        $computerSession->refresh();
+        $phoneSession->refresh();
+
+        $this->assertFalse($computerSession->isActive());
+        $this->assertTrue($phoneSession->isActive());
+
+        $this->assertNotNull($computerSession->revoked_at);
+
+        $this->assertSame(
+            'new_login',
+            $computerSession->revocation_reason,
+        );
+    }
+
+    public function test_user_can_never_have_two_active_sessions_on_different_devices(): void
+    {
+        $user = User::factory()->create();
+
+        $this->sessionService->create(
+            user: $user,
+            sessionId: 'computer-session-001',
+            ipAddress: '192.168.1.10',
+            userAgent: 'Mozilla/5.0 Chrome',
+            browser: 'Chrome',
+            device: 'Computer',
+        );
+
+        $this->sessionService->create(
+            user: $user,
+            sessionId: 'phone-session-001',
+            ipAddress: '192.168.1.20',
+            userAgent: 'Mozilla/5.0 Mobile Safari',
+            browser: 'Safari',
+            device: 'Phone',
+        );
+
+        $activeSessions = AuthenticationSession::query()
+            ->where('user_id', $user->id)
+            ->whereNull('revoked_at')
+            ->count();
+
+        $this->assertSame(1, $activeSessions);
+    }
+
+    public function test_previous_session_keeps_device_information_after_revocation(): void
+    {
+        $user = User::factory()->create();
+
+        $computerSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'computer-session-001',
+            ipAddress: '192.168.1.10',
+            userAgent: 'Mozilla/5.0 Chrome',
+            browser: 'Chrome',
+            device: 'Computer',
+        );
+
+        $this->sessionService->create(
+            user: $user,
+            sessionId: 'phone-session-001',
+            ipAddress: '192.168.1.20',
+            userAgent: 'Mozilla/5.0 Mobile Safari',
+            browser: 'Safari',
+            device: 'Phone',
+        );
+
+        $computerSession->refresh();
+
+        $this->assertSame('Computer', $computerSession->device);
+        $this->assertSame('Chrome', $computerSession->browser);
+        $this->assertSame('192.168.1.10', $computerSession->ip_address);
+        $this->assertSame('Mozilla/5.0 Chrome', $computerSession->user_agent);
+
+        $this->assertNotNull($computerSession->revoked_at);
+    }
 }
