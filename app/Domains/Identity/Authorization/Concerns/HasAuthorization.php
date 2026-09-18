@@ -6,11 +6,23 @@ namespace App\Domains\Identity\Authorization\Concerns;
 
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 
 trait HasAuthorization
 {
     public function hasRole(string|Role $role): bool
     {
+        // $slug = $role instanceof Role
+        //     ? $role->slug
+        //     : $role;
+
+        // return $this->roles()
+        //     ->where('slug', $slug)
+        //     ->exists();
+        if (! $this->isAuthorized()) {
+            return false;
+        }
+
         $slug = $role instanceof Role
             ? $role->slug
             : $role;
@@ -22,6 +34,10 @@ trait HasAuthorization
 
     public function hasAnyRole(array $roles): bool
     {
+        if (! $this->isAuthorized()) {
+            return false;
+        }
+
         return $this->roles()
             ->whereIn('slug', $this->normalizeSlugs($roles))
             ->exists();
@@ -29,6 +45,10 @@ trait HasAuthorization
 
     public function hasPermission(string|Permission $permission): bool
     {
+        if (! $this->isAuthorized()) {
+            return false;
+        }
+
         $slug = $permission instanceof Permission
             ? $permission->slug
             : $permission;
@@ -42,9 +62,15 @@ trait HasAuthorization
 
     public function hasAnyPermission(array $permissions): bool
     {
+        if (! $this->isAuthorized()) {
+            return false;
+        }
+        
         return $this->roles()
             ->whereHas('permissions', function ($query) use ($permissions): void {
-                $query->whereIn('slug', $this->normalizeSlugs($permissions));
+                $query->whereIn(
+                    'slug', 
+                    $this->normalizeSlugs($permissions));
             })
             ->exists();
     }
@@ -57,5 +83,10 @@ trait HasAuthorization
                 : $item,
             $items,
         );
+    }
+
+    public function isAuthorized(): bool
+    {
+        return $this->status === UserStatus::Active;
     }
 }
