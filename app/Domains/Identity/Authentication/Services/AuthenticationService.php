@@ -6,9 +6,9 @@ namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
@@ -63,11 +63,14 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw (new ModelNotFoundException())
-                ->setModel(
-                    User::class,
-                    [$context->email],
-                );
+            // throw (new ModelNotFoundException())
+            //     ->setModel(
+            //         User::class,
+            //         [$context->email],
+            //     );
+            throw new AuthenticationFailedException(
+                'Authentication failed.'
+            );
         }
 
         /*
@@ -84,8 +87,11 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
-                'User account is not active.'
+            // throw new RuntimeException(
+            //     'User account is not active.'
+            // );
+            throw new AuthenticationFailedException(
+                'Authentication failed.'
             );
         }
 
@@ -108,8 +114,11 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
-                'Invalid credentials.'
+            // throw new RuntimeException(
+            //     'Invalid credentials.'
+            // );
+            throw new AuthenticationFailedException(
+                'Authentication failed.'
             );
         }
 
