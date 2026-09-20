@@ -102,18 +102,6 @@ return new class extends Migration
 
         /*
         |--------------------------------------------------------------------------
-        | Password reset tokens
-        |--------------------------------------------------------------------------
-        */
-
-        Schema::create('password_reset_tokens', function (Blueprint $table): void {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        /*
-        |--------------------------------------------------------------------------
         | Sessions
         |--------------------------------------------------------------------------
         */
@@ -134,7 +122,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('sessions');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('users');
     }
 };
