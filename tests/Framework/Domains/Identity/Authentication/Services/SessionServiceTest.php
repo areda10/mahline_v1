@@ -8,6 +8,7 @@ use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -135,195 +136,61 @@ final class SessionServiceTest extends TestCase
      * The historical information about the previous login is stored
      * in login_histories.
      */
-    // public function test_only_one_active_authentication_session_exists_for_user(): void
-    // {
-    //     $user = User::factory()->create();
-
-    //     /*
-    //     * First login.
-    //     */
-    //     $firstSession = $this->sessionService->create(
-    //         user: $user,
-    //         sessionId: 'session-a',
-    //         ipAddress: '127.0.0.1',
-    //         userAgent: 'Mozilla/5.0',
-    //         browser: 'Firefox',
-    //         device: 'Windows',
-    //     );
-
-    //     /*
-    //     * Second login.
-    //     *
-    //     * The first session must be revoked and preserved.
-    //     */
-    //     $secondSession = $this->sessionService->create(
-    //         user: $user,
-    //         sessionId: 'session-b',
-    //         ipAddress: '192.168.1.10',
-    //         userAgent: 'Mozilla/5.0 Chrome',
-    //         browser: 'Chrome',
-    //         device: 'Android',
-    //     );
-
-    //     /*
-    //     * Third login.
-    //     *
-    //     * The second session must now be revoked and preserved.
-    //     */
-    //     $thirdSession = $this->sessionService->create(
-    //         user: $user,
-    //         sessionId: 'session-c',
-    //         ipAddress: '192.168.1.20',
-    //         userAgent: 'Mozilla/5.0 Safari',
-    //         browser: 'Safari',
-    //         device: 'iPhone',
-    //     );
-
-    //     /*
-    //     * There are now THREE historical authentication
-    //     * session records.
-    //     *
-    //     * Session A → revoked
-    //     * Session B → revoked
-    //     * Session C → active
-    //     */
-    //     $this->assertSame(
-    //         3,
-    //         AuthenticationSession::query()
-    //             ->where('user_id', $user->getKey())
-    //             ->count(),
-    //     );
-
-    //     /*
-    //     * Only ONE authentication session may be active.
-    //     */
-    //     $this->assertSame(
-    //         1,
-    //         AuthenticationSession::query()
-    //             ->where('user_id', $user->getKey())
-    //             ->whereNull('revoked_at')
-    //             ->count(),
-    //     );
-
-    //     /*
-    //     * The third session must be the active session.
-    //     */
-    //     $this->assertSame(
-    //         $thirdSession->getKey(),
-    //         AuthenticationSession::query()
-    //             ->where('user_id', $user->getKey())
-    //             ->whereNull('revoked_at')
-    //             ->value('id'),
-    //     );
-
-    //     /*
-    //     * The first session must be revoked.
-    //     */
-    //     $firstSession->refresh();
-
-    //     $this->assertNotNull(
-    //         $firstSession->revoked_at,
-    //     );
-
-    //     $this->assertSame(
-    //         'new_login',
-    //         $firstSession->revocation_reason,
-    //     );
-
-    //     /*
-    //     * The second session must also be revoked.
-    //     */
-    //     $secondSession->refresh();
-
-    //     $this->assertNotNull(
-    //         $secondSession->revoked_at,
-    //     );
-
-    //     $this->assertSame(
-    //         'new_login',
-    //         $secondSession->revocation_reason,
-    //     );
-
-    //     /*
-    //     * The third session must remain active.
-    //     */
-    //     $thirdSession->refresh();
-
-    //     $this->assertNull(
-    //         $thirdSession->revoked_at,
-    //     );
-
-    //     $this->assertNull(
-    //         $thirdSession->revocation_reason,
-    //     );
-    // }
-
     /**
      * Test that the previous login is preserved in LoginHistory.
      *
      * The old authentication session is represented historically
      * by a login_histories record.
      */
-    public function test_previous_session_is_retained_in_login_history(): void
+    // rename test_previous_session_is_retained_in_login_history to test_previous_session_is_retained_without_revocation
+    public function test_previous_session_is_retained_without_revocation(): void
     {
         $user = User::factory()->create();
 
-        /*
-         * First login.
-         */
-        $firstSession = $this->sessionService->create(
+        $previousSession = $this->sessionService->create(
             user: $user,
-            sessionId: 'session-a',
-            ipAddress: '127.0.0.1',
-            userAgent: 'Mozilla/5.0 Firefox',
-            browser: 'Firefox',
-            device: 'Windows',
-        );
-
-        /*
-         * Second login.
-         *
-         * This replaces the current session.
-         */
-        $secondSession = $this->sessionService->create(
-            user: $user,
-            sessionId: 'session-b',
+            sessionId: 'previous-session',
             ipAddress: '192.168.1.10',
             userAgent: 'Mozilla/5.0 Chrome',
             browser: 'Chrome',
-            device: 'Android',
+            device: 'PC',
         );
 
-        /*
-         * The current authentication session is the new one.
-         */
-        $this->assertSame(
-            'session-b',
-            $secondSession->session_id
+        $newSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'new-session',
+            ipAddress: '192.168.1.20',
+            userAgent: 'Mozilla/5.0 Safari',
+            browser: 'Safari',
+            device: 'Phone',
         );
 
-        /*
-         * The historical revocation must be stored in LoginHistory.
-         */
-        $this->assertDatabaseHas(
-            'login_histories',
+        $previousSession->refresh();
+        $newSession->refresh();
+
+        // La nouvelle connexion ne révoque pas la session précédente.
+        $this->assertTrue($previousSession->isActive());
+        $this->assertTrue($newSession->isActive());
+
+        $this->assertNull($previousSession->revoked_at);
+        $this->assertNull($newSession->revoked_at);
+
+        // Aucune révocation "new_login" ne doit être journalisée.
+        $this->assertDatabaseMissing(
+            'login_histories', 
             [
                 'user_id' => $user->getKey(),
                 'event' => 'session_revoked',
-                'reason' => 'new_login',
-                'authentication_session_id' => $firstSession->getKey(),
+                'authentication_session_id' => $previousSession->getKey(),
             ]
         );
     }
-
+    
     /**
-     * Test that only one authentication session exists for a user.
-     *
-     * Multiple logins do not create multiple authentication_sessions
-     * rows.
-     * here new function
+     * Test that a new login does not revoke the previous session
+     * or create a session_revoked history entry.
      */
-    public function test_only_one_active_authentication_session_exists_for_user(): void
+    public function test_new_login_does_not_create_session_revocation_history(): void
     {
         $user = User::factory()->create();
 
@@ -333,158 +200,47 @@ final class SessionServiceTest extends TestCase
         $firstSession = $this->sessionService->create(
             user: $user,
             sessionId: 'session-a',
-            ipAddress: '127.0.0.1',
-            userAgent: 'Mozilla/5.0',
-            browser: 'Firefox',
-            device: 'Windows',
         );
 
         /*
         * Second login.
         *
-        * The first session must be revoked.
+        * The first session must remain active.
         */
         $secondSession = $this->sessionService->create(
             user: $user,
             sessionId: 'session-b',
-            ipAddress: '192.168.1.10',
-            userAgent: 'Mozilla/5.0 Chrome',
-            browser: 'Chrome',
-            device: 'Android',
         );
 
-        /*
-        * Third login.
-        *
-        * The second session must be revoked.
-        */
-        $thirdSession = $this->sessionService->create(
-            user: $user,
-            sessionId: 'session-c',
-            ipAddress: '192.168.1.20',
-            userAgent: 'Mozilla/5.0 Safari',
-            browser: 'Safari',
-            device: 'iPhone',
-        );
-
-        /*
-        * Three historical authentication sessions exist.
-        */
-        $this->assertSame(
-            3,
-            AuthenticationSession::query()
-                ->where('user_id', $user->getKey())
-                ->count(),
-        );
-
-        /*
-        * But only ONE authentication session is active.
-        */
-        $this->assertSame(
-            1,
-            AuthenticationSession::query()
-                ->where('user_id', $user->getKey())
-                ->whereNull('revoked_at')
-                ->count(),
-        );
-
-        /*
-        * The first session is revoked.
-        */
         $firstSession->refresh();
-
-        $this->assertNotNull(
-            $firstSession->revoked_at,
-        );
-
-        $this->assertSame(
-            'new_login',
-            $firstSession->revocation_reason,
-        );
-
-        /*
-        * The second session is revoked.
-        */
         $secondSession->refresh();
 
-        $this->assertNotNull(
-            $secondSession->revoked_at,
-        );
-
-        $this->assertSame(
-            'new_login',
-            $secondSession->revocation_reason,
-        );
-
         /*
-        * The third session is active.
+        * Both sessions must remain active.
         */
-        $thirdSession->refresh();
-
-        $this->assertNull(
-            $thirdSession->revoked_at,
+        $this->assertTrue(
+            $this->sessionService->isActive($firstSession)
         );
 
-        $this->assertNull(
-            $thirdSession->revocation_reason,
-        );
-
-        /*
-        * The current() method must return the third session.
-        */
-        $currentSession = $this->sessionService->current($user);
-
-        $this->assertNotNull($currentSession);
-
-        $this->assertSame(
-            $thirdSession->getKey(),
-            $currentSession->getKey(),
-        );
-    }
-
-    /**
-     * Test that a previous session replacement is recorded
-     * with the "new_login" reason.
-     */
-    public function test_previous_session_revocation_is_recorded_in_login_history(): void
-    {
-        $user = User::factory()->create();
-
-        /*
-         * First login.
-         */
-        $firstSession = $this->sessionService->create(
-            user: $user,
-            sessionId: 'session-a',
-        );
-
-        /*
-         * Second login replaces the first one.
-         */
-        $secondSession = $this->sessionService->create(
-            user: $user,
-            sessionId: 'session-b',
-        );
-
-        /*
-         * The current session must be active.
-         */
         $this->assertTrue(
             $this->sessionService->isActive($secondSession)
         );
 
         /*
-         * The historical replacement event must exist.
-         */
-        $this->assertDatabaseHas(
-            'login_histories',
-            [
-                'user_id' => $user->getKey(),
-                'event' => 'session_revoked',
-                'reason' => 'new_login',
-                'authentication_session_id' => $firstSession->getKey(),
-            ]
-        );
+        * Neither session must have been revoked.
+        */
+        $this->assertNull($firstSession->revoked_at);
+        $this->assertNull($secondSession->revoked_at);
+
+        /*
+        * A new login must not create a session_revoked
+        * history entry for the previous session.
+        */
+        $this->assertDatabaseMissing('login_histories', [
+            'user_id' => $user->getKey(),
+            'event' => 'session_revoked',
+            'authentication_session_id' => $firstSession->getKey(),
+        ]);
     }
 
     /**
@@ -834,7 +590,13 @@ final class SessionServiceTest extends TestCase
 
         $this->assertTrue(true);
     }
-    public function test_new_login_from_phone_revokes_previous_computer_session(): void
+    /**
+     * rename test_new_login_from_phone_revokes_previous_computer_session
+     * to 
+     * test_new_login_from_phone_does_not_revoke_computer_session
+     */
+    //public function test_new_login_from_phone_revokes_previous_computer_session(): void
+    function test_new_login_from_phone_does_not_revoke_computer_session(): void
     {
         $user = User::factory()->create();
 
@@ -865,17 +627,17 @@ final class SessionServiceTest extends TestCase
         $computerSession->refresh();
         $phoneSession->refresh();
 
-        $this->assertFalse($computerSession->isActive());
-        $this->assertTrue($phoneSession->isActive());
+        $this->assertTrue($computerSession->fresh()->isActive());
+        $this->assertTrue($phoneSession->fresh()->isActive());
 
-        $this->assertNotNull($computerSession->revoked_at);
-
-        $this->assertSame(
-            'new_login',
-            $computerSession->revocation_reason,
-        );
+        $this->assertNull($computerSession->fresh()->revoked_at);
+        $this->assertNull($phoneSession->fresh()->revoked_at);
     }
-
+    /**
+     * replace test_user_can_never_have_two_active_sessions_on_different_devices()
+     * to
+     * function test_user_can_have_two_active_sessions_on_different_devices()
+     */
     public function test_user_can_never_have_two_active_sessions_on_different_devices(): void
     {
         $user = User::factory()->create();
@@ -903,9 +665,9 @@ final class SessionServiceTest extends TestCase
             ->whereNull('revoked_at')
             ->count();
 
-        $this->assertSame(1, $activeSessions);
+        $this->assertSame(2, $activeSessions);
     }
-
+    
     public function test_previous_session_keeps_device_information_after_revocation(): void
     {
         $user = User::factory()->create();
@@ -935,6 +697,110 @@ final class SessionServiceTest extends TestCase
         $this->assertSame('192.168.1.10', $computerSession->ip_address);
         $this->assertSame('Mozilla/5.0 Chrome', $computerSession->user_agent);
 
-        $this->assertNotNull($computerSession->revoked_at);
+        $this->assertNull($computerSession->revoked_at);
+        $this->assertTrue($computerSession->isActive());
+    }
+
+    public function test_user_can_have_multiple_active_sessions(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $firstSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'session-pc',
+            ipAddress: '192.168.1.10',
+            userAgent: 'Chrome',
+            browser: 'Chrome',
+            device: 'PC',
+        );
+
+        $secondSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'session-phone',
+            ipAddress: '192.168.1.20',
+            userAgent: 'Safari',
+            browser: 'Safari',
+            device: 'Phone',
+        );
+
+        $this->assertTrue(
+            $this->sessionService->isActive($firstSession)
+        );
+
+        $this->assertTrue(
+            $this->sessionService->isActive($secondSession)
+        );
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $firstSession->getKey(),
+            'revoked_at' => null,
+        ]);
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $secondSession->getKey(),
+            'revoked_at' => null,
+        ]);
+    }
+
+    public function test_revoking_one_session_does_not_revoke_other_sessions(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $firstSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'session-pc',
+            device: 'PC',
+        );
+
+        $secondSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'session-phone',
+            device: 'Phone',
+        );
+
+        $result = $this->sessionService->revoke(
+            session: $firstSession,
+            reason: 'logout',
+        );
+
+        $this->assertTrue($result);
+
+        $this->assertFalse(
+            $this->sessionService->isActive($firstSession->fresh())
+        );
+
+        $this->assertTrue(
+            $this->sessionService->isActive($secondSession->fresh())
+        );
+    }
+    public function test_multiple_active_authentication_sessions_can_exist_for_user(): void
+    {
+        $user = User::factory()->create();
+
+        $firstSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'session-pc',
+            device: 'PC',
+        );
+
+        $secondSession = $this->sessionService->create(
+            user: $user,
+            sessionId: 'session-phone',
+            device: 'Phone',
+        );
+
+        $this->assertTrue($firstSession->fresh()->isActive());
+        $this->assertTrue($secondSession->fresh()->isActive());
+
+        $activeSessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->count();
+
+        $this->assertSame(2, $activeSessions);
     }
 }
