@@ -348,27 +348,14 @@ final class AuthenticationServiceTest extends TestCase
      *
      * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
      */
-    public function test_new_login_replaces_previous_session(): void
+    // public function test_new_login_replaces_previous_session(): void
+    public function test_new_login_keeps_previous_session_active(): void
     {
-        /*
-        * ================================================================
-        * ARRANGE
-        * ================================================================
-        *
-        * Create one user.
-        */
         $user = User::factory()->create([
             'email' => 'session-replacement@example.com',
             'password' => 'password',
         ]);
 
-        /*
-        * First authentication context.
-        *
-        * Simulates:
-        *
-        * Android + Firefox
-        */
         $firstContext = new AuthenticationContext(
             email: 'session-replacement@example.com',
             password: 'password',
@@ -379,39 +366,19 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Android',
         );
 
-        /*
-        * ================================================================
-        * ACT
-        * ================================================================
-        *
-        * First login.
-        */
         $this->authenticationService->authenticate(
             $firstContext
         );
 
-        /*
-        * Retrieve the first authentication session.
-        */
         $firstSession = AuthenticationSession::query()
             ->where('user_id', $user->getKey())
             ->where('session_id', 'session-android')
             ->firstOrFail();
 
-        /*
-        * The first session must initially be active.
-        */
         $this->assertNull(
             $firstSession->revoked_at
         );
 
-        /*
-        * Second authentication context.
-        *
-        * Simulates:
-        *
-        * iPhone + Safari
-        */
         $secondContext = new AuthenticationContext(
             email: 'session-replacement@example.com',
             password: 'password',
@@ -422,93 +389,50 @@ final class AuthenticationServiceTest extends TestCase
             device: 'iPhone',
         );
 
-        /*
-        * Second login.
-        *
-        * SessionService must revoke the first session and create
-        * the new active session.
-        */
         $this->authenticationService->authenticate(
             $secondContext
         );
 
-        /*
-        * ================================================================
-        * ASSERT
-        * ================================================================
-        *
-        * Refresh the first session from the database.
-        */
         $firstSession->refresh();
 
-        /*
-        * The first session must still exist.
-        *
-        * We keep it as authentication history.
-        */
-        $this->assertTrue(
-            AuthenticationSession::query()
-                ->whereKey($firstSession->getKey())
-                ->exists()
-        );
-
-        /*
-        * The first session must now be revoked.
-        */
-        $this->assertNotNull(
-            $firstSession->revoked_at
-        );
-
-        /*
-        * The reason must indicate that a new login replaced it.
-        */
-        $this->assertSame(
-            'new_login',
-            $firstSession->revocation_reason
-        );
-
-        /*
-        * The second session must exist.
-        */
         $secondSession = AuthenticationSession::query()
             ->where('user_id', $user->getKey())
             ->where('session_id', 'session-iphone')
             ->firstOrFail();
 
         /*
-        * The second session must be active.
+        * The first session must remain active.
+        */
+        $this->assertNull(
+            $firstSession->revoked_at
+        );
+
+        $this->assertTrue(
+            $firstSession->isActive()
+        );
+
+        /*
+        * The second session must also be active.
         */
         $this->assertNull(
             $secondSession->revoked_at
         );
 
+        $this->assertTrue(
+            $secondSession->isActive()
+        );
+
         /*
-        * ================================================================
-        * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
-        * ================================================================
-        *
-        * IMPORTANT:
-        *
-        * There are now TWO session records:
-        *
-        *     Android → revoked
-        *     iPhone  → active
-        *
-        * Therefore total session count = 2.
-        *
-        * What must equal 1 is the number of ACTIVE sessions.
+        * Both sessions must coexist.
         */
         $this->assertSame(
-            1,
+            2,
             AuthenticationSession::query()
                 ->where('user_id', $user->getKey())
                 ->whereNull('revoked_at')
                 ->count()
         );
 
-        /*
-        * Verify that two historical records exist.
-        */
         $this->assertSame(
             2,
             AuthenticationSession::query()
@@ -517,13 +441,10 @@ final class AuthenticationServiceTest extends TestCase
         );
 
         /*
-        * ================================================================
-        * LOGIN HISTORY
-        * ================================================================
-        *
-        * The replacement of the first session must also be recorded.
+        * No session_revoked event must be generated
+        * for the first session.
         */
-        $this->assertDatabaseHas(
+        $this->assertDatabaseMissing(
             'login_histories',
             [
                 'user_id' => $user->getKey(),
@@ -682,7 +603,8 @@ final class AuthenticationServiceTest extends TestCase
         );
     }
 
-    public function test_login_from_phone_revokes_previous_computer_session(): void
+    // public function test_login_from_phone_revokes_previous_computer_session(): void
+    public function test_login_from_phone_keeps_previous_computer_session_active(): void
     {
         $user = User::factory()->create([
             'email' => 'user@example.com',
@@ -732,8 +654,12 @@ final class AuthenticationServiceTest extends TestCase
             ->where('session_id', 'phone-session-001')
             ->firstOrFail();
 
-        $this->assertFalse($computerSession->isActive());
+        // $this->assertFalse($computerSession->isActive());
+        // $this->assertTrue($phoneSession->isActive());
+        // $this->assertNotNull($computerSession->revoked_at);
+        $this->assertTrue($computerSession->isActive());
         $this->assertTrue($phoneSession->isActive());
-        $this->assertNotNull($computerSession->revoked_at);
+        $this->assertNull($computerSession->revoked_at);
+        $this->assertNull($phoneSession->revoked_at);
     }
 }
