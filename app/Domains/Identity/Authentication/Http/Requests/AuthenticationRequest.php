@@ -32,7 +32,6 @@ final class AuthenticationRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                'min:8',
             ],
         ];
     }
@@ -50,7 +49,6 @@ final class AuthenticationRequest extends FormRequest
 
             'password.required' => 'Password is required.',
             'password.string' => 'The password must be a string.',
-            'password.min' => 'The password must contain at least 8 characters.',
         ];
     }
 
