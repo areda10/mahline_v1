@@ -120,22 +120,33 @@ final class SessionService extends BaseService
     }
 
     /**
-     * Revoke the current authentication session of a user.
+     * Revoke for All authentications sessions of a user.
      */
     public function revokeForUser(
-        User $user,
-        string $reason = 'logout',
+    User $user,
+    string $reason = 'logout',
     ): bool {
-        $session = $this->current($user);
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->get();
 
-        if ($session === null) {
+        if ($sessions->isEmpty()) {
             return false;
         }
 
-        return $this->revoke(
-            session: $session,
-            reason: $reason,
-        );
+        $revoked = false;
+
+        foreach ($sessions as $session) {
+            if ($this->revoke(
+                session: $session,
+                reason: $reason,
+            )) {
+                $revoked = true;
+            }
+        }
+
+        return $revoked;
     }
 
     /**
