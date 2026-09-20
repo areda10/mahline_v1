@@ -53,7 +53,8 @@ final class SessionService extends BaseService
             $device,
         ): AuthenticationSession {
 
-            /*
+            // -----------------------------------------------------------------
+            /*-----------------------
              * Find the current active authentication session.
              *
              * We intentionally do not use withTrashed() here.
@@ -61,47 +62,54 @@ final class SessionService extends BaseService
              * A soft-deleted session is historical data and must
              * never become the active session again.
              */
-            $previousSession = AuthenticationSession::query()
-                ->where('user_id', $user->getKey())
-                ->whereNull('revoked_at')
-                ->first();
 
             /*
-             * If an active session already exists, revoke it.
-             *
-             * The old row remains in the database.
+             *  la partie qui recherche et révoque automatiquement la session précédente
              */
-            if ($previousSession !== null) {
-                /*
-                 * Save the old session information BEFORE
-                 * changing anything.
-                 */
-                $previousIpAddress = $previousSession->ip_address;
-                $previousUserAgent = $previousSession->user_agent;
-                $previousBrowser = $previousSession->browser;
-                $previousDevice = $previousSession->device;
 
-                /*
-                 * Revoke the previous authentication session.
-                 */
-                $previousSession->revoked_at = now();
-                $previousSession->revocation_reason = 'new_login';
+            // $previousSession = AuthenticationSession::query()
+            //     ->where('user_id', $user->getKey())
+            //     ->whereNull('revoked_at')
+            //     ->first();
 
-                $previousSession->save();
+            // /*
+            //  * If an active session already exists, revoke it.
+            //  *
+            //  * The old row remains in the database.
+            //  */
+            // if ($previousSession !== null) {
+            //     /*
+            //      * Save the old session information BEFORE
+            //      * changing anything.
+            //      */
+            //     $previousIpAddress = $previousSession->ip_address;
+            //     $previousUserAgent = $previousSession->user_agent;
+            //     $previousBrowser = $previousSession->browser;
+            //     $previousDevice = $previousSession->device;
 
-                /*
-                 * Record the session revocation in login history.
-                 */
-                $this->loginHistoryService->recordSessionRevoked(
-                    user: $user,
-                    session: $previousSession,
-                    reason: 'new_login',
-                    ipAddress: $previousIpAddress,
-                    userAgent: $previousUserAgent,
-                    browser: $previousBrowser,
-                    device: $previousDevice,
-                );
-            }
+            //     /*
+            //      * Revoke the previous authentication session.
+            //      */
+            //     $previousSession->revoked_at = now();
+            //     $previousSession->revocation_reason = 'new_login';
+
+            //     $previousSession->save();
+
+            //     /*
+            //      * Record the session revocation in login history.
+            //      */
+            //     $this->loginHistoryService->recordSessionRevoked(
+            //         user: $user,
+            //         session: $previousSession,
+            //         reason: 'new_login',
+            //         ipAddress: $previousIpAddress,
+            //         userAgent: $previousUserAgent,
+            //         browser: $previousBrowser,
+            //         device: $previousDevice,
+            //     );
+            // }
+
+            // -----------------------------------------------------------------
 
             /*
              * Create a NEW authentication session.
