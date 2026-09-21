@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Password\Http\Requests;
 
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\Password\Rules\ValidPassword;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class ResetPasswordRequest extends FormRequest
@@ -24,6 +25,7 @@ final class ResetPasswordRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
+                new ValidPassword(),
             ],
             'password_confirmation' => [
                 'required',
@@ -51,12 +53,20 @@ final class ResetPasswordRequest extends FormRequest
         return true;
     }
 
-    protected function prepareForValidation(): void
-    {
-        if ($this->has('password')) {
-            PasswordPolicy::validate(
-                (string) $this->input('password'),
-            );
-        }
-    }
+    // protected function prepareForValidation(): void
+    // {
+    //     if (! $this->has('password')) {
+    //     return;
+    //     }
+
+    //     try {
+    //         PasswordPolicy::validate(
+    //             (string) $this->input('password'),
+    //         );
+    //     } catch (\InvalidArgumentException $exception) {
+    //         $this->getValidatorInstance()
+    //             ->errors()
+    //             ->add('password', $exception->getMessage());
+    //     }
+    // }
 }

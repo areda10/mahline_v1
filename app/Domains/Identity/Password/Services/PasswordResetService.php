@@ -6,13 +6,13 @@ namespace App\Domains\Identity\Password\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use RuntimeException;
 
 final class PasswordResetService extends BaseService
 {
@@ -50,13 +50,13 @@ final class PasswordResetService extends BaseService
             ->first();
 
         if ($record === null) {
-            throw new RuntimeException(
+            throw new InvalidPasswordResetTokenException(
                 'Invalid password reset token.'
             );
         }
 
         if ($record->used_at !== null) {
-            throw new RuntimeException(
+            throw new InvalidPasswordResetTokenException(
                 'Password reset token has already been used.'
             );
         }
@@ -64,7 +64,7 @@ final class PasswordResetService extends BaseService
         if (now()->greaterThan(
             \Illuminate\Support\Carbon::parse($record->expires_at)
         )) {
-            throw new RuntimeException(
+            throw new InvalidPasswordResetTokenException(
                 'Password reset token has expired.'
             );
         }
@@ -72,7 +72,7 @@ final class PasswordResetService extends BaseService
         $user = User::query()->find($record->user_id);
 
         if ($user === null) {
-            throw new RuntimeException(
+            throw new InvalidPasswordResetTokenException(
                 'Invalid password reset token.'
             );
         }
@@ -120,62 +120,4 @@ final class PasswordResetService extends BaseService
         );
     }
 
-    public function test_password_reset_revokes_all_active_sessions(): void
-    {
-        $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
-        ]);
-
-        \App\Domains\Identity\Authentication\Models\AuthenticationSession::query()
-            ->create([
-                'user_id' => $user->getKey(),
-                'session_id' => 'reset-session-1',
-                'ip_address' => '127.0.0.1',
-                'user_agent' => 'PHPUnit',
-                'browser' => 'Test Browser',
-                'device' => 'Test Device',
-                'authenticated_at' => now(),
-                'last_activity_at' => now(),
-                'revoked_at' => null,
-                'revocation_reason' => null,
-            ]);
-
-        \App\Domains\Identity\Authentication\Models\AuthenticationSession::query()
-            ->create([
-                'user_id' => $user->getKey(),
-                'session_id' => 'reset-session-2',
-                'ip_address' => '127.0.0.2',
-                'user_agent' => 'PHPUnit',
-                'browser' => 'Another Browser',
-                'device' => 'Another Device',
-                'authenticated_at' => now(),
-                'last_activity_at' => now(),
-                'revoked_at' => null,
-                'revocation_reason' => null,
-            ]);
-
-        $token = $this->passwordResetService->createToken(
-            user: $user,
-        );
-
-        $this->passwordResetService->resetPassword(
-            token: $token,
-            newPassword: 'MahlinePassword13',
-        );
-
-        $sessions = \App\Domains\Identity\Authentication\Models\AuthenticationSession::query()
-            ->where('user_id', $user->getKey())
-            ->get();
-
-        $this->assertCount(2, $sessions);
-
-        foreach ($sessions as $session) {
-            $this->assertNotNull($session->revoked_at);
-
-            $this->assertSame(
-                'password_reset',
-                $session->revocation_reason,
-            );
-        }
-    }
 }

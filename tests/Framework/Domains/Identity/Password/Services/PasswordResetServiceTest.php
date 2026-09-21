@@ -294,4 +294,63 @@ final class PasswordResetServiceTest extends TestCase
             );
         }
     }
+
+    //  public function test_password_reset_revokes_all_active_sessions(): void
+    // {
+    //     $user = User::factory()->create([
+    //         'password' => 'MahlinePassword12',
+    //     ]);
+
+    //     AuthenticationSession::query()
+    //         ->create([
+    //             'user_id' => $user->getKey(),
+    //             'session_id' => 'reset-session-1',
+    //             'ip_address' => '127.0.0.1',
+    //             'user_agent' => 'PHPUnit',
+    //             'browser' => 'Test Browser',
+    //             'device' => 'Test Device',
+    //             'authenticated_at' => now(),
+    //             'last_activity_at' => now(),
+    //             'revoked_at' => null,
+    //             'revocation_reason' => null,
+    //         ]);
+
+    //     AuthenticationSession::query()
+    //         ->create([
+    //             'user_id' => $user->getKey(),
+    //             'session_id' => 'reset-session-2',
+    //             'ip_address' => '127.0.0.2',
+    //             'user_agent' => 'PHPUnit',
+    //             'browser' => 'Another Browser',
+    //             'device' => 'Another Device',
+    //             'authenticated_at' => now(),
+    //             'last_activity_at' => now(),
+    //             'revoked_at' => null,
+    //             'revocation_reason' => null,
+    //         ]);
+
+    //     $token = $this->passwordResetService->createToken(
+    //         user: $user,
+    //     );
+
+    //     $this->passwordResetService->resetPassword(
+    //         token: $token,
+    //         newPassword: 'MahlinePassword13',
+    //     );
+
+    //     $sessions = AuthenticationSession::query()
+    //         ->where('user_id', $user->getKey())
+    //         ->get();
+
+    //     $this->assertCount(2, $sessions);
+
+    //     foreach ($sessions as $session) {
+    //         $this->assertNotNull($session->revoked_at);
+
+    //         $this->assertSame(
+    //             'password_reset',
+    //             $session->revocation_reason,
+    //         );
+    //     }
+    // }
 }

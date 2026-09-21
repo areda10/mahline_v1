@@ -17,3 +17,8 @@ Route::post(
     '/password/forgot',
     [PasswordResetController::class, 'forgot'],
 );
+
+Route::post(
+    '/password/reset',
+    [PasswordResetController::class, 'reset'],
+);
