@@ -93,12 +93,17 @@ final class LoginHistoryService extends BaseService
     /**
      * Record a session revocation.
      *
-     * Typical reason:
+     * A session may be revoked individually or as part of a
+     * global revocation operation.
      *
-     * A user logs in from an iPhone while a session is already
-     * active on Android. The Android session is revoked with
-     * the reason "new_login".
-     */
+     * Typical reasons include:
+     *
+     * - logout
+     * - password_changed
+     * - password_reset
+     * - security_incident
+     * - global_logout
+    */
     public function recordSessionRevoked(
         User $user,
         AuthenticationSession $session,

@@ -21,22 +21,17 @@ final class AuthenticationService extends BaseService
     }
 
     /**
-     * Authenticate a user.
-     *
-     * Authentication flow:
-     *
-     * 1. Find user by email.
-     * 2. Reject unknown user.
-     * 3. Verify account status.
-     * 4. Verify password.
-     * 5. Create/replace authentication session.
-     * 6. Record successful login.
-     *
-     * The service does not depend on Laravel's HTTP Request.
-     *
-     * @throws ModelNotFoundException
-     * @throws RuntimeException
-     */
+    * Authentication flow:
+    *
+    * 1. Find user by email.
+    * 2. Reject unknown user.
+    * 3. Verify account status.
+    * 4. Verify password.
+    * 5. Create a new authentication session.
+    * 6. Record successful login.
+    *
+    * Existing active sessions are preserved.
+    */
     public function authenticate(
         AuthenticationContext $context,
     ): User {
@@ -118,7 +113,8 @@ final class AuthenticationService extends BaseService
          *
          * SessionService enforces:
          *
-         * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+         * SessionService creates a new independent authentication
+         * session without revoking existing active sessions.
          */
         $session = $this->sessionService->create(
             user: $user,
