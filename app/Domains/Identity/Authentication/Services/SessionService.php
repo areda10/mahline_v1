@@ -23,18 +23,18 @@ final class SessionService extends BaseService
      *
      * ONE USER
      *      ↓
-     * ONE ACTIVE AUTHENTICATION SESSION
+     * MULTIPLE ACTIVE AUTHENTICATION SESSIONS
      *
-     * A user may have several historical authentication
-     * sessions, but only one session can be active.
+     * A user may have several active sessions simultaneously,
+     * for example on different browsers or devices.
      *
-     * When a new login occurs:
+     * Each authentication session has its own lifecycle and
+     * can be revoked individually.
      *
-     * 1. The previous active session is revoked.
-     * 2. The revocation is recorded in LoginHistory.
-     * 3. A NEW AuthenticationSession row is created.
+     * Creating a new session does not revoke existing sessions.
      *
-     * The previous session is therefore preserved as history.
+     * The new authentication session is persisted as a new
+     * database row and returned as the active session.
      */
     public function create(
         User $user,
@@ -120,7 +120,7 @@ final class SessionService extends BaseService
     }
 
     /**
-     * Revoke for All authentications sessions of a user.
+     * Revoke all active authentication sessions of a user.
      */
     public function revokeForUser(
     User $user,
