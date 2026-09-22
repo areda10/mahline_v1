@@ -99,6 +99,12 @@ final class AuthenticationService extends BaseService
                 $context->email,
             );
 
+            if ($context->ipAddress !== null) {
+                $this->securityService->recordFailedAttemptByIp(
+                    $context->ipAddress,
+                );
+            }
+
             $this->loginHistoryService->recordFailure(
                 email: $context->email,
                 reason: 'invalid_credentials',
@@ -111,6 +117,15 @@ final class AuthenticationService extends BaseService
 
             throw new RuntimeException(
                 'Invalid credentials.'
+            );
+        }
+
+        if (
+            $context->ipAddress !== null
+            && $this->securityService->isIpLocked($context->ipAddress)
+        ) {
+            throw new RuntimeException(
+                'IP address is temporarily locked.'
             );
         }
 
@@ -142,10 +157,21 @@ final class AuthenticationService extends BaseService
             browser: $context->browser,
             device: $context->device,
         );
-        
+        /**
+         * Remise a zero compteur Attempts apres email ok
+         */
         $this->securityService->clearFailedAttempts(
             $context->email,
         );
+
+        /**
+         * Remise a zero compteur Attempts apres email ok
+         */
+        if ($context->ipAddress !== null) {
+            $this->securityService->clearFailedIpAttempts(
+                $context->ipAddress,
+            );
+        }
 
         return $user;
     }

@@ -779,4 +779,126 @@ final class AuthenticationServiceTest extends TestCase
             $securityService->remainingAttempts($context->email),
         );
     }
+
+    public function test_locked_ip_rejects_authentication(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'password' => 'password',
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'john@example.com',
+            password: 'password',
+            sessionId: 'session-success',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'Android',
+        );
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttemptByIp(
+                $context->ipAddress,
+            );
+        }
+
+        self::assertTrue(
+            $securityService->isIpLocked($context->ipAddress),
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $this->expectException(RuntimeException::class);
+
+        $service->authenticate($context);
+    }
+
+    public function test_invalid_password_records_security_failed_attempt_by_ip(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'password' => 'correct-password',
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'john@example.com',
+            password: 'wrong-password',
+            sessionId: 'session-invalid-password',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'Android',
+        );
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        self::assertSame(
+            5,
+            $securityService->remainingIpAttempts(
+                $context->ipAddress,
+            ),
+        );
+
+        $service = app(AuthenticationService::class);
+
+        try {
+            $service->authenticate($context);
+        } catch (RuntimeException) {
+            // Échec attendu.
+        }
+
+        self::assertSame(
+            4,
+            $securityService->remainingIpAttempts(
+                $context->ipAddress,
+            ),
+        );
+    }
+
+    public function test_successful_authentication_clears_security_failed_ip_attempts(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'password' => 'password',
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'john@example.com',
+            password: 'password',
+            sessionId: 'session-success',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'Android',
+        );
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $securityService->recordFailedAttemptByIp(
+                $context->ipAddress,
+            );
+        }
+
+        self::assertSame(
+            2,
+            $securityService->remainingIpAttempts(
+                $context->ipAddress,
+            ),
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $service->authenticate($context);
+
+        self::assertSame(
+            5,
+            $securityService->remainingIpAttempts(
+                $context->ipAddress,
+            ),
+        );
+    }
 }
