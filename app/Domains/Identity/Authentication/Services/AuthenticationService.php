@@ -6,6 +6,7 @@ namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -17,6 +18,7 @@ final class AuthenticationService extends BaseService
     public function __construct(
         private readonly SessionService $sessionService,
         private readonly LoginHistoryService $loginHistoryService,
+        private readonly AuthenticationSecurityService $securityService,
     ) {
     }
 
@@ -93,6 +95,10 @@ final class AuthenticationService extends BaseService
             $context->password,
             (string) $user->password,
         )) {
+            $this->securityService->recordFailedAttempt(
+                $context->email,
+            );
+
             $this->loginHistoryService->recordFailure(
                 email: $context->email,
                 reason: 'invalid_credentials',
@@ -135,6 +141,10 @@ final class AuthenticationService extends BaseService
             userAgent: $context->userAgent,
             browser: $context->browser,
             device: $context->device,
+        );
+        
+        $this->securityService->clearFailedAttempts(
+            $context->email,
         );
 
         return $user;

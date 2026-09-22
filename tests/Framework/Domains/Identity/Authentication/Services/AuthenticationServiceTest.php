@@ -7,12 +7,14 @@ namespace Tests\Framework\Domains\Identity\Authentication\Services;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
+use RuntimeException;
 
 final class AuthenticationServiceTest extends TestCase
 {
@@ -182,7 +184,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Android',
         );
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage(
             'User account is not active.'
         );
@@ -243,7 +245,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Android',
         );
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage(
             'Invalid credentials.'
         );
@@ -661,5 +663,120 @@ final class AuthenticationServiceTest extends TestCase
         $this->assertTrue($phoneSession->isActive());
         $this->assertNull($computerSession->revoked_at);
         $this->assertNull($phoneSession->revoked_at);
+    }
+
+    public function test_locked_email_rejects_authentication(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'password' => 'password',
+        ]);
+
+        // 2. Création du contexte
+        $context = new AuthenticationContext(
+            email: $user->email,
+            password: 'Password123',
+            sessionId: 'session-locked-email',
+            ipAddress: '127.0.0.1',
+            userAgent: 'TestAgent',
+            browser: 'TestBrowser',
+            device: 'TestDevice',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt(
+                $context->email,
+            );
+        }
+
+        self::assertTrue(
+            $securityService->isLocked($context->email),
+        );
+
+        $this->expectException(RuntimeException::class);
+
+        $service->authenticate($context);
+    }
+
+    public function test_invalid_password_records_security_failed_attempt(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'password' => 'correct-password',
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'john@example.com',
+            password: 'wrong-password',
+            sessionId: 'session-invalid-password',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'Android',
+        );
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        self::assertSame(
+            5,
+            $securityService->remainingAttempts($context->email),
+        );
+
+        $service = app(AuthenticationService::class);
+
+        try {
+            $service->authenticate($context);
+        } catch (RuntimeException) {
+            // L'échec d'authentification est attendu.
+        }
+
+        self::assertSame(
+            4,
+            $securityService->remainingAttempts($context->email),
+        );
+    }
+
+    public function test_successful_authentication_clears_security_failed_attempts(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'john@example.com',
+            'password' => 'password',
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'john@example.com',
+            password: 'password',
+            sessionId: 'session-success',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'Android',
+        );
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            $securityService->recordFailedAttempt(
+                $context->email,
+            );
+        }
+
+        self::assertSame(
+            2,
+            $securityService->remainingAttempts($context->email),
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $service->authenticate($context);
+
+        self::assertSame(
+            5,
+            $securityService->remainingAttempts($context->email),
+        );
     }
 }
