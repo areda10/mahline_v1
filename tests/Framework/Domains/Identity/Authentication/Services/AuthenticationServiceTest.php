@@ -9,10 +9,15 @@ use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use InvalidArgumentException;
+use Mockery;
 use Tests\TestCase;
 use RuntimeException;
 
@@ -328,28 +333,6 @@ final class AuthenticationServiceTest extends TestCase
         );
     }
 
-    /**
-     * Test that a second successful login replaces the previous
-     * authenticated session.
-     *
-     * Example:
-     *
-     * Android / Firefox
-     *       ↓
-     * Session A
-     *
-     * Then:
-     *
-     * iPhone / Safari
-     *       ↓
-     * Session B
-     *
-     * Session A must no longer be active.
-     *
-     * MAHLINE rule:
-     *
-     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
-     */
     // public function test_new_login_replaces_previous_session(): void
     public function test_new_login_keeps_previous_session_active(): void
     {
@@ -900,5 +883,310 @@ final class AuthenticationServiceTest extends TestCase
                 $context->ipAddress,
             ),
         );
+    }
+
+    public function test_successful_authentication_remembers_a_new_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'device@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-001',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $service->authenticate($context);
+
+        self::assertDatabaseHas('known_devices', [
+            'user_id' => $user->id,
+            'device' => 'iphone',
+        ]);
+    }
+
+    public function test_successful_authentication_does_not_duplicate_a_known_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'same-device@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $service = app(AuthenticationService::class);
+
+        $firstContext = new AuthenticationContext(
+            email: 'same-device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-001',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $secondContext = new AuthenticationContext(
+            email: 'same-device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-002',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service->authenticate($firstContext);
+        $service->authenticate($secondContext);
+
+        self::assertDatabaseCount('known_devices', 1);
+
+        self::assertDatabaseHas('known_devices', [
+            'user_id' => $user->id,
+            'device' => 'iphone',
+        ]);
+    }
+
+    public function test_successful_authentication_remembers_each_new_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'multi-device@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $service = app(AuthenticationService::class);
+
+        $firstContext = new AuthenticationContext(
+            email: 'multi-device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-001',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $secondContext = new AuthenticationContext(
+            email: 'multi-device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-002',
+            ipAddress: '127.0.0.2',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Chrome',
+            device: 'MacBook',
+        );
+
+        $service->authenticate($firstContext);
+        $service->authenticate($secondContext);
+
+        self::assertDatabaseCount('known_devices', 2);
+
+        self::assertDatabaseHas('known_devices', [
+            'user_id' => $user->id,
+            'device' => 'iphone',
+        ]);
+
+        self::assertDatabaseHas('known_devices', [
+            'user_id' => $user->id,
+            'device' => 'macbook',
+        ]);
+    }
+
+    public function test_authentication_detects_a_new_device_before_remembering_it(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'new-device@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $unusualActivityService = app(
+            UnusualActivityDetectionService::class,
+        );
+
+        $this->assertTrue(
+            $unusualActivityService->isNewDevice(
+                user: $user,
+                device: 'iPhone',
+            ),
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $context = new AuthenticationContext(
+            email: 'new-device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-001',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service->authenticate($context);
+
+        self::assertFalse(
+            $unusualActivityService->isNewDevice(
+                user: $user,
+                device: 'iPhone',
+            ),
+        );
+    }
+
+    public function test_authentication_rejects_an_empty_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'empty-device@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'empty-device@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-device-empty',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: '',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        try {
+            $service->authenticate($context);
+        } finally {
+            self::assertDatabaseCount('known_devices', 0);
+        }
+    }
+
+    public function test_authentication_with_an_empty_device_does_not_create_a_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'empty-device-session@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'empty-device-session@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-empty-device',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: '',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        try {
+            $service->authenticate($context);
+        } finally {
+            self::assertDatabaseMissing('authentication_sessions', [
+                'user_id' => $user->id,
+                'session_id' => 'session-empty-device',
+            ]);
+        }
+    }
+
+    public function test_device_and_session_creation_are_atomic(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'atomic@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'atomic@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-atomic-001',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        /*
+        * Le contrat recherché est que les opérations
+        * d'authentification soient atomiques.
+        *
+        * Ce test sera complété lorsque nous aurons
+        * identifié le point d'échec réel de SessionService.
+        */
+        $service->authenticate($context);
+
+        self::assertDatabaseHas('known_devices', [
+            'user_id' => $user->id,
+            'device' => 'iphone',
+        ]);
+
+        self::assertDatabaseHas('authentication_sessions', [
+            'user_id' => $user->id,
+            'session_id' => 'session-atomic-001',
+        ]);
+    }
+
+    public function test_failed_session_creation_does_not_remember_new_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'atomicity@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $sessionId = 'duplicate-session-id';
+
+        AuthenticationSession::query()->create([
+            'user_id' => $user->id,
+            'session_id' => $sessionId,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'Existing Agent',
+            'browser' => 'Firefox',
+            'device' => 'Existing Device',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+            'revoked_at' => null,
+            'revocation_reason' => null,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'atomicity@example.com',
+            password: 'ValidPassword123',
+            sessionId: $sessionId,
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'New Device',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        try {
+            $service->authenticate($context);
+            $this->fail('Authentication should have failed.');
+        } catch (\Throwable) {
+            // Expected: duplicate session_id.
+        }
+
+        $this->assertDatabaseMissing('known_devices', [
+            'user_id' => $user->id,
+            'device' => 'new device',
+        ]);
     }
 }

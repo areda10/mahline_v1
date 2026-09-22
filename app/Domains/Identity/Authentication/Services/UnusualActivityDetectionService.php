@@ -24,6 +24,12 @@ final class UnusualActivityDetectionService extends BaseService
             );
         }
 
+        if (mb_strlen($device) > 100) {
+            throw new InvalidArgumentException(
+                'Device cannot be longer than 100 characters.',
+            );
+        }
+
         return ! KnownDevice::query()
             ->where('user_id', $user->id)
             ->where('device', $device)
@@ -41,6 +47,13 @@ final class UnusualActivityDetectionService extends BaseService
                 'Device cannot be empty.',
             );
         }
+
+        if (mb_strlen($device) > 100) {
+            throw new InvalidArgumentException(
+                'Device cannot be longer than 100 characters.',
+            );
+        }
+
         KnownDevice::query()->firstOrCreate([
             'user_id' => $user->id,
             'device' => $device,

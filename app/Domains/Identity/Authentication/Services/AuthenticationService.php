@@ -6,10 +6,12 @@ namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
@@ -19,6 +21,7 @@ final class AuthenticationService extends BaseService
         private readonly SessionService $sessionService,
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
+        private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
     ) {
     }
 
@@ -129,22 +132,24 @@ final class AuthenticationService extends BaseService
             );
         }
 
-        /*
-         * Authentication succeeded.
-         *
-         * SessionService enforces:
-         *
-         * SessionService creates a new independent authentication
-         * session without revoking existing active sessions.
-         */
-        $session = $this->sessionService->create(
-            user: $user,
-            sessionId: $context->sessionId,
-            ipAddress: $context->ipAddress,
-            userAgent: $context->userAgent,
-            browser: $context->browser,
-            device: $context->device,
-        );
+        $session = DB::transaction(function () use (
+            $user,
+            $context,
+        ): AuthenticationSession {
+            $this->unusualActivityDetectionService->rememberDevice(
+                user: $user,
+                device: (string) $context->device,
+            );
+
+            return $this->sessionService->create(
+                user: $user,
+                sessionId: $context->sessionId,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+        });
 
         /*
          * Record the successful login.
