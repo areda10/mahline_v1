@@ -6,8 +6,11 @@ namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
+use App\Domains\Identity\Authentication\Services\SecurityEventService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -22,6 +25,7 @@ final class AuthenticationService extends BaseService
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
         private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
+        private readonly SecurityEventService $securityEventService,
     ) {
     }
 
@@ -89,6 +93,12 @@ final class AuthenticationService extends BaseService
             );
         }
 
+        if ($this->securityService->isLocked($context->email)) {
+            throw new RuntimeException(
+                'Account is temporarily locked.'
+            );
+        }
+
         /*
          * Verify the password.
          *
@@ -98,9 +108,34 @@ final class AuthenticationService extends BaseService
             $context->password,
             (string) $user->password,
         )) {
+            $attemptsBeforeFailure = $this->securityService->remainingAttempts(
+                $context->email,
+            );
             $this->securityService->recordFailedAttempt(
                 $context->email,
             );
+
+            if ($attemptsBeforeFailure === 1) {
+                $this->securityEventService->record(
+                    event: SecurityEventType::BruteForceDetected,
+                    reason: 'maximum_failed_authentication_attempts_reached',
+                    user: $user,
+                    ipAddress: $context->ipAddress,
+                    userAgent: $context->userAgent,
+                    browser: $context->browser,
+                    device: $context->device,
+                );
+
+                $this->securityEventService->record(
+                    event: SecurityEventType::AccountLocked,
+                    reason: 'maximum_failed_authentication_attempts_reached',
+                    user: $user,
+                    ipAddress: $context->ipAddress,
+                    userAgent: $context->userAgent,
+                    browser: $context->browser,
+                    device: $context->device,
+                );
+            }
 
             if ($context->ipAddress !== null) {
                 $this->securityService->recordFailedAttemptByIp(

@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Services;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1188,5 +1191,280 @@ final class AuthenticationServiceTest extends TestCase
             'user_id' => $user->id,
             'device' => 'new device',
         ]);
+    }
+
+    public function test_fifth_failed_authentication_records_brute_force_security_event(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'bruteforce@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'bruteforce@example.com',
+            password: 'WrongPassword123',
+            sessionId: 'session-bruteforce-001',
+            ipAddress: '127.0.0.1',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            try {
+                $service->authenticate($context);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        $this->assertDatabaseHas('security_events', [
+            'user_id' => $user->id,
+            'event' => SecurityEventType::BruteForceDetected->value,
+        ]);
+    }
+
+    public function test_fifth_failed_authentication_records_account_locked_security_event(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'locked@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'locked@example.com',
+            password: 'WrongPassword123',
+            sessionId: 'session-locked-001',
+            ipAddress: '127.0.0.2',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            try {
+                $service->authenticate($context);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        $this->assertDatabaseHas('security_events', [
+            'user_id' => $user->id,
+            'event' => SecurityEventType::AccountLocked->value,
+        ]);
+    }
+
+    public function test_locked_account_does_not_duplicate_security_events_on_further_failed_attempts(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'locked-duplicate@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'locked-duplicate@example.com',
+            password: 'WrongPassword123',
+            sessionId: 'session-locked-duplicate-001',
+            ipAddress: '127.0.0.3',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        for ($attempt = 1; $attempt <= 6; $attempt++) {
+            try {
+                $service->authenticate($context);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        $this->assertSame(
+            1,
+            SecurityEvent::query()
+                ->where('user_id', $user->id)
+                ->where(
+                    'event',
+                    SecurityEventType::BruteForceDetected->value,
+                )
+                ->count(),
+        );
+
+        $this->assertSame(
+            1,
+            SecurityEvent::query()
+                ->where('user_id', $user->id)
+                ->where(
+                    'event',
+                    SecurityEventType::AccountLocked->value,
+                )
+                ->count(),
+        );
+    }
+
+    public function test_locked_account_rejects_correct_password(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'locked-correct-password@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $wrongContext = new AuthenticationContext(
+            email: 'locked-correct-password@example.com',
+            password: 'WrongPassword123',
+            sessionId: 'session-lock-001',
+            ipAddress: '127.0.0.4',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service = app(AuthenticationService::class);
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            try {
+                $service->authenticate($wrongContext);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        $correctContext = new AuthenticationContext(
+            email: 'locked-correct-password@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-lock-002',
+            ipAddress: '127.0.0.5',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Account is temporarily locked.'
+        );
+
+        $service->authenticate($correctContext);
+    }
+
+    public function test_account_can_authenticate_after_lockout_expires(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'lockout-expired@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $service = app(AuthenticationService::class);
+
+        $wrongContext = new AuthenticationContext(
+            email: 'lockout-expired@example.com',
+            password: 'WrongPassword123',
+            sessionId: 'session-expired-001',
+            ipAddress: '127.0.0.6',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            try {
+                $service->authenticate($wrongContext);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        Carbon::setTestNow(now()->addSeconds(901));
+
+        $correctContext = new AuthenticationContext(
+            email: 'lockout-expired@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-expired-002',
+            ipAddress: '127.0.0.7',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $authenticatedUser = $service->authenticate($correctContext);
+
+        $this->assertSame(
+            $user->id,
+            $authenticatedUser->id,
+        );
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'user_id' => $user->id,
+            'session_id' => 'session-expired-002',
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_successful_authentication_resets_failed_attempts(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'reset-attempts@example.com',
+            'password' => Hash::make('ValidPassword123'),
+            'status' => UserStatus::Active,
+        ]);
+
+        $service = app(AuthenticationService::class);
+
+        $wrongContext = new AuthenticationContext(
+            email: 'reset-attempts@example.com',
+            password: 'WrongPassword123',
+            sessionId: 'session-reset-001',
+            ipAddress: '127.0.0.8',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $service->authenticate($wrongContext);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        $correctContext = new AuthenticationContext(
+            email: 'reset-attempts@example.com',
+            password: 'ValidPassword123',
+            sessionId: 'session-reset-002',
+            ipAddress: '127.0.0.9',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'iPhone',
+        );
+
+        $service->authenticate($correctContext);
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $service->authenticate($wrongContext);
+            } catch (\Throwable) {
+                // Expected failed authentication.
+            }
+        }
+
+        $this->assertFalse(
+            $this->app
+                ->make(AuthenticationSecurityService::class)
+                ->isLocked('reset-attempts@example.com'),
+        );
     }
 }
