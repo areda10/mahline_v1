@@ -44,11 +44,12 @@ final class AuthenticationService extends BaseService
     public function authenticate(
         AuthenticationContext $context,
     ): User {
+        $email = mb_strtolower(trim($context->email));
         /*
          * Find the user by email.
          */
         $user = User::query()
-            ->where('email', $context->email)
+            ->where('email', $email)
             ->first();
 
         /*
@@ -58,7 +59,7 @@ final class AuthenticationService extends BaseService
          */
         if ($user === null) {
             $this->loginHistoryService->recordFailure(
-                email: $context->email,
+                email: $email,
                 reason: 'user_not_found',
                 user: null,
                 ipAddress: $context->ipAddress,
@@ -79,7 +80,7 @@ final class AuthenticationService extends BaseService
          */
         if (! $this->isAccountActive($user)) {
             $this->loginHistoryService->recordFailure(
-                email: $context->email,
+                email: $email,
                 reason: 'account_not_active',
                 user: $user,
                 ipAddress: $context->ipAddress,
@@ -93,7 +94,36 @@ final class AuthenticationService extends BaseService
             );
         }
 
-        if ($this->securityService->isLocked($context->email)) {
+        if (
+            $context->ipAddress !== null
+            && $this->securityService->isIpLocked($context->ipAddress)
+        ) {
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'ip_locked',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new RuntimeException(
+                'IP address is temporarily locked.'
+            );
+        }
+
+        if ($this->securityService->isLocked($email)) {
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'account_locked',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
             throw new RuntimeException(
                 'Account is temporarily locked.'
             );
@@ -144,7 +174,7 @@ final class AuthenticationService extends BaseService
             }
 
             $this->loginHistoryService->recordFailure(
-                email: $context->email,
+                email: $email,
                 reason: 'invalid_credentials',
                 user: $user,
                 ipAddress: $context->ipAddress,
@@ -155,15 +185,6 @@ final class AuthenticationService extends BaseService
 
             throw new RuntimeException(
                 'Invalid credentials.'
-            );
-        }
-
-        if (
-            $context->ipAddress !== null
-            && $this->securityService->isIpLocked($context->ipAddress)
-        ) {
-            throw new RuntimeException(
-                'IP address is temporarily locked.'
             );
         }
 
