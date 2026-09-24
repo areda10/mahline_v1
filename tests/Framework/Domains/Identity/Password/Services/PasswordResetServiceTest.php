@@ -295,62 +295,128 @@ final class PasswordResetServiceTest extends TestCase
         }
     }
 
-    //  public function test_password_reset_revokes_all_active_sessions(): void
-    // {
-    //     $user = User::factory()->create([
-    //         'password' => 'MahlinePassword12',
-    //     ]);
+    public function test_invalid_reset_token_does_not_modify_password(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'MahlinePassword12',
+        ]);
 
-    //     AuthenticationSession::query()
-    //         ->create([
-    //             'user_id' => $user->getKey(),
-    //             'session_id' => 'reset-session-1',
-    //             'ip_address' => '127.0.0.1',
-    //             'user_agent' => 'PHPUnit',
-    //             'browser' => 'Test Browser',
-    //             'device' => 'Test Device',
-    //             'authenticated_at' => now(),
-    //             'last_activity_at' => now(),
-    //             'revoked_at' => null,
-    //             'revocation_reason' => null,
-    //         ]);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Invalid password reset token.'
+        );
 
-    //     AuthenticationSession::query()
-    //         ->create([
-    //             'user_id' => $user->getKey(),
-    //             'session_id' => 'reset-session-2',
-    //             'ip_address' => '127.0.0.2',
-    //             'user_agent' => 'PHPUnit',
-    //             'browser' => 'Another Browser',
-    //             'device' => 'Another Device',
-    //             'authenticated_at' => now(),
-    //             'last_activity_at' => now(),
-    //             'revoked_at' => null,
-    //             'revocation_reason' => null,
-    //         ]);
+        try {
+            $this->passwordResetService->resetPassword(
+                token: 'invalid-token',
+                newPassword: 'MahlinePassword13',
+            );
+        } finally {
+            $user->refresh();
 
-    //     $token = $this->passwordResetService->createToken(
-    //         user: $user,
-    //     );
+            $this->assertTrue(
+                \Hash::check(
+                    'MahlinePassword12',
+                    (string) $user->password,
+                )
+            );
 
-    //     $this->passwordResetService->resetPassword(
-    //         token: $token,
-    //         newPassword: 'MahlinePassword13',
-    //     );
+            $this->assertFalse(
+                \Hash::check(
+                    'MahlinePassword13',
+                    (string) $user->password,
+                )
+            );
+        }
+    }
 
-    //     $sessions = AuthenticationSession::query()
-    //         ->where('user_id', $user->getKey())
-    //         ->get();
+    public function test_expired_reset_token_does_not_modify_password(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'MahlinePassword12',
+        ]);
 
-    //     $this->assertCount(2, $sessions);
+        $token = $this->passwordResetService->createToken(
+            user: $user,
+        );
 
-    //     foreach ($sessions as $session) {
-    //         $this->assertNotNull($session->revoked_at);
+        \DB::table('password_reset_tokens')
+            ->where('user_id', $user->getKey())
+            ->update([
+                'expires_at' => now()->subMinute(),
+            ]);
 
-    //         $this->assertSame(
-    //             'password_reset',
-    //             $session->revocation_reason,
-    //         );
-    //     }
-    // }
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Password reset token has expired.'
+        );
+
+        try {
+            $this->passwordResetService->resetPassword(
+                token: $token,
+                newPassword: 'MahlinePassword13',
+            );
+        } finally {
+            $user->refresh();
+
+            $this->assertTrue(
+                \Hash::check(
+                    'MahlinePassword12',
+                    (string) $user->password,
+                )
+            );
+
+            $this->assertFalse(
+                \Hash::check(
+                    'MahlinePassword13',
+                    (string) $user->password,
+                )
+            );
+        }
+    }
+
+    public function test_used_reset_token_does_not_modify_password(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'MahlinePassword12',
+        ]);
+
+        $token = $this->passwordResetService->createToken(
+            user: $user,
+        );
+
+        \DB::table('password_reset_tokens')
+            ->where('user_id', $user->getKey())
+            ->update([
+                'used_at' => now(),
+            ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'Password reset token has already been used.'
+        );
+
+        try {
+            $this->passwordResetService->resetPassword(
+                token: $token,
+                newPassword: 'MahlinePassword13',
+            );
+        } finally {
+            $user->refresh();
+
+            $this->assertTrue(
+                \Hash::check(
+                    'MahlinePassword12',
+                    (string) $user->password,
+                )
+            );
+
+            $this->assertFalse(
+                \Hash::check(
+                    'MahlinePassword13',
+                    (string) $user->password,
+                )
+            );
+        }
+    }
 }

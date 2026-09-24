@@ -228,4 +228,33 @@ final class PasswordServiceTest extends TestCase
             newPassword: 'Mahline Password13',
         );
     }
+
+    public function test_old_password_is_unusable_after_password_change(): void
+    {
+        $user = User::factory()->create([
+            'password' => 'MahlinePassword12',
+        ]);
+
+        $this->passwordService->changePassword(
+            user: $user,
+            currentPassword: 'MahlinePassword12',
+            newPassword: 'MahlinePassword13',
+        );
+
+        $user->refresh();
+
+        $this->assertFalse(
+            $this->passwordService->verifyCurrentPassword(
+                user: $user,
+                password: 'MahlinePassword12',
+            )
+        );
+
+        $this->assertTrue(
+            $this->passwordService->verifyCurrentPassword(
+                user: $user,
+                password: 'MahlinePassword13',
+            )
+        );
+    }
 }
