@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Models;
 
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -63,7 +64,7 @@ final class PersonalAccessTokenTest extends TestCase
     public function test_personal_access_token_is_stored_hashed(): void
     {
         $user = User::factory()->create([
-        'status' => UserStatus::Active,
+            'status' => UserStatus::Active,
         ]);
 
         $accessToken = $user->createToken('hash-test');
@@ -86,6 +87,69 @@ final class PersonalAccessTokenTest extends TestCase
         $this->assertSame(
             PersonalAccessToken::class,
             Sanctum::personalAccessTokenModel(),
+        );
+    }
+
+    public function test_api_token_creation_does_not_create_web_session(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $accessToken = $user->createToken('test-api-token');
+
+        $this->assertNotEmpty($accessToken->plainTextToken);
+
+        $this->assertDatabaseCount(
+            'personal_access_tokens',
+            1,
+        );
+
+        $this->assertDatabaseCount(
+            'authentication_sessions',
+            0,
+        );
+    }
+
+    public function test_revoking_api_token_does_not_revoke_web_session(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => 'sanctum-test-session',
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'browser' => 'Test Browser',
+            'device' => 'Test Device',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+            'revoked_at' => null,
+            'revocation_reason' => null,
+        ]);
+
+        $accessToken = $user->createToken('test-api-token');
+
+        $accessToken->accessToken->delete();
+
+        $session->refresh();
+
+        $this->assertNull($session->revoked_at);
+        $this->assertNull($session->revocation_reason);
+
+        $this->assertDatabaseCount(
+            'personal_access_tokens',
+            0,
+        );
+
+        $this->assertDatabaseHas(
+            'authentication_sessions',
+            [
+                'id' => $session->getKey(),
+                'revoked_at' => null,
+            ],
         );
     }
 }
