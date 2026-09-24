@@ -7,21 +7,15 @@ namespace App\Domains\Identity\Authentication\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Authentication\Models\SecurityEvent;
-use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
-use App\Domains\Identity\Authentication\Services\SecurityEventService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 final class AuthenticationService extends BaseService
 {
     public function __construct(
-        private readonly SessionService $sessionService,
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
         private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
@@ -30,21 +24,20 @@ final class AuthenticationService extends BaseService
     }
 
     /**
-    * Authentication flow:
-    *
-    * 1. Find user by email.
-    * 2. Reject unknown user.
-    * 3. Verify account status.
-    * 4. Verify password.
-    * 5. Create a new authentication session.
-    * 6. Record successful login.
-    *
-    * Existing active sessions are preserved.
-    */
+     * Authenticate a user.
+     *
+     * This service is responsible for authentication and security
+     * verification only.
+     *
+     * Creation of the Web authentication session is intentionally
+     * handled by the HTTP layer after Laravel regenerates the
+     * session ID.
+     */
     public function authenticate(
         AuthenticationContext $context,
     ): User {
         $email = mb_strtolower(trim($context->email));
+
         /*
          * Find the user by email.
          */
@@ -94,9 +87,14 @@ final class AuthenticationService extends BaseService
             );
         }
 
+        /*
+         * Verify IP lock.
+         */
         if (
             $context->ipAddress !== null
-            && $this->securityService->isIpLocked($context->ipAddress)
+            && $this->securityService->isIpLocked(
+                $context->ipAddress,
+            )
         ) {
             $this->loginHistoryService->recordFailure(
                 email: $email,
@@ -113,6 +111,9 @@ final class AuthenticationService extends BaseService
             );
         }
 
+        /*
+         * Verify account lock.
+         */
         if ($this->securityService->isLocked($email)) {
             $this->loginHistoryService->recordFailure(
                 email: $email,
@@ -138,11 +139,11 @@ final class AuthenticationService extends BaseService
             $context->password,
             (string) $user->password,
         )) {
-            $attemptsBeforeFailure = $this->securityService->remainingAttempts(
-                $context->email,
-            );
+            $attemptsBeforeFailure = $this->securityService
+                ->remainingAttempts($email);
+
             $this->securityService->recordFailedAttempt(
-                $context->email,
+                $email,
             );
 
             if ($attemptsBeforeFailure === 1) {
@@ -188,46 +189,24 @@ final class AuthenticationService extends BaseService
             );
         }
 
-        $session = DB::transaction(function () use (
-            $user,
-            $context,
-        ): AuthenticationSession {
-            $this->unusualActivityDetectionService->rememberDevice(
-                user: $user,
-                device: (string) $context->device,
-            );
-
-            return $this->sessionService->create(
-                user: $user,
-                sessionId: $context->sessionId,
-                ipAddress: $context->ipAddress,
-                userAgent: $context->userAgent,
-                browser: $context->browser,
-                device: $context->device,
-            );
-        });
+        /*
+         * Successful authentication.
+         *
+         * The device is remembered here, but the Web authentication
+         * session is deliberately NOT created here.
+         */
+        $this->unusualActivityDetectionService->rememberDevice(
+            user: $user,
+            device: (string) $context->device,
+        );
 
         /*
-         * Record the successful login.
-         */
-        $this->loginHistoryService->recordSuccess(
-            user: $user,
-            session: $session,
-            ipAddress: $context->ipAddress,
-            userAgent: $context->userAgent,
-            browser: $context->browser,
-            device: $context->device,
-        );
-        /**
-         * Remise a zero compteur Attempts apres email ok
+         * Reset failed authentication counters.
          */
         $this->securityService->clearFailedAttempts(
-            $context->email,
+            $email,
         );
 
-        /**
-         * Remise a zero compteur Attempts apres email ok
-         */
         if ($context->ipAddress !== null) {
             $this->securityService->clearFailedIpAttempts(
                 $context->ipAddress,
