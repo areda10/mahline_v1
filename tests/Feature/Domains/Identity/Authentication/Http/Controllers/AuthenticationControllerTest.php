@@ -2,16 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Tests\Framework\Domains\Identity\Authentication\Http\Controllers;
+namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
-use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Authentication\Models\LoginHistory;
-use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
-use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Users\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 /**
@@ -69,6 +61,19 @@ final class AuthenticationControllerTest extends TestCase
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
         . 'AppleWebKit/537.36 (KHTML, like Gecko) '
         . 'Chrome/120.0.0.0 Safari/537.36';
+
+    public function test_guest_cannot_logout(): void
+    {
+        $response = $this->postJson(
+            '/authentication/logout',
+        );
+
+        $response->assertStatus(401);
+
+        $response->assertJson([
+            'message' => 'No authenticated user.',
+        ]);
+    }  
 
     /*
     |--------------------------------------------------------------------------
@@ -630,22 +635,6 @@ final class AuthenticationControllerTest extends TestCase
                 'authentication_session_id' => $session->getKey(),
             ],
         );
-    }
-
-    /**
-     * An unauthenticated user cannot logout.
-     */
-    public function test_guest_cannot_logout(): void
-    {
-        $response = $this->postJson(
-            $this->logoutUrl,
-        );
-
-        $response->assertStatus(401);
-
-        $response->assertJson([
-            'message' => 'No authenticated user.',
-        ]);
     }
 
     /*
