@@ -32,6 +32,12 @@ final class AuthenticationRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
+                'min:12',
+                'max:128',
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[0-9]/',
+                'not_regex:/\s/',
             ],
         ];
     }
@@ -49,6 +55,10 @@ final class AuthenticationRequest extends FormRequest
 
             'password.required' => 'Password is required.',
             'password.string' => 'The password must be a string.',
+            'password.min' => 'The password must be at least 12 characters.',
+            'password.max' => 'The password may not be greater than 128 characters.',
+            'password.regex' => 'The password must contain uppercase, lowercase, and numeric characters.',
+            'password.not_regex' => 'The password may not contain spaces.',
         ];
     }
 
