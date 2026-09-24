@@ -32,12 +32,12 @@ final class AuthenticationRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                'min:12',
-                'max:128',
-                'regex:/[A-Z]/',
-                'regex:/[a-z]/',
-                'regex:/[0-9]/',
-                'not_regex:/\s/',
+                // 'min:12',
+                // 'max:128',
+                // 'regex:/[A-Z]/',
+                // 'regex:/[a-z]/',
+                // 'regex:/[0-9]/',
+                // 'not_regex:/\s/',
             ],
         ];
     }
