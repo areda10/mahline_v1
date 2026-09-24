@@ -124,19 +124,6 @@ final class SessionServiceTest extends TestCase
     }
 
     /**
-     * Test that a new login replaces the current session.
-     *
-     * IMPORTANT:
-     *
-     * The previous authentication session is NOT kept as a second
-     * row in authentication_sessions.
-     *
-     * The same database row is reused.
-     *
-     * The historical information about the previous login is stored
-     * in login_histories.
-     */
-    /**
      * Test that the previous login is preserved in LoginHistory.
      *
      * The old authentication session is represented historically
@@ -633,40 +620,6 @@ final class SessionServiceTest extends TestCase
         $this->assertNull($computerSession->fresh()->revoked_at);
         $this->assertNull($phoneSession->fresh()->revoked_at);
     }
-    /**
-     * replace test_user_can_never_have_two_active_sessions_on_different_devices()
-     * to
-     * function test_user_can_have_two_active_sessions_on_different_devices()
-     */
-    public function test_user_can_never_have_two_active_sessions_on_different_devices(): void
-    {
-        $user = User::factory()->create();
-
-        $this->sessionService->create(
-            user: $user,
-            sessionId: 'computer-session-001',
-            ipAddress: '192.168.1.10',
-            userAgent: 'Mozilla/5.0 Chrome',
-            browser: 'Chrome',
-            device: 'Computer',
-        );
-
-        $this->sessionService->create(
-            user: $user,
-            sessionId: 'phone-session-001',
-            ipAddress: '192.168.1.20',
-            userAgent: 'Mozilla/5.0 Mobile Safari',
-            browser: 'Safari',
-            device: 'Phone',
-        );
-
-        $activeSessions = AuthenticationSession::query()
-            ->where('user_id', $user->id)
-            ->whereNull('revoked_at')
-            ->count();
-
-        $this->assertSame(2, $activeSessions);
-    }
     
     public function test_previous_session_keeps_device_information_after_revocation(): void
     {
@@ -777,6 +730,7 @@ final class SessionServiceTest extends TestCase
             $this->sessionService->isActive($secondSession->fresh())
         );
     }
+
     public function test_multiple_active_authentication_sessions_can_exist_for_user(): void
     {
         $user = User::factory()->create();
@@ -803,4 +757,56 @@ final class SessionServiceTest extends TestCase
 
         $this->assertSame(2, $activeSessions);
     }
-}
+
+    public function test_revoke_for_user_revokes_all_active_sessions(): void
+    {
+        $user = User::factory()->create();
+
+        AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => 'global-logout-session-1',
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'browser' => 'Browser 1',
+            'device' => 'Device 1',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+            'revoked_at' => null,
+            'revocation_reason' => null,
+        ]);
+
+        AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => 'global-logout-session-2',
+            'ip_address' => '127.0.0.2',
+            'user_agent' => 'PHPUnit',
+            'browser' => 'Browser 2',
+            'device' => 'Device 2',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+            'revoked_at' => null,
+            'revocation_reason' => null,
+        ]);
+
+        $result = $this->sessionService->revokeForUser(
+            user: $user,
+            reason: 'global_logout',
+        );
+
+        $this->assertTrue($result);
+
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->get();
+
+        $this->assertCount(2, $sessions);
+
+        foreach ($sessions as $session) {
+            $this->assertNotNull($session->revoked_at);
+            $this->assertSame(
+                'global_logout',
+                $session->revocation_reason,
+            );
+        }
+    }
+}   
