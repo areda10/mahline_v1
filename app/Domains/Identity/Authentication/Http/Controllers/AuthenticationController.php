@@ -34,7 +34,6 @@ use RuntimeException;
  *
  * Architecture rule:
  *
- * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
  */
 final class AuthenticationController extends BaseController
 {
@@ -86,15 +85,6 @@ final class AuthenticationController extends BaseController
             device: $this->detectDevice($request),
         );
 
-        /*
-         * Delegate authentication to the domain service.
-         *
-         * SessionService is responsible for enforcing:
-         *
-         * ONE USER
-         *     ↓
-         * ONE ACTIVE AUTHENTICATION SESSION
-         */
         try {
             $user = $this->authenticationService->authenticate(
                 context: $context,
