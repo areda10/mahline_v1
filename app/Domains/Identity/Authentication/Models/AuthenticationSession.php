@@ -89,19 +89,6 @@ final class AuthenticationSession extends BaseModel
         );
     }
 
-    /**
-     * Determine whether this authentication session is active.
-     *
-     * MAHLINE authentication rule:
-     *
-     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
-     *
-     * A session is considered active when:
-     *
-     *     revoked_at === null
-     *
-     * Soft deletion is also considered inactive.
-     */
     public function isActive(): bool
     {
         return $this->revoked_at === null
