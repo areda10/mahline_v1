@@ -388,4 +388,42 @@ final class LoginHistoryTest extends TestCase
 
         $this->assertTrue(true);
     }
+
+    /**
+     * The plain-text password must never be stored in LoginHistory.
+     */
+    public function test_plain_password_is_not_stored_in_login_history(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'security@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->postJson(
+            $this->loginUrl,
+            [
+                'email' => $user->email,
+                'password' => 'password',
+            ],
+        )->assertOk();
+
+        /*
+         * LoginHistory must never contain a password column/value.
+         */
+        $history = LoginHistory::query()
+            ->where('user_id', $user->getKey())
+            ->firstOrFail();
+
+        $attributes = $history->getAttributes();
+
+        foreach ($attributes as $value) {
+            if (is_string($value)) {
+                $this->assertStringNotContainsString(
+                    'password',
+                    strtolower($value),
+                );
+            }
+        }
+    }
 }
