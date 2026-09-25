@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('authentication')
     ->name('authentication.')
+    ->middleware('web')
     ->group(function (): void {
         /*
          * Display authentication endpoint.
