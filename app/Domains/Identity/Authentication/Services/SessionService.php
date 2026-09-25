@@ -111,9 +111,11 @@ final class SessionService extends BaseService
      */
     public function current(
         User $user,
+        string $sessionId,
     ): ?AuthenticationSession {
         return AuthenticationSession::query()
             ->where('user_id', $user->getKey())
+            ->where('session_id', $sessionId)
             ->whereNull('revoked_at')
             ->latest('authenticated_at')
             ->first();
