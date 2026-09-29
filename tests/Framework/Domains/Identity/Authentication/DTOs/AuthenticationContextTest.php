@@ -103,4 +103,15 @@ final class AuthenticationContextTest extends TestCase
             );
         }
     }
+
+    public function test_authentication_context_is_readonly(): void
+    {
+        $reflection = new \ReflectionClass(
+            AuthenticationContext::class
+        );
+
+        $this->assertTrue(
+            $reflection->isReadOnly()
+        );
+    }
 }

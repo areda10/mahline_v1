@@ -120,6 +120,23 @@ final class SessionService extends BaseService
             ->latest('authenticated_at')
             ->first();
     }
+    /**
+     * Return an active authentication session by its stable ID.
+     *
+     * The authentication session ID is independent from the
+     * Laravel session ID and therefore remains stable even when
+     * Laravel regenerates the browser session.
+     */
+    public function findActiveById(
+        User $user,
+        string $authenticationSessionId,
+    ): ?AuthenticationSession {
+        return AuthenticationSession::query()
+            ->whereKey($authenticationSessionId)
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->first();
+    }
 
     /**
      * Revoke all active authentication sessions of a user.
@@ -232,4 +249,5 @@ final class SessionService extends BaseService
 
         return true;
     }
+
 }
