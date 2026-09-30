@@ -18,7 +18,7 @@ final class AuthenticationService extends BaseService
     public function __construct(
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
-        private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
+        // private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
         private readonly SecurityEventService $securityEventService,
     ) {
     }
@@ -195,10 +195,10 @@ final class AuthenticationService extends BaseService
          * The device is remembered here, but the Web authentication
          * session is deliberately NOT created here.
          */
-        $this->unusualActivityDetectionService->rememberDevice(
-            user: $user,
-            device: (string) $context->device,
-        );
+        // $this->unusualActivityDetectionService->rememberDevice(
+        //     user: $user,
+        //     device: (string) $context->device,
+        // );
 
         /*
          * Reset failed authentication counters.
