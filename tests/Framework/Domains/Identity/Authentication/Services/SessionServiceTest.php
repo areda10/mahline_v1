@@ -12,6 +12,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use ReflectionClass;
 use ReflectionNamedType;
 use Tests\TestCase;
@@ -476,6 +477,7 @@ final class SessionServiceTest extends TestCase
          */
         $current = $this->sessionService->current(
             user: $user,
+            sessionId: 'session-a',
         );
 
         $this->assertNotNull($current);
@@ -505,6 +507,7 @@ final class SessionServiceTest extends TestCase
         $this->assertNull(
             $this->sessionService->current(
                 user: $user,
+                sessionId: 'session-a',
             )
         );
 
@@ -527,6 +530,7 @@ final class SessionServiceTest extends TestCase
         $this->assertNull(
             $this->sessionService->current(
                 user: $user,
+                sessionId: 'session-a',
             )
         );
     }
