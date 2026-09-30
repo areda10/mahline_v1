@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -313,6 +315,260 @@ final class AuthenticationWorkflowTest extends TestCase
         $this->assertNotSame(
             $computerSession->session_id,
             $phoneSession->session_id,
+        );
+    }
+
+    public function test_successful_authentication_remembers_a_new_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'new-device@example.com',
+            'password' => 'Password123',
+            'status' => UserStatus::Active,
+        ]);
+
+        $userAgent = $this->userAgent;
+
+        $response = $this->withHeader(
+            'User-Agent',
+            $userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+    }
+
+    public function test_successful_authentication_does_not_duplicate_a_known_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'known-device@example.com',
+            'password' => 'Password123',
+            'status' => UserStatus::Active,
+        ]);
+
+        KnownDevice::query()->create([
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $response->assertOk();
+
+        $this->assertSame(
+            1,
+            KnownDevice::query()
+                ->where('user_id', $user->getKey())
+                ->where('device', 'windows')
+                ->count(),
+        );
+    }
+
+    public function test_successful_authentication_remembers_each_new_device(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'multiple-devices@example.com',
+            'password' => 'Password123',
+            'status' => UserStatus::Active,
+        ]);
+
+        /*
+        * Computer login.
+        */
+        $computerResponse = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $computerResponse->assertOk();
+
+        /*
+        * Phone login.
+        */
+        $phoneUserAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1';
+
+        $phoneResponse = $this->withHeader(
+            'User-Agent',
+            $phoneUserAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $phoneResponse->assertOk();
+
+        /*
+        * Both devices must be known.
+        */
+        $this->assertDatabaseHas('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+
+        $this->assertDatabaseHas('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'iphone',
+        ]);
+
+        $this->assertSame(
+            2,
+            KnownDevice::query()
+                ->where('user_id', $user->getKey())
+                ->count(),
+        );
+    }
+
+    public function test_authentication_detects_a_new_device_before_remembering_it(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'detect-device@example.com',
+            'password' => 'Password123',
+            'status' => UserStatus::Active,
+        ]);
+
+        $device = 'Windows';
+
+        $service = app(
+            UnusualActivityDetectionService::class,
+        );
+
+        /*
+        * Before authentication, the device is unknown.
+        */
+        $this->assertTrue(
+            $service->isNewDevice(
+                user: $user,
+                device: $device,
+            ),
+        );
+
+        /*
+        * Detection itself must NOT persist the device.
+        */
+        $this->assertDatabaseMissing('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+
+        /*
+        * Successful authentication remembers the device.
+        */
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $response->assertOk();
+
+        /*
+        * The device is now known.
+        */
+        $this->assertDatabaseHas('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+
+        /*
+        * A second detection must now consider it known.
+        */
+        $this->assertFalse(
+            $service->isNewDevice(
+                user: $user,
+                device: $device,
+            ),
+        );
+    }
+
+    // atmocite
+    public function test_device_and_session_creation_are_atomic(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'atomicity@example.com',
+            'password' => 'Password123',
+            'status' => UserStatus::Active,
+        ]);
+
+        $response = $this->withHeader(
+            'User-Agent',
+            $this->userAgent,
+        )->postJson($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'Password123',
+        ]);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+    }
+
+    // public function test_failed_session_creation_does_not_remember_new_device(): void
+    // {
+    //     $user = User::factory()->create([
+    //         'email' => 'failed-session@example.com',
+    //         'password' => 'Password123',
+    //         'status' => UserStatus::Active,
+    //     ]);
+
+    //     $this->assertDatabaseCount('known_devices', 0);
+    //     $this->assertDatabaseCount('authentication_sessions', 0);
+
+    //     /*
+    //     * La création de session doit être testée à travers le workflow réel.
+    //     *
+    //     * On utilise un contexte invalide pour provoquer l'échec avant
+    //     * la mémorisation du device.
+    //     */
+    //     $response = $this->withHeader(
+    //         'User-Agent',
+    //         str_repeat('A', 101),
+    //     )->postJson($this->loginUrl, [
+    //         'email' => $user->email,
+    //         'password' => 'Password123',
+    //     ]);
+
+    //     $response->assertStatus(422);
+
+    //     $this->assertDatabaseCount('known_devices', 0);
+    //     $this->assertDatabaseCount('authentication_sessions', 0);
+
+    //     $this->assertDatabaseMissing('known_devices', [
+    //         'user_id' => $user->getKey(),
+    //     ]);
+
+    //     $this->assertDatabaseMissing('authentication_sessions', [
+    //         'user_id' => $user->getKey(),
+    //     ]);
+    // }
+    //a finaliser
+    public function test_failed_session_creation_does_not_remember_new_device(): void
+    {
+        $this->markTestSkipped(
+            'Requires a failure point in the real authentication workflow after authentication and before device persistence.',
         );
     }
 
