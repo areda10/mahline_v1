@@ -18,7 +18,6 @@ final class AuthenticationService extends BaseService
     public function __construct(
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
-        // private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
         private readonly SecurityEventService $securityEventService,
     ) {
     }
@@ -29,9 +28,10 @@ final class AuthenticationService extends BaseService
      * This service is responsible for authentication and security
      * verification only.
      *
-     * Creation of the Web authentication session is intentionally
-     * handled by the HTTP layer after Laravel regenerates the
-     * session ID.
+     * Creation of the Web authentication session, browser tracking,
+     * and successful login history persistence are intentionally
+     * handled by the authentication workflow after Laravel
+     * regenerates the session ID.
      */
     public function authenticate(
         AuthenticationContext $context,
@@ -83,7 +83,7 @@ final class AuthenticationService extends BaseService
             );
 
             throw new RuntimeException(
-                'User account is not active.'
+                'User account is not active.',
             );
         }
 
@@ -107,7 +107,7 @@ final class AuthenticationService extends BaseService
             );
 
             throw new RuntimeException(
-                'IP address is temporarily locked.'
+                'IP address is temporarily locked.',
             );
         }
 
@@ -126,7 +126,7 @@ final class AuthenticationService extends BaseService
             );
 
             throw new RuntimeException(
-                'Account is temporarily locked.'
+                'Account is temporarily locked.',
             );
         }
 
@@ -185,23 +185,20 @@ final class AuthenticationService extends BaseService
             );
 
             throw new RuntimeException(
-                'Invalid credentials.'
+                'Invalid credentials.',
             );
         }
 
         /*
          * Successful authentication.
          *
-         * The device is remembered here, but the Web authentication
-         * session is deliberately NOT created here.
-         */
-        // $this->unusualActivityDetectionService->rememberDevice(
-        //     user: $user,
-        //     device: (string) $context->device,
-        // );
-
-        /*
-         * Reset failed authentication counters.
+         * IMPORTANT:
+         *
+         * This service does not create the Web authentication
+         * session and does not remember the device.
+         *
+         * Those operations belong to the authentication workflow
+         * after Laravel regenerates the session ID.
          */
         $this->securityService->clearFailedAttempts(
             $email,
