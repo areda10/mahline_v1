@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
@@ -12,7 +13,9 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 use Tests\TestCase;
 
 final class AuthenticationWorkflowTest extends TestCase
@@ -526,50 +529,69 @@ final class AuthenticationWorkflowTest extends TestCase
         ]);
     }
 
-    // public function test_failed_session_creation_does_not_remember_new_device(): void
-    // {
-    //     $user = User::factory()->create([
-    //         'email' => 'failed-session@example.com',
-    //         'password' => 'Password123',
-    //         'status' => UserStatus::Active,
-    //     ]);
-
-    //     $this->assertDatabaseCount('known_devices', 0);
-    //     $this->assertDatabaseCount('authentication_sessions', 0);
-
-    //     /*
-    //     * La création de session doit être testée à travers le workflow réel.
-    //     *
-    //     * On utilise un contexte invalide pour provoquer l'échec avant
-    //     * la mémorisation du device.
-    //     */
-    //     $response = $this->withHeader(
-    //         'User-Agent',
-    //         str_repeat('A', 101),
-    //     )->postJson($this->loginUrl, [
-    //         'email' => $user->email,
-    //         'password' => 'Password123',
-    //     ]);
-
-    //     $response->assertStatus(422);
-
-    //     $this->assertDatabaseCount('known_devices', 0);
-    //     $this->assertDatabaseCount('authentication_sessions', 0);
-
-    //     $this->assertDatabaseMissing('known_devices', [
-    //         'user_id' => $user->getKey(),
-    //     ]);
-
-    //     $this->assertDatabaseMissing('authentication_sessions', [
-    //         'user_id' => $user->getKey(),
-    //     ]);
-    // }
-    //a finaliser
     public function test_failed_session_creation_does_not_remember_new_device(): void
     {
-        $this->markTestSkipped(
-            'Requires a failure point in the real authentication workflow after authentication and before device persistence.',
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'password' => Hash::make('ValidPassword123'),
+        ]);
+
+        $device = 'Windows';
+
+        $failingHook = new class implements AuthenticationWorkflowHook
+        {
+            public function afterDeviceRemembered(
+                User $user,
+                AuthenticationSession $session,
+            ): void {
+                throw new RuntimeException(
+                    'Controlled authentication workflow failure.',
+                );
+            }
+        };
+
+        $this->app->instance(
+            AuthenticationWorkflowHook::class,
+            $failingHook,
         );
+
+        $loginUrl = route('authentication.login.store');
+
+        $response = $this->withSession([
+            '_token' => csrf_token(),
+        ])->postJson($loginUrl, [
+            'email' => $user->email,
+            'password' => 'ValidPassword123',
+        ]);
+
+        $response->assertStatus(401);
+
+        $response->assertJson([
+            'message' => 'Controlled authentication workflow failure.',
+        ]);
+
+        /*
+        * The failure happened after:
+        *
+        * 1. AuthenticationSession creation
+        * 2. KnownDevice creation
+        *
+        * Both must therefore have been rolled back.
+        */
+
+        $this->assertDatabaseMissing('authentication_sessions', [
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->assertDatabaseMissing('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => mb_strtolower($device),
+        ]);
+
+        $this->assertDatabaseMissing('login_histories', [
+            'user_id' => $user->getKey(),
+            'event' => 'success',
+        ]);
     }
 
 }

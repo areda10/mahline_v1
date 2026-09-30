@@ -6,24 +6,20 @@ namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
-use App\Domains\Identity\Authentication\Services\AuthenticationService;
-use App\Domains\Identity\Authentication\Services\LoginHistoryService;
+// use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Authentication\Services\SessionService;
-use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
+use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class AuthenticationController
 {
     public function __construct(
-        private readonly AuthenticationService $authenticationService,
+        private readonly AuthenticationWorkflow $authenticationWorkflow,
         private readonly SessionService $sessionService,
-        private readonly LoginHistoryService $loginHistoryService,
-        private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
     ) {
     }
 
@@ -40,8 +36,13 @@ final class AuthenticationController
         );
 
         try {
-            $user = $this->authenticationService->authenticate(
+            /*
+             * AuthenticationWorkflow owns the complete authentication
+             * transaction after authentication succeeds.
+             */
+            $authenticationSession = $this->authenticationWorkflow->execute(
                 context: $context,
+                sessionId: $context->sessionId,
             );
         } catch (ModelNotFoundException) {
             return response()->json([
@@ -53,100 +54,13 @@ final class AuthenticationController
             ], 401);
         }
 
-        /*
-         * Authenticate the Laravel user.
-         */
-        Auth::login($user);
+        $user = Auth::user();
 
-        /*
-         * Regenerate the Laravel session ID after authentication.
-         *
-         * The AuthenticationSession must use this new ID.
-         */
-        $request->session()->regenerate();
-
-        $newSessionId = $request->session()->getId();
-
-        /*
-         * Complete the Web authentication workflow atomically.
-         *
-         * The following operations belong to one database transaction:
-         *
-         * 1. create AuthenticationSession
-         * 2. remember KnownDevice
-         * 3. record successful LoginHistory
-         *
-         * If one of these operations fails, all database changes
-         * performed inside this transaction are rolled back.
-         */
-        $authenticationSession = DB::transaction(
-            function () use (
-                $user,
-                $context,
-                $newSessionId,
-            ) {
-                /*
-                 * Create the domain authentication session.
-                 *
-                 * Existing sessions are deliberately preserved.
-                 */
-                $authenticationSession = $this->sessionService->create(
-                    user: $user,
-                    sessionId: $newSessionId,
-                    ipAddress: $context->ipAddress,
-                    userAgent: $context->userAgent,
-                    browser: $context->browser,
-                    device: $context->device,
-                );
-
-                /*
-                 * Remember the authenticated device.
-                 *
-                 * This is deliberately executed only after the
-                 * AuthenticationSession has been successfully created.
-                 */
-                if ($context->device !== null) {
-                    $this->unusualActivityDetectionService->rememberDevice(
-                        user: $user,
-                        device: $context->device,
-                    );
-                }
-
-                /*
-                 * Record the successful authentication.
-                 */
-                $this->loginHistoryService->recordSuccess(
-                    user: $user,
-                    session: $authenticationSession,
-                    ipAddress: $context->ipAddress,
-                    userAgent: $context->userAgent,
-                    browser: $context->browser,
-                    device: $context->device,
-                );
-
-                return $authenticationSession;
-            },
-        );
-
-        /*
-         * Store the stable domain authentication-session ID
-         * inside the Laravel session.
-         *
-         * IMPORTANT:
-         *
-         * This is NOT the Laravel session ID.
-         *
-         * Laravel may regenerate its session ID during the
-         * authentication lifecycle.
-         *
-         * The AuthenticationSession ID must remain stable so
-         * logout can identify exactly which Web authentication
-         * session must be revoked.
-         */
-        $request->session()->put(
-            'authentication_session_id',
-            $authenticationSession->getKey(),
-        );
+        if ($user === null) {
+            return response()->json([
+                'message' => 'Authentication failed.',
+            ], 401);
+        }
 
         return response()->json([
             'message' => 'Authentication successful.',
@@ -175,18 +89,6 @@ final class AuthenticationController
             ], 401);
         }
 
-        /*
-         * Retrieve the stable AuthenticationSession ID stored
-         * during login.
-         *
-         * Do NOT use:
-         *
-         *     $request->session()->getId()
-         *
-         * here.
-         *
-         * Laravel may have regenerated the browser session ID.
-         */
         $authenticationSessionId = $request->session()->get(
             'authentication_session_id',
         );
@@ -200,20 +102,6 @@ final class AuthenticationController
             ], 401);
         }
 
-        /*
-         * Retrieve exactly this user's active authentication
-         * session.
-         *
-         * This preserves the multi-session architecture:
-         *
-         * User
-         *  ├── Computer session
-         *  ├── Phone session
-         *  └── Tablet session
-         *
-         * Logout revokes ONLY the session represented by this
-         * authentication_session_id.
-         */
         $authenticationSession = $this->sessionService->findActiveById(
             user: $user,
             authenticationSessionId: $authenticationSessionId,
@@ -225,9 +113,6 @@ final class AuthenticationController
             ], 401);
         }
 
-        /*
-         * Revoke only the current authentication session.
-         */
         $revoked = $this->sessionService->revoke(
             session: $authenticationSession,
             reason: 'logout',
@@ -239,22 +124,12 @@ final class AuthenticationController
             ], 401);
         }
 
-        /*
-         * Remove Laravel authentication.
-         */
         Auth::logout();
 
-        /*
-         * Remove the stable authentication-session context
-         * from the current Laravel session before invalidation.
-         */
         $request->session()->forget(
             'authentication_session_id',
         );
 
-        /*
-         * Invalidate the browser session.
-         */
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
