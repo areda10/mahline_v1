@@ -15,7 +15,7 @@ final class UserRoleTest extends TestCase
     public function test_user_role_table_exists(): void
     {
         $this->assertTrue(
-            Schema::hasTable('user_role')
+            Schema::hasTable('user_role'),
         );
     }
 
@@ -25,7 +25,7 @@ final class UserRoleTest extends TestCase
             Schema::hasColumns('user_role', [
                 'user_id',
                 'role_id',
-            ])
+            ]),
         );
     }
 
@@ -33,43 +33,60 @@ final class UserRoleTest extends TestCase
     {
         $foreignKeys = Schema::getForeignKeys('user_role');
 
-        $this->assertTrue(
-            collect($foreignKeys)->contains(
-                fn (array $foreignKey): bool =>
-                    $foreignKey['columns'] === ['user_id']
-                    && $foreignKey['foreign_table'] === 'users'
-                    && $foreignKey['foreign_columns'] === ['id']
-            )
+        $foreignKey = collect($foreignKeys)->first(
+            static fn ($foreignKey): bool =>
+                $foreignKey->columns === ['user_id']
+                && $foreignKey->foreignTable === 'users'
+                && $foreignKey->foreignColumns === ['id'],
         );
+
+        $this->assertNotNull($foreignKey);
     }
 
     public function test_user_role_has_role_foreign_key(): void
     {
         $foreignKeys = Schema::getForeignKeys('user_role');
 
-        $this->assertTrue(
-            collect($foreignKeys)->contains(
-                fn (array $foreignKey): bool =>
-                    $foreignKey['columns'] === ['role_id']
-                    && $foreignKey['foreign_table'] === 'roles'
-                    && $foreignKey['foreign_columns'] === ['id']
-            )
+        $foreignKey = collect($foreignKeys)->first(
+            static fn ($foreignKey): bool =>
+                $foreignKey->columns === ['role_id']
+                && $foreignKey->foreignTable === 'roles'
+                && $foreignKey->foreignColumns === ['id'],
         );
+
+        $this->assertNotNull($foreignKey);
     }
 
     public function test_user_role_has_unique_constraint(): void
     {
         $indexes = Schema::getIndexes('user_role');
 
-        $this->assertTrue(
-            collect($indexes)->contains(
-                fn (array $index): bool =>
-                    $index['unique'] === true
-                    && $index['columns'] === [
-                        'user_id',
-                        'role_id',
-                    ]
-            )
+        $uniqueIndex = collect($indexes)->first(
+            static fn ($index): bool =>
+                $index['unique'] === true
+                && $index['columns'] === [
+                    'user_id',
+                    'role_id',
+                ],
+        );
+
+        $this->assertNotNull($uniqueIndex);
+    }
+
+    public function test_user_role_has_no_timestamps(): void
+    {
+        $this->assertFalse(
+            Schema::hasColumns('user_role', [
+                'created_at',
+                'updated_at',
+            ]),
+        );
+    }
+
+    public function test_user_role_has_no_soft_delete_column(): void
+    {
+        $this->assertFalse(
+            Schema::hasColumn('user_role', 'deleted_at'),
         );
     }
 }

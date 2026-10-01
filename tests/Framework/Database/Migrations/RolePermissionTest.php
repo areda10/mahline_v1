@@ -15,7 +15,7 @@ final class RolePermissionTest extends TestCase
     public function test_role_permission_table_exists(): void
     {
         $this->assertTrue(
-            Schema::hasTable('role_permission')
+            Schema::hasTable('role_permission'),
         );
     }
 
@@ -25,7 +25,7 @@ final class RolePermissionTest extends TestCase
             Schema::hasColumns('role_permission', [
                 'role_id',
                 'permission_id',
-            ])
+            ]),
         );
     }
 
@@ -35,11 +35,11 @@ final class RolePermissionTest extends TestCase
 
         $this->assertTrue(
             collect($foreignKeys)->contains(
-                fn (array $foreignKey): bool =>
+                static fn (array $foreignKey): bool =>
                     $foreignKey['columns'] === ['role_id']
                     && $foreignKey['foreign_table'] === 'roles'
-                    && $foreignKey['foreign_columns'] === ['id']
-            )
+                    && $foreignKey['foreign_columns'] === ['id'],
+            ),
         );
     }
 
@@ -49,11 +49,11 @@ final class RolePermissionTest extends TestCase
 
         $this->assertTrue(
             collect($foreignKeys)->contains(
-                fn (array $foreignKey): bool =>
+                static fn (array $foreignKey): bool =>
                     $foreignKey['columns'] === ['permission_id']
                     && $foreignKey['foreign_table'] === 'permissions'
-                    && $foreignKey['foreign_columns'] === ['id']
-            )
+                    && $foreignKey['foreign_columns'] === ['id'],
+            ),
         );
     }
 
@@ -63,13 +63,30 @@ final class RolePermissionTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                fn (array $index): bool =>
+                static fn (array $index): bool =>
                     $index['unique'] === true
                     && $index['columns'] === [
                         'role_id',
                         'permission_id',
-                    ]
-            )
+                    ],
+            ),
+        );
+    }
+
+    public function test_role_permission_has_no_timestamps(): void
+    {
+        $this->assertFalse(
+            Schema::hasColumns('role_permission', [
+                'created_at',
+                'updated_at',
+            ]),
+        );
+    }
+
+    public function test_role_permission_has_no_soft_delete_column(): void
+    {
+        $this->assertFalse(
+            Schema::hasColumn('role_permission', 'deleted_at'),
         );
     }
 }
