@@ -6,10 +6,13 @@ namespace Tests\Framework\Domains\Identity\Users\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Tests\TestCase;
@@ -198,5 +201,27 @@ final class UserTest extends TestCase
         self::assertNotContains('created_at', $fillable);
         self::assertNotContains('updated_at', $fillable);
         self::assertNotContains('deleted_at', $fillable);
+    }
+
+    public function test_user_uses_has_factory_trait(): void 
+    { 
+        self::assertContains( 
+            HasFactory::class, 
+            class_uses_recursive(User::class), 
+            ); 
+    }
+
+    public function test_user_defines_roles_relationship(): void 
+    { 
+        $user = new User(); 
+        self::assertInstanceOf( 
+            BelongsToMany::class, 
+            $user->roles(), 
+        ); 
+        
+        self::assertSame( 
+            Role::class, 
+            $user->roles()->getRelated()::class, 
+        ); 
     }
 }
