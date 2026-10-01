@@ -13,20 +13,26 @@ final class AuthenticationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private string $loginUrl = '/authentication/login';
+    private string $loginUrl;
 
-    private string $logoutUrl = '/authentication/logout';
+    private string $logoutUrl;
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
         . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/120.0.0.0 Safari/537.36';
+        . 'Chrome/140.0.0.0 Safari/537.36';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->loginUrl = route('authentication.login.store');
+        $this->logoutUrl = route('authentication.logout');
+    }
 
     public function test_guest_cannot_logout(): void
     {
-        $response = $this->postJson(
-            $this->logoutUrl,
-        );
+        $response = $this->postJson($this->logoutUrl);
 
         $response->assertStatus(401);
 
@@ -37,10 +43,7 @@ final class AuthenticationControllerTest extends TestCase
 
     public function test_authentication_request_validates_required_fields(): void
     {
-        $response = $this->postJson(
-            $this->loginUrl,
-            [],
-        );
+        $response = $this->postJson($this->loginUrl, []);
 
         $response->assertStatus(422);
 
@@ -85,10 +88,7 @@ final class AuthenticationControllerTest extends TestCase
         ]);
 
         $response = $this
-            ->withHeader(
-                'User-Agent',
-                $this->userAgent,
-            )
+            ->withHeader('User-Agent', $this->userAgent)
             ->postJson(
                 $this->loginUrl,
                 [
