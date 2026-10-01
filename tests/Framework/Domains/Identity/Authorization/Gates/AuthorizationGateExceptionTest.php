@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authorization\Gates;
 
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,9 +15,11 @@ final class AuthorizationGateExceptionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_gate_authorize_throws_for_user_without_permission(): void
+    public function test_gate_authorize_throws_for_active_user_without_permission(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
         $this->expectException(AuthorizationException::class);
 
@@ -25,7 +28,9 @@ final class AuthorizationGateExceptionTest extends TestCase
 
     public function test_gate_authorize_denies_unknown_permission(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
         $this->expectException(AuthorizationException::class);
 

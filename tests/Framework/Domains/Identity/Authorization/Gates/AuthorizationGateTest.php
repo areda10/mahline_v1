@@ -6,6 +6,7 @@ namespace Tests\Framework\Domains\Identity\Authorization\Gates;
 
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -15,9 +16,11 @@ final class AuthorizationGateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_gate_allows_user_with_permission(): void
+    public function test_gate_allows_active_user_with_permission(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
         $role = Role::query()->create([
             'name' => 'Administrator',
@@ -33,22 +36,26 @@ final class AuthorizationGateTest extends TestCase
         $user->roles()->attach($role);
 
         $this->assertTrue(
-            Gate::forUser($user)->allows('users.manage')
+            Gate::forUser($user)->allows('users.manage'),
         );
     }
 
-    public function test_gate_denies_user_without_permission(): void
+    public function test_gate_denies_active_user_without_permission(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
         $this->assertFalse(
-            Gate::forUser($user)->allows('users.manage')
+            Gate::forUser($user)->allows('users.manage'),
         );
     }
 
     public function test_gate_allows_permission_inherited_from_role(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
         $role = Role::query()->create([
             'name' => 'Manager',
@@ -64,16 +71,18 @@ final class AuthorizationGateTest extends TestCase
         $user->roles()->attach($role);
 
         $this->assertTrue(
-            Gate::forUser($user)->allows('products.manage')
+            Gate::forUser($user)->allows('products.manage'),
         );
     }
 
     public function test_gate_denies_unknown_ability(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
         $this->assertFalse(
-            Gate::forUser($user)->allows('unknown.permission')
+            Gate::forUser($user)->allows('unknown.permission'),
         );
     }
 }
