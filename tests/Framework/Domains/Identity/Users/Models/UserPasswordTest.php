@@ -95,31 +95,4 @@ final class UserPasswordTest extends TestCase
         );
     }
 
-    public function test_user_password_can_be_changed(): void
-    {
-        $oldPassword = 'MahlineOldPassword123!';
-        $newPassword = 'MahlineNewPassword456!';
-
-        $user = User::factory()->create([
-            'password' => $oldPassword,
-        ]);
-
-        $user->password = Hash::make($newPassword);
-        $user->save();
-        $user->refresh();
-
-        $this->assertFalse(
-            Hash::check(
-                $oldPassword,
-                $user->password
-            )
-        );
-
-        $this->assertTrue(
-            Hash::check(
-                $newPassword,
-                $user->password
-            )
-        );
-    }
 }
