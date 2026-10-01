@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Domains\Identity\Authorization;
+namespace Tests\Framework\Domains\Identity\Authorization\Models;
 
 use App\Domains\Identity\Authorization\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;

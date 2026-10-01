@@ -4,49 +4,66 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Users\Models;
 
-
 use App\Core\Foundation\Models\BaseModel;
+use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 use Tests\TestCase;
 
 final class UserTest extends TestCase
 {
     public function test_user_extends_base_model(): void
     {
-        $this->assertInstanceOf(
+        self::assertInstanceOf(
             BaseModel::class,
-            new User()
+            new User(),
         );
     }
 
     public function test_user_implements_authenticatable_contract(): void
     {
-        $this->assertTrue(
+        self::assertTrue(
             is_a(
                 User::class,
                 AuthenticatableContract::class,
-                true
-            )
+                true,
+            ),
         );
     }
 
     public function test_user_uses_authenticatable_trait(): void
     {
-        $this->assertContains(
+        self::assertContains(
             Authenticatable::class,
-            class_uses_recursive(User::class)
+            class_uses_recursive(User::class),
+        );
+    }
+
+    public function test_user_uses_api_tokens_trait(): void
+    {
+        self::assertContains(
+            HasApiTokens::class,
+            class_uses_recursive(User::class),
+        );
+    }
+
+    public function test_user_uses_authorization_trait(): void
+    {
+        self::assertContains(
+            HasAuthorization::class,
+            class_uses_recursive(User::class),
         );
     }
 
     public function test_user_uses_soft_deletes_trait(): void
     {
-        $this->assertContains(
+        self::assertContains(
             SoftDeletes::class,
-            class_uses_recursive(User::class)
+            class_uses_recursive(User::class),
         );
     }
 
@@ -54,9 +71,9 @@ final class UserTest extends TestCase
     {
         $user = new User();
 
-        $this->assertSame(
+        self::assertSame(
             'users',
-            $user->getTable()
+            $user->getTable(),
         );
     }
 
@@ -64,13 +81,13 @@ final class UserTest extends TestCase
     {
         $user = new User();
 
-        $this->assertSame(
+        self::assertSame(
             'string',
-            $user->getKeyType()
+            $user->getKeyType(),
         );
 
-        $this->assertFalse(
-            $user->getIncrementing()
+        self::assertFalse(
+            $user->getIncrementing(),
         );
     }
 
@@ -78,8 +95,8 @@ final class UserTest extends TestCase
     {
         $user = new User();
 
-        $this->assertTrue(
-            $user->usesTimestamps()
+        self::assertTrue(
+            $user->usesTimestamps(),
         );
     }
 
@@ -89,14 +106,14 @@ final class UserTest extends TestCase
 
         $casts = $user->getCasts();
 
-        $this->assertArrayHasKey(
+        self::assertArrayHasKey(
             'status',
-            $casts
+            $casts,
         );
 
-        $this->assertSame(
+        self::assertSame(
             UserStatus::class,
-            $casts['status']
+            $casts['status'],
         );
     }
 
@@ -104,9 +121,9 @@ final class UserTest extends TestCase
     {
         $user = new User();
 
-        $this->assertSame(
+        self::assertSame(
             'datetime',
-            $user->getCasts()['email_verified_at']
+            $user->getCasts()['email_verified_at'],
         );
     }
 
@@ -114,9 +131,19 @@ final class UserTest extends TestCase
     {
         $user = new User();
 
-        $this->assertSame(
+        self::assertSame(
             'hashed',
-            $user->getCasts()['password']
+            $user->getCasts()['password'],
+        );
+    }
+
+    public function test_user_casts_deleted_at_to_datetime(): void
+    {
+        $user = new User();
+
+        self::assertSame(
+            'datetime',
+            $user->getCasts()['deleted_at'],
         );
     }
 
@@ -126,14 +153,14 @@ final class UserTest extends TestCase
 
         $hidden = $user->getHidden();
 
-        $this->assertContains(
+        self::assertContains(
             'password',
-            $hidden
+            $hidden,
         );
 
-        $this->assertContains(
+        self::assertContains(
             'remember_token',
-            $hidden
+            $hidden,
         );
     }
 
@@ -153,9 +180,9 @@ final class UserTest extends TestCase
             'timezone',
         ];
 
-        $this->assertSame(
+        self::assertSame(
             $expected,
-            $user->getFillable()
+            $user->getFillable(),
         );
     }
 
@@ -165,11 +192,11 @@ final class UserTest extends TestCase
 
         $fillable = $user->getFillable();
 
-        $this->assertNotContains('created_by', $fillable);
-        $this->assertNotContains('updated_by', $fillable);
-        $this->assertNotContains('deleted_by', $fillable);
-        $this->assertNotContains('created_at', $fillable);
-        $this->assertNotContains('updated_at', $fillable);
-        $this->assertNotContains('deleted_at', $fillable);
+        self::assertNotContains('created_by', $fillable);
+        self::assertNotContains('updated_by', $fillable);
+        self::assertNotContains('deleted_by', $fillable);
+        self::assertNotContains('created_at', $fillable);
+        self::assertNotContains('updated_at', $fillable);
+        self::assertNotContains('deleted_at', $fillable);
     }
 }

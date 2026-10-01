@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Domains\Identity\Authorization;
+namespace Tests\Framework\Domains\Identity\Authorization\Relations;
 
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
