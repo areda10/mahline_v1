@@ -506,4 +506,59 @@ final class UnusualActivityDetectionServiceTest extends TestCase
             'device' => 'android',
         ]);
     }
+    // function added from other file
+    public function test_authentication_detects_a_new_device_before_remembering_it(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'detect-device@example.com',
+            'password' => 'Password123',
+            'status' => 'active',
+        ]);
+
+        $device = 'Windows';
+
+        $service = app(
+            UnusualActivityDetectionService::class,
+        );
+
+        self::assertTrue(
+            $service->isNewDevice(
+                user: $user,
+                device: $device,
+            ),
+        );
+
+        $this->assertDatabaseMissing('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+
+        $loginUrl = route('authentication.login.store');
+
+        $response = $this
+            ->withHeader(
+                'User-Agent',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                . 'AppleWebKit/537.36 '
+                . 'Chrome/140.0.0.0 Safari/537.36',
+            )
+            ->postJson($loginUrl, [
+                'email' => $user->email,
+                'password' => 'Password123',
+            ]);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('known_devices', [
+            'user_id' => $user->getKey(),
+            'device' => 'windows',
+        ]);
+
+        self::assertFalse(
+            $service->isNewDevice(
+                user: $user,
+                device: $device,
+            ),
+        );
+    }
 }
