@@ -1,326 +1,157 @@
-# AUTHENTICATION_STANDARD.md
-
-## MAHLINE Framework V1
+# MAHLINE — AUTHENTICATION STANDARD
 
 **Version:** 1.0
-**Status:** Frozen
-**Domain:** Identity
+**Status:** GELÉ
+**Domain:** Identity / Authentication
 
----
+## 1. Fundamental authentication rule
 
-# 1. Purpose
+MAHLINE authentication follows:
 
-This document defines the official authentication standard for the MAHLINE Framework.
+# ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 
-Its objectives are to:
+This is a fundamental architecture rule.
 
-* standardize authentication across the application;
-* improve security;
-* simplify maintenance;
-* provide a consistent API for every authenticated user.
+A user may have several active Web authentication sessions simultaneously.
 
-This document is the reference for every authentication-related component.
-
----
-
-# 2. Authentication Strategy
-
-MAHLINE uses Laravel's authentication system with framework extensions.
-
-Authentication is based on:
-
-* Laravel Authentication
-* Laravel Sanctum
-* ULID identifiers
-* Domain-driven architecture
-* BaseAuthenticatable
-* Identity domain services
-
----
-
-# 3. Authentication Identifier
-
-The official login identifier is:
-
-* Email Address
-
-Future versions may optionally support:
-
-* Username
-* Phone Number
-
-without changing the authentication architecture.
-
----
-
-# 4. Password Standard
-
-Passwords are never stored in plain text.
-
-Requirements:
-
-* Hashed using Laravel Hash
-* Automatically cast using:
-
-```php
-'password' => 'hashed'
-```
-
-Passwords must never be:
-
-* logged
-* serialized
-* returned by APIs
-* exposed in DTOs
-
----
-
-# 5. User Status
-
-Authentication depends on UserStatus.
-
-Allowed statuses:
-
-* Active
-* Pending
-* Inactive
-* Suspended
-* Archived
-
-Only:
+Example:
 
 ```text
-UserStatus::Active
+ONE USER
+│
+├── Computer / Chrome  → Session A → ACTIVE
+├── Computer / Firefox → Session B → ACTIVE
+└── Phone              → Session C → ACTIVE
 ```
 
-is allowed to authenticate.
+A new login does **not** revoke previous active sessions.
 
----
+## 2. Session independence
 
-# 6. Email Verification
+Each Web authentication session has its own lifecycle.
 
-Email verification is supported.
+Therefore:
 
-Users may be required to verify their email before accessing protected features.
+* Session A can be active;
+* Session B can be active;
+* Session C can be revoked;
+* revoking Session C does not revoke A or B.
 
-Verification uses Laravel's native email verification system.
+## 3. Authentication mechanisms
 
----
+MAHLINE separates:
 
-# 7. Authentication Tokens
+```text
+WEB
+└── AuthenticationSession
 
-API authentication uses:
+API
+└── Sanctum PersonalAccessToken
+```
 
-Laravel Sanctum
+The two mechanisms must not be confused.
 
-Rules:
+## 4. Authentication context
 
-* personal access tokens
-* revocable
-* individually identifiable
-* expiration configurable
-* auditable
+Authentication services operate from an explicit `AuthenticationContext`.
 
----
+The domain service must not depend directly on HTTP `Request`.
 
-# 8. Session Management
+The context may contain:
 
-Every login creates a session record.
+* email;
+* transient plain password;
+* Laravel session identifier;
+* IP address;
+* user agent;
+* browser;
+* device.
 
-Each session stores:
+The plain password must never be persisted or recorded in history.
 
-* user
-* browser
-* operating system
-* device type
-* IP address
-* user agent
-* login time
-* logout time
-* last activity
+## 5. Login process
 
----
+A successful login must:
 
-# 9. Browser Tracking
+1. normalize the email;
+2. evaluate authentication security restrictions;
+3. verify credentials;
+4. create a new authentication session;
+5. retain previous active sessions;
+6. record login history;
+7. detect the device;
+8. remember a new device when appropriate.
 
-Browser information is mandatory.
+## 6. Failed authentication
 
-Each authentication records:
+Authentication security tracks failed attempts independently for:
 
-* browser
-* browser version
-* operating system
-* platform
-* device
-* user agent
+* normalized email;
+* IP address.
 
----
+Account and IP lockouts are handled by `AuthenticationSecurityService`.
 
-# 10. Concurrent Sessions
+A locked account or locked IP must be rejected.
 
-Multiple sessions are supported.
+## 7. Client tracking
 
-Authentication policies are configurable.
+Authentication may record:
 
-Supported policies:
+* IP address;
+* user agent;
+* browser;
+* device.
 
-* unlimited sessions
-* one session only
-* one session per browser
-* one session per device
+New-device detection is part of the authentication security workflow.
 
-The active policy is configured in the Identity domain.
+## 8. Logout
 
----
+Normal Web logout revokes only the current authentication session.
 
-# 11. Session Revocation
+It must not revoke other active sessions belonging to the same user.
 
-Users can revoke:
+Global logout is a separate operation and may revoke all active sessions.
 
-* one session
-* multiple sessions
-* all sessions
+## 9. API authentication
 
-Administrators may revoke sessions.
+API tokens are handled separately through Sanctum.
 
----
+Creating an API token:
 
-# 12. Token Revocation
+* does not create a Web session.
 
-Users can revoke:
+Revoking an API token:
 
-* one token
-* all tokens
+* does not revoke a Web session.
 
-Administrators may revoke tokens.
+## 10. Transactions
 
----
+Device and session creation must be atomic.
 
-# 13. Login History
+If session creation fails, a newly detected device must not be incorrectly persisted.
 
-Every authentication event is recorded.
+## 11. Tests
 
-Events include:
+Authentication is covered by:
 
-* login success
-* login failure
-* logout
-* password reset
-* password change
-* token creation
-* token revocation
-* session revocation
+* `AuthenticationContextTest`
+* `AuthenticationServiceTest`
+* `AuthenticationSecurityServiceTest`
+* `SessionServiceTest`
+* `LoginHistoryServiceTest`
+* `SecurityEventServiceTest`
+* `KnownDeviceTest`
+* `UnusualActivityDetectionServiceTest`
+* `AuthenticationWorkflowTest`
+* `AuthenticationWorkflowTransactionTest`
+* `SanctumAuthenticationTest`
 
-Login history is immutable.
+## 12. Freeze rule
 
----
+The rule:
 
-# 14. Audit Integration
+**ONE USER → MULTIPLE ACTIVE WEB SESSIONS**
 
-Authentication integrates with the Audit domain.
+must not be changed implicitly.
 
-Every sensitive action is auditable.
-
-Examples:
-
-* login
-* logout
-* password update
-* email verification
-* session revocation
-* token revocation
-
----
-
-# 15. Security Rules
-
-Authentication must reject:
-
-* archived users
-* suspended users
-* inactive users
-
-Passwords must never be recoverable.
-
-Sensitive information must never be exposed.
-
----
-
-# 16. Extension Points
-
-Authentication may later support:
-
-* Two-Factor Authentication (2FA)
-* Passkeys (WebAuthn)
-* OAuth Providers
-* Social Login
-* Single Sign-On (SSO)
-* Multi-Factor Authentication (MFA)
-
-without changing the core architecture.
-
----
-
-# 17. Foundation Responsibilities
-
-The Foundation provides:
-
-* BaseAuthenticatable
-* authentication abstractions
-* common authentication helpers
-
-The Foundation must not contain business rules.
-
----
-
-# 18. Identity Responsibilities
-
-The Identity domain manages:
-
-* User
-* UserStatus
-* Sessions
-* Tokens
-* Login History
-* Password policies
-* Authentication services
-
-Business rules belong exclusively to the Identity domain.
-
----
-
-# 19. Development Rules
-
-Every authentication component must:
-
-* follow PSR-12
-* use strict types
-* use ULIDs
-* use Enums
-* use Repository pattern
-* use Services
-* use DTOs
-* include automated tests
-
----
-
-# 20. Checklist
-
-Authentication implementation must satisfy:
-
-* ULID identifiers
-* Sanctum integration
-* Email verification
-* Session management
-* Browser tracking
-* Login history
-* Audit integration
-* Password hashing
-* UserStatus validation
-* Automated tests
-
----
-
-# Status
-
-**This document is part of the official MAHLINE Framework V1 specification and is considered frozen.**
+Changing this rule requires an explicit architecture decision and corresponding test/documentation changes.
