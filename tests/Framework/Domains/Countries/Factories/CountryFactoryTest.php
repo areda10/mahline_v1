@@ -13,6 +13,8 @@ final class CountryFactoryTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const COUNTRY_COUNT = 3;
+
     public function test_factory_creates_a_country(): void
     {
         $country = Country::factory()->create();
@@ -95,13 +97,21 @@ final class CountryFactoryTest extends TestCase
     public function test_factory_can_create_multiple_countries(): void
     {
         $countries = Country::factory()
-            ->count(3)
+            ->count(self::COUNTRY_COUNT)
+            ->sequence(
+                ['code' => 'MA', 'iso3' => 'MAR'],
+                ['code' => 'FR', 'iso3' => 'FRA'],
+                ['code' => 'ES', 'iso3' => 'ESP'],
+            )
             ->create();
 
-        self::assertCount(3, $countries);
+        self::assertCount(
+            self::COUNTRY_COUNT,
+            $countries,
+        );
 
         self::assertCount(
-            3,
+            self::COUNTRY_COUNT,
             Country::query()->get(),
         );
     }
@@ -109,16 +119,21 @@ final class CountryFactoryTest extends TestCase
     public function test_factory_generates_unique_country_codes_and_iso_codes(): void
     {
         $countries = Country::factory()
-            ->count(3)
+            ->count(self::COUNTRY_COUNT)
+            ->sequence(
+                ['code' => 'MA', 'iso3' => 'MAR'],
+                ['code' => 'FR', 'iso3' => 'FRA'],
+                ['code' => 'ES', 'iso3' => 'ESP'],
+            )
             ->create();
 
         self::assertCount(
-            3,
+            self::COUNTRY_COUNT,
             $countries->pluck('code')->unique(),
         );
 
         self::assertCount(
-            3,
+            self::COUNTRY_COUNT,
             $countries->pluck('iso3')->unique(),
         );
     }
