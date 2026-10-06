@@ -6,8 +6,9 @@ namespace Database\Factories;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
+
 
 /**
  * @extends Factory<Cooperative>
@@ -22,7 +23,7 @@ final class CooperativeFactory extends Factory
             'name' => fake()->company(),
             'rib' => fake()->numerify('########################'),
             'tax_id' => fake()->optional()->bothify('PAT-#####'),
-            'address_id' => (string) Str::ulid(),
+            'address_id' => Address::factory(),
             'phone' => fake()->numerify('+2126########'),
             'email' => fake()->unique()->safeEmail(),
             'rc' => fake()->optional()->bothify('RC-#####'),
