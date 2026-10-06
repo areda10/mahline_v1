@@ -6,11 +6,14 @@ namespace App\Domains\Cooperatives\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Database\Factories\CooperativeFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -60,6 +63,16 @@ final class Cooperative extends BaseModel
             Address::class,
             'address_id',
         );
+    }
+
+    public function superAdmins(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'super_admin_cooperative',
+            'cooperative_id',
+            'super_admin_id',
+        )->using(SuperAdminCooperative::class);
     }
 
 }

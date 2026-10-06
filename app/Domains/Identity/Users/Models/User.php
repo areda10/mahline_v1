@@ -9,6 +9,7 @@ use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
+use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
@@ -89,7 +90,7 @@ final class User extends BaseModel implements AuthenticatableContract
             'role_id',
         );
     }
-
+    // reste inchangée pour cooperative_admin / user.
     public function cooperative(): BelongsTo
     {
         return $this->belongsTo(
@@ -97,4 +98,15 @@ final class User extends BaseModel implements AuthenticatableContract
             'cooperative_id',
         );
     }
+    // sera réservée au super_admin.
+    public function cooperatives(): BelongsToMany 
+    { 
+        return $this->belongsToMany( 
+            Cooperative::class, 
+            'super_admin_cooperative', 
+            'super_admin_id', 
+            'cooperative_id', 
+            )->using(SuperAdminCooperative::class); 
+    }
+
 }
