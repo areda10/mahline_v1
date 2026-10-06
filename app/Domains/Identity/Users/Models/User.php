@@ -6,6 +6,7 @@ namespace App\Domains\Identity\Users\Models;
 
 
 use App\Core\Foundation\Models\BaseModel;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
 use App\Domains\Identity\Enums\UserStatus;
@@ -14,6 +15,7 @@ use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
@@ -44,6 +46,7 @@ final class User extends BaseModel implements AuthenticatableContract
         'status',
         'locale',
         'timezone',
+        'cooperative_id'
     ];
 
     /**
@@ -84,6 +87,14 @@ final class User extends BaseModel implements AuthenticatableContract
             'user_role',
             'user_id',
             'role_id',
+        );
+    }
+
+    public function cooperative(): BelongsTo
+    {
+        return $this->belongsTo(
+            Cooperative::class,
+            'cooperative_id',
         );
     }
 }

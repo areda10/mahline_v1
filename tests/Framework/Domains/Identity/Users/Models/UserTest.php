@@ -181,6 +181,7 @@ final class UserTest extends TestCase
             'status',
             'locale',
             'timezone',
+            'cooperative_id'
         ];
 
         self::assertSame(
