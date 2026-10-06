@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Localization\Factories;
 
+use App\Domains\Countries\Models\Country;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -12,6 +13,8 @@ use Tests\TestCase;
 final class AddressFactoryTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const ADDRESS_COUNT = 3;
 
     public function test_factory_creates_an_address(): void
     {
@@ -111,15 +114,32 @@ final class AddressFactoryTest extends TestCase
         );
     }
 
+
     public function test_factory_can_create_multiple_addresses(): void
     {
-        $addresses = Address::factory()->count(3)->create();
+        $country = Country::factory()->create();
 
-        self::assertCount(3, $addresses);
+        $addresses = Address::factory()
+            ->count(self::ADDRESS_COUNT)
+            ->create([
+                'country_id' => $country->id,
+            ]);
 
         self::assertCount(
-            3,
+            self::ADDRESS_COUNT,
+            $addresses,
+        );
+
+        self::assertCount(
+            self::ADDRESS_COUNT,
             Address::query()->get(),
+        );
+
+        self::assertTrue(
+            $addresses->every(
+                fn (Address $address): bool =>
+                    $address->country_id === $country->id,
+            ),
         );
     }
 }

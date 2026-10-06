@@ -23,7 +23,10 @@ return new class extends Migration
 
             $table->string('state')->nullable();
 
-            $table->ulid('country_id');
+            $table->foreignUlid('country_id')
+                ->constrained('countries')
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
 
             $table->decimal('latitude', 10, 7)->nullable();
 

@@ -8,6 +8,7 @@ use App\Core\Foundation\Models\BaseModel;
 use Database\Factories\CountryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Country extends BaseModel
@@ -39,5 +40,13 @@ final class Country extends BaseModel
     protected static function newFactory(): Factory
     {
         return CountryFactory::new();
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(
+            \App\Domains\Localization\Models\Address::class,
+            'country_id',
+        );
     }
 }
