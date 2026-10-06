@@ -125,4 +125,22 @@ final class CooperativesTest extends TestCase
             $statusColumn['default'],
         );
     }
+
+    public function test_address_id_is_a_foreign_key_to_addresses(): void
+    {
+        $foreignKeys = \Illuminate\Support\Facades\Schema::getForeignKeys(
+            'cooperatives',
+        );
+
+        $foreignKey = collect($foreignKeys)
+            ->first(
+                fn (array $key): bool =>
+                    $key['columns'] === ['address_id']
+                    && $key['foreign_table'] === 'addresses'
+                    && $key['foreign_columns'] === ['id'],
+            );
+
+        self::assertNotNull($foreignKey);
+    }
+
 }

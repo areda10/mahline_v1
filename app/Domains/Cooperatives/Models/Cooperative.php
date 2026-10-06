@@ -6,9 +6,11 @@ namespace App\Domains\Cooperatives\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Localization\Models\Address;
 use Database\Factories\CooperativeFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -51,4 +53,13 @@ final class Cooperative extends BaseModel
             'cooperative_id',
         );
     }
+
+    public function address(): BelongsTo
+    {
+        return $this->belongsTo(
+            Address::class,
+            'address_id',
+        );
+    }
+
 }

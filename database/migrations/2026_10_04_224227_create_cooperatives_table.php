@@ -15,31 +15,27 @@ return new class extends Migration
             $table->ulidPrimary();
 
             $table->string('name');
-
             $table->string('rib');
-
             $table->string('tax_id')->nullable();
 
-            $table->ulid('address_id');
+            $table->foreignUlid('address_id')
+                ->constrained('addresses')
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
+            $table->index('address_id');
 
             $table->string('phone');
-
             $table->string('email');
-
             $table->string('rc')->nullable();
-
             $table->string('ice');
 
             $table->string('status')
                 ->default(CooperativeStatus::PENDING->value);
 
             $table->auditActorColumns();
-
             $table->timestamps();
-
             $table->softDeletes();
 
-            $table->index('address_id');
             $table->index('status');
             $table->index('email');
             $table->index('ice');
