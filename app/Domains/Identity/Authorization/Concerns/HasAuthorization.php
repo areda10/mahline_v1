@@ -22,6 +22,7 @@ trait HasAuthorization
 
         return $this->roles()
             ->where('slug', $slug)
+            ->where('is_active', true)
             ->exists();
     }
 
@@ -33,6 +34,7 @@ trait HasAuthorization
 
         return $this->roles()
             ->whereIn('slug', $this->normalizeSlugs($roles))
+            ->where('is_active', true)
             ->exists();
     }
 
@@ -47,8 +49,11 @@ trait HasAuthorization
             : $permission;
 
         return $this->roles()
+            ->where('is_active', true)
             ->whereHas('permissions', function ($query) use ($slug): void {
-                $query->where('slug', $slug);
+                $query
+                    ->where('slug', $slug)
+                    ->where('is_active', true);
             })
             ->exists();
     }
@@ -58,12 +63,13 @@ trait HasAuthorization
         if (! $this->isAuthorized()) {
             return false;
         }
-        
+
         return $this->roles()
+            ->where('is_active', true)
             ->whereHas('permissions', function ($query) use ($permissions): void {
-                $query->whereIn(
-                    'slug', 
-                    $this->normalizeSlugs($permissions));
+                $query
+                    ->whereIn('slug', $this->normalizeSlugs($permissions))
+                    ->where('is_active', true);
             })
             ->exists();
     }
@@ -71,9 +77,10 @@ trait HasAuthorization
     private function normalizeSlugs(array $items): array
     {
         return array_map(
-            static fn (string|Role|Permission $item): string => $item instanceof Role || $item instanceof Permission
-                ? $item->slug
-                : $item,
+            static fn (string|Role|Permission $item): string =>
+                $item instanceof Role || $item instanceof Permission
+                    ? $item->slug
+                    : $item,
             $items,
         );
     }
