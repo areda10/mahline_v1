@@ -383,4 +383,94 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_cooperative_admin_cannot_create_super_admin(): void
+    {
+        $country = Country::factory()->create();
+        $cooperative = $this->createCooperative($country);
+
+        $actor = $this->createUserWithRole(
+            'cooperative_admin',
+            $cooperative->id,
+        );
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'The actor is not authorized to assign the "super_admin" role.',
+        );
+
+        $this->service->createUser(
+            $actor,
+            [
+                'first_name' => 'Forbidden',
+                'last_name' => 'Admin',
+                'display_name' => 'Forbidden Admin',
+                'email' => 'forbidden-super-admin@example.com',
+                'telephone' => '+212600000008',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $cooperative->id,
+            ],
+            'super_admin',
+        );
+    }
+
+    public function test_super_admin_cannot_create_another_super_admin(): void
+    {
+        $country = Country::factory()->create();
+        $cooperative = $this->createCooperative($country);
+
+        $actor = $this->createUserWithRole('super_admin');
+
+        $actor->cooperatives()->syncWithoutDetaching([
+            $cooperative->id,
+        ]);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'The actor is not authorized to assign the "super_admin" role.',
+        );
+
+        $this->service->createUser(
+            $actor,
+            [
+                'first_name' => 'Forbidden',
+                'last_name' => 'Admin',
+                'display_name' => 'Forbidden Admin',
+                'email' => 'forbidden-super-admin-2@example.com',
+                'telephone' => '+212600000009',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $cooperative->id,
+            ],
+            'super_admin',
+        );
+    }
+
+    public function test_super_admin_root_cannot_create_another_super_admin_root(): void
+    {
+        $country = Country::factory()->create();
+        $cooperative = $this->createCooperative($country);
+
+        $actor = $this->createUserWithRole('super_admin_root');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'The actor is not authorized to assign the "super_admin_root" role.',
+        );
+
+        $this->service->createUser(
+            $actor,
+            [
+                'first_name' => 'Forbidden',
+                'last_name' => 'Root',
+                'display_name' => 'Forbidden Root',
+                'email' => 'forbidden-root@example.com',
+                'telephone' => '+212600000010',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $cooperative->id,
+            ],
+            'super_admin_root',
+        );
+    }
 }
