@@ -165,4 +165,51 @@ final class UserManagementScopeTest extends TestCase
             ],
         );
     }
+
+    public function test_cooperative_can_retrieve_its_assigned_super_admins(): void
+    {
+        $superAdmin = User::factory()->create();
+
+        $country = Country::factory()->create();
+
+        $address = Address::factory()->create([
+            'country_id' => $country->id,
+        ]);
+
+        $cooperative = Cooperative::factory()->create([
+            'address_id' => $address->id,
+        ]);
+
+        $superAdmin->cooperatives()->attach($cooperative->id);
+
+        self::assertTrue(
+            $cooperative->superAdmins()
+                ->whereKey($superAdmin->id)
+                ->exists(),
+        );
+    }
+
+    public function test_super_admin_cannot_be_assigned_twice_to_same_cooperative(): void
+    {
+        $superAdmin = User::factory()->create();
+
+        $country = Country::factory()->create();
+
+        $address = Address::factory()->create([
+            'country_id' => $country->id,
+        ]);
+
+        $cooperative = Cooperative::factory()->create([
+            'address_id' => $address->id,
+        ]);
+
+        $superAdmin->cooperatives()->attach($cooperative->id);
+
+        $this->expectException(
+            \Illuminate\Database\QueryException::class,
+        );
+
+        $superAdmin->cooperatives()->attach($cooperative->id);
+    }
+
 }
