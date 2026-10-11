@@ -108,4 +108,46 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
             'event' => 'success',
         ]);
     }
+
+    public function test_failed_authentication_workflow_does_not_leave_user_authenticated(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'atomic-auth-state@example.com',
+            'password' => 'ValidPassword123',
+            'status' => 'active',
+        ]);
+
+        $failingHook = new class implements AuthenticationWorkflowHook
+        {
+            public function afterDeviceRemembered(
+                User $user,
+                AuthenticationSession $session,
+            ): void {
+                throw new RuntimeException(
+                    'Controlled authentication workflow failure.',
+                );
+            }
+        };
+
+        $this->app->instance(
+            AuthenticationWorkflowHook::class,
+            $failingHook,
+        );
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'ValidPassword123',
+            ]);
+
+        $response->assertUnauthorized();
+
+        $this->assertDatabaseMissing('authentication_sessions', [
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->assertGuest();
+    }
+
 }

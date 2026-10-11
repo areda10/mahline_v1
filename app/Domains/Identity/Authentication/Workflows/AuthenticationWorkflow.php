@@ -13,7 +13,7 @@ use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Throwable;
 
 final class AuthenticationWorkflow
 {
@@ -34,66 +34,67 @@ final class AuthenticationWorkflow
             context: $context,
         );
 
-        Auth::login($user);
+        try {
+            Auth::login($user);
 
-        /*
-         * Laravel's authenticated session must be regenerated before
-         * creating the domain AuthenticationSession.
-         */
-        request()->session()->regenerate();
+            request()->session()->regenerate();
 
-        $newSessionId = request()->session()->getId();
+            $newSessionId = request()->session()->getId();
 
-        $authenticationSession = DB::transaction(
-            function () use (
-                $user,
-                $context,
-                $newSessionId,
-            ): AuthenticationSession {
-                $authenticationSession = $this->sessionService->create(
-                    user: $user,
-                    sessionId: $newSessionId,
-                    ipAddress: $context->ipAddress,
-                    userAgent: $context->userAgent,
-                    browser: $context->browser,
-                    device: $context->device,
-                );
-
-                if ($context->device !== null) {
-                    $this->unusualActivityDetectionService->rememberDevice(
+            $authenticationSession = DB::transaction(
+                function () use (
+                    $user,
+                    $context,
+                    $newSessionId,
+                ): AuthenticationSession {
+                    $authenticationSession = $this->sessionService->create(
                         user: $user,
+                        sessionId: $newSessionId,
+                        ipAddress: $context->ipAddress,
+                        userAgent: $context->userAgent,
+                        browser: $context->browser,
                         device: $context->device,
                     );
-                }
 
-                /*
-                 * Controlled failure point used by the atomicity test.
-                 *
-                 * In production the default hook does nothing.
-                 */
-                $this->hook->afterDeviceRemembered(
-                    user: $user,
-                    session: $authenticationSession,
-                );
+                    if ($context->device !== null) {
+                        $this->unusualActivityDetectionService->rememberDevice(
+                            user: $user,
+                            device: $context->device,
+                        );
+                    }
 
-                $this->loginHistoryService->recordSuccess(
-                    user: $user,
-                    session: $authenticationSession,
-                    ipAddress: $context->ipAddress,
-                    userAgent: $context->userAgent,
-                    browser: $context->browser,
-                    device: $context->device,
-                );
+                    $this->hook->afterDeviceRemembered(
+                        user: $user,
+                        session: $authenticationSession,
+                    );
 
-                return $authenticationSession;
-            },
-        );
+                    $this->loginHistoryService->recordSuccess(
+                        user: $user,
+                        session: $authenticationSession,
+                        ipAddress: $context->ipAddress,
+                        userAgent: $context->userAgent,
+                        browser: $context->browser,
+                        device: $context->device,
+                    );
 
-        request()->session()->put(
-            'authentication_session_id',
-            $authenticationSession->getKey(),
-        );
+                    return $authenticationSession;
+                },
+            );
 
-        return $authenticationSession;
+            request()->session()->put(
+                'authentication_session_id',
+                $authenticationSession->getKey(),
+            );
+
+            return $authenticationSession;
+        } catch (Throwable $exception) {
+            Auth::logout();
+
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            throw $exception;
+        }
     }
+
 }
