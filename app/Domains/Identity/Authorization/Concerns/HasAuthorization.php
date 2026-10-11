@@ -12,13 +12,6 @@ trait HasAuthorization
 {
     public function hasRole(string|Role $role): bool
     {
-        // $slug = $role instanceof Role
-        //     ? $role->slug
-        //     : $role;
-
-        // return $this->roles()
-        //     ->where('slug', $slug)
-        //     ->exists();
         if (! $this->isAuthorized()) {
             return false;
         }
