@@ -6,7 +6,6 @@ namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
-// use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
