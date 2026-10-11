@@ -106,7 +106,9 @@ final class User extends BaseModel implements AuthenticatableContract
             'super_admin_cooperative', 
             'super_admin_id', 
             'cooperative_id', 
-            )->using(SuperAdminCooperative::class); 
+        )
+            ->using(SuperAdminCooperative::class)
+            ->withTimestamps();
     }
 
 }

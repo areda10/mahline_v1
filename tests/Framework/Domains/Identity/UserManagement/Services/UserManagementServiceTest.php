@@ -473,4 +473,84 @@ final class UserManagementServiceTest extends TestCase
             'super_admin_root',
         );
     }
+
+    public function test_super_admin_created_by_root_has_no_direct_cooperative(): void
+    {
+        $country = Country::factory()->create();
+        $cooperative = $this->createCooperative($country);
+
+        $root = $this->createUserWithRole('super_admin_root');
+
+        $superAdmin = $this->service->createUser(
+            $root,
+            [
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'display_name' => 'Super Admin',
+                'email' => 'super-admin-without-cooperative@example.com',
+                'telephone' => '+212600000011',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $cooperative->id,
+            ],
+            'super_admin',
+        );
+
+        self::assertNull($superAdmin->cooperative_id);
+        self::assertCount(0, $superAdmin->cooperatives);
+    }
+
+    public function test_super_admin_root_can_create_super_admin_without_cooperative(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+
+        $superAdmin = $this->service->createUser(
+            $root,
+            [
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'display_name' => 'Super Admin',
+                'email' => 'super-admin-no-cooperative@example.com',
+                'telephone' => '+212600000012',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+            ],
+            'super_admin',
+        );
+
+        self::assertNull($superAdmin->cooperative_id);
+        self::assertTrue($superAdmin->hasRole('super_admin'));
+        self::assertCount(0, $superAdmin->cooperatives);
+    }
+
+    public function test_inactive_role_cannot_be_assigned_during_user_creation(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+
+        $cooperative = $this->createCooperative();
+
+        Role::query()
+            ->where('slug', 'user')
+            ->update(['is_active' => false]);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'Role "user" is inactive.',
+        );
+
+        $this->service->createUser(
+            $root,
+            [
+                'first_name' => 'Inactive',
+                'last_name' => 'Role',
+                'display_name' => 'Inactive Role',
+                'email' => 'inactive-role@example.com',
+                'telephone' => '+212600000013',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $cooperative->id,
+            ],
+            'user',
+        );
+    }
 }

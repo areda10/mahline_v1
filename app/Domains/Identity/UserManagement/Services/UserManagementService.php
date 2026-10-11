@@ -25,19 +25,23 @@ final class UserManagementService
         array $attributes,
         string $roleSlug,
     ): User {
-        $cooperativeId = $attributes['cooperative_id'] ?? null;
         
         $role = $this->findRole($roleSlug);
-        
-        $this->assertCanCreateUser(
-            $actor,
-            $cooperativeId,
-        );
 
         $this->assertCanAssignRole(
             $actor,
             $roleSlug,
         );
+
+        if ($roleSlug === self::ROLE_SUPER_ADMIN) {
+            $this->assertSuperAdminRoot($actor);
+            $attributes['cooperative_id'] = null;
+        } else {
+            $this->assertCanCreateUser( 
+                $actor, 
+                $attributes['cooperative_id'] ?? null, 
+            );
+        }
 
         return DB::transaction(function () use (
             $attributes,
@@ -188,6 +192,12 @@ final class UserManagementService
         if ($role === null) {
             throw new DomainException(
                 sprintf('Unknown role "%s".', $roleSlug),
+            );
+        }
+
+        if (! $role->is_active) {
+            throw new DomainException(
+                sprintf('Role "%s" is inactive.', $roleSlug),
             );
         }
 
