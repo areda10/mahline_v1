@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Models\CooperativeSettings;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<CooperativeSettings>
@@ -18,7 +18,7 @@ final class CooperativeSettingsFactory extends Factory
     public function definition(): array
     {
         return [
-            'cooperative_id' => (string) Str::ulid(),
+            'cooperative_id' => Cooperative::factory(),
             'currency' => 'MAD',
             'locale' => 'fr',
             'timezone' => 'Africa/Casablanca',

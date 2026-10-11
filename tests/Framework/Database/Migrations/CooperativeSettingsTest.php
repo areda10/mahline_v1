@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Database\Migrations;
 
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -122,68 +125,55 @@ final class CooperativeSettingsTest extends TestCase
         );
     }
 
+
     public function test_default_values_are_correct(): void
     {
-        $cooperativeId = (string) Str::ulid();
+        $country = Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Morocco',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+
+        $address = Address::factory()->create([
+            'country_id' => $country->id,
+        ]);
+
+        $cooperative = Cooperative::factory()->create([
+            'address_id' => $address->id,
+        ]);
+
         $now = now();
 
         DB::table('cooperative_settings')->insert([
             'id' => (string) Str::ulid(),
-            'cooperative_id' => $cooperativeId,
+            'cooperative_id' => $cooperative->id,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
 
         $settings = DB::table('cooperative_settings')
-            ->where('cooperative_id', $cooperativeId)
+            ->where('cooperative_id', $cooperative->id)
             ->first();
 
         $this->assertNotNull($settings);
 
-        $this->assertSame(
-            'MAD',
-            $settings->currency,
-        );
-
-        $this->assertSame(
-            'fr',
-            $settings->locale,
-        );
-
-        $this->assertSame(
-            'Africa/Casablanca',
-            $settings->timezone,
-        );
-
-        $this->assertSame(
-            'CMD',
-            $settings->order_prefix,
-        );
-
-        $this->assertSame(
-            'FAC',
-            $settings->invoice_prefix,
-        );
-
-        $this->assertEquals(
-            0,
-            $settings->default_tax_rate,
-        );
-
-        $this->assertFalse(
-            (bool) $settings->prices_include_tax,
-        );
-
-        $this->assertTrue(
-            (bool) $settings->notify_new_order,
-        );
-
-        $this->assertTrue(
-            (bool) $settings->notify_order_status,
-        );
-
-        $this->assertTrue(
-            (bool) $settings->notify_low_stock,
-        );
+        $this->assertSame('MAD', $settings->currency);
+        $this->assertSame('fr', $settings->locale);
+        $this->assertSame('Africa/Casablanca', $settings->timezone);
+        $this->assertSame('CMD', $settings->order_prefix);
+        $this->assertSame('FAC', $settings->invoice_prefix);
+        $this->assertEquals(0, $settings->default_tax_rate);
+        $this->assertFalse((bool) $settings->prices_include_tax);
+        $this->assertTrue((bool) $settings->notify_new_order);
+        $this->assertTrue((bool) $settings->notify_order_status);
+        $this->assertTrue((bool) $settings->notify_low_stock);
     }
+
 }

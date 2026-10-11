@@ -29,32 +29,30 @@ final class UserRoleTest extends TestCase
         );
     }
 
-    public function test_user_role_has_user_foreign_key(): void
-    {
-        $foreignKeys = Schema::getForeignKeys('user_role');
-
-        $foreignKey = collect($foreignKeys)->first(
-            static fn ($foreignKey): bool =>
-                $foreignKey->columns === ['user_id']
-                && $foreignKey->foreignTable === 'users'
-                && $foreignKey->foreignColumns === ['id'],
-        );
-
-        $this->assertNotNull($foreignKey);
+    public function test_user_role_has_user_foreign_key(): void { 
+        $foreignKeys = Schema::getForeignKeys('user_role'); 
+        
+        $foreignKey = collect($foreignKeys)->first( 
+            static fn (array $foreignKey): bool => 
+            $foreignKey['columns'] === ['user_id'] 
+            && $foreignKey['foreign_table'] === 'users' 
+            && $foreignKey['foreign_columns'] === ['id'], 
+        ); 
+        
+        $this->assertNotNull($foreignKey); 
     }
 
-    public function test_user_role_has_role_foreign_key(): void
-    {
-        $foreignKeys = Schema::getForeignKeys('user_role');
-
-        $foreignKey = collect($foreignKeys)->first(
-            static fn ($foreignKey): bool =>
-                $foreignKey->columns === ['role_id']
-                && $foreignKey->foreignTable === 'roles'
-                && $foreignKey->foreignColumns === ['id'],
-        );
-
-        $this->assertNotNull($foreignKey);
+    public function test_user_role_has_role_foreign_key(): void { 
+        $foreignKeys = Schema::getForeignKeys('user_role'); 
+        
+        $foreignKey = collect($foreignKeys)->first( 
+            static fn (array $foreignKey): bool => 
+            $foreignKey['columns'] === ['role_id'] 
+            && $foreignKey['foreign_table'] === 'roles' 
+            && $foreignKey['foreign_columns'] === ['id'], 
+        ); 
+        
+        $this->assertNotNull($foreignKey); 
     }
 
     public function test_user_role_has_unique_constraint(): void
