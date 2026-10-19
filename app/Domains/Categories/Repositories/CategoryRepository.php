@@ -38,8 +38,13 @@ final class CategoryRepository
         return $category->refresh();
     }
 
-    public function delete(Category $category): void
+    public function hasChildren(Category $category): bool
     {
-        $category->delete();
+        return $category->children()->exists();
+    }
+
+    public function delete(Category $category): bool
+    {
+        return (bool) $category->delete();
     }
 }

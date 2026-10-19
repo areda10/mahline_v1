@@ -15,7 +15,6 @@ return new class extends Migration
 
             $table->string('name', 150);
             $table->string('slug', 180);
-
             $table->text('description')->nullable();
 
             $table->ulid('parent_id')->nullable();
@@ -23,10 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
 
-            $table->char('created_by', 26)->nullable();
-            $table->char('updated_by', 26)->nullable();
-            $table->char('deleted_by', 26)->nullable();
-
+            $table->auditActorColumns();
             $table->timestamps();
             $table->softDeletes();
 
@@ -38,11 +34,6 @@ return new class extends Migration
             $table->index(
                 ['is_active', 'sort_order'],
                 'categories_active_sort_index',
-            );
-
-            $table->index(
-                'parent_id',
-                'categories_parent_id_index',
             );
 
             $table->foreign(

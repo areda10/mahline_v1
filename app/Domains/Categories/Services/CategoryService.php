@@ -4,93 +4,116 @@ declare(strict_types=1);
 
 namespace App\Domains\Categories\Services;
 
-use App\Core\Foundation\Services\BaseService;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Repositories\CategoryRepository;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-final class CategoryService extends BaseService
+final class CategoryService
 {
     public function __construct(
-        private readonly CategoryRepository $categories,
+        private readonly CategoryRepository $repository,
     ) {
     }
 
-    public function create(array $data): Category
+    public function create(array $attributes): Category
     {
-        return $this->categories->create($data);
+        return DB::transaction(function () use ($attributes): Category {
+            $this->validateParent(
+                parentId: $attributes['parent_id'] ?? null,
+            );
+
+            return $this->repository->create($attributes);
+        });
     }
 
     public function update(
         Category $category,
-        array $data,
+        array $attributes,
     ): Category {
-        if (array_key_exists('parent_id', $data)) {
-            $this->assertNoParentCycle(
-                $category,
-                $data['parent_id'],
-            );
-        }
-
-        return $this->categories->update(
+        return DB::transaction(function () use (
             $category,
-            $data,
-        );
+            $attributes,
+        ): Category {
+            if (array_key_exists('parent_id', $attributes)) {
+                $this->validateParent(
+                    parentId: $attributes['parent_id'],
+                    category: $category,
+                );
+            }
+
+            return $this->repository->update(
+                $category,
+                $attributes,
+            );
+        });
     }
 
     public function delete(Category $category): void
     {
-        if ($category->children()->exists()) {
+        if ($this->repository->hasChildren($category)) {
             throw ValidationException::withMessages([
                 'category' => [
-                    'Une catégorie ayant des sous-catégories ne peut pas être supprimée.',
+                    'Impossible de supprimer une catégorie qui possède des sous-catégories.',
                 ],
             ]);
         }
 
-        $this->categories->delete($category);
+        $this->repository->delete($category);
     }
 
-    private function assertNoParentCycle(
-        Category $category,
-        mixed $parentId,
+    private function validateParent(
+        ?string $parentId,
+        ?Category $category = null,
     ): void {
         if ($parentId === null) {
             return;
         }
 
-        $currentId = (string) $parentId;
-        $categoryId = (string) $category->getKey();
-        $visited = [];
+        if ($category !== null && $parentId === $category->getKey()) {
+            throw ValidationException::withMessages([
+                'parent_id' => [
+                    'Une catégorie ne peut pas être son propre parent.',
+                ],
+            ]);
+        }
 
-        while ($currentId !== '') {
-            if ($currentId === $categoryId) {
-                throw ValidationException::withMessages([
-                    'parent_id' => [
-                        'Une catégorie ne peut pas devenir son propre parent ou celui de ses ancêtres.',
-                    ],
-                ]);
-            }
+        $parent = Category::query()->find($parentId);
+
+        if ($parent === null) {
+            throw (new ModelNotFoundException())
+                ->setModel(Category::class, [$parentId]);
+        }
+
+        $visited = [];
+        $current = $parent;
+
+        while ($current !== null) {
+            $currentId = (string) $current->getKey();
 
             if (isset($visited[$currentId])) {
                 throw ValidationException::withMessages([
                     'parent_id' => [
-                        'Une boucle existe déjà dans la hiérarchie des catégories.',
+                        'La hiérarchie actuelle contient un cycle.',
                     ],
                 ]);
             }
 
             $visited[$currentId] = true;
 
-            $nextId = Category::query()
-                ->whereKey($currentId)
-                ->value('parent_id');
-
-            if ($nextId === null) {
-                break;
+            if (
+                $category !== null
+                && $currentId === (string) $category->getKey()
+            ) {
+                throw ValidationException::withMessages([
+                    'parent_id' => [
+                        'Une catégorie ne peut pas devenir son propre descendant.',
+                    ],
+                ]);
             }
 
-            $currentId = (string) $nextId;
+            $current = $current->parent;
         }
     }
 }

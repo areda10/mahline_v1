@@ -45,6 +45,8 @@ final class Category extends BaseModel
         return $this->hasMany(
             self::class,
             'parent_id',
-        )->orderBy('sort_order');
+        )
+            ->orderBy('sort_order')
+            ->orderBy('name');
     }
 }
