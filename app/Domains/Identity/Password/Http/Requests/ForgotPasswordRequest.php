@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Password\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator; 
+use Illuminate\Foundation\Http\FormRequest; 
+use Illuminate\Http\Exceptions\HttpResponseException; 
+use Illuminate\Validation\ValidationException;
 
 final class ForgotPasswordRequest extends FormRequest
 {
@@ -35,8 +38,17 @@ final class ForgotPasswordRequest extends FormRequest
         ];
     }
 
-    public function expectsJson(): bool
+    protected function failedValidation(Validator $validator): void
     {
-        return true;
+        if ($this->is('api/*') || $this->expectsJson()) {
+            throw new HttpResponseException(
+                response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $validator->errors(),
+                ], 422)
+            );
+        }
+
+        throw new ValidationException($validator);
     }
 }

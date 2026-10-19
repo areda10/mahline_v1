@@ -84,6 +84,11 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
+    'password_reset_url' => env(
+        'PASSWORD_RESET_URL',
+        env('APP_URL', 'http://localhost'),
+    ),
+
     /*
     |--------------------------------------------------------------------------
     | Encryption Key

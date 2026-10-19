@@ -67,8 +67,8 @@ final class AuthenticationRequest extends FormRequest
      *
      * Authentication is exposed as a JSON endpoint.
      */
-    public function expectsJson(): bool
-    {
-        return true;
-    }
+    // public function expectsJson(): bool
+    // {
+    //     return true;
+    // }
 }

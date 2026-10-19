@@ -7,10 +7,12 @@ namespace App\Domains\Identity\Password\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException;
+use App\Domains\Identity\Password\Notifications\PasswordResetLinkNotification;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -38,6 +40,23 @@ final class PasswordResetService extends BaseService
             'created_at' => now(),
         ]);
 
+        $resetBaseUrl = rtrim(
+            (string) config(
+                'app.password_reset_url',
+                config('app.url'),
+            ),
+            '/',
+        );
+
+        $resetUrl = $resetBaseUrl . '/password/reset?' . http_build_query([
+            'token' => $token,
+            'email' => $user->email,
+        ]);
+
+        Notification::route('mail', $user->email)->notify(
+            new PasswordResetLinkNotification($resetUrl),
+        );
+
         return $token;
     }
 
@@ -61,7 +80,7 @@ final class PasswordResetService extends BaseService
             );
         }
 
-        if (now()->greaterThan(
+        if (now()->greaterThanOrEqualTo(
             \Illuminate\Support\Carbon::parse($record->expires_at)
         )) {
             throw new InvalidPasswordResetTokenException(
@@ -83,41 +102,67 @@ final class PasswordResetService extends BaseService
     public function resetPassword(
         string $token,
         string $newPassword,
-    ): void 
-    {
-        $user = $this->validateToken(
-            token: $token,
-        );
+    ): void {
+        DB::transaction(function () use ($token, $newPassword): void {
+            $tokenHash = hash('sha256', $token);
 
-        PasswordPolicy::validate(
-            $newPassword,
-        );
+            $record = DB::table('password_reset_tokens')
+                ->where('token_hash', $tokenHash)
+                ->lockForUpdate()
+                ->first();
 
-        if (Hash::check(
-            $newPassword,
-            (string) $user->password,
-        )) {
-            throw new InvalidArgumentException(
-                'New password must be different from current password.'
+            if ($record === null) {
+                throw new InvalidPasswordResetTokenException(
+                    'Invalid password reset token.'
+                );
+            }
+
+            if ($record->used_at !== null) {
+                throw new InvalidPasswordResetTokenException(
+                    'Password reset token has already been used.'
+                );
+            }
+
+            if (now()->greaterThanOrEqualTo(
+                \Illuminate\Support\Carbon::parse($record->expires_at)
+            )) {
+                throw new InvalidPasswordResetTokenException(
+                    'Password reset token has expired.'
+                );
+            }
+
+            $user = User::query()
+                ->whereKey($record->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($user === null) {
+                throw new InvalidPasswordResetTokenException(
+                    'Invalid password reset token.'
+                );
+            }
+
+            PasswordPolicy::validate($newPassword);
+
+            if (Hash::check($newPassword, (string) $user->password)) {
+                throw new InvalidArgumentException(
+                    'New password must be different from current password.'
+                );
+            }
+
+            $user->password = $newPassword;
+            $user->save();
+
+            DB::table('password_reset_tokens')
+                ->where('token_hash', $tokenHash)
+                ->whereNull('used_at')
+                ->update(['used_at' => now()]);
+
+            $this->sessionService->revokeForUser(
+                user: $user,
+                reason: 'password_reset',
             );
-        }
-
-        $user->password = $newPassword;
-        $user->save();
-
-        DB::table('password_reset_tokens')
-            ->where(
-                'token_hash',
-                hash('sha256', $token),
-            )
-            ->update([
-                'used_at' => now(),
-            ]);
-
-        $this->sessionService->revokeForUser(
-            user: $user,
-            reason: 'password_reset',
-        );
+        });
     }
 
 }
