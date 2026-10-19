@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domains\Categories\Repositories;
+
+use App\Domains\Categories\Models\Category;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+final class CategoryRepository
+{
+    public function paginate(
+        int $perPage = 20,
+    ): LengthAwarePaginator {
+        return Category::query()
+            ->with('parent')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
+    public function findOrFail(string $id): Category
+    {
+        return Category::query()->findOrFail($id);
+    }
+
+    public function create(array $attributes): Category
+    {
+        return Category::query()->create($attributes);
+    }
+
+    public function update(
+        Category $category,
+        array $attributes,
+    ): Category {
+        $category->update($attributes);
+
+        return $category->refresh();
+    }
+
+    public function delete(Category $category): void
+    {
+        $category->delete();
+    }
+}

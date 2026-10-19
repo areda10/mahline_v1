@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authorization\Providers;
 
+use App\Domains\Categories\Models\Category;
+use App\Domains\Categories\Policies\CategoryPolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Policies\CooperativePolicy;
 use Illuminate\Support\Facades\Gate;
@@ -16,6 +18,11 @@ final class AuthorizationServiceProvider extends ServiceProvider
         Gate::policy(
             Cooperative::class,
             CooperativePolicy::class,
+        );
+        
+        Gate::policy(
+            Category::class,
+            CategoryPolicy::class,
         );
 
         Gate::before(
