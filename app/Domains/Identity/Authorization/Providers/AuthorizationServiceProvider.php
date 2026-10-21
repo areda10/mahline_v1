@@ -51,6 +51,19 @@ final class AuthorizationServiceProvider extends ServiceProvider
                 if ($isCooperativeAuthorization) {
                     return null;
                 }
+                
+                // Les catégories doivent être autorisées par CategoryPolicy.
+                $isCategoryAuthorization =
+                    in_array(Category::class, $arguments, true)
+                    || count(array_filter(
+                        $arguments,
+                        static fn (mixed $argument): bool =>
+                            $argument instanceof Category,
+                    )) > 0;
+
+                if ($isCategoryAuthorization) {
+                    return null;
+                }
 
                 if ($user->hasPermission($ability)) {
                     return true;

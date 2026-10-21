@@ -11,6 +11,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 final class CategoryPolicyTest extends TestCase
@@ -116,5 +117,23 @@ final class CategoryPolicyTest extends TestCase
         $user->roles()->attach($role->getKey());
 
         return $user;
+    }
+    
+    public function test_generic_view_permission_does_not_bypass_category_policy(): void
+    {
+        $user = $this->userWithPermission('view');
+
+        $this->assertFalse(
+            Gate::forUser($user)->allows('viewAny', Category::class)
+        );
+    }
+
+    public function test_category_view_permission_is_respected_by_gate(): void
+    {
+        $user = $this->userWithPermission('categories.view');
+
+        $this->assertTrue(
+            Gate::forUser($user)->allows('viewAny', Category::class)
+        );
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Users\Models;
 
-
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
