@@ -23,7 +23,18 @@ final class AddressFactory extends Factory
             'postal_code' => fake()->optional()->postcode(),
             'city' => fake()->city(),
             'state' => fake()->optional()->state(),
-            'country_id' => Country::factory(),
+            'country_id' => Country::query()->firstOrCreate(
+                ['code' => 'MA'],
+                [
+                    'iso3' => 'MAR',
+                    'name' => 'Morocco',
+                    'native_name' => 'المغرب',
+                    'phone_code' => '+212',
+                    'currency' => 'MAD',
+                    'locale' => 'fr',
+                    'is_active' => true,
+                ],
+            )->getKey(),
             'latitude' => fake()->optional()->latitude(),
             'longitude' => fake()->optional()->longitude(),
         ];

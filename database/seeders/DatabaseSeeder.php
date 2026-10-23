@@ -15,14 +15,16 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RoleSeeder::class,
+            // RoleSeeder::class,
+            ProductSeeder::class,
+            ProductVariantSeeder::class,
         ]);
 
-        User::factory()->create([
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'display_name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // User::factory()->create([
+        //     'first_name' => 'Test',
+        //     'last_name' => 'User',
+        //     'display_name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
     }
 }
