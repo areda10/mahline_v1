@@ -15,7 +15,7 @@ final class ProductRepository
     ): LengthAwarePaginator {
         return Product::query()
             ->forCooperative($cooperativeId)
-            ->with(['variants', 'categories', 'catalogs'])
+            ->with(['categories', 'catalogs', 'variants'])
             ->orderBy('name')
             ->paginate($perPage);
     }
@@ -26,7 +26,7 @@ final class ProductRepository
     ): Product {
         return Product::query()
             ->forCooperative($cooperativeId)
-            ->with(['variants', 'categories', 'catalogs'])
+            ->with(['categories', 'catalogs', 'variants'])
             ->findOrFail($productId);
     }
 

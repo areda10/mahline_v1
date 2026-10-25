@@ -35,15 +35,8 @@ final class ProductService
                 $attributes['catalog_ids'] ?? [],
             );
 
-            $this->assertCategoriesBelongToCooperative(
-                $categoryIds,
-                $cooperativeId,
-            );
-
-            $this->assertCatalogsBelongToCooperative(
-                $catalogIds,
-                $cooperativeId,
-            );
+            $this->assertCategoriesAvailable($categoryIds, $cooperativeId);
+            $this->assertCatalogsOwnedByCooperative($catalogIds, $cooperativeId);
 
             $name = trim((string) ($attributes['name'] ?? ''));
 
@@ -53,67 +46,57 @@ final class ProductService
                 ]);
             }
 
-            $slug = $this->makeAvailableSlug(
-                $name,
-                $cooperativeId,
-            );
-
             $product = $this->repository->create([
                 'cooperative_id' => $cooperativeId,
                 'name' => $name,
-                'slug' => $slug,
+                'slug' => $this->uniqueSlug($cooperativeId, $name),
                 'description' => $attributes['description'] ?? null,
-                'is_active' => $attributes['is_active'] ?? true,
+                'is_active' => (bool) ($attributes['is_active'] ?? true),
             ]);
 
             $product->categories()->sync($categoryIds);
             $product->catalogs()->sync($catalogIds);
 
-            return $product->load([
-                'variants',
-                'categories',
-                'catalogs',
-            ]);
+            return $product->load(['categories', 'catalogs', 'variants']);
         });
     }
 
     public function update(
         Product $product,
+        string $cooperativeId,
         array $attributes,
     ): Product {
         return DB::transaction(function () use (
             $product,
+            $cooperativeId,
             $attributes,
         ): Product {
-            $categoryIds = array_key_exists(
-                'category_ids',
-                $attributes,
-            )
-                ? $this->normalizeIds($attributes['category_ids'])
+            if ((string) $product->cooperative_id !== $cooperativeId) {
+                throw ValidationException::withMessages([
+                    'product' => ['Ce produit ne relève pas de cette coopérative.'],
+                ]);
+            }
+
+            $categoryIds = array_key_exists('category_ids', $attributes)
+                ? $this->normalizeIds($attributes['category_ids'] ?? [])
                 : null;
 
-            $catalogIds = array_key_exists(
-                'catalog_ids',
-                $attributes,
-            )
-                ? $this->normalizeIds($attributes['catalog_ids'])
+            $catalogIds = array_key_exists('catalog_ids', $attributes)
+                ? $this->normalizeIds($attributes['catalog_ids'] ?? [])
                 : null;
 
             if ($categoryIds !== null) {
-                $this->assertCategoriesBelongToCooperative(
-                    $categoryIds,
-                    (string) $product->cooperative_id,
-                );
+                $this->assertCategoriesAvailable($categoryIds, $cooperativeId);
             }
 
             if ($catalogIds !== null) {
-                $this->assertCatalogsBelongToCooperative(
+                $this->assertCatalogsOwnedByCooperative(
                     $catalogIds,
-                    (string) $product->cooperative_id,
+                    $cooperativeId,
                 );
             }
 
-            $update = [];
+            $changes = [];
 
             if (array_key_exists('name', $attributes)) {
                 $name = trim((string) $attributes['name']);
@@ -124,44 +107,24 @@ final class ProductService
                     ]);
                 }
 
-                $update['name'] = $name;
+                $changes['name'] = $name;
+                $changes['slug'] = $this->uniqueSlug(
+                    $cooperativeId,
+                    $name,
+                    (string) $product->getKey(),
+                );
             }
 
             if (array_key_exists('description', $attributes)) {
-                $update['description'] = $attributes['description'];
+                $changes['description'] = $attributes['description'];
             }
 
             if (array_key_exists('is_active', $attributes)) {
-                $update['is_active'] = (bool) $attributes['is_active'];
+                $changes['is_active'] = (bool) $attributes['is_active'];
             }
 
-            if (array_key_exists('slug', $attributes)) {
-                $requestedSlug = Str::slug(
-                    (string) $attributes['slug'],
-                );
-
-                if ($requestedSlug === '') {
-                    throw ValidationException::withMessages([
-                        'slug' => ['Le slug fourni est invalide.'],
-                    ]);
-                }
-
-                $update['slug'] = $this->makeAvailableSlug(
-                    $requestedSlug,
-                    (string) $product->cooperative_id,
-                    $product,
-                );
-            } elseif (array_key_exists('name', $attributes)) {
-                $update['slug'] = $this->makeAvailableSlug(
-                    $update['name'],
-                    (string) $product->cooperative_id,
-                    $product,
-                );
-            }
-
-            if ($update !== []) {
-                $this->repository->update($product, $update);
-            }
+            // Le propriétaire ne peut pas être changé via update.
+            $this->repository->update($product, $changes);
 
             if ($categoryIds !== null) {
                 $product->categories()->sync($categoryIds);
@@ -171,32 +134,12 @@ final class ProductService
                 $product->catalogs()->sync($catalogIds);
             }
 
-            return $product->refresh()->load([
-                'variants',
-                'categories',
-                'catalogs',
-            ]);
+            return $product->refresh()
+                ->load(['categories', 'catalogs', 'variants']);
         });
     }
 
-    public function deactivate(Product $product): Product
-    {
-        $product->is_active = false;
-        $product->save();
-
-        return $product->refresh();
-    }
-
-    public function delete(Product $product): void
-    {
-        DB::transaction(function () use ($product): void {
-            // Suppression logique uniquement.
-            // Ne pas supprimer les variantes ni l'historique commercial.
-            $this->repository->delete($product);
-        });
-    }
-
-    private function assertCategoriesBelongToCooperative(
+    private function assertCategoriesAvailable(
         array $categoryIds,
         string $cooperativeId,
     ): void {
@@ -205,21 +148,24 @@ final class ProductService
         }
 
         $count = Category::query()
-            ->where('cooperative_id', $cooperativeId)
             ->whereIn('id', $categoryIds)
             ->where('is_active', true)
+            ->where(function ($query) use ($cooperativeId): void {
+                $query->whereNull('cooperative_id')
+                    ->orWhere('cooperative_id', $cooperativeId);
+            })
             ->count();
 
         if ($count !== count($categoryIds)) {
             throw ValidationException::withMessages([
                 'category_ids' => [
-                    'Une ou plusieurs catégories sont invalides, inactives ou appartiennent à une autre coopérative.',
+                    'Une catégorie est inexistante, inactive ou appartient à une autre coopérative.',
                 ],
             ]);
         }
     }
 
-    private function assertCatalogsBelongToCooperative(
+    private function assertCatalogsOwnedByCooperative(
         array $catalogIds,
         string $cooperativeId,
     ): void {
@@ -228,79 +174,54 @@ final class ProductService
         }
 
         $count = Catalog::query()
-            ->where('cooperative_id', $cooperativeId)
             ->whereIn('id', $catalogIds)
+            ->where('cooperative_id', $cooperativeId)
+            ->where('is_active', true)
             ->count();
 
         if ($count !== count($catalogIds)) {
             throw ValidationException::withMessages([
                 'catalog_ids' => [
-                    'Un ou plusieurs catalogues sont invalides ou appartiennent à une autre coopérative.',
+                    'Un catalogue est inexistant, inactif ou appartient à une autre coopérative.',
                 ],
             ]);
         }
     }
 
-    private function makeAvailableSlug(
-        string $value,
+    private function normalizeIds(array $ids): array
+    {
+        return array_values(array_unique(array_map(
+            static fn ($id): string => (string) $id,
+            $ids,
+        )));
+    }
+
+    private function uniqueSlug(
         string $cooperativeId,
-        ?Product $except = null,
+        string $name,
+        ?string $ignoreId = null,
     ): string {
-        $base = Str::slug($value);
-
-        if ($base === '') {
-            throw ValidationException::withMessages([
-                'slug' => ['Impossible de générer un slug valide.'],
-            ]);
-        }
-
+        $base = Str::slug($name) ?: 'produit';
         $slug = $base;
         $suffix = 2;
 
-        while (true) {
-            $query = Product::withTrashed()
+        do {
+            $query = Product::query()
                 ->where('cooperative_id', $cooperativeId)
-                ->where('slug', $slug)
-                ->whereNull('deleted_at');
+                ->where('slug', $slug);
 
-            if ($except !== null) {
-                $query->whereKeyNot($except->getKey());
+            if ($ignoreId !== null) {
+                $query->where('id', '!=', $ignoreId);
             }
 
-            if (! $query->exists()) {
-                return $slug;
+            $exists = $query->exists();
+
+            if ($exists) {
+                $slug = $base.'-'.$suffix;
+                $suffix++;
             }
+        } while ($exists);
 
-            $slug = $base.'-'.$suffix;
-            $suffix++;
-        }
-    }
-
-    private function normalizeIds(mixed $ids): array
-    {
-        if (! is_array($ids)) {
-            throw ValidationException::withMessages([
-                'associations' => [
-                    'Les identifiants associés doivent être fournis sous forme de liste.',
-                ],
-            ]);
-        }
-
-        $normalized = array_values(array_unique(array_map(
-            static fn (mixed $id): string => (string) $id,
-            $ids,
-        )));
-
-        foreach ($normalized as $id) {
-            if ($id === '') {
-                throw ValidationException::withMessages([
-                    'associations' => [
-                        'Un identifiant associé ne peut pas être vide.',
-                    ],
-                ]);
-            }
-        }
-
-        return $normalized;
+        return $slug;
     }
 }

@@ -12,10 +12,10 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table): void {
             $table->ulidPrimary();
-
             $table->ulid('cooperative_id');
+
             $table->string('name', 180);
-            $table->string('slug', 180);
+            $table->string('slug', 200);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
 
@@ -23,18 +23,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // Nécessaire pour la FK composite des variantes.
-            $table->unique(
-                ['cooperative_id', 'id'],
-                'products_cooperative_id_id_unique',
-            );
-
-            // Un slug est unique parmi les produits actifs
-            // d'une coopérative, mais réutilisable après soft delete.
-            $table->string('active_slug', 180)
+            $table->string('active_slug', 200)
                 ->nullable()
                 ->storedAs(
-                    'CASE WHEN deleted_at IS NULL THEN slug ELSE NULL END',
+                    'CASE WHEN deleted_at IS NULL THEN slug ELSE NULL END'
                 );
 
             $table->unique(

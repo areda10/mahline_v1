@@ -9,19 +9,36 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 final class CategoryRepository
 {
-    public function paginate(
+    public function paginateAvailableFor(
+        string $cooperativeId,
         int $perPage = 20,
     ): LengthAwarePaginator {
         return Category::query()
-            ->with('parent')
+            ->availableFor($cooperativeId)
+            ->with(['parent', 'children'])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->paginate($perPage);
     }
 
-    public function findOrFail(string $id): Category
+    public function paginateGlobal(int $perPage = 20): LengthAwarePaginator
     {
-        return Category::query()->findOrFail($id);
+        return Category::query()
+            ->global()
+            ->with(['parent', 'children'])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
+    public function findAvailableForOrFail(
+        string $categoryId,
+        string $cooperativeId,
+    ): Category {
+        return Category::query()
+            ->availableFor($cooperativeId)
+            ->with(['parent', 'children'])
+            ->findOrFail($categoryId);
     }
 
     public function create(array $attributes): Category
@@ -36,11 +53,6 @@ final class CategoryRepository
         $category->update($attributes);
 
         return $category->refresh();
-    }
-
-    public function hasChildren(Category $category): bool
-    {
-        return $category->children()->exists();
     }
 
     public function delete(Category $category): bool

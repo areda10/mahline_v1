@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domains\Products\Models;
 
 use App\Core\Foundation\Models\BaseModel;
-use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -19,18 +18,12 @@ final class ProductVariant extends BaseModel
 
     protected $fillable = [
         'product_id',
-        'cooperative_id',
-        'name',
+        'label',
         'normalized_label',
         'sku',
         'attributes',
         'is_active',
     ];
-
-    protected static function newFactory(): ProductVariantFactory
-    {
-        return ProductVariantFactory::new();
-    }
 
     protected function casts(): array
     {
@@ -43,9 +36,6 @@ final class ProductVariant extends BaseModel
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(
-            Product::class,
-            'product_id',
-        );
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }

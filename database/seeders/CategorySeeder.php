@@ -12,35 +12,24 @@ final class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            [
-                'name' => 'Bien-être',
-                'slug' => 'bien-etre',
-                'sort_order' => 10,
-            ],
-            [
-                'name' => 'Fruits secs',
-                'slug' => 'fruits-secs',
-                'sort_order' => 20,
-            ],
-            [
-                'name' => 'Miels, amlou et confitures',
-                'slug' => 'miels-amlou-confitures',
-                'sort_order' => 30,
-            ],
-            [
-                'name' => 'Épices',
-                'slug' => 'epices',
-                'sort_order' => 40,
-            ],
+            'Bien-être' => 'bien-etre',
+            'Fruits secs' => 'fruits-secs',
+            'Miels, Amlou et Confitures' => 'miels-amlou-confitures',
+            'Épices' => 'epices',
         ];
 
-        foreach ($categories as $attributes) {
-            Category::query()->withTrashed()->updateOrCreate(
-                ['slug' => $attributes['slug']],
+        foreach ($categories as $name => $slug) {
+            Category::query()->firstOrCreate(
                 [
-                    ...$attributes,
-                    'is_active' => true,
+                    'cooperative_id' => null,
+                    'slug' => $slug,
+                ],
+                [
                     'parent_id' => null,
+                    'name' => $name,
+                    'description' => null,
+                    'is_active' => true,
+                    'sort_order' => 0,
                 ],
             );
         }

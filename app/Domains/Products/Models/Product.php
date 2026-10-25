@@ -8,7 +8,6 @@ use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
-use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,15 +53,7 @@ final class Product extends BaseModel
 
     public function variants(): HasMany
     {
-        return $this->hasMany(
-            ProductVariant::class,
-            'product_id',
-        );
-    }
-
-    public function activeVariants(): HasMany
-    {
-        return $this->variants()->where('is_active', true);
+        return $this->hasMany(ProductVariant::class, 'product_id');
     }
 
     public function categories(): BelongsToMany

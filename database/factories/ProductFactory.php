@@ -18,26 +18,29 @@ final class ProductFactory extends Factory
 
     public function definition(): array
     {
-        $name = fake()->randomElement([
-            'Miel naturel',
-            'Amlou traditionnel',
-            'Confiture de figues',
-            'Amandes grillées',
-            'Safran du Maroc',
-        ]);
+        $name = fake()->unique()->words(3, true);
 
         return [
             'cooperative_id' => Cooperative::factory(),
-            'name' => $name,
-            'slug' => Str::slug($name).'-'.fake()->unique()->numerify('#####'),
-            'description' => fake()->optional()->sentence(),
+            'name' => Str::title($name),
+            'slug' => Str::slug($name),
+            'description' => fake()->optional()->paragraph(),
             'is_active' => true,
         ];
     }
 
+    public function forCooperative(Cooperative|string $cooperative): static
+    {
+        return $this->state(fn (): array => [
+            'cooperative_id' => $cooperative instanceof Cooperative
+                ? $cooperative->getKey()
+                : $cooperative,
+        ]);
+    }
+
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes): array => [
+        return $this->state(fn (): array => [
             'is_active' => false,
         ]);
     }

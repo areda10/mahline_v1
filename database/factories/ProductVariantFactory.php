@@ -18,31 +18,20 @@ final class ProductVariantFactory extends Factory
 
     public function definition(): array
     {
-        $label = fake()->randomElement([
-            'Pot en verre 250 g',
-            'Pot en verre 500 g',
-            'Bouteille 300 ml',
-            'Sachet 1 kg',
-        ]);
+        $label = fake()->unique()->words(2, true);
 
         return [
             'product_id' => Product::factory(),
-            'cooperative_id' => fn (array $attributes): string =>
-                (string) Product::query()
-                    ->findOrFail($attributes['product_id'])
-                    ->cooperative_id,
-            'name' => $label,
-            'normalized_label' => Str::lower(
-                preg_replace('/\s+/', ' ', trim(Str::ascii($label))) ?? $label
-            ),
+            'label' => Str::title($label),
+            'normalized_label' => Str::lower(trim($label)),
             'sku' => fake()->boolean(70)
-                    ? fake()->unique()->bothify('SKU-####-????')
-                    : null,
+                ? fake()->unique()->bothify('SKU-####-????')
+                : null,
             'attributes' => [
-                'packaging' => fake()->randomElement([
-                    'glass',
-                    'plastic',
-                    'pouch',
+                'format' => fake()->randomElement([
+                    '250 g',
+                    '500 g',
+                    '1 kg',
                 ]),
             ],
             'is_active' => true,
@@ -51,7 +40,7 @@ final class ProductVariantFactory extends Factory
 
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes): array => [
+        return $this->state(fn (): array => [
             'is_active' => false,
         ]);
     }

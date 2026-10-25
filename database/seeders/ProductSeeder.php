@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Seeder;
@@ -13,48 +14,49 @@ final class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        $products = [
-            [
-                'name' => 'Miel naturel',
-                'description' => 'Miel naturel produit au Maroc.',
-            ],
-            [
-                'name' => 'Amlou traditionnel',
-                'description' => 'Préparation traditionnelle à base d’amandes.',
-            ],
-            [
-                'name' => 'Confiture de figues',
-                'description' => 'Confiture artisanale de figues.',
-            ],
-            [
-                'name' => 'Amandes grillées',
-                'description' => 'Amandes soigneusement sélectionnées.',
-            ],
-            [
-                'name' => 'Safran du Maroc',
-                'description' => 'Safran conditionné par la coopérative.',
-            ],
-        ];
+        $category = Category::query()
+            ->whereNull('cooperative_id')
+            ->where('slug', 'miels-amlou-confitures')
+            ->where('is_active', true)
+            ->first();
 
-        Cooperative::query()->each(
-            function (Cooperative $cooperative) use ($products): void {
-                foreach ($products as $data) {
-                    $slug = Str::slug($data['name']);
+        if ($category === null) {
+            $this->command?->warn(
+                'ProductSeeder ignoré : exécutez CategorySeeder en premier.'
+            );
 
-                    Product::query()->firstOrCreate(
-                        [
-                            'cooperative_id' => $cooperative->getKey(),
-                            'slug' => $slug,
-                            'deleted_at' => null,
-                        ],
-                        [
-                            'name' => $data['name'],
-                            'description' => $data['description'],
-                            'is_active' => true,
-                        ],
-                    );
-                }
-            },
-        );
+            return;
+        }
+
+        $cooperatives = Cooperative::query()->get();
+
+        foreach ($cooperatives as $cooperative) {
+            $products = [
+                'Miel naturel',
+                'Amlou traditionnel',
+                'Confiture artisanale',
+            ];
+
+            foreach ($products as $name) {
+                $slug = Str::slug($name);
+
+                $product = Product::query()->firstOrCreate(
+                    [
+                        'cooperative_id' => $cooperative->getKey(),
+                        'slug' => $slug,
+                    ],
+                    [
+                        'name' => $name,
+                        'description' => 'Produit de démonstration MAHLINE.',
+                        'is_active' => true,
+                    ],
+                );
+
+                // Évite de dupliquer l'association au prochain seeding.
+                $product->categories()->syncWithoutDetaching([
+                    $category->getKey(),
+                ]);
+            }
+        }
     }
 }
