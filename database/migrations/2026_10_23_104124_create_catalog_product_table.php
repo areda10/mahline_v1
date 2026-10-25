@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('catalog_product', function (Blueprint $table): void {
             $table->ulid('catalog_id');
             $table->ulid('product_id');
+
             $table->timestamps();
 
             $table->primary(
@@ -20,12 +21,12 @@ return new class extends Migration
                 'catalog_product_primary',
             );
 
-            $table->foreign('catalog_id')
+            $table->foreign('catalog_id', 'catalog_product_catalog_id_foreign')
                 ->references('id')
                 ->on('catalogs')
                 ->cascadeOnDelete();
 
-            $table->foreign('product_id')
+            $table->foreign('product_id', 'catalog_product_product_id_foreign')
                 ->references('id')
                 ->on('products')
                 ->cascadeOnDelete();
