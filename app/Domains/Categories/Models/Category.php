@@ -100,4 +100,9 @@ final class Category extends BaseModel
         return $this->cooperative_id !== null
             && (string) $this->cooperative_id === $cooperativeId;
     }
+    
+    protected static function newFactory(): \Database\Factories\CategoryFactory
+    {
+        return \Database\Factories\CategoryFactory::new();
+    }
 }

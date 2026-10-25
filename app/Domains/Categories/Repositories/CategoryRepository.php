@@ -59,4 +59,20 @@ final class CategoryRepository
     {
         return (bool) $category->delete();
     }
+
+    public function findOrFail(string $categoryId): Category
+    {
+        return Category::query()
+            ->with(['parent', 'children'])
+            ->findOrFail($categoryId);
+    }
+
+    public function paginate(int $perPage = 20): LengthAwarePaginator
+    {
+        return Category::query()
+            ->with(['parent', 'children'])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
 }

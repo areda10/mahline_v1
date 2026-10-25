@@ -17,6 +17,11 @@ final class CategoryService
     ) {
     }
 
+    public function create(array $attributes): Category
+    {
+        return $this->createGlobal($attributes);
+    }
+
     public function createForCooperative(
         string $cooperativeId,
         array $attributes,
@@ -147,11 +152,19 @@ final class CategoryService
             ]);
         }
 
-        $parent = Category::query()->find($parentId);
+        // $parent = Category::query()->find($parentId);
 
-        if ($parent === null || ! $parent->is_active) {
+        // if ($parent === null || ! $parent->is_active) {
+        //     throw ValidationException::withMessages([
+        //         'parent_id' => ['La catégorie parente est inexistante ou inactive.'],
+        //     ]);
+        // }
+
+        $parent = Category::query()->findOrFail($parentId);
+
+        if (! $parent->is_active) {
             throw ValidationException::withMessages([
-                'parent_id' => ['La catégorie parente est inexistante ou inactive.'],
+                'parent_id' => ['La catégorie parente est inactive.'],
             ]);
         }
 
@@ -236,5 +249,20 @@ final class CategoryService
         } while ($exists);
 
         return $slug;
+    }
+
+    public function delete(Category $category): void
+    {
+        DB::transaction(function () use ($category): void {
+            if ($category->children()->exists()) {
+                throw ValidationException::withMessages([
+                    'category' => [
+                        'Impossible de supprimer une catégorie qui possède des sous-catégories.',
+                    ],
+                ]);
+            }
+
+            $this->repository->delete($category);
+        });
     }
 }

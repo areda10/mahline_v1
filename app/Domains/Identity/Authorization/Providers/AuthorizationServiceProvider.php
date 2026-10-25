@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authorization\Providers;
 
+use App\Domains\Catalog\Models\Catalog;
+use App\Domains\Catalog\Policies\CatalogPolicy;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Policies\CategoryPolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
@@ -17,6 +19,11 @@ final class AuthorizationServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        Gate::policy(
+            Catalog::class,
+            CatalogPolicy::class,
+        );
+        
         Gate::policy(
             Category::class,
             CategoryPolicy::class,

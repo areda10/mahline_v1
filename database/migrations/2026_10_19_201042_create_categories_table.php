@@ -26,6 +26,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
 
+            $table->auditActorColumns();
             $table->timestamps();
             $table->softDeletes();
 
