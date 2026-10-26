@@ -35,21 +35,33 @@ final class ProductService
                 $attributes['catalog_ids'] ?? [],
             );
 
-            $this->assertCategoriesAvailable($categoryIds, $cooperativeId);
-            $this->assertCatalogsOwnedByCooperative($catalogIds, $cooperativeId);
+            $this->assertCategoriesAvailable(
+                $categoryIds,
+                $cooperativeId,
+            );
+
+            $this->assertCatalogsOwnedByCooperative(
+                $catalogIds,
+                $cooperativeId,
+            );
 
             $name = trim((string) ($attributes['name'] ?? ''));
 
             if ($name === '') {
                 throw ValidationException::withMessages([
-                    'name' => ['Le nom du produit est obligatoire.'],
+                    'name' => [
+                        'Le nom du produit est obligatoire.',
+                    ],
                 ]);
             }
 
             $product = $this->repository->create([
                 'cooperative_id' => $cooperativeId,
                 'name' => $name,
-                'slug' => $this->uniqueSlug($cooperativeId, $name),
+                'slug' => $this->uniqueSlug(
+                    $cooperativeId,
+                    $name,
+                ),
                 'description' => $attributes['description'] ?? null,
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
             ]);
@@ -57,7 +69,11 @@ final class ProductService
             $product->categories()->sync($categoryIds);
             $product->catalogs()->sync($catalogIds);
 
-            return $product->load(['categories', 'catalogs', 'variants']);
+            return $product->load([
+                'categories',
+                'catalogs',
+                'variants',
+            ]);
         });
     }
 
@@ -73,7 +89,9 @@ final class ProductService
         ): Product {
             if ((string) $product->cooperative_id !== $cooperativeId) {
                 throw ValidationException::withMessages([
-                    'product' => ['Ce produit ne relève pas de cette coopérative.'],
+                    'product' => [
+                        'Ce produit ne relève pas de cette coopérative.',
+                    ],
                 ]);
             }
 
@@ -86,7 +104,10 @@ final class ProductService
                 : null;
 
             if ($categoryIds !== null) {
-                $this->assertCategoriesAvailable($categoryIds, $cooperativeId);
+                $this->assertCategoriesAvailable(
+                    $categoryIds,
+                    $cooperativeId,
+                );
             }
 
             if ($catalogIds !== null) {
@@ -103,7 +124,9 @@ final class ProductService
 
                 if ($name === '') {
                     throw ValidationException::withMessages([
-                        'name' => ['Le nom du produit est obligatoire.'],
+                        'name' => [
+                            'Le nom du produit est obligatoire.',
+                        ],
                     ]);
                 }
 
@@ -135,8 +158,32 @@ final class ProductService
             }
 
             return $product->refresh()
-                ->load(['categories', 'catalogs', 'variants']);
+                ->load([
+                    'categories',
+                    'catalogs',
+                    'variants',
+                ]);
         });
+    }
+
+    /**
+     * Désactive un produit sans le supprimer.
+     */
+    public function deactivate(Product $product): Product
+    {
+        return $this->repository->update($product, [
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Supprime logiquement un produit.
+     *
+     * Le modèle Product utilise SoftDeletes.
+     */
+    public function delete(Product $product): bool
+    {
+        return $this->repository->delete($product);
     }
 
     private function assertCategoriesAvailable(

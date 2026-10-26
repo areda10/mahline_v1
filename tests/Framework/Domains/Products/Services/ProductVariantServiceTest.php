@@ -52,8 +52,7 @@ final class ProductVariantServiceTest extends TestCase
         $this->assertDatabaseHas('product_variants', [
             'id' => $variant->getKey(),
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
-            'name' => 'Pot en verre 250 g',
+            'label' => 'Pot en verre 250 g',
             'normalized_label' => 'pot en verre 250 g',
             'sku' => 'MIEL-250',
             'is_active' => true,
@@ -77,6 +76,11 @@ final class ProductVariantServiceTest extends TestCase
         $this->assertSame(
             'pot en verre 250 g',
             $variant->normalized_label,
+        );
+
+        $this->assertSame(
+            'Pot   en VERRE 250 g',
+            $variant->label,
         );
     }
 
@@ -146,14 +150,16 @@ final class ProductVariantServiceTest extends TestCase
             'is_active' => true,
         ]);
 
+        $variantId = $variant->getKey();
+
         $variant->delete();
 
         $this->assertSoftDeleted('product_variants', [
-            'id' => $variant->getKey(),
+            'id' => $variantId,
         ]);
 
         $this->assertDatabaseHas('product_variants', [
-            'id' => $variant->getKey(),
+            'id' => $variantId,
         ]);
     }
 }

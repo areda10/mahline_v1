@@ -15,7 +15,7 @@ final class ProductVariantRepository
     ): LengthAwarePaginator {
         return ProductVariant::query()
             ->where('product_id', $productId)
-            ->orderBy('name')
+            ->orderBy('label')
             ->paginate($perPage);
     }
 
@@ -26,5 +26,10 @@ final class ProductVariantRepository
         return ProductVariant::query()
             ->where('product_id', $productId)
             ->findOrFail($variantId);
+    }
+
+    public function delete(ProductVariant $variant): bool
+    {
+        return (bool) $variant->delete();
     }
 }

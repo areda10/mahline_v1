@@ -31,12 +31,10 @@ final class ProductVariantRepositoryTest extends TestCase
 
         ProductVariant::factory()->count(3)->create([
             'product_id' => $productA->getKey(),
-            'cooperative_id' => $productA->cooperative_id,
         ]);
 
         ProductVariant::factory()->count(2)->create([
             'product_id' => $productB->getKey(),
-            'cooperative_id' => $productB->cooperative_id,
         ]);
 
         $page = $this->repository->paginateForProduct(
@@ -79,7 +77,6 @@ final class ProductVariantRepositoryTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $productA->getKey(),
-            'cooperative_id' => $productA->cooperative_id,
         ]);
 
         $this->expectException(ModelNotFoundException::class);

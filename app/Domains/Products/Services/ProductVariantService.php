@@ -22,11 +22,10 @@ final class ProductVariantService
         ): ProductVariant {
             $this->assertProductIsAvailable($product);
 
-            $label = $this->normalizeLabel(
-                (string) ($attributes['name'] ?? ''),
-            );
+            $name = trim((string) ($attributes['name'] ?? ''));
+            $normalizedLabel = $this->normalizeLabel($name);
 
-            if ($label === '') {
+            if ($normalizedLabel === '') {
                 throw ValidationException::withMessages([
                     'name' => [
                         'Le libellé de la variante est obligatoire.',
@@ -36,15 +35,16 @@ final class ProductVariantService
 
             $this->assertUniqueActiveLabel(
                 $product,
-                $label,
+                $normalizedLabel,
             );
 
             $variant = new ProductVariant();
 
+            // La variante appartient au produit.
+            // La coopérative est déterminée via Product::cooperative_id.
             $variant->product_id = $product->getKey();
-            $variant->cooperative_id = $product->cooperative_id;
-            $variant->name = trim((string) $attributes['name']);
-            $variant->normalized_label = $label;
+            $variant->label = $name;
+            $variant->normalized_label = $normalizedLabel;
             $variant->sku = $attributes['sku'] ?? null;
             $variant->attributes = $attributes['attributes'] ?? null;
             $variant->is_active = $attributes['is_active'] ?? true;
@@ -77,9 +77,9 @@ final class ProductVariantService
 
             if (array_key_exists('name', $attributes)) {
                 $name = trim((string) $attributes['name']);
-                $normalized = $this->normalizeLabel($name);
+                $normalizedLabel = $this->normalizeLabel($name);
 
-                if ($normalized === '') {
+                if ($normalizedLabel === '') {
                     throw ValidationException::withMessages([
                         'name' => [
                             'Le libellé de la variante est obligatoire.',
@@ -90,13 +90,13 @@ final class ProductVariantService
                 if ($variant->is_active) {
                     $this->assertUniqueActiveLabel(
                         $product,
-                        $normalized,
+                        $normalizedLabel,
                         $variant,
                     );
                 }
 
-                $variant->name = $name;
-                $variant->normalized_label = $normalized;
+                $variant->label = $name;
+                $variant->normalized_label = $normalizedLabel;
             }
 
             if (array_key_exists('sku', $attributes)) {
@@ -110,10 +110,7 @@ final class ProductVariantService
             if (array_key_exists('is_active', $attributes)) {
                 $newActiveState = (bool) $attributes['is_active'];
 
-                if (
-                    $newActiveState
-                    && ! $variant->is_active
-                ) {
+                if ($newActiveState && ! $variant->is_active) {
                     $this->assertUniqueActiveLabel(
                         $product,
                         $variant->normalized_label,
