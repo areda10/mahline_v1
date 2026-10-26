@@ -58,7 +58,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_update_requires_update_permission(): void
     {
-        $user = $this->userWithPermission('categories.update');
+        $user = $this->rootUserWithPermission('categories.update');
         $category = new Category();
 
         $this->assertTrue($this->policy->update($user, $category));
@@ -66,7 +66,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_delete_requires_delete_permission(): void
     {
-        $user = $this->userWithPermission('categories.delete');
+        $user = $this->rootUserWithPermission('categories.delete');
         $category = new Category();
 
         $this->assertTrue($this->policy->delete($user, $category));
@@ -74,7 +74,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_restore_requires_restore_permission(): void
     {
-        $user = $this->userWithPermission('categories.restore');
+        $user = $this->rootUserWithPermission('categories.restore');
         $category = new Category();
 
         $this->assertTrue($this->policy->restore($user, $category));
@@ -82,7 +82,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_force_delete_requires_force_delete_permission(): void
     {
-        $user = $this->userWithPermission('categories.force_delete');
+        $user = $this->rootUserWithPermission('categories.force_delete');
         $category = new Category();
 
         $this->assertTrue($this->policy->forceDelete($user, $category));
@@ -136,4 +136,22 @@ final class CategoryPolicyTest extends TestCase
             Gate::forUser($user)->allows('viewAny', Category::class)
         );
     }
+
+    private function rootUserWithPermission(string $permissionSlug): User
+    {
+        $user = $this->userWithPermission($permissionSlug);
+
+        $rootRole = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin_root'],
+            [
+                'name' => 'Super Admin Root',
+                'is_active' => true,
+            ],
+        );
+
+        $user->roles()->attach($rootRole->getKey());
+
+        return $user;
+    }
+
 }

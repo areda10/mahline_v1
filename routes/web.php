@@ -1,7 +1,11 @@
 <?php
 
+use App\Domains\Catalog\Http\Controllers\CatalogController;
+use App\Domains\Catalog\Http\Controllers\CatalogProductController;
+use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
+use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -84,6 +88,40 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::prefix('back-office')
+    ->name('backoffice.')
+    ->middleware(['web', 'auth'])
+    ->group(function (): void {
+
+        // Catalogue
+        Route::resource('catalogs', CatalogController::class)
+            ->except(['destroy'])
+            ->names('catalogs');
+
+        Route::delete(
+            'catalogs/{catalog}',
+            [CatalogController::class, 'destroy']
+        )->name('catalogs.destroy');
+
+        Route::post(
+            'catalogs/{catalog}/products',
+            [CatalogProductController::class, 'store']
+        )->name('catalogs.products.store');
+
+        Route::delete(
+            'catalogs/{catalog}/products/{product}',
+            [CatalogProductController::class, 'destroy']
+        )->name('catalogs.products.destroy');
+
+        // Catégories
+        Route::resource('categories', CategoryController::class)
+            ->except(['show'])
+            ->names('categories');
+
+        // Produits
+        Route::resource('products', ProductController::class)
+            ->names('products');
+    });
 // Route::get('/_debug/auth-session', function () {
 //     return response()->json([
 //         'authenticated' => auth()->check(),
