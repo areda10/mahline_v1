@@ -222,16 +222,25 @@ final class ProductController
     }
 
     public function reactivate(
-        Product $product,
-        ProductService $productService
-    ) {
-        $this->authorize('reactivate', $product);
+        string $cooperative,
+        string $product,
+    ): RedirectResponse {
+        $cooperativeModel = $this->resolveCooperative($cooperative);
 
-        $productService->reactivate($product);
+        $cooperativeId = (string) $cooperativeModel->getKey();
+
+        $productModel = $this->productRepository
+            ->findForCooperativeOrFail($product, $cooperativeId);
+
+        Gate::authorize('reactivate', $productModel);
+
+        $this->productService->reactivate($productModel);
 
         return redirect()
-            ->back()
+            ->route('backoffice.products.show', [
+                'cooperative' => $cooperativeId,
+                'product' => $productModel->getKey(),
+            ])
             ->with('success', 'Le produit a été réactivé avec succès.');
     }
-
 }

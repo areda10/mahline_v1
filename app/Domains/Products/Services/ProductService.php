@@ -143,7 +143,17 @@ final class ProductService
             }
 
             if (array_key_exists('is_active', $attributes)) {
-                $changes['is_active'] = (bool) $attributes['is_active'];
+                $requestedActive = (bool) $attributes['is_active'];
+
+                if ($requestedActive && ! $product->is_active) {
+                    throw ValidationException::withMessages([
+                        'is_active' => [
+                            'Utilisez l’action de réactivation pour réactiver ce produit.',
+                        ],
+                    ]);
+                }
+
+                $changes['is_active'] = $requestedActive;
             }
 
             // Le propriétaire ne peut pas être changé via update.
@@ -272,7 +282,6 @@ final class ProductService
         return $slug;
     }
 
-
     public function reactivate(Product $product): Product
     {
         return DB::transaction(function () use ($product): Product {
@@ -281,20 +290,21 @@ final class ProductService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Une réactivation exige au moins une catégorie active.
+            // Un produit déjà actif ne nécessite aucune modification.
+            if ($lockedProduct->is_active) {
+                return $lockedProduct;
+            }
+
             $hasActiveCategory = $lockedProduct->categories()
                 ->where('categories.is_active', true)
                 ->exists();
 
             if (! $hasActiveCategory) {
                 throw ValidationException::withMessages([
-                    'product' => 'Impossible de réactiver ce produit : il doit appartenir à au moins une catégorie active.',
+                    'product' => [
+                        'Impossible de réactiver ce produit : il doit appartenir à au moins une catégorie active.',
+                    ],
                 ]);
-            }
-
-            // Évite une mise à jour inutile.
-            if ($lockedProduct->is_active) {
-                return $lockedProduct;
             }
 
             $lockedProduct->is_active = true;
@@ -303,5 +313,4 @@ final class ProductService
             return $lockedProduct->refresh();
         });
     }
-
 }

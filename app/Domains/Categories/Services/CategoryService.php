@@ -483,14 +483,20 @@ final class CategoryService
             return;
         }
 
-        Product::query()
+        $products = Product::query()
             ->whereIn('id', $productIds)
             ->whereDoesntHave('categories', function ($query): void {
                 $query->where('categories.is_active', true);
             })
-            ->update([
-                'is_active' => false,
-                'updated_at' => now(),
-            ]);
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($products as $product) {
+            if ($product->is_active) {
+                $product->is_active = false;
+                $product->save();
+            }
+        }
     }
+
 }

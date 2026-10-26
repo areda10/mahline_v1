@@ -117,26 +117,12 @@ final class ProductPolicy
 
     public function reactivate(User $user, Product $product): bool
     {
-        if (! $user->hasPermission('products.update')) {
-            return false;
-        }
-
-        if ($user->isAuthorized('super_admin_root')) {
-            return true;
-        }
-
-        if ($user->isAuthorized('super_admin')) {
-            return $user->cooperatives()
-                ->whereKey($product->cooperative_id)
-                ->exists();
-        }
-
-        return in_array(
-            $user->role,
-            ['cooperative_admin', 'user'],
-            true
-        ) && (string) $user->cooperative_id
-            === (string) $product->cooperative_id;
+        return $this->canAccessProduct(
+            $user,
+            $product,
+            'products.update',
+        );
     }
+
 
 }
