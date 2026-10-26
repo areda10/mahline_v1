@@ -62,8 +62,8 @@ final class CatalogController
         ]);
 
         $attributes = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:150'],
+            'slug' => ['nullable', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
@@ -136,8 +136,8 @@ final class CatalogController
         Gate::authorize('update', $catalogModel);
 
         $attributes = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'slug' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:150'],
+            'slug' => ['sometimes', 'nullable', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
         ]);

@@ -66,8 +66,8 @@ final class CategoryController
         Gate::authorize('create', Category::class);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:150'],
+            'slug' => ['nullable', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'parent_id' => ['nullable', 'string', 'max:26'],
             'is_active' => ['sometimes', 'boolean'],
@@ -132,8 +132,8 @@ final class CategoryController
         Gate::authorize('update', $categoryModel);
 
         $data = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'slug' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:150'],
+            'slug' => ['sometimes', 'nullable', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string'],
             'parent_id' => ['sometimes', 'nullable', 'string', 'max:26'],
             'is_active' => ['sometimes', 'boolean'],

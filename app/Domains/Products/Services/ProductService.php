@@ -69,6 +69,15 @@ final class ProductService
             $product->categories()->sync($categoryIds);
             $product->catalogs()->sync($catalogIds);
 
+            if (
+                ! $product->categories()
+                    ->where('categories.is_active', true)
+                    ->exists()
+            ) {
+                $product->is_active = false;
+                $product->save();
+            }
+
             return $product->load([
                 'categories',
                 'catalogs',
@@ -165,6 +174,16 @@ final class ProductService
 
             if ($catalogIds !== null) {
                 $product->catalogs()->sync($catalogIds);
+            }
+            
+            if (
+                ! $product->categories()
+                    ->where('categories.is_active', true)
+                    ->exists()
+                && $product->is_active
+            ) {
+                $product->is_active = false;
+                $product->save();
             }
 
             return $product->refresh()
@@ -297,15 +316,14 @@ final class ProductService
 
             $hasActiveCategory = $lockedProduct->categories()
                 ->where('categories.is_active', true)
+                ->where(function ($query) use ($lockedProduct): void {
+                    $query->whereNull('categories.cooperative_id')
+                        ->orWhere(
+                            'categories.cooperative_id',
+                            $lockedProduct->cooperative_id,
+                        );
+                })
                 ->exists();
-
-            if (! $hasActiveCategory) {
-                throw ValidationException::withMessages([
-                    'product' => [
-                        'Impossible de réactiver ce produit : il doit appartenir à au moins une catégorie active.',
-                    ],
-                ]);
-            }
 
             $lockedProduct->is_active = true;
             $lockedProduct->save();
