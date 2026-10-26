@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domains\Products\Http;
+namespace Tests\Feature\Domains\Products\Http\Controllers;
 
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;

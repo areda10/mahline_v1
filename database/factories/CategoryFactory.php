@@ -59,7 +59,6 @@ final class CategoryFactory extends Factory
     {
         return $this->state(fn (): array => [
             'parent_id' => $parent->getKey(),
-            'cooperative_id' => $parent->cooperative_id,
         ]);
     }
 }
