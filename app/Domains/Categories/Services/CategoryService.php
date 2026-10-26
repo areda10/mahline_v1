@@ -6,6 +6,7 @@ namespace App\Domains\Categories\Services;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Repositories\CategoryRepository;
+use App\Domains\Products\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -254,13 +255,10 @@ final class CategoryService
     public function delete(Category $category): void
     {
         DB::transaction(function () use ($category): void {
-            // Verrouille la catégorie de départ pendant l'opération.
             $lockedCategory = Category::query()
                 ->whereKey($category->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
-
-            $categoryId = (string) $lockedCategory->getKey();
 
             if ($lockedCategory->isGlobal()) {
                 $this->deleteGlobalBranch($lockedCategory);
@@ -268,7 +266,12 @@ final class CategoryService
                 return;
             }
 
-            $this->deleteLocalBranch($lockedCategory, $categoryId);
+            $cooperativeId = (string) $lockedCategory->cooperative_id;
+
+            $this->deleteLocalBranch(
+                $lockedCategory,
+                $cooperativeId,
+            );
         });
     }
 
@@ -301,14 +304,13 @@ final class CategoryService
             ->map(fn (Category $item): string => (string) $item->getKey())
             ->all();
 
-        $this->detachCategoryProducts($categoryIds);
+        $productIds = $this->detachCategoryProducts($categoryIds);
 
-        // Suppression logique des descendants, puis de la racine.
         foreach ($categories->reverse() as $item) {
             $item->delete();
         }
 
-        $category->delete();
+        $this->deactivateProductsWithoutActiveCategories($productIds);
     }
 
     /**
@@ -333,8 +335,7 @@ final class CategoryService
             ->map(fn (Category $item): string => (string) $item->getKey())
             ->all();
 
-        // Les catégories locales directement rattachées à une catégorie
-        // globale de la branche sont conservées et deviennent racines.
+        // Préserver les catégories locales et leurs sous-arbres.
         Category::query()
             ->whereIn('parent_id', $globalIds)
             ->whereNotNull('cooperative_id')
@@ -343,13 +344,13 @@ final class CategoryService
                 'updated_at' => now(),
             ]);
 
-        // Le SoftDeletes ne supprime pas les associations de la table pivot.
-        $this->detachCategoryProducts($globalIds);
+        $productIds = $this->detachCategoryProducts($globalIds);
 
-        // Suppression logique des catégories globales de la branche.
         foreach ($globalCategories->reverse() as $item) {
             $item->delete();
         }
+
+        $this->deactivateProductsWithoutActiveCategories($productIds);
     }
 
     /**
@@ -446,18 +447,50 @@ final class CategoryService
     }
 
     /**
-     * Détache les produits des catégories supprimées.
+     * Détache les associations et retourne les identifiants
+     * des produits qui étaient associés à ces catégories.
      *
-     * Aucun produit ni aucune variante n'est supprimé physiquement.
+     * @return array<int, string>
      */
-    private function detachCategoryProducts(array $categoryIds): void
+    private function detachCategoryProducts(array $categoryIds): array
     {
         if ($categoryIds === []) {
-            return;
+            return [];
         }
+
+        $productIds = DB::table('category_product')
+            ->whereIn('category_id', $categoryIds)
+            ->distinct()
+            ->pluck('product_id')
+            ->map(fn ($id): string => (string) $id)
+            ->all();
 
         DB::table('category_product')
             ->whereIn('category_id', $categoryIds)
             ->delete();
+
+        return $productIds;
+    }
+
+    /**
+     * Désactive les produits concernés qui n'ont plus
+     * aucune catégorie active après le détachement.
+     */
+    private function deactivateProductsWithoutActiveCategories(
+        array $productIds,
+    ): void {
+        if ($productIds === []) {
+            return;
+        }
+
+        Product::query()
+            ->whereIn('id', $productIds)
+            ->whereDoesntHave('categories', function ($query): void {
+                $query->where('categories.is_active', true);
+            })
+            ->update([
+                'is_active' => false,
+                'updated_at' => now(),
+            ]);
     }
 }

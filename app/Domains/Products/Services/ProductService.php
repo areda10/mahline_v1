@@ -271,4 +271,37 @@ final class ProductService
 
         return $slug;
     }
+
+
+    public function reactivate(Product $product): Product
+    {
+        return DB::transaction(function () use ($product): Product {
+            $lockedProduct = Product::query()
+                ->whereKey($product->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            // Une réactivation exige au moins une catégorie active.
+            $hasActiveCategory = $lockedProduct->categories()
+                ->where('categories.is_active', true)
+                ->exists();
+
+            if (! $hasActiveCategory) {
+                throw ValidationException::withMessages([
+                    'product' => 'Impossible de réactiver ce produit : il doit appartenir à au moins une catégorie active.',
+                ]);
+            }
+
+            // Évite une mise à jour inutile.
+            if ($lockedProduct->is_active) {
+                return $lockedProduct;
+            }
+
+            $lockedProduct->is_active = true;
+            $lockedProduct->save();
+
+            return $lockedProduct->refresh();
+        });
+    }
+
 }

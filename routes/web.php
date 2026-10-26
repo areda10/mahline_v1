@@ -128,6 +128,12 @@ Route::prefix('back-office')
             });
 });
 
+Route::patch(
+    '/products/{product}/reactivate',
+    [ProductController::class, 'reactivate']
+)
+    ->middleware('auth')
+    ->name('products.reactivate');
 
 // Route::get('/_debug/auth-session', function () {
 //     return response()->json([

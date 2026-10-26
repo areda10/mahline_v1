@@ -220,4 +220,18 @@ final class ProductController
 
         return $cooperative;
     }
+
+    public function reactivate(
+        Product $product,
+        ProductService $productService
+    ) {
+        $this->authorize('reactivate', $product);
+
+        $productService->reactivate($product);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Le produit a été réactivé avec succès.');
+    }
+
 }
