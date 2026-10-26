@@ -93,35 +93,42 @@ Route::prefix('back-office')
     ->middleware(['web', 'auth'])
     ->group(function (): void {
 
-        // Catalogue
-        Route::resource('catalogs', CatalogController::class)
-            ->except(['destroy'])
-            ->names('catalogs');
+        Route::prefix('cooperatives/{cooperative}')
+            ->group(function (): void {
 
-        Route::delete(
-            'catalogs/{catalog}',
-            [CatalogController::class, 'destroy']
-        )->name('catalogs.destroy');
+                // Catalogues
+                Route::resource('catalogs', CatalogController::class)
+                    ->except(['destroy'])
+                    ->names('catalogs');
 
-        Route::post(
-            'catalogs/{catalog}/products',
-            [CatalogProductController::class, 'store']
-        )->name('catalogs.products.store');
+                Route::delete(
+                    'catalogs/{catalog}',
+                    [CatalogController::class, 'destroy'],
+                )->name('catalogs.destroy');
 
-        Route::delete(
-            'catalogs/{catalog}/products/{product}',
-            [CatalogProductController::class, 'destroy']
-        )->name('catalogs.products.destroy');
+                // Gestion des produits associés à un catalogue
+                Route::post(
+                    'catalogs/{catalog}/products',
+                    [CatalogProductController::class, 'store'],
+                )->name('catalogs.products.store');
 
-        // Catégories
-        Route::resource('categories', CategoryController::class)
-            ->except(['show'])
-            ->names('categories');
+                Route::delete(
+                    'catalogs/{catalog}/products/{product}',
+                    [CatalogProductController::class, 'destroy'],
+                )->name('catalogs.products.destroy');
 
-        // Produits
-        Route::resource('products', ProductController::class)
-            ->names('products');
-    });
+                // Catégories
+                Route::resource('categories', CategoryController::class)
+                    ->except(['show'])
+                    ->names('categories');
+
+                // Produits
+                Route::resource('products', ProductController::class)
+                    ->names('products');
+            });
+});
+
+
 // Route::get('/_debug/auth-session', function () {
 //     return response()->json([
 //         'authenticated' => auth()->check(),

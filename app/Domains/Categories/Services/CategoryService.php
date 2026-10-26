@@ -254,15 +254,210 @@ final class CategoryService
     public function delete(Category $category): void
     {
         DB::transaction(function () use ($category): void {
-            if ($category->children()->exists()) {
+            // Verrouille la catégorie de départ pendant l'opération.
+            $lockedCategory = Category::query()
+                ->whereKey($category->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $categoryId = (string) $lockedCategory->getKey();
+
+            if ($lockedCategory->isGlobal()) {
+                $this->deleteGlobalBranch($lockedCategory);
+
+                return;
+            }
+
+            $this->deleteLocalBranch($lockedCategory, $categoryId);
+        });
+    }
+
+    /**
+     * Supprime logiquement une branche locale.
+     *
+     * Une catégorie locale ne peut avoir pour descendants que
+     * des catégories de la même coopérative.
+     */
+    private function deleteLocalBranch(
+        Category $category,
+        string $cooperativeId,
+    ): void {
+        $categories = $this->collectDescendants($category);
+
+        foreach ($categories as $descendant) {
+            if (
+                $descendant->cooperative_id === null
+                || (string) $descendant->cooperative_id !== $cooperativeId
+            ) {
                 throw ValidationException::withMessages([
                     'category' => [
-                        'Impossible de supprimer une catégorie qui possède des sous-catégories.',
+                        'La branche contient une catégorie hors du périmètre autorisé.',
+                    ],
+                ]);
+            }
+        }
+
+        $categoryIds = $categories
+            ->map(fn (Category $item): string => (string) $item->getKey())
+            ->all();
+
+        $this->detachCategoryProducts($categoryIds);
+
+        // Suppression logique des descendants, puis de la racine.
+        foreach ($categories->reverse() as $item) {
+            $item->delete();
+        }
+
+        $category->delete();
+    }
+
+    /**
+     * Supprime une branche globale sans supprimer les catégories locales.
+     *
+     * Les enfants globaux sont supprimés récursivement.
+     * Les enfants locaux directs de chaque catégorie globale supprimée
+     * sont conservés et deviennent des racines.
+     */
+    private function deleteGlobalBranch(Category $category): void
+    {
+        $globalCategories = collect();
+        $visited = [];
+
+        $this->collectGlobalDescendants(
+            $category,
+            $globalCategories,
+            $visited,
+        );
+
+        $globalIds = $globalCategories
+            ->map(fn (Category $item): string => (string) $item->getKey())
+            ->all();
+
+        // Les catégories locales directement rattachées à une catégorie
+        // globale de la branche sont conservées et deviennent racines.
+        Category::query()
+            ->whereIn('parent_id', $globalIds)
+            ->whereNotNull('cooperative_id')
+            ->update([
+                'parent_id' => null,
+                'updated_at' => now(),
+            ]);
+
+        // Le SoftDeletes ne supprime pas les associations de la table pivot.
+        $this->detachCategoryProducts($globalIds);
+
+        // Suppression logique des catégories globales de la branche.
+        foreach ($globalCategories->reverse() as $item) {
+            $item->delete();
+        }
+    }
+
+    /**
+     * Collecte la catégorie et tous ses descendants.
+     *
+     * L'ordre de collecte est parent puis descendants.
+     */
+    private function collectDescendants(Category $category): \Illuminate\Support\Collection
+    {
+        $result = collect();
+        $visited = [];
+
+        $walk = function (Category $current) use (
+            &$walk,
+            &$result,
+            &$visited,
+        ): void {
+            $id = (string) $current->getKey();
+
+            if (isset($visited[$id])) {
+                throw ValidationException::withMessages([
+                    'category' => [
+                        'Un cycle a été détecté dans la hiérarchie des catégories.',
                     ],
                 ]);
             }
 
-            $this->repository->delete($category);
-        });
+            $visited[$id] = true;
+            $result->push($current);
+
+            $children = Category::query()
+                ->where('parent_id', $id)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($children as $child) {
+                $walk($child);
+            }
+        };
+
+        $walk($category);
+
+        return $result;
+    }
+
+    /**
+     * Parcourt uniquement la branche globale.
+     *
+     * Lorsqu'un enfant local est rencontré, il n'est pas ajouté
+     * à la branche à supprimer. Il sera détaché lors de l'opération.
+     */
+    private function collectGlobalDescendants(
+        Category $category,
+        \Illuminate\Support\Collection &$result,
+        array &$visited,
+    ): void {
+        $id = (string) $category->getKey();
+
+        if (isset($visited[$id])) {
+            throw ValidationException::withMessages([
+                'category' => [
+                    'Un cycle a été détecté dans la hiérarchie des catégories.',
+                ],
+            ]);
+        }
+
+        if (! $category->isGlobal()) {
+            throw ValidationException::withMessages([
+                'category' => [
+                    'Une branche globale ne peut contenir que des catégories globales.',
+                ],
+            ]);
+        }
+
+        $visited[$id] = true;
+        $result->push($category);
+
+        $children = Category::query()
+            ->where('parent_id', $id)
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($children as $child) {
+            if ($child->isGlobal()) {
+                $this->collectGlobalDescendants(
+                    $child,
+                    $result,
+                    $visited,
+                );
+            }
+        }
+    }
+
+    /**
+     * Détache les produits des catégories supprimées.
+     *
+     * Aucun produit ni aucune variante n'est supprimé physiquement.
+     */
+    private function detachCategoryProducts(array $categoryIds): void
+    {
+        if ($categoryIds === []) {
+            return;
+        }
+
+        DB::table('category_product')
+            ->whereIn('category_id', $categoryIds)
+            ->delete();
     }
 }
