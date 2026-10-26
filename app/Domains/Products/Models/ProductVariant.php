@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Products\Models;
 
 use App\Core\Foundation\Models\BaseModel;
+use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -32,6 +33,11 @@ final class ProductVariant extends BaseModel
             'is_active' => 'boolean',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    protected static function newFactory(): ProductVariantFactory
+    {
+        return ProductVariantFactory::new();
     }
 
     public function product(): BelongsTo

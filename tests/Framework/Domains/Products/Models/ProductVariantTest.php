@@ -19,7 +19,6 @@ final class ProductVariantTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $this->assertTrue(
@@ -33,7 +32,6 @@ final class ProductVariantTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
             'attributes' => [
                 'weight' => '250 g',
                 'packaging' => 'glass',
@@ -53,7 +51,6 @@ final class ProductVariantTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
             'sku' => null,
         ]);
 
@@ -66,7 +63,6 @@ final class ProductVariantTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $variantId = $variant->getKey();
@@ -88,12 +84,10 @@ final class ProductVariantTest extends TestCase
 
         $activeVariant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $deletedVariant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $deletedVariant->delete();

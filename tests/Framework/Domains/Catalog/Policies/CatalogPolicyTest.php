@@ -106,8 +106,7 @@ final class CatalogPolicyTest extends TestCase
             'cooperative_id' => $cooperativeId,
         ]);
 
-        $roleSlug = 'test-' . str_replace('.', '-', $permissionSlug)
-            . '-' . str_replace('_', '-', $roleName);
+        $roleSlug = $roleName;
 
         $role = Role::query()->create([
             'name' => $roleName,

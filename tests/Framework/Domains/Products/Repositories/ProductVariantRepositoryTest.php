@@ -59,7 +59,6 @@ final class ProductVariantRepositoryTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $result = $this->repository->findForProductOrFail(
@@ -97,7 +96,6 @@ final class ProductVariantRepositoryTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $variantId = $variant->getKey();
@@ -118,7 +116,6 @@ final class ProductVariantRepositoryTest extends TestCase
 
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
-            'cooperative_id' => $product->cooperative_id,
         ]);
 
         $variantId = $variant->getKey();
