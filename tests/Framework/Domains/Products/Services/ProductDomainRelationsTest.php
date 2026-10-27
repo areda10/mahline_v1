@@ -13,8 +13,8 @@ use App\Domains\Products\Models\Product;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 final class ProductDomainRelationsTest extends TestCase
@@ -215,7 +215,8 @@ final class ProductDomainRelationsTest extends TestCase
         ]);
 
         $this->assertTrue(
-            $product->fresh()->categories()
+            $product->fresh()
+                ->categories()
                 ->whereKey($categoryToKeep->getKey())
                 ->exists(),
         );
@@ -230,9 +231,21 @@ final class ProductDomainRelationsTest extends TestCase
             ->create();
 
         $localChild = Category::factory()
-            ->forCooperative($cooperative)
             ->childOf($globalCategory)
+            ->forCooperative($cooperative)
             ->create();
+
+        $this->assertNull($globalCategory->cooperative_id);
+
+        $this->assertSame(
+            $cooperative->getKey(),
+            $localChild->cooperative_id,
+        );
+
+        $this->assertSame(
+            $globalCategory->getKey(),
+            $localChild->parent_id,
+        );
 
         app(CategoryService::class)->delete($globalCategory);
 
@@ -271,12 +284,12 @@ final class ProductDomainRelationsTest extends TestCase
             ]);
 
             $this->fail(
-                'MySQL aurait dû refuser cette association entre coopératives.'
+                'MySQL aurait dû refuser cette association entre coopératives.',
             );
         } catch (QueryException $exception) {
             $this->assertStringContainsString(
                 'catalog',
-                strtolower($exception->getMessage())
+                strtolower($exception->getMessage()),
             );
         }
 
@@ -308,12 +321,12 @@ final class ProductDomainRelationsTest extends TestCase
             ]);
 
             $this->fail(
-                'MySQL aurait dû refuser cette catégorie locale étrangère.'
+                'MySQL aurait dû refuser cette catégorie locale étrangère.',
             );
         } catch (QueryException $exception) {
             $this->assertStringContainsString(
                 'categorie',
-                strtolower($exception->getMessage())
+                strtolower($exception->getMessage()),
             );
         }
 
@@ -390,12 +403,12 @@ final class ProductDomainRelationsTest extends TestCase
                 ]);
 
             $this->fail(
-                'MySQL aurait dû refuser le changement de propriétaire.'
+                'MySQL aurait dû refuser le changement de propriétaire.',
             );
         } catch (QueryException $exception) {
             $this->assertStringContainsString(
                 'cooperative',
-                strtolower($exception->getMessage())
+                strtolower($exception->getMessage()),
             );
         }
 
@@ -409,5 +422,4 @@ final class ProductDomainRelationsTest extends TestCase
             'product_id' => $productA->getKey(),
         ]);
     }
-
 }

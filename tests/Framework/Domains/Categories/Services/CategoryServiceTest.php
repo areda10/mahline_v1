@@ -78,7 +78,9 @@ final class CategoryServiceTest extends TestCase
                 'parent_id' => $category->getKey(),
             ]);
 
-            $this->fail('Une catégorie ne doit pas être son propre parent.');
+            $this->fail(
+                'Une catégorie ne doit pas être son propre parent.',
+            );
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey(
                 'parent_id',
@@ -105,7 +107,9 @@ final class CategoryServiceTest extends TestCase
                 'parent_id' => $child->getKey(),
             ]);
 
-            $this->fail('Le déplacement doit être refusé pour éviter un cycle.');
+            $this->fail(
+                'Le déplacement doit être refusé pour éviter un cycle.',
+            );
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey(
                 'parent_id',
@@ -127,33 +131,30 @@ final class CategoryServiceTest extends TestCase
         $this->assertSame('epices', $updated->slug);
     }
 
-    public function test_service_refuses_to_delete_category_with_children(): void
+    public function test_service_deletes_global_parent_and_global_children(): void
     {
         $parent = $this->createCategory([
             'name' => 'Alimentation',
             'slug' => 'alimentation',
         ]);
 
-        $this->createCategory([
+        $child = $this->createCategory([
             'name' => 'Miels',
             'slug' => 'miels',
             'parent_id' => $parent->getKey(),
         ]);
 
-        try {
-            $this->service->delete($parent);
+        $this->assertNull($parent->cooperative_id);
+        $this->assertNull($child->cooperative_id);
 
-            $this->fail('La catégorie parent doit être conservée.');
-        } catch (ValidationException $exception) {
-            $this->assertArrayHasKey(
-                'category',
-                $exception->errors(),
-            );
-        }
+        $this->service->delete($parent);
 
-        $this->assertDatabaseHas('categories', [
+        $this->assertSoftDeleted('categories', [
             'id' => $parent->getKey(),
-            'deleted_at' => null,
+        ]);
+
+        $this->assertSoftDeleted('categories', [
+            'id' => $child->getKey(),
         ]);
     }
 
@@ -174,30 +175,6 @@ final class CategoryServiceTest extends TestCase
             'name' => 'Catégorie test',
             'slug' => 'categorie-test',
             ...$attributes,
-        ]);
-    }
-
-    public function test_service_deletes_global_parent_and_global_children(): void
-    {
-        $parent = $this->createCategory([
-            'name' => 'Alimentation',
-            'slug' => 'alimentation',
-        ]);
-
-        $child = $this->createCategory([
-            'name' => 'Miels',
-            'slug' => 'miels',
-            'parent_id' => $parent->getKey(),
-        ]);
-
-        $this->service->delete($parent);
-
-        $this->assertSoftDeleted('categories', [
-            'id' => $parent->getKey(),
-        ]);
-
-        $this->assertSoftDeleted('categories', [
-            'id' => $child->getKey(),
         ]);
     }
 }

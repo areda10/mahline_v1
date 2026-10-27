@@ -15,10 +15,13 @@ final class CategoryFactoryTest extends TestCase
 
     public function test_it_creates_a_global_category(): void
     {
-        $category = Category::factory()->global()->create();
+        $category = Category::factory()
+            ->global()
+            ->create();
 
         $this->assertNull($category->cooperative_id);
         $this->assertNull($category->parent_id);
+
         $this->assertDatabaseHas('categories', [
             'id' => $category->getKey(),
             'cooperative_id' => null,
@@ -39,16 +42,29 @@ final class CategoryFactoryTest extends TestCase
         );
     }
 
-    public function test_it_can_create_a_child_category(): void
+    public function test_it_can_create_a_local_child_of_a_global_category(): void
     {
-        $parent = Category::factory()->global()->create();
+        $cooperative = Cooperative::factory()->create();
+
+        $parent = Category::factory()
+            ->global()
+            ->create();
 
         $child = Category::factory()
-            ->childOf($globalParent)
+            ->childOf($parent)
             ->forCooperative($cooperative)
             ->create();
 
-        $this->assertSame($parent->getKey(), $child->parent_id);
-        $this->assertNull($child->cooperative_id);
+        $this->assertSame(
+            $parent->getKey(),
+            $child->parent_id,
+        );
+
+        $this->assertSame(
+            $cooperative->getKey(),
+            $child->cooperative_id,
+        );
+
+        $this->assertNull($parent->cooperative_id);
     }
 }
