@@ -11,8 +11,10 @@ use App\Domains\Categories\Services\CategoryService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Services\ProductService;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class ProductDomainRelationsTest extends TestCase
@@ -245,4 +247,167 @@ final class ProductDomainRelationsTest extends TestCase
             'deleted_at' => null,
         ]);
     }
+
+    public function test_database_rejects_catalog_product_relation_across_cooperatives(): void
+    {
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+
+        $catalogA = Catalog::factory()->create([
+            'cooperative_id' => $cooperativeA->getKey(),
+            'is_active' => true,
+        ]);
+
+        $productB = Product::factory()
+            ->forCooperative($cooperativeB)
+            ->create();
+
+        try {
+            DB::table('catalog_product')->insert([
+                'catalog_id' => $catalogA->getKey(),
+                'product_id' => $productB->getKey(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $this->fail(
+                'MySQL aurait dû refuser cette association entre coopératives.'
+            );
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString(
+                'catalog',
+                strtolower($exception->getMessage())
+            );
+        }
+
+        $this->assertDatabaseMissing('catalog_product', [
+            'catalog_id' => $catalogA->getKey(),
+            'product_id' => $productB->getKey(),
+        ]);
+    }
+
+    public function test_database_rejects_foreign_local_category_for_product(): void
+    {
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+
+        $productA = Product::factory()
+            ->forCooperative($cooperativeA)
+            ->create();
+
+        $categoryB = Category::factory()
+            ->forCooperative($cooperativeB)
+            ->create();
+
+        try {
+            DB::table('category_product')->insert([
+                'category_id' => $categoryB->getKey(),
+                'product_id' => $productA->getKey(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $this->fail(
+                'MySQL aurait dû refuser cette catégorie locale étrangère.'
+            );
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString(
+                'categorie',
+                strtolower($exception->getMessage())
+            );
+        }
+
+        $this->assertDatabaseMissing('category_product', [
+            'category_id' => $categoryB->getKey(),
+            'product_id' => $productA->getKey(),
+        ]);
+    }
+
+    public function test_database_allows_global_category_for_different_cooperatives(): void
+    {
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+
+        $globalCategory = Category::factory()
+            ->global()
+            ->create();
+
+        $productA = Product::factory()
+            ->forCooperative($cooperativeA)
+            ->create();
+
+        $productB = Product::factory()
+            ->forCooperative($cooperativeB)
+            ->create();
+
+        DB::table('category_product')->insert([
+            [
+                'category_id' => $globalCategory->getKey(),
+                'product_id' => $productA->getKey(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'category_id' => $globalCategory->getKey(),
+                'product_id' => $productB->getKey(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $this->assertDatabaseHas('category_product', [
+            'category_id' => $globalCategory->getKey(),
+            'product_id' => $productA->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('category_product', [
+            'category_id' => $globalCategory->getKey(),
+            'product_id' => $productB->getKey(),
+        ]);
+    }
+
+    public function test_database_rejects_product_owner_change_that_invalidates_catalog_relation(): void
+    {
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+
+        $catalogA = Catalog::factory()->create([
+            'cooperative_id' => $cooperativeA->getKey(),
+            'is_active' => true,
+        ]);
+
+        $productA = Product::factory()
+            ->forCooperative($cooperativeA)
+            ->create();
+
+        $catalogA->products()->attach($productA->getKey());
+
+        try {
+            DB::table('products')
+                ->where('id', $productA->getKey())
+                ->update([
+                    'cooperative_id' => $cooperativeB->getKey(),
+                ]);
+
+            $this->fail(
+                'MySQL aurait dû refuser le changement de propriétaire.'
+            );
+        } catch (QueryException $exception) {
+            $this->assertStringContainsString(
+                'cooperative',
+                strtolower($exception->getMessage())
+            );
+        }
+
+        $this->assertDatabaseHas('products', [
+            'id' => $productA->getKey(),
+            'cooperative_id' => $cooperativeA->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('catalog_product', [
+            'catalog_id' => $catalogA->getKey(),
+            'product_id' => $productA->getKey(),
+        ]);
+    }
+
 }
