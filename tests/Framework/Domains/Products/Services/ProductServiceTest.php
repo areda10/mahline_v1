@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Products\Services;
 
+use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Services\ProductService;
@@ -26,6 +27,9 @@ final class ProductServiceTest extends TestCase
     public function test_it_creates_a_product_for_the_given_cooperative(): void
     {
         $cooperative = Cooperative::factory()->create();
+        $category = Category::factory()
+            ->forCooperative($cooperative)
+            ->create();
 
         $product = $this->service->create(
             (string) $cooperative->getKey(),
@@ -34,6 +38,7 @@ final class ProductServiceTest extends TestCase
                 'slug' => 'miel-naturel',
                 'description' => 'Miel produit au Maroc.',
                 'is_active' => true,
+                'category_ids' => [$category->getKey()],
             ],
         );
 

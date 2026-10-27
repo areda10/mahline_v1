@@ -176,4 +176,28 @@ final class CategoryServiceTest extends TestCase
             ...$attributes,
         ]);
     }
+
+    public function test_service_deletes_global_parent_and_global_children(): void
+    {
+        $parent = $this->createCategory([
+            'name' => 'Alimentation',
+            'slug' => 'alimentation',
+        ]);
+
+        $child = $this->createCategory([
+            'name' => 'Miels',
+            'slug' => 'miels',
+            'parent_id' => $parent->getKey(),
+        ]);
+
+        $this->service->delete($parent);
+
+        $this->assertSoftDeleted('categories', [
+            'id' => $parent->getKey(),
+        ]);
+
+        $this->assertSoftDeleted('categories', [
+            'id' => $child->getKey(),
+        ]);
+    }
 }

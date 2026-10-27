@@ -44,7 +44,8 @@ final class CategoryFactoryTest extends TestCase
         $parent = Category::factory()->global()->create();
 
         $child = Category::factory()
-            ->childOf($parent)
+            ->childOf($globalParent)
+            ->forCooperative($cooperative)
             ->create();
 
         $this->assertSame($parent->getKey(), $child->parent_id);

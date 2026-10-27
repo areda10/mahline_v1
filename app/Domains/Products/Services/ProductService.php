@@ -325,6 +325,14 @@ final class ProductService
                 })
                 ->exists();
 
+            if (! $hasActiveCategory) {
+                throw ValidationException::withMessages([
+                    'product' => [
+                        'Un produit doit être associé à au moins une catégorie active pour être réactivé.',
+                    ],
+                ]);
+            }
+
             $lockedProduct->is_active = true;
             $lockedProduct->save();
 
