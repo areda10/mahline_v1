@@ -65,6 +65,19 @@ final class AuthorizationServiceProvider extends ServiceProvider
                 if ($isCooperativeAuthorization) {
                     return null;
                 }
+
+                // Les catalogues doivent être autorisés par CatalogPolicy.
+                $isCatalogAuthorization =
+                    in_array(Catalog::class, $arguments, true)
+                    || count(array_filter(
+                        $arguments,
+                        static fn (mixed $argument): bool =>
+                            $argument instanceof Catalog,
+                    )) > 0;
+
+                if ($isCatalogAuthorization) {
+                    return null;
+                }
                 
                 // Les catégories doivent être autorisées par CategoryPolicy.
                 $isCategoryAuthorization =

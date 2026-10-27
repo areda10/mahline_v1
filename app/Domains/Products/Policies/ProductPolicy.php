@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Policies;
 
-use App\Domains\Products\Models\Product;
+use App\Core\Foundation\Policies\BasePolicy;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Products\Models\Product;
 
-final class ProductPolicy
+final class ProductPolicy extends BasePolicy
 {
     public function viewAny(User $user): bool
     {
@@ -123,6 +124,4 @@ final class ProductPolicy
             'products.update',
         );
     }
-
-
 }
