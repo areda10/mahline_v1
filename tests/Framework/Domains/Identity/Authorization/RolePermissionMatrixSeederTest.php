@@ -80,4 +80,69 @@ final class RolePermissionMatrixSeederTest extends TestCase
             $secondPermissionIds,
         );
     }
+
+    public function test_every_role_can_view_only_the_cooperatives_allowed_by_its_policy(): void
+    {
+        $this->seed([
+            \Database\Seeders\RoleSeeder::class,
+            \Database\Seeders\PermissionSeeder::class,
+            \Database\Seeders\RolePermissionSeeder::class,
+        ]);
+
+        foreach ([
+            'super_admin_root',
+            'super_admin',
+            'cooperative_admin',
+            'user',
+        ] as $roleSlug) {
+            $role = Role::query()
+                ->where('slug', $roleSlug)
+                ->firstOrFail();
+
+            $this->assertTrue(
+                $role->permissions()
+                    ->where('slug', 'cooperatives.view')
+                    ->exists(),
+                sprintf(
+                    'Le rôle "%s" doit posséder cooperatives.view.',
+                    $roleSlug,
+                ),
+            );
+        }
+    }
+
+    public function test_every_permission_in_the_matrix_exists_and_is_active(): void
+    {
+        $this->seed([
+            \Database\Seeders\RoleSeeder::class,
+            \Database\Seeders\PermissionSeeder::class,
+            \Database\Seeders\RolePermissionSeeder::class,
+        ]);
+
+        $matrix = config('authorization.role_permissions');
+
+        foreach ($matrix as $roleSlug => $permissionSlugs) {
+            $role = Role::query()
+                ->where('slug', $roleSlug)
+                ->firstOrFail();
+
+            $actualSlugs = $role->permissions()
+                ->where('permissions.is_active', true)
+                ->pluck('permissions.slug')
+                ->all();
+
+            foreach ($permissionSlugs as $permissionSlug) {
+                $this->assertContains(
+                    $permissionSlug,
+                    $actualSlugs,
+                    sprintf(
+                        'La permission "%s" doit être active et attribuée au rôle "%s".',
+                        $permissionSlug,
+                        $roleSlug,
+                    ),
+                );
+            }
+        }
+    }
+
 }

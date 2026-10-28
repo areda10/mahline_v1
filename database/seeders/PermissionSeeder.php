@@ -12,6 +12,13 @@ final class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            // Cooperatives
+            'cooperatives.view' => 'Consulter les coopératives',
+            'cooperatives.create' => 'Créer une coopérative',
+            'cooperatives.update' => 'Modifier une coopérative',
+            'cooperatives.delete' => 'Supprimer une coopérative',
+
+            // Catalogs
             'catalogs.view' => 'Consulter les catalogues',
             'catalogs.create' => 'Créer un catalogue',
             'catalogs.update' => 'Modifier un catalogue',
@@ -19,6 +26,7 @@ final class PermissionSeeder extends Seeder
             'catalogs.restore' => 'Restaurer un catalogue',
             'catalogs.force_delete' => 'Supprimer définitivement un catalogue',
 
+            // Categories
             'categories.view' => 'Consulter les catégories',
             'categories.create' => 'Créer une catégorie',
             'categories.update' => 'Modifier une catégorie',
@@ -26,6 +34,7 @@ final class PermissionSeeder extends Seeder
             'categories.restore' => 'Restaurer une catégorie',
             'categories.force_delete' => 'Supprimer définitivement une catégorie',
 
+            // Products
             'products.view' => 'Consulter les produits',
             'products.create' => 'Créer un produit',
             'products.update' => 'Modifier un produit',
@@ -35,15 +44,17 @@ final class PermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $slug => $name) {
-            Permission::query()->withTrashed()->updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $name,
-                    'description' => $name,
-                    'is_active' => true,
-                    'deleted_at' => null,
-                ],
-            );
+            Permission::query()
+                ->withTrashed()
+                ->updateOrCreate(
+                    ['slug' => $slug],
+                    [
+                        'name' => $name,
+                        'description' => $name,
+                        'is_active' => true,
+                        'deleted_at' => null,
+                    ],
+                );
         }
     }
 }

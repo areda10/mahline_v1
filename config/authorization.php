@@ -21,6 +21,11 @@ return [
          * Global MAHLINE platform administration.
          */
         'super_admin_root' => [
+            'cooperatives.view',
+            'cooperatives.create',
+            'cooperatives.update',
+            'cooperatives.delete',
+
             'catalogs.view',
             'catalogs.create',
             'catalogs.update',
@@ -47,6 +52,10 @@ return [
          * Administration of assigned cooperatives.
          */
         'super_admin' => [
+            'cooperatives.view',
+            'cooperatives.update',
+            'cooperatives.delete',
+
             'catalogs.view',
             'catalogs.create',
             'catalogs.update',
@@ -70,6 +79,8 @@ return [
          * Administration of the user's own cooperative.
          */
         'cooperative_admin' => [
+            'cooperatives.view',
+
             'catalogs.view',
             'catalogs.create',
             'catalogs.update',
@@ -93,6 +104,7 @@ return [
          * Standard cooperative user.
          */
         'user' => [
+            'cooperatives.view',
             'catalogs.view',
             'categories.view',
             'products.view',
