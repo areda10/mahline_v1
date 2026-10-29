@@ -91,14 +91,14 @@ final class AuthenticationSessionTest extends TestCase
             'authenticated_at' => now(),
         ]);
 
-        $session->revoke('new_login');
+        $session->revoke('security');
 
         $session->refresh();
 
         $this->assertFalse($session->isActive());
         $this->assertNotNull($session->revoked_at);
         $this->assertSame(
-            'new_login',
+            'security',
             $session->revocation_reason
         );
     }
