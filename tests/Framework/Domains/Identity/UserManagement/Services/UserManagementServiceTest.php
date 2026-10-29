@@ -85,44 +85,6 @@ final class UserManagementServiceTest extends TestCase
         self::assertTrue($user->hasRole('user'));
     }
 
-    // public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void
-    // {
-    //     $superAdmin = $this->createUserWithRole('super_admin');
-
-    //     $assignedCooperative = $this->createCooperative();
-
-    //     $country = Country::factory()->create();
-
-    //     $unassignedAddress = Address::factory()->create([
-    //         'country_id' => $country->id,
-    //     ]);
-
-    //     $unassignedCooperative = Cooperative::factory()->create([
-    //         'address_id' => $unassignedAddress->id,
-    //     ]);
-
-    //     $superAdmin->cooperatives()->attach(
-    //         $assignedCooperative->id,
-    //     );
-
-    //     $this->expectException(\DomainException::class);
-
-    //     $this->service->createUser(
-    //         $superAdmin,
-    //         [
-    //             'first_name' => 'Blocked',
-    //             'last_name' => 'User',
-    //             'display_name' => 'Blocked User',
-    //             'email' => 'blocked@example.com',
-    //             'telephone' => '+212600000003',
-    //             'password' => 'Password123',
-    //             'status' => UserStatus::Active,
-    //             'cooperative_id' => $unassignedCooperative->id,
-    //         ],
-    //         'user',
-    //     );
-    // }
-
     public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void 
     { 
         $superAdmin = $this->createUserWithRole('super_admin'); 
@@ -300,24 +262,6 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    // private function createUserWithRole(
-    //     string $roleSlug,
-    //     ?string $cooperativeId = null,
-    // ): User {
-    //     $user = User::factory()->create([
-    //         'cooperative_id' => $cooperativeId,
-    //     ]);
-
-    //     $role = Role::query()->create([
-    //         'name' => $roleSlug,
-    //         'slug' => $roleSlug,
-    //         'is_active' => true,
-    //     ]);
-
-    //     $user->roles()->attach($role);
-
-    //     return $user;
-    // }
     private function createUserWithRole( 
         string $roleSlug, 
         ?string $cooperativeId = null, 
@@ -551,6 +495,35 @@ final class UserManagementServiceTest extends TestCase
                 'cooperative_id' => $cooperative->id,
             ],
             'user',
+        );
+    }
+
+    public function test_super_admin_root_can_remove_assignment_from_inactive_super_admin(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+
+        $cooperative = $this->createCooperative();
+
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $superAdmin->cooperatives()->attach(
+            $cooperative->id,
+        );
+
+        $superAdmin->update([
+            'status' => UserStatus::Inactive,
+        ]);
+
+        $this->service->removeSuperAdminFromCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        self::assertFalse(
+            $superAdmin->cooperatives()
+                ->whereKey($cooperative->id)
+                ->exists(),
         );
     }
 }

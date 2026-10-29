@@ -84,7 +84,7 @@ final class UserManagementService
     ): void {
         $this->assertActorIsActive($actor);
         $this->assertSuperAdminRoot($actor);
-        $this->assertSuperAdminTarget($superAdmin);
+        $this->assertSuperAdminRoleTarget($superAdmin);
         $this->assertCooperativeExists($cooperative->getKey());
 
         DB::transaction(function () use (
@@ -95,6 +95,19 @@ final class UserManagementService
                 $cooperative->getKey(),
             );
         });
+    }
+
+    private function assertSuperAdminRoleTarget(User $superAdmin): void
+    {
+        $hasSuperAdminRole = $superAdmin->roles()
+            ->where('slug', self::ROLE_SUPER_ADMIN)
+            ->exists();
+
+        if (! $hasSuperAdminRole) {
+            throw new DomainException(
+                'The target user must have the super_admin role.',
+            );
+        }
     }
 
     private function assertActorIsActive(User $actor): void
@@ -220,11 +233,7 @@ final class UserManagementService
             );
         }
 
-        if (! $superAdmin->hasRole(self::ROLE_SUPER_ADMIN)) {
-            throw new DomainException(
-                'The target user must have the super_admin role.',
-            );
-        }
+        $this->assertSuperAdminRoleTarget($superAdmin);
     }
 
     private function findRole(string $roleSlug): Role
