@@ -470,28 +470,24 @@ Les tokens associés doivent être considérés comme invalides.
 
 ---
 
-# 25. One Active Session Rule
+# 25. Sessions Web et API Tokens
 
-La règle :
-
-```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
-```
-
-concerne les sessions d'authentification interactive.
-
-Elle ne signifie pas :
+La règle des sessions Web est :
 
 ```text
-ONE USER → ONE API TOKEN
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
-Un User peut posséder plusieurs API Tokens.
+Chaque session Web possède son propre cycle de vie et peut être révoquée indépendamment. Une nouvelle connexion Web ne révoque pas les sessions actives existantes.
+
+Cette règle est indépendante de la gestion des API Tokens. Un User peut posséder plusieurs API Tokens.
 
 Exemple :
 
 ```text
 USER
+ ├── Web Session A → ACTIVE
+ ├── Web Session B → ACTIVE
  ├── Token ERP
  ├── Token Mobile
  └── Token Automation
@@ -501,11 +497,11 @@ USER
 
 # 26. Nouvelle connexion Web
 
-Une nouvelle connexion Web peut révoquer l'ancienne session conformément à :
+Une nouvelle connexion Web crée une session Web indépendante et ne révoque pas les sessions actives existantes. Les règles détaillées sont définies dans :
 
 ```text
-SESSION_SPECIFICATION.md
-SESSION_STANDARD.md
+ID-I-003-SESSION_STANDARD.md
+ID-S-001.1-SESSION_SPECIFICATION.md
 ```
 
 Cette règle ne doit pas automatiquement révoquer les API Tokens du User.
@@ -1064,7 +1060,7 @@ Les tokens sont indépendants des sessions Web.
 La règle suivante concerne les sessions Web :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
 Elle n'impose pas un seul API Token par User.
