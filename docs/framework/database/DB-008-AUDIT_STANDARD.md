@@ -10,7 +10,7 @@ CORE / DATABASE / AUDIT
 
 ### Version
 
-1.0
+1.1
 
 ### Statut
 
@@ -1270,11 +1270,25 @@ NO SECRETS IN AUDIT
 
 ---
 
+## Historique des versions
+
+### Version 1.1
+
+* Correction de la règle de nouvelle connexion pour autoriser plusieurs sessions Web actives par User.
+* Clarification : une nouvelle connexion ne révoque pas les sessions Web existantes.
+* Alignement des exemples et invariants sur le standard Identity des sessions.
+
+### Version 1.0
+
+* Création du standard transversal d'audit.
+
+---
+
 # 63. Statut du document
 
 ```text
 DOCUMENT : AUDIT_STANDARD.md
-VERSION  : 1.0
+VERSION  : 1.1
 DOMAINE  : CORE / DATABASE
 STATUT   : OFFICIEL — GELÉ
 ```
