@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domains\Audit\Http\Controllers\AuditEventController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,3 +23,8 @@ Route::post(
     '/password/reset',
     [PasswordResetController::class, 'reset'],
 );
+
+Route::middleware('auth:sanctum')->get(
+    '/audit/events',
+    [AuditEventController::class, 'index'],
+)->name('audit.events.index');
