@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authorization\Providers;
 
+use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Policies\AuditEventPolicy;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Policies\CatalogPolicy;
 use App\Domains\Categories\Models\Category;
@@ -19,6 +21,8 @@ final class AuthorizationServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        Gate::policy(AuditEvent::class, AuditEventPolicy::class);
+
         Gate::policy(
             Catalog::class,
             CatalogPolicy::class,
