@@ -12,6 +12,9 @@ final class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+            // Audit
+            'audit.view' => 'Consulter le journal d’audit',
+
             // Cooperatives
             'cooperatives.view' => 'Consulter les coopératives',
             'cooperatives.create' => 'Créer une coopérative',
