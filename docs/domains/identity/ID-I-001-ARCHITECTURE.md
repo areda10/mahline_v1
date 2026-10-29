@@ -714,7 +714,7 @@ Les tests doivent notamment vérifier :
 * régénération ;
 * sessions simultanées autorisées ;
 * nouvelle connexion ;
-* révocation automatique de l'ancienne session ;
+* révocation individuelle ou globale des sessions ;
 * changement d'appareil ;
 * changement de navigateur ;
 * connexions concurrentes.
@@ -796,7 +796,7 @@ Chaque session est indépendante du navigateur, de l'appareil, du système d'exp
 
 ### ID-001-R12
 
-Les API Tokens ne sont pas automatiquement soumis à la règle de session unique.
+Les API Tokens sont indépendants des sessions Web et suivent leurs propres règles de création et de révocation.
 
 ---
 
