@@ -21,6 +21,7 @@ return [
          * Global MAHLINE platform administration.
          */
         'super_admin_root' => [
+            'audit.view',
             'cooperatives.view',
             'cooperatives.create',
             'cooperatives.update',
@@ -52,6 +53,7 @@ return [
          * Administration of assigned cooperatives.
          */
         'super_admin' => [
+            'audit.view',
             'cooperatives.view',
             'cooperatives.update',
             'cooperatives.delete',
@@ -79,6 +81,7 @@ return [
          * Administration of the user's own cooperative.
          */
         'cooperative_admin' => [
+            'audit.view',
             'cooperatives.view',
 
             'catalogs.view',
