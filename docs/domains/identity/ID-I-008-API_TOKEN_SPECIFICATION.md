@@ -10,7 +10,7 @@ IDENTITY / AUTHENTICATION / API TOKEN
 
 ### Version
 
-1.0
+1.1
 
 ### Statut
 
@@ -1137,6 +1137,19 @@ ID-001-ARCHITECTURE.md
                            ▼
                          AUDIT
 ```
+
+---
+
+## Historique des versions
+
+### Version 1.1
+
+* Alignement de la spécification API Token avec la règle officielle de sessions Web multiples.
+* Clarification de l'indépendance entre sessions Web et API Tokens.
+
+### Version 1.0
+
+* Création de la spécification API Token.
 
 ---
 
