@@ -5,11 +5,15 @@ declare(strict_types=1);
 namespace App\Domains\Audit\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Shared\DTOs\AuditEntryDTO;
 use InvalidArgumentException;
 
 final class AuditService
 {
+    public function __construct(private readonly AuditEventRepository $events)
+    {
+    }
     /**
      * Keys that must never be persisted in audit payloads.
      *
@@ -46,7 +50,7 @@ final class AuditService
             throw new InvalidArgumentException('Audit event key and action are required.');
         }
 
-        return AuditEvent::query()->create([
+        return $this->events->append([
             'event_key' => $entry->eventKey,
             'action' => $entry->action,
             'actor_type' => $entry->actorType,
