@@ -60,7 +60,7 @@ final class AuditService
             'ip_address' => $entry->ipAddress,
             'user_agent' => $entry->userAgent,
             'correlation_id' => $entry->correlationId,
-            'occurred_at' => $entry->occurredAt,
+            'occurred_at' => $entry->occurredAt ?? now(),
         ]);
     }
 
