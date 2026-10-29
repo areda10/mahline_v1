@@ -246,16 +246,15 @@ SESSION_STANDARD.md
 
 # 8. Règle architecturale fondamentale
 
-## ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+## ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 
-MAHLINE impose une politique de **session unique par User**.
-
-Un User ne peut disposer que d'une seule session authentifiée active à un instant donné.
+MAHLINE autorise plusieurs sessions Web authentifiées actives simultanément pour un même User. Chaque session est indépendante, peut correspondre à un navigateur ou appareil différent et possède son propre cycle de vie.
 
 ```text
 ONE USER
-   │
-   └── ONE ACTIVE AUTHENTICATED SESSION
+   ├── Session A → ACTIVE
+   ├── Session B → ACTIVE
+   └── Session C → ACTIVE
 ```
 
 Cette règle est **OFFICIELLE — GELÉE**.
@@ -268,11 +267,12 @@ Lorsqu'un User se connecte avec succès, le système doit :
 
 1. authentifier le User ;
 2. vérifier son statut ;
-3. identifier les sessions actives existantes ;
-4. révoquer les anciennes sessions ;
-5. créer la nouvelle session ;
-6. enregistrer le contexte de connexion ;
-7. enregistrer l'événement dans Login History.
+3. renouveler l'identifiant de session Laravel ;
+4. créer une nouvelle session d'authentification indépendante ;
+5. enregistrer le contexte de connexion ;
+6. enregistrer l'événement dans Login History.
+
+Une nouvelle connexion ne révoque pas les sessions Web déjà actives.
 
 Flux officiel :
 
@@ -289,10 +289,7 @@ UserStatus validation
 Credentials valid
  │
  ▼
-Revoke previous active session
- │
- ▼
-Create new session
+Create new independent session
  │
  ▼
 Record Login History
@@ -308,79 +305,44 @@ Authenticated
 Lorsqu'une nouvelle session est créée pour un User :
 
 ```text
-Previous Session → REVOKED
-New Session      → ACTIVE
+Existing Session A → ACTIVE
+New Session B      → ACTIVE
 ```
 
-La session précédente ne doit plus pouvoir accéder aux ressources protégées.
+Chaque session peut être révoquée individuellement. La déconnexion normale révoque uniquement la session courante. Une révocation globale est une action distincte qui cible toutes les sessions actives du User concerné.
 
 Exemple :
 
 ```text
 User A
-│
-├── Session 1 → Chrome / Windows
-│
-└── Login Android
-        │
-        ├── Session 1 → REVOKED
-        │
-        └── Session 2 → ACTIVE
-```
+├── Session 1 → Chrome / Windows → ACTIVE
+└── Session 2 → Firefox / Android → ACTIVE
 
-Après l'opération :
-
-```text
-User A
-└── Session 2 → ACTIVE
-```
-
----
-
-# 11. Indépendance du contexte
-
-La règle de session unique s'applique indépendamment :
-
-* du navigateur ;
-* du système d'exploitation ;
-* de l'appareil ;
-* de l'adresse IP ;
-* du réseau ;
-* de la localisation ;
-* du type de terminal.
-
-Ainsi :
-
-```text
-Chrome / Windows
-        +
-Chrome / Android
-```
-
-ne peuvent pas produire deux sessions authentifiées actives simultanément pour le même User.
-
----
-
-# 12. Connexions concurrentes
-
-L'implémentation doit garantir la règle de session unique même lorsque deux authentifications sont exécutées simultanément.
-
-Le système doit éviter qu'une condition de concurrence permette :
-
-```text
-User A
+Logout Session 2
 ├── Session 1 → ACTIVE
-└── Session 2 → ACTIVE
+└── Session 2 → REVOKED
 ```
 
-La logique de création et de révocation doit donc être conçue de manière transactionnelle et/ou avec les mécanismes de verrouillage appropriés.
+---
 
-Le résultat final doit toujours respecter :
+# 11. Sessions simultanées et concurrence
+
+La création et la révocation doivent rester transactionnelles et préserver l'intégrité de chaque session. La concurrence entre connexions ne doit pas entraîner la révocation implicite d'une session indépendante.
+
+Le résultat attendu est :
 
 ```text
 User A
-└── ONE ACTIVE SESSION
+├── Session A → ACTIVE
+├── Session B → ACTIVE
+└── Session C → ACTIVE
 ```
+
+---
+
+# 12. Révocation globale
+
+Une révocation globale peut être déclenchée par une action de sécurité dédiée. Elle révoque les sessions Web actives du User spécifié, sans affecter les sessions d'autres utilisateurs. Les API Tokens restent un mécanisme distinct et leur révocation suit la politique dédiée aux tokens.
 
 ---
 
@@ -936,18 +898,13 @@ Le domaine Identity est conforme lorsque :
 
 Le domaine **Identity** constitue l'infrastructure de gestion de l'identité, de l'authentification, des sessions, des tokens et de l'autorisation dans MAHLINE.
 
-La règle de sécurité fondamentale concernant les sessions est désormais :
+La règle de sécurité fondamentale concernant les sessions Web est :
 
 ```text
-ONE USER
-   │
-   └── ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
-Un User ne peut jamais disposer de plusieurs sessions authentifiées actives simultanément.
+Un User peut rester authentifié simultanément dans plusieurs navigateurs ou appareils. Une nouvelle authentification ne révoque pas les sessions existantes. La déconnexion normale révoque uniquement la session courante ; la révocation globale est une action distincte.
 
-Toute nouvelle authentification valide révoque automatiquement la session active précédente, indépendamment du navigateur, de l'appareil, du système d'exploitation, de l'adresse IP ou du réseau.
+Cette règle est **OFFICIELLE — GELÉE**. Toute modification future nécessite une décision explicite d'architecture.
 
-Cette règle est **OFFICIELLE — GELÉE** et constitue une contrainte architecturale obligatoire du domaine Identity.
-
-Toute modification future permettant plusieurs sessions authentifiées simultanément devra faire l'objet d'une nouvelle décision d'architecture et d'une nouvelle version de ce document.
