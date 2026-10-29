@@ -1145,10 +1145,10 @@ ID-001-ARCHITECTURE.md
 MAHLINE retient définitivement :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
-pour les sessions Web.
+pour les sessions Web. Une nouvelle connexion ne révoque pas les sessions actives existantes.
 
 Mais :
 
