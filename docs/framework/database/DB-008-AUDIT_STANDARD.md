@@ -10,7 +10,7 @@ CORE / DATABASE / AUDIT
 
 ### Version
 
-1.0
+1.1
 
 ### Statut
 
@@ -333,30 +333,26 @@ Le mécanisme Session conserve cependant sa propre responsabilité fonctionnelle
 
 # 16. Nouvelle connexion
 
-MAHLINE impose :
+MAHLINE autorise plusieurs sessions Web authentifiées actives pour un même User :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
-Lorsqu'un User se connecte depuis un nouvel appareil :
+Lorsqu'un User se connecte depuis un nouvel appareil, les sessions existantes restent actives et une nouvelle session indépendante est créée :
 
 ```text
+EXISTING SESSION A → ACTIVE
 NEW LOGIN
     │
     ▼
-REVOKE PREVIOUS SESSION
+CREATE SESSION B
     │
     ▼
-CREATE NEW SESSION
+SESSION A → ACTIVE / SESSION B → ACTIVE
 ```
 
-La révocation de l'ancienne session peut être auditée :
-
-```text
-SESSION_REVOKED
-reason = new_login
-```
+Aucune révocation avec le motif `new_login` ne doit être déclenchée par une nouvelle connexion.
 
 ---
 
@@ -1083,7 +1079,7 @@ Un User non actif ne doit pas utiliser ses permissions pour contourner son statu
 Le système respecte :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
 ---
@@ -1186,7 +1182,7 @@ USER
 AUTHENTICATION
  │
  ▼
-ONE ACTIVE SESSION
+MULTIPLE ACTIVE WEB SESSIONS
  │
  ▼
 AUTHORIZATION
@@ -1257,7 +1253,7 @@ AUDIT ≠ AUTHORIZATION
 et :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
 ainsi que :
@@ -1274,11 +1270,25 @@ NO SECRETS IN AUDIT
 
 ---
 
+## Historique des versions
+
+### Version 1.1
+
+* Correction de la règle de nouvelle connexion pour autoriser plusieurs sessions Web actives par User.
+* Clarification : une nouvelle connexion ne révoque pas les sessions Web existantes.
+* Alignement des exemples et invariants sur le standard Identity des sessions.
+
+### Version 1.0
+
+* Création du standard transversal d'audit.
+
+---
+
 # 63. Statut du document
 
 ```text
 DOCUMENT : AUDIT_STANDARD.md
-VERSION  : 1.0
+VERSION  : 1.1
 DOMAINE  : CORE / DATABASE
 STATUT   : OFFICIEL — GELÉ
 ```

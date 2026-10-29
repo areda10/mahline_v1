@@ -15,14 +15,11 @@ return new class extends Migration
      *
      * MAHLINE policy:
      *
-     * ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+     * ONE USER → MULTIPLE ACTIVE WEB SESSIONS
      *
-     * Important:
-     * A user may have multiple historical sessions.
-     * However, only one session may be active at a time.
-     *
-     * SessionService is responsible for revoking the previous
-     * active session before creating a new one.
+     * A user may have multiple active sessions at the same time.
+     * A new login must not revoke previously active sessions.
+     * Each session can be revoked independently.
      */
     public function up(): void
     {
@@ -43,14 +40,13 @@ return new class extends Migration
              *
              * The user who owns this authentication session.
              *
-             * A user can have multiple historical sessions:
+             * A user can have multiple active sessions:
              *
-             *     Session A → revoked
-             *     Session B → revoked
-             *     Session C → active
+             *     Session A → active
+             *     Session B → active
+             *     Session C → revoked
              *
-             * SessionService guarantees that only one session is
-             * active at any given time.
+             * SessionService manages each session independently.
              */
             $table->char('user_id', 26);
 
@@ -123,7 +119,6 @@ return new class extends Migration
              *
              * Examples:
              *
-             *     new_login
              *     logout
              *     expired
              *     security
@@ -192,16 +187,16 @@ return new class extends Migration
              * Example:
              *
              *     User 01
-             *       ├── Session A → revoked
-             *       ├── Session B → revoked
-             *       └── Session C → active
+             *       ├── Session A → active
+             *       ├── Session B → active
+             *       └── Session C → revoked
              *
-             * SessionService guarantees the ONE ACTIVE SESSION rule.
+             * Multiple active sessions per user are allowed.
              */
             $table->index('user_id');
 
             /*
-             * Used to find the active session of a user.
+             * Used to find all active sessions belonging to a user.
              */
             $table->index([
                 'user_id',
