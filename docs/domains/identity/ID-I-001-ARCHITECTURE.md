@@ -50,7 +50,7 @@ Le domaine Identity respecte les principes suivants :
 4. absence de dépendance directe du domaine métier à HTTP ;
 5. utilisation des contrats et services pour les mécanismes transversaux ;
 6. toutes les opérations sensibles doivent être testables ;
-7. les sessions authentifiées sont contrôlées par une politique de session unique ;
+7. plusieurs sessions Web authentifiées actives sont autorisées par User ;
 8. les API Tokens sont séparés des sessions web ;
 9. les informations sensibles ne doivent jamais être stockées inutilement ;
 10. les règles de sécurité doivent être centralisées et non dispersées dans les contrôleurs.
@@ -437,7 +437,7 @@ Login History doit permettre d'enregistrer notamment :
 * session ;
 * contexte API si applicable.
 
-Une nouvelle authentification qui provoque la révocation d'une session précédente doit être identifiable dans la traçabilité.
+La création d'une nouvelle session est enregistrée dans Login History sans révoquer les sessions actives existantes.
 
 Les détails sont définis dans :
 
@@ -460,13 +460,13 @@ Il peut inclure :
 * User-Agent ;
 * informations techniques nécessaires à la sécurité.
 
-Le navigateur ne constitue pas une exception à la règle :
+Chaque navigateur ou appareil peut posséder sa propre session Web active :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
-Un nouveau navigateur provoque donc la révocation de la session active précédente.
+Un nouveau navigateur crée une session indépendante et ne révoque pas les sessions existantes.
 
 Les détails sont définis dans :
 
@@ -491,12 +491,10 @@ User → API Token
 La règle :
 
 ```text
-ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 ```
 
-concerne les sessions authentifiées.
-
-Elle ne révoque pas automatiquement les API Tokens.
+concerne les sessions Web authentifiées. Les sessions Web et les API Tokens ont des cycles de vie distincts.
 
 Les API Tokens sont régis par :
 
@@ -544,7 +542,7 @@ Le domaine Identity applique les principes suivants :
 * régénération après authentification ;
 * cookies sécurisés ;
 * révocation des sessions ;
-* session unique par User ;
+* sessions Web multiples et indépendantes par User ;
 * journalisation des connexions ;
 * limitation des tentatives ;
 * protection contre la Session Fixation ;
@@ -714,7 +712,7 @@ Les tests doivent notamment vérifier :
 * révocation ;
 * déconnexion ;
 * régénération ;
-* session unique ;
+* sessions simultanées autorisées ;
 * nouvelle connexion ;
 * révocation automatique de l'ancienne session ;
 * changement d'appareil ;
@@ -784,17 +782,17 @@ Les statuts User contrôlent l'éligibilité à l'authentification.
 
 ### ID-001-R09
 
-## ONE USER → ONE ACTIVE AUTHENTICATED SESSION
+## ONE USER → MULTIPLE ACTIVE WEB SESSIONS
 
-Un User ne peut disposer que d'une seule session authentifiée active à la fois.
+Un User peut disposer de plusieurs sessions Web authentifiées actives simultanément.
 
 ### ID-001-R10
 
-Toute nouvelle authentification valide révoque automatiquement la session active précédente du User.
+Toute nouvelle authentification valide crée une nouvelle session indépendante et ne révoque pas les sessions actives existantes.
 
 ### ID-001-R11
 
-La règle de session unique s'applique indépendamment du navigateur, de l'appareil, du système d'exploitation, de l'adresse IP ou du réseau.
+Chaque session est indépendante du navigateur, de l'appareil, du système d'exploitation, de l'adresse IP et du réseau.
 
 ### ID-001-R12
 
@@ -811,8 +809,8 @@ Le domaine Identity est conforme lorsque :
 * Authorization est séparée ;
 * les statuts User sont respectés ;
 * les sessions sont sécurisées ;
-* une seule session authentifiée active existe par User ;
-* une nouvelle connexion révoque l'ancienne session ;
+* plusieurs sessions Web authentifiées actives peuvent coexister pour un User ;
+* une nouvelle connexion conserve les sessions actives existantes ;
 * les connexions sont journalisées ;
 * les événements sensibles sont auditables ;
 * les API Tokens sont correctement séparés ;
@@ -874,9 +872,9 @@ Le domaine Identity est conforme lorsque :
 ## Version 1.1
 
 * Mise à jour de l'architecture Identity.
-* Introduction officielle de la politique de session unique.
-* Gel de la règle **ONE USER → ONE ACTIVE AUTHENTICATED SESSION**.
-* Définition de la révocation automatique de la session précédente lors d'une nouvelle authentification.
+* Confirmation de la politique de sessions Web simultanées.
+* Gel de la règle **ONE USER → MULTIPLE ACTIVE WEB SESSIONS**.
+* Interdiction de révoquer les sessions actives existantes lors d'une nouvelle authentification.
 * Intégration de la règle dans le flux Authentication → Session.
 * Ajout des exigences concernant les connexions concurrentes.
 * Clarification de la séparation entre Sessions et API Tokens.
