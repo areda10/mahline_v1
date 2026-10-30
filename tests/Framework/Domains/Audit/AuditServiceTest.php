@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domains\Audit;
+namespace Tests\Framework\Domains\Audit;
 
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Services\AuditService;
