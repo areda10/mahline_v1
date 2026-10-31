@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Password\\Services;
+namespace App\Domains\Identity\Password\Services;
 
-use App\\Core\\Foundation\\Services\\BaseService;
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authentication\\Services\\SessionService;
-use App\\Domains\\Identity\\Password\\Exceptions\\InvalidPasswordResetTokenException;
-use App\\Domains\\Identity\\Password\\Notifications\\PasswordResetLinkNotification;
-use App\\Domains\\Identity\\Password\\Rules\\PasswordPolicy;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Hash;
-use Illuminate\\Support\\Facades\\Notification;
-use Illuminate\\Support\\Str;
+use App\Core\Foundation\Services\BaseService;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException;
+use App\Domains\Identity\Password\Notifications\PasswordResetLinkNotification;
+use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 final class PasswordResetService extends BaseService
@@ -74,7 +74,7 @@ final class PasswordResetService extends BaseService
             throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
         }
 
-        if (now()->greaterThanOrEqualTo(\\Illuminate\\Support\\Carbon::parse($record->expires_at))) {
+        if (now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($record->expires_at))) {
             throw new InvalidPasswordResetTokenException('Password reset token has expired.');
         }
 
@@ -109,7 +109,7 @@ final class PasswordResetService extends BaseService
                 throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
             }
 
-            if (now()->greaterThanOrEqualTo(\\Illuminate\\Support\\Carbon::parse($record->expires_at))) {
+            if (now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($record->expires_at))) {
                 throw new InvalidPasswordResetTokenException('Password reset token has expired.');
             }
 
