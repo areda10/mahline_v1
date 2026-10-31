@@ -456,4 +456,53 @@ final class PasswordResetServiceTest extends TestCase
         }
     }
 
+
+    public function test_reset_audit_is_created_after_token_is_consumed(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $token = $this->passwordResetService->createToken($user);
+
+        $this->passwordResetService->resetPassword(
+            token: $token,
+            newPassword: 'MahlinePassword13',
+        );
+
+        $record = \DB::table('password_reset_tokens')
+            ->where('user_id', $user->getKey())
+            ->first();
+
+        $this->assertNotNull($record?->used_at);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.password.reset',
+            'action' => 'reset',
+            'subject_type' => User::class,
+            'subject_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_reset_audit_never_contains_plain_text_token_or_password(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $token = $this->passwordResetService->createToken($user);
+
+        $this->passwordResetService->resetPassword(
+            token: $token,
+            newPassword: 'MahlinePassword13',
+        );
+
+        $event = \App\Domains\Audit\Models\AuditEvent::query()
+            ->where('event_key', 'identity.password.reset')
+            ->firstOrFail();
+
+        $serialized = json_encode([
+            'old_values' => $event->old_values,
+            'new_values' => $event->new_values,
+            'metadata' => $event->metadata,
+        ], JSON_THROW_ON_ERROR);
+
+        $this->assertStringNotContainsString($token, $serialized);
+        $this->assertStringNotContainsString('MahlinePassword12', $serialized);
+        $this->assertStringNotContainsString('MahlinePassword13', $serialized);
+    }
+
 }
