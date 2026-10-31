@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Password\\Services;
+namespace App\Domains\Identity\Password\Services;
 
-use App\\Core\\Foundation\\Services\\BaseService;
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authentication\\Services\\SessionService;
-use App\\Domains\\Identity\\Password\\Rules\\PasswordPolicy;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Hash;
+use App\Core\Foundation\Services\BaseService;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 final class PasswordService extends BaseService
