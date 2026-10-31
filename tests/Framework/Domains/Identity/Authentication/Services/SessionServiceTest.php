@@ -1489,4 +1489,55 @@ final class SessionServiceTest extends TestCase
         );
     }
 
+
+    public function test_each_revoked_session_creates_exactly_one_audit_event(): void
+    {
+        $user = User::factory()->create();
+
+        $first = $this->sessionService->create($user, 'audit-session-1');
+        $second = $this->sessionService->create($user, 'audit-session-2');
+
+        $this->assertTrue($this->sessionService->revokeForUser($user, 'global_logout'));
+
+        $this->assertDatabaseCount('audit_events', 2);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'action' => 'session_revoked',
+            'subject_type' => AuthenticationSession::class,
+            'subject_id' => $first->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'action' => 'session_revoked',
+            'subject_type' => AuthenticationSession::class,
+            'subject_id' => $second->getKey(),
+        ]);
+    }
+
+    public function test_repeated_revocation_does_not_duplicate_audit_event(): void
+    {
+        $user = User::factory()->create();
+        $session = $this->sessionService->create($user, 'audit-idempotent-session');
+
+        $this->assertTrue($this->sessionService->revoke($session, 'security_review'));
+        $this->assertFalse($this->sessionService->revoke($session, 'security_review'));
+
+        $this->assertDatabaseCount('audit_events', 1);
+    }
+
+    public function test_logout_is_audited_with_logout_event_key(): void
+    {
+        $user = User::factory()->create();
+        $session = $this->sessionService->create($user, 'audit-logout-session');
+
+        $this->assertTrue($this->sessionService->revoke($session, 'logout'));
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.logout',
+            'action' => 'logout',
+            'subject_type' => AuthenticationSession::class,
+            'subject_id' => $session->getKey(),
+        ]);
+    }
+
 }
