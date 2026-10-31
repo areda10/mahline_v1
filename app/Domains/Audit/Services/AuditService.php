@@ -7,14 +7,12 @@ namespace App\Domains\Audit\Services;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Shared\DTOs\AuditEntryDTO;
-use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 final class AuditService
 {
     public function __construct(
         private readonly AuditEventRepository $events,
-        private readonly Request $request,
     ) {
     }
 
