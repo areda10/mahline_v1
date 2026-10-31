@@ -419,4 +419,41 @@ final class PasswordResetServiceTest extends TestCase
             );
         }
     }
+
+    public function test_password_reset_is_recorded_in_audit(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $token = $this->passwordResetService->createToken($user);
+
+        $this->passwordResetService->resetPassword(
+            token: $token,
+            newPassword: 'MahlinePassword13',
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.password.reset',
+            'action' => 'reset',
+            'subject_type' => User::class,
+            'subject_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_invalid_password_reset_does_not_create_audit_event(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+
+        try {
+            $this->passwordResetService->resetPassword(
+                token: 'invalid-token',
+                newPassword: 'MahlinePassword13',
+            );
+            $this->fail('Expected invalid reset token exception.');
+        } catch (\RuntimeException $exception) {
+            $this->assertDatabaseMissing('audit_events', [
+                'event_key' => 'identity.password.reset',
+                'subject_id' => $user->getKey(),
+            ]);
+        }
+    }
+
 }
