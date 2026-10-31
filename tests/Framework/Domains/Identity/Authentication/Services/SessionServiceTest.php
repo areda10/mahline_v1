@@ -1446,4 +1446,47 @@ final class SessionServiceTest extends TestCase
             $revokedSession->revocation_reason,
         );
     }
+
+    public function test_session_revocation_is_recorded_in_audit(): void
+    {
+        $user = User::factory()->create();
+        $session = $this->sessionService->create(user: $user, sessionId: 'audit-session');
+
+        $this->assertTrue($this->sessionService->revoke(
+            session: $session,
+            reason: 'security_incident',
+        ));
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'action' => 'session_revoked',
+            'subject_type' => AuthenticationSession::class,
+            'subject_id' => $session->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $user->getKey(),
+            'event' => 'session_revoked',
+            'reason' => 'security_incident',
+            'authentication_session_id' => $session->getKey(),
+        ]);
+    }
+
+    public function test_repeated_session_revocation_does_not_duplicate_audit_event(): void
+    {
+        $user = User::factory()->create();
+        $session = $this->sessionService->create(user: $user, sessionId: 'audit-session-once');
+
+        $this->assertTrue($this->sessionService->revoke($session, 'security_incident'));
+        $this->assertFalse($this->sessionService->revoke($session, 'security_incident'));
+
+        $this->assertSame(
+            1,
+            \App\Domains\Audit\Models\AuditEvent::query()
+                ->where('subject_id', $session->getKey())
+                ->where('event_key', 'identity.authentication.session_revoked')
+                ->count(),
+        );
+    }
+
 }
