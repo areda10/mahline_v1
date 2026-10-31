@@ -295,4 +295,58 @@ final class PasswordServiceTest extends TestCase
         }
     }
     
+
+    public function test_password_change_audits_revoked_sessions_and_password_change(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => 'audit-password-session',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+
+        $this->passwordService->changePassword(
+            user: $user,
+            currentPassword: 'MahlinePassword12',
+            newPassword: 'MahlinePassword13',
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'subject_id' => $session->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.password.changed',
+            'subject_type' => User::class,
+            'subject_id' => $user->getKey(),
+        ]);
+        $this->assertDatabaseCount('audit_events', 2);
+    }
+
+    public function test_password_audit_never_contains_plain_text_passwords(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+
+        $this->passwordService->changePassword(
+            user: $user,
+            currentPassword: 'MahlinePassword12',
+            newPassword: 'MahlinePassword13',
+        );
+
+        $event = \App\Domains\Audit\Models\AuditEvent::query()
+            ->where('event_key', 'identity.password.changed')
+            ->firstOrFail();
+
+        $serialized = json_encode([
+            'old_values' => $event->old_values,
+            'new_values' => $event->new_values,
+            'metadata' => $event->metadata,
+        ], JSON_THROW_ON_ERROR);
+
+        $this->assertStringNotContainsString('MahlinePassword12', $serialized);
+        $this->assertStringNotContainsString('MahlinePassword13', $serialized);
+    }
+
 }
