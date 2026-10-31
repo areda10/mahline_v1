@@ -42,24 +42,19 @@ final class AuditService
 
     public function record(AuditEntryDTO $entry): AuditEvent
     {
-        if (
-            trim($entry->eventKey) === ''
-            || trim($entry->action) === ''
-        ) {
+        if (trim($entry->eventKey) === '' || trim($entry->action) === '') {
             throw new InvalidArgumentException(
-                'Audit event key and action are required.',
+                'Audit event key and action are required.'
             );
         }
 
-        $route = $this->request->route();
+        $request = app()->bound('request')
+            ? app('request')
+            : null;
 
-        $metadata = array_merge(
-            $entry->metadata ?? [],
-            [
-                'http_method' => $this->request->method(),
-                'route_name' => $route?->getName(),
-            ],
-        );
+        if (! $request instanceof Request) {
+            $request = null;
+        }
 
         return $this->events->append([
             'event_key' => $entry->eventKey,
@@ -71,16 +66,16 @@ final class AuditService
             'subject_id' => $entry->subjectId,
             'old_values' => $this->sanitize($entry->oldValues),
             'new_values' => $this->sanitize($entry->newValues),
-            'metadata' => $this->sanitize($metadata),
+            'metadata' => $this->sanitize($entry->metadata),
 
             'ip_address' => $entry->ipAddress
-                ?? $this->request->ip(),
+                ?? $request?->ip(),
 
             'user_agent' => $entry->userAgent
-                ?? $this->request->userAgent(),
+                ?? $request?->userAgent(),
 
             'correlation_id' => $entry->correlationId
-                ?? $this->request->attributes->get('correlation_id'),
+                ?? $request?->attributes->get('correlation_id'),
 
             'occurred_at' => $entry->occurredAt ?? now(),
         ]);
