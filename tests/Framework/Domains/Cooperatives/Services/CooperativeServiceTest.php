@@ -8,7 +8,10 @@ use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
+use DomainException;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -146,7 +149,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_delete_soft_deletes_and_records_actor(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
 
         $this->service->delete($actor, $cooperative);
@@ -228,6 +231,93 @@ final class CooperativeServiceTest extends TestCase
 
         $this->assertDatabaseMissing('cooperatives', ['name' => 'Coopérative Audit']);
         $this->assertDatabaseMissing('audit_events', ['event_key' => 'cooperatives.created']);
+    }
+
+    public function test_ordinary_actor_cannot_delete_cooperative(): void
+    {
+        $actor = User::factory()->create();
+        $cooperative = Cooperative::factory()->create();
+
+        try {
+            $this->service->delete($actor, $cooperative);
+            $this->fail('Only super_admin_root may delete a cooperative.');
+        } catch (AuthorizationException) {
+            $this->assertDatabaseHas('cooperatives', [
+                'id' => $cooperative->id,
+                'deleted_at' => null,
+            ]);
+            $this->assertDatabaseMissing('audit_events', [
+                'event_key' => 'cooperatives.deleted',
+                'subject_id' => $cooperative->id,
+            ]);
+        }
+    }
+
+    public function test_archived_cooperative_can_only_be_reactivated_by_root_to_active_or_inactive(): void
+    {
+        $ordinary = User::factory()->create();
+        $root = $this->rootActor();
+        $cooperative = Cooperative::factory()->create([
+            'status' => CooperativeStatus::ARCHIVED,
+        ]);
+
+        try {
+            $this->service->activate($ordinary, $cooperative);
+            $this->fail('Ordinary actor must not reactivate an archived cooperative.');
+        } catch (DomainException) {
+            $this->assertSame(CooperativeStatus::ARCHIVED, $cooperative->fresh()->status);
+            $this->assertDatabaseMissing('audit_events', [
+                'subject_id' => $cooperative->id,
+                'event_key' => 'cooperatives.activated',
+            ]);
+        }
+
+        $this->service->deactivate($root, $cooperative);
+        $this->assertSame(CooperativeStatus::INACTIVE, $cooperative->fresh()->status);
+    }
+
+    public function test_root_can_reactivate_archived_cooperative_as_active(): void
+    {
+        $root = $this->rootActor();
+        $cooperative = Cooperative::factory()->create([
+            'status' => CooperativeStatus::ARCHIVED,
+        ]);
+
+        $this->service->activate($root, $cooperative);
+
+        $this->assertSame(CooperativeStatus::ACTIVE, $cooperative->fresh()->status);
+        $this->assertAuditEvent('cooperatives.activated', 'activated', $root, $cooperative);
+    }
+
+    public function test_disallowed_status_transition_does_not_change_status_or_write_audit(): void
+    {
+        $actor = User::factory()->create();
+        $cooperative = Cooperative::factory()->create([
+            'status' => CooperativeStatus::PENDING,
+        ]);
+
+        try {
+            $this->service->suspend($actor, $cooperative);
+            $this->fail('PENDING to SUSPENDED is not allowed.');
+        } catch (DomainException) {
+            $this->assertSame(CooperativeStatus::PENDING, $cooperative->fresh()->status);
+            $this->assertDatabaseMissing('audit_events', [
+                'subject_id' => $cooperative->id,
+                'event_key' => 'cooperatives.suspended',
+            ]);
+        }
+    }
+
+    private function rootActor(): User
+    {
+        $actor = User::factory()->create();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin_root'],
+            ['name' => 'Super Admin Root', 'is_active' => true],
+        );
+        $actor->roles()->attach($role->getKey());
+
+        return $actor;
     }
 
     private function assertStatusTransition(
