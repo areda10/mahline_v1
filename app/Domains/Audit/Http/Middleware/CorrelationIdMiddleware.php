@@ -15,15 +15,19 @@ final class CorrelationIdMiddleware
         Request $request,
         Closure $next,
     ): Response {
+        // Generate a server-side unique identifier for this request.
         $correlationId = (string) Str::uuid();
 
+        // Make the identifier available to downstream services.
         $request->attributes->set(
             'correlation_id',
             $correlationId,
         );
 
+        // Continue request processing.
         $response = $next($request);
 
+        // Return the identifier to the client.
         $response->headers->set(
             'X-Correlation-ID',
             $correlationId,
