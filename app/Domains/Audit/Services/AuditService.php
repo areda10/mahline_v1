@@ -14,7 +14,6 @@ final class AuditService
 {
     public function __construct(
         private readonly AuditEventRepository $events,
-        private readonly Request $request,
     ) {
     }
 
