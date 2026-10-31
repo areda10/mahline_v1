@@ -36,20 +36,20 @@ final class PasswordService extends BaseService
         string $currentPassword,
         string $newPassword,
     ): void {
-        if (! $this->verifyCurrentPassword($user, $currentPassword)) {
-            throw new RuntimeException('Current password is invalid.');
-        }
-
-        PasswordPolicy::validateChange(
-            currentPassword: $currentPassword,
-            newPassword: $newPassword,
-        );
-
-        DB::transaction(function () use ($user, $newPassword): void {
+        DB::transaction(function () use ($user, $currentPassword, $newPassword): void {
             $lockedUser = User::query()
                 ->whereKey($user->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (! $this->verifyCurrentPassword($lockedUser, $currentPassword)) {
+                throw new RuntimeException('Current password is invalid.');
+            }
+
+            PasswordPolicy::validateChange(
+                currentPassword: $currentPassword,
+                newPassword: $newPassword,
+            );
 
             $lockedUser->password = $newPassword;
             $lockedUser->save();
