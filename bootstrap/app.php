@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domains\Audit\Http\Middleware\CorrelationIdMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,9 +16,28 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+
         $middleware->redirectGuestsTo('/authentication/login');
+
+        /*
+        |--------------------------------------------------------------------------
+        | MAHLINE Audit
+        |--------------------------------------------------------------------------
+        |
+        | Attach a unique correlation identifier to every HTTP request.
+        |
+        */
+
+        $middleware->web(append: [
+            CorrelationIdMiddleware::class,
+        ]);
+
+        $middleware->api(append: [
+            CorrelationIdMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+
         /*
          * Authentication endpoints return JSON responses.
          *
@@ -25,10 +45,12 @@ return Application::configure(basePath: dirname(__DIR__))
          * as JSON for the authentication routes as well as
          * the traditional API routes.
          */
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request): bool =>
                 $request->is('api/*')
                 || $request->is('authentication/*'),
         );
+
     })
     ->create();

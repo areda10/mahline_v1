@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\UserManagement\Services;
 
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -20,6 +22,11 @@ final class UserManagementService
     private const ROLE_COOPERATIVE_ADMIN = 'cooperative_admin';
 
     private const ROLE_USER = 'user';
+
+    public function __construct(
+        private readonly AuditService $audit,
+    ) {
+    }
 
     public function createUser(
         User $actor,
@@ -48,14 +55,33 @@ final class UserManagementService
         return DB::transaction(function () use (
             $attributes,
             $role,
+            $actor,
+            $roleSlug,
         ): User {
             $user = User::query()->create($attributes);
 
             $user->roles()->attach($role->getKey());
 
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.user.created',
+                action: 'created',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: isset($attributes['cooperative_id'])
+                ? (string) $attributes['cooperative_id']
+                : null,
+                subjectType: User::class,
+                subjectId: (string) $user->getKey(),
+                newValues: [
+                    'role' => $roleSlug,
+                    'cooperative_id' => $attributes['cooperative_id'] ?? null,
+                ],
+            ));
+
             return $user;
         });
     }
+    
 
     public function assignSuperAdminToCooperative(
         User $actor,
@@ -67,13 +93,43 @@ final class UserManagementService
         $this->assertSuperAdminTarget($superAdmin);
         $this->assertCooperativeExists($cooperative->getKey());
 
+        // DB::transaction(function () use (
+        //     $superAdmin,
+        //     $cooperative,
+        // ): void {
+        //     $superAdmin->cooperatives()->syncWithoutDetaching([
+        //         $cooperative->getKey(),
+        //     ]);
+        // });
         DB::transaction(function () use (
+            $actor,
             $superAdmin,
             $cooperative,
         ): void {
-            $superAdmin->cooperatives()->syncWithoutDetaching([
+            $alreadyAssigned = $superAdmin->cooperatives()
+                ->whereKey($cooperative->getKey())
+                ->exists();
+
+            if ($alreadyAssigned) {
+                return;
+            }
+
+            $superAdmin->cooperatives()->attach(
                 $cooperative->getKey(),
-            ]);
+            );
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.super_admin.cooperative_assigned',
+                action: 'assigned',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: (string) $cooperative->getKey(),
+                subjectType: User::class,
+                subjectId: (string) $superAdmin->getKey(),
+                newValues: [
+                    'cooperative_id' => (string) $cooperative->getKey(),
+                ],
+            ));
         });
     }
 
@@ -88,12 +144,34 @@ final class UserManagementService
         $this->assertCooperativeExists($cooperative->getKey());
 
         DB::transaction(function () use (
+            $actor,
             $superAdmin,
             $cooperative,
         ): void {
+            $isAssigned = $superAdmin->cooperatives()
+                ->whereKey($cooperative->getKey())
+                ->exists();
+
+            if (! $isAssigned) {
+                return;
+            }
+
             $superAdmin->cooperatives()->detach(
                 $cooperative->getKey(),
             );
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.super_admin.cooperative_unassigned',
+                action: 'unassigned',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: (string) $cooperative->getKey(),
+                subjectType: User::class,
+                subjectId: (string) $superAdmin->getKey(),
+                oldValues: [
+                    'cooperative_id' => (string) $cooperative->getKey(),
+                ],
+            ));
         });
     }
 
