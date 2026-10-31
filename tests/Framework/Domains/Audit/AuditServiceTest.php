@@ -92,4 +92,41 @@ final class AuditServiceTest extends TestCase
             action: 'CREATE',
         ));
     }
+
+    public function test_records_http_request_context(): void
+    {
+        $this->app['request']->server->set(
+            'REMOTE_ADDR',
+            '192.0.2.10',
+        );
+
+        $this->app['request']->headers->set(
+            'User-Agent',
+            'Mozilla/5.0 MAHLINE Audit Test',
+        );
+
+        $this->app['request']->attributes->set(
+            'correlation_id',
+            'test-correlation-001',
+        );
+
+        $event = app(AuditService::class)->record(
+            new AuditEntryDTO(
+                eventKey: 'TEST_HTTP_CONTEXT',
+                action: 'TEST',
+            ),
+        );
+
+        self::assertSame('192.0.2.10', $event->ip_address);
+
+        self::assertSame(
+            'Mozilla/5.0 MAHLINE Audit Test',
+            $event->user_agent,
+        );
+
+        self::assertSame(
+            'test-correlation-001',
+            $event->correlation_id,
+        );
+    }
 }

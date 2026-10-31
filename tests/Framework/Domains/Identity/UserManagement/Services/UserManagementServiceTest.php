@@ -27,7 +27,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->seed(RoleSeeder::class);
 
-        $this->service = new UserManagementService();
+        $this->service = app(UserManagementService::class);
     }
 
     public function test_super_admin_root_can_create_user_for_any_cooperative(): void
@@ -525,5 +525,168 @@ final class UserManagementServiceTest extends TestCase
                 ->whereKey($cooperative->id)
                 ->exists(),
         );
+    }
+
+    public function test_creating_user_records_audit_event(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+
+        $user = $this->service->createUser(
+            $root,
+            [
+                'first_name' => 'Audit',
+                'last_name' => 'Test',
+                'display_name' => 'Audit Test',
+                'email' => 'audit-test@example.com',
+                'telephone' => '+212600000020',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $cooperative->id,
+            ],
+            'user',
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.created',
+            'action' => 'created',
+            'actor_id' => $root->id,
+            'cooperative_id' => $cooperative->id,
+            'subject_id' => $user->id,
+        ]);
+
+        $event = \App\Domains\Audit\Models\AuditEvent::query()
+            ->where('event_key', 'identity.user.created')
+            ->where('subject_id', $user->id)
+            ->firstOrFail();
+
+        self::assertSame('user', $event->new_values['role']);
+        self::assertArrayNotHasKey('password', $event->new_values);
+    }
+
+    public function test_assigning_super_admin_records_audit_event(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $this->service->assignSuperAdminToCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.super_admin.cooperative_assigned',
+            'action' => 'assigned',
+            'actor_id' => $root->id,
+            'cooperative_id' => $cooperative->id,
+            'subject_id' => $superAdmin->id,
+        ]);
+    }
+
+    public function test_removing_super_admin_records_audit_event(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $superAdmin->cooperatives()->attach($cooperative->id);
+
+        $this->service->removeSuperAdminFromCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.super_admin.cooperative_unassigned',
+            'action' => 'unassigned',
+            'actor_id' => $root->id,
+            'cooperative_id' => $cooperative->id,
+            'subject_id' => $superAdmin->id,
+        ]);
+    }
+
+    public function test_assigning_existing_super_admin_does_not_duplicate_audit_event(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $superAdmin->cooperatives()->attach($cooperative->id);
+
+        $this->service->assignSuperAdminToCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.super_admin.cooperative_assigned',
+            'actor_id' => $root->id,
+            'cooperative_id' => $cooperative->id,
+            'subject_id' => $superAdmin->id,
+        ]);
+    }
+
+    public function test_removing_non_existing_assignment_does_not_record_audit_event(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $this->service->removeSuperAdminFromCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.super_admin.cooperative_unassigned',
+            'actor_id' => $root->id,
+            'cooperative_id' => $cooperative->id,
+            'subject_id' => $superAdmin->id,
+        ]);
+    }
+
+    public function test_audit_event_is_rolled_back_with_business_transaction(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(
+                function () use ($root, $cooperative): void {
+                    $this->service->createUser(
+                        $root,
+                        [
+                            'first_name' => 'Rollback',
+                            'last_name' => 'Test',
+                            'display_name' => 'Rollback Test',
+                            'email' => 'rollback@example.com',
+                            'telephone' => '+212600000021',
+                            'password' => 'Password123',
+                            'status' => UserStatus::Active,
+                            'cooperative_id' => $cooperative->id,
+                        ],
+                        'user',
+                    );
+
+                    throw new \RuntimeException('Force rollback.');
+                },
+            );
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Force rollback.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.user.created',
+            'cooperative_id' => $cooperative->id,
+        ]);
+
+        $this->assertDatabaseMissing('users', [
+            'email' => 'rollback@example.com',
+        ]);
     }
 }

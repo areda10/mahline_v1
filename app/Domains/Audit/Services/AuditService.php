@@ -7,21 +7,17 @@ namespace App\Domains\Audit\Services;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Http\Request;
 use InvalidArgumentException;
 
 final class AuditService
 {
-    public function __construct(private readonly AuditEventRepository $events)
-    {
+    public function __construct(
+        private readonly AuditEventRepository $events,
+        private readonly Request $request,
+    ) {
     }
-    /**
-     * Keys that must never be persisted in audit payloads.
-     *
-     * This is a defence-in-depth denylist; callers must still avoid passing
-     * secrets and unnecessary personal data to the audit API.
-     *
-     * @var list<string>
-     */
+
     private const SENSITIVE_KEYS = [
         'password',
         'password_confirmation',
@@ -46,9 +42,24 @@ final class AuditService
 
     public function record(AuditEntryDTO $entry): AuditEvent
     {
-        if (trim($entry->eventKey) === '' || trim($entry->action) === '') {
-            throw new InvalidArgumentException('Audit event key and action are required.');
+        if (
+            trim($entry->eventKey) === ''
+            || trim($entry->action) === ''
+        ) {
+            throw new InvalidArgumentException(
+                'Audit event key and action are required.',
+            );
         }
+
+        $route = $this->request->route();
+
+        $metadata = array_merge(
+            $entry->metadata ?? [],
+            [
+                'http_method' => $this->request->method(),
+                'route_name' => $route?->getName(),
+            ],
+        );
 
         return $this->events->append([
             'event_key' => $entry->eventKey,
@@ -60,10 +71,17 @@ final class AuditService
             'subject_id' => $entry->subjectId,
             'old_values' => $this->sanitize($entry->oldValues),
             'new_values' => $this->sanitize($entry->newValues),
-            'metadata' => $this->sanitize($entry->metadata),
-            'ip_address' => $entry->ipAddress,
-            'user_agent' => $entry->userAgent,
-            'correlation_id' => $entry->correlationId,
+            'metadata' => $this->sanitize($metadata),
+
+            'ip_address' => $entry->ipAddress
+                ?? $this->request->ip(),
+
+            'user_agent' => $entry->userAgent
+                ?? $this->request->userAgent(),
+
+            'correlation_id' => $entry->correlationId
+                ?? $this->request->attributes->get('correlation_id'),
+
             'occurred_at' => $entry->occurredAt ?? now(),
         ]);
     }
@@ -77,7 +95,14 @@ final class AuditService
         $safe = [];
 
         foreach ($values as $key => $value) {
-            if (is_string($key) && in_array(strtolower($key), self::SENSITIVE_KEYS, true)) {
+            if (
+                is_string($key)
+                && in_array(
+                    strtolower($key),
+                    self::SENSITIVE_KEYS,
+                    true,
+                )
+            ) {
                 continue;
             }
 
