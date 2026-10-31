@@ -173,6 +173,46 @@ final class CooperativeServiceTest extends TestCase
         ]);
     }
 
+    public function test_create_rolls_back_when_audit_insert_fails(): void
+    {
+        $actor = User::factory()->create();
+        $failureInjected = false;
+
+        DB::connection()->beforeExecuting(
+            function (string $query) use (&$failureInjected): void {
+                if (
+                    ! $failureInjected
+                    && preg_match(
+                        '/^\\s*insert\\s+into\\s+[`"]?audit_events[`"]?/i',
+                        $query,
+                    ) === 1
+                ) {
+                    $failureInjected = true;
+
+                    throw new RuntimeException('Simulated audit insert failure.');
+                }
+            },
+        );
+
+        try {
+            $this->service->create($actor, $this->attributes());
+            $this->fail('The audit insert failure should abort cooperative creation.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame(
+                'Simulated audit insert failure.',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertTrue($failureInjected, 'The audit insert was not intercepted.');
+        $this->assertDatabaseMissing('cooperatives', [
+            'name' => 'Coopérative Audit',
+        ]);
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'cooperatives.created',
+        ]);
+    }
+
     public function test_outer_transaction_rolls_back_cooperative_and_audit_event(): void
     {
         $actor = User::factory()->create();
