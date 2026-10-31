@@ -2,18 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Domains\Identity\Password\Services;
+namespace App\\Domains\\Identity\\Password\\Services;
 
-use App\Core\Foundation\Services\BaseService;
-use App\Domains\Identity\Authentication\Services\SessionService;
-use App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException;
-use App\Domains\Identity\Password\Notifications\PasswordResetLinkNotification;
-use App\Domains\Identity\Password\Rules\PasswordPolicy;
-use App\Domains\Identity\Users\Models\User;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Str;
+use App\\Core\\Foundation\\Services\\BaseService;
+use App\\Domains\\Audit\\Services\\AuditService;
+use App\\Domains\\Identity\\Authentication\\Services\\SessionService;
+use App\\Domains\\Identity\\Password\\Exceptions\\InvalidPasswordResetTokenException;
+use App\\Domains\\Identity\\Password\\Notifications\\PasswordResetLinkNotification;
+use App\\Domains\\Identity\\Password\\Rules\\PasswordPolicy;
+use App\\Domains\\Identity\\Users\\Models\\User;
+use App\\Shared\\DTOs\\AuditEntryDTO;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Support\\Facades\\Hash;
+use Illuminate\\Support\\Facades\\Notification;
+use Illuminate\\Support\\Str;
 use InvalidArgumentException;
 
 final class PasswordResetService extends BaseService
@@ -22,14 +24,13 @@ final class PasswordResetService extends BaseService
 
     public function __construct(
         private readonly SessionService $sessionService,
+        private readonly AuditService $audit,
     ) {
     }
 
     public function createToken(User $user): string
     {
-        $token = bin2hex(
-            random_bytes(self::TOKEN_BYTES)
-        );
+        $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
         DB::table('password_reset_tokens')->insert([
             'id' => (string) Str::ulid(),
@@ -41,10 +42,7 @@ final class PasswordResetService extends BaseService
         ]);
 
         $resetBaseUrl = rtrim(
-            (string) config(
-                'app.password_reset_url',
-                config('app.url'),
-            ),
+            (string) config('app.password_reset_url', config('app.url')),
             '/',
         );
 
@@ -69,40 +67,32 @@ final class PasswordResetService extends BaseService
             ->first();
 
         if ($record === null) {
-            throw new InvalidPasswordResetTokenException(
-                'Invalid password reset token.'
-            );
+            throw new InvalidPasswordResetTokenException('Invalid password reset token.');
         }
 
         if ($record->used_at !== null) {
-            throw new InvalidPasswordResetTokenException(
-                'Password reset token has already been used.'
-            );
+            throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
         }
 
-        if (now()->greaterThanOrEqualTo(
-            \Illuminate\Support\Carbon::parse($record->expires_at)
-        )) {
-            throw new InvalidPasswordResetTokenException(
-                'Password reset token has expired.'
-            );
+        if (now()->greaterThanOrEqualTo(\\Illuminate\\Support\\Carbon::parse($record->expires_at))) {
+            throw new InvalidPasswordResetTokenException('Password reset token has expired.');
         }
 
         $user = User::query()->find($record->user_id);
 
         if ($user === null) {
-            throw new InvalidPasswordResetTokenException(
-                'Invalid password reset token.'
-            );
+            throw new InvalidPasswordResetTokenException('Invalid password reset token.');
         }
 
         return $user;
     }
 
-    public function resetPassword(
-        string $token,
-        string $newPassword,
-    ): void {
+    /**
+     * Consume the token, change the password, revoke all active
+     * sessions and append the audit event atomically.
+     */
+    public function resetPassword(string $token, string $newPassword): void
+    {
         DB::transaction(function () use ($token, $newPassword): void {
             $tokenHash = hash('sha256', $token);
 
@@ -112,23 +102,15 @@ final class PasswordResetService extends BaseService
                 ->first();
 
             if ($record === null) {
-                throw new InvalidPasswordResetTokenException(
-                    'Invalid password reset token.'
-                );
+                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
             }
 
             if ($record->used_at !== null) {
-                throw new InvalidPasswordResetTokenException(
-                    'Password reset token has already been used.'
-                );
+                throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
             }
 
-            if (now()->greaterThanOrEqualTo(
-                \Illuminate\Support\Carbon::parse($record->expires_at)
-            )) {
-                throw new InvalidPasswordResetTokenException(
-                    'Password reset token has expired.'
-                );
+            if (now()->greaterThanOrEqualTo(\\Illuminate\\Support\\Carbon::parse($record->expires_at))) {
+                throw new InvalidPasswordResetTokenException('Password reset token has expired.');
             }
 
             $user = User::query()
@@ -137,16 +119,14 @@ final class PasswordResetService extends BaseService
                 ->first();
 
             if ($user === null) {
-                throw new InvalidPasswordResetTokenException(
-                    'Invalid password reset token.'
-                );
+                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
             }
 
             PasswordPolicy::validate($newPassword);
 
             if (Hash::check($newPassword, (string) $user->password)) {
                 throw new InvalidArgumentException(
-                    'New password must be different from current password.'
+                    'New password must be different from current password.',
                 );
             }
 
@@ -162,7 +142,17 @@ final class PasswordResetService extends BaseService
                 user: $user,
                 reason: 'password_reset',
             );
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.password.reset',
+                action: 'reset',
+                cooperativeId: $user->cooperative_id
+                    ? (string) $user->cooperative_id
+                    : null,
+                subjectType: User::class,
+                subjectId: (string) $user->getKey(),
+                metadata: ['reason' => 'password_reset_token'],
+            ));
         });
     }
-
 }
