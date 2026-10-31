@@ -10,7 +10,9 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use BackedEnum;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use DomainException;
 use InvalidArgumentException;
 
 final class CooperativeService
@@ -131,6 +133,10 @@ final class CooperativeService
                 return;
             }
 
+            if (! $actor->hasRole('super_admin_root')) {
+                throw new AuthorizationException('Only super_admin_root may delete a cooperative.');
+            }
+
             $before = $this->auditSnapshot($cooperative);
             $cooperative->deleted_by = (string) $actor->getKey();
             $cooperative->save();
@@ -167,6 +173,8 @@ final class CooperativeService
                 return $cooperative;
             }
 
+            $this->assertAllowedStatusTransition($actor, $cooperative->status, $status);
+
             $cooperative->status = $status;
             $cooperative->updated_by = (string) $actor->getKey();
             $cooperative->save();
@@ -182,6 +190,36 @@ final class CooperativeService
 
             return $cooperative;
         });
+    }
+
+    private function assertAllowedStatusTransition(
+        User $actor,
+        CooperativeStatus $current,
+        CooperativeStatus $target,
+    ): void {
+        $ordinaryTransitions = [
+            CooperativeStatus::PENDING->value => [CooperativeStatus::ACTIVE, CooperativeStatus::ARCHIVED],
+            CooperativeStatus::ACTIVE->value => [CooperativeStatus::INACTIVE, CooperativeStatus::SUSPENDED],
+            CooperativeStatus::SUSPENDED->value => [CooperativeStatus::ACTIVE, CooperativeStatus::INACTIVE, CooperativeStatus::ARCHIVED],
+            CooperativeStatus::INACTIVE->value => [CooperativeStatus::ACTIVE, CooperativeStatus::ARCHIVED],
+            CooperativeStatus::ARCHIVED->value => [],
+        ];
+
+        $rootArchivedReactivation = $actor->hasRole('super_admin_root')
+            && $current === CooperativeStatus::ARCHIVED
+            && in_array($target, [CooperativeStatus::ACTIVE, CooperativeStatus::INACTIVE], true);
+
+        if ($rootArchivedReactivation) {
+            return;
+        }
+
+        if (! in_array($target, $ordinaryTransitions[$current->value] ?? [], true)) {
+            throw new DomainException(sprintf(
+                'Transition from %s to %s is not allowed.',
+                $current->value,
+                $target->value,
+            ));
+        }
     }
 
     /** @param array<string, mixed> $attributes
