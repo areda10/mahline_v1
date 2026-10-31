@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Authentication\\Services;
+namespace App\Domains\Identity\Authentication\Services;
 
-use App\\Core\\Foundation\\Services\\BaseService;
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authentication\\Models\\AuthenticationSession;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
-use Illuminate\\Support\\Facades\\DB;
+use App\Core\Foundation\Services\BaseService;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Facades\DB;
 
 final class SessionService extends BaseService
 {
