@@ -257,4 +257,42 @@ final class PasswordServiceTest extends TestCase
             )
         );
     }
+
+    public function test_password_change_is_recorded_in_audit(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+
+        $this->passwordService->changePassword(
+            user: $user,
+            currentPassword: 'MahlinePassword12',
+            newPassword: 'MahlinePassword13',
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.password.changed',
+            'action' => 'changed',
+            'subject_type' => User::class,
+            'subject_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_failed_password_change_does_not_create_audit_event(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+
+        try {
+            $this->passwordService->changePassword(
+                user: $user,
+                currentPassword: 'WrongPassword12',
+                newPassword: 'MahlinePassword13',
+            );
+            $this->fail('Expected invalid current password exception.');
+        } catch (\RuntimeException $exception) {
+            $this->assertDatabaseMissing('audit_events', [
+                'event_key' => 'identity.password.changed',
+                'subject_id' => $user->getKey(),
+            ]);
+        }
+    }
+    
 }
