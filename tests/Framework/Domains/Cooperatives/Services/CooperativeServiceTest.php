@@ -189,7 +189,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_deleting_already_deleted_cooperative_is_idempotent(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
         $cooperative->delete();
 
