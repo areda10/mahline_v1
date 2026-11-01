@@ -155,7 +155,7 @@ final class CooperativePolicyTest extends TestCase
         );
     }
 
-    public function test_only_super_admin_root_can_create_cooperative(): void
+    public function test_super_admin_root_and_super_admin_can_create_cooperative(): void
     {
         $root = $this->userWithRoleAndPermissions(
             'super_admin_root',
@@ -232,6 +232,32 @@ final class CooperativePolicyTest extends TestCase
             Gate::forUser($userWithoutDeletePermission)
                 ->allows('delete', $cooperative),
         );
+    }
+
+    public function test_super_admin_can_delete_only_an_assigned_cooperative(): void
+    {
+        $assigned = $this->createCooperative();
+        $unassigned = $this->createCooperative();
+
+        $user = $this->userWithRoleAndPermissions(
+            'super_admin',
+            ['cooperatives.delete'],
+        );
+        $user->cooperatives()->attach($assigned->id);
+
+        self::assertTrue(Gate::forUser($user)->allows('delete', $assigned));
+        self::assertFalse(Gate::forUser($user)->allows('delete', $unassigned));
+    }
+
+    public function test_super_admin_root_can_delete_any_cooperative(): void
+    {
+        $cooperative = $this->createCooperative();
+        $root = $this->userWithRoleAndPermissions(
+            'super_admin_root',
+            ['cooperatives.delete'],
+        );
+
+        self::assertTrue(Gate::forUser($root)->allows('delete', $cooperative));
     }
 
     public function test_view_any_requires_view_permission(): void
