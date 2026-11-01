@@ -23,7 +23,7 @@ final class CooperativeService
     ];
 
     /** @var list<string> */
-    private const AUDITABLE_FIELDS = [
+    /** @var list<string> */\n    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = [\n        'phone', 'email', 'address_id',\n    ];\n\n    private const AUDITABLE_FIELDS = [
         'name', 'address_id', 'phone', 'email', 'rc', 'status',
     ];
 
@@ -205,11 +205,11 @@ final class CooperativeService
             CooperativeStatus::ARCHIVED->value => [],
         ];
 
-        $rootArchivedReactivation = $actor->hasRole('super_admin_root')
+        $authorizedArchivedReactivation = $actor->hasAnyRole(['super_admin_root', 'super_admin'])
             && $current === CooperativeStatus::ARCHIVED
             && in_array($target, [CooperativeStatus::ACTIVE, CooperativeStatus::INACTIVE], true);
 
-        if ($rootArchivedReactivation) {
+        if ($authorizedArchivedReactivation) {
             return;
         }
 
