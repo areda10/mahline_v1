@@ -12,6 +12,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use BackedEnum;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use DomainException;
 use InvalidArgumentException;
 
@@ -35,6 +36,7 @@ final class CooperativeService
     /** @param array<string, mixed> $attributes */
     public function create(User $actor, array $attributes): Cooperative
     {
+        Gate::forUser($actor)->authorize('create', Cooperative::class);
         $attributes = $this->filterWritableAttributes($attributes);
 
         return DB::transaction(function () use ($actor, $attributes): Cooperative {
@@ -72,6 +74,13 @@ final class CooperativeService
             $cooperative = Cooperative::query()
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
+
+            Gate::forUser($actor)->authorize('update', $cooperative);
+
+            if ($actor->hasRole('cooperative_admin')
+                && array_diff(array_keys($attributes), self::COOPERATIVE_ADMIN_WRITABLE_FIELDS) !== []) {
+                throw new AuthorizationException('A cooperative_admin may only update phone, email and address.');
+            }
 
             $before = $this->auditSnapshot($cooperative);
             $cooperative->fill($attributes);
@@ -133,9 +142,7 @@ final class CooperativeService
                 return;
             }
 
-            if (! $actor->hasRole('super_admin_root')) {
-                throw new AuthorizationException('Only super_admin_root may delete a cooperative.');
-            }
+            Gate::forUser($actor)->authorize('delete', $cooperative);
 
             $before = $this->auditSnapshot($cooperative);
             $cooperative->deleted_by = (string) $actor->getKey();
@@ -166,6 +173,12 @@ final class CooperativeService
             $cooperative = Cooperative::query()
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
+
+            Gate::forUser($actor)->authorize('update', $cooperative);
+
+            if (! $actor->hasAnyRole(['super_admin_root', 'super_admin'])) {
+                throw new AuthorizationException('Only super_admin_root or an assigned super_admin may change cooperative status.');
+            }
 
             $before = $this->auditSnapshot($cooperative);
 
