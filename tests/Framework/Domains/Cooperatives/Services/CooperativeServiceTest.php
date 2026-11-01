@@ -62,7 +62,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_update_records_old_and_new_safe_values(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['name' => 'Ancien nom']);
 
         $this->service->update($actor, $cooperative, [
@@ -89,7 +89,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_update_with_same_values_does_not_record_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['name' => 'Identique']);
 
         $this->service->update($actor, $cooperative, ['name' => 'Identique']);
@@ -102,7 +102,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_update_rejects_status_and_unknown_attributes(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
 
         $this->expectException(InvalidArgumentException::class);
@@ -179,7 +179,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_create_rolls_back_when_audit_insert_fails(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $failureInjected = false;
 
         DB::connection()->beforeExecuting(
@@ -219,7 +219,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_outer_transaction_rolls_back_cooperative_and_audit_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
 
         try {
             DB::transaction(function () use ($actor): void {
@@ -265,7 +265,7 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->activate($ordinary, $cooperative);
             $this->fail('Ordinary actor must not reactivate an archived cooperative.');
-        } catch (DomainException) {
+        } catch (AuthorizationException) {
             $this->assertSame(CooperativeStatus::ARCHIVED, $cooperative->fresh()->status);
             $this->assertDatabaseMissing('audit_events', [
                 'subject_id' => $cooperative->id,
@@ -358,7 +358,7 @@ final class CooperativeServiceTest extends TestCase
         string $eventKey,
         string $action,
     ): void {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['status' => $from]);
 
         $updated = $this->service->{$method}($actor, $cooperative);
