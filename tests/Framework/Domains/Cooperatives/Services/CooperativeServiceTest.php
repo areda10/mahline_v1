@@ -33,7 +33,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_create_persists_cooperative_and_audit_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = $this->service->create($actor, $this->attributes());
 
         $this->assertDatabaseHas('cooperatives', [
