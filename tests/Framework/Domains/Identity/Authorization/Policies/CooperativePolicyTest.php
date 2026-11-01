@@ -272,6 +272,44 @@ final class CooperativePolicyTest extends TestCase
         );
     }
 
+
+    public function test_visible_to_scope_applies_role_perimeters(): void
+    {
+        $first = $this->createCooperative();
+        $second = $this->createCooperative();
+
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['cooperatives.view']);
+        $superAdmin = $this->userWithRoleAndPermissions('super_admin', ['cooperatives.view']);
+        $superAdmin->cooperatives()->attach($first->id);
+        $cooperativeAdmin = $this->userWithRoleAndPermissions(
+            'cooperative_admin',
+            ['cooperatives.view'],
+            ['cooperative_id' => $first->id],
+        );
+        $user = $this->userWithRoleAndPermissions(
+            'user',
+            ['cooperatives.view'],
+            ['cooperative_id' => $second->id],
+        );
+
+        self::assertEqualsCanonicalizing(
+            [$first->id, $second->id],
+            Cooperative::query()->visibleTo($root)->pluck('id')->all(),
+        );
+        self::assertSame(
+            [$first->id],
+            Cooperative::query()->visibleTo($superAdmin)->pluck('id')->all(),
+        );
+        self::assertSame(
+            [$first->id],
+            Cooperative::query()->visibleTo($cooperativeAdmin)->pluck('id')->all(),
+        );
+        self::assertSame(
+            [$second->id],
+            Cooperative::query()->visibleTo($user)->pluck('id')->all(),
+        );
+    }
+
     private function createCooperative(): Cooperative
     {
         $country = Country::query()->firstOrCreate(
