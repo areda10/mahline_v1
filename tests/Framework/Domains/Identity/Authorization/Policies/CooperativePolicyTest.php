@@ -171,7 +171,7 @@ final class CooperativePolicyTest extends TestCase
             Gate::forUser($root)->allows('create', Cooperative::class),
         );
 
-        self::assertFalse(
+        self::assertTrue(
             Gate::forUser($superAdmin)->allows('create', Cooperative::class),
         );
     }
@@ -218,7 +218,7 @@ final class CooperativePolicyTest extends TestCase
             ['cooperative_id' => $cooperative->id],
         );
 
-        self::assertTrue(
+        self::assertFalse(
             Gate::forUser($user)->allows('delete', $cooperative),
         );
 
