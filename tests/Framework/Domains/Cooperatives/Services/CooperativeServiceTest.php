@@ -137,7 +137,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_repeating_same_status_does_not_duplicate_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->active()->create();
 
         $this->service->activate($actor, $cooperative);
@@ -274,6 +274,7 @@ final class CooperativeServiceTest extends TestCase
         }
 
         $superAdmin = $this->superAdminActor();
+        $superAdmin->cooperatives()->attach($cooperative->id);
         $this->service->deactivate($superAdmin, $cooperative);
         $this->assertSame(CooperativeStatus::INACTIVE, $cooperative->fresh()->status);
     }
@@ -293,7 +294,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_disallowed_status_transition_does_not_change_status_or_write_audit(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create([
             'status' => CooperativeStatus::PENDING,
         ]);
