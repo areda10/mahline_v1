@@ -12,12 +12,9 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
-use DomainException;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
-use RuntimeException;
 use Tests\TestCase;
 
 final class CooperativeServiceTest extends TestCase
@@ -132,7 +129,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->service->update($actor, $cooperative, [
             'status' => CooperativeStatus::ACTIVE,
         ]);
@@ -220,7 +217,7 @@ final class CooperativeServiceTest extends TestCase
                 ) {
                     $failureInjected = true;
 
-                    throw new RuntimeException('Simulated audit insert failure.');
+                    throw new \RuntimeException('Simulated audit insert failure.');
                 }
             },
         );
@@ -228,7 +225,7 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->create($actor, $this->attributes());
             $this->fail('The audit insert failure should abort cooperative creation.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame(
                 'Simulated audit insert failure.',
                 $exception->getMessage(),
@@ -329,7 +326,7 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->suspend($actor, $cooperative);
             $this->fail('PENDING to SUSPENDED is not allowed.');
-        } catch (DomainException) {
+        } catch (\DomainException) {
             $this->assertSame(CooperativeStatus::PENDING, $cooperative->fresh()->status);
             $this->assertDatabaseMissing('audit_events', [
                 'subject_id' => $cooperative->id,
