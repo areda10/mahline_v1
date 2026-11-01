@@ -10,6 +10,7 @@ use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Database\Factories\CooperativeFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,6 +48,33 @@ final class Cooperative extends BaseModel
     protected static function newFactory(): Factory
     {
         return CooperativeFactory::new();
+    }
+
+    /**
+     * Restrict cooperative queries to the records visible to the given user.
+     */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if (! $user->isAuthorized()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->hasRole('super_admin_root')) {
+            return $query;
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return $query->whereIn(
+                $this->getQualifiedKeyName(),
+                $user->cooperatives()->select('cooperatives.id'),
+            );
+        }
+
+        if ($user->hasAnyRole(['cooperative_admin', 'user']) && $user->cooperative_id !== null) {
+            return $query->where($this->getQualifiedKeyName(), $user->cooperative_id);
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 
     public function settings(): HasOne
