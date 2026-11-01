@@ -24,7 +24,10 @@ final class CooperativeService
     ];
 
     /** @var list<string> */
-    /** @var list<string> */\n    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = [\n        'phone', 'email', 'address_id',\n    ];\n\n    private const AUDITABLE_FIELDS = [
+    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email', 'address_id'];
+
+    /** @var list<string> */
+    private const AUDITABLE_FIELDS = [
         'name', 'address_id', 'phone', 'email', 'rc', 'status',
     ];
 
