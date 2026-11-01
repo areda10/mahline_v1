@@ -248,9 +248,9 @@ final class CooperativeServiceTest extends TestCase
         try {
             DB::transaction(function () use ($actor): void {
                 $this->service->create($actor, $this->attributes());
-                throw new RuntimeException('Rollback requested by test.');
+                throw new \\RuntimeException('Rollback requested by test.');
             });
-        } catch (RuntimeException $exception) {
+        } catch (\\RuntimeException $exception) {
             $this->assertSame('Rollback requested by test.', $exception->getMessage());
         }
 
