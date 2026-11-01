@@ -87,6 +87,33 @@ final class CooperativeServiceTest extends TestCase
         ]);
     }
 
+
+    public function test_cooperative_admin_can_update_only_phone_email_and_address(): void
+    {
+        $cooperative = Cooperative::factory()->create([
+            'name' => 'Nom protégé',
+            'phone' => '+212600000000',
+            'email' => 'old@example.test',
+        ]);
+        $actor = $this->cooperativeAdminActor($cooperative);
+
+        $updated = $this->service->update($actor, $cooperative, [
+            'phone' => '+212611111111',
+            'email' => 'new@example.test',
+        ]);
+
+        $this->assertSame('+212611111111', $updated->phone);
+        $this->assertSame('new@example.test', $updated->email);
+        $this->assertSame('Nom protégé', $updated->name);
+
+        try {
+            $this->service->update($actor, $cooperative, ['name' => 'Nom modifié']);
+            $this->fail('A cooperative_admin must not change the cooperative name.');
+        } catch (AuthorizationException) {
+            $this->assertSame('Nom protégé', $cooperative->fresh()->name);
+        }
+    }
+
     public function test_update_with_same_values_does_not_record_event(): void
     {
         $actor = $this->rootActor();
@@ -309,6 +336,27 @@ final class CooperativeServiceTest extends TestCase
                 'event_key' => 'cooperatives.suspended',
             ]);
         }
+    }
+
+
+    private function cooperativeAdminActor(Cooperative $cooperative): User
+    {
+        $actor = User::factory()->create(['cooperative_id' => $cooperative->id]);
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'cooperative_admin'],
+            ['name' => 'Cooperative Admin', 'is_active' => true],
+        );
+        $actor->roles()->attach($role->getKey());
+
+        foreach (['cooperatives.view', 'cooperatives.update'] as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $slug, 'is_active' => true],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
+
+        return $actor;
     }
 
     private function rootActor(): User
