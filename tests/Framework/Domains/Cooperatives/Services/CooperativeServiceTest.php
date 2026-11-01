@@ -9,6 +9,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use DomainException;
@@ -46,7 +47,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_create_excludes_confidential_fields_from_audit(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = $this->service->create($actor, $this->attributes());
 
         $event = AuditEvent::query()
@@ -253,7 +254,7 @@ final class CooperativeServiceTest extends TestCase
         }
     }
 
-    public function test_archived_cooperative_can_only_be_reactivated_by_root_to_active_or_inactive(): void
+    public function test_archived_cooperative_can_be_reactivated_by_super_admin_or_root(): void
     {
         $ordinary = User::factory()->create();
         $root = $this->rootActor();
@@ -272,7 +273,8 @@ final class CooperativeServiceTest extends TestCase
             ]);
         }
 
-        $this->service->deactivate($root, $cooperative);
+        $superAdmin = $this->superAdminActor();
+        $this->service->deactivate($superAdmin, $cooperative);
         $this->assertSame(CooperativeStatus::INACTIVE, $cooperative->fresh()->status);
     }
 
@@ -316,6 +318,35 @@ final class CooperativeServiceTest extends TestCase
             ['name' => 'Super Admin Root', 'is_active' => true],
         );
         $actor->roles()->attach($role->getKey());
+
+        foreach (['cooperatives.view', 'cooperatives.create', 'cooperatives.update', 'cooperatives.delete'] as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $slug, 'is_active' => true],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
+
+        return $actor;
+    }
+
+
+    private function superAdminActor(): User
+    {
+        $actor = User::factory()->create();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+        $actor->roles()->attach($role->getKey());
+
+        foreach (['cooperatives.view', 'cooperatives.create', 'cooperatives.update', 'cooperatives.delete'] as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $slug, 'is_active' => true],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
 
         return $actor;
     }
