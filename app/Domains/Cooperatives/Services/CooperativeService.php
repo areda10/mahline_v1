@@ -9,12 +9,9 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
-use BackedEnum;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use DomainException;
-use InvalidArgumentException;
 
 final class CooperativeService
 {
@@ -141,11 +138,11 @@ final class CooperativeService
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
 
+            Gate::forUser($actor)->authorize('delete', $cooperative);
+
             if ($cooperative->trashed()) {
                 return;
             }
-
-            Gate::forUser($actor)->authorize('delete', $cooperative);
 
             $before = $this->auditSnapshot($cooperative);
             $cooperative->deleted_by = (string) $actor->getKey();
@@ -230,7 +227,7 @@ final class CooperativeService
         }
 
         if (! in_array($target, $ordinaryTransitions[$current->value] ?? [], true)) {
-            throw new DomainException(sprintf(
+            throw new \DomainException(sprintf(
                 'Transition from %s to %s is not allowed.',
                 $current->value,
                 $target->value,
@@ -246,7 +243,7 @@ final class CooperativeService
         $unknown = array_diff(array_keys($attributes), self::WRITABLE_FIELDS);
 
         if ($unknown !== []) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Unsupported cooperative attributes: '.implode(', ', $unknown),
             );
         }
@@ -261,7 +258,7 @@ final class CooperativeService
 
         foreach (self::AUDITABLE_FIELDS as $field) {
             $value = $cooperative->getAttribute($field);
-            $snapshot[$field] = $value instanceof BackedEnum ? $value->value : $value;
+            $snapshot[$field] = $value instanceof \BackedEnum ? $value->value : $value;
         }
 
         return $snapshot;
