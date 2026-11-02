@@ -67,7 +67,7 @@ final class CooperativeController
     public function show(string $cooperative): View
     {
         $model = $this->resolveCooperative($cooperative);
-        return view('backoffice.cooperatives.show', ['cooperative' => $model->load('address')]);
+        return view('backoffice.cooperatives.show', ['cooperative' => $model->load('address.country')]);
     }
 
     public function edit(string $cooperative): View
