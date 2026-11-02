@@ -9,6 +9,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -40,11 +41,10 @@ final class CooperativeControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['cooperatives.view', 'cooperatives.create']);
 
         $response = $this->actingAs($actor)->post(route('backoffice.cooperatives.store'), [
-            'name' => 'Coopérative HTTP',
-            'email' => 'http-coop@example.test',
-            'phone' => '+212600000001',
+            ...$this->validCooperativeAttributes('Coopérative HTTP'),
         ]);
 
+        $response->assertSessionHasNoErrors();
         $cooperative = Cooperative::query()->where('name', 'Coopérative HTTP')->firstOrFail();
 
         $response->assertRedirect(route('backoffice.cooperatives.show', $cooperative));
@@ -59,9 +59,10 @@ final class CooperativeControllerTest extends TestCase
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
 
         $response = $this->actingAs($actor)->post(route('backoffice.cooperatives.store'), [
-            'name' => 'Coopérative Root',
+            ...$this->validCooperativeAttributes('Coopérative Root'),
         ]);
 
+        $response->assertSessionHasNoErrors();
         $cooperative = Cooperative::query()->where('name', 'Coopérative Root')->firstOrFail();
 
         $response->assertRedirect(route('backoffice.cooperatives.show', $cooperative));
@@ -171,6 +172,21 @@ final class CooperativeControllerTest extends TestCase
         $this->actingAs($actor)
             ->get(route('backoffice.cooperatives.index'))
             ->assertForbidden();
+    }
+
+    /** @return array<string, mixed> */
+    private function validCooperativeAttributes(string $name): array
+    {
+        return [
+            'name' => $name,
+            'rib' => '123456789012345678901234',
+            'tax_id' => 'TAX-HTTP',
+            'address_id' => Address::factory()->create()->getKey(),
+            'phone' => '+212600000001',
+            'email' => strtolower(str_replace(' ', '-', $name)).'@example.test',
+            'rc' => 'RC-HTTP',
+            'ice' => '001234567890123',
+        ];
     }
 
     /** @param list<string> $permissions
