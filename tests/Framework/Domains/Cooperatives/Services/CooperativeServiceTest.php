@@ -72,7 +72,7 @@ final class CooperativeServiceTest extends TestCase
         ]);
     }
 
-    public function test_repeated_creation_does_not_duplicate_super_admin_assignment(): void
+    public function test_each_created_cooperative_gets_exactly_one_super_admin_assignment(): void
     {
         $actor = $this->superAdminActor();
 
