@@ -100,7 +100,9 @@ final class Cooperative extends BaseModel
             'super_admin_cooperative',
             'cooperative_id',
             'super_admin_id',
-        )->using(SuperAdminCooperative::class);
+        )
+            ->using(SuperAdminCooperative::class)
+            ->withTimestamps();
     }
 
 }
