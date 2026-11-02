@@ -46,6 +46,14 @@ final class CooperativeService
             $cooperative->created_by = (string) $actor->getKey();
             $cooperative->save();
 
+            // A super_admin owns the cooperative assignment from creation.
+            // Root administrators retain global access and need no pivot row.
+            if ($actor->hasRole('super_admin') && ! $actor->hasRole('super_admin_root')) {
+                $actor->cooperatives()->syncWithoutDetaching([
+                    $cooperative->getKey(),
+                ]);
+            }
+
             $this->record(
                 actor: $actor,
                 cooperative: $cooperative,
