@@ -55,6 +55,7 @@ return [
         'super_admin' => [
             'audit.view',
             'cooperatives.view',
+            'cooperatives.create',
             'cooperatives.update',
             'cooperatives.delete',
 
@@ -83,6 +84,7 @@ return [
         'cooperative_admin' => [
             'audit.view',
             'cooperatives.view',
+            'cooperatives.update',
 
             'catalogs.view',
             'catalogs.create',

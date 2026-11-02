@@ -155,7 +155,7 @@ final class CooperativePolicyTest extends TestCase
         );
     }
 
-    public function test_only_super_admin_root_can_create_cooperative(): void
+    public function test_super_admin_root_and_super_admin_can_create_cooperative(): void
     {
         $root = $this->userWithRoleAndPermissions(
             'super_admin_root',
@@ -171,7 +171,7 @@ final class CooperativePolicyTest extends TestCase
             Gate::forUser($root)->allows('create', Cooperative::class),
         );
 
-        self::assertFalse(
+        self::assertTrue(
             Gate::forUser($superAdmin)->allows('create', Cooperative::class),
         );
     }
@@ -218,7 +218,7 @@ final class CooperativePolicyTest extends TestCase
             ['cooperative_id' => $cooperative->id],
         );
 
-        self::assertTrue(
+        self::assertFalse(
             Gate::forUser($user)->allows('delete', $cooperative),
         );
 
@@ -234,6 +234,32 @@ final class CooperativePolicyTest extends TestCase
         );
     }
 
+    public function test_super_admin_can_delete_only_an_assigned_cooperative(): void
+    {
+        $assigned = $this->createCooperative();
+        $unassigned = $this->createCooperative();
+
+        $user = $this->userWithRoleAndPermissions(
+            'super_admin',
+            ['cooperatives.delete'],
+        );
+        $user->cooperatives()->attach($assigned->id);
+
+        self::assertTrue(Gate::forUser($user)->allows('delete', $assigned));
+        self::assertFalse(Gate::forUser($user)->allows('delete', $unassigned));
+    }
+
+    public function test_super_admin_root_can_delete_any_cooperative(): void
+    {
+        $cooperative = $this->createCooperative();
+        $root = $this->userWithRoleAndPermissions(
+            'super_admin_root',
+            ['cooperatives.delete'],
+        );
+
+        self::assertTrue(Gate::forUser($root)->allows('delete', $cooperative));
+    }
+
     public function test_view_any_requires_view_permission(): void
     {
         $user = $this->userWithRoleAndPermissions(
@@ -243,6 +269,44 @@ final class CooperativePolicyTest extends TestCase
 
         self::assertFalse(
             Gate::forUser($user)->allows('viewAny', Cooperative::class),
+        );
+    }
+
+
+    public function test_visible_to_scope_applies_role_perimeters(): void
+    {
+        $first = $this->createCooperative();
+        $second = $this->createCooperative();
+
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['cooperatives.view']);
+        $superAdmin = $this->userWithRoleAndPermissions('super_admin', ['cooperatives.view']);
+        $superAdmin->cooperatives()->attach($first->id);
+        $cooperativeAdmin = $this->userWithRoleAndPermissions(
+            'cooperative_admin',
+            ['cooperatives.view'],
+            ['cooperative_id' => $first->id],
+        );
+        $user = $this->userWithRoleAndPermissions(
+            'user',
+            ['cooperatives.view'],
+            ['cooperative_id' => $second->id],
+        );
+
+        self::assertEqualsCanonicalizing(
+            [$first->id, $second->id],
+            Cooperative::query()->visibleTo($root)->pluck('id')->all(),
+        );
+        self::assertSame(
+            [$first->id],
+            Cooperative::query()->visibleTo($superAdmin)->pluck('id')->all(),
+        );
+        self::assertSame(
+            [$first->id],
+            Cooperative::query()->visibleTo($cooperativeAdmin)->pluck('id')->all(),
+        );
+        self::assertSame(
+            [$second->id],
+            Cooperative::query()->visibleTo($user)->pluck('id')->all(),
         );
     }
 

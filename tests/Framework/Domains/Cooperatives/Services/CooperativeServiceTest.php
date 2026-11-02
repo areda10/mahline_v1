@@ -9,14 +9,12 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
-use DomainException;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
-use RuntimeException;
 use Tests\TestCase;
 
 final class CooperativeServiceTest extends TestCase
@@ -33,7 +31,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_create_persists_cooperative_and_audit_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = $this->service->create($actor, $this->attributes());
 
         $this->assertDatabaseHas('cooperatives', [
@@ -46,7 +44,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_create_excludes_confidential_fields_from_audit(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = $this->service->create($actor, $this->attributes());
 
         $event = AuditEvent::query()
@@ -61,7 +59,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_update_records_old_and_new_safe_values(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['name' => 'Ancien nom']);
 
         $this->service->update($actor, $cooperative, [
@@ -86,9 +84,36 @@ final class CooperativeServiceTest extends TestCase
         ]);
     }
 
+
+    public function test_cooperative_admin_can_update_only_phone_email_and_address(): void
+    {
+        $cooperative = Cooperative::factory()->create([
+            'name' => 'Nom protégé',
+            'phone' => '+212600000000',
+            'email' => 'old@example.test',
+        ]);
+        $actor = $this->cooperativeAdminActor($cooperative);
+
+        $updated = $this->service->update($actor, $cooperative, [
+            'phone' => '+212611111111',
+            'email' => 'new@example.test',
+        ]);
+
+        $this->assertSame('+212611111111', $updated->phone);
+        $this->assertSame('new@example.test', $updated->email);
+        $this->assertSame('Nom protégé', $updated->name);
+
+        try {
+            $this->service->update($actor, $cooperative, ['name' => 'Nom modifié']);
+            $this->fail('A cooperative_admin must not change the cooperative name.');
+        } catch (AuthorizationException) {
+            $this->assertSame('Nom protégé', $cooperative->fresh()->name);
+        }
+    }
+
     public function test_update_with_same_values_does_not_record_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['name' => 'Identique']);
 
         $this->service->update($actor, $cooperative, ['name' => 'Identique']);
@@ -101,10 +126,10 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_update_rejects_status_and_unknown_attributes(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->service->update($actor, $cooperative, [
             'status' => CooperativeStatus::ACTIVE,
         ]);
@@ -136,7 +161,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_repeating_same_status_does_not_duplicate_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->active()->create();
 
         $this->service->activate($actor, $cooperative);
@@ -164,7 +189,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_deleting_already_deleted_cooperative_is_idempotent(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
         $cooperative->delete();
 
@@ -178,7 +203,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_create_rolls_back_when_audit_insert_fails(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $failureInjected = false;
 
         DB::connection()->beforeExecuting(
@@ -192,7 +217,7 @@ final class CooperativeServiceTest extends TestCase
                 ) {
                     $failureInjected = true;
 
-                    throw new RuntimeException('Simulated audit insert failure.');
+                    throw new \RuntimeException('Simulated audit insert failure.');
                 }
             },
         );
@@ -200,7 +225,7 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->create($actor, $this->attributes());
             $this->fail('The audit insert failure should abort cooperative creation.');
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame(
                 'Simulated audit insert failure.',
                 $exception->getMessage(),
@@ -218,14 +243,14 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_outer_transaction_rolls_back_cooperative_and_audit_event(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
 
         try {
             DB::transaction(function () use ($actor): void {
                 $this->service->create($actor, $this->attributes());
-                throw new RuntimeException('Rollback requested by test.');
+                throw new \RuntimeException('Rollback requested by test.');
             });
-        } catch (RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame('Rollback requested by test.', $exception->getMessage());
         }
 
@@ -253,7 +278,7 @@ final class CooperativeServiceTest extends TestCase
         }
     }
 
-    public function test_archived_cooperative_can_only_be_reactivated_by_root_to_active_or_inactive(): void
+    public function test_archived_cooperative_can_be_reactivated_by_super_admin_or_root(): void
     {
         $ordinary = User::factory()->create();
         $root = $this->rootActor();
@@ -264,7 +289,7 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->activate($ordinary, $cooperative);
             $this->fail('Ordinary actor must not reactivate an archived cooperative.');
-        } catch (DomainException) {
+        } catch (AuthorizationException) {
             $this->assertSame(CooperativeStatus::ARCHIVED, $cooperative->fresh()->status);
             $this->assertDatabaseMissing('audit_events', [
                 'subject_id' => $cooperative->id,
@@ -272,7 +297,9 @@ final class CooperativeServiceTest extends TestCase
             ]);
         }
 
-        $this->service->deactivate($root, $cooperative);
+        $superAdmin = $this->superAdminActor();
+        $superAdmin->cooperatives()->attach($cooperative->id);
+        $this->service->deactivate($superAdmin, $cooperative);
         $this->assertSame(CooperativeStatus::INACTIVE, $cooperative->fresh()->status);
     }
 
@@ -291,7 +318,7 @@ final class CooperativeServiceTest extends TestCase
 
     public function test_disallowed_status_transition_does_not_change_status_or_write_audit(): void
     {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create([
             'status' => CooperativeStatus::PENDING,
         ]);
@@ -299,13 +326,34 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->suspend($actor, $cooperative);
             $this->fail('PENDING to SUSPENDED is not allowed.');
-        } catch (DomainException) {
+        } catch (\DomainException) {
             $this->assertSame(CooperativeStatus::PENDING, $cooperative->fresh()->status);
             $this->assertDatabaseMissing('audit_events', [
                 'subject_id' => $cooperative->id,
                 'event_key' => 'cooperatives.suspended',
             ]);
         }
+    }
+
+
+    private function cooperativeAdminActor(Cooperative $cooperative): User
+    {
+        $actor = User::factory()->create(['cooperative_id' => $cooperative->id]);
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'cooperative_admin'],
+            ['name' => 'Cooperative Admin', 'is_active' => true],
+        );
+        $actor->roles()->attach($role->getKey());
+
+        foreach (['cooperatives.view', 'cooperatives.update'] as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $slug, 'is_active' => true],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
+
+        return $actor;
     }
 
     private function rootActor(): User
@@ -317,6 +365,35 @@ final class CooperativeServiceTest extends TestCase
         );
         $actor->roles()->attach($role->getKey());
 
+        foreach (['cooperatives.view', 'cooperatives.create', 'cooperatives.update', 'cooperatives.delete'] as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $slug, 'is_active' => true],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
+
+        return $actor;
+    }
+
+
+    private function superAdminActor(): User
+    {
+        $actor = User::factory()->create();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+        $actor->roles()->attach($role->getKey());
+
+        foreach (['cooperatives.view', 'cooperatives.create', 'cooperatives.update', 'cooperatives.delete'] as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $slug, 'is_active' => true],
+            );
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
+
         return $actor;
     }
 
@@ -327,7 +404,7 @@ final class CooperativeServiceTest extends TestCase
         string $eventKey,
         string $action,
     ): void {
-        $actor = User::factory()->create();
+        $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['status' => $from]);
 
         $updated = $this->service->{$method}($actor, $cooperative);

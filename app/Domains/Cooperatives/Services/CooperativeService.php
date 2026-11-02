@@ -9,11 +9,9 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
-use BackedEnum;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
-use DomainException;
-use InvalidArgumentException;
+use Illuminate\Support\Facades\Gate;
 
 final class CooperativeService
 {
@@ -21,6 +19,9 @@ final class CooperativeService
     private const WRITABLE_FIELDS = [
         'name', 'rib', 'tax_id', 'address_id', 'phone', 'email', 'rc', 'ice',
     ];
+
+    /** @var list<string> */
+    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email', 'address_id'];
 
     /** @var list<string> */
     private const AUDITABLE_FIELDS = [
@@ -35,6 +36,7 @@ final class CooperativeService
     /** @param array<string, mixed> $attributes */
     public function create(User $actor, array $attributes): Cooperative
     {
+        Gate::forUser($actor)->authorize('create', Cooperative::class);
         $attributes = $this->filterWritableAttributes($attributes);
 
         return DB::transaction(function () use ($actor, $attributes): Cooperative {
@@ -72,6 +74,13 @@ final class CooperativeService
             $cooperative = Cooperative::query()
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
+
+            Gate::forUser($actor)->authorize('update', $cooperative);
+
+            if ($actor->hasRole('cooperative_admin')
+                && array_diff(array_keys($attributes), self::COOPERATIVE_ADMIN_WRITABLE_FIELDS) !== []) {
+                throw new AuthorizationException('A cooperative_admin may only update phone, email and address.');
+            }
 
             $before = $this->auditSnapshot($cooperative);
             $cooperative->fill($attributes);
@@ -129,12 +138,10 @@ final class CooperativeService
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
 
+            Gate::forUser($actor)->authorize('delete', $cooperative);
+
             if ($cooperative->trashed()) {
                 return;
-            }
-
-            if (! $actor->hasRole('super_admin_root')) {
-                throw new AuthorizationException('Only super_admin_root may delete a cooperative.');
             }
 
             $before = $this->auditSnapshot($cooperative);
@@ -166,6 +173,12 @@ final class CooperativeService
             $cooperative = Cooperative::query()
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
+
+            Gate::forUser($actor)->authorize('update', $cooperative);
+
+            if (! $actor->hasAnyRole(['super_admin_root', 'super_admin'])) {
+                throw new AuthorizationException('Only super_admin_root or an assigned super_admin may change cooperative status.');
+            }
 
             $before = $this->auditSnapshot($cooperative);
 
@@ -205,16 +218,16 @@ final class CooperativeService
             CooperativeStatus::ARCHIVED->value => [],
         ];
 
-        $rootArchivedReactivation = $actor->hasRole('super_admin_root')
+        $authorizedArchivedReactivation = $actor->hasAnyRole(['super_admin_root', 'super_admin'])
             && $current === CooperativeStatus::ARCHIVED
             && in_array($target, [CooperativeStatus::ACTIVE, CooperativeStatus::INACTIVE], true);
 
-        if ($rootArchivedReactivation) {
+        if ($authorizedArchivedReactivation) {
             return;
         }
 
         if (! in_array($target, $ordinaryTransitions[$current->value] ?? [], true)) {
-            throw new DomainException(sprintf(
+            throw new \DomainException(sprintf(
                 'Transition from %s to %s is not allowed.',
                 $current->value,
                 $target->value,
@@ -230,7 +243,7 @@ final class CooperativeService
         $unknown = array_diff(array_keys($attributes), self::WRITABLE_FIELDS);
 
         if ($unknown !== []) {
-            throw new InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Unsupported cooperative attributes: '.implode(', ', $unknown),
             );
         }
@@ -245,7 +258,7 @@ final class CooperativeService
 
         foreach (self::AUDITABLE_FIELDS as $field) {
             $value = $cooperative->getAttribute($field);
-            $snapshot[$field] = $value instanceof BackedEnum ? $value->value : $value;
+            $snapshot[$field] = $value instanceof \BackedEnum ? $value->value : $value;
         }
 
         return $snapshot;
