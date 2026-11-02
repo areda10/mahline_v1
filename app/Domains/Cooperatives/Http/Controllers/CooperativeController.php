@@ -99,19 +99,19 @@ final class CooperativeController
 
         $rules = $user->hasRole('cooperative_admin')
             ? [
-                'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
-                'email' => ['sometimes', 'nullable', 'email', 'max:180'],
-                'address_id' => ['sometimes', 'nullable', 'string', 'max:26', 'exists:addresses,id'],
+                'phone' => ['sometimes', 'required', 'string', 'max:255'],
+                'email' => ['sometimes', 'required', 'email', 'max:255'],
+                'address_id' => ['sometimes', 'required', 'string', 'size:26', 'exists:addresses,id'],
             ]
             : [
-                'name' => ['sometimes', 'required', 'string', 'max:180'],
-                'rib' => ['sometimes', 'nullable', 'string', 'max:34'],
-                'tax_id' => ['sometimes', 'nullable', 'string', 'max:100'],
-                'address_id' => ['sometimes', 'nullable', 'string', 'max:26', 'exists:addresses,id'],
-                'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
-                'email' => ['sometimes', 'nullable', 'email', 'max:180'],
-                'rc' => ['sometimes', 'nullable', 'string', 'max:100'],
-                'ice' => ['sometimes', 'nullable', 'string', 'max:100'],
+                'name' => ['sometimes', 'required', 'string', 'max:255'],
+                'rib' => ['sometimes', 'required', 'string', 'max:255'],
+                'tax_id' => ['sometimes', 'nullable', 'string', 'max:255'],
+                'address_id' => ['sometimes', 'required', 'string', 'size:26', 'exists:addresses,id'],
+                'phone' => ['sometimes', 'required', 'string', 'max:255'],
+                'email' => ['sometimes', 'required', 'email', 'max:255'],
+                'rc' => ['sometimes', 'nullable', 'string', 'max:255'],
+                'ice' => ['sometimes', 'required', 'string', 'max:255'],
             ];
 
         $data = $request->validate($rules);
