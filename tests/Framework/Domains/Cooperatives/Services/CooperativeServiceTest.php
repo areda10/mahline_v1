@@ -56,7 +56,7 @@ final class CooperativeServiceTest extends TestCase
             $actor->cooperatives()->whereKey($cooperative->getKey())->exists(),
         );
         $this->assertTrue(
-            \\Illuminate\\Support\\Facades\\Gate::forUser($actor)->allows('view', $cooperative),
+            \Illuminate\Support\Facades\Gate::forUser($actor)->allows('view', $cooperative),
         );
     }
 
