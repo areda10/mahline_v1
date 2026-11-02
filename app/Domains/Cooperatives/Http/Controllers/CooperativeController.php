@@ -45,14 +45,14 @@ final class CooperativeController
         Gate::authorize('create', Cooperative::class);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:180'],
-            'rib' => ['nullable', 'string', 'max:34'],
-            'tax_id' => ['nullable', 'string', 'max:100'],
-            'address_id' => ['nullable', 'string', 'max:26', 'exists:addresses,id'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:180'],
-            'rc' => ['nullable', 'string', 'max:100'],
-            'ice' => ['nullable', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:255'],
+            'rib' => ['required', 'string', 'max:255'],
+            'tax_id' => ['nullable', 'string', 'max:255'],
+            'address_id' => ['required', 'string', 'size:26', 'exists:addresses,id'],
+            'phone' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'rc' => ['nullable', 'string', 'max:255'],
+            'ice' => ['required', 'string', 'max:255'],
         ]);
 
         $cooperative = $this->cooperativeService->create($request->user(), $data);
@@ -82,6 +82,16 @@ final class CooperativeController
         Gate::authorize('update', $model);
 
         $user = $request->user();
+
+        if ($user->hasRole('cooperative_admin')) {
+            $forbiddenFields = array_diff(
+                array_keys($request->all()),
+                ['phone', 'email', 'address_id', '_token', '_method'],
+            );
+
+            abort_if($forbiddenFields !== [], 403);
+        }
+
         $rules = $user->hasRole('cooperative_admin')
             ? [
                 'phone' => ['sometimes', 'nullable', 'string', 'max:30'],
