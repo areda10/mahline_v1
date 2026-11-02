@@ -42,6 +42,95 @@ final class CooperativeServiceTest extends TestCase
         $this->assertAuditEvent('cooperatives.created', 'created', $actor, $cooperative);
     }
 
+    public function test_super_admin_creator_is_automatically_assigned_to_created_cooperative(): void
+    {
+        $actor = $this->superAdminActor();
+
+        $cooperative = $this->service->create($actor, $this->attributes());
+
+        $this->assertDatabaseHas('super_admin_cooperative', [
+            'super_admin_id' => $actor->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $this->assertTrue(
+            $actor->cooperatives()->whereKey($cooperative->getKey())->exists(),
+        );
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Gate::forUser($actor)->allows('view', $cooperative),
+        );
+    }
+
+    public function test_root_creator_does_not_receive_a_super_admin_pivot_assignment(): void
+    {
+        $actor = $this->rootActor();
+
+        $cooperative = $this->service->create($actor, $this->attributes());
+
+        $this->assertDatabaseMissing('super_admin_cooperative', [
+            'super_admin_id' => $actor->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+    }
+
+    public function test_each_created_cooperative_gets_exactly_one_super_admin_assignment(): void
+    {
+        $actor = $this->superAdminActor();
+
+        $first = $this->service->create($actor, $this->attributes());
+        $second = $this->service->create($actor, [
+            ...$this->attributes(),
+            'name' => 'Deuxième coopérative',
+            'email' => 'second-coop@example.test',
+        ]);
+
+        $this->assertSame(
+            1,
+            DB::table('super_admin_cooperative')
+                ->where('super_admin_id', $actor->getKey())
+                ->where('cooperative_id', $first->getKey())
+                ->count(),
+        );
+        $this->assertSame(
+            1,
+            DB::table('super_admin_cooperative')
+                ->where('super_admin_id', $actor->getKey())
+                ->where('cooperative_id', $second->getKey())
+                ->count(),
+        );
+    }
+
+    public function test_failed_super_admin_assignment_rolls_back_cooperative_and_audit(): void
+    {
+        $actor = $this->superAdminActor();
+        $failureInjected = false;
+
+        DB::connection()->beforeExecuting(
+            function (string $query) use (&$failureInjected): void {
+                if (
+                    ! $failureInjected
+                    && preg_match('/^\\s*insert\\s+into\\s+[\\x60\\"]?super_admin_cooperative[\\x60\\"]?/i', $query) === 1
+                ) {
+                    $failureInjected = true;
+                    throw new \RuntimeException('Simulated assignment insert failure.');
+                }
+            },
+        );
+
+        try {
+            $this->service->create($actor, $this->attributes());
+            $this->fail('The failed assignment must abort cooperative creation.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Simulated assignment insert failure.', $exception->getMessage());
+        }
+
+        $this->assertTrue($failureInjected, 'The assignment insert was not intercepted.');
+        $this->assertDatabaseMissing('cooperatives', ['name' => 'Coopérative Audit']);
+        $this->assertDatabaseMissing('audit_events', ['event_key' => 'cooperatives.created']);
+        $this->assertDatabaseMissing('super_admin_cooperative', [
+            'super_admin_id' => $actor->getKey(),
+        ]);
+    }
+
     public function test_create_excludes_confidential_fields_from_audit(): void
     {
         $actor = $this->rootActor();
