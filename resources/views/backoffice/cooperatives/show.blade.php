@@ -22,23 +22,23 @@
 </dl>
 @if(auth()->user()->hasAnyRole(['super_admin_root', 'super_admin']) && auth()->user()->hasPermission('cooperatives.update'))
 <div class="actions">
-    @if($cooperative->status->value === 'PENDING')
+    @if($cooperative->status->value === 'pending')
         @foreach(['activate' => 'Activer', 'archive' => 'Archiver'] as $action => $label)
             <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
         @endforeach
-    @elseif($cooperative->status->value === 'ACTIVE')
+    @elseif($cooperative->status->value === 'active')
         @foreach(['deactivate' => 'Désactiver', 'suspend' => 'Suspendre'] as $action => $label)
             <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
         @endforeach
-    @elseif($cooperative->status->value === 'SUSPENDED')
+    @elseif($cooperative->status->value === 'suspended')
         @foreach(['activate' => 'Activer', 'deactivate' => 'Désactiver', 'archive' => 'Archiver'] as $action => $label)
             <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
         @endforeach
-    @elseif($cooperative->status->value === 'INACTIVE')
+    @elseif($cooperative->status->value === 'inactive')
         @foreach(['activate' => 'Activer', 'archive' => 'Archiver'] as $action => $label)
             <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
         @endforeach
-    @elseif($cooperative->status->value === 'ARCHIVED')
+    @elseif($cooperative->status->value === 'archived')
         @foreach(['activate' => 'Réactiver', 'deactivate' => 'Réactiver (inactive)'] as $action => $label)
             <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
         @endforeach
