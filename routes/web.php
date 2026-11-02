@@ -3,6 +3,7 @@
 use App\Domains\Catalog\Http\Controllers\CatalogController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
+use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Products\Http\Controllers\ProductController;
@@ -92,6 +93,20 @@ Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['web', 'auth'])
     ->group(function (): void {
+
+        Route::resource('cooperatives', CooperativeController::class)
+            ->except(['destroy'])
+            ->names('cooperatives');
+
+        Route::delete('cooperatives/{cooperative}', [CooperativeController::class, 'destroy'])
+            ->name('cooperatives.destroy');
+
+        foreach (['activate', 'deactivate', 'suspend', 'archive'] as $action) {
+            Route::patch(
+                'cooperatives/{cooperative}/'.$action,
+                [CooperativeController::class, $action],
+            )->name('cooperatives.'.$action);
+        }
 
         Route::prefix('cooperatives/{cooperative}')
             ->group(function (): void {
