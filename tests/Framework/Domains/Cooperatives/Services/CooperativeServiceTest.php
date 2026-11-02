@@ -108,7 +108,7 @@ final class CooperativeServiceTest extends TestCase
                     && preg_match('/^\\s*insert\\s+into\\s+[\\x60\\"]?super_admin_cooperative[\\x60\\"]?/i', $query) === 1
                 ) {
                     $failureInjected = true;
-                    throw new \\RuntimeException('Simulated assignment insert failure.');
+                    throw new \RuntimeException('Simulated assignment insert failure.');
                 }
             },
         );
@@ -116,7 +116,7 @@ final class CooperativeServiceTest extends TestCase
         try {
             $this->service->create($actor, $this->attributes());
             $this->fail('The failed assignment must abort cooperative creation.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame('Simulated assignment insert failure.', $exception->getMessage());
         }
 
