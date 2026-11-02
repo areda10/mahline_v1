@@ -4,14 +4,45 @@
 <div class="page-header"><div><h1>{{ $cooperative->name }}</h1><p class="muted">Statut : {{ $cooperative->status->value }}</p></div>
 @can('update', $cooperative)<a class="button" href="{{ route('backoffice.cooperatives.edit', $cooperative) }}">Modifier</a>@endcan</div>
 <div class="card"><dl>
-<dt>Email</dt><dd>{{ $cooperative->email ?? '—' }}</dd><dt>Téléphone</dt><dd>{{ $cooperative->phone ?? '—' }}</dd>
-<dt>Adresse (ID)</dt><dd>{{ $cooperative->address_id ?? '—' }}</dd><dt>RC</dt><dd>{{ $cooperative->rc ?? '—' }}</dd><dt>ICE</dt><dd>{{ $cooperative->ice ?? '—' }}</dd>
+<dt>Email</dt><dd>{{ $cooperative->email ?? '—' }}</dd>
+<dt>Téléphone</dt><dd>{{ $cooperative->phone ?? '—' }}</dd>
+<dt>Adresse</dt>
+<dd>
+    @if($cooperative->address)
+        {{ $cooperative->address->address_line_1 }}
+        @if($cooperative->address->address_line_2), {{ $cooperative->address->address_line_2 }}@endif
+        — {{ $cooperative->address->city }}
+        @if($cooperative->address->country), {{ $cooperative->address->country->name }}@endif
+    @else
+        —
+    @endif
+</dd>
+<dt>RC</dt><dd>{{ $cooperative->rc ?? '—' }}</dd>
+<dt>ICE</dt><dd>{{ $cooperative->ice ?? '—' }}</dd>
 </dl>
 @if(auth()->user()->hasAnyRole(['super_admin_root', 'super_admin']) && auth()->user()->hasPermission('cooperatives.update'))
 <div class="actions">
-@foreach(['activate' => 'Activer', 'deactivate' => 'Désactiver', 'suspend' => 'Suspendre', 'archive' => 'Archiver'] as $action => $label)
-<form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
-@endforeach
+    @if($cooperative->status->value === 'PENDING')
+        @foreach(['activate' => 'Activer', 'archive' => 'Archiver'] as $action => $label)
+            <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
+        @endforeach
+    @elseif($cooperative->status->value === 'ACTIVE')
+        @foreach(['deactivate' => 'Désactiver', 'suspend' => 'Suspendre'] as $action => $label)
+            <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
+        @endforeach
+    @elseif($cooperative->status->value === 'SUSPENDED')
+        @foreach(['activate' => 'Activer', 'deactivate' => 'Désactiver', 'archive' => 'Archiver'] as $action => $label)
+            <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
+        @endforeach
+    @elseif($cooperative->status->value === 'INACTIVE')
+        @foreach(['activate' => 'Activer', 'archive' => 'Archiver'] as $action => $label)
+            <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
+        @endforeach
+    @elseif($cooperative->status->value === 'ARCHIVED')
+        @foreach(['activate' => 'Réactiver', 'deactivate' => 'Réactiver (inactive)'] as $action => $label)
+            <form method="POST" action="{{ route('backoffice.cooperatives.'.$action, $cooperative) }}">@csrf @method('PATCH')<button class="button button-secondary" type="submit">{{ $label }}</button></form>
+        @endforeach
+    @endif
 </div>
 @endif
 @can('delete', $cooperative)
