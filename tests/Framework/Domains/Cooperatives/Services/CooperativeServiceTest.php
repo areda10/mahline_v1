@@ -55,6 +55,9 @@ final class CooperativeServiceTest extends TestCase
         $this->assertTrue(
             $actor->cooperatives()->whereKey($cooperative->getKey())->exists(),
         );
+        $this->assertTrue(
+            \\Illuminate\\Support\\Facades\\Gate::forUser($actor)->allows('view', $cooperative),
+        );
     }
 
     public function test_root_creator_does_not_receive_a_super_admin_pivot_assignment(): void
