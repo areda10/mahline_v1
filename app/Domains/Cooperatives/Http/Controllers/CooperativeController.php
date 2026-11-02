@@ -6,6 +6,7 @@ namespace App\Domains\Cooperatives\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -37,6 +38,7 @@ final class CooperativeController
 
         return view('backoffice.cooperatives.create', [
             'cooperative' => new Cooperative(),
+            'addresses' => $this->availableAddresses(),
         ]);
     }
 
@@ -73,7 +75,10 @@ final class CooperativeController
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
 
-        return view('backoffice.cooperatives.edit', ['cooperative' => $model]);
+        return view('backoffice.cooperatives.edit', [
+            'cooperative' => $model,
+            'addresses' => $this->availableAddresses(),
+        ]);
     }
 
     public function update(Request $request, string $cooperative): RedirectResponse
@@ -155,6 +160,15 @@ final class CooperativeController
         return redirect()
             ->route('backoffice.cooperatives.show', $model)
             ->with('success', 'Le statut de la coopérative a été mis à jour.');
+    }
+
+    private function availableAddresses()
+    {
+        return Address::query()
+            ->with('country')
+            ->orderBy('city')
+            ->orderBy('address_line_1')
+            ->get();
     }
 
     private function resolveCooperative(string $id): Cooperative
