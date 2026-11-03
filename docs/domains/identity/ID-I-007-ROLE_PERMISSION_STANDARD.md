@@ -130,9 +130,13 @@ Covered by:
 * `RolePermissionRelationshipTest`
 * `UserRoleRelationshipTest`
 
-Final validation:
+Baseline validation for version 1.0:
 
 **41 tests / 53 assertions passed**
+
+Version 1.1 adds user-management matrix and policy tests. These new tests must
+be executed in the Laravel environment before version 1.1 can be reported as
+validated.
 
 ## 10. Change history
 
