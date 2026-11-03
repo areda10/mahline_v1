@@ -67,6 +67,16 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($admin)->allows('view', $otherUser));
     }
 
+    public function test_cooperative_admin_cannot_create_users(): void
+    {
+        $admin = $this->userWithRoleAndPermissions(
+            'cooperative_admin',
+            ['users.create'],
+        );
+
+        self::assertFalse(Gate::forUser($admin)->allows('create', User::class));
+    }
+
     public function test_root_can_change_own_status(): void
     {
         $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.deactivate']);
