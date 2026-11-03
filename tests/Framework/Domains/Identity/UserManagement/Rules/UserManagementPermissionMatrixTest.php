@@ -26,7 +26,7 @@ final class UserManagementPermissionMatrixTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_root_has_all_user_lifecycle_permissions(): void
+    public function test_super_admin_root_has_all_user_lifecycle_and_assignment_permissions(): void
     {
         $permissions = $this->permissionSlugs('super_admin_root');
 
@@ -40,12 +40,14 @@ final class UserManagementPermissionMatrixTest extends TestCase
             'users.restore',
             'users.delete',
             'users.restore_deleted',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
         ] as $permission) {
             self::assertContains($permission, $permissions);
         }
     }
 
-    public function test_super_admin_can_manage_basic_statuses_but_not_archive_or_delete_users(): void
+    public function test_super_admin_can_manage_basic_statuses_but_not_archive_delete_or_assign_super_admins(): void
     {
         $permissions = $this->permissionSlugs('super_admin');
 
@@ -64,12 +66,14 @@ final class UserManagementPermissionMatrixTest extends TestCase
             'users.restore',
             'users.delete',
             'users.restore_deleted',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
         ] as $permission) {
             self::assertNotContains($permission, $permissions);
         }
     }
 
-    public function test_cooperative_admin_can_only_view_users(): void
+    public function test_cooperative_admin_can_only_view_users_and_cannot_assign_super_admins(): void
     {
         $permissions = $this->permissionSlugs('cooperative_admin');
 
@@ -83,6 +87,29 @@ final class UserManagementPermissionMatrixTest extends TestCase
             'users.restore',
             'users.delete',
             'users.restore_deleted',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
+        ] as $permission) {
+            self::assertNotContains($permission, $permissions);
+        }
+    }
+
+    public function test_standard_user_has_no_user_management_permissions(): void
+    {
+        $permissions = $this->permissionSlugs('user');
+
+        foreach ([
+            'users.view',
+            'users.create',
+            'users.activate',
+            'users.deactivate',
+            'users.suspend',
+            'users.archive',
+            'users.restore',
+            'users.delete',
+            'users.restore_deleted',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
         ] as $permission) {
             self::assertNotContains($permission, $permissions);
         }
