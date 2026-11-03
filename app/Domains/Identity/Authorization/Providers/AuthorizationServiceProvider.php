@@ -12,6 +12,8 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Policies\CategoryPolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Policies\CooperativePolicy;
+use App\Domains\Identity\Authorization\Policies\UserPolicy;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Policies\ProductPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -43,8 +45,26 @@ final class AuthorizationServiceProvider extends ServiceProvider
             ProductPolicy::class,
         );
 
+        Gate::policy(
+            User::class,
+            UserPolicy::class,
+        );
+
         Gate::before(
             function ($user, string $ability, ...$arguments): ?bool {
+                // Les utilisateurs doivent toujours passer par UserPolicy.
+                $isUserAuthorization =
+                    in_array(User::class, $arguments, true)
+                    || count(array_filter(
+                        $arguments,
+                        static fn (mixed $argument): bool =>
+                            $argument instanceof User,
+                    )) > 0;
+
+                if ($isUserAuthorization) {
+                    return null;
+                }
+
                 $cooperativeAbilities = [
                     'viewAny',
                     'view',
