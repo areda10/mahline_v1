@@ -109,6 +109,9 @@ Route::prefix('back-office')
         Route::patch('users/{user}/deactivate', [UserManagementController::class, 'deactivate'])
             ->name('users.deactivate');
 
+        Route::patch('users/{user}/suspend', [UserManagementController::class, 'suspend'])
+            ->name('users.suspend');
+
         Route::patch('users/{user}/archive', [UserManagementController::class, 'archive'])
             ->name('users.archive');
 
