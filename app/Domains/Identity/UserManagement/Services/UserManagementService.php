@@ -96,20 +96,27 @@ final class UserManagementService
         $this->assertSuperAdminTarget($superAdmin);
         $this->assertCooperativeExists($cooperative->getKey());
 
-        // DB::transaction(function () use (
-        //     $superAdmin,
-        //     $cooperative,
-        // ): void {
-        //     $superAdmin->cooperatives()->syncWithoutDetaching([
-        //         $cooperative->getKey(),
-        //     ]);
-        // });
         DB::transaction(function () use (
             $actor,
             $superAdmin,
             $cooperative,
         ): void {
-            $alreadyAssigned = $superAdmin->cooperatives()
+            $lockedSuperAdmin = User::query()
+                ->whereKey($superAdmin->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSuperAdmin === null) {
+                throw new DomainException(
+                    'The super admin does not exist or is deleted.',
+                );
+            }
+
+            // Revalidation après acquisition du verrou.
+            $this->assertSuperAdminTarget($lockedSuperAdmin);
+
+            // Vérification de l'affectation après verrouillage.
+            $alreadyAssigned = $lockedSuperAdmin->cooperatives()
                 ->whereKey($cooperative->getKey())
                 ->exists();
 
@@ -117,10 +124,11 @@ final class UserManagementService
                 return;
             }
 
-            $superAdmin->cooperatives()->attach(
+            $lockedSuperAdmin->cooperatives()->attach(
                 $cooperative->getKey(),
             );
 
+            // L'événement d'audit appartient à la même transaction.
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_assigned',
                 action: 'assigned',
@@ -128,7 +136,7 @@ final class UserManagementService
                 actorId: (string) $actor->getKey(),
                 cooperativeId: (string) $cooperative->getKey(),
                 subjectType: User::class,
-                subjectId: (string) $superAdmin->getKey(),
+                subjectId: (string) $lockedSuperAdmin->getKey(),
                 newValues: [
                     'cooperative_id' => (string) $cooperative->getKey(),
                 ],
@@ -151,7 +159,22 @@ final class UserManagementService
             $superAdmin,
             $cooperative,
         ): void {
-            $isAssigned = $superAdmin->cooperatives()
+            $lockedSuperAdmin = User::query()
+                ->whereKey($superAdmin->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSuperAdmin === null) {
+                throw new DomainException(
+                    'The super admin does not exist or is deleted.',
+                );
+            }
+
+            // Le rôle est obligatoire, mais le compte peut être inactif
+            // ou suspendu : la désaffectation reste autorisée.
+            $this->assertSuperAdminRoleTarget($lockedSuperAdmin);
+
+            $isAssigned = $lockedSuperAdmin->cooperatives()
                 ->whereKey($cooperative->getKey())
                 ->exists();
 
@@ -159,10 +182,11 @@ final class UserManagementService
                 return;
             }
 
-            $superAdmin->cooperatives()->detach(
+            $lockedSuperAdmin->cooperatives()->detach(
                 $cooperative->getKey(),
             );
 
+            // L'événement d'audit appartient à la même transaction.
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_unassigned',
                 action: 'unassigned',
@@ -170,7 +194,7 @@ final class UserManagementService
                 actorId: (string) $actor->getKey(),
                 cooperativeId: (string) $cooperative->getKey(),
                 subjectType: User::class,
-                subjectId: (string) $superAdmin->getKey(),
+                subjectId: (string) $lockedSuperAdmin->getKey(),
                 oldValues: [
                     'cooperative_id' => (string) $cooperative->getKey(),
                 ],
