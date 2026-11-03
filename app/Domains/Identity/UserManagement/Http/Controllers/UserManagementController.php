@@ -131,7 +131,7 @@ final class UserManagementController
 
         try {
             $service->deleteUser($request->user(), $user);
-        } catch (\\DomainException) {
+        } catch (\DomainException) {
             return redirect()->route('backoffice.users.index')
                 ->with('error', 'Le compte ne peut pas être supprimé : son état a changé ou cette action n’est plus autorisée.');
         }
@@ -147,7 +147,7 @@ final class UserManagementController
 
         try {
             $service->restoreDeletedUser($request->user(), $deletedUser);
-        } catch (\\DomainException) {
+        } catch (\DomainException) {
             return redirect()->route('backoffice.users.index', ['deleted' => 1])
                 ->with('error', 'Le compte ne peut pas être restauré : son état a changé ou cette action n’est plus autorisée.');
         }
