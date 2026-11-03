@@ -12,6 +12,7 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 final class CooperativeControllerTest extends TestCase
@@ -173,6 +174,25 @@ final class CooperativeControllerTest extends TestCase
             'id' => $cooperative->getKey(),
             'deleted_at' => null,
         ]);
+    }
+
+    public function test_cooperative_specific_abilities_cannot_use_generic_permissions(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('cooperative_admin', [
+            'activate',
+            'deactivate',
+            'suspend',
+            'archive',
+            'restore',
+        ], ['cooperative_id' => $cooperative->getKey()]);
+
+        foreach (['activate', 'deactivate', 'suspend', 'archive', 'restore'] as $ability) {
+            $this->assertFalse(
+                Gate::forUser($actor)->allows($ability, $cooperative),
+                sprintf('The generic "%s" permission must not bypass CooperativePolicy.', $ability),
+            );
+        }
     }
 
     public function test_index_requires_view_permission(): void
