@@ -19,8 +19,6 @@ final class UserManagementService
 
     private const ROLE_SUPER_ADMIN = 'super_admin';
 
-    private const ROLE_COOPERATIVE_ADMIN = 'cooperative_admin';
-
     private const ROLE_USER = 'user';
 
     public function __construct(
@@ -219,20 +217,6 @@ final class UserManagementService
             return;
         }
 
-        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
-            if (
-                $actor->cooperative_id === null
-                || (string) $actor->cooperative_id
-                    !== (string) $cooperativeId
-            ) {
-                throw new DomainException(
-                    'The cooperative admin can only manage users in their own cooperative.',
-                );
-            }
-
-            return;
-        }
-
         throw new DomainException(
             'The user is not authorized to create users.',
         );
@@ -250,9 +234,6 @@ final class UserManagementService
             ],
             $actor->hasRole(self::ROLE_SUPER_ADMIN) => [
                 self::ROLE_COOPERATIVE_ADMIN,
-                self::ROLE_USER,
-            ],
-            $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN) => [
                 self::ROLE_USER,
             ],
             default => [],
