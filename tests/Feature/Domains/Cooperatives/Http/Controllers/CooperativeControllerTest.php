@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,6 +17,15 @@ use Tests\TestCase;
 final class CooperativeControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Les tests du contrôleur coopérative isolent les règles métier et d'autorisation.
+        // Le middleware de session MAHLINE est couvert par ses tests d'intégration dédiés.
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+    }
 
     public function test_super_admin_index_lists_only_assigned_cooperatives(): void
     {
