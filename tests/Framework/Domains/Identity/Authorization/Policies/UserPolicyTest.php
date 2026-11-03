@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authorization\Policies;
 
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -18,31 +21,22 @@ final class UserPolicyTest extends TestCase
 
     public function test_root_can_view_users_across_cooperatives(): void
     {
-        $root = $this->userWithRoleAndPermissions(
-            'super_admin_root',
-            ['users.view'],
-        );
-
-        $target = User::factory()->create([
-            'cooperative_id' => (string) \Illuminate\Support\Str::ulid(),
-        ]);
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
 
         self::assertTrue(Gate::forUser($root)->allows('view', $target));
     }
 
     public function test_super_admin_can_view_only_users_in_assigned_cooperatives(): void
     {
-        $cooperativeId = (string) \Illuminate\Support\Str::ulid();
-        $otherCooperativeId = (string) \Illuminate\Support\Str::ulid();
+        $assignedCooperative = $this->createCooperative();
+        $otherCooperative = $this->createCooperative();
 
-        $admin = $this->userWithRoleAndPermissions(
-            'super_admin',
-            ['users.view'],
-        );
+        $admin = $this->userWithRoleAndPermissions('super_admin', ['users.view']);
         $admin->cooperatives()->attach($assignedCooperative->getKey());
 
         $assignedUser = User::factory()->create([
-            'cooperative_id' => $cooperative->getKey(),
+            'cooperative_id' => $assignedCooperative->getKey(),
         ]);
         $unassignedUser = User::factory()->create([
             'cooperative_id' => $otherCooperative->getKey(),
@@ -54,16 +48,19 @@ final class UserPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_view_only_users_in_own_cooperative(): void
     {
-        $cooperativeId = (string) \Illuminate\Support\Str::ulid();
+        $cooperative = $this->createCooperative();
+        $otherCooperative = $this->createCooperative();
 
         $admin = $this->userWithRoleAndPermissions(
             'cooperative_admin',
             ['users.view'],
             ['cooperative_id' => $cooperative->getKey()],
         );
-        $ownUser = User::factory()->create(['cooperative_id' => $cooperativeId]);
+        $ownUser = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
         $otherUser = User::factory()->create([
-            'cooperative_id' => (string) \Illuminate\Support\Str::ulid(),
+            'cooperative_id' => $otherCooperative->getKey(),
         ]);
 
         self::assertTrue(Gate::forUser($admin)->allows('view', $ownUser));
@@ -72,31 +69,22 @@ final class UserPolicyTest extends TestCase
 
     public function test_root_can_change_own_status(): void
     {
-        $root = $this->userWithRoleAndPermissions(
-            'super_admin_root',
-            ['users.deactivate'],
-        );
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.deactivate']);
 
         self::assertTrue(Gate::forUser($root)->allows('deactivate', $root));
     }
 
     public function test_super_admin_cannot_change_own_status(): void
     {
-        $admin = $this->userWithRoleAndPermissions(
-            'super_admin',
-            ['users.deactivate'],
-        );
+        $admin = $this->userWithRoleAndPermissions('super_admin', ['users.deactivate']);
 
         self::assertFalse(Gate::forUser($admin)->allows('deactivate', $admin));
     }
 
     public function test_super_admin_cannot_reactivate_a_suspended_user(): void
     {
-        $cooperativeId = (string) \Illuminate\Support\Str::ulid();
-        $admin = $this->userWithRoleAndPermissions(
-            'super_admin',
-            ['users.activate'],
-        );
+        $cooperative = $this->createCooperative();
+        $admin = $this->userWithRoleAndPermissions('super_admin', ['users.activate']);
         $admin->cooperatives()->attach($cooperative->getKey());
 
         $suspended = User::factory()->create([
@@ -109,14 +97,14 @@ final class UserPolicyTest extends TestCase
 
     public function test_cooperative_admin_cannot_change_user_status(): void
     {
-        $cooperativeId = (string) \Illuminate\Support\Str::ulid();
+        $cooperative = $this->createCooperative();
         $admin = $this->userWithRoleAndPermissions(
             'cooperative_admin',
             ['users.activate', 'users.deactivate', 'users.suspend'],
             ['cooperative_id' => $cooperative->getKey()],
         );
         $target = User::factory()->create([
-            'cooperative_id' => $cooperativeId,
+            'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
         ]);
 
@@ -141,6 +129,30 @@ final class UserPolicyTest extends TestCase
         self::assertTrue(Gate::forUser($root)->allows('delete', $target));
         self::assertFalse(Gate::forUser($admin)->allows('archive', $target));
         self::assertFalse(Gate::forUser($admin)->allows('delete', $target));
+    }
+
+    private function createCooperative(): Cooperative
+    {
+        $country = Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Morocco',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+
+        $address = Address::factory()->create([
+            'country_id' => $country->getKey(),
+        ]);
+
+        return Cooperative::factory()->create([
+            'address_id' => $address->getKey(),
+        ]);
     }
 
     /**
