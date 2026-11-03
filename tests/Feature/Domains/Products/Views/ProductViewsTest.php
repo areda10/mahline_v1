@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Products\Views;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,6 +35,7 @@ final class ProductViewsTest extends TestCase
         $this->actingAs(User::factory()->create([
             'cooperative_id' => $this->cooperative->getKey(),
         ]));
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
         Gate::before(static fn (): bool => true);
 
