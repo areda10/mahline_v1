@@ -100,6 +100,9 @@ Route::prefix('back-office')
         Route::get('users', [UserManagementController::class, 'index'])
             ->name('users.index');
 
+        Route::get('users/{user}', [UserManagementController::class, 'show'])
+            ->name('users.show');
+
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
             ->group(function (): void {
