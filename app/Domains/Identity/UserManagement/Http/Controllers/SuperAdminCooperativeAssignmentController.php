@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 final class SuperAdminCooperativeAssignmentController
 {
@@ -29,14 +30,25 @@ final class SuperAdminCooperativeAssignmentController
             ->orderBy('cooperatives.name')
             ->paginate(15, ['*'], 'assigned_page');
 
-        $availableCooperatives = Cooperative::query()
-            ->with('address.country')
-            ->whereDoesntHave(
-                'superAdmins',
-                static fn (Builder $query) => $query->whereKey($superAdmin->getKey()),
-            )
-            ->orderBy('name')
-            ->paginate(15, ['*'], 'available_page');
+        $availableCooperatives = $this->isSuperAdminRoot(request()->user())
+            ? Cooperative::query()
+                ->with('address.country')
+                ->whereDoesntHave(
+                    'superAdmins',
+                    static fn (Builder $query) => $query->whereKey($superAdmin->getKey()),
+                )
+                ->orderBy('name')
+                ->paginate(15, ['*'], 'available_page')
+            : new LengthAwarePaginator(
+                collect(),
+                0,
+                15,
+                1,
+                [
+                    'path' => request()->url(),
+                    'pageName' => 'available_page',
+                ],
+            );
 
         return view('backoffice.super-admins.cooperatives.index', [
             'superAdmin' => $superAdmin,
@@ -79,5 +91,14 @@ final class SuperAdminCooperativeAssignmentController
         return redirect()
             ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
             ->with('success', 'L’affectation de la coopérative a été retirée.');
+    }
+
+    private function isSuperAdminRoot(?User $user): bool
+    {
+        return $user !== null
+            && $user->isAuthorized()
+            && $user->roles()
+                ->where('slug', 'super_admin_root')
+                ->exists();
     }
 }
