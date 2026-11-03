@@ -125,7 +125,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            'The user is not authorized to create users.',
+            'The actor is not authorized to assign the "user" role.',
         );
 
         $this->service->createUser(
