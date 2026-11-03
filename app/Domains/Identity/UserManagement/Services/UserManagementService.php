@@ -463,10 +463,6 @@ final class UserManagementService
             ->where('tokenable_type', $target->getMorphClass())
             ->where('tokenable_id', $target->getKey())
             ->whereNull('revoked_at')
-            ->where(function ($query): void {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
             ->lockForUpdate()
             ->get();
 
