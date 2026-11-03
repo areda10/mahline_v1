@@ -66,6 +66,22 @@ final class UserLifecycleServiceTest extends TestCase
         ]);
     }
 
+    public function test_root_can_change_own_status(): void
+    {
+        $root = $this->userWithRole('super_admin_root');
+        $session = $this->sessions->create($root, 'root-self-deactivation-session');
+
+        $updated = $this->service->deactivateUser($root, $root);
+
+        self::assertSame(UserStatus::Inactive, $updated->status);
+        self::assertNotNull($session->fresh()->revoked_at);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $root->getKey(),
+        ]);
+    }
+
     public function test_super_admin_can_activate_pending_user_in_assigned_cooperative(): void
     {
         $cooperativeId = $this->createCooperative()->getKey();
