@@ -109,6 +109,12 @@ Route::prefix('back-office')
         Route::patch('users/{user}/deactivate', [UserManagementController::class, 'deactivate'])
             ->name('users.deactivate');
 
+        Route::patch('users/{user}/archive', [UserManagementController::class, 'archive'])
+            ->name('users.archive');
+
+        Route::patch('users/{user}/restore', [UserManagementController::class, 'restore'])
+            ->name('users.restore');
+
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
             ->group(function (): void {
