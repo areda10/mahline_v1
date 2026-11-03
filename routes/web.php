@@ -6,6 +6,7 @@ use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -94,6 +95,25 @@ Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
     ->group(function (): void {
+
+        Route::prefix('super-admins/{superAdmin}')
+            ->name('super-admins.')
+            ->group(function (): void {
+                Route::get(
+                    'cooperatives',
+                    [SuperAdminCooperativeAssignmentController::class, 'index'],
+                )->name('cooperatives.index');
+
+                Route::post(
+                    'cooperatives/{cooperative}',
+                    [SuperAdminCooperativeAssignmentController::class, 'store'],
+                )->name('cooperatives.store');
+
+                Route::delete(
+                    'cooperatives/{cooperative}',
+                    [SuperAdminCooperativeAssignmentController::class, 'destroy'],
+                )->name('cooperatives.destroy');
+            });
 
         Route::resource('cooperatives', CooperativeController::class)
             ->except(['destroy'])
