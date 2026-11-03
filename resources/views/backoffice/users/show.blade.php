@@ -32,6 +32,15 @@
             </form>
         @endcan
 
+        @can('suspend', $user)
+            <form method="POST" action="{{ route('backoffice.users.suspend', $user) }}"
+                  onsubmit="return confirm('Confirmer la suspension de ce compte ? Toutes ses sessions et tous ses jetons API seront révoqués.');">
+                @csrf
+                @method('PATCH')
+                <button class="button button-danger" type="submit">Suspendre le compte</button>
+            </form>
+        @endcan
+
         @can('archive', $user)
             <form method="POST" action="{{ route('backoffice.users.archive', $user) }}"
                   onsubmit="return confirm('Confirmer l’archivage ? Les sessions et jetons API seront révoqués.');">
