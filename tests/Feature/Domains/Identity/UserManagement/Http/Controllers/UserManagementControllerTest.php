@@ -129,10 +129,60 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee('Aucune coopérative');
     }
 
-    public function test_non_root_user_cannot_view_global_user_detail(): void
+    public function test_assigned_super_admin_can_view_user_detail_in_assigned_cooperative(): void
     {
+        $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.view']);
-        $target = User::factory()->create();
+        $actor->cooperatives()->attach($cooperative->getKey());
+        $target = User::factory()->create([
+            'display_name' => 'Utilisateur du périmètre',
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Utilisateur du périmètre');
+    }
+
+    public function test_super_admin_cannot_view_user_detail_outside_assigned_cooperatives(): void
+    {
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.view']);
+        $actor->cooperatives()->attach($assigned->getKey());
+        $target = User::factory()->create(['cooperative_id' => $unassigned->getKey()]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertForbidden();
+    }
+
+    public function test_cooperative_admin_can_view_user_detail_in_own_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('cooperative_admin', ['users.view'], [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $target = User::factory()->create([
+            'display_name' => 'Utilisateur de ma coopérative',
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Utilisateur de ma coopérative');
+    }
+
+    public function test_cooperative_admin_cannot_view_user_detail_from_another_cooperative(): void
+    {
+        $own = Cooperative::factory()->create();
+        $other = Cooperative::factory()->create();
+        $actor = $this->actor('cooperative_admin', ['users.view'], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+        $target = User::factory()->create(['cooperative_id' => $other->getKey()]);
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.show', $target))
@@ -495,12 +545,59 @@ final class UserManagementControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_non_root_user_is_forbidden_from_global_user_list(): void
+    public function test_super_admin_list_is_limited_to_assigned_cooperatives(): void
     {
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.view']);
+        $actor->cooperatives()->attach($assigned->getKey());
+        User::factory()->create([
+            'display_name' => 'Utilisateur autorisé',
+            'cooperative_id' => $assigned->getKey(),
+        ]);
+        User::factory()->create([
+            'display_name' => 'Utilisateur hors périmètre',
+            'cooperative_id' => $unassigned->getKey(),
+        ]);
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.index'))
+            ->assertOk()
+            ->assertSee('Utilisateur autorisé')
+            ->assertDontSee('Utilisateur hors périmètre');
+    }
+
+    public function test_cooperative_admin_list_is_limited_to_own_cooperative(): void
+    {
+        $own = Cooperative::factory()->create();
+        $other = Cooperative::factory()->create();
+        $actor = $this->actor('cooperative_admin', ['users.view'], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+        User::factory()->create([
+            'display_name' => 'Utilisateur de ma coopérative',
+            'cooperative_id' => $own->getKey(),
+        ]);
+        User::factory()->create([
+            'display_name' => 'Utilisateur autre coopérative',
+            'cooperative_id' => $other->getKey(),
+        ]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.index'))
+            ->assertOk()
+            ->assertSee('Utilisateur de ma coopérative')
+            ->assertDontSee('Utilisateur autre coopérative');
+    }
+
+    public function test_non_root_user_cannot_request_deleted_users(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.view']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.index', ['deleted' => 1]))
             ->assertForbidden();
     }
 
