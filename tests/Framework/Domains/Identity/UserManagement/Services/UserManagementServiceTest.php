@@ -123,7 +123,7 @@ final class UserManagementServiceTest extends TestCase
             $cooperative->id,
         );
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
             'The user is not authorized to create users.',
         );
