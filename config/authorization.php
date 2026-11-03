@@ -37,6 +37,8 @@ return [
             'users.restore',
             'users.delete',
             'users.restore_deleted',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
 
             'catalogs.view',
             'catalogs.create',
