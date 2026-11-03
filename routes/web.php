@@ -5,6 +5,7 @@ use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -91,7 +92,7 @@ Route::get('/', function () {
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth'])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
     ->group(function (): void {
 
         Route::resource('cooperatives', CooperativeController::class)
