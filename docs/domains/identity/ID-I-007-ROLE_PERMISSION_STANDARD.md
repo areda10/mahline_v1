@@ -1,6 +1,6 @@
 # MAHLINE — ROLE & PERMISSION STANDARD
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** GELÉ
 **Domain:** Identity / Authorization
 
@@ -134,7 +134,17 @@ Final validation:
 
 **41 tests / 53 assertions passed**
 
-## 10. Freeze rule
+## 10. Change history
+
+### Version 1.1
+
+* Added the official user-management permission matrix.
+* Restricted user creation to `super_admin_root` and `super_admin`.
+* Confirmed that `cooperative_admin` may view users in its own cooperative
+  but cannot create users or manage their statuses.
+* Documented cooperative scope and status-transition constraints.
+
+## 11. Freeze rule
 
 Authorization behavior is frozen.
 
