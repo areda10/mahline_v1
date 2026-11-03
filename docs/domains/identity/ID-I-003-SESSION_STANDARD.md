@@ -87,7 +87,8 @@ Global revocation:
 * ignores already revoked sessions;
 * ignores deleted sessions;
 * preserves the global revocation reason;
-* does not create individual logout history entries for every session.
+* records one `session_revoked` LoginHistory entry and one Audit event per revoked session;
+* does not misclassify a global revocation as an individual user logout.
 
 ## 8. Current session
 
