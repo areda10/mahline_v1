@@ -107,6 +107,7 @@ return [
             'cooperatives.update',
 
             'users.view',
+            'users.create',
 
             'catalogs.view',
             'catalogs.create',
