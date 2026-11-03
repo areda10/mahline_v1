@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Catalog\Http\Controllers;
 
 use App\Domains\Catalog\Models\Catalog;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +36,25 @@ final class CatalogControllerTest extends TestCase
             'email' => $user->email,
             'password' => 'password',
         ])->assertRedirect('/');
+
+        // Diagnostic : vérifier l'état réellement conservé par le client HTTP.
+        $this->assertAuthenticatedAs($user);
+        $authenticationSessionId = session()->get('authentication_session_id');
+        $this->assertIsString($authenticationSessionId);
+
+        $authenticationSession = AuthenticationSession::query()
+            ->find($authenticationSessionId);
+
+        $this->assertNotNull($authenticationSession);
+        $this->assertSame(
+            $user->getKey(),
+            $authenticationSession->user_id,
+        );
+        $this->assertSame(
+            session()->getId(),
+            $authenticationSession->session_id,
+        );
+        $this->assertNull($authenticationSession->revoked_at);
 
         // Ces tests isolent le comportement du contrôleur.
         // Les règles d'autorisation doivent être testées séparément.
