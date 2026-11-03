@@ -89,6 +89,11 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         $store = app('session.store');
         $store->start();
 
+        // Mirror AuthenticationWorkflow: authenticate, regenerate the
+        // Laravel session identifier, then persist the MAHLINE session.
+        Auth::login($user);
+        $store->regenerate();
+
         $authenticationSession = $withAuthenticationSession
             ? app(SessionService::class)->create(
                 user: $user,
@@ -102,8 +107,6 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
                 $authenticationSession->getKey(),
             );
         }
-
-        Auth::login($user);
 
         $request = Request::create('/back-office');
         $request->setLaravelSession($store);
