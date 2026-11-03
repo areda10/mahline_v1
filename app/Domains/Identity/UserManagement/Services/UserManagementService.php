@@ -203,8 +203,8 @@ final class UserManagementService
     }
 
     /**
-     * Activate a pending or inactive account.
-     * Only the root administrator may reactivate a suspended account.
+     * Activate a pending, inactive, or suspended account.
+     * This lifecycle transition is reserved to the root administrator.
      */
     public function activateUser(User $actor, User $target): User
     {
@@ -215,18 +215,14 @@ final class UserManagementService
             UserStatus::Inactive,
             UserStatus::Suspended,
         ];
-        $superAdminCanActivateFrom = [
-            UserStatus::Pending,
-            UserStatus::Inactive,
-        ];
-
         return $this->changeUserStatus(
             actor: $actor,
             target: $target,
             newStatus: UserStatus::Active,
             action: 'activated',
             allowedRootSourceStatuses: $rootCanActivateFrom,
-            allowedSuperAdminSourceStatuses: $superAdminCanActivateFrom,
+            allowedSuperAdminSourceStatuses: [],
+            rootOnly: true,
         );
     }
 
