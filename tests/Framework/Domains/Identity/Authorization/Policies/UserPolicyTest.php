@@ -39,13 +39,13 @@ final class UserPolicyTest extends TestCase
             'super_admin',
             ['users.view'],
         );
-        $admin->cooperatives()->attach($cooperativeId);
+        $admin->cooperatives()->attach($assignedCooperative->getKey());
 
         $assignedUser = User::factory()->create([
-            'cooperative_id' => $cooperativeId,
+            'cooperative_id' => $cooperative->getKey(),
         ]);
         $unassignedUser = User::factory()->create([
-            'cooperative_id' => $otherCooperativeId,
+            'cooperative_id' => $otherCooperative->getKey(),
         ]);
 
         self::assertTrue(Gate::forUser($admin)->allows('view', $assignedUser));
@@ -59,7 +59,7 @@ final class UserPolicyTest extends TestCase
         $admin = $this->userWithRoleAndPermissions(
             'cooperative_admin',
             ['users.view'],
-            ['cooperative_id' => $cooperativeId],
+            ['cooperative_id' => $cooperative->getKey()],
         );
         $ownUser = User::factory()->create(['cooperative_id' => $cooperativeId]);
         $otherUser = User::factory()->create([
@@ -97,10 +97,10 @@ final class UserPolicyTest extends TestCase
             'super_admin',
             ['users.activate'],
         );
-        $admin->cooperatives()->attach($cooperativeId);
+        $admin->cooperatives()->attach($cooperative->getKey());
 
         $suspended = User::factory()->create([
-            'cooperative_id' => $cooperativeId,
+            'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Suspended,
         ]);
 
@@ -113,7 +113,7 @@ final class UserPolicyTest extends TestCase
         $admin = $this->userWithRoleAndPermissions(
             'cooperative_admin',
             ['users.activate', 'users.deactivate', 'users.suspend'],
-            ['cooperative_id' => $cooperativeId],
+            ['cooperative_id' => $cooperative->getKey()],
         );
         $target = User::factory()->create([
             'cooperative_id' => $cooperativeId,
