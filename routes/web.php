@@ -103,6 +103,12 @@ Route::prefix('back-office')
         Route::get('users/{user}', [UserManagementController::class, 'show'])
             ->name('users.show');
 
+        Route::patch('users/{user}/activate', [UserManagementController::class, 'activate'])
+            ->name('users.activate');
+
+        Route::patch('users/{user}/deactivate', [UserManagementController::class, 'deactivate'])
+            ->name('users.deactivate');
+
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
             ->group(function (): void {
