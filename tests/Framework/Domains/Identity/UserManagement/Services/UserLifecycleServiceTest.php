@@ -150,7 +150,9 @@ final class UserLifecycleServiceTest extends TestCase
         $actor->cooperatives()->attach($cooperativeId);
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('The user cannot transition from "suspended" to "active".');
+        $this->expectExceptionMessage(
+            'Only the super admin root can perform this action.',
+        );
 
         $this->service->activateUser($actor, $target);
     }
