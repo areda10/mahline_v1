@@ -1,6 +1,6 @@
 # MAHLINE — ROLE & PERMISSION STANDARD
 
-**Version:** 1.1
+**Version:** 1.2
 **Status:** GELÉ
 **Domain:** Identity / Authorization
 
@@ -129,16 +129,22 @@ Covered by:
 * `PermissionTest`
 * `RolePermissionRelationshipTest`
 * `UserRoleRelationshipTest`
+* `UserLifecycleServiceTest`
+* `EnsureActiveAuthenticationSessionTest`
 
 Baseline validation for version 1.0:
 
 **41 tests / 53 assertions passed**
 
-Version 1.1 adds user-management matrix and policy tests. These new tests must
-be executed in the Laravel environment before version 1.1 can be reported as
-validated.
+Versions 1.1 and 1.2 add user-management matrix, policy, lifecycle, session-enforcement, and token-revocation tests. These tests must be executed in the Laravel environment before the updated specifications can be reported as validated.
 
 ## 10. Change history
+
+### Version 1.2
+
+* Added the user lifecycle service and its regression-test coverage.
+* Documented status transition side effects, including Web session and API Token revocation.
+* Added active Web authentication-session enforcement on back-office requests.
 
 ### Version 1.1
 
