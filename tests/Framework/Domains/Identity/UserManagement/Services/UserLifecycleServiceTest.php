@@ -10,6 +10,9 @@ use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Address;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -63,15 +66,7 @@ final class UserLifecycleServiceTest extends TestCase
 
     public function test_super_admin_can_activate_pending_user_in_assigned_cooperative(): void
     {
-        $cooperativeId = (string) \Illuminate\Support\Str::ulid();
-        \Illuminate\Support\Facades\DB::table('cooperatives')->insert([
-            'id' => $cooperativeId,
-            'name' => 'Lifecycle Cooperative',
-            'slug' => 'lifecycle-cooperative',
-            'status' => 'active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $cooperativeId = $this->createCooperative()->getKey();
 
         $actor = $this->userWithRole('super_admin');
         $target = $this->userWithRole('user', $cooperativeId, UserStatus::Pending);
@@ -84,15 +79,7 @@ final class UserLifecycleServiceTest extends TestCase
 
     public function test_super_admin_cannot_reactivate_suspended_user(): void
     {
-        $cooperativeId = (string) \Illuminate\Support\Str::ulid();
-        \Illuminate\Support\Facades\DB::table('cooperatives')->insert([
-            'id' => $cooperativeId,
-            'name' => 'Suspension Cooperative',
-            'slug' => 'suspension-cooperative',
-            'status' => 'active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $cooperativeId = $this->createCooperative()->getKey();
 
         $actor = $this->userWithRole('super_admin');
         $target = $this->userWithRole('user', $cooperativeId, UserStatus::Suspended);
@@ -159,6 +146,18 @@ final class UserLifecycleServiceTest extends TestCase
         self::assertSame(UserStatus::Active, $restored->status);
         self::assertNotNull($session->fresh()->revoked_at);
         self::assertNotNull($token->fresh()->revoked_at);
+    }
+
+    private function createCooperative(): Cooperative
+    {
+        $country = Country::factory()->create();
+        $address = Address::factory()->create([
+            'country_id' => $country->getKey(),
+        ]);
+
+        return Cooperative::factory()->create([
+            'address_id' => $address->getKey(),
+        ]);
     }
 
     private function userWithRole(
