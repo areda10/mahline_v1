@@ -1,0 +1,113 @@
+@extends('layouts.admin')
+
+@section('title', 'Fiche utilisateur — '.$user->display_name)
+
+@section('content')
+<div class="page-header">
+    <div>
+        <h1>Fiche utilisateur</h1>
+        <p class="muted">Consultation du compte et de ses rattachements dans MAHLINE.</p>
+    </div>
+
+    <div class="actions">
+        <a class="button button-secondary" href="{{ route('backoffice.users.index') }}">Retour à la liste</a>
+    </div>
+</div>
+
+<section class="card" aria-labelledby="identity-heading">
+    <h2 id="identity-heading">Identité et coordonnées</h2>
+
+    <div class="table-wrap">
+        <table>
+            <tbody>
+                <tr>
+                    <th>Nom d'affichage</th>
+                    <td>{{ $user->display_name }}</td>
+                </tr>
+                <tr>
+                    <th>Prénom</th>
+                    <td>{{ $user->first_name }}</td>
+                </tr>
+                <tr>
+                    <th>Nom</th>
+                    <td>{{ $user->last_name }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ $user->email }}</td>
+                </tr>
+                <tr>
+                    <th>Téléphone</th>
+                    <td>{{ $user->telephone }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="card" aria-labelledby="account-heading">
+    <h2 id="account-heading">Compte et autorisations</h2>
+
+    <div class="table-wrap">
+        <table>
+            <tbody>
+                <tr>
+                    <th>Statut</th>
+                    <td><span class="badge">{{ $user->status->label() }}</span></td>
+                </tr>
+                <tr>
+                    <th>Rôles</th>
+                    <td>
+                        @forelse($user->roles as $role)
+                            <span class="badge">{{ $role->name }}</span>
+                        @empty
+                            —
+                        @endforelse
+                    </td>
+                </tr>
+                <tr>
+                    <th>Coopérative principale</th>
+                    <td>{{ $user->cooperative?->name ?? 'Aucune coopérative' }}</td>
+                </tr>
+                <tr>
+                    <th>Compte créé le</th>
+                    <td>{{ $user->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Dernière modification</th>
+                    <td>{{ $user->updated_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@if($isSuperAdmin)
+    <section class="card" aria-labelledby="assignments-heading">
+        <h2 id="assignments-heading">Affectations aux coopératives</h2>
+
+        @if($user->cooperatives->isEmpty())
+            <div class="empty">Ce super administrateur n'est affecté à aucune coopérative.</div>
+        @else
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Coopérative</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($user->cooperatives as $cooperative)
+                            <tr>
+                                <td>{{ $cooperative->name }}</td>
+                                <td>{{ $cooperative->status->label() }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </section>
+@endif
+@endsection
