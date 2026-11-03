@@ -41,6 +41,29 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
             ->assertSee('Coopérative disponible');
     }
 
+    public function test_super_admin_can_only_see_its_own_assignments_and_no_unassigned_cooperative_details(): void
+    {
+        $superAdmin = $this->actor('super_admin', ['users.view']);
+        $assigned = Cooperative::factory()->create([
+            'name' => 'Coopérative autorisée',
+            'email' => 'autorisee@example.test',
+        ]);
+        $unassigned = Cooperative::factory()->create([
+            'name' => 'Coopérative confidentielle',
+            'email' => 'confidentielle@example.test',
+        ]);
+
+        $superAdmin->cooperatives()->attach($assigned->getKey());
+
+        $this->actingAs($superAdmin)
+            ->get(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertOk()
+            ->assertSee('Coopérative autorisée')
+            ->assertSee('autorisee@example.test')
+            ->assertDontSee('Coopérative confidentielle')
+            ->assertDontSee('confidentielle@example.test');
+    }
+
     public function test_root_can_assign_an_active_super_admin_and_the_action_is_audited(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.assign_super_admin']);
