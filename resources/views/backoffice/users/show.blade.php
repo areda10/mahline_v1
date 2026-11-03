@@ -101,7 +101,7 @@
                         @foreach($user->cooperatives as $cooperative)
                             <tr>
                                 <td>{{ $cooperative->name }}</td>
-                                <td>{{ $cooperative->status->label() }}</td>
+                                <td>{{ ucfirst($cooperative->status->value) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
