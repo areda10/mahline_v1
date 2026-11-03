@@ -138,7 +138,7 @@
     </div>
 </section>
 
-@if($isSuperAdmin)
+@if($canViewAssignments)
     <section class="card" aria-labelledby="assignments-heading">
         <h2 id="assignments-heading">Affectations aux coopératives</h2>
 
