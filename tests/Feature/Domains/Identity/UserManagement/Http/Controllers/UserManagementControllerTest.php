@@ -158,6 +158,114 @@ final class UserManagementControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_root_can_activate_a_pending_user_from_the_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à activer',
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_root_can_activate_a_suspended_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Suspended,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_root_can_deactivate_an_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.deactivate']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à désactiver',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.deactivate', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Inactive->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_user_activation_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Pending]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Pending->value,
+        ]);
+    }
+
+    public function test_user_deactivation_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.deactivate', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_root_cannot_activate_an_already_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertForbidden();
+    }
+
     public function test_non_root_user_is_forbidden_from_global_user_list(): void
     {
         $actor = $this->actor('super_admin', ['users.view']);
