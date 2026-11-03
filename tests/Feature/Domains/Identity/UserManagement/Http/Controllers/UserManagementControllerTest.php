@@ -75,6 +75,89 @@ final class UserManagementControllerTest extends TestCase
             ->assertDontSee('Autre utilisateur');
     }
 
+    public function test_root_can_view_user_detail_and_main_cooperative(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $cooperative = Cooperative::factory()->create(['name' => 'Coopérative détail']);
+        $target = User::factory()->create([
+            'display_name' => 'Utilisateur détaillé',
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertViewIs('backoffice.users.show')
+            ->assertSee('Utilisateur détaillé')
+            ->assertSee('Coopérative détail');
+    }
+
+    public function test_root_can_view_super_admin_cooperative_assignments(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $superAdmin = $this->actor('super_admin', [], [
+            'display_name' => 'Administrateur global',
+        ]);
+        $first = Cooperative::factory()->create(['name' => 'Coopérative Alpha']);
+        $second = Cooperative::factory()->create(['name' => 'Coopérative Beta']);
+        $superAdmin->cooperatives()->attach([
+            $first->getKey(),
+            $second->getKey(),
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $superAdmin))
+            ->assertOk()
+            ->assertSee('Administrateur global')
+            ->assertSee('Affectations aux coopératives')
+            ->assertSee('Coopérative Alpha')
+            ->assertSee('Coopérative Beta');
+    }
+
+    public function test_root_can_view_user_detail_without_cooperative(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte indépendant',
+            'cooperative_id' => null,
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Compte indépendant')
+            ->assertSee('Aucune coopérative');
+    }
+
+    public function test_non_root_user_cannot_view_global_user_detail(): void
+    {
+        $actor = $this->actor('super_admin', ['users.view']);
+        $target = User::factory()->create();
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertForbidden();
+    }
+
+    public function test_root_without_users_view_permission_cannot_view_user_detail(): void
+    {
+        $root = $this->actor('super_admin_root', []);
+        $target = User::factory()->create();
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertForbidden();
+    }
+
+    public function test_missing_user_detail_returns_not_found(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', '01J00000000000000000000000'))
+            ->assertNotFound();
+    }
+
     public function test_non_root_user_is_forbidden_from_global_user_list(): void
     {
         $actor = $this->actor('super_admin', ['users.view']);
