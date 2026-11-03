@@ -109,11 +109,8 @@ final class UserPolicy extends BasePolicy
             ], true);
         }
 
-        return $this->canManageStatus($actor, $target)
-            && in_array($target->status, [
-                UserStatus::Pending,
-                UserStatus::Inactive,
-            ], true);
+        // Pending and inactive accounts may only be activated by the root.
+        return false;
     }
 
     public function deactivate(User $actor, User $target): bool
