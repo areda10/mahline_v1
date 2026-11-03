@@ -39,7 +39,8 @@ final class UserLifecycleServiceTest extends TestCase
         $target = $this->userWithRole('user');
         $sessionA = $this->sessions->create($target, 'lifecycle-session-a');
         $sessionB = $this->sessions->create($target, 'lifecycle-session-b');
-        $token = $target->createToken('ERP')->accessToken;
+        $newToken = $target->createToken('ERP');
+        $token = $newToken->accessToken;
 
         $updated = $this->service->deactivateUser($root, $target);
 
@@ -47,6 +48,7 @@ final class UserLifecycleServiceTest extends TestCase
         self::assertNotNull($sessionA->fresh()->revoked_at);
         self::assertNotNull($sessionB->fresh()->revoked_at);
         self::assertNotNull($token->fresh()->revoked_at);
+        self::assertNull(PersonalAccessToken::findToken($newToken->plainTextToken));
         self::assertSame(
             2,
             \App\Domains\Identity\Authentication\Models\LoginHistory::query()
@@ -113,13 +115,15 @@ final class UserLifecycleServiceTest extends TestCase
         $root = $this->userWithRole('super_admin_root');
         $target = $this->userWithRole('user');
         $session = $this->sessions->create($target, 'archive-session');
-        $token = $target->createToken('Mobile')->accessToken;
+        $newToken = $target->createToken('Mobile');
+        $token = $newToken->accessToken;
 
         $archived = $this->service->archiveUser($root, $target);
 
         self::assertSame(UserStatus::Archived, $archived->status);
         self::assertNotNull($session->fresh()->revoked_at);
         self::assertNotNull($token->fresh()->revoked_at);
+        self::assertNull(PersonalAccessToken::findToken($newToken->plainTextToken));
 
         $restored = $this->service->restoreArchivedUser($root, $archived);
 
