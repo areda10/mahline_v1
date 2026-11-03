@@ -46,6 +46,87 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($admin)->allows('view', $unassignedUser));
     }
 
+    public function test_root_can_view_assignments_of_any_super_admin(): void
+    {
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.view']);
+        $target = $this->userWithRoleAndPermissions('super_admin', []);
+
+        self::assertTrue(Gate::forUser($root)->allows('viewAssignments', $target));
+    }
+
+    public function test_super_admin_can_view_only_its_own_assignments(): void
+    {
+        $actor = $this->userWithRoleAndPermissions('super_admin', ['users.view']);
+        $other = $this->userWithRoleAndPermissions('super_admin', []);
+
+        self::assertTrue(Gate::forUser($actor)->allows('viewAssignments', $actor));
+        self::assertFalse(Gate::forUser($actor)->allows('viewAssignments', $other));
+    }
+
+    public function test_cooperative_admin_cannot_view_super_admin_assignments(): void
+    {
+        $actor = $this->userWithRoleAndPermissions('cooperative_admin', ['users.view']);
+        $target = $this->userWithRoleAndPermissions('super_admin', []);
+
+        self::assertFalse(Gate::forUser($actor)->allows('viewAssignments', $target));
+    }
+
+    public function test_only_root_can_assign_an_active_super_admin_to_a_cooperative(): void
+    {
+        $cooperative = $this->createCooperative();
+        $root = $this->userWithRoleAndPermissions(
+            'super_admin_root',
+            ['users.assign_super_admin'],
+        );
+        $superAdmin = $this->userWithRoleAndPermissions('super_admin', []);
+        $otherAdmin = $this->userWithRoleAndPermissions(
+            'super_admin',
+            ['users.assign_super_admin'],
+        );
+
+        self::assertTrue(Gate::forUser($root)->allows(
+            'assignCooperative',
+            [$superAdmin, $cooperative],
+        ));
+        self::assertFalse(Gate::forUser($otherAdmin)->allows(
+            'assignCooperative',
+            [$superAdmin, $cooperative],
+        ));
+
+        $superAdmin->status = UserStatus::Suspended;
+        $superAdmin->save();
+
+        self::assertFalse(Gate::forUser($root)->allows(
+            'assignCooperative',
+            [$superAdmin, $cooperative],
+        ));
+    }
+
+    public function test_only_root_can_unassign_a_super_admin_even_when_target_is_inactive(): void
+    {
+        $cooperative = $this->createCooperative();
+        $root = $this->userWithRoleAndPermissions(
+            'super_admin_root',
+            ['users.unassign_super_admin'],
+        );
+        $superAdmin = $this->userWithRoleAndPermissions('super_admin', [
+            'users.unassign_super_admin',
+        ]);
+        $otherAdmin = $this->userWithRoleAndPermissions('super_admin', []);
+
+        $superAdmin->status = UserStatus::Suspended;
+        $superAdmin->save();
+
+        self::assertTrue(Gate::forUser($root)->allows(
+            'unassignCooperative',
+            [$superAdmin, $cooperative],
+        ));
+        self::assertFalse(Gate::forUser($otherAdmin)->allows(
+            'unassignCooperative',
+            [$superAdmin, $cooperative],
+        ));
+    }
+
     public function test_cooperative_admin_can_view_only_users_in_own_cooperative(): void
     {
         $cooperative = $this->createCooperative();
