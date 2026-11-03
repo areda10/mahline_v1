@@ -31,6 +31,24 @@
                 <button class="button button-danger" type="submit">Désactiver le compte</button>
             </form>
         @endcan
+
+        @can('archive', $user)
+            <form method="POST" action="{{ route('backoffice.users.archive', $user) }}"
+                  onsubmit="return confirm('Confirmer l’archivage ? Les sessions et jetons API seront révoqués.');">
+                @csrf
+                @method('PATCH')
+                <button class="button button-danger" type="submit">Archiver le compte</button>
+            </form>
+        @endcan
+
+        @can('restore', $user)
+            <form method="POST" action="{{ route('backoffice.users.restore', $user) }}"
+                  onsubmit="return confirm('Restaurer ce compte avec le statut actif ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                @csrf
+                @method('PATCH')
+                <button class="button" type="submit">Restaurer le compte</button>
+            </form>
+        @endcan
     </div>
 </div>
 
