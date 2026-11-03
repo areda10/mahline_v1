@@ -33,7 +33,14 @@ final class EnsureActiveAuthenticationSession
             ? $this->sessions->findActiveById($user, $authenticationSessionId)
             : null;
 
-        if (! $user->isAuthorized() || $authenticationSession === null) {
+        if (
+            ! $user->isAuthorized()
+            || $authenticationSession === null
+            || ! hash_equals(
+                $authenticationSession->session_id,
+                $request->session()->getId(),
+            )
+        ) {
             Auth::logout();
 
             $request->session()->invalidate();
