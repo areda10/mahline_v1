@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Catalog\Http\Controllers;
 
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -29,7 +30,21 @@ final class CatalogControllerTest extends TestCase
             'cooperative_id' => $this->cooperative->getKey(),
         ]);
 
+        // Reproduire le contexte créé par AuthenticationWorkflow :
+        // session Laravel régénérée puis session MAHLINE persistée.
+        $this->startSession();
         $this->actingAs($user);
+        session()->regenerate();
+
+        $authenticationSession = app(SessionService::class)->create(
+            user: $user,
+            sessionId: session()->getId(),
+        );
+
+        session()->put(
+            'authentication_session_id',
+            $authenticationSession->getKey(),
+        );
 
         // Ces tests isolent le comportement du contrôleur.
         // Les règles d'autorisation doivent être testées séparément.
