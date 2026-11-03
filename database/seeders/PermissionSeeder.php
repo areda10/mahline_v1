@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Database\\Seeders;
+namespace Database\Seeders;
 
-use App\\Domains\\Identity\\Authorization\\Models\\Permission;
-use Illuminate\\Database\\Seeder;
+use App\Domains\Identity\Authorization\Models\Permission;
+use Illuminate\Database\Seeder;
 
 final class PermissionSeeder extends Seeder
 {
