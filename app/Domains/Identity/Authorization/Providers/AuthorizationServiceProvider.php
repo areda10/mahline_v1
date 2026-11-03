@@ -51,7 +51,7 @@ final class AuthorizationServiceProvider extends ServiceProvider
         );
 
         Gate::before(
-            function ($user, string $ability, ...$arguments): ?bool {
+            function ($user, string $ability, array $arguments): ?bool {
                 // Les utilisateurs doivent toujours passer par UserPolicy.
                 $isUserAuthorization =
                     in_array(User::class, $arguments, true)
