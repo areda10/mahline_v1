@@ -18,11 +18,6 @@ final class UserManagementController
 {
     public function show(Request $request, User $user): View
     {
-        abort_unless(
-            $request->user()->hasRole('super_admin_root'),
-            403,
-        );
-
         Gate::authorize('view', $user);
 
         $user->load([
@@ -30,18 +25,15 @@ final class UserManagementController
             'cooperative',
         ]);
 
-        $isSuperAdmin = $user->roles->contains(
-            static fn ($role): bool => $role->slug === 'super_admin' && $role->is_active,
-        );
+        $canViewAssignments = Gate::allows('viewAssignments', $user);
 
-        if ($isSuperAdmin) {
-            Gate::authorize('viewAssignments', $user);
+        if ($canViewAssignments) {
             $user->load('cooperatives');
         }
 
         return view('backoffice.users.show', [
             'user' => $user,
-            'isSuperAdmin' => $isSuperAdmin,
+            'canViewAssignments' => $canViewAssignments,
         ]);
     }
 
@@ -180,11 +172,6 @@ final class UserManagementController
     {
         Gate::authorize('viewAny', User::class);
 
-        abort_unless(
-            $request->user()->hasRole('super_admin_root'),
-            403,
-        );
-
         $filters = $request->validate([
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
             'role' => ['sometimes', 'nullable', 'string', 'exists:roles,slug'],
@@ -201,10 +188,25 @@ final class UserManagementController
             abort_unless(in_array($filters['status'], $validStatuses, true), 422);
         }
 
+        $actor = $request->user();
+        $isRoot = $actor->hasRole('super_admin_root');
         $deletedOnly = ($filters['deleted'] ?? '0') === '1';
+
+        abort_if($deletedOnly && ! $isRoot, 403);
 
         $users = User::query()
             ->when($deletedOnly, static fn (Builder $query) => $query->onlyTrashed())
+            ->when(
+                ! $isRoot && $actor->hasRole('super_admin'),
+                static fn (Builder $query) => $query->whereIn(
+                    'cooperative_id',
+                    $actor->cooperatives()->select('cooperatives.id'),
+                ),
+            )
+            ->when(
+                ! $isRoot && $actor->hasRole('cooperative_admin'),
+                static fn (Builder $query) => $query->where('cooperative_id', $actor->cooperative_id),
+            )
             ->with([
                 'roles' => static fn ($query) => $query->orderBy('name'),
                 'cooperative',
