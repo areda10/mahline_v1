@@ -66,6 +66,33 @@ final class UserLifecycleServiceTest extends TestCase
         ]);
     }
 
+    public function test_root_revokes_expired_api_tokens_and_preserves_expiration_date(): void
+    {
+        $root = $this->userWithRole('super_admin_root');
+        $target = $this->userWithRole('user');
+        $accessToken = $target->createToken('Expired integration token');
+        $token = $accessToken->accessToken;
+        $expirationDate = now()->subDay()->startOfSecond();
+
+        $token->forceFill([
+            'expires_at' => $expirationDate,
+        ])->save();
+
+        $updated = $this->service->deactivateUser($root, $target);
+
+        self::assertSame(UserStatus::Inactive, $updated->status);
+        self::assertNotNull($token->fresh()->revoked_at);
+        self::assertEquals(
+            $expirationDate->toISOString(),
+            $token->fresh()->expires_at?->toISOString(),
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.api_token_revoked',
+            'subject_id' => $token->getKey(),
+            'action' => 'api_token_revoked',
+        ]);
+    }
     public function test_root_can_change_own_status(): void
     {
         $root = $this->userWithRole('super_admin_root');
