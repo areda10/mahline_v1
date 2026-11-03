@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Authentication\\Models;
+namespace App\Domains\Identity\Authentication\Models;
 
-use Illuminate\\Database\\Eloquent\\Concerns\\HasUlids;
-use Laravel\\Sanctum\\PersonalAccessToken as SanctumPersonalAccessToken;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
 final class PersonalAccessToken extends SanctumPersonalAccessToken
 {
