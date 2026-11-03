@@ -125,6 +125,37 @@ final class UserManagementController
             ->with('success', 'Le compte a été restauré avec le statut actif. Les anciennes sessions et les anciens jetons restent révoqués.');
     }
 
+    public function destroy(Request $request, User $user, UserManagementService $service): RedirectResponse
+    {
+        Gate::authorize('delete', $user);
+
+        try {
+            $service->deleteUser($request->user(), $user);
+        } catch (\\DomainException) {
+            return redirect()->route('backoffice.users.index')
+                ->with('error', 'Le compte ne peut pas être supprimé : son état a changé ou cette action n’est plus autorisée.');
+        }
+
+        return redirect()->route('backoffice.users.index')
+            ->with('success', 'Le compte a été supprimé logiquement. Ses sessions et jetons API ont été révoqués.');
+    }
+
+    public function restoreDeleted(Request $request, string $user, UserManagementService $service): RedirectResponse
+    {
+        $deletedUser = User::withTrashed()->findOrFail($user);
+        Gate::authorize('restoreDeleted', $deletedUser);
+
+        try {
+            $service->restoreDeletedUser($request->user(), $deletedUser);
+        } catch (\\DomainException) {
+            return redirect()->route('backoffice.users.index', ['deleted' => 1])
+                ->with('error', 'Le compte ne peut pas être restauré : son état a changé ou cette action n’est plus autorisée.');
+        }
+
+        return redirect()->route('backoffice.users.index')
+            ->with('success', 'Le compte a été restauré. Les anciennes sessions et les anciens jetons restent révoqués.');
+    }
+
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', User::class);
@@ -138,6 +169,7 @@ final class UserManagementController
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
             'role' => ['sometimes', 'nullable', 'string', 'exists:roles,slug'],
             'status' => ['sometimes', 'nullable', 'string'],
+            'deleted' => ['sometimes', 'nullable', 'in:0,1'],
         ]);
 
         $validStatuses = array_map(
@@ -149,7 +181,10 @@ final class UserManagementController
             abort_unless(in_array($filters['status'], $validStatuses, true), 422);
         }
 
+        $deletedOnly = ($filters['deleted'] ?? '0') === '1';
+
         $users = User::query()
+            ->when($deletedOnly, static fn (Builder $query) => $query->onlyTrashed())
             ->with([
                 'roles' => static fn ($query) => $query->orderBy('name'),
                 'cooperative',
@@ -193,6 +228,7 @@ final class UserManagementController
                 'search' => $filters['search'] ?? '',
                 'role' => $filters['role'] ?? '',
                 'status' => $filters['status'] ?? '',
+                'deleted' => $deletedOnly ? '1' : '0',
             ],
         ]);
     }
