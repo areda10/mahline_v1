@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Http\Middleware;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,12 +20,7 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
     public function test_active_authentication_session_allows_request(): void
     {
         $user = User::factory()->create();
-        $session = app(SessionService::class)->create(
-            user: $user,
-            sessionId: 'middleware-active-session',
-        );
-
-        $request = $this->authenticatedRequest($user, $session->getKey());
+        [$request] = $this->authenticatedRequest($user);
 
         $response = app(EnsureActiveAuthenticationSession::class)->handle(
             $request,
@@ -38,15 +34,9 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
     public function test_revoked_authentication_session_logs_user_out_and_redirects(): void
     {
         $user = User::factory()->create();
-        $sessions = app(SessionService::class);
-        $session = $sessions->create(
-            user: $user,
-            sessionId: 'middleware-revoked-session',
-        );
+        [$request, $session] = $this->authenticatedRequest($user);
 
-        $request = $this->authenticatedRequest($user, $session->getKey());
-
-        $sessions->revoke($session, 'user_deactivated');
+        app(SessionService::class)->revoke($session, 'user_deactivated');
 
         $response = app(EnsureActiveAuthenticationSession::class)->handle(
             $request,
@@ -61,7 +51,7 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
     public function test_authenticated_user_without_authentication_session_is_rejected(): void
     {
         $user = User::factory()->create();
-        $request = $this->authenticatedRequest($user, null);
+        [$request] = $this->authenticatedRequest($user, false);
 
         $response = app(EnsureActiveAuthenticationSession::class)->handle(
             $request,
@@ -72,13 +62,45 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         self::assertFalse(Auth::check());
     }
 
-    private function authenticatedRequest(User $user, ?string $sessionId): Request
+    public function test_authentication_session_must_match_current_laravel_session(): void
     {
+        $user = User::factory()->create();
+        [$request, $session] = $this->authenticatedRequest($user);
+
+        $request->session()->setId('another-laravel-session');
+
+        $response = app(EnsureActiveAuthenticationSession::class)->handle(
+            $request,
+            static fn () => response('must not be reached'),
+        );
+
+        self::assertSame(302, $response->getStatusCode());
+        self::assertFalse(Auth::check());
+        self::assertNull($session->fresh()->revoked_at);
+    }
+
+    /**
+     * @return array{0: Request, 1: AuthenticationSession|null}
+     */
+    private function authenticatedRequest(
+        User $user,
+        bool $withAuthenticationSession = true,
+    ): array {
         $store = app('session.store');
         $store->start();
 
-        if ($sessionId !== null) {
-            $store->put('authentication_session_id', $sessionId);
+        $authenticationSession = $withAuthenticationSession
+            ? app(SessionService::class)->create(
+                user: $user,
+                sessionId: $store->getId(),
+            )
+            : null;
+
+        if ($authenticationSession !== null) {
+            $store->put(
+                'authentication_session_id',
+                $authenticationSession->getKey(),
+            );
         }
 
         Auth::login($user);
@@ -87,6 +109,6 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         $request->setLaravelSession($store);
         $request->setUserResolver(static fn () => $user);
 
-        return $request;
+        return [$request, $authenticationSession];
     }
 }
