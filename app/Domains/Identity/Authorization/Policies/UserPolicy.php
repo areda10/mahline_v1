@@ -39,7 +39,7 @@ final class UserPolicy extends BasePolicy
      */
     public function viewAssignments(User $actor, User $target): bool
     {
-        if ($target->trashed() || ! $target->hasRole(self::ROLE_SUPER_ADMIN)) {
+        if ($target->trashed() || ! $this->targetHasActiveRole($target, self::ROLE_SUPER_ADMIN)) {
             return false;
         }
 
@@ -202,6 +202,14 @@ final class UserPolicy extends BasePolicy
         }
 
         return false;
+    }
+
+    private function targetHasActiveRole(User $target, string $roleSlug): bool
+    {
+        return $target->roles()
+            ->where('slug', $roleSlug)
+            ->where('is_active', true)
+            ->exists();
     }
 
     private function hasPermission(User $user, string $permission): bool
