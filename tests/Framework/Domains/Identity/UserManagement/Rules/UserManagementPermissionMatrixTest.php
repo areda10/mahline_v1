@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Identity\\UserManagement\\Rules;
+namespace Tests\Framework\Domains\Identity\UserManagement\Rules;
 
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use Database\\Seeders\\PermissionSeeder;
-use Database\\Seeders\\RolePermissionSeeder;
-use Database\\Seeders\\RoleSeeder;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Identity\Authorization\Models\Role;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class UserManagementPermissionMatrixTest extends TestCase
 {
