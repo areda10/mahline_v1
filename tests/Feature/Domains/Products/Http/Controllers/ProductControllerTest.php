@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Products\Http\Controllers;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,6 +34,7 @@ final class ProductControllerTest extends TestCase
         ]);
 
         $this->actingAs($user);
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
         // Isole le comportement HTTP du contrôleur.
         // Les autorisations réelles nécessitent des tests distincts.
