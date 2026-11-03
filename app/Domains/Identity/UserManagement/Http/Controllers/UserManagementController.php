@@ -7,7 +7,9 @@ namespace App\Domains\Identity\UserManagement\Http\Controllers;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -41,6 +43,46 @@ final class UserManagementController
             'user' => $user,
             'isSuperAdmin' => $isSuperAdmin,
         ]);
+    }
+
+    public function activate(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        Gate::authorize('activate', $user);
+
+        try {
+            $userManagementService->activateUser($request->user(), $user);
+        } catch (\\DomainException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with('success', 'Le compte utilisateur a été activé.');
+    }
+
+    public function deactivate(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        Gate::authorize('deactivate', $user);
+
+        try {
+            $userManagementService->deactivateUser($request->user(), $user);
+        } catch (\\DomainException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with('success', 'Le compte utilisateur a été désactivé. Ses sessions et jetons API ont été révoqués.');
     }
 
     public function index(Request $request): View
