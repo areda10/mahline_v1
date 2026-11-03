@@ -249,6 +249,98 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
+    public function test_root_can_suspend_an_active_user_from_the_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.suspend']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à suspendre',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.suspend', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Suspended->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_assigned_super_admin_can_suspend_user_in_its_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.suspend']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($actor)
+            ->patch(route('backoffice.users.suspend', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Suspended->value,
+        ]);
+    }
+
+    public function test_super_admin_cannot_suspend_user_outside_assigned_cooperatives(): void
+    {
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.suspend']);
+        $actor->cooperatives()->attach($assigned->getKey());
+        $target = User::factory()->create([
+            'cooperative_id' => $unassigned->getKey(),
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($actor)
+            ->patch(route('backoffice.users.suspend', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_user_suspension_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.suspend', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_already_inactive_user_cannot_be_suspended(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.suspend']);
+        $target = User::factory()->create(['status' => UserStatus::Inactive]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.suspend', $target))
+            ->assertForbidden();
+    }
+
     public function test_user_activation_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
