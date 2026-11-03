@@ -183,6 +183,29 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_cannot_activate_pending_or_inactive_users_even_in_assigned_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.view', 'users.activate']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        foreach ([UserStatus::Pending, UserStatus::Inactive] as $status) {
+            $target = User::factory()->create([
+                'cooperative_id' => $cooperative->getKey(),
+                'status' => $status,
+            ]);
+
+            $this->actingAs($actor)
+                ->patch(route('backoffice.users.activate', $target))
+                ->assertForbidden();
+
+            $this->assertDatabaseHas('users', [
+                'id' => $target->getKey(),
+                'status' => $status->value,
+            ]);
+        }
+    }
+
     public function test_root_can_activate_a_suspended_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
