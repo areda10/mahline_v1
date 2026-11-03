@@ -69,14 +69,14 @@ final class UserManagementPermissionMatrixTest extends TestCase
         }
     }
 
-    public function test_cooperative_admin_can_only_consult_users(): void
+    public function test_cooperative_admin_can_create_users_but_cannot_manage_their_status(): void
     {
         $permissions = $this->permissionSlugs('cooperative_admin');
 
         self::assertContains('users.view', $permissions);
+        self::assertContains('users.create', $permissions);
 
         foreach ([
-            'users.create',
             'users.activate',
             'users.deactivate',
             'users.suspend',
