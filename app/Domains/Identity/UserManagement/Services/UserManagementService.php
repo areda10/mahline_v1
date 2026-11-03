@@ -19,6 +19,8 @@ final class UserManagementService
 
     private const ROLE_SUPER_ADMIN = 'super_admin';
 
+    private const ROLE_COOPERATIVE_ADMIN = 'cooperative_admin';
+
     private const ROLE_USER = 'user';
 
     public function __construct(
