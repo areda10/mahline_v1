@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authorization\Policies;
 
 use App\Core\Foundation\Policies\BasePolicy;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 
@@ -28,6 +29,62 @@ final class UserPolicy extends BasePolicy
         return ! $target->trashed()
             && $this->canAccessUser($actor, $target)
             && $this->hasPermission($actor, 'users.view');
+    }
+
+    /**
+     * View the cooperative assignments of a super administrator.
+     *
+     * A super administrator may inspect only their own assignments.
+     * The platform root may inspect assignments for every super administrator.
+     */
+    public function viewAssignments(User $actor, User $target): bool
+    {
+        if ($target->trashed() || ! $target->hasRole(self::ROLE_SUPER_ADMIN)) {
+            return false;
+        }
+
+        return $this->hasPermission($actor, 'users.view')
+            && (
+                $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+                || (
+                    $actor->hasRole(self::ROLE_SUPER_ADMIN)
+                    && $actor->is($target)
+                )
+            );
+    }
+
+    /**
+     * Assign an active super administrator to a cooperative.
+     */
+    public function assignCooperative(
+        User $actor,
+        User $target,
+        Cooperative $cooperative,
+    ): bool {
+        return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            && $this->hasPermission($actor, 'users.assign_super_admin')
+            && ! $target->trashed()
+            && $target->hasRole(self::ROLE_SUPER_ADMIN)
+            && $target->status === UserStatus::Active
+            && ! $cooperative->trashed();
+    }
+
+    /**
+     * Remove a super administrator's cooperative assignment.
+     *
+     * Inactive or suspended super administrators remain eligible for
+     * unassignment so that stale access can always be removed.
+     */
+    public function unassignCooperative(
+        User $actor,
+        User $target,
+        Cooperative $cooperative,
+    ): bool {
+        return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            && $this->hasPermission($actor, 'users.unassign_super_admin')
+            && ! $target->trashed()
+            && $target->hasRole(self::ROLE_SUPER_ADMIN)
+            && ! $cooperative->trashed();
     }
 
     public function create(User $actor): bool
