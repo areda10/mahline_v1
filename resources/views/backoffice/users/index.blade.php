@@ -81,7 +81,9 @@
                     @foreach($users as $user)
                         <tr>
                             <td>
-                                <strong>{{ $user->display_name }}</strong>
+                                <a href="{{ route('backoffice.users.show', $user) }}">
+                                    <strong>{{ $user->display_name }}</strong>
+                                </a>
                                 <div class="muted">{{ $user->first_name }} {{ $user->last_name }}</div>
                             </td>
                             <td>{{ $user->email }}</td>
