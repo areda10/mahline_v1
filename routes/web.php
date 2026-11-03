@@ -7,6 +7,7 @@ use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
+use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -95,6 +96,9 @@ Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
     ->group(function (): void {
+
+        Route::get('users', [UserManagementController::class, 'index'])
+            ->name('users.index');
 
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
