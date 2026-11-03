@@ -114,7 +114,7 @@ final class UserManagementServiceTest extends TestCase
         ); 
     }
 
-    public function test_cooperative_admin_can_create_user_in_own_cooperative(): void
+    public function test_cooperative_admin_cannot_create_user_in_own_cooperative(): void
     {
         $cooperative = $this->createCooperative();
 
@@ -123,13 +123,18 @@ final class UserManagementServiceTest extends TestCase
             $cooperative->id,
         );
 
-        $user = $this->service->createUser(
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage(
+            'The user is not authorized to create users.',
+        );
+
+        $this->service->createUser(
             $admin,
             [
-                'first_name' => 'Local',
+                'first_name' => 'Blocked',
                 'last_name' => 'User',
-                'display_name' => 'Local User',
-                'email' => 'local@example.com',
+                'display_name' => 'Blocked User',
+                'email' => 'blocked-local@example.com',
                 'telephone' => '+212600000004',
                 'password' => 'Password123',
                 'status' => UserStatus::Active,
@@ -137,12 +142,9 @@ final class UserManagementServiceTest extends TestCase
             ],
             'user',
         );
-
-        self::assertSame($cooperative->id, $user->cooperative_id);
-        self::assertTrue($user->hasRole('user'));
     }
 
-    public function test_cooperative_admin_cannot_create_user_in_another_cooperative(): void
+    public function test_cooperative_admin_cannot_create_user_outside_own_cooperative(): void
     {
         $country = Country::factory()->create();
 
