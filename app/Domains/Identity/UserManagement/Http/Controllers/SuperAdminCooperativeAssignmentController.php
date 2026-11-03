@@ -7,6 +7,7 @@ namespace App\Domains\Identity\UserManagement\Http\Controllers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -26,11 +27,21 @@ final class SuperAdminCooperativeAssignmentController
         $cooperatives = $superAdmin->cooperatives()
             ->with('address.country')
             ->orderBy('cooperatives.name')
-            ->paginate(15);
+            ->paginate(15, ['*'], 'assigned_page');
+
+        $availableCooperatives = Cooperative::query()
+            ->with('address.country')
+            ->whereDoesntHave(
+                'superAdmins',
+                static fn (Builder $query) => $query->whereKey($superAdmin->getKey()),
+            )
+            ->orderBy('name')
+            ->paginate(15, ['*'], 'available_page');
 
         return view('backoffice.super-admins.cooperatives.index', [
             'superAdmin' => $superAdmin,
             'cooperatives' => $cooperatives,
+            'availableCooperatives' => $availableCooperatives,
         ]);
     }
 
