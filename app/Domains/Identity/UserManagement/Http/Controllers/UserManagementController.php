@@ -85,6 +85,46 @@ final class UserManagementController
             ->with('success', 'Le compte utilisateur a été désactivé. Ses sessions et jetons API ont été révoqués.');
     }
 
+    public function archive(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        Gate::authorize('archive', $user);
+
+        try {
+            $userManagementService->archiveUser($request->user(), $user);
+        } catch (\DomainException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le compte ne peut plus être archivé : son état a changé ou cette action n’est plus autorisée.');
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with('success', 'Le compte a été archivé. Ses sessions et jetons API ont été révoqués.');
+    }
+
+    public function restore(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        Gate::authorize('restore', $user);
+
+        try {
+            $userManagementService->restoreArchivedUser($request->user(), $user);
+        } catch (\DomainException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le compte ne peut plus être restauré : son état a changé ou cette action n’est plus autorisée.');
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with('success', 'Le compte a été restauré avec le statut actif. Les anciennes sessions et les anciens jetons restent révoqués.');
+    }
+
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', User::class);
