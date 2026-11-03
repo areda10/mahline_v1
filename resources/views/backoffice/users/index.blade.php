@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1>Utilisateurs</h1>
-        <p class="muted">Vue globale de tous les comptes MAHLINE, indépendamment de leurs affectations aux coopératives.</p>
+        <p class="muted">Comptes utilisateurs accessibles selon votre périmètre d’autorisation.</p>
     </div>
 </div>
 
@@ -66,7 +66,7 @@
 
 <section class="card" aria-labelledby="users-list-heading">
     <div class="page-header">
-        <h2 id="users-list-heading">{{ $filters['deleted'] === '1' ? 'Comptes supprimés logiquement' : 'Tous les utilisateurs' }}</h2>
+        <h2 id="users-list-heading">{{ $filters['deleted'] === '1' ? 'Comptes supprimés logiquement' : 'Utilisateurs accessibles' }}</h2>
         <span class="muted">{{ $users->total() }} résultat(s)</span>
     </div>
 
