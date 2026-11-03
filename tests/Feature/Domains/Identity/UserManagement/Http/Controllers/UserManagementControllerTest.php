@@ -398,6 +398,100 @@ final class UserManagementControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_can_soft_delete_user_from_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.delete']);
+        $target = User::factory()->create(['display_name' => 'Compte à supprimer']);
+
+        $this->actingAs($root)
+            ->delete(route('backoffice.users.destroy', $target))
+            ->assertRedirect(route('backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.deleted',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_user_deletion_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
+
+        $this->actingAs($root)
+            ->delete(route('backoffice.users.destroy', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_non_root_user_cannot_soft_delete_or_restore_deleted_users(): void
+    {
+        $actor = $this->actor('super_admin', ['users.delete', 'users.restore_deleted']);
+        $active = User::factory()->create();
+        $deleted = User::factory()->create();
+        $deleted->delete();
+
+        $this->actingAs($actor)
+            ->delete(route('backoffice.users.destroy', $active))
+            ->assertForbidden();
+
+        $this->patch(route('backoffice.users.restore-deleted', $deleted->getKey()))
+            ->assertForbidden();
+    }
+
+    public function test_root_can_list_and_restore_soft_deleted_users(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.restore_deleted']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte supprimé à restaurer',
+            'status' => UserStatus::Inactive,
+        ]);
+        $target->delete();
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.index', ['deleted' => 1]))
+            ->assertOk()
+            ->assertSee('Compte supprimé à restaurer')
+            ->assertSee('Comptes supprimés logiquement')
+            ->assertSee(route('backoffice.users.restore-deleted', $target->getKey()));
+
+        $this->patch(route('backoffice.users.restore-deleted', $target->getKey()))
+            ->assertRedirect(route('backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'deleted_at' => null,
+            'status' => UserStatus::Inactive->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.restored',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_restoring_deleted_user_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
+        $target->delete();
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore-deleted', $target->getKey()))
+            ->assertForbidden();
+
+        $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
+    }
+
     /** @param list<string> $permissions
      *  @param array<string, mixed> $attributes
      */
