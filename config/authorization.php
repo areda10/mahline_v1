@@ -98,8 +98,8 @@ return [
 
         /*
          * Administration of the user's own cooperative.
-         * Cooperative administrators may consult users but cannot manage
-         * their statuses, archive them, or delete/restore them.
+         * Cooperative administrators may consult and create users in their
+         * own cooperative, but cannot manage statuses, archive, or delete.
          */
         'cooperative_admin' => [
             'audit.view',
