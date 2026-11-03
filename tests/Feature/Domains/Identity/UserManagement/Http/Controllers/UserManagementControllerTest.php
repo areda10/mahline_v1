@@ -266,6 +266,120 @@ final class UserManagementControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_can_archive_an_active_user_from_the_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.archive']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à archiver',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.archive', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Archived->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_root_can_restore_an_archived_user_to_active(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte archivé',
+            'status' => UserStatus::Archived,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_archiving_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.archive', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_restoring_archived_user_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Archived->value,
+        ]);
+    }
+
+    public function test_non_root_user_cannot_archive_or_restore_users(): void
+    {
+        $actor = $this->actor('super_admin', ['users.archive', 'users.restore']);
+        $active = User::factory()->create(['status' => UserStatus::Active]);
+        $archived = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($actor)
+            ->patch(route('backoffice.users.archive', $active))
+            ->assertForbidden();
+
+        $this->patch(route('backoffice.users.restore', $archived))
+            ->assertForbidden();
+    }
+
+    public function test_archived_user_cannot_be_archived_again(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.archive']);
+        $target = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.archive', $target))
+            ->assertForbidden();
+    }
+
+    public function test_non_archived_user_cannot_be_restored(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore', $target))
+            ->assertForbidden();
+    }
+
     public function test_non_root_user_is_forbidden_from_global_user_list(): void
     {
         $actor = $this->actor('super_admin', ['users.view']);
