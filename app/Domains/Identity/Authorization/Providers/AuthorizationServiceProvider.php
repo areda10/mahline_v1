@@ -65,26 +65,16 @@ final class AuthorizationServiceProvider extends ServiceProvider
                     return null;
                 }
 
-                $cooperativeAbilities = [
-                    'viewAny',
-                    'view',
-                    'create',
-                    'update',
-                    'delete',
-                ];
-
-                $isCooperativeAuthorization = in_array(
-                    $ability,
-                    $cooperativeAbilities,
-                    true,
-                ) && (
+                // Toute autorisation portant sur une coopérative doit passer par CooperativePolicy.
+                // Ne pas filtrer par ability : une nouvelle ability ne doit jamais
+                // bénéficier accidentellement de l'autorisation générique.
+                $isCooperativeAuthorization =
                     in_array(Cooperative::class, $arguments, true)
                     || count(array_filter(
                         $arguments,
                         static fn (mixed $argument): bool =>
                             $argument instanceof Cooperative,
-                    )) > 0
-                );
+                    )) > 0;
 
                 if ($isCooperativeAuthorization) {
                     return null;
