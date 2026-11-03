@@ -85,6 +85,26 @@ final class UserManagementController
             ->with('success', 'Le compte utilisateur a été désactivé. Ses sessions et jetons API ont été révoqués.');
     }
 
+    public function suspend(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        Gate::authorize('suspend', $user);
+
+        try {
+            $userManagementService->suspendUser($request->user(), $user);
+        } catch (\\DomainException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with('success', 'Le compte utilisateur a été suspendu. Ses sessions et jetons API ont été révoqués.');
+    }
+
     public function archive(
         Request $request,
         User $user,
