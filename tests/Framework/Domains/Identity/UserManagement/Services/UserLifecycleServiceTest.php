@@ -117,7 +117,7 @@ final class UserLifecycleServiceTest extends TestCase
         $target = $this->userWithRole('user', $cooperativeId, UserStatus::Pending);
         $actor->cooperatives()->attach($cooperativeId);
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
             'Only the super admin root can perform this action.',
         );
@@ -133,7 +133,7 @@ final class UserLifecycleServiceTest extends TestCase
         $target = $this->userWithRole('user', $cooperativeId, UserStatus::Inactive);
         $actor->cooperatives()->attach($cooperativeId);
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
             'Only the super admin root can perform this action.',
         );
