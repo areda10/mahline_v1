@@ -12,6 +12,26 @@
     <div class="actions">
         <a class="button button-secondary" href="{{ route('backoffice.users.index') }}">Retour à la liste</a>
     </div>
+
+    <div class="actions">
+        @can('activate', $user)
+            <form method="POST" action="{{ route('backoffice.users.activate', $user) }}"
+                  onsubmit="return confirm('Confirmer l’activation de ce compte ?');">
+                @csrf
+                @method('PATCH')
+                <button class="button" type="submit">Activer le compte</button>
+            </form>
+        @endcan
+
+        @can('deactivate', $user)
+            <form method="POST" action="{{ route('backoffice.users.deactivate', $user) }}"
+                  onsubmit="return confirm('Confirmer la désactivation de ce compte ? Les sessions et jetons API seront révoqués.');">
+                @csrf
+                @method('PATCH')
+                <button class="button button-danger" type="submit">Désactiver le compte</button>
+            </form>
+        @endcan
+    </div>
 </div>
 
 <section class="card" aria-labelledby="identity-heading">
