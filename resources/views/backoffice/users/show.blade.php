@@ -49,6 +49,15 @@
                 <button class="button" type="submit">Restaurer le compte</button>
             </form>
         @endcan
+
+        @can('delete', $user)
+            <form method="POST" action="{{ route('backoffice.users.destroy', $user) }}"
+                  onsubmit="return confirm('Confirmer la suppression logique de ce compte ? Ses sessions et jetons API seront révoqués.');">
+                @csrf
+                @method('DELETE')
+                <button class="button button-danger" type="submit">Supprimer le compte</button>
+            </form>
+        @endcan
     </div>
 </div>
 
