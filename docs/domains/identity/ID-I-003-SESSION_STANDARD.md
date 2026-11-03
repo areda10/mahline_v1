@@ -115,6 +115,7 @@ Covered by:
 
 * `AuthenticationSessionTest`
 * `SessionServiceTest`
+* `EnsureActiveAuthenticationSessionTest`
 * `AuthenticationWorkflowTest`
 * `AuthenticationWorkflowTransactionTest`
 
