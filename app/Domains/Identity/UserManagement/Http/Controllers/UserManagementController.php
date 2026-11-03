@@ -14,6 +14,35 @@ use Illuminate\View\View;
 
 final class UserManagementController
 {
+    public function show(Request $request, User $user): View
+    {
+        abort_unless(
+            $request->user()->hasRole('super_admin_root'),
+            403,
+        );
+
+        Gate::authorize('view', $user);
+
+        $user->load([
+            'roles' => static fn ($query) => $query->orderBy('name'),
+            'cooperative',
+        ]);
+
+        $isSuperAdmin = $user->roles->contains(
+            static fn ($role): bool => $role->slug === 'super_admin' && $role->is_active,
+        );
+
+        if ($isSuperAdmin) {
+            Gate::authorize('viewAssignments', $user);
+            $user->load('cooperatives');
+        }
+
+        return view('backoffice.users.show', [
+            'user' => $user,
+            'isSuperAdmin' => $isSuperAdmin,
+        ]);
+    }
+
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', User::class);
