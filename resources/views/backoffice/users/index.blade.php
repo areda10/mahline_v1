@@ -38,6 +38,14 @@
         </div>
 
         <div class="field">
+            <label for="deleted">Type de comptes</label>
+            <select id="deleted" name="deleted">
+                <option value="0" @selected($filters['deleted'] === '0')>Comptes non supprimés</option>
+                <option value="1" @selected($filters['deleted'] === '1')>Comptes supprimés logiquement</option>
+            </select>
+        </div>
+
+        <div class="field">
             <label for="status">Statut</label>
             <select id="status" name="status">
                 <option value="">Tous les statuts</option>
@@ -58,7 +66,7 @@
 
 <section class="card" aria-labelledby="users-list-heading">
     <div class="page-header">
-        <h2 id="users-list-heading">Tous les utilisateurs</h2>
+        <h2 id="users-list-heading">{{ $filters['deleted'] === '1' ? 'Comptes supprimés logiquement' : 'Tous les utilisateurs' }}</h2>
         <span class="muted">{{ $users->total() }} résultat(s)</span>
     </div>
 
@@ -75,16 +83,23 @@
                         <th>Rôle(s)</th>
                         <th>Coopérative</th>
                         <th>Statut</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($users as $user)
                         <tr>
                             <td>
-                                <a href="{{ route('backoffice.users.show', $user) }}">
+                                @if($user->trashed())
                                     <strong>{{ $user->display_name }}</strong>
-                                </a>
-                                <div class="muted">{{ $user->first_name }} {{ $user->last_name }}</div>
+                                    <div class="muted">{{ $user->first_name }} {{ $user->last_name }}</div>
+                                    <div class="muted">Supprimé le {{ $user->deleted_at?->format('d/m/Y H:i') }}</div>
+                                @else
+                                    <a href="{{ route('backoffice.users.show', $user) }}">
+                                        <strong>{{ $user->display_name }}</strong>
+                                    </a>
+                                    <div class="muted">{{ $user->first_name }} {{ $user->last_name }}</div>
+                                @endif
                             </td>
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->telephone }}</td>
@@ -97,6 +112,20 @@
                             </td>
                             <td>{{ $user->cooperative?->name ?? 'Aucune coopérative' }}</td>
                             <td><span class="badge">{{ $user->status->label() }}</span></td>
+                            <td>
+                                @if($user->trashed())
+                                    @can('restoreDeleted', $user)
+                                        <form method="POST" action="{{ route('backoffice.users.restore-deleted', $user->getKey()) }}"
+                                              onsubmit="return confirm('Restaurer ce compte supprimé ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button class="button" type="submit">Restaurer</button>
+                                        </form>
+                                    @endcan
+                                @else
+                                    <a class="button button-secondary" href="{{ route('backoffice.users.show', $user) }}">Consulter</a>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
