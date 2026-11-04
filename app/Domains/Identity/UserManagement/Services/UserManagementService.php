@@ -62,7 +62,17 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $actor,
             $roleSlug,
         ): User {
-            $user = User::query()->create($attributes);
+            $userAttributes = array_merge($attributes, [
+                'display_name' => trim(
+                    $attributes['first_name'].' '.$attributes['last_name'],
+                ),
+                // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
+                'password' => bin2hex(random_bytes(32)),
+                'status' => UserStatus::Pending,
+                'email_verified_at' => null,
+            ]);
+
+            $user = User::query()->create($userAttributes);
 
             $user->roles()->attach($role->getKey());
 
@@ -71,21 +81,21 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 action: 'created',
                 actorType: User::class,
                 actorId: (string) $actor->getKey(),
-                cooperativeId: isset($attributes['cooperative_id'])
-                ? (string) $attributes['cooperative_id']
-                : null,
+                cooperativeId: $user->cooperative_id
+                    ? (string) $user->cooperative_id
+                    : null,
                 subjectType: User::class,
                 subjectId: (string) $user->getKey(),
                 newValues: [
                     'role' => $roleSlug,
-                    'cooperative_id' => $attributes['cooperative_id'] ?? null,
+                    'cooperative_id' => $user->cooperative_id,
+                    'status' => UserStatus::Pending->value,
                 ],
             ));
 
             return $user;
         });
     }
-    
 
     public function assignSuperAdminToCooperative(
         User $actor,
