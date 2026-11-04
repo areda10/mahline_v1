@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
@@ -15,7 +16,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
-final class UserManagementService
+final class UserManagementService implements SuperAdminCooperativeAssignmentService
 {
     private const ROLE_SUPER_ADMIN_ROOT = 'super_admin_root';
 
