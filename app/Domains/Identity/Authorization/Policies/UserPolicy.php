@@ -101,6 +101,21 @@ final class UserPolicy extends BasePolicy
             && $actor->cooperatives()->exists();
     }
 
+    public function resendInvitation(User $actor, User $target): bool
+    {
+        if (! $this->hasPermission($actor, 'users.create')
+            || $target->trashed()
+            || $target->status !== UserStatus::Pending) {
+            return false;
+        }
+
+        return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            || (
+                $actor->hasRole(self::ROLE_SUPER_ADMIN)
+                && $this->canAccessUser($actor, $target)
+            );
+    }
+
     public function activate(User $actor, User $target): bool
     {
         if (! $this->hasPermission($actor, 'users.activate') || $target->trashed()) {
