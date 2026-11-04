@@ -117,10 +117,10 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $superAdmin = $this->actor('super_admin', []);
         $cooperative = Cooperative::factory()->create();
 
-        $this->mock(\\App\\Domains\\Identity\\UserManagement\\Services\\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
             ->shouldReceive('assignSuperAdminToCooperative')
             ->once()
-            ->andThrow(new \\DomainException('Target status changed.'));
+            ->andThrow(new \DomainException('Target status changed.'));
 
         $this->actingAs($root)
             ->post(route('backoffice.super-admins.cooperatives.store', [$superAdmin, $cooperative]))
@@ -133,14 +133,14 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.view', 'users.assign_super_admin']);
         $superAdmin = $this->actor('super_admin', []);
         $cooperative = Cooperative::factory()->create();
-        $exception = new \\Illuminate\\Database\\QueryException(
+        $exception = new \Illuminate\Database\QueryException(
             'mysql',
             'insert into super_admin_cooperative',
             [],
-            new \\PDOException('Duplicate assignment.'),
+            new \PDOException('Duplicate assignment.'),
         );
 
-        $this->mock(\\App\\Domains\\Identity\\UserManagement\\Services\\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
             ->shouldReceive('assignSuperAdminToCooperative')
             ->once()
             ->andThrow($exception);
@@ -158,10 +158,10 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $superAdmin->cooperatives()->attach($cooperative->getKey());
 
-        $this->mock(\\App\\Domains\\Identity\\UserManagement\\Services\\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
             ->shouldReceive('removeSuperAdminFromCooperative')
             ->once()
-            ->andThrow(new \\DomainException('Target changed.'));
+            ->andThrow(new \DomainException('Target changed.'));
 
         $this->actingAs($root)
             ->delete(route('backoffice.super-admins.cooperatives.destroy', [$superAdmin, $cooperative]))
@@ -175,14 +175,14 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $superAdmin = $this->actor('super_admin', []);
         $cooperative = Cooperative::factory()->create();
         $superAdmin->cooperatives()->attach($cooperative->getKey());
-        $exception = new \\Illuminate\\Database\\QueryException(
+        $exception = new \Illuminate\Database\QueryException(
             'mysql',
             'delete from super_admin_cooperative',
             [],
-            new \\PDOException('Database conflict.'),
+            new \PDOException('Database conflict.'),
         );
 
-        $this->mock(\\App\\Domains\\Identity\\UserManagement\\Services\\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
             ->shouldReceive('removeSuperAdminFromCooperative')
             ->once()
             ->andThrow($exception);

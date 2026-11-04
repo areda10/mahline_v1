@@ -71,7 +71,7 @@ final class SuperAdminCooperativeAssignmentController
                 $superAdmin,
                 $cooperative,
             );
-        } catch (\\DomainException) {
+        } catch (\DomainException) {
             return redirect()
                 ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
                 ->with('error', 'Cette affectation n’est plus autorisée. Actualisez la page et vérifiez le statut du super administrateur.');
@@ -101,7 +101,7 @@ final class SuperAdminCooperativeAssignmentController
                 $superAdmin,
                 $cooperative,
             );
-        } catch (\\DomainException) {
+        } catch (\DomainException) {
             return redirect()
                 ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
                 ->with('error', 'Cette désaffectation n’est plus autorisée. Actualisez la page et vérifiez le statut du super administrateur.');
