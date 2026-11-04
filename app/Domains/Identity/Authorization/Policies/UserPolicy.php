@@ -89,10 +89,16 @@ final class UserPolicy extends BasePolicy
 
     public function create(User $actor): bool
     {
-        return $actor->hasAnyRole([
-            self::ROLE_SUPER_ADMIN_ROOT,
-            self::ROLE_SUPER_ADMIN,
-        ]) && $this->hasPermission($actor, 'users.create');
+        if (! $this->hasPermission($actor, 'users.create')) {
+            return false;
+        }
+
+        if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            return true;
+        }
+
+        return $actor->hasRole(self::ROLE_SUPER_ADMIN)
+            && $actor->cooperatives()->exists();
     }
 
     public function activate(User $actor, User $target): bool
