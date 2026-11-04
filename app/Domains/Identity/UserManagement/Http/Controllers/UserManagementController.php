@@ -94,7 +94,7 @@ final class UserManagementController
 
         try {
             $userManagementService->suspendUser($request->user(), $user);
-        } catch (\\DomainException) {
+        } catch (\DomainException) {
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');

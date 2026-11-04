@@ -84,7 +84,7 @@ final class UserLifecycleServiceTest extends TestCase
         self::assertNull(PersonalAccessToken::findToken($newToken->plainTextToken));
         self::assertSame(
             2,
-            \\App\\Domains\\Identity\\Authentication\\Models\\LoginHistory::query()
+            \App\Domains\Identity\Authentication\Models\LoginHistory::query()
                 ->where('user_id', $target->getKey())
                 ->where('event', 'session_revoked')
                 ->count(),
