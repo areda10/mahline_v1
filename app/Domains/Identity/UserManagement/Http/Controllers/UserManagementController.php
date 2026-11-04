@@ -40,7 +40,7 @@ final class UserManagementController
 
         $users = User::query()
             ->with([
-                'roles' => static fn (Builder $query) => $query->orderBy('name'),
+                'roles' => static fn ($query) => $query->orderBy('name'),
                 'cooperative',
             ])
             ->when(
