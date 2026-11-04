@@ -6,6 +6,7 @@ namespace App\Domains\Identity\UserManagement\Http\Requests;
 
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 final class CreateUserRequest extends FormRequest
@@ -13,7 +14,7 @@ final class CreateUserRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user() !== null
-            && $this->user()->can('create', User::class);
+            && Gate::forUser($this->user())->allows('create', User::class);
     }
 
     public function rules(): array
