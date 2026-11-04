@@ -155,6 +155,58 @@ final class UserInvitationService
     }
 
     /**
+     * Validate an invitation without consuming it.
+     *
+     * The invitation is checked again transactionally during acceptance.
+     */
+    public function validateInvitation(string $token): void
+    {
+        if ($token === '') {
+            throw new InvalidArgumentException(
+                'An invitation token is required.',
+            );
+        }
+
+        $tokenHash = hash('sha256', $token);
+
+        $invitation = UserInvitation::query()
+            ->where('token_hash', $tokenHash)
+            ->first();
+
+        if ($invitation === null) {
+            throw new DomainException(
+                'The invitation token is invalid.',
+            );
+        }
+
+        if (
+            $invitation->used_at !== null
+            || $invitation->revoked_at !== null
+            || now()->greaterThanOrEqualTo($invitation->expires_at)
+        ) {
+            throw new DomainException(
+                'The invitation is no longer valid.',
+            );
+        }
+
+        $user = User::query()
+            ->whereKey($invitation->user_id)
+            ->first();
+
+        if ($user === null) {
+            throw new DomainException(
+                'The invited user does not exist or is deleted.',
+            );
+        }
+
+        if ($user->status !== UserStatus::Pending) {
+            throw new DomainException(
+                'Only pending users can accept an invitation.',
+            );
+        }
+    }
+
+    /**
      * Accept an invitation and activate its pending user atomically.
      */
     public function acceptInvitation(
