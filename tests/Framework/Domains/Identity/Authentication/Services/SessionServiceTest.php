@@ -48,7 +48,7 @@ final class SessionServiceTest extends TestCase
                     'A session should not be created for status "%s".',
                     $status->value,
                 ));
-            } catch (\\RuntimeException $exception) {
+            } catch (\RuntimeException $exception) {
                 self::assertStringContainsString(
                     'user account is not active',
                     $exception->getMessage(),
@@ -71,7 +71,7 @@ final class SessionServiceTest extends TestCase
             'status' => UserStatus::Suspended,
         ])->save();
 
-        $this->expectException(\\RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage(
             'The user account is not active. A new session cannot be created.',
         );
