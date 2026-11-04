@@ -137,6 +137,9 @@ Route::prefix('back-office')
         Route::patch('users/{user}/restore-deleted', [UserManagementController::class, 'restoreDeleted'])
             ->name('users.restore-deleted');
 
+        Route::post('users/{user}/resend-invitation', [UserManagementController::class, 'resendInvitation'])
+            ->name('users.resend-invitation');
+            
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
             ->group(function (): void {

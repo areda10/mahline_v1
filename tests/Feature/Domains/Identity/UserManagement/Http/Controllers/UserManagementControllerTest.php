@@ -1075,6 +1075,180 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNull($invitation->used_at);
     }
 
+    public function test_root_can_resend_invitation_to_pending_user(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($root)
+            ->post(route('backoffice.users.resend-invitation', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.invitation_sent',
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_assigned_super_admin_can_resend_invitation_in_its_cooperative(): void
+    {
+        Notification::fake();
+
+        $cooperative = Cooperative::factory()->create();
+
+        $actor = $this->actor('super_admin', ['users.create']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.resend-invitation', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
+    public function test_super_admin_cannot_resend_invitation_outside_assigned_cooperatives(): void
+    {
+        Notification::fake();
+
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
+
+        $actor = $this->actor('super_admin', ['users.create']);
+        $actor->cooperatives()->attach($assigned->getKey());
+
+        $target = User::factory()->create([
+            'cooperative_id' => $unassigned->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.resend-invitation', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('user_invitations', [
+            'user_id' => $target->getKey(),
+        ]);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_cooperative_admin_and_regular_user_cannot_resend_invitations(): void
+    {
+        Notification::fake();
+
+        $cooperative = Cooperative::factory()->create();
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        foreach (['cooperative_admin', 'user'] as $roleSlug) {
+            $actor = $this->actor($roleSlug, ['users.create'], [
+                'cooperative_id' => $cooperative->getKey(),
+            ]);
+
+            $this->actingAs($actor)
+                ->post(route('backoffice.users.resend-invitation', $target))
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseMissing('user_invitations', [
+            'user_id' => $target->getKey(),
+        ]);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_invitation_cannot_be_resent_to_non_pending_user(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+
+        foreach ([
+            UserStatus::Active,
+            UserStatus::Inactive,
+            UserStatus::Suspended,
+            UserStatus::Archived,
+        ] as $status) {
+            $target = User::factory()->create([
+                'status' => $status,
+            ]);
+
+            $this->actingAs($root)
+                ->post(route('backoffice.users.resend-invitation', $target))
+                ->assertForbidden();
+        }
+
+        $this->assertDatabaseCount('user_invitations', 0);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_failed_resend_keeps_user_pending_and_revokes_new_invitation(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.create']);
+
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+        ]);
+
+        Notification::extend('mail', function () {
+            return new class {
+                public function send(
+                    object $notifiable,
+                    object $notification,
+                ): void {
+                    throw new RuntimeException('Mail transport unavailable.');
+                }
+            };
+        });
+
+        $this->actingAs($root)
+            ->post(route('backoffice.users.resend-invitation', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('error')
+            ->assertSessionMissing('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Pending->value,
+        ]);
+
+        $invitation = UserInvitation::query()
+            ->where('user_id', $target->getKey())
+            ->firstOrFail();
+
+        $this->assertNotNull($invitation->revoked_at);
+        $this->assertNull($invitation->used_at);
+    }
+
     /**
      * @return array<string, string>
      */

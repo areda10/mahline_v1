@@ -84,6 +84,38 @@ final class UserManagementController
             );
     }
 
+    public function resendInvitation(
+        User $user,
+        UserInvitationService $invitationService,
+    ): RedirectResponse {
+        Gate::authorize('resendInvitation', $user);
+
+        try {
+            $invitationService->sendInvitation($user);
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with(
+                    'error',
+                    'L’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez réessayer.',
+                );
+        } catch (\DomainException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with(
+                    'error',
+                    'L’invitation n’a pas pu être renvoyée : le compte n’est plus en attente ou n’est plus disponible.',
+                );
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with(
+                'success',
+                'Une nouvelle invitation a été envoyée à l’adresse e-mail de cet utilisateur.',
+            );
+    }
+
     public function show(Request $request, User $user): View
     {
         Gate::authorize('view', $user);
