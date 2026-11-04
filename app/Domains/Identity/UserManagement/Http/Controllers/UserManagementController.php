@@ -6,6 +6,7 @@ namespace App\Domains\Identity\UserManagement\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -64,6 +65,11 @@ final class UserManagementController
             );
 
             $invitationService->sendInvitation($user);
+        } catch (UserInvitationDeliveryException) {
+            return back()->with(
+                'error',
+                'Le compte a été créé, mais l’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez renvoyer l’invitation.',
+            );
         } catch (\\DomainException $exception) {
             return back()
                 ->withInput()
