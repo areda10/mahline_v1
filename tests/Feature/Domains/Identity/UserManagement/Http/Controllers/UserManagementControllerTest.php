@@ -822,7 +822,7 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNull($created->cooperative_id);
         $this->assertNull($created->email_verified_at);
         $this->assertNotSame('password', $created->password);
-        $this->assertDatabaseHas('role_user', [
+        $this->assertDatabaseHas('user_role', [
             'user_id' => $created->getKey(),
             'role_id' => Role::query()->where('slug', 'super_admin')->value('id'),
         ]);
