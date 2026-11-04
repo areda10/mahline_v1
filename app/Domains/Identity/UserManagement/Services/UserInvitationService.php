@@ -129,6 +129,17 @@ final class UserInvitationService
                 $exception,
             );
         }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: 'identity.user.invitation_sent',
+            action: 'invitation_sent',
+            subjectType: User::class,
+            subjectId: (string) $invitation->user_id,
+            metadata: [
+                'invitation_id' => (string) $invitation->getKey(),
+                'expires_at' => $invitation->expires_at->toISOString(),
+            ],
+        ));
     }
 
     /**
