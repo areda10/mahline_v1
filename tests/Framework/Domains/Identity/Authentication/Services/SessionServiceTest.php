@@ -27,6 +27,61 @@ final class SessionServiceTest extends TestCase
         $this->sessionService = app(SessionService::class);
     }
 
+    public function test_session_creation_rejects_every_non_active_user_status(): void
+    {
+        foreach (UserStatus::cases() as $status) {
+            if ($status === UserStatus::Active) {
+                continue;
+            }
+
+            $user = User::factory()->create([
+                'status' => $status,
+            ]);
+
+            try {
+                $this->sessionService->create(
+                    user: $user,
+                    sessionId: 'blocked-' . $status->value,
+                );
+
+                self::fail(sprintf(
+                    'A session should not be created for status "%s".',
+                    $status->value,
+                ));
+            } catch (\\RuntimeException $exception) {
+                self::assertStringContainsString(
+                    'user account is not active',
+                    $exception->getMessage(),
+                );
+            }
+        }
+
+        $this->assertDatabaseCount('authentication_sessions', 0);
+    }
+
+    public function test_session_creation_rechecks_status_in_database_instead_of_trusting_stale_user_model(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $staleUser = User::query()->findOrFail($user->getKey());
+
+        $user->forceFill([
+            'status' => UserStatus::Suspended,
+        ])->save();
+
+        $this->expectException(\\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'The user account is not active. A new session cannot be created.',
+        );
+
+        $this->sessionService->create(
+            user: $staleUser,
+            sessionId: 'stale-user-session',
+        );
+    }
+
     /**
      * Test that a new authentication session can be created.
      */
