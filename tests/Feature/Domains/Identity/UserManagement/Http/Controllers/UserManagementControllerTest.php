@@ -10,7 +10,10 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\UserManagement\Models\UserInvitation;
+use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 final class UserManagementControllerTest extends TestCase
@@ -793,6 +796,253 @@ final class UserManagementControllerTest extends TestCase
         $this->actingAs($actor)
             ->get(route('backoffice.users.create'))
             ->assertForbidden();
+    }
+
+
+    public function test_root_can_create_super_admin_without_cooperative_assignment_and_send_invitation(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+
+        $payload = $this->validCreationPayload('super_admin');
+
+        $this->actingAs($root)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertRedirect(route('backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+        $this->assertSame(UserStatus::Pending, $created->status);
+        $this->assertNull($created->cooperative_id);
+        $this->assertNull($created->email_verified_at);
+        $this->assertNotSame('password', $created->password);
+        $this->assertDatabaseHas('role_user', [
+            'user_id' => $created->getKey(),
+            'role_id' => Role::query()->where('slug', 'super_admin')->value('id'),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.created',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $created->getKey(),
+        ]);
+
+        $invitation = UserInvitation::query()
+            ->where('user_id', $created->getKey())
+            ->firstOrFail();
+
+        $this->assertSame(64, strlen($invitation->token_hash));
+        $this->assertNull($invitation->used_at);
+        $this->assertNull($invitation->revoked_at);
+        $this->assertTrue($invitation->expires_at->between(
+            now()->addMinutes(59),
+            now()->addMinutes(61),
+        ));
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
+    public function test_root_can_create_cooperative_admin_and_user_in_selected_cooperative(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+
+        foreach (['cooperative_admin', 'user'] as $roleSlug) {
+            Role::query()->firstOrCreate(
+                ['slug' => $roleSlug],
+                ['name' => str($roleSlug)->replace('_', ' ')->title()->toString(), 'is_active' => true],
+            );
+
+            $payload = $this->validCreationPayload($roleSlug, $cooperative->getKey());
+
+            $this->actingAs($root)
+                ->post(route('backoffice.users.store'), $payload)
+                ->assertRedirect(route('backoffice.users.index'))
+                ->assertSessionHas('success');
+
+            $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+            $this->assertSame(UserStatus::Pending, $created->status);
+            $this->assertSame((string) $cooperative->getKey(), (string) $created->cooperative_id);
+            $this->assertTrue($created->roles()->where('slug', $roleSlug)->exists());
+            $this->assertDatabaseHas('user_invitations', [
+                'user_id' => $created->getKey(),
+                'used_at' => null,
+                'revoked_at' => null,
+            ]);
+        }
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
+    public function test_assigned_super_admin_can_create_cooperative_admin_or_user_only_in_assigned_cooperative(): void
+    {
+        Notification::fake();
+
+        $assigned = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.create']);
+        $actor->cooperatives()->attach($assigned->getKey());
+
+        foreach (['cooperative_admin', 'user'] as $roleSlug) {
+            Role::query()->firstOrCreate(
+                ['slug' => $roleSlug],
+                ['name' => str($roleSlug)->replace('_', ' ')->title()->toString(), 'is_active' => true],
+            );
+
+            $payload = $this->validCreationPayload($roleSlug, $assigned->getKey());
+
+            $this->actingAs($actor)
+                ->post(route('backoffice.users.store'), $payload)
+                ->assertRedirect(route('backoffice.users.index'))
+                ->assertSessionHas('success');
+
+            $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+            $this->assertSame(UserStatus::Pending, $created->status);
+            $this->assertSame((string) $assigned->getKey(), (string) $created->cooperative_id);
+            $this->assertTrue($created->roles()->where('slug', $roleSlug)->exists());
+        }
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
+    public function test_super_admin_without_assignment_cannot_create_user(): void
+    {
+        Notification::fake();
+
+        $actor = $this->actor('super_admin', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $payload = $this->validCreationPayload('user', $cooperative->getKey());
+
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
+    }
+
+    public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void
+    {
+        Notification::fake();
+
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.create']);
+        $actor->cooperatives()->attach($assigned->getKey());
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $payload = $this->validCreationPayload('user', $unassigned->getKey());
+
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
+    }
+
+    public function test_cooperative_admin_and_regular_user_cannot_create_users(): void
+    {
+        Notification::fake();
+
+        $cooperative = Cooperative::factory()->create();
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        foreach (['cooperative_admin', 'user'] as $roleSlug) {
+            $actor = $this->actor($roleSlug, ['users.create'], [
+                'cooperative_id' => $cooperative->getKey(),
+            ]);
+            $payload = $this->validCreationPayload(
+                'user',
+                $cooperative->getKey(),
+            );
+
+            $this->actingAs($actor)
+                ->post(route('backoffice.users.store'), $payload)
+                ->assertForbidden();
+
+            $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        }
+
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
+    }
+
+    public function test_failed_invitation_delivery_keeps_user_pending_and_revokes_invitation(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        $payload = $this->validCreationPayload('user', $cooperative->getKey());
+
+        Notification::shouldReceive('route')
+            ->once()
+            ->with('mail', $payload['email'])
+            ->andReturnUsing(function (): object {
+                return new class {
+                    public function notify(object $notification): void
+                    {
+                        throw new RuntimeException('Mail transport unavailable.');
+                    }
+                };
+            });
+
+        $this->actingAs($root)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+        $this->assertSame(UserStatus::Pending, $created->status);
+        $invitation = UserInvitation::query()
+            ->where('user_id', $created->getKey())
+            ->firstOrFail();
+        $this->assertNotNull($invitation->revoked_at);
+        $this->assertNull($invitation->used_at);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function validCreationPayload(
+        string $roleSlug,
+        string|int|null $cooperativeId = null,
+    ): array {
+        return [
+            'first_name' => 'Amina',
+            'last_name' => 'Test',
+            'email' => fake()->unique()->safeEmail(),
+            'telephone' => '+212600000000',
+            'role_slug' => $roleSlug,
+            ...($cooperativeId === null ? [] : [
+                'cooperative_id' => (string) $cooperativeId,
+            ]),
+        ];
     }
 
     /** @param list<string> $permissions
