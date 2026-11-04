@@ -988,42 +988,82 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    // public function test_failed_invitation_delivery_keeps_user_pending_and_revokes_invitation(): void
+    // {
+    //     $root = $this->actor('super_admin_root', ['users.create']);
+    //     $cooperative = Cooperative::factory()->create();
+    //     Role::query()->firstOrCreate(
+    //         ['slug' => 'user'],
+    //         ['name' => 'User', 'is_active' => true],
+    //     );
+
+    //     $payload = $this->validCreationPayload('user', $cooperative->getKey());
+
+    //     Notification::shouldReceive('route')
+    //         ->once()
+    //         ->with('mail', $payload['email'])
+    //         ->andReturnUsing(function (): object {
+    //             return new class {
+    //                 public function notify(object $notification): void
+    //                 {
+    //                     throw new RuntimeException('Mail transport unavailable.');
+    //                 }
+    //             };
+    //         });
+
+    //     $this->actingAs($root)
+    //         ->post(route('backoffice.users.store'), $payload)
+    //         ->assertRedirect()
+    //         ->assertSessionHas('error');
+
+    //     $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+    //     $this->assertSame(UserStatus::Pending, $created->status);
+    //     $invitation = UserInvitation::query()
+    //         ->where('user_id', $created->getKey())
+    //         ->firstOrFail();
+    //     $this->assertNotNull($invitation->revoked_at);
+    //     $this->assertNull($invitation->used_at);
+    // }
     public function test_failed_invitation_delivery_keeps_user_pending_and_revokes_invitation(): void
     {
         $root = $this->actor('super_admin_root', ['users.create']);
+
         $cooperative = Cooperative::factory()->create();
+
         Role::query()->firstOrCreate(
             ['slug' => 'user'],
             ['name' => 'User', 'is_active' => true],
         );
 
-        $payload = $this->validCreationPayload('user', $cooperative->getKey());
+        $payload = $this->validCreationPayload(
+            'user',
+            $cooperative->getKey(),
+        );
 
-        Notification::shouldReceive('route')
-            ->once()
-            ->with('mail', $payload['email'])
-            ->andReturnUsing(function (): object {
-                return new class {
-                    public function notify(object $notification): void
-                    {
-                        throw new RuntimeException('Mail transport unavailable.');
-                    }
-                };
-            });
+        /*
+        |--------------------------------------------------------------------------
+        | Diagnostic temporaire
+        |--------------------------------------------------------------------------
+        | On retire volontairement le mock Notification::shouldReceive()
+        | pour identifier pourquoi l'envoi de l'invitation n'est pas atteint.
+        */
 
-        $this->actingAs($root)
-            ->post(route('backoffice.users.store'), $payload)
-            ->assertRedirect()
-            ->assertSessionHas('error');
+        $response = $this->actingAs($root)
+            ->post(route('backoffice.users.store'), $payload);
 
-        $created = User::query()->where('email', $payload['email'])->firstOrFail();
+        dump([
+            'status' => $response->status(),
+            'content' => $response->getContent(),
+            'errors' => session()->get('errors')?->all(),
+            'error' => session()->get('error'),
+            'success' => session()->get('success'),
+            'redirect' => $response->headers->get('Location'),
+        ]);
 
-        $this->assertSame(UserStatus::Pending, $created->status);
-        $invitation = UserInvitation::query()
-            ->where('user_id', $created->getKey())
-            ->firstOrFail();
-        $this->assertNotNull($invitation->revoked_at);
-        $this->assertNull($invitation->used_at);
+        $this->fail(
+            'Diagnostic temporaire : consulter les informations affichées ci-dessus.',
+        );
     }
 
     /**
