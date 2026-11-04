@@ -100,6 +100,12 @@ Route::prefix('back-office')
         Route::get('users', [UserManagementController::class, 'index'])
             ->name('users.index');
 
+        Route::get('users/create', [UserManagementController::class, 'create'])
+            ->name('users.create');
+
+        Route::post('users', [UserManagementController::class, 'store'])
+            ->name('users.store');
+
         Route::get('users/{user}', [UserManagementController::class, 'show'])
             ->name('users.show');
 
