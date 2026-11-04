@@ -704,6 +704,97 @@ final class UserManagementControllerTest extends TestCase
         $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
     }
 
+    public function test_root_can_access_user_creation_form_with_all_allowed_roles(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.create']);
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'cooperative_admin'],
+            ['name' => 'Cooperative Admin', 'is_active' => true],
+        );
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.create'))
+            ->assertOk()
+            ->assertViewIs('backoffice.users.create')
+            ->assertSee('value="super_admin"', false)
+            ->assertSee('value="cooperative_admin"', false)
+            ->assertSee('value="user"', false);
+    }
+
+    public function test_assigned_super_admin_can_access_user_creation_form_with_limited_roles_and_cooperatives(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+
+        $actor = $this->actor('super_admin', ['users.create']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'cooperative_admin'],
+            ['name' => 'Cooperative Admin', 'is_active' => true],
+        );
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.create'))
+            ->assertOk()
+            ->assertViewIs('backoffice.users.create')
+            ->assertDontSee('value="super_admin"', false)
+            ->assertSee('value="cooperative_admin"', false)
+            ->assertSee('value="user"', false)
+            ->assertSee($cooperative->name);
+    }
+
+    public function test_super_admin_without_cooperative_assignment_cannot_access_user_creation_form(): void
+    {
+        $actor = $this->actor('super_admin', ['users.create']);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.create'))
+            ->assertForbidden();
+    }
+
+    public function test_cooperative_admin_cannot_access_user_creation_form(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+
+        $actor = $this->actor('cooperative_admin', ['users.create'], [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.create'))
+            ->assertForbidden();
+    }
+
+    public function test_regular_user_cannot_access_user_creation_form(): void
+    {
+        $actor = $this->actor('user', ['users.create']);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.create'))
+            ->assertForbidden();
+    }
+
     /** @param list<string> $permissions
      *  @param array<string, mixed> $attributes
      */
