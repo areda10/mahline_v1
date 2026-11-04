@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\UserManagement\Http\Controllers;
 
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\UserManagement\Services\UserInvitationService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +19,65 @@ use Illuminate\View\View;
 
 final class UserManagementController
 {
+    public function create(Request $request): View
+    {
+        Gate::authorize('create', User::class);
+
+        $actor = $request->user();
+
+        $allowedRoles = $actor->hasRole('super_admin_root')
+            ? ['super_admin', 'cooperative_admin', 'user']
+            : ['cooperative_admin', 'user'];
+
+        $roles = Role::query()
+            ->where('is_active', true)
+            ->whereIn('slug', $allowedRoles)
+            ->orderBy('name')
+            ->get(['name', 'slug']);
+
+        $cooperatives = Cooperative::query()
+            ->visibleTo($actor)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('backoffice.users.create', [
+            'roles' => $roles,
+            'cooperatives' => $cooperatives,
+        ]);
+    }
+
+    public function store(
+        CreateUserRequest $request,
+        UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
+    ): RedirectResponse {
+        $data = $request->validated();
+
+        $roleSlug = $data['role_slug'];
+        unset($data['role_slug']);
+
+        try {
+            $user = $userManagementService->createUser(
+                $request->user(),
+                $data,
+                $roleSlug,
+            );
+
+            $invitationService->sendInvitation($user);
+        } catch (\\DomainException $exception) {
+            return back()
+                ->withInput()
+                ->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('backoffice.users.index')
+            ->with(
+                'success',
+                'Le compte a été créé. Une invitation a été envoyée à son adresse e-mail.',
+            );
+    }
+
     public function show(Request $request, User $user): View
     {
         Gate::authorize('view', $user);
