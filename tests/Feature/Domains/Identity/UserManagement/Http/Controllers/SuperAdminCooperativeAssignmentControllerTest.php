@@ -117,7 +117,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $superAdmin = $this->actor('super_admin', []);
         $cooperative = Cooperative::factory()->create();
 
-        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
             ->shouldReceive('assignSuperAdminToCooperative')
             ->once()
             ->andThrow(new \DomainException('Target status changed.'));
@@ -140,7 +140,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
             new \PDOException('Duplicate assignment.'),
         );
 
-        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
             ->shouldReceive('assignSuperAdminToCooperative')
             ->once()
             ->andThrow($exception);
@@ -158,7 +158,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $superAdmin->cooperatives()->attach($cooperative->getKey());
 
-        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
             ->shouldReceive('removeSuperAdminFromCooperative')
             ->once()
             ->andThrow(new \DomainException('Target changed.'));
@@ -182,7 +182,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
             new \PDOException('Database conflict.'),
         );
 
-        $this->mock(\App\Domains\Identity\UserManagement\Services\UserManagementService::class)
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
             ->shouldReceive('removeSuperAdminFromCooperative')
             ->once()
             ->andThrow($exception);
