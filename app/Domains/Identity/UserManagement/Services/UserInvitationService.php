@@ -7,6 +7,7 @@ namespace App\Domains\Identity\UserManagement\Services;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
 use App\Domains\Identity\Users\Models\User;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Throwable;
 
 final class UserInvitationService
 {
@@ -35,10 +37,10 @@ final class UserInvitationService
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
-        $invitation = DB::transaction(function () use (
+        [$invitation, $recipientEmail] = DB::transaction(function () use (
             $user,
             $token,
-        ): UserInvitation {
+        ): array {
             $lockedUser = User::query()
                 ->whereKey($user->getKey())
                 ->lockForUpdate()
@@ -74,8 +76,8 @@ final class UserInvitationService
             ]);
 
             $this->audit->record(new AuditEntryDTO(
-                eventKey: 'identity.user.invitation_sent',
-                action: 'invitation_sent',
+                eventKey: 'identity.user.invitation_created',
+                action: 'invitation_created',
                 cooperativeId: $lockedUser->cooperative_id
                     ? (string) $lockedUser->cooperative_id
                     : null,
@@ -87,7 +89,7 @@ final class UserInvitationService
                 ],
             ));
 
-            return $invitation;
+            return [$invitation, $lockedUser->email];
         });
 
         $invitationUrl = rtrim(
@@ -100,9 +102,33 @@ final class UserInvitationService
             'token' => $token,
         ]);
 
-        Notification::route('mail', $user->email)->notify(
-            new UserInvitationNotification($invitationUrl),
-        );
+        try {
+            Notification::route('mail', $recipientEmail)->notify(
+                new UserInvitationNotification($invitationUrl),
+            );
+        } catch (Throwable $exception) {
+            // A failed (or ambiguous) delivery must never leave a usable link.
+            DB::transaction(function () use ($invitation): void {
+                $lockedInvitation = UserInvitation::query()
+                    ->whereKey($invitation->getKey())
+                    ->lockForUpdate()
+                    ->first();
+
+                if (
+                    $lockedInvitation !== null
+                    && $lockedInvitation->used_at === null
+                    && $lockedInvitation->revoked_at === null
+                ) {
+                    $lockedInvitation->revoked_at = now();
+                    $lockedInvitation->save();
+                }
+            });
+
+            throw new UserInvitationDeliveryException(
+                'The user was created, but the invitation email could not be delivered.',
+                $exception,
+            );
+        }
     }
 
     /**
