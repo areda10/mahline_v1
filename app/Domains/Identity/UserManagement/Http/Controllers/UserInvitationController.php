@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\UserManagement\Http\Controllers;
 
+use App\Domains\Identity\UserManagement\Http\Requests\AcceptUserInvitationRequest;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
@@ -35,13 +36,9 @@ final class UserInvitationController
         ]);
     }
 
-    public function accept(Request $request): RedirectResponse
+    public function accept(AcceptUserInvitationRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'token' => ['required', 'string'],
-            'password' => ['required', 'string', 'confirmed'],
-            'password_confirmation' => ['required', 'string'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $this->invitationService->acceptInvitation(
