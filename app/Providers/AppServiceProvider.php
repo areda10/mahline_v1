@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
+use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Workflows\NullAuthenticationWorkflowHook;
 use Illuminate\Support\ServiceProvider;
@@ -17,6 +19,11 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(
+            SuperAdminCooperativeAssignmentService::class,
+            UserManagementService::class,
+        );
+
         $this->app->bind( 
                         AuthenticationWorkflowHook::class, 
                         NullAuthenticationWorkflowHook::class, 
