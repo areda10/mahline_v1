@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\UserManagement\Services\UserManagementService;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
@@ -18,7 +18,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class SuperAdminCooperativeAssignmentController
 {
     public function __construct(
-        private readonly UserManagementService $userManagementService,
+        private readonly SuperAdminCooperativeAssignmentService $userManagementService,
     ) {
     }
 
