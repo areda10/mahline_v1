@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\UserManagement\Http\Requests;
 
-use App\Domains\Identity\Users\Rules\ValidPassword;
+use App\Domains\Identity\Password\Rules\ValidPassword;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class AcceptUserInvitationRequest extends FormRequest
