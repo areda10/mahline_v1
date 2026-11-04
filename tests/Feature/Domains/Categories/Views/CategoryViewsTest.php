@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Categories\Views;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
@@ -28,6 +29,7 @@ final class CategoryViewsTest extends TestCase
         $this->actingAs(User::factory()->create([
             'cooperative_id' => $this->cooperative->getKey(),
         ]));
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
         Gate::before(static fn (): bool => true);
     }

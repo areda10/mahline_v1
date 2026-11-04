@@ -12,7 +12,10 @@ use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class UserManagementServiceTest extends TestCase
@@ -114,7 +117,7 @@ final class UserManagementServiceTest extends TestCase
         ); 
     }
 
-    public function test_cooperative_admin_can_create_user_in_own_cooperative(): void
+    public function test_cooperative_admin_cannot_create_user_in_own_cooperative(): void
     {
         $cooperative = $this->createCooperative();
 
@@ -123,13 +126,18 @@ final class UserManagementServiceTest extends TestCase
             $cooperative->id,
         );
 
-        $user = $this->service->createUser(
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'The actor is not authorized to assign the "user" role.',
+        );
+
+        $this->service->createUser(
             $admin,
             [
-                'first_name' => 'Local',
+                'first_name' => 'Blocked',
                 'last_name' => 'User',
-                'display_name' => 'Local User',
-                'email' => 'local@example.com',
+                'display_name' => 'Blocked User',
+                'email' => 'blocked-local@example.com',
                 'telephone' => '+212600000004',
                 'password' => 'Password123',
                 'status' => UserStatus::Active,
@@ -137,12 +145,9 @@ final class UserManagementServiceTest extends TestCase
             ],
             'user',
         );
-
-        self::assertSame($cooperative->id, $user->cooperative_id);
-        self::assertTrue($user->hasRole('user'));
     }
 
-    public function test_cooperative_admin_cannot_create_user_in_another_cooperative(): void
+    public function test_cooperative_admin_cannot_create_user_outside_own_cooperative(): void
     {
         $country = Country::factory()->create();
 
@@ -608,13 +613,11 @@ final class UserManagementServiceTest extends TestCase
         ]);
     }
 
-    public function test_assigning_existing_super_admin_does_not_duplicate_audit_event(): void
+    public function test_repeated_super_admin_assignment_is_idempotent(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
         $cooperative = $this->createCooperative();
         $superAdmin = $this->createUserWithRole('super_admin');
-
-        $superAdmin->cooperatives()->attach($cooperative->id);
 
         $this->service->assignSuperAdminToCooperative(
             $root,
@@ -622,8 +625,19 @@ final class UserManagementServiceTest extends TestCase
             $cooperative,
         );
 
-        $this->assertDatabaseMissing('audit_events', [
+        $this->service->assignSuperAdminToCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        $this->assertDatabaseCount('super_admin_cooperative', 1);
+
+        $this->assertDatabaseCount('audit_events', 1);
+
+        $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.super_admin.cooperative_assigned',
+            'action' => 'assigned',
             'actor_id' => $root->id,
             'cooperative_id' => $cooperative->id,
             'subject_id' => $superAdmin->id,
@@ -687,6 +701,29 @@ final class UserManagementServiceTest extends TestCase
 
         $this->assertDatabaseMissing('users', [
             'email' => 'rollback@example.com',
+        ]);
+    }
+
+    public function test_database_rejects_duplicate_super_admin_cooperative_assignment(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $this->service->assignSuperAdminToCooperative(
+            $root,
+            $superAdmin,
+            $cooperative,
+        );
+
+        $this->expectException(QueryException::class);
+
+        DB::table('super_admin_cooperative')->insert([
+            'id' => (string) Str::ulid(),
+            'super_admin_id' => $superAdmin->id,
+            'cooperative_id' => $cooperative->id,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }

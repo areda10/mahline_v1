@@ -1,0 +1,520 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Domains\Identity\UserManagement\Http\Controllers;
+
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+final class UserManagementControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+    }
+
+    public function test_root_sees_users_with_and_without_cooperative_assignments(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $cooperative = Cooperative::factory()->create(['name' => 'Coopérative visible']);
+        $assignedUser = User::factory()->create([
+            'display_name' => 'Utilisateur affecté',
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unassignedSuperAdmin = $this->actor('super_admin', [], [
+            'display_name' => 'Super admin non affecté',
+        ]);
+        $userWithoutCooperative = User::factory()->create([
+            'display_name' => 'Utilisateur sans coopérative',
+            'cooperative_id' => null,
+        ]);
+
+        $response = $this->actingAs($root)
+            ->get(route('backoffice.users.index'));
+
+        $response->assertOk()
+            ->assertViewIs('backoffice.users.index')
+            ->assertSee('Utilisateur affecté')
+            ->assertSee('Super admin non affecté')
+            ->assertSee('Utilisateur sans coopérative')
+            ->assertSee('Coopérative visible')
+            ->assertSee('Aucune coopérative');
+    }
+
+    public function test_root_can_filter_users_by_search_role_and_status(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = $this->actor('super_admin', [], [
+            'first_name' => 'Amina',
+            'last_name' => 'Test',
+            'display_name' => 'Amina Test',
+            'email' => 'amina@example.test',
+            'status' => UserStatus::Inactive,
+        ]);
+        $this->actor('user', [], ['display_name' => 'Autre utilisateur']);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.index', [
+                'search' => 'amina',
+                'role' => 'super_admin',
+                'status' => UserStatus::Inactive->value,
+            ]))
+            ->assertOk()
+            ->assertSee('Amina Test')
+            ->assertDontSee('Autre utilisateur');
+    }
+
+    public function test_root_can_view_user_detail_and_main_cooperative(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $cooperative = Cooperative::factory()->create(['name' => 'Coopérative détail']);
+        $target = User::factory()->create([
+            'display_name' => 'Utilisateur détaillé',
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertViewIs('backoffice.users.show')
+            ->assertSee('Utilisateur détaillé')
+            ->assertSee('Coopérative détail');
+    }
+
+    public function test_root_can_view_super_admin_cooperative_assignments(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $superAdmin = $this->actor('super_admin', [], [
+            'display_name' => 'Administrateur global',
+        ]);
+        $first = Cooperative::factory()->create(['name' => 'Coopérative Alpha']);
+        $second = Cooperative::factory()->create(['name' => 'Coopérative Beta']);
+        $superAdmin->cooperatives()->attach([
+            $first->getKey(),
+            $second->getKey(),
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $superAdmin))
+            ->assertOk()
+            ->assertSee('Administrateur global')
+            ->assertSee('Affectations aux coopératives')
+            ->assertSee('Coopérative Alpha')
+            ->assertSee('Coopérative Beta');
+    }
+
+    public function test_root_can_view_user_detail_without_cooperative(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte indépendant',
+            'cooperative_id' => null,
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Compte indépendant')
+            ->assertSee('Aucune coopérative');
+    }
+
+    public function test_non_root_user_cannot_view_global_user_detail(): void
+    {
+        $actor = $this->actor('super_admin', ['users.view']);
+        $target = User::factory()->create();
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertForbidden();
+    }
+
+    public function test_root_without_users_view_permission_cannot_view_user_detail(): void
+    {
+        $root = $this->actor('super_admin_root', []);
+        $target = User::factory()->create();
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertForbidden();
+    }
+
+    public function test_missing_user_detail_returns_not_found(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', '01J00000000000000000000000'))
+            ->assertNotFound();
+    }
+
+    public function test_root_can_activate_a_pending_user_from_the_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à activer',
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_root_can_activate_a_suspended_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Suspended,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_root_can_deactivate_an_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.deactivate']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à désactiver',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.deactivate', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Inactive->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_user_activation_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Pending]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Pending->value,
+        ]);
+    }
+
+    public function test_user_deactivation_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.deactivate', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_root_cannot_activate_an_already_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.activate', $target))
+            ->assertForbidden();
+    }
+
+    public function test_root_can_archive_an_active_user_from_the_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.archive']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte à archiver',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.archive', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Archived->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_root_can_restore_an_archived_user_to_active(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte archivé',
+            'status' => UserStatus::Archived,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore', $target))
+            ->assertRedirect(route('backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_archiving_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.archive', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_restoring_archived_user_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Archived->value,
+        ]);
+    }
+
+    public function test_non_root_user_cannot_archive_or_restore_users(): void
+    {
+        $actor = $this->actor('super_admin', ['users.archive', 'users.restore']);
+        $active = User::factory()->create(['status' => UserStatus::Active]);
+        $archived = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($actor)
+            ->patch(route('backoffice.users.archive', $active))
+            ->assertForbidden();
+
+        $this->patch(route('backoffice.users.restore', $archived))
+            ->assertForbidden();
+    }
+
+    public function test_archived_user_cannot_be_archived_again(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.archive']);
+        $target = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.archive', $target))
+            ->assertForbidden();
+    }
+
+    public function test_non_archived_user_cannot_be_restored(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore', $target))
+            ->assertForbidden();
+    }
+
+    public function test_non_root_user_is_forbidden_from_global_user_list(): void
+    {
+        $actor = $this->actor('super_admin', ['users.view']);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.index'))
+            ->assertForbidden();
+    }
+
+    public function test_user_without_users_view_permission_is_forbidden(): void
+    {
+        $root = $this->actor('super_admin_root', []);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.index'))
+            ->assertForbidden();
+    }
+
+    public function test_root_can_soft_delete_user_from_detail_page(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.delete']);
+        $target = User::factory()->create(['display_name' => 'Compte à supprimer']);
+
+        $this->actingAs($root)
+            ->delete(route('backoffice.users.destroy', $target))
+            ->assertRedirect(route('backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.deleted',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_user_deletion_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
+
+        $this->actingAs($root)
+            ->delete(route('backoffice.users.destroy', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_non_root_user_cannot_soft_delete_or_restore_deleted_users(): void
+    {
+        $actor = $this->actor('super_admin', ['users.delete', 'users.restore_deleted']);
+        $active = User::factory()->create();
+        $deleted = User::factory()->create();
+        $deleted->delete();
+
+        $this->actingAs($actor)
+            ->delete(route('backoffice.users.destroy', $active))
+            ->assertForbidden();
+
+        $this->patch(route('backoffice.users.restore-deleted', $deleted->getKey()))
+            ->assertForbidden();
+    }
+
+    public function test_root_can_list_and_restore_soft_deleted_users(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.restore_deleted']);
+        $target = User::factory()->create([
+            'display_name' => 'Compte supprimé à restaurer',
+            'status' => UserStatus::Inactive,
+        ]);
+        $target->delete();
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.index', ['deleted' => 1]))
+            ->assertOk()
+            ->assertSee('Compte supprimé à restaurer')
+            ->assertSee('Comptes supprimés logiquement')
+            ->assertSee(route('backoffice.users.restore-deleted', $target->getKey()));
+
+        $this->patch(route('backoffice.users.restore-deleted', $target->getKey()))
+            ->assertRedirect(route('backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'deleted_at' => null,
+            'status' => UserStatus::Inactive->value,
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.restored',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_restoring_deleted_user_requires_its_specific_permission(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
+        $target->delete();
+
+        $this->actingAs($root)
+            ->patch(route('backoffice.users.restore-deleted', $target->getKey()))
+            ->assertForbidden();
+
+        $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
+    }
+
+    /** @param list<string> $permissions
+     *  @param array<string, mixed> $attributes
+     */
+    private function actor(string $roleSlug, array $permissions, array $attributes = []): User
+    {
+        $actor = User::factory()->create($attributes);
+
+        $role = Role::query()->firstOrCreate(
+            ['slug' => $roleSlug],
+            ['name' => str($roleSlug)->replace('_', ' ')->title()->toString(), 'is_active' => true],
+        );
+
+        foreach ($permissions as $slug) {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => str($slug)->replace('.', ' ')->title()->toString(), 'is_active' => true],
+            );
+
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
+
+        $actor->roles()->syncWithoutDetaching([$role->getKey()]);
+
+        return $actor;
+    }
+}

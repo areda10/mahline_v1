@@ -8,14 +8,25 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 final class CooperativeControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Les tests du contrôleur coopérative isolent les règles métier et d'autorisation.
+        // Le middleware de session MAHLINE est couvert par ses tests d'intégration dédiés.
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+    }
 
     public function test_super_admin_index_lists_only_assigned_cooperatives(): void
     {
@@ -163,6 +174,25 @@ final class CooperativeControllerTest extends TestCase
             'id' => $cooperative->getKey(),
             'deleted_at' => null,
         ]);
+    }
+
+    public function test_cooperative_specific_abilities_cannot_use_generic_permissions(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('cooperative_admin', [
+            'activate',
+            'deactivate',
+            'suspend',
+            'archive',
+            'restore',
+        ], ['cooperative_id' => $cooperative->getKey()]);
+
+        foreach (['activate', 'deactivate', 'suspend', 'archive', 'restore'] as $ability) {
+            $this->assertFalse(
+                Gate::forUser($actor)->allows($ability, $cooperative),
+                sprintf('The generic "%s" permission must not bypass CooperativePolicy.', $ability),
+            );
+        }
     }
 
     public function test_index_requires_view_permission(): void

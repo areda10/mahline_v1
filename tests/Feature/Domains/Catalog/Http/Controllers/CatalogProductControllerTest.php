@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Catalog\Http\Controllers;
 
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,6 +34,7 @@ final class CatalogProductControllerTest extends TestCase
         ]);
 
         $this->actingAs($user);
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
         Gate::before(static fn (): bool => true);
 

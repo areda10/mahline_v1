@@ -1,6 +1,6 @@
 # MAHLINE — SESSION STANDARD
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** GELÉ
 **Domain:** Identity / Authentication
 
@@ -87,7 +87,8 @@ Global revocation:
 * ignores already revoked sessions;
 * ignores deleted sessions;
 * preserves the global revocation reason;
-* does not create individual logout history entries for every session.
+* records one `session_revoked` LoginHistory entry and one Audit event per revoked session;
+* does not misclassify a global revocation as an individual user logout.
 
 ## 8. Current session
 
@@ -101,16 +102,25 @@ An active session may update its last activity.
 
 A revoked session cannot update its activity.
 
-## 10. Tests
+## 10. Revocation enforcement
+
+Protected back-office requests must validate the authentication session referenced by the Laravel session. The authentication-session ULID and the current Laravel session identifier must both match an active record owned by the authenticated user.
+
+If the record is missing, revoked, deleted, belongs to another user, or does not match the current Laravel session identifier, the request must log out the user, invalidate the Laravel session, regenerate the CSRF token, and redirect to the login page.
+
+The middleware is `EnsureActiveAuthenticationSession` and is applied to the authenticated back-office route group. Deactivation, suspension, archiving, and logical deletion revoke every active Web session; the next protected request is therefore rejected.
+
+## 11. Tests
 
 Covered by:
 
 * `AuthenticationSessionTest`
 * `SessionServiceTest`
+* `EnsureActiveAuthenticationSessionTest`
 * `AuthenticationWorkflowTest`
 * `AuthenticationWorkflowTransactionTest`
 
-## 11. Freeze rule
+## 12. Freeze rule
 
 The multiple-active-Web-session rule is a core security decision.
 

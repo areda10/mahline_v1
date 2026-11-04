@@ -18,8 +18,21 @@ final class PermissionSeeder extends Seeder
             // Cooperatives
             'cooperatives.view' => 'Consulter les coopératives',
             'cooperatives.create' => 'Créer une coopérative',
-            'cooperatives.update' => 'Modifier une coopérative',
-            'cooperatives.delete' => 'Supprimer une coopérative',
+            'cooperatives.update' => 'Modifier les coopératives',
+            'cooperatives.delete' => 'Supprimer les coopératives',
+
+            // User management
+            'users.view' => 'Consulter les utilisateurs',
+            'users.create' => 'Créer les utilisateurs',
+            'users.activate' => 'Activer les utilisateurs',
+            'users.deactivate' => 'Désactiver les utilisateurs',
+            'users.suspend' => 'Suspendre les utilisateurs',
+            'users.archive' => 'Archiver les utilisateurs',
+            'users.restore' => 'Restaurer les utilisateurs archivés',
+            'users.delete' => 'Supprimer logiquement les utilisateurs',
+            'users.restore_deleted' => 'Restaurer les utilisateurs supprimés logiquement',
+            'users.assign_super_admin' => 'Affecter un super administrateur à une coopérative',
+            'users.unassign_super_admin' => 'Retirer l’affectation d’un super administrateur',
 
             // Catalogs
             'catalogs.view' => 'Consulter les catalogues',

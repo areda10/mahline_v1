@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domains\Identity\Authentication\Http\Middleware;
+
+use App\Domains\Identity\Authentication\Services\SessionService;
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
+
+final class EnsureActiveAuthenticationSession
+{
+    public function __construct(
+        private readonly SessionService $sessions,
+    ) {
+    }
+
+    public function handle(Request $request, Closure $next): Response
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return $next($request);
+        }
+
+        $authenticationSessionId = $request->session()->get(
+            'authentication_session_id',
+        );
+
+        $authenticationSession = is_string($authenticationSessionId)
+            ? $this->sessions->findActiveById($user, $authenticationSessionId)
+            : null;
+
+        if (
+            ! $user->isAuthorized()
+            || $authenticationSession === null
+            || ! hash_equals(
+                $authenticationSession->session_id,
+                $request->session()->getId(),
+            )
+        ) {
+            Auth::logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('authentication.login');
+        }
+
+        $this->sessions->touch($authenticationSession);
+
+        return $next($request);
+    }
+}

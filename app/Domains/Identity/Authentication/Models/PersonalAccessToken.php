@@ -18,4 +18,32 @@ final class PersonalAccessToken extends SanctumPersonalAccessToken
     public $incrementing = false;
 
     public $timestamps = true;
+
+    protected function casts(): array
+    {
+        return [
+            'abilities' => 'json',
+            'last_used_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'revoked_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * Sanctum resolves bearer credentials through this method.
+     * A revoked token must never be returned as an authenticated token.
+     */
+    public static function findToken($token): ?static
+    {
+        $personalAccessToken = parent::findToken($token);
+
+        if (
+            $personalAccessToken === null
+            || $personalAccessToken->revoked_at !== null
+        ) {
+            return null;
+        }
+
+        return $personalAccessToken;
+    }
 }

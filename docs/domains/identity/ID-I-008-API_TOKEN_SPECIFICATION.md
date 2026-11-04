@@ -10,7 +10,7 @@ IDENTITY / AUTHENTICATION / API TOKEN
 
 ### Version
 
-1.1
+1.2
 
 ### Statut
 
@@ -115,7 +115,7 @@ last_used_at
 revoked_at
 ```
 
-Les colonnes exactes dépendent de la migration finale.
+Les colonnes exactes dépendent de la migration finale. La migration complémentaire MAHLINE ajoute `revoked_at` à `personal_access_tokens` sans modifier la migration initiale.
 
 ---
 
@@ -1142,6 +1142,12 @@ ID-001-ARCHITECTURE.md
 
 ## Historique des versions
 
+### Version 1.2
+
+* Ajout de la révocation persistante via `revoked_at`.
+* Une credential révoquée reste conservée pour la traçabilité mais Sanctum ne doit plus la résoudre.
+* Révocation des tokens actifs lors de la désactivation, suspension, archivage ou suppression logique d'un User.
+
 ### Version 1.1
 
 * Alignement de la spécification API Token avec la règle officielle de sessions Web multiples.
@@ -1188,7 +1194,7 @@ respecter les permissions
 
 ```text
 DOCUMENT : API_TOKEN_SPECIFICATION.md
-VERSION  : 1.0
+VERSION  : 1.2
 DOMAINE  : IDENTITY / AUTHENTICATION
 STATUT   : OFFICIEL — GELÉ
 ```

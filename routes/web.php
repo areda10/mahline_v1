@@ -5,6 +5,9 @@ use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
+use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -91,8 +94,51 @@ Route::get('/', function () {
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth'])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
     ->group(function (): void {
+
+        Route::get('users', [UserManagementController::class, 'index'])
+            ->name('users.index');
+
+        Route::get('users/{user}', [UserManagementController::class, 'show'])
+            ->name('users.show');
+
+        Route::patch('users/{user}/activate', [UserManagementController::class, 'activate'])
+            ->name('users.activate');
+
+        Route::patch('users/{user}/deactivate', [UserManagementController::class, 'deactivate'])
+            ->name('users.deactivate');
+
+        Route::patch('users/{user}/archive', [UserManagementController::class, 'archive'])
+            ->name('users.archive');
+
+        Route::patch('users/{user}/restore', [UserManagementController::class, 'restore'])
+            ->name('users.restore');
+
+        Route::delete('users/{user}', [UserManagementController::class, 'destroy'])
+            ->name('users.destroy');
+
+        Route::patch('users/{user}/restore-deleted', [UserManagementController::class, 'restoreDeleted'])
+            ->name('users.restore-deleted');
+
+        Route::prefix('super-admins/{superAdmin}')
+            ->name('super-admins.')
+            ->group(function (): void {
+                Route::get(
+                    'cooperatives',
+                    [SuperAdminCooperativeAssignmentController::class, 'index'],
+                )->name('cooperatives.index');
+
+                Route::post(
+                    'cooperatives/{cooperative}',
+                    [SuperAdminCooperativeAssignmentController::class, 'store'],
+                )->name('cooperatives.store');
+
+                Route::delete(
+                    'cooperatives/{cooperative}',
+                    [SuperAdminCooperativeAssignmentController::class, 'destroy'],
+                )->name('cooperatives.destroy');
+            });
 
         Route::resource('cooperatives', CooperativeController::class)
             ->except(['destroy'])

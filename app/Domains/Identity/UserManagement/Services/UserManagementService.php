@@ -7,6 +7,8 @@ namespace App\Domains\Identity\UserManagement\Services;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -25,6 +27,7 @@ final class UserManagementService
 
     public function __construct(
         private readonly AuditService $audit,
+        private readonly SessionService $sessions,
     ) {
     }
 
@@ -93,20 +96,27 @@ final class UserManagementService
         $this->assertSuperAdminTarget($superAdmin);
         $this->assertCooperativeExists($cooperative->getKey());
 
-        // DB::transaction(function () use (
-        //     $superAdmin,
-        //     $cooperative,
-        // ): void {
-        //     $superAdmin->cooperatives()->syncWithoutDetaching([
-        //         $cooperative->getKey(),
-        //     ]);
-        // });
         DB::transaction(function () use (
             $actor,
             $superAdmin,
             $cooperative,
         ): void {
-            $alreadyAssigned = $superAdmin->cooperatives()
+            $lockedSuperAdmin = User::query()
+                ->whereKey($superAdmin->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSuperAdmin === null) {
+                throw new DomainException(
+                    'The super admin does not exist or is deleted.',
+                );
+            }
+
+            // Revalidation après acquisition du verrou.
+            $this->assertSuperAdminTarget($lockedSuperAdmin);
+
+            // Vérification de l'affectation après verrouillage.
+            $alreadyAssigned = $lockedSuperAdmin->cooperatives()
                 ->whereKey($cooperative->getKey())
                 ->exists();
 
@@ -114,10 +124,11 @@ final class UserManagementService
                 return;
             }
 
-            $superAdmin->cooperatives()->attach(
+            $lockedSuperAdmin->cooperatives()->attach(
                 $cooperative->getKey(),
             );
 
+            // L'événement d'audit appartient à la même transaction.
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_assigned',
                 action: 'assigned',
@@ -125,7 +136,7 @@ final class UserManagementService
                 actorId: (string) $actor->getKey(),
                 cooperativeId: (string) $cooperative->getKey(),
                 subjectType: User::class,
-                subjectId: (string) $superAdmin->getKey(),
+                subjectId: (string) $lockedSuperAdmin->getKey(),
                 newValues: [
                     'cooperative_id' => (string) $cooperative->getKey(),
                 ],
@@ -148,7 +159,22 @@ final class UserManagementService
             $superAdmin,
             $cooperative,
         ): void {
-            $isAssigned = $superAdmin->cooperatives()
+            $lockedSuperAdmin = User::query()
+                ->whereKey($superAdmin->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSuperAdmin === null) {
+                throw new DomainException(
+                    'The super admin does not exist or is deleted.',
+                );
+            }
+
+            // Le rôle est obligatoire, mais le compte peut être inactif
+            // ou suspendu : la désaffectation reste autorisée.
+            $this->assertSuperAdminRoleTarget($lockedSuperAdmin);
+
+            $isAssigned = $lockedSuperAdmin->cooperatives()
                 ->whereKey($cooperative->getKey())
                 ->exists();
 
@@ -156,10 +182,11 @@ final class UserManagementService
                 return;
             }
 
-            $superAdmin->cooperatives()->detach(
+            $lockedSuperAdmin->cooperatives()->detach(
                 $cooperative->getKey(),
             );
 
+            // L'événement d'audit appartient à la même transaction.
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_unassigned',
                 action: 'unassigned',
@@ -167,12 +194,351 @@ final class UserManagementService
                 actorId: (string) $actor->getKey(),
                 cooperativeId: (string) $cooperative->getKey(),
                 subjectType: User::class,
-                subjectId: (string) $superAdmin->getKey(),
+                subjectId: (string) $lockedSuperAdmin->getKey(),
                 oldValues: [
                     'cooperative_id' => (string) $cooperative->getKey(),
                 ],
             ));
         });
+    }
+
+    /**
+     * Activate a pending or inactive account.
+     * Only the root administrator may reactivate a suspended account.
+     */
+    public function activateUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+
+        $rootCanActivateFrom = [
+            UserStatus::Pending,
+            UserStatus::Inactive,
+            UserStatus::Suspended,
+        ];
+        $superAdminCanActivateFrom = [
+            UserStatus::Pending,
+            UserStatus::Inactive,
+        ];
+
+        return $this->changeUserStatus(
+            actor: $actor,
+            target: $target,
+            newStatus: UserStatus::Active,
+            action: 'activated',
+            allowedRootSourceStatuses: $rootCanActivateFrom,
+            allowedSuperAdminSourceStatuses: $superAdminCanActivateFrom,
+        );
+    }
+
+    public function deactivateUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+
+        return $this->changeUserStatus(
+            actor: $actor,
+            target: $target,
+            newStatus: UserStatus::Inactive,
+            action: 'deactivated',
+            allowedRootSourceStatuses: [UserStatus::Active],
+            allowedSuperAdminSourceStatuses: [UserStatus::Active],
+            revokeReason: 'user_deactivated',
+        );
+    }
+
+    public function suspendUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+
+        return $this->changeUserStatus(
+            actor: $actor,
+            target: $target,
+            newStatus: UserStatus::Suspended,
+            action: 'suspended',
+            allowedRootSourceStatuses: [UserStatus::Active],
+            allowedSuperAdminSourceStatuses: [UserStatus::Active],
+            revokeReason: 'user_suspended',
+        );
+    }
+
+    public function archiveUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        return $this->changeUserStatus(
+            actor: $actor,
+            target: $target,
+            newStatus: UserStatus::Archived,
+            action: 'archived',
+            allowedRootSourceStatuses: [
+                UserStatus::Pending,
+                UserStatus::Active,
+                UserStatus::Inactive,
+                UserStatus::Suspended,
+            ],
+            allowedSuperAdminSourceStatuses: [],
+            revokeReason: 'user_archived',
+            rootOnly: true,
+        );
+    }
+
+    public function restoreArchivedUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        return $this->changeUserStatus(
+            actor: $actor,
+            target: $target,
+            newStatus: UserStatus::Active,
+            action: 'restored',
+            allowedRootSourceStatuses: [UserStatus::Archived],
+            allowedSuperAdminSourceStatuses: [],
+            rootOnly: true,
+        );
+    }
+
+    /**
+     * Soft-delete a user after recording the action and revoking credentials.
+     * Historical session and token records remain available for audit.
+     */
+    public function deleteUser(User $actor, User $target): bool
+    {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        return DB::transaction(function () use ($actor, $target): bool {
+            $lockedTarget = User::query()
+                ->whereKey($target->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedTarget === null) {
+                throw new DomainException('The user does not exist or is already deleted.');
+            }
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.deleted',
+                action: 'deleted',
+                oldValues: ['deleted_at' => null],
+                newValues: ['deleted_at' => now()->toISOString()],
+            );
+
+            $this->revokeAccessCredentials(
+                actor: $actor,
+                target: $lockedTarget,
+                reason: 'user_deleted',
+            );
+
+            return (bool) $lockedTarget->delete();
+        });
+    }
+
+    /**
+     * Restore a soft-deleted user without restoring its old sessions or tokens.
+     * The account status is deliberately preserved.
+     */
+    public function restoreDeletedUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        return DB::transaction(function () use ($actor, $target): User {
+            $lockedTarget = User::withTrashed()
+                ->whereKey($target->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedTarget === null || ! $lockedTarget->trashed()) {
+                throw new DomainException('Only a soft-deleted user can be restored.');
+            }
+
+            $oldDeletedAt = $lockedTarget->deleted_at?->toISOString();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.restored',
+                action: 'restored',
+                oldValues: ['deleted_at' => $oldDeletedAt],
+                newValues: ['deleted_at' => null],
+            );
+
+            $lockedTarget->restore();
+
+            return $lockedTarget->fresh();
+        });
+    }
+
+    /**
+     * Apply one validated status transition. The status and its audit event
+     * are persisted before any Web session or API token is revoked.
+     *
+     * @param list<UserStatus> $allowedRootSourceStatuses
+     * @param list<UserStatus> $allowedSuperAdminSourceStatuses
+     */
+    private function changeUserStatus(
+        User $actor,
+        User $target,
+        UserStatus $newStatus,
+        string $action,
+        array $allowedRootSourceStatuses,
+        array $allowedSuperAdminSourceStatuses,
+        ?string $revokeReason = null,
+        bool $rootOnly = false,
+    ): User {
+        return DB::transaction(function () use (
+            $actor,
+            $target,
+            $newStatus,
+            $action,
+            $allowedRootSourceStatuses,
+            $allowedSuperAdminSourceStatuses,
+            $revokeReason,
+            $rootOnly,
+        ): User {
+            $lockedTarget = User::query()
+                ->whereKey($target->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedTarget === null) {
+                throw new DomainException('The user does not exist or is deleted.');
+            }
+
+            $isRoot = $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+
+            if (! $isRoot && $rootOnly) {
+                throw new DomainException('Only the super admin root can perform this action.');
+            }
+
+            if (! $isRoot) {
+                $this->assertSuperAdminCanManageTarget($actor, $lockedTarget);
+            }
+
+            $allowedSourceStatuses = $isRoot
+                ? $allowedRootSourceStatuses
+                : $allowedSuperAdminSourceStatuses;
+
+            if (! in_array($lockedTarget->status, $allowedSourceStatuses, true)) {
+                throw new DomainException(sprintf(
+                    'The user cannot transition from "%s" to "%s".',
+                    $lockedTarget->status->value,
+                    $newStatus->value,
+                ));
+            }
+
+            $oldStatus = $lockedTarget->status;
+            $lockedTarget->status = $newStatus;
+            $lockedTarget->save();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.status_changed',
+                action: 'status_changed',
+                oldValues: ['status' => $oldStatus->value],
+                newValues: ['status' => $newStatus->value],
+                metadata: ['operation' => $action],
+            );
+
+            if ($revokeReason !== null) {
+                $this->revokeAccessCredentials(
+                    actor: $actor,
+                    target: $lockedTarget,
+                    reason: $revokeReason,
+                );
+            }
+
+            return $lockedTarget->fresh();
+        });
+    }
+
+    private function assertSuperAdminCanManageTarget(
+        User $actor,
+        User $target,
+    ): void {
+        if (
+            ! $actor->hasRole(self::ROLE_SUPER_ADMIN)
+            || $actor->is($target)
+            || $target->cooperative_id === null
+            || ! $actor->cooperatives()
+                ->whereKey($target->cooperative_id)
+                ->exists()
+        ) {
+            throw new DomainException(
+                'The super admin cannot manage this user.',
+            );
+        }
+    }
+
+    private function revokeAccessCredentials(
+        User $actor,
+        User $target,
+        string $reason,
+    ): void {
+        // SessionService writes one LoginHistory and one Audit event per session.
+        $this->sessions->revokeForUser($target, $reason);
+
+        // The revoked_at column is part of the MAHLINE token lifecycle migration.
+        $tokens = PersonalAccessToken::query()
+            ->where('tokenable_type', $target->getMorphClass())
+            ->where('tokenable_id', $target->getKey())
+            ->whereNull('revoked_at')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($tokens as $token) {
+            $revokedAt = now();
+            $token->revoked_at = $revokedAt;
+            $token->save();
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.api_token_revoked',
+                action: 'api_token_revoked',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: $target->cooperative_id
+                    ? (string) $target->cooperative_id
+                    : null,
+                subjectType: PersonalAccessToken::class,
+                subjectId: (string) $token->getKey(),
+                oldValues: ['revoked_at' => null],
+                newValues: ['revoked_at' => $revokedAt->toISOString()],
+                metadata: [
+                    'user_id' => (string) $target->getKey(),
+                    'token_name' => $token->name,
+                    'reason' => $reason,
+                ],
+            ));
+        }
+    }
+
+    private function recordLifecycleAudit(
+        User $actor,
+        User $target,
+        string $eventKey,
+        string $action,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?array $metadata = null,
+    ): void {
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: $target->cooperative_id
+                ? (string) $target->cooperative_id
+                : null,
+            subjectType: User::class,
+            subjectId: (string) $target->getKey(),
+            oldValues: $oldValues,
+            newValues: $newValues,
+            metadata: $metadata,
+        ));
     }
 
     private function assertSuperAdminRoleTarget(User $superAdmin): void
@@ -219,20 +585,6 @@ final class UserManagementService
             return;
         }
 
-        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
-            if (
-                $actor->cooperative_id === null
-                || (string) $actor->cooperative_id
-                    !== (string) $cooperativeId
-            ) {
-                throw new DomainException(
-                    'The cooperative admin can only manage users in their own cooperative.',
-                );
-            }
-
-            return;
-        }
-
         throw new DomainException(
             'The user is not authorized to create users.',
         );
@@ -250,9 +602,6 @@ final class UserManagementService
             ],
             $actor->hasRole(self::ROLE_SUPER_ADMIN) => [
                 self::ROLE_COOPERATIVE_ADMIN,
-                self::ROLE_USER,
-            ],
-            $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN) => [
                 self::ROLE_USER,
             ],
             default => [],

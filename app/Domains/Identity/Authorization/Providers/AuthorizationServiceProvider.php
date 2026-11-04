@@ -12,6 +12,8 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Policies\CategoryPolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Policies\CooperativePolicy;
+use App\Domains\Identity\Authorization\Policies\UserPolicy;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Policies\ProductPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -43,28 +45,36 @@ final class AuthorizationServiceProvider extends ServiceProvider
             ProductPolicy::class,
         );
 
-        Gate::before(
-            function ($user, string $ability, ...$arguments): ?bool {
-                $cooperativeAbilities = [
-                    'viewAny',
-                    'view',
-                    'create',
-                    'update',
-                    'delete',
-                ];
+        Gate::policy(
+            User::class,
+            UserPolicy::class,
+        );
 
-                $isCooperativeAuthorization = in_array(
-                    $ability,
-                    $cooperativeAbilities,
-                    true,
-                ) && (
+        Gate::before(
+            function ($user, string $ability, array $arguments): ?bool {
+                // Les utilisateurs doivent toujours passer par UserPolicy.
+                $isUserAuthorization =
+                    in_array(User::class, $arguments, true)
+                    || count(array_filter(
+                        $arguments,
+                        static fn (mixed $argument): bool =>
+                            $argument instanceof User,
+                    )) > 0;
+
+                if ($isUserAuthorization) {
+                    return null;
+                }
+
+                // Toute autorisation portant sur une coopérative doit passer par CooperativePolicy.
+                // Ne pas filtrer par ability : une nouvelle ability ne doit jamais
+                // bénéficier accidentellement de l'autorisation générique.
+                $isCooperativeAuthorization =
                     in_array(Cooperative::class, $arguments, true)
                     || count(array_filter(
                         $arguments,
                         static fn (mixed $argument): bool =>
                             $argument instanceof Cooperative,
-                    )) > 0
-                );
+                    )) > 0;
 
                 if ($isCooperativeAuthorization) {
                     return null;

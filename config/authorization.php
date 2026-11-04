@@ -10,8 +10,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Each role receives only the permissions explicitly declared here.
-    |
-    | Permission slugs must exist in the permissions table.
+    | Cooperative scope and status-transition rules remain enforced by policies
+    | and the UserManagement domain service; permissions alone are not enough.
     |
     */
 
@@ -22,10 +22,23 @@ return [
          */
         'super_admin_root' => [
             'audit.view',
+
             'cooperatives.view',
             'cooperatives.create',
             'cooperatives.update',
             'cooperatives.delete',
+
+            'users.view',
+            'users.create',
+            'users.activate',
+            'users.deactivate',
+            'users.suspend',
+            'users.archive',
+            'users.restore',
+            'users.delete',
+            'users.restore_deleted',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
 
             'catalogs.view',
             'catalogs.create',
@@ -54,10 +67,17 @@ return [
          */
         'super_admin' => [
             'audit.view',
+
             'cooperatives.view',
             'cooperatives.create',
             'cooperatives.update',
             'cooperatives.delete',
+
+            'users.view',
+            'users.create',
+            'users.activate',
+            'users.deactivate',
+            'users.suspend',
 
             'catalogs.view',
             'catalogs.create',
@@ -80,11 +100,15 @@ return [
 
         /*
          * Administration of the user's own cooperative.
+         * Cooperative administrators may only consult users in their
+         * own cooperative. They cannot create or manage user accounts.
          */
         'cooperative_admin' => [
             'audit.view',
             'cooperatives.view',
             'cooperatives.update',
+
+            'users.view',
 
             'catalogs.view',
             'catalogs.create',
