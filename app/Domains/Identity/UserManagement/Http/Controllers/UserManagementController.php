@@ -70,7 +70,7 @@ final class UserManagementController
                 'error',
                 'Le compte a été créé, mais l’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez renvoyer l’invitation.',
             );
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             return back()
                 ->withInput()
                 ->with('error', $exception->getMessage());
