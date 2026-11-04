@@ -58,12 +58,13 @@ final class UserInvitationService
                 );
             }
 
-            // Revoke all previous invitations that are still usable.
             UserInvitation::query()
                 ->where('user_id', $lockedUser->getKey())
                 ->whereNull('used_at')
                 ->whereNull('revoked_at')
-                ->update(['revoked_at' => now()]);
+                ->update([
+                    'revoked_at' => now(),
+                ]);
 
             $invitation = UserInvitation::query()->create([
                 'id' => (string) Str::ulid(),
@@ -89,7 +90,10 @@ final class UserInvitationService
                 ],
             ));
 
-            return [$invitation, $lockedUser->email];
+            return [
+                $invitation,
+                $lockedUser->email,
+            ];
         });
 
         $invitationUrl = rtrim(
@@ -107,8 +111,16 @@ final class UserInvitationService
                 new UserInvitationNotification($invitationUrl),
             );
         } catch (Throwable $exception) {
-            // A failed (or ambiguous) delivery must never leave a usable link.
             DB::transaction(function () use ($invitation): void {
+                $lockedUser = User::query()
+                    ->whereKey($invitation->user_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($lockedUser === null) {
+                    return;
+                }
+
                 $lockedInvitation = UserInvitation::query()
                     ->whereKey($invitation->getKey())
                     ->lockForUpdate()
@@ -163,12 +175,53 @@ final class UserInvitationService
             $tokenHash,
             $password,
         ): User {
-            $invitation = UserInvitation::query()
+            /*
+             * First lookup only identifies the user.
+             * No lock is acquired here.
+             */
+            $invitationReference = UserInvitation::query()
                 ->where('token_hash', $tokenHash)
+                ->first();
+
+            if ($invitationReference === null) {
+                throw new DomainException(
+                    'The invitation token is invalid.',
+                );
+            }
+
+            /*
+             * Lock order is always:
+             * User -> UserInvitation
+             */
+            $user = User::query()
+                ->whereKey($invitationReference->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($user === null) {
+                throw new DomainException(
+                    'The invited user does not exist or is deleted.',
+                );
+            }
+
+            $invitation = UserInvitation::query()
+                ->whereKey($invitationReference->getKey())
+                ->where('user_id', $user->getKey())
                 ->lockForUpdate()
                 ->first();
 
             if ($invitation === null) {
+                throw new DomainException(
+                    'The invitation token is invalid.',
+                );
+            }
+
+            if (
+                ! hash_equals(
+                    $invitation->token_hash,
+                    $tokenHash,
+                )
+            ) {
                 throw new DomainException(
                     'The invitation token is invalid.',
                 );
@@ -181,17 +234,6 @@ final class UserInvitationService
             ) {
                 throw new DomainException(
                     'The invitation is no longer valid.',
-                );
-            }
-
-            $user = User::query()
-                ->whereKey($invitation->user_id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($user === null) {
-                throw new DomainException(
-                    'The invited user does not exist or is deleted.',
                 );
             }
 
