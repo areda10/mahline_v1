@@ -7,6 +7,7 @@ use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
+use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Products\Http\Controllers\ProductController;
@@ -91,6 +92,12 @@ Route::prefix('password')
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
+    ->name('user-invitations.show');
+
+Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept'])
+    ->name('user-invitations.accept');
 
 Route::prefix('back-office')
     ->name('backoffice.')
