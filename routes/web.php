@@ -101,6 +101,14 @@ Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
 Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept'])
     ->name('user-invitations.accept');
 
+Route::prefix('root/back-office')
+    ->name('root.backoffice.')
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->group(function (): void {
+        Route::get('dashboard', SuperAdminRootDashboardController::class)
+            ->name('dashboard');
+    });
+
 Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
