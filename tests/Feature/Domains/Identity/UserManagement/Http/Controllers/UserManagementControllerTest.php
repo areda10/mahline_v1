@@ -1385,6 +1385,26 @@ final class UserManagementControllerTest extends TestCase
     /** @param list<string> $permissions
      *  @param array<string, mixed> $attributes
      */
+
+    public function test_root_uses_its_dedicated_user_management_space(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.users.index'))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.users.index');
+    }
+
+    public function test_super_admin_cannot_access_root_user_management_space(): void
+    {
+        $superAdmin = $this->actor('super_admin', ['users.view']);
+
+        $this->actingAs($superAdmin)
+            ->get(route('root.backoffice.users.index'))
+            ->assertForbidden();
+    }
+
     private function actor(string $roleSlug, array $permissions, array $attributes = []): User
     {
         $actor = User::factory()->create($attributes);
