@@ -57,6 +57,7 @@ final class AuthenticationController
             $authenticationSession = $this->authenticationWorkflow->execute(
                 context: $context,
                 sessionId: $context->sessionId,
+                request: $request,
             );
         } catch (ModelNotFoundException) {
             if ($request->expectsJson()) {
