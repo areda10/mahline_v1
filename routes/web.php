@@ -3,6 +3,7 @@
 use App\Domains\Catalog\Http\Controllers\CatalogController;
 use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
@@ -135,6 +136,20 @@ Route::prefix('root/back-office')
         Route::post('users/{user}/resend-invitation', [SuperAdminRootUserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
 
+
+        Route::resource('cooperatives', SuperAdminRootCooperativeController::class)
+            ->except(['destroy'])
+            ->names('cooperatives');
+
+        Route::delete('cooperatives/{cooperative}', [SuperAdminRootCooperativeController::class, 'destroy'])
+            ->name('cooperatives.destroy');
+
+        foreach (['activate', 'deactivate', 'suspend', 'archive'] as $action) {
+            Route::patch(
+                'cooperatives/{cooperative}/'.$action,
+                [SuperAdminRootCooperativeController::class, $action],
+            )->name('cooperatives.'.$action);
+        }
 
         Route::resource('categories', GlobalCategoryController::class)
             ->except(['show'])
