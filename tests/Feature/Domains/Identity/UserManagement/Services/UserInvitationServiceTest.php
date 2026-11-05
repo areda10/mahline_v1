@@ -18,6 +18,62 @@ final class UserInvitationServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_sending_new_invitation_revokes_previous_active_invitation(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Pending,
+        ]);
+
+        $previousInvitation = UserInvitation::query()->create([
+            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'user_id' => $user->getKey(),
+            'token_hash' => hash('sha256', 'previous-token'),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
+
+        app(UserInvitationService::class)->sendInvitation($user);
+
+        $previousInvitation->refresh();
+
+        $this->assertNotNull($previousInvitation->revoked_at);
+        $this->assertNull($previousInvitation->used_at);
+
+        $newInvitation = UserInvitation::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->whereNull('used_at')
+            ->firstOrFail();
+
+        $this->assertNotSame(
+            $previousInvitation->token_hash,
+            $newInvitation->token_hash,
+        );
+
+        $this->assertTrue(
+            $newInvitation->expires_at->between(
+                now()->addMinutes(59),
+                now()->addMinutes(61),
+            ),
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.invitation_created',
+            'subject_id' => $user->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.invitation_sent',
+            'subject_id' => $user->getKey(),
+        ]);
+
+        Notification::assertSentOnDemand(
+            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
+        );
+    }
+
     public function test_failed_delivery_keeps_user_pending_and_revokes_invitation(): void
     {
         $user = User::factory()->create([
