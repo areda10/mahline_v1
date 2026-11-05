@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 
 @section('title', 'Tableau de bord Super Admin Root')
 

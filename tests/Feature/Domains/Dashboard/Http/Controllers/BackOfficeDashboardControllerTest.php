@@ -119,4 +119,19 @@ final class BackOfficeDashboardControllerTest extends TestCase
                 fn ($roles): bool => $roles['super_admin_root'] === 1,
             );
     }
+
+    public function test_root_dashboard_displays_only_root_navigation(): void
+    {
+        $root = $this->userWithRole('super_admin_root');
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.dashboard'))
+            ->assertOk()
+            ->assertSee('Tableau de bord')
+            ->assertSee('Catégories globales')
+            ->assertSee('Coopératives')
+            ->assertSee('Utilisateurs')
+            ->assertDontSee('Coopérative :')
+            ->assertDontSee('Catalogues');
+    }
 }
