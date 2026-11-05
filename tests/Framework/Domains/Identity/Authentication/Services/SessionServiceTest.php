@@ -59,6 +59,24 @@ final class SessionServiceTest extends TestCase
         $this->assertDatabaseCount('authentication_sessions', 0);
     }
 
+    public function test_session_creation_rejects_active_user_with_unverified_email(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'The user email address is not verified. A new session cannot be created.',
+        );
+
+        $this->sessionService->create(
+            user: $user,
+            sessionId: 'unverified-user-session',
+        );
+    }
+
     public function test_session_creation_rechecks_status_in_database_instead_of_trusting_stale_user_model(): void
     {
         $user = User::factory()->create([
