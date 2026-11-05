@@ -13,7 +13,6 @@ use DomainException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 final class CreateRootUser extends Command
 {
@@ -121,11 +120,12 @@ final class CreateRootUser extends Command
                     'telephone' => $telephone,
                     'password' => $password,
                     'status' => UserStatus::Active,
-                    'email_verified_at' => now(),
-                    'cooperative_id' => null,
+                        'cooperative_id' => null,
                     'locale' => 'fr',
                     'timezone' => 'UTC',
                 ]);
+
+                $user->forceFill(['email_verified_at' => now()])->save();
 
                 $user->roles()->attach($lockedRole->getKey());
 
