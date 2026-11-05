@@ -42,7 +42,7 @@ final class UserManagementController
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('root.backoffice.users.create', [
+        return view('super-admin-root.users.create', [
             'roles' => $roles,
             'cooperatives' => $cooperatives,
         ]);
@@ -138,7 +138,7 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
-        return view('root.backoffice.users.show', [
+        return view('super-admin-root.users.show', [
             'user' => $user,
             'canViewAssignments' => $canViewAssignments,
         ]);
@@ -357,7 +357,7 @@ final class UserManagementController
             ->paginate(15)
             ->withQueryString();
 
-        return view('root.backoffice.users.index', [
+        return view('super-admin-root.users.index', [
             'users' => $users,
             'roles' => Role::query()->where('is_active', true)->orderBy('name')->get(['name', 'slug']),
             'statuses' => UserStatus::cases(),
