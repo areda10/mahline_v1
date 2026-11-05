@@ -72,6 +72,7 @@
             th, td { padding: 9px; }
         }
     </style>
+    @stack('styles')
 </head>
 <body>
 <header class="topbar">
