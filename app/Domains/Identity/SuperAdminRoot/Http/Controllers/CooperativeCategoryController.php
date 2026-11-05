@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
-final class CategoryController
+final class CooperativeCategoryController
 {
     public function __construct(
         private readonly CategoryRepository $categoryRepository,
@@ -32,7 +32,7 @@ final class CategoryController
             (string) $cooperativeModel->getKey(),
         );
 
-        return view('root.backoffice.cooperatives.categories.index', [
+        return view('super-admin-root.cooperatives.categories.index', [
             'cooperative' => $cooperativeModel,
             'categories' => $categories,
         ]);
@@ -40,6 +40,7 @@ final class CategoryController
 
     public function create(Request $request, string $cooperative): View
     {
+        $this->authorizeRoot($request);
         $cooperativeModel = $this->resolveCooperative($cooperative);
 
         Gate::authorize('create', Category::class);
@@ -51,7 +52,7 @@ final class CategoryController
             ->orderBy('name')
             ->get();
 
-        return view('root.backoffice.cooperatives.categories.create', [
+        return view('super-admin-root.cooperatives.categories.create', [
             'cooperative' => $cooperativeModel,
             'category' => new Category(),
             'categories' => $categories,
@@ -83,7 +84,7 @@ final class CategoryController
         );
 
         return redirect()
-            ->route('backoffice.categories.index', [
+            ->route('root.backoffice.cooperatives.categories.index', [
                 'cooperative' => $cooperativeModel->getKey(),
             ])
             ->with('success', 'La catégorie a été créée.');
@@ -148,7 +149,7 @@ final class CategoryController
         $this->categoryService->update($categoryModel, $data);
 
         return redirect()
-            ->route('backoffice.categories.index', [
+            ->route('root.backoffice.cooperatives.categories.index', [
                 'cooperative' => $cooperativeModel->getKey(),
             ])
             ->with('success', 'La catégorie a été mise à jour.');
@@ -159,6 +160,7 @@ final class CategoryController
         string $cooperative,
         string $category,
     ): RedirectResponse {
+        $this->authorizeRoot($request);
         $cooperativeModel = $this->resolveCooperative($cooperative);
 
         $categoryModel = $this->categoryRepository
@@ -172,7 +174,7 @@ final class CategoryController
         $this->categoryService->delete($categoryModel);
 
         return redirect()
-            ->route('backoffice.categories.index', [
+            ->route('root.backoffice.cooperatives.categories.index', [
                 'cooperative' => $cooperativeModel->getKey(),
             ])
             ->with('success', 'La catégorie a été supprimée.');
