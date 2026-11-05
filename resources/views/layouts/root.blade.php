@@ -66,6 +66,9 @@
         @media (max-width: 650px) {
             .container { padding: 0 12px; margin-top: 18px; }
             .card { padding: 15px; }
+            .form-grid { grid-template-columns: 1fr; }
+            dl { grid-template-columns: 1fr; gap: 5px; }
+            dd { margin-bottom: 10px; }
             th, td { padding: 9px; }
         }
     </style>
