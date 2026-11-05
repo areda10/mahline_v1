@@ -93,7 +93,7 @@ final class UserInvitationServiceTest extends TestCase
         ]);
 
         Notification::assertSentOnDemand(
-            \\App\\Domains\\Identity\\UserManagement\\Notifications\\UserInvitationNotification::class,
+            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
         );
     }
 
@@ -128,7 +128,7 @@ final class UserInvitationServiceTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'id' => $user->getKey(),
-            'status' => UserStatus::Active->value,
+            'status' => UserStatus::Inactive->value,
         ]);
     }
 
@@ -136,6 +136,7 @@ final class UserInvitationServiceTest extends TestCase
     {
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
             'email' => 'invitation-failure@example.test',
         ]);
 
