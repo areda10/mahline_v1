@@ -41,6 +41,7 @@ final class UserManagementControllerTest extends TestCase
         $userWithoutCooperative = User::factory()->create([
             'display_name' => 'Utilisateur sans coopérative',
             'cooperative_id' => null,
+            'email_verified_at' => null,
         ]);
 
         $response = $this->actingAs($root)
@@ -52,7 +53,10 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee('Super admin non affecté')
             ->assertSee('Utilisateur sans coopérative')
             ->assertSee('Coopérative visible')
-            ->assertSee('Aucune coopérative');
+            ->assertSee('Aucune coopérative')
+            ->assertSee('Vérification email')
+            ->assertSee('Vérifié')
+            ->assertSee('À vérifier');
     }
 
     public function test_root_can_filter_users_by_search_role_and_status(): void
