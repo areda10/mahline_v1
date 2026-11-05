@@ -106,6 +106,39 @@ final class ResetRootPasswordTest extends TestCase
         ]);
     }
 
+    public function test_reset_password_allows_an_active_verified_root_to_login_with_the_new_password(): void
+    {
+        $root = $this->createRoot([
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        // Réinitialiser le mot de passe
+        $this->artisan('mahline:reset-root-password')
+            ->expectsQuestion('Adresse e-mail du compte Root', 'root@example.test')
+            ->expectsQuestion('Nouveau mot de passe', 'NewRootPassword123!')
+            ->expectsQuestion('Confirmer le nouveau mot de passe', 'NewRootPassword123!')
+            ->assertExitCode(Command::SUCCESS);
+
+        // Se connecter avec le nouveau mot de passe
+        $this->postJson(route('authentication.login.store'), [
+            'email' => $root->email,
+            'password' => 'NewRootPassword123!',
+        ])->assertOk()
+            ->assertJson([
+                'message' => 'Authentication successful.',
+            ]);
+
+        // Vérifier l'authentification
+        $this->assertAuthenticatedAs($root->fresh());
+
+        // Vérifier la création d'une session active
+        $this->assertDatabaseHas('authentication_sessions', [
+            'user_id' => $root->getKey(),
+            'revoked_at' => null,
+        ]);
+    }
+
     private function createRoot(array $attributes = []): User
     {
         $role = Role::query()->create([
