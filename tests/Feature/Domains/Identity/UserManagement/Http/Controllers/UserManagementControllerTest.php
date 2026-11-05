@@ -909,6 +909,42 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
+    public function test_root_can_create_active_user_and_send_verification_invitation(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        $payload = $this->validCreationPayload(
+            'user',
+            $cooperative->getKey(),
+            UserStatus::Active,
+        );
+
+        $this->actingAs($root)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertRedirect(route('backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+        $this->assertSame(UserStatus::Active, $created->status);
+        $this->assertNull($created->email_verified_at);
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $created->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
     public function test_root_can_create_cooperative_admin_and_user_in_selected_cooperative(): void
     {
         Notification::fake();
@@ -1318,6 +1354,7 @@ final class UserManagementControllerTest extends TestCase
     private function validCreationPayload(
         string $roleSlug,
         string|int|null $cooperativeId = null,
+        UserStatus $status = UserStatus::Pending,
     ): array {
         return [
             'first_name' => 'Amina',
@@ -1325,6 +1362,7 @@ final class UserManagementControllerTest extends TestCase
             'email' => fake()->unique()->safeEmail(),
             'telephone' => '+212600000000',
             'role_slug' => $roleSlug,
+            'status' => $status->value,
             ...($cooperativeId === null ? [] : [
                 'cooperative_id' => (string) $cooperativeId,
             ]),
