@@ -4,6 +4,7 @@ use App\Domains\Catalog\Http\Controllers\CatalogController;
 use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
@@ -108,6 +109,32 @@ Route::prefix('root/back-office')
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
+
+        Route::get('users', [SuperAdminRootUserManagementController::class, 'index'])
+            ->name('users.index');
+        Route::get('users/create', [SuperAdminRootUserManagementController::class, 'create'])
+            ->name('users.create');
+        Route::post('users', [SuperAdminRootUserManagementController::class, 'store'])
+            ->name('users.store');
+        Route::get('users/{user}', [SuperAdminRootUserManagementController::class, 'show'])
+            ->name('users.show');
+        Route::patch('users/{user}/activate', [SuperAdminRootUserManagementController::class, 'activate'])
+            ->name('users.activate');
+        Route::patch('users/{user}/deactivate', [SuperAdminRootUserManagementController::class, 'deactivate'])
+            ->name('users.deactivate');
+        Route::patch('users/{user}/suspend', [SuperAdminRootUserManagementController::class, 'suspend'])
+            ->name('users.suspend');
+        Route::patch('users/{user}/archive', [SuperAdminRootUserManagementController::class, 'archive'])
+            ->name('users.archive');
+        Route::patch('users/{user}/restore', [SuperAdminRootUserManagementController::class, 'restore'])
+            ->name('users.restore');
+        Route::delete('users/{user}', [SuperAdminRootUserManagementController::class, 'destroy'])
+            ->name('users.destroy');
+        Route::patch('users/{user}/restore-deleted', [SuperAdminRootUserManagementController::class, 'restoreDeleted'])
+            ->name('users.restore-deleted');
+        Route::post('users/{user}/resend-invitation', [SuperAdminRootUserManagementController::class, 'resendInvitation'])
+            ->name('users.resend-invitation');
+
 
         Route::resource('categories', GlobalCategoryController::class)
             ->except(['show'])
