@@ -6,8 +6,8 @@
     <div class="page-header">
         <div><h1>Tableau de bord</h1><p class="muted">Vue globale de la plateforme MAHLINE</p></div>
         <div class="actions">
-            <a class="button" href="{{ route('backoffice.cooperatives.index') }}">Gérer les coopératives</a>
-            <a class="button button-secondary" href="{{ route('backoffice.users.index') }}">Gérer les utilisateurs</a>
+            <a class="button" href="{{ route('root.backoffice.cooperatives.index') }}">Gérer les coopératives</a>
+            <a class="button button-secondary" href="{{ route('root.backoffice.users.index') }}">Gérer les utilisateurs</a>
         </div>
     </div>
     <section class="dashboard-grid" aria-label="Indicateurs globaux">
