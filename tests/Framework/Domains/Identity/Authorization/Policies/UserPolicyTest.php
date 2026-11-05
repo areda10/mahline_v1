@@ -167,6 +167,7 @@ final class UserPolicyTest extends TestCase
 
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         self::assertTrue(
@@ -187,6 +188,7 @@ final class UserPolicyTest extends TestCase
         $target = User::factory()->create([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         self::assertTrue(
