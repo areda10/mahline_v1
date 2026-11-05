@@ -38,6 +38,21 @@
         .button { display: inline-block; border: 0; border-radius: 6px; padding: 10px 14px; background: #176b57; color: white; cursor: pointer; font-size: 14px; }
         .button:hover { background: #105342; text-decoration: none; }
         .button-secondary { background: #e8efec; color: #153d34; }
+        .button-secondary:hover { background: #dbe7e2; }
+        .button-danger { background: #a83232; color: #fff; }
+        .button-danger:hover { background: #872626; }
+        .button-small { padding: 7px 10px; font-size: 13px; }
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+        .field, .form-grid label { display: flex; flex-direction: column; gap: 7px; font-weight: 600; }
+        input, select, textarea { width: 100%; min-width: 0; border: 1px solid #cbd5da; border-radius: 6px; padding: 10px 11px; background: #fff; color: #202b36; font: inherit; font-weight: 400; }
+        input:focus, select:focus, textarea:focus { outline: 2px solid #176b57; outline-offset: 1px; border-color: #176b57; }
+        .error { color: #9b1c1c; margin: 8px 0; }
+        .pagination { margin-top: 18px; }
+        .pagination nav { display: flex; justify-content: space-between; gap: 12px; }
+        .inline-form { display: inline-flex; }
+        dl { display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 10px 18px; margin: 0 0 20px; }
+        dt { font-weight: 700; }
+        dd { margin: 0; }
         .table-wrap { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e5eaed; vertical-align: top; }
