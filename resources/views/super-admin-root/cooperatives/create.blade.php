@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 @section('title', 'Créer une coopérative')
 @section('content')
 <div class="page-header"><h1>Créer une coopérative</h1></div>
