@@ -14,6 +14,18 @@
     </div>
 
     <div class="actions">
+
+        @can('resendInvitation', $user)
+            <form method="POST"
+                action="{{ route('backoffice.users.resend-invitation', $user) }}"
+                onsubmit="return confirm('Envoyer une nouvelle invitation à cet utilisateur ?');">
+                @csrf
+                <button class="button" type="submit">
+                    Renvoyer l’invitation
+                </button>
+            </form>
+        @endcan
+
         @can('activate', $user)
             <form method="POST" action="{{ route('backoffice.users.activate', $user) }}"
                   onsubmit="return confirm('Confirmer l’activation de ce compte ?');">
