@@ -28,6 +28,12 @@ final class AuthenticationController
     public function showLogin(): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
     {
         if (Auth::check()) {
+            $user = Auth::user();
+
+            if ($user?->hasRole('super_admin_root')) {
+                return redirect()->route('root.backoffice.dashboard');
+            }
+
             return redirect()->intended('/');
         }
 
@@ -51,6 +57,7 @@ final class AuthenticationController
             $authenticationSession = $this->authenticationWorkflow->execute(
                 context: $context,
                 sessionId: $context->sessionId,
+                request: $request,
             );
         } catch (ModelNotFoundException) {
             if ($request->expectsJson()) {
@@ -116,11 +123,11 @@ final class AuthenticationController
          * Keep the session lifecycle managed by the existing workflow.
          * Do not regenerate or revoke sessions here without synchronizing
          * the Laravel session ID with the Identity authentication session.
-         *
-         * The root route is the only confirmed post-login destination here.
-         * Replace it with the authorized dashboard route when that route
-         * has been verified.
          */
+        if ($user->hasRole('super_admin_root')) {
+            return redirect()->route('root.backoffice.dashboard');
+        }
+
         return redirect()->intended('/');
     }
 

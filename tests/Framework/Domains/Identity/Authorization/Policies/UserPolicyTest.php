@@ -158,6 +158,115 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($admin)->allows('create', User::class));
     }
 
+    public function test_root_can_resend_invitation_to_pending_user(): void
+    {
+        $root = $this->userWithRoleAndPermissions(
+            'super_admin_root',
+            ['users.create'],
+        );
+
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+            'email_verified_at' => null,
+        ]);
+
+        self::assertTrue(
+            Gate::forUser($root)->allows('resendInvitation', $target),
+        );
+    }
+
+    public function test_super_admin_can_resend_invitation_to_user_in_assigned_cooperative(): void
+    {
+        $cooperative = $this->createCooperative();
+
+        $admin = $this->userWithRoleAndPermissions(
+            'super_admin',
+            ['users.create'],
+        );
+        $admin->cooperatives()->attach($cooperative->getKey());
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+            'email_verified_at' => null,
+        ]);
+
+        self::assertTrue(
+            Gate::forUser($admin)->allows('resendInvitation', $target),
+        );
+    }
+
+    public function test_super_admin_cannot_resend_invitation_outside_assigned_cooperatives(): void
+    {
+        $cooperative = $this->createCooperative();
+
+        $admin = $this->userWithRoleAndPermissions(
+            'super_admin',
+            ['users.create'],
+        );
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        self::assertFalse(
+            Gate::forUser($admin)->allows('resendInvitation', $target),
+        );
+    }
+
+    public function test_cooperative_admin_cannot_resend_invitation(): void
+    {
+        $cooperative = $this->createCooperative();
+
+        $admin = $this->userWithRoleAndPermissions(
+            'cooperative_admin',
+            ['users.create'],
+            ['cooperative_id' => $cooperative->getKey()],
+        );
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        self::assertFalse(
+            Gate::forUser($admin)->allows('resendInvitation', $target),
+        );
+    }
+
+    public function test_user_cannot_resend_invitation(): void
+    {
+        $actor = $this->userWithRoleAndPermissions(
+            'user',
+            ['users.create'],
+        );
+
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+        ]);
+
+        self::assertFalse(
+            Gate::forUser($actor)->allows('resendInvitation', $target),
+        );
+    }
+
+    public function test_invitation_cannot_be_resent_to_user_who_is_not_pending(): void
+    {
+        $root = $this->userWithRoleAndPermissions(
+            'super_admin_root',
+            ['users.create'],
+        );
+
+        $target = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        self::assertFalse(
+            Gate::forUser($root)->allows('resendInvitation', $target),
+        );
+    }
+
     public function test_root_can_change_own_status(): void
     {
         $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.deactivate']);

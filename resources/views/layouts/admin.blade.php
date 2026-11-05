@@ -72,12 +72,24 @@
             th, td { padding: 9px; }
         }
     </style>
+    @stack('styles')
 </head>
 <body>
 <header class="topbar">
     <div class="brand">
         <a href="{{ url('/') }}">MAHLINE</a>
     </div>
+
+    @auth
+        @if(auth()->user()->hasRole('super_admin_root'))
+            <nav class="nav" aria-label="Navigation principale">
+                <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
+                <a href="{{ route('root.backoffice.categories.index') }}">Catégories globales</a>
+                <a href="{{ route('root.backoffice.cooperatives.index') }}">Coopératives</a>
+                <a href="{{ route('root.backoffice.users.index') }}">Utilisateurs</a>
+            </nav>
+        @endif
+    @endauth
 
     @if(isset($cooperative))
         <div class="muted" style="color:#d9e9e2; margin-top:6px">

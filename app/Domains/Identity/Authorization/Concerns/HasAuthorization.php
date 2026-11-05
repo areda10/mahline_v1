@@ -87,6 +87,7 @@ trait HasAuthorization
 
     public function isAuthorized(): bool
     {
-        return $this->status === UserStatus::Active;
+        return $this->status === UserStatus::Active
+            && $this->email_verified_at !== null;
     }
 }

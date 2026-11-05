@@ -111,6 +111,88 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         ]);
     }
 
+    public function test_assignment_domain_conflict_returns_a_controlled_error(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.assign_super_admin']);
+        $superAdmin = $this->actor('super_admin', []);
+        $cooperative = Cooperative::factory()->create();
+
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
+            ->shouldReceive('assignSuperAdminToCooperative')
+            ->once()
+            ->andThrow(new \DomainException('Target status changed.'));
+
+        $this->actingAs($root)
+            ->post(route('backoffice.super-admins.cooperatives.store', [$superAdmin, $cooperative]))
+            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertSessionHas('error');
+    }
+
+    public function test_assignment_database_conflict_returns_a_controlled_error(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.assign_super_admin']);
+        $superAdmin = $this->actor('super_admin', []);
+        $cooperative = Cooperative::factory()->create();
+        $exception = new \Illuminate\Database\QueryException(
+            'mysql',
+            'insert into super_admin_cooperative',
+            [],
+            new \PDOException('Duplicate assignment.'),
+        );
+
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
+            ->shouldReceive('assignSuperAdminToCooperative')
+            ->once()
+            ->andThrow($exception);
+
+        $this->actingAs($root)
+            ->post(route('backoffice.super-admins.cooperatives.store', [$superAdmin, $cooperative]))
+            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertSessionHas('error');
+    }
+
+    public function test_unassignment_domain_conflict_returns_a_controlled_error(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.unassign_super_admin']);
+        $superAdmin = $this->actor('super_admin', []);
+        $cooperative = Cooperative::factory()->create();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
+            ->shouldReceive('removeSuperAdminFromCooperative')
+            ->once()
+            ->andThrow(new \DomainException('Target changed.'));
+
+        $this->actingAs($root)
+            ->delete(route('backoffice.super-admins.cooperatives.destroy', [$superAdmin, $cooperative]))
+            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertSessionHas('error');
+    }
+
+    public function test_unassignment_database_conflict_returns_a_controlled_error(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.unassign_super_admin']);
+        $superAdmin = $this->actor('super_admin', []);
+        $cooperative = Cooperative::factory()->create();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $exception = new \Illuminate\Database\QueryException(
+            'mysql',
+            'delete from super_admin_cooperative',
+            [],
+            new \PDOException('Database conflict.'),
+        );
+
+        $this->mock(\App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService::class)
+            ->shouldReceive('removeSuperAdminFromCooperative')
+            ->once()
+            ->andThrow($exception);
+
+        $this->actingAs($root)
+            ->delete(route('backoffice.super-admins.cooperatives.destroy', [$superAdmin, $cooperative]))
+            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertSessionHas('error');
+    }
+
     public function test_root_can_unassign_a_suspended_super_admin_and_the_action_is_audited(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.unassign_super_admin']);

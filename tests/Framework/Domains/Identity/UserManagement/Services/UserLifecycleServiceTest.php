@@ -66,6 +66,41 @@ final class UserLifecycleServiceTest extends TestCase
         ]);
     }
 
+    public function test_root_can_suspend_user_and_revoke_all_web_sessions_and_api_tokens(): void
+    {
+        $root = $this->userWithRole('super_admin_root');
+        $target = $this->userWithRole('user');
+        $sessionA = $this->sessions->create($target, 'suspension-session-a');
+        $sessionB = $this->sessions->create($target, 'suspension-session-b');
+        $newToken = $target->createToken('Suspension API');
+        $token = $newToken->accessToken;
+
+        $updated = $this->service->suspendUser($root, $target);
+
+        self::assertSame(UserStatus::Suspended, $updated->status);
+        self::assertNotNull($sessionA->fresh()->revoked_at);
+        self::assertNotNull($sessionB->fresh()->revoked_at);
+        self::assertNotNull($token->fresh()->revoked_at);
+        self::assertNull(PersonalAccessToken::findToken($newToken->plainTextToken));
+        self::assertSame(
+            2,
+            \App\Domains\Identity\Authentication\Models\LoginHistory::query()
+                ->where('user_id', $target->getKey())
+                ->where('event', 'session_revoked')
+                ->count(),
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.api_token_revoked',
+            'subject_id' => $token->getKey(),
+        ]);
+    }
+
     public function test_root_revokes_expired_api_tokens_and_preserves_expiration_date(): void
     {
         $root = $this->userWithRole('super_admin_root');
@@ -109,7 +144,7 @@ final class UserLifecycleServiceTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_activate_pending_user_in_assigned_cooperative(): void
+    public function test_super_admin_cannot_activate_pending_user_in_assigned_cooperative(): void
     {
         $cooperativeId = $this->createCooperative()->getKey();
 
@@ -117,9 +152,28 @@ final class UserLifecycleServiceTest extends TestCase
         $target = $this->userWithRole('user', $cooperativeId, UserStatus::Pending);
         $actor->cooperatives()->attach($cooperativeId);
 
-        $updated = $this->service->activateUser($actor, $target);
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'Only the super admin root can perform this action.',
+        );
 
-        self::assertSame(UserStatus::Active, $updated->status);
+        $this->service->activateUser($actor, $target);
+    }
+
+    public function test_super_admin_cannot_activate_inactive_user_in_assigned_cooperative(): void
+    {
+        $cooperativeId = $this->createCooperative()->getKey();
+
+        $actor = $this->userWithRole('super_admin');
+        $target = $this->userWithRole('user', $cooperativeId, UserStatus::Inactive);
+        $actor->cooperatives()->attach($cooperativeId);
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage(
+            'Only the super admin root can perform this action.',
+        );
+
+        $this->service->activateUser($actor, $target);
     }
 
     public function test_super_admin_cannot_reactivate_suspended_user(): void
@@ -131,7 +185,9 @@ final class UserLifecycleServiceTest extends TestCase
         $actor->cooperatives()->attach($cooperativeId);
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('The user cannot transition from "suspended" to "active".');
+        $this->expectExceptionMessage(
+            'Only the super admin root can perform this action.',
+        );
 
         $this->service->activateUser($actor, $target);
     }

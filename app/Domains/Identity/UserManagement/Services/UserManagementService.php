@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
@@ -15,7 +16,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
-final class UserManagementService
+final class UserManagementService implements SuperAdminCooperativeAssignmentService
 {
     private const ROLE_SUPER_ADMIN_ROOT = 'super_admin_root';
 
@@ -35,7 +36,14 @@ final class UserManagementService
         User $actor,
         array $attributes,
         string $roleSlug,
+        UserStatus $initialStatus = UserStatus::Pending,
     ): User {
+        if (! in_array($initialStatus, [UserStatus::Active, UserStatus::Pending], true)) {
+            throw new DomainException(
+                'A newly created user must start as active or pending.',
+            );
+        }
+
         $this->assertActorIsActive($actor);
 
         $role = $this->findRole($roleSlug);
@@ -60,8 +68,20 @@ final class UserManagementService
             $role,
             $actor,
             $roleSlug,
+            $initialStatus,
         ): User {
-            $user = User::query()->create($attributes);
+            $userAttributes = array_merge($attributes, [
+                'display_name' => trim(
+                    $attributes['first_name'].' '.$attributes['last_name'],
+                ),
+                // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
+                'password' => bin2hex(random_bytes(32)),
+                //'status' => UserStatus::Pending,
+                'status' => $initialStatus,
+                'email_verified_at' => null,
+            ]);
+
+            $user = User::query()->create($userAttributes);
 
             $user->roles()->attach($role->getKey());
 
@@ -70,21 +90,22 @@ final class UserManagementService
                 action: 'created',
                 actorType: User::class,
                 actorId: (string) $actor->getKey(),
-                cooperativeId: isset($attributes['cooperative_id'])
-                ? (string) $attributes['cooperative_id']
-                : null,
+                cooperativeId: $user->cooperative_id
+                    ? (string) $user->cooperative_id
+                    : null,
                 subjectType: User::class,
                 subjectId: (string) $user->getKey(),
                 newValues: [
                     'role' => $roleSlug,
-                    'cooperative_id' => $attributes['cooperative_id'] ?? null,
+                    'cooperative_id' => $user->cooperative_id,
+                    //'status' => UserStatus::Pending->value,
+                    'status' => $initialStatus->value,
                 ],
             ));
 
             return $user;
         });
     }
-    
 
     public function assignSuperAdminToCooperative(
         User $actor,
@@ -203,8 +224,8 @@ final class UserManagementService
     }
 
     /**
-     * Activate a pending or inactive account.
-     * Only the root administrator may reactivate a suspended account.
+     * Activate a pending, inactive, or suspended account.
+     * This lifecycle transition is reserved to the root administrator.
      */
     public function activateUser(User $actor, User $target): User
     {
@@ -215,18 +236,14 @@ final class UserManagementService
             UserStatus::Inactive,
             UserStatus::Suspended,
         ];
-        $superAdminCanActivateFrom = [
-            UserStatus::Pending,
-            UserStatus::Inactive,
-        ];
-
         return $this->changeUserStatus(
             actor: $actor,
             target: $target,
             newStatus: UserStatus::Active,
             action: 'activated',
             allowedRootSourceStatuses: $rootCanActivateFrom,
-            allowedSuperAdminSourceStatuses: $superAdminCanActivateFrom,
+            allowedSuperAdminSourceStatuses: [],
+            rootOnly: true,
         );
     }
 

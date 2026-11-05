@@ -89,10 +89,32 @@ final class UserPolicy extends BasePolicy
 
     public function create(User $actor): bool
     {
-        return $actor->hasAnyRole([
-            self::ROLE_SUPER_ADMIN_ROOT,
-            self::ROLE_SUPER_ADMIN,
-        ]) && $this->hasPermission($actor, 'users.create');
+        if (! $this->hasPermission($actor, 'users.create')) {
+            return false;
+        }
+
+        if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            return true;
+        }
+
+        return $actor->hasRole(self::ROLE_SUPER_ADMIN)
+            && $actor->cooperatives()->exists();
+    }
+
+    public function resendInvitation(User $actor, User $target): bool
+    {
+        if (! $this->hasPermission($actor, 'users.create')
+            || $target->trashed()
+            || ! in_array($target->status, [UserStatus::Active, UserStatus::Pending], true)
+            || $target->email_verified_at !== null) {
+            return false;
+        }
+
+        return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            || (
+                $actor->hasRole(self::ROLE_SUPER_ADMIN)
+                && $this->canAccessUser($actor, $target)
+            );
     }
 
     public function activate(User $actor, User $target): bool
@@ -109,11 +131,8 @@ final class UserPolicy extends BasePolicy
             ], true);
         }
 
-        return $this->canManageStatus($actor, $target)
-            && in_array($target->status, [
-                UserStatus::Pending,
-                UserStatus::Inactive,
-            ], true);
+        // Pending and inactive accounts may only be activated by the root.
+        return false;
     }
 
     public function deactivate(User $actor, User $target): bool

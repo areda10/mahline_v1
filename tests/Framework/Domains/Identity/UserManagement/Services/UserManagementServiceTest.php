@@ -56,7 +56,9 @@ final class UserManagementServiceTest extends TestCase
 
         self::assertInstanceOf(User::class, $user);
         self::assertSame($cooperative->id, $user->cooperative_id);
-        self::assertTrue($user->hasRole('user'));
+        self::assertTrue(
+            $user->roles()->where('slug', 'user')->exists(),
+        );
     }
 
     public function test_super_admin_can_create_user_in_assigned_cooperative(): void
@@ -85,7 +87,9 @@ final class UserManagementServiceTest extends TestCase
         );
 
         self::assertSame($cooperative->id, $user->cooperative_id);
-        self::assertTrue($user->hasRole('user'));
+        self::assertTrue(
+            $user->roles()->where('slug', 'user')->exists(),
+        );
     }
 
     public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void 
@@ -468,7 +472,9 @@ final class UserManagementServiceTest extends TestCase
         );
 
         self::assertNull($superAdmin->cooperative_id);
-        self::assertTrue($superAdmin->hasRole('super_admin'));
+        self::assertTrue(
+            $superAdmin->roles()->where('slug', 'super_admin')->exists(),
+        );
         self::assertCount(0, $superAdmin->cooperatives);
     }
 

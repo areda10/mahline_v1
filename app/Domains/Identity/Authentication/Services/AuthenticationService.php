@@ -88,6 +88,25 @@ final class AuthenticationService extends BaseService
         }
 
         /*
+         * An active account must also have a verified email address.
+         */
+        if ($user->email_verified_at === null) {
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'email_not_verified',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new RuntimeException(
+                'Email address is not verified.',
+            );
+        }
+
+        /*
          * Verify IP lock.
          */
         if (

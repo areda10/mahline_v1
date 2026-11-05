@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,6 +79,86 @@ final class AuthenticationControllerTest extends TestCase
             fn ($errors): bool =>
                 is_array($errors) && $errors !== [],
         );
+    }
+
+    public function test_active_user_with_unverified_email_cannot_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'unverified-controller@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson(
+                $this->loginUrl,
+                [
+                    'email' => $user->email,
+                    'password' => 'password',
+                ],
+            );
+
+        $response->assertUnauthorized();
+
+        $response->assertJson([
+            'message' => 'Email address is not verified.',
+        ]);
+
+        $this->assertGuest();
+
+        $this->assertDatabaseMissing('authentication_sessions', [
+            'user_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_super_admin_root_is_redirected_to_its_dedicated_dashboard_after_login(): void
+    {
+        $rootRole = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin_root'],
+            [
+                'name' => 'Super Admin Root',
+                'is_active' => true,
+            ],
+        );
+
+        $root = User::factory()->create([
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $root->roles()->attach($rootRole->getKey());
+
+        $response = $this->post(route('authentication.login.store'), [
+            'email' => $root->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(
+            route('root.backoffice.dashboard'),
+        );
+
+        $this->assertAuthenticatedAs($root);
+
+        $sessionCookie = $response->getCookie(
+            config('session.cookie'),
+        );
+
+        $this->assertNotNull($sessionCookie);
+
+        $this->withCookie(
+            config('session.cookie'),
+            $sessionCookie->getValue(),
+        );
+
+        $dashboardResponse = $this->get(
+            route('root.backoffice.dashboard'),
+        );
+
+        $dashboardResponse->assertOk();
+
+        $this->assertAuthenticatedAs($root);
     }
 
     public function test_user_can_authenticate_successfully(): void

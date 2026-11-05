@@ -104,6 +104,39 @@ final class AuthenticationServiceTest extends TestCase
         ]);
     }
 
+    public function test_active_user_with_unverified_email_is_rejected(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'unverified@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $context = new AuthenticationContext(
+            email: 'unverified@example.com',
+            password: 'password',
+            sessionId: 'session-unverified',
+            ipAddress: '127.0.0.30',
+            userAgent: 'Mozilla/5.0',
+            browser: 'Firefox',
+            device: 'Desktop',
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Email address is not verified.');
+
+        try {
+            $this->authenticationService->authenticate($context);
+        } finally {
+            $this->assertDatabaseHas('login_histories', [
+                'user_id' => $user->getKey(),
+                'event' => 'failed',
+                'reason' => 'email_not_verified',
+            ]);
+        }
+    }
+
     public function test_inactive_user_is_rejected(): void
     {
         $user = User::factory()->create([

@@ -14,6 +14,18 @@
     </div>
 
     <div class="actions">
+
+        @can('resendInvitation', $user)
+            <form method="POST"
+                action="{{ route('backoffice.users.resend-invitation', $user) }}"
+                onsubmit="return confirm('Envoyer une nouvelle invitation à cet utilisateur ?');">
+                @csrf
+                <button class="button" type="submit">
+                    Renvoyer l’invitation
+                </button>
+            </form>
+        @endcan
+
         @can('activate', $user)
             <form method="POST" action="{{ route('backoffice.users.activate', $user) }}"
                   onsubmit="return confirm('Confirmer l’activation de ce compte ?');">
@@ -29,6 +41,15 @@
                 @csrf
                 @method('PATCH')
                 <button class="button button-danger" type="submit">Désactiver le compte</button>
+            </form>
+        @endcan
+
+        @can('suspend', $user)
+            <form method="POST" action="{{ route('backoffice.users.suspend', $user) }}"
+                  onsubmit="return confirm('Confirmer la suspension de ce compte ? Toutes ses sessions et tous ses jetons API seront révoqués.');">
+                @csrf
+                @method('PATCH')
+                <button class="button button-danger" type="submit">Suspendre le compte</button>
             </form>
         @endcan
 
@@ -129,7 +150,7 @@
     </div>
 </section>
 
-@if($isSuperAdmin)
+@if($canViewAssignments)
     <section class="card" aria-labelledby="assignments-heading">
         <h2 id="assignments-heading">Affectations aux coopératives</h2>
 

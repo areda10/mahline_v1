@@ -32,6 +32,27 @@ final class AuthenticationWorkflowTest extends TestCase
         $this->logoutUrl = route('authentication.logout');
     }
 
+    public function test_suspended_user_cannot_create_an_authentication_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'suspended-workflow@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Suspended,
+        ]);
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $response->assertUnauthorized();
+
+        $this->assertDatabaseCount('authentication_sessions', 0);
+        $this->assertGuest();
+    }
+
     public function test_successful_authentication_creates_active_session(): void
     {
         $user = User::factory()->create([

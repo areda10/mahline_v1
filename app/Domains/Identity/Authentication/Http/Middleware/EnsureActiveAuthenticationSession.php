@@ -30,7 +30,10 @@ final class EnsureActiveAuthenticationSession
         );
 
         $authenticationSession = is_string($authenticationSessionId)
-            ? $this->sessions->findActiveById($user, $authenticationSessionId)
+            ? $this->sessions->findActiveById(
+                $user,
+                $authenticationSessionId,
+            )
             : null;
 
         if (
@@ -44,6 +47,7 @@ final class EnsureActiveAuthenticationSession
             Auth::logout();
 
             $request->session()->invalidate();
+
             $request->session()->regenerateToken();
 
             return redirect()->route('authentication.login');
