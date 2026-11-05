@@ -8,6 +8,7 @@ use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryControlle
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeCategoryController as SuperAdminRootCooperativeCategoryController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogProductController as SuperAdminRootCatalogProductController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductController as SuperAdminRootProductController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
@@ -185,6 +186,16 @@ Route::prefix('root/back-office')
                     'catalogs/{catalog}/products/{product}',
                     [SuperAdminRootCatalogProductController::class, 'destroy'],
                 )->name('catalogs.products.destroy');
+
+                Route::resource(
+                    'products',
+                    SuperAdminRootProductController::class,
+                )->names('products');
+
+                Route::patch(
+                    'products/{product}/reactivate',
+                    [SuperAdminRootProductController::class, 'reactivate'],
+                )->name('products.reactivate');
             });
 
         Route::resource('categories', GlobalCategoryController::class)
