@@ -152,6 +152,17 @@ Route::prefix('root/back-office')
             )->name('cooperatives.'.$action);
         }
 
+        Route::prefix('cooperatives/{cooperative}')
+            ->name('cooperatives.')
+            ->group(function (): void {
+                Route::resource(
+                    'categories',
+                    SuperAdminRootCooperativeCategoryController::class,
+                )
+                    ->except(['show'])
+                    ->names('categories');
+            });
+
         Route::resource('categories', GlobalCategoryController::class)
             ->except(['show'])
             ->names('categories');
