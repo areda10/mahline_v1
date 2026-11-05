@@ -100,6 +100,7 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($root)
@@ -118,6 +119,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($actor)
@@ -150,6 +152,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($actor)
@@ -280,6 +283,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create([
             'display_name' => 'Compte à activer',
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($root)
@@ -1181,6 +1185,7 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.create']);
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($root)
@@ -1214,6 +1219,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($actor)
@@ -1243,6 +1249,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create([
             'cooperative_id' => $unassigned->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->actingAs($actor)
@@ -1265,6 +1272,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         foreach (['cooperative_admin', 'user'] as $roleSlug) {
@@ -1316,6 +1324,7 @@ final class UserManagementControllerTest extends TestCase
 
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         Notification::extend('mail', function () {
