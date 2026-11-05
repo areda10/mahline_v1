@@ -24,6 +24,7 @@ final class UserInvitationServiceTest extends TestCase
 
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $previousInvitation = UserInvitation::query()->create([
@@ -74,21 +75,44 @@ final class UserInvitationServiceTest extends TestCase
         );
     }
 
-    public function test_sending_invitation_to_non_pending_user_is_rejected(): void
+    public function test_sending_invitation_to_active_unverified_user_is_allowed(): void
     {
+        Notification::fake();
+
         $user = User::factory()->create([
             'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        app(UserInvitationService::class)->sendInvitation($user);
+
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $user->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+
+        Notification::assertSentOnDemand(
+            \\App\\Domains\\Identity\\UserManagement\\Notifications\\UserInvitationNotification::class,
+        );
+    }
+
+    public function test_sending_invitation_to_inactive_user_is_rejected(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => null,
         ]);
 
         try {
             app(UserInvitationService::class)->sendInvitation($user);
 
             $this->fail(
-                'The service should reject invitations to non-pending users.',
+                'The service should reject invitations to inactive users.',
             );
         } catch (\DomainException $exception) {
             $this->assertSame(
-                'Only pending users can receive an invitation.',
+                'Only active or pending, unverified users can receive an invitation.',
                 $exception->getMessage(),
             );
         }
