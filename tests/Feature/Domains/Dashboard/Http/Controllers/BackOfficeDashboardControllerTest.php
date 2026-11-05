@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Dashboard\Http\Controllers;
 
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -78,5 +81,42 @@ final class BackOfficeDashboardControllerTest extends TestCase
         $user->roles()->attach($role->getKey());
 
         return $user;
+    }
+
+    public function test_guest_cannot_view_dedicated_root_dashboard(): void
+    {
+        $this->get(route('root.backoffice.dashboard'))
+            ->assertRedirect(route('authentication.login'));
+    }
+
+    public function test_root_dashboard_returns_global_statistics(): void
+    {
+        $root = $this->userWithRole('super_admin_root');
+
+        Cooperative::factory()->active()->create();
+
+        User::factory()->create([
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.dashboard'))
+            ->assertOk()
+            ->assertViewHas('cooperativeTotal', 1)
+            ->assertViewHas(
+                'cooperativeStatuses',
+                fn ($statuses): bool =>
+                    $statuses[CooperativeStatus::ACTIVE->value] === 1,
+            )
+            ->assertViewHas('userTotal', 2)
+            ->assertViewHas(
+                'userStatuses',
+                fn ($statuses): bool =>
+                    $statuses[UserStatus::Pending->value] === 1,
+            )
+            ->assertViewHas(
+                'usersByRole',
+                fn ($roles): bool => $roles['super_admin_root'] === 1,
+            );
     }
 }
