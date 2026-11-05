@@ -195,6 +195,22 @@ final class CooperativeControllerTest extends TestCase
         }
     }
 
+    public function test_super_admin_cannot_access_root_cooperative_management_routes(): void
+    {
+        $actor = $this->actor('super_admin', ['cooperatives.view']);
+
+        $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.index'))
+            ->assertForbidden();
+    }
+
+    public function test_root_cooperative_management_routes_are_registered_separately(): void
+    {
+        $this->assertTrue(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.cooperatives.index'));
+        $this->assertTrue(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.cooperatives.store'));
+        $this->assertTrue(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.cooperatives.destroy'));
+    }
+
     public function test_index_requires_view_permission(): void
     {
         $actor = $this->actor('super_admin', ['cooperatives.create']);
