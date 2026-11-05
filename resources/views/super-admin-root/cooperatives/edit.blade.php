@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 @section('title', 'Modifier une coopérative')
 @section('content')
 <div class="page-header"><h1>Modifier {{ $cooperative->name }}</h1></div>
