@@ -2,6 +2,7 @@
 
 use App\Domains\Catalog\Http\Controllers\CatalogController;
 use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
