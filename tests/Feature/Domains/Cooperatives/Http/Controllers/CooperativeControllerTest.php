@@ -69,14 +69,14 @@ final class CooperativeControllerTest extends TestCase
     {
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
 
-        $response = $this->actingAs($actor)->post(route('backoffice.cooperatives.store'), [
+        $response = $this->actingAs($actor)->post(route('root.backoffice.cooperatives.store'), [
             ...$this->validCooperativeAttributes('Coopérative Root'),
         ]);
 
         $response->assertSessionHasNoErrors();
         $cooperative = Cooperative::query()->where('name', 'Coopérative Root')->firstOrFail();
 
-        $response->assertRedirect(route('backoffice.cooperatives.show', $cooperative));
+        $response->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
         $this->assertDatabaseMissing('super_admin_cooperative', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -193,6 +193,21 @@ final class CooperativeControllerTest extends TestCase
                 sprintf('The generic "%s" permission must not bypass CooperativePolicy.', $ability),
             );
         }
+    }
+
+    public function test_root_can_access_its_independent_cooperative_index_and_create_views(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+
+        $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.index'))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.cooperatives.index');
+
+        $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.create'))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.cooperatives.create');
     }
 
     public function test_super_admin_cannot_access_root_cooperative_management_routes(): void
