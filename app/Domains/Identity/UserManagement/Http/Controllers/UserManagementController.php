@@ -106,7 +106,7 @@ final class UserManagementController
                 ->route('backoffice.users.show', $user)
                 ->with(
                     'error',
-                    'L’invitation n’a pas pu être renvoyée : le compte n’est plus en attente ou n’est plus disponible.',
+                    'L’invitation n’a pas pu être renvoyée : le compte est déjà vérifié, indisponible ou son statut ne permet plus l’invitation.',
                 );
         }
 
