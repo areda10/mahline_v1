@@ -44,6 +44,27 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertForbidden();
     }
 
+
+    public function test_root_can_view_its_dedicated_dashboard(): void
+    {
+        $root = $this->userWithRole('super_admin_root');
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.dashboard'))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.dashboard')
+            ->assertSee('Vue globale de la plateforme MAHLINE');
+    }
+
+    public function test_non_root_user_cannot_view_dedicated_root_dashboard(): void
+    {
+        $user = $this->userWithRole('super_admin');
+
+        $this->actingAs($user)
+            ->get(route('root.backoffice.dashboard'))
+            ->assertForbidden();
+    }
+
     private function userWithRole(string $slug): User
     {
         $user = User::factory()->create();
