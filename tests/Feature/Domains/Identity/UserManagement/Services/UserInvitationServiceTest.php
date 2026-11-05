@@ -74,6 +74,40 @@ final class UserInvitationServiceTest extends TestCase
         );
     }
 
+    public function test_sending_invitation_to_non_pending_user_is_rejected(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        try {
+            app(UserInvitationService::class)->sendInvitation($user);
+
+            $this->fail(
+                'The service should reject invitations to non-pending users.',
+            );
+        } catch (\DomainException $exception) {
+            $this->assertSame(
+                'Only pending users can receive an invitation.',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertDatabaseMissing('user_invitations', [
+            'user_id' => $user->getKey(),
+        ]);
+
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.user.invitation_created',
+            'subject_id' => $user->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
     public function test_failed_delivery_keeps_user_pending_and_revokes_invitation(): void
     {
         $user = User::factory()->create([
