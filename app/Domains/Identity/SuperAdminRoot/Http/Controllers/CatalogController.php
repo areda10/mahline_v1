@@ -7,6 +7,7 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Services\CatalogService;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Products\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -63,7 +64,18 @@ final class CatalogController
         $item = $this->service->findForCooperativeOrFail($catalog, (string) $coop->getKey());
         Gate::authorize('view', $item);
 
-        return view('super-admin-root.cooperatives.catalogs.show', ['cooperative' => $coop, 'catalog' => $item]);
+        $availableProducts = Product::query()
+            ->where('cooperative_id', $coop->getKey())
+            ->where('is_active', true)
+            ->whereDoesntHave('catalogs', fn ($query) => $query->whereKey($item->getKey()))
+            ->orderBy('name')
+            ->get();
+
+        return view('super-admin-root.cooperatives.catalogs.show', [
+            'cooperative' => $coop,
+            'catalog' => $item,
+            'availableProducts' => $availableProducts,
+        ]);
     }
 
     public function edit(Request $request, string $cooperative, string $catalog): View
