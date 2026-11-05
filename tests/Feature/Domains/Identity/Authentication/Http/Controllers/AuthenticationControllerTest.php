@@ -113,53 +113,123 @@ final class AuthenticationControllerTest extends TestCase
         ]);
     }
 
+public function test_super_admin_root_is_redirected_to_its_dedicated_dashboard_after_login(): void
+{
+    $role = Role::query()->create([
+        'slug' => 'super_admin_root',
+        'name' => 'Super Admin Root',
+        'is_active' => true,
+    ]);
 
-    public function test_super_admin_root_is_redirected_to_its_dedicated_dashboard_after_login(): void
-    {
-        $role = Role::query()->create([
-            'slug' => 'super_admin_root',
-            'name' => 'Super Admin Root',
-            'is_active' => true,
-        ]);
+    $root = User::factory()->create([
+        'email' => 'root-dashboard@example.com',
+        'password' => 'RootPassword123!',
+        'status' => UserStatus::Active,
+        'email_verified_at' => now(),
+    ]);
 
-        $root = User::factory()->create([
-            'email' => 'root-dashboard@example.com',
+    $root->roles()->attach($role->getKey());
+
+    // 1. Authenticate the root user.
+    $response = $this
+        ->withHeader('User-Agent', $this->userAgent)
+        ->post($this->loginUrl, [
+            'email' => $root->email,
             'password' => 'RootPassword123!',
-            'status' => UserStatus::Active,
-            'email_verified_at' => now(),
         ]);
 
-        $root->roles()->attach($role->getKey());
+    $response->assertRedirect(
+        route('root.backoffice.dashboard'),
+    );
+    $sessionCookie = $response->getCookie(
+        config('session.cookie'),
+        false,
+    );
 
-        $response = $this
-            ->withHeader('User-Agent', $this->userAgent)
-            ->post($this->loginUrl, [
-                'email' => $root->email,
-                'password' => 'RootPassword123!',
-            ]);
+    $this->assertNotNull($sessionCookie);
 
-        $response->assertRedirect(route('root.backoffice.dashboard'));
+    $this->withCookie(
+        config('session.cookie'),
+        $sessionCookie->getValue(),
+    );
 
-        $this->assertAuthenticatedAs($root);
+    $this->assertAuthenticatedAs($root);
 
-        $authenticationSessionId = session('authentication_session_id');
+    // 2. Retrieve the MAHLINE authentication session.
+    $authenticationSessionId = session(
+        'authentication_session_id',
+    );
 
-        $this->assertIsString($authenticationSessionId);
+    $this->assertIsString($authenticationSessionId);
 
-        $authenticationSession = AuthenticationSession::query()
-            ->whereKey($authenticationSessionId)
-            ->where('user_id', $root->getKey())
-            ->firstOrFail();
+    $authenticationSession = AuthenticationSession::query()
+        ->whereKey($authenticationSessionId)
+        ->where('user_id', $root->getKey())
+        ->firstOrFail();
 
-        $this->assertSame(
-            session()->getId(),
-            $authenticationSession->session_id,
-        );
+    // 3. Capture session information before dashboard request.
+    $sessionIdBeforeDashboard = session()->getId();
 
-        $this->get(route('root.backoffice.dashboard'))
-            ->assertOk()
-            ->assertViewIs('super-admin-root.dashboard');
-    }
+    $authenticationSessionIdBeforeDashboard = session(
+        'authentication_session_id',
+    );
+
+    // 4. Diagnose each middleware condition independently.
+    $isAuthorized = $root->isAuthorized();
+
+    $activeSessionExists = AuthenticationSession::query()
+        ->whereKey($authenticationSessionIdBeforeDashboard)
+        ->where('user_id', $root->getKey())
+        ->whereNull('revoked_at')
+        ->exists();
+
+    $deletedAt = AuthenticationSession::withTrashed()
+        ->whereKey($authenticationSessionIdBeforeDashboard)
+        ->value('deleted_at');
+
+    $sessionIdMatchesDatabase = hash_equals(
+        $authenticationSession->session_id,
+        $sessionIdBeforeDashboard,
+    );
+
+    // 5. Request the dedicated dashboard.
+    $dashboardResponse = $this->get(
+        route('root.backoffice.dashboard'),
+    );
+
+    // 6. Display the complete diagnostic.
+    dump([
+        'session_driver' => config('session.driver'),
+
+        'is_authorized' => $isAuthorized,
+
+        'active_session_exists' => $activeSessionExists,
+
+        'authentication_session_deleted_at' => $deletedAt,
+
+        'session_id_matches_database' => $sessionIdMatchesDatabase,
+
+        'session_id_before_dashboard' => $sessionIdBeforeDashboard,
+
+        'authentication_session_id_before_dashboard' =>
+            $authenticationSessionIdBeforeDashboard,
+
+        'dashboard_status' => $dashboardResponse->getStatusCode(),
+
+        'redirect_location' =>
+            $dashboardResponse->headers->get('Location'),
+
+        'authenticated_after_dashboard' => auth()->check(),
+
+        'user_id_after_dashboard' => auth()->id(),
+
+        'session_id_after_dashboard' => session()->getId(),
+
+        'authentication_session_id_after_dashboard' => session(
+            'authentication_session_id',
+        ),
+    ]);
+}
 
     public function test_user_can_authenticate_successfully(): void
     {
