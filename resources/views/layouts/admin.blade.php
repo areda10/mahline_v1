@@ -84,6 +84,7 @@
         @if(auth()->user()->hasRole('super_admin_root'))
             <nav class="nav" aria-label="Navigation principale">
                 <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
+                <a href="{{ route('root.backoffice.categories.index') }}">Catégories globales</a>
                 <a href="{{ route('backoffice.cooperatives.index') }}">Coopératives</a>
                 <a href="{{ route('backoffice.users.index') }}">Utilisateurs</a>
             </nav>
