@@ -30,7 +30,7 @@ final class CooperativeController
             ->orderBy('name')
             ->paginate(15);
 
-        return view('root.root.backoffice.cooperatives.index', compact('cooperatives'));
+        return view('super-admin-root.cooperatives.index', compact('cooperatives'));
     }
 
     public function create(Request $request): View
@@ -38,7 +38,7 @@ final class CooperativeController
         $this->authorizeRoot($request);
         Gate::authorize('create', Cooperative::class);
 
-        return view('root.root.backoffice.cooperatives.create', [
+        return view('super-admin-root.cooperatives.create', [
             'cooperative' => new Cooperative(),
             'addresses' => $this->availableAddresses(),
         ]);
@@ -63,7 +63,7 @@ final class CooperativeController
         $cooperative = $this->cooperativeService->create($request->user(), $data);
 
         return redirect()
-            ->route('root.root.backoffice.cooperatives.show', $cooperative)
+            ->route('root.backoffice.cooperatives.show', $cooperative)
             ->with('success', 'La coopérative a été créée.');
     }
 
@@ -71,7 +71,7 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         $model = $this->resolveCooperative($cooperative);
-        return view('root.root.backoffice.cooperatives.show', ['cooperative' => $model->load('address.country')]);
+        return view('super-admin-root.cooperatives.show', ['cooperative' => $model->load('address.country')]);
     }
 
     public function edit(Request $request, string $cooperative): View
@@ -80,7 +80,7 @@ final class CooperativeController
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
 
-        return view('root.root.backoffice.cooperatives.edit', [
+        return view('super-admin-root.cooperatives.edit', [
             'cooperative' => $model,
             'addresses' => $this->availableAddresses(),
         ]);
@@ -124,7 +124,7 @@ final class CooperativeController
         $this->cooperativeService->update($user, $model, $data);
 
         return redirect()
-            ->route('root.root.backoffice.cooperatives.show', $model)
+            ->route('root.backoffice.cooperatives.show', $model)
             ->with('success', 'La coopérative a été mise à jour.');
     }
 
@@ -159,7 +159,7 @@ final class CooperativeController
         $this->cooperativeService->delete($request->user(), $model);
 
         return redirect()
-            ->route('root.root.backoffice.cooperatives.index')
+            ->route('root.backoffice.cooperatives.index')
             ->with('success', 'La coopérative a été supprimée.');
     }
 
@@ -169,7 +169,7 @@ final class CooperativeController
         $this->cooperativeService->{$action}($request->user(), $model);
 
         return redirect()
-            ->route('root.root.backoffice.cooperatives.show', $model)
+            ->route('root.backoffice.cooperatives.show', $model)
             ->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
 
