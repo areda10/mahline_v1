@@ -7,6 +7,7 @@ use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController a
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeCategoryController as SuperAdminRootCooperativeCategoryController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogProductController as SuperAdminRootCatalogProductController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
@@ -174,6 +175,16 @@ Route::prefix('root/back-office')
                     'catalogs/{catalog}',
                     [SuperAdminRootCatalogController::class, 'destroy'],
                 )->name('catalogs.destroy');
+
+                Route::post(
+                    'catalogs/{catalog}/products',
+                    [SuperAdminRootCatalogProductController::class, 'store'],
+                )->name('catalogs.products.store');
+
+                Route::delete(
+                    'catalogs/{catalog}/products/{product}',
+                    [SuperAdminRootCatalogProductController::class, 'destroy'],
+                )->name('catalogs.products.destroy');
             });
 
         Route::resource('categories', GlobalCategoryController::class)
