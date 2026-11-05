@@ -58,7 +58,7 @@ final class SessionService extends BaseService
             }
 
             if ($lockedUser->email_verified_at === null) {
-                throw new RuntimeException(
+                throw new \RuntimeException(
                     'The user email address is not verified. A new session cannot be created.',
                 );
             }
