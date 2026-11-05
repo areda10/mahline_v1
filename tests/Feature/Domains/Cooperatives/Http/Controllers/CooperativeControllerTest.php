@@ -206,9 +206,9 @@ final class CooperativeControllerTest extends TestCase
 
     public function test_root_cooperative_management_routes_are_registered_separately(): void
     {
-        $this->assertTrue(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.cooperatives.index'));
-        $this->assertTrue(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.cooperatives.store'));
-        $this->assertTrue(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.cooperatives.destroy'));
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('root.backoffice.cooperatives.index'));
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('root.backoffice.cooperatives.store'));
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('root.backoffice.cooperatives.destroy'));
     }
 
     public function test_index_requires_view_permission(): void
