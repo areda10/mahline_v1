@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -109,6 +110,40 @@ final class AuthenticationControllerTest extends TestCase
         $this->assertDatabaseMissing('authentication_sessions', [
             'user_id' => $user->getKey(),
         ]);
+    }
+
+
+    public function test_super_admin_root_is_redirected_to_its_dedicated_dashboard_after_login(): void
+    {
+        $role = Role::query()->create([
+            'slug' => 'super_admin_root',
+            'name' => 'Super Admin Root',
+            'is_active' => true,
+        ]);
+
+        $root = User::factory()->create([
+            'email' => 'root-dashboard@example.com',
+            'password' => 'RootPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $root->roles()->attach($role->getKey());
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->post($this->loginUrl, [
+                'email' => $root->email,
+                'password' => 'RootPassword123!',
+            ]);
+
+        $response->assertRedirect(route('root.backoffice.dashboard'));
+
+        $this->assertAuthenticatedAs($root);
+
+        $this->get(route('root.backoffice.dashboard'))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.dashboard');
     }
 
     public function test_user_can_authenticate_successfully(): void
