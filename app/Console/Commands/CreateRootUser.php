@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\\Console\\Commands;
+namespace App\Console\Commands;
 
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
-use Illuminate\\Console\\Command;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Validator;
-use Illuminate\\Validation\\Rule;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 final class CreateRootUser extends Command
 {
