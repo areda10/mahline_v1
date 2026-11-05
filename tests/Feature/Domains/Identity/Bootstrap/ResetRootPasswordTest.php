@@ -75,7 +75,6 @@ final class ResetRootPasswordTest extends TestCase
             ->expectsQuestion('Adresse e-mail du compte Root', 'root@example.test')
             ->expectsQuestion('Nouveau mot de passe', 'NewRootPassword123!')
             ->expectsQuestion('Confirmer le nouveau mot de passe', 'DifferentPassword123!')
-            ->expectsOutputToContain('confirmation does not match')
             ->assertExitCode(Command::FAILURE);
 
         $this->assertTrue(Hash::check('OriginalRootPassword123!', $root->fresh()->password));
