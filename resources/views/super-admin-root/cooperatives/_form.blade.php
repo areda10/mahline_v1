@@ -26,4 +26,4 @@
     </label>
 </div>
 @foreach($errors->all() as $error)<p class="error">{{ $error }}</p>@endforeach
-<div class="actions"><button class="button" type="submit">{{ $submitLabel }}</button><a class="button button-secondary" href="{{ $cooperative->exists ? route('root.root.backoffice.cooperatives.show', $cooperative) : route('root.root.backoffice.cooperatives.index') }}">Annuler</a></div>
+<div class="actions"><button class="button" type="submit">{{ $submitLabel }}</button><a class="button button-secondary" href="{{ $cooperative->exists ? route('root.backoffice.cooperatives.show', $cooperative) : route('root.backoffice.cooperatives.index') }}">Annuler</a></div>
