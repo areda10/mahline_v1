@@ -127,11 +127,12 @@ final class BackOfficeDashboardControllerTest extends TestCase
         $this->actingAs($root)
             ->get(route('root.backoffice.dashboard'))
             ->assertOk()
+            ->assertSee('Navigation Root', false)
+            ->assertDontSee('Navigation principale', false)
             ->assertSee('Tableau de bord')
             ->assertSee('Catégories globales')
             ->assertSee('Coopératives')
             ->assertSee('Utilisateurs')
-            ->assertDontSee('Coopérative :')
-            ->assertDontSee('Catalogues');
+            ->assertDontSee('Coopérative :');
     }
 }
