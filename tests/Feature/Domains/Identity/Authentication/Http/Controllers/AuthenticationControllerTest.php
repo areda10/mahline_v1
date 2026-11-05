@@ -79,6 +79,38 @@ final class AuthenticationControllerTest extends TestCase
         );
     }
 
+    public function test_active_user_with_unverified_email_cannot_authenticate(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'unverified-controller@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson(
+                $this->loginUrl,
+                [
+                    'email' => $user->email,
+                    'password' => 'password',
+                ],
+            );
+
+        $response->assertUnauthorized();
+
+        $response->assertJson([
+            'message' => 'Email address is not verified.',
+        ]);
+
+        $this->assertGuest();
+
+        $this->assertDatabaseMissing('authentication_sessions', [
+            'user_id' => $user->getKey(),
+        ]);
+    }
+
     public function test_user_can_authenticate_successfully(): void
     {
         $user = User::factory()->create([
