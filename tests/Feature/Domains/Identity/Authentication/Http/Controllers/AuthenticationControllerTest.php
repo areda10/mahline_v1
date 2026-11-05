@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -140,6 +141,20 @@ final class AuthenticationControllerTest extends TestCase
         $response->assertRedirect(route('root.backoffice.dashboard'));
 
         $this->assertAuthenticatedAs($root);
+
+        $authenticationSessionId = session('authentication_session_id');
+
+        $this->assertIsString($authenticationSessionId);
+
+        $authenticationSession = AuthenticationSession::query()
+            ->whereKey($authenticationSessionId)
+            ->where('user_id', $root->getKey())
+            ->firstOrFail();
+
+        $this->assertSame(
+            session()->getId(),
+            $authenticationSession->session_id,
+        );
 
         $this->get(route('root.backoffice.dashboard'))
             ->assertOk()
