@@ -105,7 +105,8 @@ final class UserPolicy extends BasePolicy
     {
         if (! $this->hasPermission($actor, 'users.create')
             || $target->trashed()
-            || $target->status !== UserStatus::Pending) {
+            || ! in_array($target->status, [UserStatus::Active, UserStatus::Pending], true)
+            || $target->email_verified_at !== null) {
             return false;
         }
 
