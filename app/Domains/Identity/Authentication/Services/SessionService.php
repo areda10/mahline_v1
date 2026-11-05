@@ -57,6 +57,12 @@ final class SessionService extends BaseService
                 );
             }
 
+            if ($lockedUser->email_verified_at === null) {
+                throw new RuntimeException(
+                    'The user email address is not verified. A new session cannot be created.',
+                );
+            }
+
             $session = AuthenticationSession::query()->create([
                 'user_id' => $user->getKey(),
                 'session_id' => $sessionId,
