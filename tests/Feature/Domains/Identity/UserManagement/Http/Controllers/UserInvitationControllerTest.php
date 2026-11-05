@@ -21,6 +21,7 @@ final class UserInvitationControllerTest extends TestCase
         $token = bin2hex(random_bytes(32));
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token);
@@ -48,6 +49,7 @@ final class UserInvitationControllerTest extends TestCase
         $token = bin2hex(random_bytes(32));
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token, [
@@ -66,6 +68,7 @@ final class UserInvitationControllerTest extends TestCase
         $token = bin2hex(random_bytes(32));
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token, [
@@ -84,6 +87,7 @@ final class UserInvitationControllerTest extends TestCase
         $token = bin2hex(random_bytes(32));
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token, [
@@ -97,11 +101,12 @@ final class UserInvitationControllerTest extends TestCase
             ->assertSessionHas('error');
     }
 
-    public function test_non_pending_user_cannot_display_acceptance_form(): void
+    public function test_inactive_user_cannot_display_acceptance_form(): void
     {
         $token = bin2hex(random_bytes(32));
         $user = User::factory()->create([
             'status' => UserStatus::Inactive,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token);
@@ -182,6 +187,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token, [
@@ -206,6 +212,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token, [
@@ -231,6 +238,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $this->createInvitation($user, $token, [
@@ -250,27 +258,30 @@ final class UserInvitationControllerTest extends TestCase
         );
     }
 
-    public function test_active_user_cannot_accept_pending_invitation(): void
+    public function test_active_unverified_user_can_accept_invitation_without_status_change(): void
     {
         $token = bin2hex(random_bytes(32));
 
         $user = User::factory()->create([
             'status' => UserStatus::Active,
+            'email_verified_at' => null,
         ]);
 
-        $this->createInvitation($user, $token);
+        $invitation = $this->createInvitation($user, $token);
 
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
             'password' => 'MahlineSecure2026',
             'password_confirmation' => 'MahlineSecure2026',
         ])
-            ->assertSessionHasErrors('invitation');
+            ->assertRedirect(route('authentication.login'))
+            ->assertSessionHas('status');
 
-        $this->assertSame(
-            UserStatus::Active,
-            $user->fresh()->status,
-        );
+        $user->refresh();
+
+        $this->assertSame(UserStatus::Active, $user->status);
+        $this->assertNotNull($user->email_verified_at);
+        $this->assertNotNull($invitation->fresh()->used_at);
     }
 
     public function test_password_not_compliant_with_policy_is_rejected(): void
@@ -279,6 +290,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $invitation = $this->createInvitation($user, $token);
@@ -304,6 +316,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $user = User::factory()->create([
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
         $invitation = $this->createInvitation($user, $token);
