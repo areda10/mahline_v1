@@ -115,10 +115,20 @@ final class AuthenticationControllerTest extends TestCase
 
     public function test_super_admin_root_is_redirected_to_its_dedicated_dashboard_after_login(): void
     {
+        $rootRole = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin_root'],
+            [
+                'name' => 'Super Admin Root',
+                'is_active' => true,
+            ],
+        );
+
         $root = User::factory()->create([
-            'role' => 'super_admin_root',
-            'status' => 'active',
+            'password' => 'password',
+            'status' => UserStatus::Active,
         ]);
+
+        $root->roles()->attach($rootRole->getKey());
 
         $response = $this->post(route('authentication.login.store'), [
             'email' => $root->email,
