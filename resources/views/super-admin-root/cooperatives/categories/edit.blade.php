@@ -19,7 +19,7 @@
           action="{{ route('root.backoffice.cooperatives.categories.update', ['cooperative' => $cooperative->getKey(), 'category' => $category->getKey()]) }}">
         @csrf
         @method('PUT')
-        @include('root.backoffice.cooperatives.categories._form', ['submitLabel' => 'Enregistrer'])
+        @include('super-admin-root.cooperatives.categories._form', ['submitLabel' => 'Enregistrer'])
     </form>
 </div>
 @endsection
