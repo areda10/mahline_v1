@@ -210,6 +210,26 @@ final class CooperativeControllerTest extends TestCase
             ->assertViewIs('super-admin-root.cooperatives.create');
     }
 
+    public function test_root_dashboard_and_navigation_use_only_root_cooperative_routes(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view']);
+
+        $dashboard = $this->actingAs($actor)
+            ->get(route('root.backoffice.dashboard'));
+
+        $dashboard->assertOk()
+            ->assertViewIs('super-admin-root.dashboard')
+            ->assertSee(route('root.backoffice.cooperatives.index'))
+            ->assertDontSee(route('backoffice.cooperatives.index'));
+
+        $index = $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.index'));
+
+        $index->assertOk()
+            ->assertSee(route('root.backoffice.cooperatives.index'))
+            ->assertDontSee(route('backoffice.cooperatives.index'));
+    }
+
     public function test_super_admin_cannot_access_root_cooperative_management_routes(): void
     {
         $actor = $this->actor('super_admin', ['cooperatives.view']);
