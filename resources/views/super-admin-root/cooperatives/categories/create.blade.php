@@ -16,7 +16,7 @@
     <form method="POST"
           action="{{ route('root.backoffice.cooperatives.categories.store', ['cooperative' => $cooperative->getKey()]) }}">
         @csrf
-        @include('root.backoffice.cooperatives.categories._form', ['submitLabel' => 'Créer la catégorie'])
+        @include('super-admin-root.cooperatives.categories._form', ['submitLabel' => 'Créer la catégorie'])
     </form>
 </div>
 @endsection
