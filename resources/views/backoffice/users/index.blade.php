@@ -79,6 +79,7 @@
                     <tr>
                         <th>Utilisateur</th>
                         <th>Email</th>
+                        <th>Vérification email</th>
                         <th>Téléphone</th>
                         <th>Rôle(s)</th>
                         <th>Coopérative</th>
@@ -102,6 +103,13 @@
                                 @endif
                             </td>
                             <td>{{ $user->email }}</td>
+                            <td>
+                                @if($user->email_verified_at !== null)
+                                    <span class="badge">Vérifié</span>
+                                @else
+                                    <span class="badge">À vérifier</span>
+                                @endif
+                            </td>
                             <td>{{ $user->telephone }}</td>
                             <td>
                                 @forelse($user->roles as $role)
