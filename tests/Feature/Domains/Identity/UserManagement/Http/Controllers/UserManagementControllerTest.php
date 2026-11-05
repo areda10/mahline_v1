@@ -95,6 +95,69 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee('Coopérative détail');
     }
 
+    public function test_root_sees_resend_invitation_button_for_pending_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Renvoyer l’invitation');
+    }
+
+    public function test_assigned_super_admin_sees_resend_invitation_button_for_pending_user(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+
+        $actor = $this->actor('super_admin', ['users.view', 'users.create']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Renvoyer l’invitation');
+    }
+
+    public function test_root_does_not_see_resend_invitation_button_for_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertDontSee('Renvoyer l’invitation');
+    }
+
+    public function test_cooperative_admin_does_not_see_resend_invitation_button(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+
+        $actor = $this->actor('cooperative_admin', ['users.view', 'users.create'], [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Pending,
+        ]);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.users.show', $target))
+            ->assertOk()
+            ->assertDontSee('Renvoyer l’invitation');
+    }
+
     public function test_root_can_view_super_admin_cooperative_assignments(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
