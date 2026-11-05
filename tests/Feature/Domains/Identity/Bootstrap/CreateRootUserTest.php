@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Identity\\Bootstrap;
+namespace Tests\Feature\Domains\Identity\Bootstrap;
 
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use Illuminate\\Console\\Command;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use Illuminate\Console\Command;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class CreateRootUserTest extends TestCase
 {
