@@ -36,7 +36,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         User $actor,
         array $attributes,
         string $roleSlug,
+        UserStatus $initialStatus = UserStatus::Pending,
     ): User {
+        if (! in_array($initialStatus, [UserStatus::Active, UserStatus::Pending], true)) {
+            throw new DomainException(
+                'A newly created user must start as active or pending.',
+            );
+        }
+
         $this->assertActorIsActive($actor);
 
         $role = $this->findRole($roleSlug);
@@ -61,6 +68,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $role,
             $actor,
             $roleSlug,
+            $initialStatus,
         ): User {
             $userAttributes = array_merge($attributes, [
                 'display_name' => trim(
@@ -68,7 +76,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 ),
                 // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
                 'password' => bin2hex(random_bytes(32)),
-                'status' => UserStatus::Pending,
+                //'status' => UserStatus::Pending,
+                'status' => $initialStatus,
                 'email_verified_at' => null,
             ]);
 
@@ -89,7 +98,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 newValues: [
                     'role' => $roleSlug,
                     'cooperative_id' => $user->cooperative_id,
-                    'status' => UserStatus::Pending->value,
+                    //'status' => UserStatus::Pending->value,
+                    'status' => $initialStatus->value,
                 ],
             ));
 
