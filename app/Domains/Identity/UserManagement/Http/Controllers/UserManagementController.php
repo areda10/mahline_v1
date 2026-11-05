@@ -55,13 +55,15 @@ final class UserManagementController
         $data = $request->validated();
 
         $roleSlug = $data['role_slug'];
-        unset($data['role_slug']);
+        $initialStatus = UserStatus::from($data['status']);
+        unset($data['role_slug'], $data['status']);
 
         try {
             $user = $userManagementService->createUser(
                 $request->user(),
                 $data,
                 $roleSlug,
+                $initialStatus,
             );
 
             $invitationService->sendInvitation($user);
