@@ -11,6 +11,7 @@ use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -29,7 +30,9 @@ final class AuthenticationWorkflow
     public function execute(
         AuthenticationContext $context,
         string $sessionId,
+        ?Request $request = null,
     ): AuthenticationSession {
+        $request ??= request();
         $user = $this->authenticationService->authenticate(
             context: $context,
         );
@@ -37,9 +40,9 @@ final class AuthenticationWorkflow
         try {
             Auth::login($user);
 
-            request()->session()->regenerate();
+            $request->session()->regenerate();
 
-            $newSessionId = request()->session()->getId();
+            $newSessionId = $request->session()->getId();
 
             $authenticationSession = DB::transaction(
                 function () use (
@@ -81,7 +84,7 @@ final class AuthenticationWorkflow
                 },
             );
 
-            request()->session()->put(
+            $request->session()->put(
                 'authentication_session_id',
                 $authenticationSession->getKey(),
             );
@@ -90,8 +93,8 @@ final class AuthenticationWorkflow
         } catch (Throwable $exception) {
             Auth::logout();
 
-            request()->session()->invalidate();
-            request()->session()->regenerateToken();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
             throw $exception;
         }
