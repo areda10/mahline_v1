@@ -31,7 +31,7 @@ final class UserInvitationService
     }
 
     /**
-     * Create and send a new invitation to a pending user.
+     * Create and send a new invitation to an active or pending, unverified user.
      */
     public function sendInvitation(User $user): void
     {
@@ -52,9 +52,12 @@ final class UserInvitationService
                 );
             }
 
-            if ($lockedUser->status !== UserStatus::Pending) {
+            if (
+                ! in_array($lockedUser->status, [UserStatus::Active, UserStatus::Pending], true)
+                || $lockedUser->email_verified_at !== null
+            ) {
                 throw new DomainException(
-                    'Only pending users can receive an invitation.',
+                    'Only active or pending, unverified users can receive an invitation.',
                 );
             }
 
@@ -199,9 +202,12 @@ final class UserInvitationService
             );
         }
 
-        if ($user->status !== UserStatus::Pending) {
+        if (
+            ! in_array($user->status, [UserStatus::Active, UserStatus::Pending], true)
+            || $user->email_verified_at !== null
+        ) {
             throw new DomainException(
-                'Only pending users can accept an invitation.',
+                'Only active or pending, unverified users can accept an invitation.',
             );
         }
     }
@@ -289,14 +295,20 @@ final class UserInvitationService
                 );
             }
 
-            if ($user->status !== UserStatus::Pending) {
+            if (
+                ! in_array($user->status, [UserStatus::Active, UserStatus::Pending], true)
+                || $user->email_verified_at !== null
+            ) {
                 throw new DomainException(
-                    'Only pending users can accept an invitation.',
+                    'Only active or pending, unverified users can accept an invitation.',
                 );
             }
 
             $user->password = $password;
-            $user->status = UserStatus::Active;
+
+            if ($user->status === UserStatus::Pending) {
+                $user->status = UserStatus::Active;
+            }
             $user->email_verified_at = now();
             $user->save();
 
