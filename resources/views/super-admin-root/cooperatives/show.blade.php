@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 @section('title', $cooperative->name)
 @section('content')
 <div class="page-header"><div><h1>{{ $cooperative->name }}</h1><p class="muted">Statut : {{ $cooperative->status->value }}</p></div>
