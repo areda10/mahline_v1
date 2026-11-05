@@ -1,6 +1,7 @@
 <?php
 
 use App\Domains\Catalog\Http\Controllers\CatalogController;
+use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
@@ -103,6 +104,9 @@ Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
     ->group(function (): void {
+
+        Route::get('dashboard', BackOfficeDashboardController::class)
+            ->name('dashboard');
 
         Route::get('users', [UserManagementController::class, 'index'])
             ->name('users.index');
