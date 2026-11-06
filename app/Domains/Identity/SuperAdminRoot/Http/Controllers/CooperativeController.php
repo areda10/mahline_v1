@@ -220,7 +220,21 @@ final class CooperativeController
             'country_id' => [...$required, 'required', 'string', 'size:26',
                 Rule::exists('countries', 'id')->where('code', 'MA')->where('is_active', true)->whereNull('deleted_at')],
             'postal_code' => [...$required, 'required', 'string', 'max:32'],
-            'state' => [...$required, 'required', 'string', 'max:255'],
+            'state' => [...$required, 'required', 'string', 'max:255',
+                Rule::in([
+                    'Tanger-Tétouan-Al Hoceïma',
+                    "L'Oriental",
+                    'Fès-Meknès',
+                    'Rabat-Salé-Kénitra',
+                    'Béni Mellal-Khénifra',
+                    'Casablanca-Settat',
+                    'Marrakech-Safi',
+                    'Drâa-Tafilalet',
+                    'Souss-Massa',
+                    'Guelmim-Oued Noun',
+                    'Laâyoune-Sakia El Hamra',
+                    'Dakhla-Oued Ed-Dahab',
+                ])],
         ];
     }
 
