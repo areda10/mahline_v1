@@ -261,7 +261,7 @@ final class CooperativeControllerTest extends TestCase
     {
         $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
-        $country = Country::factory()->create(['code' => 'ES', 'iso3' => 'ESP', 'name' => 'Spain']);
+        $country = $this->morocco();
 
         $this->actingAs($actor)
             ->put(route('root.backoffice.cooperatives.update', $cooperative), [
@@ -282,6 +282,48 @@ final class CooperativeControllerTest extends TestCase
             'postal_code' => '28013',
             'state' => 'Community of Madrid',
         ]);
+    }
+
+    public function test_root_create_form_lists_all_moroccan_regions_and_morocco(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+
+        $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.create'))
+            ->assertOk()
+            ->assertSee('Maroc')
+            ->assertSee('Tanger-Tétouan-Al Hoceïma')
+            ->assertSee("L&#039;Oriental", false)
+            ->assertSee('Fès-Meknès')
+            ->assertSee('Rabat-Salé-Kénitra')
+            ->assertSee('Béni Mellal-Khénifra')
+            ->assertSee('Casablanca-Settat')
+            ->assertSee('Marrakech-Safi')
+            ->assertSee('Drâa-Tafilalet')
+            ->assertSee('Souss-Massa')
+            ->assertSee('Guelmim-Oued Noun')
+            ->assertSee('Laâyoune-Sakia El Hamra')
+            ->assertSee('Dakhla-Oued Ed-Dahab');
+    }
+
+    public function test_root_cannot_select_a_country_other_than_morocco(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+        $foreignCountry = Country::factory()->create([
+            'code' => 'ES',
+            'iso3' => 'ESP',
+            'name' => 'Espagne',
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('root.backoffice.cooperatives.store'), [
+                ...$this->validCooperativeAttributes('Pays interdit'),
+                ...$this->validAddressAttributes(),
+                'country_id' => $foreignCountry->getKey(),
+            ])
+            ->assertSessionHasErrors(['country_id']);
+
+        $this->assertDatabaseMissing('cooperatives', ['name' => 'Pays interdit']);
     }
 
     public function test_root_cannot_create_cooperative_without_all_five_address_fields(): void
