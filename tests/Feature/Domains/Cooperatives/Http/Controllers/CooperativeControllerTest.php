@@ -206,6 +206,8 @@ final class CooperativeControllerTest extends TestCase
             ->assertOk()
             ->assertViewIs('super-admin-root.cooperatives.index');
 
+        $this->morocco();
+
         $this->actingAs($actor)
             ->get(route('root.backoffice.cooperatives.create'))
             ->assertOk()
@@ -265,22 +267,22 @@ final class CooperativeControllerTest extends TestCase
 
         $this->actingAs($actor)
             ->put(route('root.backoffice.cooperatives.update', $cooperative), [
-                'address_line_1' => '12 Calle Mayor',
-                'city' => 'Madrid',
+                'address_line_1' => '12 Avenue Hassan II',
+                'city' => 'Rabat',
                 'country_id' => $country->getKey(),
-                'postal_code' => '28013',
-                'state' => 'Community of Madrid',
+                'postal_code' => '10000',
+                'state' => 'Rabat-Salé-Kénitra',
             ])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
 
         $this->assertDatabaseHas('addresses', [
             'id' => $cooperative->fresh()->address_id,
-            'address_line_1' => '12 Calle Mayor',
-            'city' => 'Madrid',
+            'address_line_1' => '12 Avenue Hassan II',
+            'city' => 'Rabat',
             'country_id' => $country->getKey(),
-            'postal_code' => '28013',
-            'state' => 'Community of Madrid',
+            'postal_code' => '10000',
+            'state' => 'Rabat-Salé-Kénitra',
         ]);
     }
 
@@ -341,6 +343,22 @@ final class CooperativeControllerTest extends TestCase
         $this->assertDatabaseMissing('cooperatives', ['name' => 'Adresse incomplète']);
     }
 
+    private function morocco(): Country
+    {
+        return Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Maroc',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+    }
+
     /** @return array<string, mixed> */
     private function validCooperativeAttributes(string $name): array
     {
@@ -363,7 +381,7 @@ final class CooperativeControllerTest extends TestCase
             ['code' => 'MA'],
             [
                 'iso3' => 'MAR',
-                'name' => 'Morocco',
+                'name' => 'Maroc',
                 'native_name' => 'المغرب',
                 'phone_code' => '+212',
                 'currency' => 'MAD',
