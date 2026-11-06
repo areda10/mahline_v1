@@ -16,12 +16,32 @@
         <select name="country_id" required>
             <option value="">Sélectionner un pays</option>
             @foreach($countries as $country)
-                <option value="{{ $country->getKey() }}" @selected((string) old('country_id', $address?->country_id) === (string) $country->getKey())>{{ $country->name }}</option>
+                <option value="{{ $country->getKey() }}" @selected((string) old('country_id', $address?->country_id ?? $country->getKey()) === (string) $country->getKey())>Maroc</option>
             @endforeach
         </select>
     </label>
     <label>Code postal <input name="postal_code" required maxlength="32" value="{{ old('postal_code', $address?->postal_code) }}"></label>
-    <label>Région <input name="state" required maxlength="255" value="{{ old('state', $address?->state) }}"></label>
+    <label>Région
+        <select name="state" required>
+            <option value="">Sélectionner une région</option>
+            @foreach([
+                'Tanger-Tétouan-Al Hoceïma',
+                "L'Oriental",
+                'Fès-Meknès',
+                'Rabat-Salé-Kénitra',
+                'Béni Mellal-Khénifra',
+                'Casablanca-Settat',
+                'Marrakech-Safi',
+                'Drâa-Tafilalet',
+                'Souss-Massa',
+                'Guelmim-Oued Noun',
+                'Laâyoune-Sakia El Hamra',
+                'Dakhla-Oued Ed-Dahab',
+            ] as $region)
+                <option value="{{ $region }}" @selected(old('state', $address?->state) === $region)>{{ $region }}</option>
+            @endforeach
+        </select>
+    </label>
 </div>
 @foreach($errors->all() as $error)<p class="error">{{ $error }}</p>@endforeach
 <div class="actions"><button class="button" type="submit">{{ $submitLabel }}</button><a class="button button-secondary" href="{{ $cooperative->exists ? route('root.backoffice.cooperatives.show', $cooperative) : route('root.backoffice.cooperatives.index') }}">Annuler</a></div>
