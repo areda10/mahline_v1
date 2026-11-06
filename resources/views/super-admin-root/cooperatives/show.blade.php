@@ -13,9 +13,10 @@
 <dd>
     @if($cooperative->address)
         {{ $cooperative->address->address_line_1 }}
-        @if($cooperative->address->address_line_2), {{ $cooperative->address->address_line_2 }}@endif
         — {{ $cooperative->address->city }}
-        @if($cooperative->address->country), {{ $cooperative->address->country->name }}@endif
+        — {{ $cooperative->address->country?->name ?? '—' }}
+        — {{ $cooperative->address->postal_code }}
+        — {{ $cooperative->address->state }}
     @else
         —
     @endif
