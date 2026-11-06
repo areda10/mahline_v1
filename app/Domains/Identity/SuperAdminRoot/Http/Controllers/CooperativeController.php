@@ -206,7 +206,7 @@ final class CooperativeController
 
     private function availableCountries()
     {
-        return Country::query()->where('is_active', true)->orderBy('name')->get();
+        return Country::query()->where('code', 'MA')->where('is_active', true)->orderBy('name')->get();
     }
 
     /** @return array<string, array<int, mixed>> */
@@ -218,7 +218,7 @@ final class CooperativeController
             'address_line_1' => [...$required, 'required', 'string', 'max:255'],
             'city' => [...$required, 'required', 'string', 'max:255'],
             'country_id' => [...$required, 'required', 'string', 'size:26',
-                Rule::exists('countries', 'id')->where('is_active', true)->whereNull('deleted_at')],
+                Rule::exists('countries', 'id')->where('code', 'MA')->where('is_active', true)->whereNull('deleted_at')],
             'postal_code' => [...$required, 'required', 'string', 'max:32'],
             'state' => [...$required, 'required', 'string', 'max:255'],
         ];
