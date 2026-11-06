@@ -290,6 +290,8 @@ final class CooperativeControllerTest extends TestCase
     {
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
 
+        $this->morocco();
+
         $this->actingAs($actor)
             ->get(route('root.backoffice.cooperatives.create'))
             ->assertOk()
