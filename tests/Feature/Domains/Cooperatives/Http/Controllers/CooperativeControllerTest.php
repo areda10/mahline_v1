@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Cooperatives\Http\Controllers;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
@@ -71,6 +72,7 @@ final class CooperativeControllerTest extends TestCase
 
         $response = $this->actingAs($actor)->post(route('root.backoffice.cooperatives.store'), [
             ...$this->validCooperativeAttributes('Coopérative Root'),
+            ...$this->validAddressAttributes(),
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -255,6 +257,48 @@ final class CooperativeControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_can_update_all_five_cooperative_address_fields(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
+        $country = Country::factory()->create(['code' => 'ES', 'iso3' => 'ESP', 'name' => 'Spain']);
+
+        $this->actingAs($actor)
+            ->put(route('root.backoffice.cooperatives.update', $cooperative), [
+                'address_line_1' => '12 Calle Mayor',
+                'city' => 'Madrid',
+                'country_id' => $country->getKey(),
+                'postal_code' => '28013',
+                'state' => 'Community of Madrid',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $cooperative->fresh()->address_id,
+            'address_line_1' => '12 Calle Mayor',
+            'city' => 'Madrid',
+            'country_id' => $country->getKey(),
+            'postal_code' => '28013',
+            'state' => 'Community of Madrid',
+        ]);
+    }
+
+    public function test_root_cannot_create_cooperative_without_all_five_address_fields(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+
+        $this->actingAs($actor)
+            ->post(route('root.backoffice.cooperatives.store'), [
+                ...$this->validCooperativeAttributes('Adresse incomplète'),
+                'address_line_1' => '1 Rue Test',
+                'city' => 'Casablanca',
+            ])
+            ->assertSessionHasErrors(['country_id', 'postal_code', 'state']);
+
+        $this->assertDatabaseMissing('cooperatives', ['name' => 'Adresse incomplète']);
+    }
+
     /** @return array<string, mixed> */
     private function validCooperativeAttributes(string $name): array
     {
@@ -267,6 +311,31 @@ final class CooperativeControllerTest extends TestCase
             'email' => strtolower(str_replace(' ', '-', $name)).'@example.test',
             'rc' => 'RC-HTTP',
             'ice' => '001234567890123',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function validAddressAttributes(): array
+    {
+        $country = Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Morocco',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+
+        return [
+            'address_line_1' => '10 Avenue Hassan II',
+            'city' => 'Casablanca',
+            'country_id' => $country->getKey(),
+            'postal_code' => '20000',
+            'state' => 'Casablanca-Settat',
         ];
     }
 
