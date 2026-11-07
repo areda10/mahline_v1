@@ -43,6 +43,52 @@ final class AuthenticationControllerTest extends TestCase
         ]);
     }
 
+    public function test_web_logout_terminates_the_current_session_and_revokes_its_identity_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'logout-controller@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $loginResponse = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->post($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $loginResponse->assertRedirect(route('user.dashboard'));
+        $this->assertAuthenticatedAs($user);
+
+        $authenticationSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        $logoutResponse = $this->post($this->logoutUrl);
+
+        $logoutResponse->assertRedirect(route('authentication.login'));
+        $this->assertGuest();
+        $this->assertNotNull($authenticationSession->fresh()->revoked_at);
+    }
+
+    public function test_web_logout_still_ends_laravel_session_when_identity_session_reference_is_missing(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'logout-missing-session@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->post($this->logoutUrl);
+
+        $response->assertRedirect(route('authentication.login'));
+        $this->assertGuest();
+    }
+
     public function test_authentication_request_validates_required_fields(): void
     {
         $response = $this->postJson($this->loginUrl, []);
