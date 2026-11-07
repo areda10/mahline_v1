@@ -147,6 +147,8 @@ final class UserManagementControllerTest extends TestCase
             ->get(route('root.backoffice.users.index'))
             ->assertOk()
             ->assertViewIs('super-admin-root.users.index')
+            ->assertSee('Navigation Root')
+            ->assertDontSee('Navigation principale')
             ->assertSee('Utilisateur Root');
     }
 
@@ -164,6 +166,8 @@ final class UserManagementControllerTest extends TestCase
             ->get(route('root.backoffice.users.create'))
             ->assertOk()
             ->assertViewIs('super-admin-root.users.create')
+            ->assertSee('Navigation Root')
+            ->assertDontSee('Navigation principale')
             ->assertSee('Coopérative Root')
             ->assertViewHas('roles', fn ($roles) => $roles->contains('slug', 'super_admin'));
     }
@@ -177,6 +181,8 @@ final class UserManagementControllerTest extends TestCase
             ->get(route('root.backoffice.users.show', $target))
             ->assertOk()
             ->assertViewIs('super-admin-root.users.show')
+            ->assertSee('Navigation Root')
+            ->assertDontSee('Navigation principale')
             ->assertSee('Utilisateur détaillé Root');
     }
 
