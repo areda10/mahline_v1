@@ -289,6 +289,110 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
+    public function test_root_can_update_user_profile_and_role(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Active,
+            'first_name' => 'Ancien',
+            'last_name' => 'Nom',
+        ]);
+        $target->roles()->attach($this->ensureRole('user')->getKey());
+        $cooperative = Cooperative::factory()->create();
+        [$session, $token] = $this->createAccessCredentials($target);
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.users.edit', $target))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.users.edit')
+            ->assertSee('Modifier un utilisateur')
+            ->assertDontSee('super_admin_root');
+
+        $this->actingAs($root)
+            ->put(route('root.backoffice.users.update', $target), [
+                'first_name' => 'Nouveau',
+                'last_name' => 'Nom',
+                'email' => $target->email,
+                'telephone' => '+212622222222',
+                'role_slug' => 'cooperative_admin',
+                'cooperative_id' => $cooperative->getKey(),
+            ])
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $target->refresh();
+        $this->assertSame('Nouveau Nom', $target->display_name);
+        $this->assertSame('+212622222222', $target->telephone);
+        $this->assertSame((string) $cooperative->getKey(), (string) $target->cooperative_id);
+        $this->assertSame(['cooperative_admin'], $target->roles()->pluck('slug')->all());
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
+    }
+
+    public function test_root_cannot_assign_root_role_through_user_edit(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
+        $target->roles()->attach($this->ensureRole('user')->getKey());
+
+        $this->actingAs($root)
+            ->put(route('root.backoffice.users.update', $target), [
+                'first_name' => $target->first_name,
+                'last_name' => $target->last_name,
+                'email' => $target->email,
+                'telephone' => $target->telephone,
+                'role_slug' => 'super_admin_root',
+            ])
+            ->assertSessionHasErrors('role_slug');
+
+        $this->assertSame(['user'], $target->fresh()->roles()->pluck('slug')->all());
+    }
+
+    public function test_root_can_manage_super_admin_cooperative_assignments_in_root_workspace(): void
+    {
+        $root = $this->actor('super_admin_root', [
+            'users.view',
+            'users.assign_super_admin',
+            'users.unassign_super_admin',
+        ]);
+        $superAdmin = User::factory()->create(['status' => UserStatus::Active]);
+        $superAdmin->roles()->attach($this->ensureRole('super_admin')->getKey());
+        $cooperative = Cooperative::factory()->create();
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.users.cooperatives.index', $superAdmin))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.users.cooperatives')
+            ->assertSee('Affectations des coopératives')
+            ->assertSee($cooperative->name);
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.users.cooperatives.store', [
+                'superAdmin' => $superAdmin,
+                'cooperative' => $cooperative,
+            ]))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('super_admin_cooperative', [
+            'super_admin_id' => $superAdmin->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        $this->actingAs($root)
+            ->delete(route('root.backoffice.users.cooperatives.destroy', [
+                'superAdmin' => $superAdmin,
+                'cooperative' => $cooperative,
+            ]))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('super_admin_cooperative', [
+            'super_admin_id' => $superAdmin->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+    }
+
     /**
      * @return array{AuthenticationSession, \App\Domains\Identity\Authentication\Models\PersonalAccessToken}
      */
@@ -353,7 +457,8 @@ final class UserManagementControllerTest extends TestCase
             ->assertViewIs('super-admin-root.users.index')
             ->assertSee('Navigation Root')
             ->assertDontSee('Navigation principale')
-            ->assertSee('Utilisateur Root');
+            ->assertSee('Utilisateur Root')
+            ->assertSee('Déconnexion');
     }
 
     public function test_root_can_open_its_dedicated_user_creation_form(): void
