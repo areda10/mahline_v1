@@ -161,6 +161,47 @@ final class AuthenticationControllerTest extends TestCase
         $this->assertAuthenticatedAs($root);
     }
 
+
+    public function test_user_can_keep_multiple_active_web_sessions_on_different_devices(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'multiple-sessions@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $firstResponse = $this
+            ->withHeader('User-Agent', 'MAHLINE Desktop Browser')
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $firstResponse->assertOk();
+
+        $secondResponse = $this
+            ->withHeader('User-Agent', 'MAHLINE Mobile Browser')
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $secondResponse->assertOk();
+
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->orderBy('authenticated_at')
+            ->get();
+
+        $this->assertCount(2, $sessions);
+        $this->assertNull($sessions[0]->revoked_at);
+        $this->assertNull($sessions[1]->revoked_at);
+        $this->assertNotSame(
+            $sessions[0]->session_id,
+            $sessions[1]->session_id,
+        );
+    }
+
     public function test_user_can_authenticate_successfully(): void
     {
         $user = User::factory()->create([
