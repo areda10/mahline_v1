@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1>Créer un utilisateur</h1>
-        <p class="muted">Choisissez le statut initial du compte. Dans les deux cas, une invitation sera envoyée pour définir le mot de passe et vérifier l’adresse e-mail.</p>
+        <p class="muted">Le compte sera toujours créé en attente. Une invitation permettra à l’utilisateur de définir son mot de passe et de vérifier son adresse e-mail.</p>
     </div>
 
     <div class="actions">
@@ -106,16 +106,7 @@
             @enderror
         </div>
 
-        <div class="field">
-            <label for="status">Statut initial</label>
-            <select id="status" name="status" required>
-                <option value="pending" @selected(old('status', 'pending') === 'pending')>En attente</option>
-                <option value="active" @selected(old('status') === 'active')>Actif (connexion après vérification de l’e-mail)</option>
-            </select>
-            @error('status')
-                <div class="field-error">{{ $message }}</div>
-            @enderror
-        </div>
+        <input type="hidden" name="status" value="pending">
 
         <div class="field" id="cooperative-field">
             <label for="cooperative_id">Coopérative</label>
@@ -140,7 +131,7 @@
 
         <p class="muted">
             L'utilisateur recevra un lien sécurisé valable 60 minutes pour définir son mot de passe et vérifier son adresse e-mail.
-            Un compte « Actif » ne pourra se connecter qu'après cette vérification. Aucun mot de passe temporaire ne sera communiqué à l'administrateur.
+            Le compte restera en attente jusqu’à l’acceptation de l’invitation. Aucun mot de passe temporaire ne sera communiqué à l'administrateur.
         </p>
 
         <div class="actions">
