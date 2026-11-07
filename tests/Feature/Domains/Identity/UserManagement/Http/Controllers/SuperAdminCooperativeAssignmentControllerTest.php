@@ -56,7 +56,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $superAdmin->cooperatives()->attach($assigned->getKey());
 
         $this->actingAs($superAdmin)
-            ->get(route('root.backoffice.users.cooperatives.index', $superAdmin))
+            ->get(route('backoffice.super-admins.cooperatives.index', $superAdmin))
             ->assertOk()
             ->assertSee('Coopérative autorisée')
             ->assertSee('autorisee@example.test')
