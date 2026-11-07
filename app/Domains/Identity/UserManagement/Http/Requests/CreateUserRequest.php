@@ -51,10 +51,7 @@ final class CreateUserRequest extends FormRequest
             ],
             'status' => [
                 'required',
-                Rule::in([
-                    UserStatus::Active->value,
-                    UserStatus::Pending->value,
-                ]),
+                Rule::in([UserStatus::Pending->value]),
             ],
             'cooperative_id' => [
                 Rule::requiredIf($roleRequiresCooperative),
@@ -77,7 +74,7 @@ final class CreateUserRequest extends FormRequest
             'telephone.required' => 'Le téléphone est obligatoire.',
             'role_slug.required' => 'Le rôle est obligatoire.',
             'status.required' => 'Le statut initial est obligatoire.',
-            'status.in' => 'Le statut initial doit être actif ou en attente.',
+            'status.in' => 'Un nouveau compte doit obligatoirement être créé en attente.',
             'role_slug.in' => 'Ce rôle ne peut pas être attribué par votre compte.',
             'role_slug.exists' => 'Ce rôle est indisponible.',
             'cooperative_id.required' => 'La coopérative est obligatoire pour ce rôle.',
