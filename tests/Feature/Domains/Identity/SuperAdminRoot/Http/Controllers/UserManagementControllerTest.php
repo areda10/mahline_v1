@@ -298,6 +298,7 @@ final class UserManagementControllerTest extends TestCase
             'last_name' => 'Nom',
         ]);
         $target->roles()->attach($this->ensureRole('user')->getKey());
+        $this->ensureRole('cooperative_admin');
         $cooperative = Cooperative::factory()->create();
         [$session, $token] = $this->createAccessCredentials($target);
 
