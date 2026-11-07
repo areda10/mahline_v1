@@ -10,7 +10,7 @@
     </div>
 
     <div class="actions">
-        <a class="button button-secondary" href="{{ route('backoffice.users.index') }}">Retour à la liste</a>
+        <a class="button button-secondary" href="{{ route('backoffice.dashboard') }}">Retour à la liste</a>
         @if($canViewAssignments)
             <a class="button button-secondary" href="{{ route('backoffice.super-admins.cooperatives.index', $user) }}">Gérer les affectations</a>
         @endif
