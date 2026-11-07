@@ -177,7 +177,24 @@ final class CatalogService
     ): void {
         $this->assertCatalogOwnership($catalog, $cooperativeId);
 
-        DB::transaction(function () use ($catalog, $productId): void {
+        DB::transaction(function () use (
+            $catalog,
+            $cooperativeId,
+            $productId
+        ): void {
+            $productExists = Product::query()
+                ->whereKey($productId)
+                ->where('cooperative_id', $cooperativeId)
+                ->exists();
+
+            if (! $productExists) {
+                throw ValidationException::withMessages([
+                    'product' => [
+                        'Le produit est introuvable ou appartient à une autre coopérative.',
+                    ],
+                ]);
+            }
+
             $catalog->products()->detach($productId);
         });
     }
