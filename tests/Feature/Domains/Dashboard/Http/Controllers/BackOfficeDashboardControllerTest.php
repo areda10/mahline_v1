@@ -59,6 +59,27 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertSee('Vue globale de la plateforme MAHLINE');
     }
 
+    public function test_regular_user_can_view_its_personal_dashboard(): void
+    {
+        $user = $this->userWithRole('user');
+
+        $this->actingAs($user)
+            ->get(route('user.dashboard'))
+            ->assertOk()
+            ->assertViewIs('user.dashboard')
+            ->assertSee('Votre espace personnel MAHLINE')
+            ->assertSee($user->email);
+    }
+
+    public function test_non_user_role_cannot_view_regular_user_dashboard(): void
+    {
+        $superAdmin = $this->userWithRole('super_admin');
+
+        $this->actingAs($superAdmin)
+            ->get(route('user.dashboard'))
+            ->assertForbidden();
+    }
+
     public function test_non_root_user_cannot_view_dedicated_root_dashboard(): void
     {
         $user = $this->userWithRole('super_admin');
