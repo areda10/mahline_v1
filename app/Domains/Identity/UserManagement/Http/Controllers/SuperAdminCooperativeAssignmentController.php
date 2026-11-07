@@ -24,6 +24,12 @@ final class SuperAdminCooperativeAssignmentController
 
     public function index(User $superAdmin): View
     {
+        // L'espace Root doit rester inaccessible aux autres rôles, même si
+        // un super_admin peut consulter ses propres affectations dans son espace.
+        if (request()->routeIs('root.backoffice.users.cooperatives.*')) {
+            abort_unless($this->isSuperAdminRoot(request()->user()), 403);
+        }
+
         Gate::authorize('viewAssignments', $superAdmin);
 
         $cooperatives = $superAdmin->cooperatives()
