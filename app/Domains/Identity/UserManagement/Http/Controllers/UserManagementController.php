@@ -143,12 +143,18 @@ final class UserManagementController
         Request $request,
         User $user,
         UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
     ): RedirectResponse {
         Gate::authorize('activate', $user);
 
         try {
-            $userManagementService->activateUser($request->user(), $user);
-        } catch (\DomainException) {
+            $activeUser = $userManagementService->activateUser($request->user(), $user);
+            $invitationService->sendInvitation($activeUser, 'root_manual_verification');
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le compte est actif, mais l’e-mail de vérification n’a pas pu être envoyé. Vous pourrez réessayer.');
+        } catch (\\DomainException) {
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
@@ -156,7 +162,7 @@ final class UserManagementController
 
         return redirect()
             ->route('backoffice.users.show', $user)
-            ->with('success', 'Le compte utilisateur a été activé.');
+            ->with('success', 'Le compte est actif, mais la connexion reste bloquée jusqu’à la vérification de l’adresse e-mail. Une invitation a été envoyée.');
     }
 
     public function deactivate(
@@ -236,7 +242,7 @@ final class UserManagementController
 
         return redirect()
             ->route('backoffice.users.show', $user)
-            ->with('success', 'Le compte a été restauré avec le statut actif. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez ensuite une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
     public function destroy(Request $request, User $user, UserManagementService $service): RedirectResponse
