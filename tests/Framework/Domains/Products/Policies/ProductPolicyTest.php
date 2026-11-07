@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Products\\Policies;
+namespace Tests\Framework\Domains\Products\Policies;
 
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authorization\\Models\\Permission;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Products\\Models\\Product;
-use App\\Domains\\Products\\Policies\\ProductPolicy;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Policies\ProductPolicy;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class ProductPolicyTest extends TestCase
 {

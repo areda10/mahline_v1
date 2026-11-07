@@ -113,7 +113,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_super_admin_can_manage_category_of_assigned_cooperative(): void
     {
-        $cooperative = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
         $admin->cooperatives()->attach($cooperative->getKey());
@@ -123,7 +123,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_super_admin_cannot_manage_category_of_unassigned_cooperative(): void
     {
-        $cooperative = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
 
@@ -132,7 +132,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_manage_category_of_own_cooperative(): void
     {
-        $cooperative = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission(
             'cooperative_admin',
@@ -145,8 +145,8 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_cooperative_admin_cannot_manage_category_of_another_cooperative(): void
     {
-        $own = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
-        $other = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $own = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $other = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($other)->create();
         $admin = $this->userWithRoleAndPermission(
             'cooperative_admin',
