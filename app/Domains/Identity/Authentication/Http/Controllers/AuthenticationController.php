@@ -170,63 +170,27 @@ final class AuthenticationController
             return redirect()->route('authentication.login');
         }
 
+        /*
+         * Revoke only the current Identity authentication session when it
+         * exists. A missing/stale Identity record must never keep the
+         * Laravel web session authenticated.
+         */
         $authenticationSessionId = $request->session()->get(
             'authentication_session_id',
         );
 
-        if (
-            ! is_string($authenticationSessionId)
-            || $authenticationSessionId === ''
-        ) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Authentication session not found.',
-                ], 401);
+        if (is_string($authenticationSessionId) && $authenticationSessionId !== '') {
+            $authenticationSession = $this->sessionService->findActiveById(
+                user: $user,
+                authenticationSessionId: $authenticationSessionId,
+            );
+
+            if ($authenticationSession !== null) {
+                $this->sessionService->revoke(
+                    session: $authenticationSession,
+                    reason: 'logout',
+                );
             }
-
-            return redirect()
-                ->route('authentication.login')
-                ->withErrors([
-                    'email' => 'Authentication session not found.',
-                ]);
-        }
-
-        $authenticationSession = $this->sessionService->findActiveById(
-            user: $user,
-            authenticationSessionId: $authenticationSessionId,
-        );
-
-        if ($authenticationSession === null) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Authentication session not found.',
-                ], 401);
-            }
-
-            return redirect()
-                ->route('authentication.login')
-                ->withErrors([
-                    'email' => 'Authentication session not found.',
-                ]);
-        }
-
-        $revoked = $this->sessionService->revoke(
-            session: $authenticationSession,
-            reason: 'logout',
-        );
-
-        if (! $revoked) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Unable to logout.',
-                ], 401);
-            }
-
-            return redirect()
-                ->route('authentication.login')
-                ->withErrors([
-                    'email' => 'Unable to logout.',
-                ]);
         }
 
         Auth::logout();
