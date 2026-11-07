@@ -61,6 +61,8 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e5eaed; vertical-align: top; }
         th { background: #f7f9fa; font-size: 13px; }
+        .badge { display: inline-block; border-radius: 20px; padding: 4px 9px; background: #e8efec; font-size: 12px; }
+        .badge-inactive { background: #fbe8e8; color: #8b2020; }
         .empty { text-align: center; padding: 28px; color: #65737e; }
         .alert { border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; }
         .alert-success { background: #e4f5eb; color: #14532d; }
