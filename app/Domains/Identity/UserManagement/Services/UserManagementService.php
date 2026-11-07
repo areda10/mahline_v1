@@ -359,6 +359,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $oldStatus = $lockedTarget->status;
+            $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
             $lockedTarget->status = UserStatus::Active;
             $lockedTarget->email_verified_at = null;
             $lockedTarget->must_change_password = false;
@@ -369,7 +370,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 target: $lockedTarget,
                 eventKey: 'identity.user.activated_for_email_verification',
                 action: 'activated_for_email_verification',
-                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => null],
+                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => $oldEmailVerifiedAt],
                 newValues: ['status' => UserStatus::Active->value, 'email_verified_at' => null],
             );
 
@@ -561,6 +562,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $lockedTarget->restore();
             $lockedTarget->status = UserStatus::Pending;
             $lockedTarget->email_verified_at = null;
+            $lockedTarget->must_change_password = false;
             $lockedTarget->save();
 
             return $lockedTarget->fresh();
