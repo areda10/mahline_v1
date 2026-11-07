@@ -3,7 +3,7 @@
     @if($cooperative->exists && auth()->user()->hasRole('super_admin_root'))
         <label>Statut de la coopérative
             <select name="status" required>
-                @foreach(\\App\\Domains\\Cooperatives\\Enums\\CooperativeStatus::cases() as $status)
+                @foreach(\App\Domains\Cooperatives\Enums\CooperativeStatus::cases() as $status)
                     <option value="{{ $status->value }}" @selected(old('status', $cooperative->status?->value) === $status->value)>{{ ucfirst($status->value) }}</option>
                 @endforeach
             </select>
