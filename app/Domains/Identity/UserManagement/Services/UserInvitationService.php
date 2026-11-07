@@ -60,7 +60,7 @@ final class UserInvitationService
                 || ($purpose === 'root_manual_verification' && $lockedUser->status !== UserStatus::Active)
             ) {
                 throw new DomainException(
-                    'Only pending, unverified users can receive an activation invitation.',
+                    'The account status does not allow this invitation purpose.',
                 );
             }
 
@@ -215,7 +215,7 @@ final class UserInvitationService
             || ! in_array($invitation->purpose, ['account_activation', 'root_manual_verification'], true)
         ) {
             throw new DomainException(
-                'Only pending, unverified users can accept an activation invitation.',
+                'The account status does not allow this invitation to be accepted.',
             );
         }
     }
@@ -319,8 +319,6 @@ final class UserInvitationService
 
             if ($invitation->purpose === 'account_activation') {
                 $user->status = UserStatus::Active;
-                $user->password = $password;
-                $user->must_change_password = false;
             }
             $user->email_verified_at = now();
             $user->must_change_password = false;
@@ -340,6 +338,7 @@ final class UserInvitationService
                 metadata: [
                     'invitation_id' => (string) $invitation->getKey(),
                     'status' => UserStatus::Active->value,
+                    'purpose' => $invitation->purpose,
                 ],
             ));
 
