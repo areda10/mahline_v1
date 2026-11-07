@@ -40,6 +40,11 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.create']);
         Cooperative::factory()->create(['name' => 'Coopérative Root']);
 
+        Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+
         $this->actingAs($root)
             ->get(route('root.backoffice.users.create'))
             ->assertOk()
