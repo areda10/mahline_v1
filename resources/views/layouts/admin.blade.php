@@ -83,12 +83,15 @@
     @auth
         @if(!auth()->user()->hasRole('super_admin_root'))
             <nav class="nav" aria-label="Sécurité du compte">
+                <a href="{{ route('security.password.edit') }}">Changer le mot de passe</a>
                 <a href="{{ route('backoffice.security.sessions.index') }}">Mes appareils connectés</a>
             </nav>
         @endif
         @if(auth()->user()->hasRole('super_admin_root'))
             <nav class="nav" aria-label="Navigation principale">
                 <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
+                <a href="{{ route('security.password.edit') }}">Sécurité · Mot de passe</a>
+                <a href="{{ route('root.backoffice.security.sessions.index') }}">Appareils connectés</a>
                 <a href="{{ route('root.backoffice.categories.index') }}">Catégories globales</a>
                 <a href="{{ route('root.backoffice.cooperatives.index') }}">Coopératives</a>
                 <a href="{{ route('root.backoffice.users.index') }}">Utilisateurs</a>
