@@ -178,7 +178,10 @@ final class UserManagementController
         Gate::authorize('resendInvitation', $user);
 
         try {
-            $invitationService->sendInvitation($user);
+            $invitationService->sendInvitation(
+                $user,
+                $user->status === UserStatus::Active ? 'root_manual_verification' : 'account_activation',
+            );
         } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
@@ -407,7 +410,7 @@ final class UserManagementController
         }
 
         return redirect()->route('root.backoffice.users.index')
-            ->with('success', 'Le compte a été restauré en attente. Une nouvelle invitation a été envoyée. Les anciens accès restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez maintenant une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
     public function index(Request $request): View
