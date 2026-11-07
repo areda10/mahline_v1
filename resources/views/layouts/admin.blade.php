@@ -77,7 +77,7 @@
 <body>
 <header class="topbar">
     <div class="brand">
-        <a href="{{ url('/') }}">MAHLINE</a>
+        <a href="@auth{{ auth()->user()->hasRole('user') ? route('user.dashboard') : route('backoffice.dashboard') }}@else{{ url('/') }}@endauth">MAHLINE</a>
     </div>
 
     @auth
