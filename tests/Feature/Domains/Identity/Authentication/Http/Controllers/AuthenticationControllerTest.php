@@ -162,6 +162,32 @@ final class AuthenticationControllerTest extends TestCase
     }
 
 
+    public function test_regular_user_is_redirected_to_its_personal_dashboard_after_login(): void
+    {
+        $userRole = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            [
+                'name' => 'User',
+                'is_active' => true,
+            ],
+        );
+
+        $user = User::factory()->create([
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $user->roles()->attach($userRole->getKey());
+
+        $response = $this->post(route('authentication.login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('user.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
     public function test_user_can_keep_multiple_active_web_sessions_on_different_devices(): void
     {
         $user = User::factory()->create([
