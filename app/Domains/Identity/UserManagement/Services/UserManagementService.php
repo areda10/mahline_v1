@@ -73,7 +73,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 ->lockForUpdate()
                 ->first();
 
-            if ($lockedTarget === null || $lockedTarget->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            if ($lockedTarget === null || $lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
                 throw new DomainException('Root accounts cannot be modified through ordinary user management.');
             }
 
