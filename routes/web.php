@@ -20,6 +20,7 @@ use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAs
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
+use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
