@@ -34,9 +34,9 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $superAdmin->cooperatives()->attach($assigned->getKey());
 
         $this->actingAs($root)
-            ->get(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->get(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertOk()
-            ->assertViewIs('backoffice.super-admins.cooperatives.index')
+            ->assertViewIs('super-admin-root.users.cooperatives')
             ->assertSee('Coopérative affectée')
             ->assertSee('Coopérative disponible');
     }
@@ -56,7 +56,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         $superAdmin->cooperatives()->attach($assigned->getKey());
 
         $this->actingAs($superAdmin)
-            ->get(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->get(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertOk()
             ->assertSee('Coopérative autorisée')
             ->assertSee('autorisee@example.test')
@@ -72,7 +72,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
 
         $this->actingAs($root)
             ->post(route('backoffice.super-admins.cooperatives.store', [$superAdmin, $cooperative]))
-            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('super_admin_cooperative', [
@@ -124,7 +124,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
 
         $this->actingAs($root)
             ->post(route('backoffice.super-admins.cooperatives.store', [$superAdmin, $cooperative]))
-            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertSessionHas('error');
     }
 
@@ -147,7 +147,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
 
         $this->actingAs($root)
             ->post(route('backoffice.super-admins.cooperatives.store', [$superAdmin, $cooperative]))
-            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertSessionHas('error');
     }
 
@@ -165,7 +165,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
 
         $this->actingAs($root)
             ->delete(route('backoffice.super-admins.cooperatives.destroy', [$superAdmin, $cooperative]))
-            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertSessionHas('error');
     }
 
@@ -189,7 +189,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
 
         $this->actingAs($root)
             ->delete(route('backoffice.super-admins.cooperatives.destroy', [$superAdmin, $cooperative]))
-            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertSessionHas('error');
     }
 
@@ -202,7 +202,7 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
 
         $this->actingAs($root)
             ->delete(route('backoffice.super-admins.cooperatives.destroy', [$superAdmin, $cooperative]))
-            ->assertRedirect(route('backoffice.super-admins.cooperatives.index', $superAdmin))
+            ->assertRedirect(route('root.backoffice.users.cooperatives.index', $superAdmin))
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseMissing('super_admin_cooperative', [
