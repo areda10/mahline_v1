@@ -108,20 +108,40 @@ final class UserManagementControllerTest extends TestCase
     }
 
 
-    public function test_root_can_activate_a_pending_user(): void
+    public function test_root_reactivation_returns_user_to_pending_and_sends_a_new_invitation(): void
     {
+        Notification::fake();
+
         $root = $this->actor('super_admin_root', ['users.activate']);
-        $target = User::factory()->create(['status' => UserStatus::Pending]);
+        $target = User::factory()->create([
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => null,
+        ]);
+
+        $oldInvitation = UserInvitation::query()->create([
+            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'user_id' => $target->getKey(),
+            'token_hash' => hash('sha256', 'old-inactive-invitation'),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.activate', $target))
             ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseHas('users', [
-            'id' => $target->getKey(),
-            'status' => UserStatus::Active->value,
-        ]);
+        $this->assertSame(UserStatus::Pending, $target->fresh()->status);
+        $this->assertNotNull($oldInvitation->fresh()->revoked_at);
+
+        $newInvitation = UserInvitation::query()
+            ->where('user_id', $target->getKey())
+            ->whereNull('revoked_at')
+            ->whereNull('used_at')
+            ->firstOrFail();
+
+        $this->assertNotSame($oldInvitation->token_hash, $newInvitation->token_hash);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.user.status_changed',
             'actor_id' => $root->getKey(),
