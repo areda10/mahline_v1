@@ -194,6 +194,28 @@ final class UserManagementControllerTest extends TestCase
         $this->assertTrue(Hash::check('NewSecurePassword2026', $target->password));
     }
 
+    public function test_archived_user_must_be_restored_before_either_root_activation_flow(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.activate']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Archived,
+            'email_verified_at' => null,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.activate', $target))
+            ->assertForbidden();
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.activate-and-verify', $target))
+            ->assertForbidden();
+
+        $this->assertSame(UserStatus::Archived, $target->fresh()->status);
+        $this->assertDatabaseMissing('user_invitations', [
+            'user_id' => $target->getKey(),
+        ]);
+    }
+
     public function test_root_can_deactivate_an_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.deactivate']);
