@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 @section('title', $catalog->name)
 @section('content')
 <div class="page-header">
