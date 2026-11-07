@@ -342,6 +342,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function activateUser(User $actor, User $target): User
     {
         $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
 
         $rootCanActivateFrom = [
             UserStatus::Pending,
