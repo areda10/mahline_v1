@@ -25,11 +25,11 @@ final class ForcedPasswordChangeController
             return redirect()->route('authentication.login');
         }
 
-        if (! $user->must_change_password) {
-            return $this->dashboardRedirect($user);
+        if ($user->must_change_password) {
+            return view('auth.force-password-change');
         }
 
-        return view('auth.force-password-change');
+        return view('identity.password.change');
     }
 
     public function update(Request $request, AuditService $audit): RedirectResponse
@@ -37,16 +37,26 @@ final class ForcedPasswordChangeController
         $user = $request->user();
 
         abort_unless($user instanceof User, 403);
-        abort_unless($user->must_change_password, 403);
 
-        $validated = $request->validate([
+        $forced = (bool) $user->must_change_password;
+
+        $rules = [
             'password' => ['required', 'string', 'confirmed', 'min:12', 'max:128'],
             'password_confirmation' => ['required', 'string'],
-        ]);
+        ];
+
+        if (! $forced) {
+            $rules['current_password'] = ['required', 'string', 'current_password'];
+        }
+
+        $validated = $request->validate($rules);
 
         try {
             PasswordPolicy::validate($validated['password']);
-            PasswordPolicy::validateChange('MahlineMahline', $validated['password']);
+            PasswordPolicy::validateChange(
+                $forced ? 'MahlineMahline' : (string) $validated['current_password'],
+                $validated['password'],
+            );
         } catch (InvalidArgumentException $exception) {
             return back()->withErrors(['password' => $exception->getMessage()]);
         }
@@ -54,7 +64,11 @@ final class ForcedPasswordChangeController
         DB::transaction(function () use ($user, $validated, $audit): void {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
-            if (! $lockedUser->must_change_password || $lockedUser->status->value !== 'active') {
+            if ($lockedUser->status->value !== 'active') {
+                abort(403);
+            }
+
+            if ($forced !== (bool) $lockedUser->must_change_password) {
                 abort(403);
             }
 
@@ -63,8 +77,10 @@ final class ForcedPasswordChangeController
             $lockedUser->save();
 
             $audit->record(new AuditEntryDTO(
-                eventKey: 'identity.user.forced_password_changed',
-                action: 'forced_password_changed',
+                eventKey: $forced
+                    ? 'identity.user.forced_password_changed'
+                    : 'identity.user.password_changed',
+                action: $forced ? 'forced_password_changed' : 'password_changed',
                 actorType: User::class,
                 actorId: (string) $lockedUser->getKey(),
                 cooperativeId: $lockedUser->cooperative_id ? (string) $lockedUser->cooperative_id : null,
