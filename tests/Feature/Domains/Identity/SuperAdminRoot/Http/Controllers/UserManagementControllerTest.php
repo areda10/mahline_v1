@@ -45,7 +45,7 @@ final class UserManagementControllerTest extends TestCase
             ->assertOk()
             ->assertViewIs('super-admin-root.users.create')
             ->assertSee('Coopérative Root')
-            ->assertSee('Super Admin');
+            ->assertViewHas('roles', fn ($roles) => $roles->contains('slug', 'super_admin'));
     }
 
     public function test_root_can_open_user_detail_in_its_dedicated_space(): void
