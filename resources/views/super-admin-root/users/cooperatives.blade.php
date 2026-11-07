@@ -12,7 +12,7 @@
             ({{ $superAdmin->email }})
         </p>
     </div>
-    <a class="button button-secondary" href="{{ route('root.backoffice.users.show', $superAdmin) }}">Retour à la fiche utilisateur</a>
+    <a class="button button-secondary" href="{{ route('root.backoffice.dashboard') }}">Retour au tableau de bord</a>
 </div>
 
 @if($superAdmin->status)
