@@ -146,7 +146,7 @@ final class UserManagementControllerTest extends TestCase
         $this->assertSame('root_manual_verification', $newInvitation->purpose);
         Notification::assertSentOnDemand(UserInvitationNotification::class);
         $this->assertDatabaseHas('audit_events', [
-            'event_key' => 'identity.user.status_changed',
+            'event_key' => 'identity.user.activated_for_email_verification',
             'actor_id' => $root->getKey(),
             'subject_id' => $target->getKey(),
         ]);
