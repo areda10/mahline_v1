@@ -175,6 +175,62 @@ final class UserInvitationServiceTest extends TestCase
         ]);
     }
 
+    public function test_root_manual_verification_invitation_is_rejected_after_user_is_suspended(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $token = 'root-manual-verification-suspended-token';
+
+        UserInvitation::query()->create([
+            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'user_id' => $user->getKey(),
+            'purpose' => 'root_manual_verification',
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
+
+        $user->status = UserStatus::Suspended;
+        $user->save();
+
+        try {
+            app(UserInvitationService::class)->validateInvitation($token);
+
+            $this->fail('A suspended user must not use a root verification invitation.');
+        } catch (\\DomainException $exception) {
+            $this->assertSame(
+                'The account status does not allow this invitation to be accepted.',
+                $exception->getMessage(),
+            );
+        }
+
+        try {
+            app(UserInvitationService::class)->acceptInvitation(
+                $token,
+                'MahlineSecure2026',
+            );
+
+            $this->fail('A suspended user must not accept a root verification invitation.');
+        } catch (\\DomainException $exception) {
+            $this->assertSame(
+                'Only pending, unverified users can accept an activation invitation.',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertSame(UserStatus::Suspended, $user->fresh()->status);
+        $this->assertNull($user->fresh()->email_verified_at);
+        $this->assertNull(
+            UserInvitation::query()
+                ->where('token_hash', hash('sha256', $token))
+                ->firstOrFail()
+                ->used_at,
+        );
+    }
+
     public function test_sending_invitation_to_inactive_user_is_rejected(): void
     {
         $user = User::factory()->create([
