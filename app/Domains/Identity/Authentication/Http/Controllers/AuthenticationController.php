@@ -42,6 +42,10 @@ final class AuthenticationController
                 return redirect()->route('user.dashboard');
             }
 
+            if ($user?->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+                return redirect()->route('backoffice.dashboard');
+            }
+
             return redirect()->intended('/');
         }
 
@@ -142,6 +146,10 @@ final class AuthenticationController
 
         if ($user->hasRole('user')) {
             return redirect()->route('user.dashboard');
+        }
+
+        if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+            return redirect()->route('backoffice.dashboard');
         }
 
         return redirect()->intended('/');
