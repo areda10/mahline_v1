@@ -11,7 +11,7 @@
     </div>
 
     <section class="card" style="max-width:680px">
-        <h2>Changer le mot de passe</h2>
+        <h2>Changer votre mot de passe</h2>
 
         @if ($errors->any())
             <div class="alert alert-error" role="alert">
