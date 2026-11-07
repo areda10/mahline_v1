@@ -75,12 +75,12 @@ final class UserInvitationServiceTest extends TestCase
         );
     }
 
-    public function test_sending_invitation_to_active_unverified_user_is_allowed(): void
+    public function test_sending_invitation_to_pending_unverified_user_is_allowed(): void
     {
         Notification::fake();
 
         $user = User::factory()->create([
-            'status' => UserStatus::Active,
+            'status' => UserStatus::Pending,
             'email_verified_at' => null,
         ]);
 
