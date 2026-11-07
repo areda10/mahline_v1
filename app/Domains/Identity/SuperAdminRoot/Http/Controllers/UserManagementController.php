@@ -362,10 +362,6 @@ final class UserManagementController
 
         try {
             $userManagementService->restoreArchivedUser($request->user(), $user);
-        } catch (UserInvitationDeliveryException) {
-            return redirect()
-                ->route('root.backoffice.users.show', $user)
-                ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
         } catch (\DomainException $exception) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
@@ -404,9 +400,6 @@ final class UserManagementController
 
         try {
             $restoredUser = $service->restoreDeletedUser($request->user(), $deletedUser);
-        } catch (UserInvitationDeliveryException) {
-            return redirect()->route('root.backoffice.users.index')
-                ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
         } catch (\DomainException $exception) {
             return redirect()->route('root.backoffice.users.index', ['deleted' => 1])
                 ->with('error', $exception->getMessage());
