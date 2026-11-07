@@ -14,6 +14,8 @@ final class UserInvitation extends BaseModel
 
     public $timestamps = false;
 
+    protected $fillable = ['id', 'user_id', 'purpose', 'token_hash', 'expires_at', 'used_at', 'revoked_at', 'created_at'];
+
     protected function casts(): array
     {
         return [
