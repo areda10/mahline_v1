@@ -94,6 +94,7 @@ final class UserInvitationService
                 metadata: [
                     'invitation_id' => (string) $invitation->getKey(),
                     'expires_at' => $invitation->expires_at->toISOString(),
+                    'purpose' => $purpose,
                 ],
             ));
 
@@ -157,6 +158,7 @@ final class UserInvitationService
             metadata: [
                 'invitation_id' => (string) $invitation->getKey(),
                 'expires_at' => $invitation->expires_at->toISOString(),
+                'purpose' => $purpose,
             ],
         ));
     }
@@ -320,6 +322,7 @@ final class UserInvitationService
                 $user->must_change_password = false;
             }
             $user->email_verified_at = now();
+            $user->must_change_password = false;
             $user->save();
 
             $invitation->used_at = now();
