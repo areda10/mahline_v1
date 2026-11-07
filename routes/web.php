@@ -140,6 +140,13 @@ Route::prefix('root/back-office')
         Route::post('users/{user}/resend-invitation', [SuperAdminRootUserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
 
+        Route::get('users/{superAdmin}/cooperatives', [SuperAdminCooperativeAssignmentController::class, 'index'])
+            ->name('users.cooperatives.index');
+        Route::post('users/{superAdmin}/cooperatives/{cooperative}', [SuperAdminCooperativeAssignmentController::class, 'store'])
+            ->name('users.cooperatives.store');
+        Route::delete('users/{superAdmin}/cooperatives/{cooperative}', [SuperAdminCooperativeAssignmentController::class, 'destroy'])
+            ->name('users.cooperatives.destroy');
+
 
         Route::resource('cooperatives', SuperAdminRootCooperativeController::class)
             ->except(['destroy'])
