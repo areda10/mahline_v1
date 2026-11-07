@@ -51,7 +51,11 @@ final class SuperAdminCooperativeAssignmentController
                 ],
             );
 
-        return view('backoffice.super-admins.cooperatives.index', [
+        $view = $this->isSuperAdminRoot(request()->user())
+            ? 'super-admin-root.users.cooperatives'
+            : 'backoffice.super-admins.cooperatives.index';
+
+        return view($view, [
             'superAdmin' => $superAdmin,
             'cooperatives' => $cooperatives,
             'availableCooperatives' => $availableCooperatives,
@@ -73,7 +77,7 @@ final class SuperAdminCooperativeAssignmentController
             );
         } catch (\DomainException) {
             return redirect()
-                ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+                ->route($this->assignmentRouteName($request), $superAdmin)
                 ->with('error', 'Cette affectation n’est plus autorisée. Actualisez la page et vérifiez le statut du super administrateur.');
         } catch (QueryException $exception) {
             report($exception);
@@ -116,6 +120,13 @@ final class SuperAdminCooperativeAssignmentController
         return redirect()
             ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
             ->with('success', 'L’affectation de la coopérative a été retirée.');
+    }
+
+    private function assignmentRouteName(Request $request): string
+    {
+        return $this->isSuperAdminRoot($request->user())
+            ? 'root.backoffice.users.cooperatives.index'
+            : 'backoffice.super-admins.cooperatives.index';
     }
 
     private function isSuperAdminRoot(?User $user): bool
