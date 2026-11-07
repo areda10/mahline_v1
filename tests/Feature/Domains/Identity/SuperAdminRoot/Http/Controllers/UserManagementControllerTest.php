@@ -154,6 +154,7 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.deactivate']);
         $target = User::factory()->create(['status' => UserStatus::Active]);
         [$session, $token] = $this->createAccessCredentials($target);
+        $invitation = $this->createPendingInvitation($target, 'deactivation-token');
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.deactivate', $target))
@@ -170,6 +171,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
     }
 
     public function test_root_can_suspend_an_active_user(): void
@@ -177,6 +179,7 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.suspend']);
         $target = User::factory()->create(['status' => UserStatus::Active]);
         [$session, $token] = $this->createAccessCredentials($target);
+        $invitation = $this->createPendingInvitation($target, 'suspension-token');
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.suspend', $target))
@@ -190,6 +193,7 @@ final class UserManagementControllerTest extends TestCase
         $this->assertSame('user_suspended', $session->fresh()->revocation_reason);
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
     }
 
     public function test_root_can_archive_and_restore_a_user(): void
@@ -200,6 +204,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
         $target = User::factory()->create(['status' => UserStatus::Active]);
         [$session, $token] = $this->createAccessCredentials($target);
+        $invitation = $this->createPendingInvitation($target, 'archive-token');
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.archive', $target))
@@ -213,6 +218,7 @@ final class UserManagementControllerTest extends TestCase
         $this->assertSame('user_archived', $session->fresh()->revocation_reason);
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore', $target))
@@ -236,6 +242,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
         $target = User::factory()->create();
         [$session, $token] = $this->createAccessCredentials($target);
+        $invitation = $this->createPendingInvitation($target, 'deleted-user-token');
 
         $this->actingAs($root)
             ->delete(route('root.backoffice.users.destroy', $target))
@@ -246,6 +253,7 @@ final class UserManagementControllerTest extends TestCase
         $this->assertSame('user_deleted', $session->fresh()->revocation_reason);
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
@@ -476,6 +484,17 @@ final class UserManagementControllerTest extends TestCase
     /**
      * @return array{AuthenticationSession, \App\Domains\Identity\Authentication\Models\PersonalAccessToken}
      */
+    private function createPendingInvitation(User $user, string $token): UserInvitation
+    {
+        return UserInvitation::query()->create([
+            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'user_id' => $user->getKey(),
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addHour(),
+            'created_at' => now(),
+        ]);
+    }
+
     private function createAccessCredentials(User $user): array
     {
         $session = AuthenticationSession::query()->create([
