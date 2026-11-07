@@ -238,21 +238,27 @@ final class UserManagementController
         Request $request,
         User $user,
         UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
         Gate::authorize('activate', $user);
 
         try {
-            $userManagementService->activateUser($request->user(), $user);
-        } catch (\DomainException) {
+            $pendingUser = $userManagementService->activateUser($request->user(), $user);
+            $invitationService->sendInvitation($pendingUser);
+        } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
-                ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
+                ->with('error', 'Le compte a été remis en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
+        } catch (\\DomainException $exception) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', $exception->getMessage());
         }
 
         return redirect()
             ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte utilisateur a été activé.');
+            ->with('success', 'Le compte a été remis en attente. Une nouvelle invitation a été envoyée.');
     }
 
     public function deactivate(
@@ -322,21 +328,27 @@ final class UserManagementController
         Request $request,
         User $user,
         UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
         Gate::authorize('restore', $user);
 
         try {
-            $userManagementService->restoreArchivedUser($request->user(), $user);
-        } catch (\DomainException) {
+            $pendingUser = $userManagementService->restoreArchivedUser($request->user(), $user);
+            $invitationService->sendInvitation($pendingUser);
+        } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
-                ->with('error', 'Le compte ne peut plus être restauré : son état a changé ou cette action n’est plus autorisée.');
+                ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
+        } catch (\\DomainException $exception) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', $exception->getMessage());
         }
 
         return redirect()
             ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte a été restauré avec le statut actif. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Une nouvelle invitation a été envoyée. Les anciens accès restent révoqués.');
     }
 
     public function destroy(Request $request, User $user, UserManagementService $service): RedirectResponse
@@ -355,21 +367,29 @@ final class UserManagementController
             ->with('success', 'Le compte a été supprimé logiquement. Ses sessions et jetons API ont été révoqués.');
     }
 
-    public function restoreDeleted(Request $request, string $user, UserManagementService $service): RedirectResponse
-    {
+    public function restoreDeleted(
+        Request $request,
+        string $user,
+        UserManagementService $service,
+        UserInvitationService $invitationService,
+    ): RedirectResponse {
         $this->authorizeRoot($request);
         $deletedUser = User::withTrashed()->findOrFail($user);
         Gate::authorize('restoreDeleted', $deletedUser);
 
         try {
-            $service->restoreDeletedUser($request->user(), $deletedUser);
-        } catch (\DomainException) {
+            $pendingUser = $service->restoreDeletedUser($request->user(), $deletedUser);
+            $invitationService->sendInvitation($pendingUser);
+        } catch (UserInvitationDeliveryException) {
+            return redirect()->route('root.backoffice.users.index')
+                ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
+        } catch (\\DomainException $exception) {
             return redirect()->route('root.backoffice.users.index', ['deleted' => 1])
-                ->with('error', 'Le compte ne peut pas être restauré : son état a changé ou cette action n’est plus autorisée.');
+                ->with('error', $exception->getMessage());
         }
 
         return redirect()->route('root.backoffice.users.index')
-            ->with('success', 'Le compte a été restauré. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Une nouvelle invitation a été envoyée. Les anciens accès restent révoqués.');
     }
 
     public function index(Request $request): View
