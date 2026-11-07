@@ -17,12 +17,12 @@ Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request)
 Route::post(
     '/password/forgot',
     [PasswordResetController::class, 'forgot'],
-);
+)->middleware('throttle:5,1');
 
 Route::post(
     '/password/reset',
     [PasswordResetController::class, 'reset'],
-);
+)->middleware('throttle:10,1');
 
 Route::middleware('auth:sanctum')->get(
     '/audit/events',
