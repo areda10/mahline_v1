@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 
 @section('title', 'Fiche utilisateur — '.$user->display_name)
 
