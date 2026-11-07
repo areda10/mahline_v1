@@ -30,6 +30,10 @@ final class AuthenticationController
         if (Auth::check()) {
             $user = Auth::user();
 
+            if ($user?->must_change_password) {
+                return redirect()->route('password.force-change.edit');
+            }
+
             if ($user?->hasRole('super_admin_root')) {
                 return redirect()->route('root.backoffice.dashboard');
             }
@@ -124,6 +128,10 @@ final class AuthenticationController
          * Do not regenerate or revoke sessions here without synchronizing
          * the Laravel session ID with the Identity authentication session.
          */
+        if ($user->must_change_password) {
+            return redirect()->route('password.force-change.edit');
+        }
+
         if ($user->hasRole('super_admin_root')) {
             return redirect()->route('root.backoffice.dashboard');
         }
