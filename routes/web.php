@@ -93,6 +93,14 @@ Route::prefix('password')
         )->name('update');
     });
 
+Route::prefix('password/change-required')
+    ->name('password.force-change.')
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->group(function (): void {
+        Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+        Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+    });
+
 /*
 |--------------------------------------------------------------------------
 | Application
@@ -138,6 +146,8 @@ Route::prefix('root/back-office')
             ->name('users.show');
         Route::patch('users/{user}/activate', [SuperAdminRootUserManagementController::class, 'activate'])
             ->name('users.activate');
+        Route::patch('users/{user}/activate-and-verify', [SuperAdminRootUserManagementController::class, 'activateAndVerify'])
+            ->name('users.activate-and-verify');
         Route::patch('users/{user}/deactivate', [SuperAdminRootUserManagementController::class, 'deactivate'])
             ->name('users.deactivate');
         Route::patch('users/{user}/suspend', [SuperAdminRootUserManagementController::class, 'suspend'])
