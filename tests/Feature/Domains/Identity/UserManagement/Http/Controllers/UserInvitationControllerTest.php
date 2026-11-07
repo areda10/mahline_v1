@@ -17,6 +17,14 @@ final class UserInvitationControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Throttling is tested separately.
+        $this->withoutMiddleware(ThrottleRequests::class);
+    }
+
     public function test_valid_invitation_displays_acceptance_form(): void
     {
         $token = bin2hex(random_bytes(32));
@@ -292,7 +300,6 @@ final class UserInvitationControllerTest extends TestCase
 
     public function test_only_pending_users_can_accept_an_activation_invitation(): void
     {
-        dump(RateLimiter::limiter('user-invitations.accept'));
         foreach ([
             UserStatus::Active,
             UserStatus::Inactive,
