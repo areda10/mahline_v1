@@ -149,9 +149,9 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         string $roleSlug,
         UserStatus $initialStatus = UserStatus::Pending,
     ): User {
-        if (! in_array($initialStatus, [UserStatus::Active, UserStatus::Pending], true)) {
+        if ($initialStatus !== UserStatus::Pending) {
             throw new DomainException(
-                'A newly created user must start as active or pending.',
+                'A newly created user must start as pending.',
             );
         }
 
@@ -188,8 +188,9 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
                 'password' => bin2hex(random_bytes(32)),
                 //'status' => UserStatus::Pending,
-                'status' => $initialStatus,
+                'status' => UserStatus::Pending,
                 'email_verified_at' => null,
+                'must_change_password' => false,
             ]);
 
             $user = User::query()->create($userAttributes);
@@ -346,17 +347,75 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             UserStatus::Pending,
             UserStatus::Inactive,
             UserStatus::Suspended,
+            UserStatus::Archived,
         ];
-        return $this->changeUserStatus(
-            actor: $actor,
-            target: $target,
-            newStatus: UserStatus::Pending,
-            action: 'reactivated_pending_invitation',
-            allowedRootSourceStatuses: $rootCanActivateFrom,
-            allowedSuperAdminSourceStatuses: [],
-            rootOnly: true,
-            resetEmailVerification: true,
-        );
+
+        return DB::transaction(function () use ($actor, $target, $rootCanActivateFrom): User {
+            $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
+
+            if ($lockedTarget === null || ! in_array($lockedTarget->status, $rootCanActivateFrom, true)) {
+                throw new DomainException('This account cannot be activated from its current status.');
+            }
+
+            $oldStatus = $lockedTarget->status;
+            $lockedTarget->status = UserStatus::Active;
+            $lockedTarget->email_verified_at = null;
+            $lockedTarget->must_change_password = false;
+            $lockedTarget->save();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.activated_for_email_verification',
+                action: 'activated_for_email_verification',
+                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => null],
+                newValues: ['status' => UserStatus::Active->value, 'email_verified_at' => null],
+            );
+
+            $this->revokePendingInvitations($lockedTarget);
+            $this->revokeAccessCredentials($actor, $lockedTarget, 'user_reactivated');
+
+            return $lockedTarget->fresh();
+        });
+    }
+
+    public function activateAndVerifyUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        return DB::transaction(function () use ($actor, $target): User {
+            $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
+
+            if ($lockedTarget === null || ! in_array($lockedTarget->status, [
+                UserStatus::Pending, UserStatus::Inactive, UserStatus::Suspended, UserStatus::Archived,
+            ], true)) {
+                throw new DomainException('This account cannot be activated from its current status.');
+            }
+
+            $oldStatus = $lockedTarget->status;
+            $oldVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+            $lockedTarget->status = UserStatus::Active;
+            $lockedTarget->email_verified_at = now();
+            $lockedTarget->password = 'MahlineMahline';
+            $lockedTarget->must_change_password = true;
+            $lockedTarget->save();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.activated_with_temporary_password',
+                action: 'activated_with_temporary_password',
+                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => $oldVerifiedAt],
+                newValues: ['status' => UserStatus::Active->value, 'email_verified_at' => $lockedTarget->email_verified_at->toISOString()],
+                metadata: ['must_change_password' => true],
+            );
+
+            $this->revokePendingInvitations($lockedTarget);
+            $this->revokeAccessCredentials($actor, $lockedTarget, 'user_reactivated_with_temporary_password');
+
+            return $lockedTarget->fresh();
+        });
     }
 
     public function deactivateUser(User $actor, User $target): User
