@@ -75,14 +75,7 @@
             </form>
         @endcan
 
-        @can('restore', $user)
-            <form method="POST" action="{{ route('root.backoffice.users.restore', $user) }}"
-                  onsubmit="return confirm('Restaurer ce compte en attente ? Vous devrez ensuite choisir une méthode d’activation. Les anciennes sessions et les anciens jetons resteront révoqués.');">
-                @csrf
-                @method('PATCH')
-                <button class="button" type="submit">Restaurer le compte en attente</button>
-            </form>
-        @endcan
+
 
         @can('delete', $user)
             <form method="POST" action="{{ route('root.backoffice.users.destroy', $user) }}"
