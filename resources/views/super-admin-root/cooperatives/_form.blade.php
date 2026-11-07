@@ -1,5 +1,14 @@
 @php($isCooperativeAdmin = auth()->user()->hasRole('cooperative_admin'))
 <div class="form-grid">
+    @if($cooperative->exists && auth()->user()->hasRole('super_admin_root'))
+        <label>Statut de la coopérative
+            <select name="status" required>
+                @foreach(\\App\\Domains\\Cooperatives\\Enums\\CooperativeStatus::cases() as $status)
+                    <option value="{{ $status->value }}" @selected(old('status', $cooperative->status?->value) === $status->value)>{{ ucfirst($status->value) }}</option>
+                @endforeach
+            </select>
+        </label>
+    @endif
     @unless($isCooperativeAdmin)
         <label>Nom <input name="name" required maxlength="255" value="{{ old('name', $cooperative->name) }}"></label>
         <label>RIB <input name="rib" required maxlength="255" value="{{ old('rib', $cooperative->rib) }}"></label>
