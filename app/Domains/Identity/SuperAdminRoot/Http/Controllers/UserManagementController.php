@@ -146,7 +146,10 @@ final class UserManagementController
                 $initialStatus,
             );
 
-            $invitationService->sendInvitation($user);
+            $invitationService->sendInvitation(
+                $user,
+                $user->status === UserStatus::Active ? 'root_manual_verification' : 'account_activation',
+            );
         } catch (UserInvitationDeliveryException) {
             return back()->with(
                 'error',
