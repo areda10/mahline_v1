@@ -5,7 +5,7 @@
 @can('update', $cooperative)<a class="button" href="{{ route('root.backoffice.cooperatives.edit', $cooperative) }}">Modifier</a>@endcan
 <a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.categories.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les catégories</a>
 <a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les catalogues</a>
-<a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.products.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les produits</a></div>
+<a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.products.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les produits</a><a class="button button-secondary" href="{{ route('root.backoffice.dashboard') }}">Retour au tableau de bord</a></div>
 <div class="card"><dl>
 <dt>Email</dt><dd>{{ $cooperative->email ?? '—' }}</dd>
 <dt>Téléphone</dt><dd>{{ $cooperative->phone ?? '—' }}</dd>
