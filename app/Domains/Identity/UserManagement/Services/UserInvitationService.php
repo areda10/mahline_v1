@@ -53,14 +53,33 @@ final class UserInvitationService
                 );
             }
 
+            if (! in_array($purpose, ['account_activation', 'root_manual_verification'], true)) {
+                throw new InvalidArgumentException(
+                    'The invitation purpose is invalid.',
+                );
+            }
+
+            if ($lockedUser->email_verified_at !== null) {
+                throw new DomainException(
+                    'The user email address is already verified.',
+                );
+            }
+
             if (
-                $lockedUser->email_verified_at !== null
-                || ! in_array($purpose, ['account_activation', 'root_manual_verification'], true)
-                || ($purpose === 'account_activation' && $lockedUser->status !== UserStatus::Pending)
-                || ($purpose === 'root_manual_verification' && $lockedUser->status !== UserStatus::Active)
+                $purpose === 'account_activation'
+                && $lockedUser->status !== UserStatus::Pending
             ) {
                 throw new DomainException(
-                    'The account status does not allow this invitation purpose.',
+                    'Only pending, unverified users can receive an activation invitation.',
+                );
+            }
+
+            if (
+                $purpose === 'root_manual_verification'
+                && $lockedUser->status !== UserStatus::Active
+            ) {
+                throw new DomainException(
+                    'Only active, unverified users can receive a root verification invitation.',
                 );
             }
 
