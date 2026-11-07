@@ -124,7 +124,7 @@
                                 @if($user->trashed())
                                     @can('restoreDeleted', $user)
                                         <form method="POST" action="{{ route('backoffice.users.restore-deleted', $user->getKey()) }}"
-                                              onsubmit="return confirm('Restaurer ce compte supprimé ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                                              onsubmit="return confirm('Restaurer ce compte supprimé en attente ? Une nouvelle activation sera nécessaire. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                                             @csrf
                                             @method('PATCH')
                                             <button class="button" type="submit">Restaurer</button>
