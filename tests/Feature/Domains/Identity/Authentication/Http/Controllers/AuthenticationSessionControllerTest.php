@@ -40,7 +40,7 @@ final class AuthenticationSessionControllerTest extends TestCase
 
         $response->assertOk()
             ->assertViewIs('super-admin-root.users.show')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions->count() === 2)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \\Illuminate\\Support\\Collection && $sessions->count() === 2)
             ->assertSee('Target laptop')
             ->assertSee('Target phone')
             ->assertDontSee('Old revoked device')
@@ -97,7 +97,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->get(route('backoffice.security.sessions.index'))
             ->assertOk()
             ->assertViewIs('identity.security.sessions.index')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions->count() === 1)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \\Illuminate\\Support\\Collection && $sessions->count() === 1)
             ->assertSee('My personal laptop')
             ->assertDontSee('Someone else device');
 
@@ -144,7 +144,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->get(route('root.backoffice.security.sessions.index'))
             ->assertOk()
             ->assertViewIs('identity.security.sessions.index')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions->count() === 1)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \\Illuminate\\Support\\Collection && $sessions->count() === 1)
             ->assertSee('Root private workstation')
             ->assertDontSee('Other private device');
     }
