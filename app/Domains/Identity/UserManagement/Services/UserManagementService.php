@@ -11,6 +11,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
@@ -345,8 +346,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         return $this->changeUserStatus(
             actor: $actor,
             target: $target,
-            newStatus: UserStatus::Active,
-            action: 'activated',
+            newStatus: UserStatus::Pending,
+            action: 'reactivated_pending_invitation',
             allowedRootSourceStatuses: $rootCanActivateFrom,
             allowedSuperAdminSourceStatuses: [],
             rootOnly: true,
@@ -413,8 +414,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         return $this->changeUserStatus(
             actor: $actor,
             target: $target,
-            newStatus: UserStatus::Active,
-            action: 'restored',
+            newStatus: UserStatus::Pending,
+            action: 'restored_pending_invitation',
             allowedRootSourceStatuses: [UserStatus::Archived],
             allowedSuperAdminSourceStatuses: [],
             rootOnly: true,
@@ -448,6 +449,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 oldValues: ['deleted_at' => null],
                 newValues: ['deleted_at' => now()->toISOString()],
             );
+
+            $this->revokePendingInvitations($lockedTarget);
 
             $this->revokeAccessCredentials(
                 actor: $actor,
@@ -490,6 +493,9 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             $lockedTarget->restore();
+            $lockedTarget->status = UserStatus::Pending;
+            $lockedTarget->email_verified_at = null;
+            $lockedTarget->save();
 
             return $lockedTarget->fresh();
         });
@@ -568,6 +574,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             if ($revokeReason !== null) {
+                $this->revokePendingInvitations($lockedTarget);
+
                 $this->revokeAccessCredentials(
                     actor: $actor,
                     target: $lockedTarget,
@@ -595,6 +603,17 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'The super admin cannot manage this user.',
             );
         }
+    }
+
+    private function revokePendingInvitations(User $target): void
+    {
+        UserInvitation::query()
+            ->where('user_id', $target->getKey())
+            ->whereNull('used_at')
+            ->whereNull('revoked_at')
+            ->update([
+                'revoked_at' => now(),
+            ]);
     }
 
     private function revokeAccessCredentials(
