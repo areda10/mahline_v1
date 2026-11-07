@@ -32,6 +32,104 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     ) {
     }
 
+    /**
+     * Update a normal user account and its single operational role.
+     * Root accounts are managed outside the ordinary user CRUD.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    public function updateUserAccount(
+        User $actor,
+        User $target,
+        array $attributes,
+        string $roleSlug,
+    ): User {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        if ($roleSlug === self::ROLE_SUPER_ADMIN_ROOT) {
+            throw new DomainException('The super admin root role cannot be assigned through user management.');
+        }
+
+        $role = $this->findRole($roleSlug);
+        $cooperativeId = $roleSlug === self::ROLE_SUPER_ADMIN
+            ? null
+            : ($attributes['cooperative_id'] ?? null);
+
+        if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+            $this->assertCooperativeExists($cooperativeId);
+        }
+
+        return DB::transaction(function () use (
+            $actor,
+            $target,
+            $attributes,
+            $role,
+            $roleSlug,
+            $cooperativeId,
+        ): User {
+            $lockedTarget = User::query()
+                ->whereKey($target->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedTarget === null || $lockedTarget->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+                throw new DomainException('Root accounts cannot be modified through ordinary user management.');
+            }
+
+            $oldValues = [
+                'first_name' => $lockedTarget->first_name,
+                'last_name' => $lockedTarget->last_name,
+                'email' => $lockedTarget->email,
+                'telephone' => $lockedTarget->telephone,
+                'cooperative_id' => $lockedTarget->cooperative_id,
+                'roles' => $lockedTarget->roles()->pluck('slug')->all(),
+            ];
+
+            $lockedTarget->fill([
+                'first_name' => $attributes['first_name'],
+                'last_name' => $attributes['last_name'],
+                'display_name' => trim($attributes['first_name'].' '.$attributes['last_name']),
+                'email' => $attributes['email'],
+                'telephone' => $attributes['telephone'],
+                'cooperative_id' => $cooperativeId,
+            ]);
+            $lockedTarget->save();
+
+            $lockedTarget->roles()->sync([$role->getKey()]);
+
+            if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+                $lockedTarget->cooperatives()->detach();
+            }
+
+            $newValues = [
+                'first_name' => $lockedTarget->first_name,
+                'last_name' => $lockedTarget->last_name,
+                'email' => $lockedTarget->email,
+                'telephone' => $lockedTarget->telephone,
+                'cooperative_id' => $lockedTarget->cooperative_id,
+                'roles' => [$roleSlug],
+            ];
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.updated',
+                action: 'updated',
+                oldValues: $oldValues,
+                newValues: $newValues,
+            );
+
+            $this->revokeAccessCredentials(
+                actor: $actor,
+                target: $lockedTarget,
+                reason: 'user_role_or_profile_changed',
+            );
+
+            return $lockedTarget->fresh();
+        });
+    }
+
     public function createUser(
         User $actor,
         array $attributes,
