@@ -23,6 +23,117 @@ final class UserManagementControllerTest extends TestCase
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
     }
 
+
+    public function test_root_can_create_super_admin_without_cooperative_and_send_invitation(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $this->ensureRole('super_admin');
+
+        $payload = $this->validCreationPayload('super_admin');
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.users.store'), $payload)
+            ->assertRedirect(route('root.backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+        $this->assertSame(UserStatus::Pending, $created->status);
+        $this->assertNull($created->cooperative_id);
+        $this->assertNull($created->email_verified_at);
+        $this->assertTrue($created->roles()->where('slug', 'super_admin')->exists());
+
+        $invitation = UserInvitation::query()
+            ->where('user_id', $created->getKey())
+            ->firstOrFail();
+
+        $this->assertNull($invitation->used_at);
+        $this->assertNull($invitation->revoked_at);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
+    public function test_root_can_create_cooperative_admin_and_user_in_selected_cooperative(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+
+        foreach (['cooperative_admin', 'user'] as $roleSlug) {
+            $this->ensureRole($roleSlug);
+            $payload = $this->validCreationPayload($roleSlug, $cooperative->getKey());
+
+            $this->actingAs($root)
+                ->post(route('root.backoffice.users.store'), $payload)
+                ->assertRedirect(route('root.backoffice.users.index'))
+                ->assertSessionHas('success');
+
+            $created = User::query()->where('email', $payload['email'])->firstOrFail();
+
+            $this->assertSame(UserStatus::Pending, $created->status);
+            $this->assertSame((string) $cooperative->getKey(), (string) $created->cooperative_id);
+            $this->assertTrue($created->roles()->where('slug', $roleSlug)->exists());
+
+            $this->assertDatabaseHas('user_invitations', [
+                'user_id' => $created->getKey(),
+                'used_at' => null,
+                'revoked_at' => null,
+            ]);
+        }
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
+    public function test_root_cannot_assign_super_admin_root_role_through_user_creation_form(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $payload = $this->validCreationPayload('super_admin_root');
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.users.store'), $payload)
+            ->assertSessionHasErrors('role_slug');
+
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function validCreationPayload(
+        string $roleSlug,
+        string|int|null $cooperativeId = null,
+        UserStatus $status = UserStatus::Pending,
+    ): array {
+        return [
+            'first_name' => 'Amina',
+            'last_name' => 'Test',
+            'email' => fake()->unique()->safeEmail(),
+            'telephone' => '+212600000000',
+            'role_slug' => $roleSlug,
+            'status' => $status->value,
+            ...($cooperativeId === null ? [] : [
+                'cooperative_id' => (string) $cooperativeId,
+            ]),
+        ];
+    }
+
+    private function ensureRole(string $slug): Role
+    {
+        return Role::query()->firstOrCreate(
+            ['slug' => $slug],
+            [
+                'name' => str($slug)->replace('_', ' ')->title()->toString(),
+                'is_active' => true,
+            ],
+        );
+    }
+
     public function test_root_can_open_its_dedicated_user_list(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
