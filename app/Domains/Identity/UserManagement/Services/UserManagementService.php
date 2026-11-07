@@ -348,7 +348,6 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             UserStatus::Pending,
             UserStatus::Inactive,
             UserStatus::Suspended,
-            UserStatus::Archived,
         ];
 
         return DB::transaction(function () use ($actor, $target, $rootCanActivateFrom): User {
@@ -390,7 +389,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
 
             if ($lockedTarget === null || ! in_array($lockedTarget->status, [
-                UserStatus::Pending, UserStatus::Inactive, UserStatus::Suspended, UserStatus::Archived,
+                UserStatus::Pending, UserStatus::Inactive, UserStatus::Suspended,
             ], true)) {
                 throw new DomainException('This account cannot be activated from its current status.');
             }
@@ -641,6 +640,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $oldStatus = $lockedTarget->status;
+            $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+            $oldMustChangePassword = $lockedTarget->must_change_password;
             $lockedTarget->status = $newStatus;
 
             if ($resetEmailVerification) {
@@ -650,13 +651,23 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $lockedTarget->save();
 
+            $oldValues = ['status' => $oldStatus->value];
+            $newValues = ['status' => $newStatus->value];
+
+            if ($resetEmailVerification) {
+                $oldValues['email_verified_at'] = $oldEmailVerifiedAt;
+                $oldValues['must_change_password'] = $oldMustChangePassword;
+                $newValues['email_verified_at'] = null;
+                $newValues['must_change_password'] = false;
+            }
+
             $this->recordLifecycleAudit(
                 actor: $actor,
                 target: $lockedTarget,
                 eventKey: 'identity.user.status_changed',
                 action: 'status_changed',
-                oldValues: ['status' => $oldStatus->value],
-                newValues: ['status' => $newStatus->value],
+                oldValues: $oldValues,
+                newValues: $newValues,
                 metadata: ['operation' => $action],
             );
 
