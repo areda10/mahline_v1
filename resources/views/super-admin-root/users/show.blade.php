@@ -11,6 +11,9 @@
 
     <div class="actions">
         <a class="button button-secondary" href="{{ route('root.backoffice.users.index') }}">Retour à la liste</a>
+        @if($canViewAssignments)
+            <a class="button" href="{{ route('root.backoffice.users.cooperatives.index', $user) }}">Gérer les affectations coopératives</a>
+        @endif
     </div>
 
     <div class="actions">
