@@ -112,7 +112,7 @@ final class UserInvitationServiceTest extends TestCase
             );
         } catch (\DomainException $exception) {
             $this->assertSame(
-                'Only active or pending, unverified users can receive an invitation.',
+                'Only pending, unverified users can receive an activation invitation.',
                 $exception->getMessage(),
             );
         }
