@@ -10,7 +10,7 @@
     </div>
 
     <div class="actions">
-        <a class="button button-secondary" href="{{ route('root.backoffice.users.index') }}">Retour à la liste</a>
+        <a class="button button-secondary" href="{{ route('root.backoffice.dashboard') }}">Retour à la liste</a>
         @unless($user->roles->contains('slug', 'super_admin_root'))
             <a class="button" href="{{ route('root.backoffice.users.edit', $user) }}">Modifier l’utilisateur</a>
         @endunless
