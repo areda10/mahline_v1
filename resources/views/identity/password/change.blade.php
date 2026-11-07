@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends(auth()->user()->hasRole('super_admin_root') ? 'layouts.root' : 'layouts.admin')
 
 @section('title', 'Sécurité — Changer le mot de passe')
 
