@@ -103,6 +103,10 @@ Route::prefix('password/change-required')
         Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
     });
 
+Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit'])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->name('security.password.edit');
+
 /*
 |--------------------------------------------------------------------------
 | Application
