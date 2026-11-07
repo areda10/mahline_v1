@@ -110,13 +110,19 @@ final class UserManagementController
             if ($emailChanged && in_array($updatedUser->status, [UserStatus::Active, UserStatus::Pending], true)) {
                 $invitationService->sendInvitation($updatedUser);
             }
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', 'Le compte a été modifié, mais le nouvel e-mail de vérification n’a pas pu être envoyé.');
         } catch (\DomainException $exception) {
             return back()->withInput()->with('error', $exception->getMessage());
         }
 
         return redirect()
             ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte et son rôle ont été mis à jour. Les anciennes sessions et les anciens jetons API ont été révoqués.');
+            ->with('success', $emailChanged
+                ? 'Le compte a été mis à jour. La nouvelle adresse doit être vérifiée ; une invitation a été envoyée si le statut du compte le permet. Les anciens accès ont été révoqués.'
+                : 'Le compte et son rôle ont été mis à jour. Les anciennes sessions et les anciens jetons API ont été révoqués.');
     }
 
     public function store(
