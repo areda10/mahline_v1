@@ -131,7 +131,7 @@
 
         <p class="muted">
             L'utilisateur recevra un lien sécurisé valable 60 minutes pour définir son mot de passe et vérifier son adresse e-mail.
-            Un compte « Actif » ne pourra se connecter qu'après cette vérification. Aucun mot de passe temporaire ne sera communiqué à l'administrateur.
+            Le compte restera en attente jusqu’à l’acceptation de l’invitation. Aucun mot de passe temporaire ne sera communiqué à l'administrateur.
         </p>
 
         <div class="actions">
