@@ -258,30 +258,37 @@ final class UserInvitationControllerTest extends TestCase
         );
     }
 
-    public function test_active_unverified_user_can_accept_invitation_without_status_change(): void
+    public function test_only_pending_users_can_accept_an_activation_invitation(): void
     {
-        $token = bin2hex(random_bytes(32));
+        foreach ([
+            UserStatus::Active,
+            UserStatus::Inactive,
+            UserStatus::Suspended,
+            UserStatus::Archived,
+        ] as $status) {
+            $token = bin2hex(random_bytes(32));
 
-        $user = User::factory()->create([
-            'status' => UserStatus::Active,
-            'email_verified_at' => null,
-        ]);
+            $user = User::factory()->create([
+                'status' => $status,
+                'email_verified_at' => null,
+            ]);
 
-        $invitation = $this->createInvitation($user, $token);
+            $invitation = $this->createInvitation($user, $token);
 
-        $this->post(route('user-invitations.accept'), [
-            'token' => $token,
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'MahlineSecure2026',
-        ])
-            ->assertRedirect(route('authentication.login'))
-            ->assertSessionHas('status');
+            $this->get(route('user-invitations.show', ['token' => $token]))
+                ->assertRedirect(route('authentication.login'))
+                ->assertSessionHas('error');
 
-        $user->refresh();
+            $this->post(route('user-invitations.accept'), [
+                'token' => $token,
+                'password' => 'MahlineSecure2026',
+                'password_confirmation' => 'MahlineSecure2026',
+            ])->assertSessionHasErrors('invitation');
 
-        $this->assertSame(UserStatus::Active, $user->status);
-        $this->assertNotNull($user->email_verified_at);
-        $this->assertNotNull($invitation->fresh()->used_at);
+            $this->assertSame($status, $user->fresh()->status);
+            $this->assertNull($user->fresh()->email_verified_at);
+            $this->assertNull($invitation->fresh()->used_at);
+        }
     }
 
     public function test_password_not_compliant_with_policy_is_rejected(): void
