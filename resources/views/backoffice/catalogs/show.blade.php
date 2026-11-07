@@ -11,7 +11,7 @@
 
     <div class="actions">
         <a class="button button-secondary"
-           href="{{ route('backoffice.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">
+           href="{{ route('backoffice.dashboard') }}">
             Retour
         </a>
 
