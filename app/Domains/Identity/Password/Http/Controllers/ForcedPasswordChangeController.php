@@ -61,8 +61,6 @@ final class ForcedPasswordChangeController
             $lockedUser->save();
         });
 
-        $request->session()->regenerate();
-
         return $this->dashboardRedirect($user->fresh());
     }
 
