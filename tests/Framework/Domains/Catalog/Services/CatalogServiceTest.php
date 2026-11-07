@@ -206,6 +206,37 @@ final class CatalogServiceTest extends TestCase
         ]);
     }
 
+    public function test_it_rejects_removing_a_product_from_another_cooperative(): void
+    {
+        $owner = Cooperative::factory()->create();
+        $other = Cooperative::factory()->create();
+
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $owner->getKey(),
+        ]);
+
+        $foreignProduct = Product::factory()->create([
+            'cooperative_id' => $other->getKey(),
+        ]);
+
+        try {
+            $this->service->removeProduct(
+                $catalog,
+                (string) $owner->getKey(),
+                (string) $foreignProduct->getKey(),
+            );
+
+            $this->fail('Le service aurait dû refuser ce produit.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('product', $exception->errors());
+        }
+
+        $this->assertDatabaseHas('products', [
+            'id' => $foreignProduct->getKey(),
+            'cooperative_id' => $other->getKey(),
+        ]);
+    }
+
     public function test_it_soft_deletes_catalog_without_deleting_products(): void
     {
         $cooperative = Cooperative::factory()->create();
