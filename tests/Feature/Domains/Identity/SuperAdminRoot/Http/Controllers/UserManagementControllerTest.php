@@ -106,6 +106,163 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertNothingSent();
     }
 
+
+    public function test_root_can_activate_a_pending_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.activate']);
+        $target = User::factory()->create(['status' => UserStatus::Pending]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.activate', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_root_can_deactivate_an_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.deactivate']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.deactivate', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Inactive->value,
+        ]);
+    }
+
+    public function test_root_can_suspend_an_active_user(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.suspend']);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.suspend', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Suspended->value,
+        ]);
+    }
+
+    public function test_root_can_archive_and_restore_a_user(): void
+    {
+        $root = $this->actor('super_admin_root', [
+            'users.archive',
+            'users.restore',
+        ]);
+        $target = User::factory()->create(['status' => UserStatus::Active]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.archive', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Archived->value,
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.restore', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+    }
+
+    public function test_root_can_soft_delete_and_restore_a_user(): void
+    {
+        $root = $this->actor('super_admin_root', [
+            'users.delete',
+            'users.restore_deleted',
+        ]);
+        $target = User::factory()->create();
+
+        $this->actingAs($root)
+            ->delete(route('root.backoffice.users.destroy', $target))
+            ->assertRedirect(route('root.backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
+            ->assertRedirect(route('root.backoffice.users.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $target->getKey(),
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_super_admin_cannot_use_root_lifecycle_routes(): void
+    {
+        $superAdmin = $this->actor('super_admin', [
+            'users.activate',
+            'users.deactivate',
+            'users.suspend',
+            'users.archive',
+            'users.restore',
+            'users.delete',
+            'users.restore_deleted',
+        ]);
+        $pending = User::factory()->create(['status' => UserStatus::Pending]);
+        $active = User::factory()->create(['status' => UserStatus::Active]);
+        $archived = User::factory()->create(['status' => UserStatus::Archived]);
+
+        $this->actingAs($superAdmin)
+            ->patch(route('root.backoffice.users.activate', $pending))
+            ->assertForbidden();
+        $this->actingAs($superAdmin)
+            ->patch(route('root.backoffice.users.deactivate', $active))
+            ->assertForbidden();
+        $this->actingAs($superAdmin)
+            ->patch(route('root.backoffice.users.suspend', $active))
+            ->assertForbidden();
+        $this->actingAs($superAdmin)
+            ->patch(route('root.backoffice.users.archive', $active))
+            ->assertForbidden();
+        $this->actingAs($superAdmin)
+            ->patch(route('root.backoffice.users.restore', $archived))
+            ->assertForbidden();
+        $this->actingAs($superAdmin)
+            ->delete(route('root.backoffice.users.destroy', $active))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $pending->getKey(),
+            'status' => UserStatus::Pending->value,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'id' => $active->getKey(),
+            'status' => UserStatus::Active->value,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'id' => $archived->getKey(),
+            'status' => UserStatus::Archived->value,
+        ]);
+    }
+
     /**
      * @return array<string, string>
      */
