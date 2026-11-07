@@ -30,6 +30,12 @@ final class AuthenticationSessionController
     public function revokeOwn(Request $request, AuthenticationSession $session, SessionService $service): RedirectResponse
     {
         $isRoot = $request->user()->hasRole('super_admin_root');
+        if ($request->routeIs('root.backoffice.*')) {
+            abort_unless($isRoot, 403);
+        } else {
+            abort_if($isRoot, 404);
+        }
+
         $owned = $service->findActiveById($request->user(), (string) $session->getKey());
         abort_if($owned === null, 404);
 
