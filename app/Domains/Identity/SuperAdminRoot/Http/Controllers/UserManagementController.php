@@ -244,12 +244,12 @@ final class UserManagementController
         Gate::authorize('activate', $user);
 
         try {
-            $pendingUser = $userManagementService->activateUser($request->user(), $user);
-            $invitationService->sendInvitation($pendingUser);
+            $activeUser = $userManagementService->activateUser($request->user(), $user);
+            $invitationService->sendInvitation($activeUser, 'root_manual_verification');
         } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
-                ->with('error', 'Le compte a été remis en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
+                ->with('error', 'Le compte est actif, mais l’e-mail de vérification n’a pas pu être envoyé. Vous pourrez réessayer.');
         } catch (\DomainException $exception) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
@@ -258,7 +258,26 @@ final class UserManagementController
 
         return redirect()
             ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte a été remis en attente. Une nouvelle invitation a été envoyée.');
+            ->with('success', 'Le compte est actif, mais la connexion reste bloquée jusqu’à la vérification de l’adresse e-mail. Une invitation a été envoyée.');
+    }
+
+    public function activateAndVerify(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        $this->authorizeRoot($request);
+        Gate::authorize('activate', $user);
+
+        try {
+            $userManagementService->activateAndVerifyUser($request->user(), $user);
+        } catch (\DomainException $exception) {
+            return redirect()->route('root.backoffice.users.show', $user)
+                ->with('error', $exception->getMessage());
+        }
+
+        return redirect()->route('root.backoffice.users.show', $user)
+            ->with('success', 'Le compte est actif et l’e-mail est vérifié. Le mot de passe provisoire est MahlineMahline ; son remplacement sera obligatoire à la première connexion.');
     }
 
     public function deactivate(
@@ -328,14 +347,12 @@ final class UserManagementController
         Request $request,
         User $user,
         UserManagementService $userManagementService,
-        UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
         Gate::authorize('restore', $user);
 
         try {
-            $pendingUser = $userManagementService->restoreArchivedUser($request->user(), $user);
-            $invitationService->sendInvitation($pendingUser);
+            $userManagementService->restoreArchivedUser($request->user(), $user);
         } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
@@ -348,7 +365,7 @@ final class UserManagementController
 
         return redirect()
             ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte a été restauré en attente. Une nouvelle invitation a été envoyée. Les anciens accès restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez ensuite l’une des deux méthodes d’activation. Les anciens accès restent révoqués.');
     }
 
     public function destroy(Request $request, User $user, UserManagementService $service): RedirectResponse
@@ -371,15 +388,13 @@ final class UserManagementController
         Request $request,
         string $user,
         UserManagementService $service,
-        UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
         $deletedUser = User::withTrashed()->findOrFail($user);
         Gate::authorize('restoreDeleted', $deletedUser);
 
         try {
-            $pendingUser = $service->restoreDeletedUser($request->user(), $deletedUser);
-            $invitationService->sendInvitation($pendingUser);
+            $service->restoreDeletedUser($request->user(), $deletedUser);
         } catch (UserInvitationDeliveryException) {
             return redirect()->route('root.backoffice.users.index')
                 ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
