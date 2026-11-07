@@ -42,7 +42,7 @@ final class AuthenticationController
                 return redirect()->route('user.dashboard');
             }
 
-            return redirect()->route('backoffice.dashboard');
+            return redirect()->intended('/');
         }
 
         return view('auth.login');
