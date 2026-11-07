@@ -329,6 +329,30 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNotNull($token->fresh()->revoked_at);
     }
 
+    public function test_root_cannot_edit_a_root_account_even_when_it_is_inactive(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $protectedRoot = User::factory()->create(['status' => UserStatus::Inactive]);
+        $protectedRoot->roles()->attach($this->ensureRole('super_admin_root')->getKey());
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.users.edit', $protectedRoot))
+            ->assertNotFound();
+
+        $this->actingAs($root)
+            ->put(route('root.backoffice.users.update', $protectedRoot), [
+                'first_name' => 'Intrusion',
+                'last_name' => 'Test',
+                'email' => $protectedRoot->email,
+                'telephone' => $protectedRoot->telephone,
+                'role_slug' => 'user',
+                'cooperative_id' => Cooperative::factory()->create()->getKey(),
+            ])
+            ->assertNotFound();
+
+        $this->assertSame('super_admin_root', $protectedRoot->roles()->firstOrFail()->slug);
+    }
+
     public function test_root_cannot_assign_root_role_through_user_edit(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
