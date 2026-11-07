@@ -887,7 +887,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     {
         if (! $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
             throw new DomainException(
-                'Only the super admin root can manage super admin assignments.',
+                'Only the super admin root can perform this action.',
             );
         }
     }
