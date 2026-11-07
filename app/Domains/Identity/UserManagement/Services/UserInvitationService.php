@@ -53,11 +53,11 @@ final class UserInvitationService
             }
 
             if (
-                ! in_array($lockedUser->status, [UserStatus::Active, UserStatus::Pending], true)
+                $lockedUser->status !== UserStatus::Pending
                 || $lockedUser->email_verified_at !== null
             ) {
                 throw new DomainException(
-                    'Only active or pending, unverified users can receive an invitation.',
+                    'Only pending, unverified users can receive an activation invitation.',
                 );
             }
 
@@ -203,11 +203,11 @@ final class UserInvitationService
         }
 
         if (
-            ! in_array($user->status, [UserStatus::Active, UserStatus::Pending], true)
+            $user->status !== UserStatus::Pending
             || $user->email_verified_at !== null
         ) {
             throw new DomainException(
-                'Only active or pending, unverified users can accept an invitation.',
+                'Only pending, unverified users can accept an activation invitation.',
             );
         }
     }
@@ -296,11 +296,11 @@ final class UserInvitationService
             }
 
             if (
-                ! in_array($user->status, [UserStatus::Active, UserStatus::Pending], true)
+                $user->status !== UserStatus::Pending
                 || $user->email_verified_at !== null
             ) {
                 throw new DomainException(
-                    'Only active or pending, unverified users can accept an invitation.',
+                    'Only pending, unverified users can accept an activation invitation.',
                 );
             }
 
