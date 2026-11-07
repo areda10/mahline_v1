@@ -2,6 +2,7 @@
 
 use App\Domains\Catalog\Http\Controllers\CatalogController;
 use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
+use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
@@ -112,7 +113,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/user/dashboard', UserDashboardController::class)\n    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])\n    ->name('user.dashboard');\n\nRoute::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
+Route::get('/user/dashboard', UserDashboardController::class)
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->name('user.dashboard');
+
+Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
     ->name('user-invitations.show');
 
 Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept'])
