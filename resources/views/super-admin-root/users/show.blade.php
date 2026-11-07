@@ -34,10 +34,17 @@
 
         @can('activate', $user)
             <form method="POST" action="{{ route('root.backoffice.users.activate', $user) }}"
-                  onsubmit="return confirm('Confirmer l’activation de ce compte ?');">
+                  onsubmit="return confirm('Activer le compte et envoyer un lien de vérification ? L’utilisateur devra définir son mot de passe via le lien reçu.');">
                 @csrf
                 @method('PATCH')
-                <button class="button" type="submit">Activer le compte</button>
+                <button class="button" type="submit">Activer et envoyer une invitation</button>
+            </form>
+
+            <form method="POST" action="{{ route('root.backoffice.users.activate-and-verify', $user) }}"
+                  onsubmit="return confirm('Activer immédiatement et vérifier l’e-mail ? Le mot de passe provisoire sera MahlineMahline et son changement sera obligatoire à la première connexion.');">
+                @csrf
+                @method('PATCH')
+                <button class="button" type="submit">Activer, vérifier l’e-mail et autoriser la connexion</button>
             </form>
         @endcan
 
@@ -70,10 +77,10 @@
 
         @can('restore', $user)
             <form method="POST" action="{{ route('root.backoffice.users.restore', $user) }}"
-                  onsubmit="return confirm('Restaurer ce compte avec le statut actif ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                  onsubmit="return confirm('Restaurer ce compte en attente ? Vous devrez ensuite choisir une méthode d’activation. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                 @csrf
                 @method('PATCH')
-                <button class="button" type="submit">Restaurer le compte</button>
+                <button class="button" type="submit">Restaurer le compte en attente</button>
             </form>
         @endcan
 
