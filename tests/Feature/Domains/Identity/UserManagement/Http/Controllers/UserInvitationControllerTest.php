@@ -155,6 +155,37 @@ final class UserInvitationControllerTest extends TestCase
         ]);
     }
 
+    public function test_root_manual_verification_invitation_only_verifies_active_user(): void
+    {
+        $token = bin2hex(random_bytes(32));
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $invitation = $this->createInvitation($user, $token, [
+            'purpose' => 'root_manual_verification',
+        ]);
+
+        $this->get(route('user-invitations.show', ['token' => $token]))
+            ->assertOk()
+            ->assertViewIs('auth.accept-invitation');
+
+        $password = 'MahlineSecure2026';
+        $this->post(route('user-invitations.accept'), [
+            'token' => $token,
+            'password' => $password,
+            'password_confirmation' => $password,
+        ])->assertRedirect(route('authentication.login'));
+
+        $user->refresh();
+        $this->assertSame(UserStatus::Active, $user->status);
+        $this->assertNotNull($user->email_verified_at);
+        $this->assertTrue(Hash::check($password, $user->password));
+        $this->assertFalse($user->must_change_password);
+        $this->assertNotNull($invitation->fresh()->used_at);
+    }
+
     public function test_password_confirmation_mismatch_does_not_activate_user(): void
     {
         $token = bin2hex(random_bytes(32));
