@@ -24,18 +24,13 @@ final class BackOfficeDashboardControllerTest extends TestCase
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
     }
 
-    public function test_root_can_view_global_dashboard(): void
+    public function test_root_cannot_view_the_regular_backoffice_dashboard(): void
     {
         $root = $this->userWithRole('super_admin_root');
 
         $this->actingAs($root)
             ->get(route('backoffice.dashboard'))
-            ->assertOk()
-            ->assertViewIs('backoffice.dashboard')
-            ->assertSee('Vue globale de la plateforme MAHLINE')
-            ->assertSee('Coopératives par statut')
-            ->assertSee('Utilisateurs par statut')
-            ->assertSee('Activité récente');
+            ->assertForbidden();
     }
 
     public function test_non_root_user_cannot_view_global_dashboard(): void
