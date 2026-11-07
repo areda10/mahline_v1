@@ -140,7 +140,7 @@ Route::get('/', function () {
 });
 
 Route::get('/user/dashboard', UserDashboardController::class)
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
@@ -151,7 +151,7 @@ Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept
 
 Route::prefix('root/back-office')
     ->name('root.backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
@@ -267,7 +267,7 @@ Route::prefix('root/back-office')
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
     ->group(function (): void {
 
         Route::get('dashboard', BackOfficeDashboardController::class)
