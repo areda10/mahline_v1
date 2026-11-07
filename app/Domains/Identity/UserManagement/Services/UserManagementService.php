@@ -83,6 +83,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $oldValues = [
                 'first_name' => $lockedTarget->first_name,
                 'last_name' => $lockedTarget->last_name,
+                'status' => $lockedTarget->status->value,
                 'email' => $lockedTarget->email,
                 'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
                 'telephone' => $lockedTarget->telephone,
@@ -100,6 +101,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             ]);
             if ($emailChanged) {
                 $lockedTarget->email_verified_at = null;
+                $lockedTarget->status = UserStatus::Pending;
+                $this->revokePendingInvitations($lockedTarget);
             }
 
             $lockedTarget->save();
@@ -113,6 +116,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $newValues = [
                 'first_name' => $lockedTarget->first_name,
                 'last_name' => $lockedTarget->last_name,
+                'status' => $lockedTarget->status->value,
                 'email' => $lockedTarget->email,
                 'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
                 'telephone' => $lockedTarget->telephone,
