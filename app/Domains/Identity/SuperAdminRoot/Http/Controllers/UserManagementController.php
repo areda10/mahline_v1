@@ -190,7 +190,7 @@ final class UserManagementController
                 ->route('root.backoffice.users.show', $user)
                 ->with(
                     'error',
-                    'L’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez réessayer.',
+                    'L’invitation n’a pas pu être envoyée. Le compte reste actif mais non vérifié ; vous pourrez réessayer.',
                 );
         } catch (\DomainException) {
             return redirect()
