@@ -97,6 +97,39 @@ final class UserInvitationServiceTest extends TestCase
         );
     }
 
+    public function test_root_manual_verification_invitation_is_allowed_for_active_unverified_user(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        app(UserInvitationService::class)->sendInvitation(
+            $user,
+            'root_manual_verification',
+        );
+
+        $invitation = UserInvitation::query()
+            ->where('user_id', $user->getKey())
+            ->firstOrFail();
+
+        $this->assertSame('root_manual_verification', $invitation->purpose);
+        $this->assertNull($invitation->used_at);
+        $this->assertNull($invitation->revoked_at);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->getKey(),
+            'status' => UserStatus::Active->value,
+            'email_verified_at' => null,
+        ]);
+
+        Notification::assertSentOnDemand(
+            \\App\\Domains\\Identity\\UserManagement\\Notifications\\UserInvitationNotification::class,
+        );
+    }
+
     public function test_sending_invitation_to_inactive_user_is_rejected(): void
     {
         $user = User::factory()->create([
