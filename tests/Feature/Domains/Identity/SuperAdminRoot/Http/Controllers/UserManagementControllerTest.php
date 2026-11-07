@@ -15,6 +15,7 @@ use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 final class UserManagementControllerTest extends TestCase
@@ -108,7 +109,7 @@ final class UserManagementControllerTest extends TestCase
     }
 
 
-    public function test_root_reactivation_returns_user_to_pending_and_sends_a_new_invitation(): void
+    public function test_root_reactivation_activates_account_and_sends_verification_invitation(): void
     {
         Notification::fake();
 
@@ -131,7 +132,8 @@ final class UserManagementControllerTest extends TestCase
             ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
-        $this->assertSame(UserStatus::Pending, $target->fresh()->status);
+        $this->assertSame(UserStatus::Active, $target->fresh()->status);
+        $this->assertNull($target->fresh()->email_verified_at);
         $this->assertNotNull($oldInvitation->fresh()->revoked_at);
 
         $newInvitation = UserInvitation::query()
@@ -141,12 +143,55 @@ final class UserManagementControllerTest extends TestCase
             ->firstOrFail();
 
         $this->assertNotSame($oldInvitation->token_hash, $newInvitation->token_hash);
+        $this->assertSame('root_manual_verification', $newInvitation->purpose);
         Notification::assertSentOnDemand(UserInvitationNotification::class);
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.user.status_changed',
             'actor_id' => $root->getKey(),
             'subject_id' => $target->getKey(),
         ]);
+    }
+
+    public function test_root_can_activate_and_verify_immediately_with_a_forced_password_change(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.activate']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Suspended,
+            'email_verified_at' => null,
+        ]);
+        [$session, $token] = $this->createAccessCredentials($target);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.activate-and-verify', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $target->refresh();
+        $this->assertSame(UserStatus::Active, $target->status);
+        $this->assertNotNull($target->email_verified_at);
+        $this->assertTrue($target->must_change_password);
+        $this->assertTrue(Hash::check('MahlineMahline', $target->password));
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
+        Notification::assertNothingSent();
+
+        $this->actingAs($target)
+            ->get(route('password.force-change.edit'))
+            ->assertOk()
+            ->assertSee('Changer votre mot de passe');
+
+        $this->actingAs($target)
+            ->put(route('password.force-change.update'), [
+                'password' => 'NewSecurePassword2026',
+                'password_confirmation' => 'NewSecurePassword2026',
+            ])
+            ->assertRedirect(route('backoffice.dashboard'));
+
+        $target->refresh();
+        $this->assertFalse($target->must_change_password);
+        $this->assertTrue(Hash::check('NewSecurePassword2026', $target->password));
     }
 
     public function test_root_can_deactivate_an_active_user(): void
@@ -235,12 +280,11 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
         $this->assertNotNull($invitation->fresh()->revoked_at);
-        $this->assertDatabaseHas('user_invitations', [
+        $this->assertDatabaseMissing('user_invitations', [
             'user_id' => $target->getKey(),
-            'used_at' => null,
             'revoked_at' => null,
         ]);
-        Notification::assertSentOnDemand(UserInvitationNotification::class);
+        Notification::assertNothingSent();
     }
 
     public function test_root_can_soft_delete_and_restore_a_user(): void
@@ -268,7 +312,7 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
-            ->assertRedirect(route('root.backoffice.users.index'))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -281,12 +325,11 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
         $this->assertNotNull($invitation->fresh()->revoked_at);
-        $this->assertDatabaseHas('user_invitations', [
+        $this->assertDatabaseMissing('user_invitations', [
             'user_id' => $target->getKey(),
-            'used_at' => null,
             'revoked_at' => null,
         ]);
-        Notification::assertSentOnDemand(UserInvitationNotification::class);
+        Notification::assertNothingSent();
     }
 
     public function test_super_admin_cannot_use_root_lifecycle_routes(): void
