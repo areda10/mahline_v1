@@ -61,7 +61,7 @@ final class ForcedPasswordChangeController
             return back()->withErrors(['password' => $exception->getMessage()]);
         }
 
-        DB::transaction(function () use ($user, $validated, $audit): void {
+        DB::transaction(function () use ($user, $validated, $audit, $forced): void {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
             if ($lockedUser->status->value !== 'active') {
