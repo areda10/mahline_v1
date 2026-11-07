@@ -301,7 +301,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('audit_events', [
-            'event_key' => 'identity.user.status_changed',
+            'event_key' => 'identity.user.activated_for_email_verification',
             'actor_id' => $root->getKey(),
             'subject_id' => $target->getKey(),
         ]);
@@ -530,7 +530,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
-    public function test_root_can_restore_an_archived_user_to_active(): void
+    public function test_root_can_restore_an_archived_user_to_pending(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
         $target = User::factory()->create([
@@ -545,7 +545,7 @@ final class UserManagementControllerTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'id' => $target->getKey(),
-            'status' => UserStatus::Active->value,
+            'status' => UserStatus::Pending->value,
         ]);
 
         $this->assertDatabaseHas('audit_events', [
@@ -755,7 +755,8 @@ final class UserManagementControllerTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $target->getKey(),
             'deleted_at' => null,
-            'status' => UserStatus::Inactive->value,
+            'status' => UserStatus::Pending->value,
+            'email_verified_at' => null,
         ]);
 
         $this->assertDatabaseHas('audit_events', [
@@ -917,7 +918,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
-    public function test_root_can_create_active_user_and_send_verification_invitation(): void
+    public function test_root_can_create_user_in_pending_status_and_send_activation_invitation(): void
     {
         Notification::fake();
 
@@ -932,7 +933,7 @@ final class UserManagementControllerTest extends TestCase
         $payload = $this->validCreationPayload(
             'user',
             $cooperative->getKey(),
-            UserStatus::Active,
+            UserStatus::Pending,
         );
 
         $this->actingAs($root)
@@ -942,10 +943,11 @@ final class UserManagementControllerTest extends TestCase
 
         $created = User::query()->where('email', $payload['email'])->firstOrFail();
 
-        $this->assertSame(UserStatus::Active, $created->status);
+        $this->assertSame(UserStatus::Pending, $created->status);
         $this->assertNull($created->email_verified_at);
         $this->assertDatabaseHas('user_invitations', [
             'user_id' => $created->getKey(),
+            'purpose' => 'account_activation',
             'used_at' => null,
             'revoked_at' => null,
         ]);
