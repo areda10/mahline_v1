@@ -100,6 +100,14 @@ final class ForcedPasswordChangeController
             return redirect()->route('root.backoffice.dashboard');
         }
 
-        return redirect()->route('backoffice.dashboard');
+        if ($user->hasRole('user')) {
+            return redirect()->route('user.dashboard');
+        }
+
+        if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+            return redirect()->route('backoffice.dashboard');
+        }
+
+        abort(403, 'No dashboard is available for this account role.');
     }
 }
