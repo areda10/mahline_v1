@@ -234,6 +234,17 @@ final class SuperAdminCooperativeAssignmentControllerTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_cannot_open_root_assignment_area_even_for_own_account(): void
+    {
+        $superAdmin = $this->actor('super_admin', ['users.view']);
+        $cooperative = Cooperative::factory()->create();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+
+        $this->actingAs($superAdmin)
+            ->get(route('root.backoffice.users.cooperatives.index', $superAdmin))
+            ->assertForbidden();
+    }
+
     public function test_non_root_roles_cannot_view_another_super_admin_assignments_or_manage_them(): void
     {
         $target = $this->actor('super_admin', []);
