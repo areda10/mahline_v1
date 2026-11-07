@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Localization\Models\Address;
@@ -129,13 +130,16 @@ final class CooperativeController
             'phone' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255'],
             ...$this->addressRules('sometimes'),
+            'status' => ['sometimes', 'required', Rule::in(array_map(static fn (CooperativeStatus $status): string => $status->value, CooperativeStatus::cases()))],
         ];
 
         $data = $request->validate($rules);
+        $requestedStatus = isset($data['status']) ? CooperativeStatus::from($data['status']) : null;
+        unset($data['status']);
         $addressData = array_intersect_key($data, array_flip($addressFields));
         $cooperativeData = array_diff_key($data, array_flip($addressFields));
 
-        DB::transaction(function () use ($user, $model, $addressData, $cooperativeData): void {
+        DB::transaction(function () use ($user, $model, $addressData, $cooperativeData, $requestedStatus): void {
             if ($addressData !== []) {
                 $address = $model->address_id
                     ? Address::query()->findOrFail($model->address_id)
@@ -152,6 +156,16 @@ final class CooperativeController
             }
 
             $this->cooperativeService->update($user, $model, $cooperativeData);
+
+            if ($requestedStatus !== null && $requestedStatus !== $model->fresh()->status) {
+                match ($requestedStatus) {
+                    CooperativeStatus::ACTIVE => $this->cooperativeService->activate($user, $model),
+                    CooperativeStatus::INACTIVE => $this->cooperativeService->deactivate($user, $model),
+                    CooperativeStatus::SUSPENDED => $this->cooperativeService->suspend($user, $model),
+                    CooperativeStatus::ARCHIVED => $this->cooperativeService->archive($user, $model),
+                    CooperativeStatus::PENDING => throw new \\DomainException('Une coopérative ne peut pas revenir au statut en attente.'),
+                };
+            }
         });
 
         return redirect()
