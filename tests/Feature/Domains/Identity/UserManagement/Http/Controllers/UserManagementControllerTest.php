@@ -780,7 +780,7 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee(route('root.backoffice.users.restore-deleted', $target->getKey()));
 
         $this->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
-            ->assertRedirect(route('root.backoffice.users.index'))
+            ->assertRedirect(route('root.backoffice.users.show', $target->getKey()))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -832,7 +832,7 @@ final class UserManagementControllerTest extends TestCase
         $this->actingAs($root)
             ->get(route('root.backoffice.users.create'))
             ->assertOk()
-            ->assertViewIs('backoffice.users.create')
+            ->assertViewIs('super-admin-root.users.create')
             ->assertSee('value="super_admin"', false)
             ->assertSee('value="cooperative_admin"', false)
             ->assertSee('value="user"', false);
