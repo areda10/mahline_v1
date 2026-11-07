@@ -188,6 +188,50 @@ final class AuthenticationControllerTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_super_admin_is_redirected_to_the_backoffice_dashboard_after_login(): void
+    {
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin'],
+            ['name' => 'Super Admin', 'is_active' => true],
+        );
+
+        $user = User::factory()->create([
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+        $user->roles()->attach($role->getKey());
+
+        $response = $this->post(route('authentication.login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('backoffice.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_cooperative_admin_is_redirected_to_the_cooperative_dashboard_after_login(): void
+    {
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'cooperative_admin'],
+            ['name' => 'Cooperative Admin', 'is_active' => true],
+        );
+
+        $user = User::factory()->create([
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+        $user->roles()->attach($role->getKey());
+
+        $response = $this->post(route('authentication.login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('backoffice.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
     public function test_user_can_keep_multiple_active_web_sessions_on_different_devices(): void
     {
         $user = User::factory()->create([
