@@ -163,7 +163,7 @@ final class CooperativeController
                     CooperativeStatus::INACTIVE => $this->cooperativeService->deactivate($user, $model),
                     CooperativeStatus::SUSPENDED => $this->cooperativeService->suspend($user, $model),
                     CooperativeStatus::ARCHIVED => $this->cooperativeService->archive($user, $model),
-                    CooperativeStatus::PENDING => throw new \\DomainException('Une coopérative ne peut pas revenir au statut en attente.'),
+                    CooperativeStatus::PENDING => throw new \DomainException('Une coopérative ne peut pas revenir au statut en attente.'),
                 };
             }
         });
