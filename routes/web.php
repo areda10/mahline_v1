@@ -112,7 +112,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
+Route::get('/user/dashboard', UserDashboardController::class)\n    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])\n    ->name('user.dashboard');\n\nRoute::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
     ->name('user-invitations.show');
 
 Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept'])
