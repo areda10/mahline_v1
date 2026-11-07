@@ -49,7 +49,7 @@ Route::prefix('authentication')
         Route::post(
             '/login',
             [AuthenticationController::class, 'login']
-        )->name('login.store');
+        )->middleware('throttle:5,1')->name('login.store');
 
         /*
          * Logout authenticated user.
@@ -80,7 +80,7 @@ Route::prefix('password')
         Route::post(
             '/forgot',
             [PasswordResetController::class, 'forgot']
-        )->name('email');
+        )->middleware('throttle:5,1')->name('email');
 
         // Display the password-reset form.
         Route::get(
@@ -92,7 +92,7 @@ Route::prefix('password')
         Route::post(
             '/reset',
             [PasswordResetController::class, 'reset']
-        )->name('update');
+        )->middleware('throttle:10,1')->name('update');
     });
 
 Route::prefix('password/change-required')
@@ -144,9 +144,11 @@ Route::get('/user/dashboard', UserDashboardController::class)
     ->name('user.dashboard');
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
+    ->middleware('throttle:10,1')
     ->name('user-invitations.show');
 
 Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept'])
+    ->middleware('throttle:5,1')
     ->name('user-invitations.accept');
 
 Route::prefix('root/back-office')
