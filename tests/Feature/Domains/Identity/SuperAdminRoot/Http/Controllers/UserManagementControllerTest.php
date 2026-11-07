@@ -161,6 +161,7 @@ final class UserManagementControllerTest extends TestCase
             'status' => UserStatus::Suspended,
             'email_verified_at' => null,
         ]);
+        $target->roles()->attach($this->ensureRole('user')->getKey());
         [$session, $token] = $this->createAccessCredentials($target);
 
         $this->actingAs($root)
@@ -187,7 +188,7 @@ final class UserManagementControllerTest extends TestCase
                 'password' => 'NewSecurePassword2026',
                 'password_confirmation' => 'NewSecurePassword2026',
             ])
-            ->assertRedirect(route('root.backoffice.dashboard'));
+            ->assertRedirect(route('user.dashboard'));
 
         $target->refresh();
         $this->assertFalse($target->must_change_password);
