@@ -38,7 +38,11 @@ final class AuthenticationController
                 return redirect()->route('root.backoffice.dashboard');
             }
 
-            return redirect()->intended('/');
+            if ($user?->hasRole('user')) {
+                return redirect()->route('user.dashboard');
+            }
+
+            return redirect()->route('backoffice.dashboard');
         }
 
         return view('auth.login');
@@ -136,7 +140,11 @@ final class AuthenticationController
             return redirect()->route('root.backoffice.dashboard');
         }
 
-        return redirect()->intended('/');
+        if ($user->hasRole('user')) {
+            return redirect()->route('user.dashboard');
+        }
+
+        return redirect()->route('backoffice.dashboard');
     }
 
     public function logout(
