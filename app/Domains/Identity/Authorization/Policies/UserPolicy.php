@@ -105,8 +105,16 @@ final class UserPolicy extends BasePolicy
     {
         if (! $this->hasPermission($actor, 'users.create')
             || $target->trashed()
-            || ! in_array($target->status, [UserStatus::Active, UserStatus::Pending], true)
             || $target->email_verified_at !== null) {
+            return false;
+        }
+
+        if ($target->status === UserStatus::Active) {
+            // Only the root may re-verify an already-active account.
+            return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+        }
+
+        if ($target->status !== UserStatus::Pending) {
             return false;
         }
 
