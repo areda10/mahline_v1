@@ -85,6 +85,38 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertForbidden();
     }
 
+
+    public function test_cooperative_admin_cannot_access_root_or_user_workspaces(): void
+    {
+        $cooperativeAdmin = $this->userWithRole('cooperative_admin');
+
+        $this->actingAs($cooperativeAdmin)
+            ->get(route('root.backoffice.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($cooperativeAdmin)
+            ->get(route('user.dashboard'))
+            ->assertForbidden();
+    }
+
+    public function test_regular_user_cannot_access_backoffice_workspace(): void
+    {
+        $user = $this->userWithRole('user');
+
+        $this->actingAs($user)
+            ->get(route('backoffice.dashboard'))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_cannot_access_root_workspace_even_with_root_permissions(): void
+    {
+        $superAdmin = $this->userWithRole('super_admin');
+
+        $this->actingAs($superAdmin)
+            ->get(route('root.backoffice.dashboard'))
+            ->assertForbidden();
+    }
+
     private function userWithRole(string $slug): User
     {
         $user = User::factory()->create();
