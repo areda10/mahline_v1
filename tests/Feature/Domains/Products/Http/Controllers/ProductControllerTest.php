@@ -238,4 +238,30 @@ final class ProductControllerTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_product_from_another_cooperative_cannot_be_updated_or_deleted(): void
+    {
+        $otherCooperative = Cooperative::factory()->active()->create();
+        $foreignProduct = Product::factory()
+            ->forCooperative($otherCooperative)
+            ->create(['name' => 'Produit privé']);
+
+        $this->patch(route('backoffice.products.update', [
+            'cooperative' => $this->cooperative->getKey(),
+            'product' => $foreignProduct->getKey(),
+        ]), ['name' => 'Tentative de modification'])
+            ->assertNotFound();
+
+        $this->delete(route('backoffice.products.destroy', [
+            'cooperative' => $this->cooperative->getKey(),
+            'product' => $foreignProduct->getKey(),
+        ]))->assertNotFound();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $foreignProduct->getKey(),
+            'cooperative_id' => $otherCooperative->getKey(),
+            'name' => 'Produit privé',
+            'deleted_at' => null,
+        ]);
+    }
 }
