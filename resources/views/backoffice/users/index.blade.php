@@ -37,13 +37,6 @@
             </select>
         </div>
 
-        <div class="field">
-            <label for="deleted">Type de comptes</label>
-            <select id="deleted" name="deleted">
-                <option value="0" @selected($filters['deleted'] === '0')>Comptes non supprimés</option>
-                <option value="1" @selected($filters['deleted'] === '1')>Comptes supprimés logiquement</option>
-            </select>
-        </div>
 
         <div class="field">
             <label for="status">Statut</label>
