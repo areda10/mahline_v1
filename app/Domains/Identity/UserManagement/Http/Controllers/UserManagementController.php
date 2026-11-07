@@ -154,7 +154,7 @@ final class UserManagementController
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with('error', 'Le compte est actif, mais l’e-mail de vérification n’a pas pu être envoyé. Vous pourrez réessayer.');
-        } catch (\\DomainException) {
+        } catch (\DomainException) {
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
