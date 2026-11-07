@@ -315,6 +315,7 @@ final class UserInvitationService
             }
 
             $user->password = $password;
+            $user->must_change_password = false;
 
             if ($invitation->purpose === 'account_activation') {
                 $user->status = UserStatus::Active;
