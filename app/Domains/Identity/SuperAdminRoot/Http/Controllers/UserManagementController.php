@@ -6,6 +6,7 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\Enums\UserStatus;
@@ -215,9 +216,21 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->orderByDesc('last_activity_at')
+            ->get();
+
+        $currentSessionId = $request->session()->getId();
+        $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
+            $session->setAttribute('is_current', hash_equals((string) $session->session_id, $currentSessionId));
+        });
+
         return view('super-admin-root.users.show', [
             'user' => $user,
             'canViewAssignments' => $canViewAssignments,
+            'sessions' => $sessions,
         ]);
     }
 
