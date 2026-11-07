@@ -81,6 +81,11 @@
     </div>
 
     @auth
+        @if(!auth()->user()->hasRole('super_admin_root'))
+            <nav class="nav" aria-label="Sécurité du compte">
+                <a href="{{ route('backoffice.security.sessions.index') }}">Mes appareils connectés</a>
+            </nav>
+        @endif
         @if(auth()->user()->hasRole('super_admin_root'))
             <nav class="nav" aria-label="Navigation principale">
                 <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
