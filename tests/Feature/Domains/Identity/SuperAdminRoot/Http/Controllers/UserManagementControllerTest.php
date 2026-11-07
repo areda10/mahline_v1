@@ -198,6 +198,8 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_can_archive_and_restore_a_user(): void
     {
+        Notification::fake();
+
         $root = $this->actor('super_admin_root', [
             'users.archive',
             'users.restore',
@@ -227,15 +229,24 @@ final class UserManagementControllerTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'id' => $target->getKey(),
-            'status' => UserStatus::Active->value,
+            'status' => UserStatus::Pending->value,
         ]);
-        // Restoring the account must never reactivate its former credentials.
+        // Restoring never reactivates former invitations or credentials.
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
     public function test_root_can_soft_delete_and_restore_a_user(): void
     {
+        Notification::fake();
+
         $root = $this->actor('super_admin_root', [
             'users.delete',
             'users.restore_deleted',
@@ -263,10 +274,19 @@ final class UserManagementControllerTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $target->getKey(),
             'deleted_at' => null,
+            'status' => UserStatus::Pending->value,
+            'email_verified_at' => null,
         ]);
-        // Restoring a soft-deleted account leaves old sessions and API tokens revoked.
+        // Restoring a soft-deleted account leaves old sessions, tokens and invitations revoked.
         $this->assertNotNull($session->fresh()->revoked_at);
         $this->assertNotNull($token->fresh()->revoked_at);
+        $this->assertNotNull($invitation->fresh()->revoked_at);
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
     public function test_super_admin_cannot_use_root_lifecycle_routes(): void
