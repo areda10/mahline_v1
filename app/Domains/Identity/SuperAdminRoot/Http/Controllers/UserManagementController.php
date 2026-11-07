@@ -54,7 +54,7 @@ final class UserManagementController
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
 
-        abort_if($user->hasRole('super_admin_root'), 404);
+        abort_if($user->roles()->where('slug', 'super_admin_root')->exists(), 404);
 
         $user->load(['roles', 'cooperative']);
 
@@ -78,7 +78,7 @@ final class UserManagementController
     ): RedirectResponse {
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
-        abort_if($user->hasRole('super_admin_root'), 404);
+        abort_if($user->roles()->where('slug', 'super_admin_root')->exists(), 404);
 
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
