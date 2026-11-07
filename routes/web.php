@@ -114,7 +114,29 @@ Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit']
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    if (! auth()->check()) {
+        return view('welcome');
+    }
+
+    $user = auth()->user();
+
+    if ($user->must_change_password) {
+        return redirect()->route('password.force-change.edit');
+    }
+
+    if ($user->hasRole('super_admin_root')) {
+        return redirect()->route('root.backoffice.dashboard');
+    }
+
+    if ($user->hasRole('user')) {
+        return redirect()->route('user.dashboard');
+    }
+
+    if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+        return redirect()->route('backoffice.dashboard');
+    }
+
+    abort(403);
 });
 
 Route::get('/user/dashboard', UserDashboardController::class)
