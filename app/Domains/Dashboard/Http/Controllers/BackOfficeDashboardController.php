@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domains\Dashboard\Http\Controllers;
 
-use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Http\Request;
@@ -20,50 +18,64 @@ final class BackOfficeDashboardController
 {
     public function __invoke(Request $request): View
     {
-        abort_unless($request->user()?->hasRole('super_admin_root'), 403);
+        $user = $request->user();
 
-        $cooperativeStatuses = $this->countByStatus(Cooperative::class, CooperativeStatus::cases());
-        $userStatuses = $this->countByStatus(User::class, UserStatus::cases());
+        abort_unless(
+            $user !== null && $user->hasAnyRole(['super_admin', 'cooperative_admin']),
+            403,
+        );
 
-        $usersByRole = collect(['super_admin_root', 'super_admin', 'cooperative_admin', 'user'])
-            ->mapWithKeys(fn (string $role): array => [
-                $role => User::query()->whereHas(
-                    'roles',
-                    fn ($query) => $query->where('slug', $role),
-                )->count(),
-            ]);
+        $cooperatives = Cooperative::query()
+            ->visibleTo($user)
+            ->get(['id', 'name', 'status']);
 
-        return view('backoffice.dashboard', [
-            'cooperativeTotal' => Cooperative::query()->count(),
-            'cooperativeStatuses' => $cooperativeStatuses,
-            'userTotal' => User::query()->count(),
-            'userStatuses' => $userStatuses,
-            'unverifiedUsers' => User::query()->whereNull('email_verified_at')->count(),
-            'usersByRole' => $usersByRole,
-            'catalogTotal' => Catalog::query()->count(),
-            'activeCatalogTotal' => Catalog::query()->where('is_active', true)->count(),
-            'productTotal' => Product::query()->count(),
-            'activeProductTotal' => Product::query()->where('is_active', true)->count(),
-            'categoryTotal' => Category::query()->count(),
-            'globalCategoryTotal' => Category::query()->whereNull('cooperative_id')->count(),
-            'localCategoryTotal' => Category::query()->whereNotNull('cooperative_id')->count(),
-            'recentActivities' => AuditEvent::query()
-                ->orderByDesc('occurred_at')
-                ->limit(8)
-                ->get(['id', 'event_key', 'actor_id', 'subject_id', 'occurred_at']),
-        ]);
+        $cooperativeIds = $cooperatives->modelKeys();
+
+        $cooperativeQuery = Cooperative::query()->whereIn('id', $cooperativeIds);
+        $userQuery = User::query()->whereIn('cooperative_id', $cooperativeIds);
+        $catalogQuery = Catalog::query()->whereIn('cooperative_id', $cooperativeIds);
+        $productQuery = Product::query()->whereIn('cooperative_id', $cooperativeIds);
+        $categoryQuery = Category::query()->where(function ($query) use ($cooperativeIds): void {
+            $query->whereNull('cooperative_id')
+                ->orWhereIn('cooperative_id', $cooperativeIds);
+        });
+
+        $cooperativeStatuses = $this->countByStatus(
+            (clone $cooperativeQuery),
+            CooperativeStatus::cases(),
+        );
+
+        $isSuperAdmin = $user->hasRole('super_admin');
+
+        return view(
+            $isSuperAdmin ? 'super-admin.dashboard' : 'cooperative-admin.dashboard',
+            [
+                'user' => $user,
+                'cooperatives' => $cooperatives,
+                'cooperativeTotal' => $cooperativeQuery->count(),
+                'cooperativeStatuses' => $cooperativeStatuses,
+                'userTotal' => $userQuery->count(),
+                'unverifiedUsers' => (clone $userQuery)->whereNull('email_verified_at')->count(),
+                'catalogTotal' => $catalogQuery->count(),
+                'activeCatalogTotal' => (clone $catalogQuery)->where('is_active', true)->count(),
+                'productTotal' => $productQuery->count(),
+                'activeProductTotal' => (clone $productQuery)->where('is_active', true)->count(),
+                'categoryTotal' => $categoryQuery->count(),
+                'activeCategoryTotal' => (clone $categoryQuery)->where('is_active', true)->count(),
+            ],
+        );
     }
 
     /**
-     * @param class-string<\Illuminate\Database\Eloquent\Model> $model
+     * @param \Illuminate\Database\Eloquent\Builder $query
      * @param array<int, \BackedEnum> $statuses
      * @return Collection<string, int>
      */
-    private function countByStatus(string $model, array $statuses): Collection
+    private function countByStatus($query, array $statuses): Collection
     {
         return collect($statuses)->mapWithKeys(
             fn (\BackedEnum $status): array => [
-                (string) $status->value => $model::query()
+                (string) $status->value => (clone $query)
                     ->where('status', $status->value)
                     ->count(),
             ],
