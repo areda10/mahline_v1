@@ -329,6 +329,41 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNotNull($token->fresh()->revoked_at);
     }
 
+    public function test_root_email_change_requires_verification_and_sends_new_invitation(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $cooperative = Cooperative::factory()->create();
+        $target = User::factory()->create([
+            'status' => UserStatus::Active,
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $target->roles()->attach($this->ensureRole('user')->getKey());
+
+        $this->actingAs($root)
+            ->put(route('root.backoffice.users.update', $target), [
+                'first_name' => $target->first_name,
+                'last_name' => $target->last_name,
+                'email' => 'changed-address@example.test',
+                'telephone' => $target->telephone,
+                'role_slug' => 'user',
+                'cooperative_id' => $cooperative->getKey(),
+            ])
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $target->refresh();
+        $this->assertSame('changed-address@example.test', $target->email);
+        $this->assertNull($target->email_verified_at);
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
     public function test_root_cannot_edit_a_root_account_even_when_it_is_inactive(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
