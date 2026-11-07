@@ -81,46 +81,44 @@
     </div>
 
     @auth
-        @if(!auth()->user()->hasRole('super_admin_root'))
-            <nav class="nav" aria-label="Sécurité du compte">
-                <a href="{{ route('security.password.edit') }}">Changer le mot de passe</a>
-                <a href="{{ route('backoffice.security.sessions.index') }}">Mes appareils connectés</a>
-            </nav>
-        @endif
-        @if(auth()->user()->hasRole('super_admin_root'))
-            <nav class="nav" aria-label="Navigation principale">
-                <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
-                <a href="{{ route('security.password.edit') }}">Sécurité · Mot de passe</a>
-                <a href="{{ route('root.backoffice.security.sessions.index') }}">Appareils connectés</a>
-                <a href="{{ route('root.backoffice.categories.index') }}">Catégories globales</a>
-                <a href="{{ route('root.backoffice.cooperatives.index') }}">Coopératives</a>
-                <a href="{{ route('root.backoffice.users.index') }}">Utilisateurs</a>
-            </nav>
-        @endif
+        @php($currentUser = auth()->user())
+
+        <nav class="nav" aria-label="Navigation du compte">
+            @if($currentUser->hasRole('super_admin'))
+                <a href="{{ route('backoffice.dashboard') }}">Tableau de bord</a>
+                <a href="{{ route('backoffice.cooperatives.index') }}">Coopératives</a>
+                <a href="{{ route('backoffice.users.index') }}">Utilisateurs</a>
+            @elseif($currentUser->hasRole('cooperative_admin'))
+                <a href="{{ route('backoffice.dashboard') }}">Tableau de bord</a>
+                <a href="{{ route('backoffice.cooperatives.index') }}">Ma coopérative</a>
+                <a href="{{ route('backoffice.users.index') }}">Utilisateurs</a>
+            @elseif($currentUser->hasRole('user'))
+                <a href="{{ route('user.dashboard') }}">Mon tableau de bord</a>
+            @endif
+
+            <a href="{{ route('security.password.edit') }}">Sécurité · Mot de passe</a>
+            <a href="{{ route('backoffice.security.sessions.index') }}">Mes appareils connectés</a>
+            <form method="POST" action="{{ route('authentication.logout') }}" style="display:inline">
+                @csrf
+                <button class="button button-secondary" type="submit">Déconnexion</button>
+            </form>
+        </nav>
     @endauth
 
-    @if(isset($cooperative))
+    @if(isset($cooperative) && auth()->user()?->hasAnyRole(['super_admin', 'cooperative_admin']))
         <div class="muted" style="color:#d9e9e2; margin-top:6px">
             Coopérative : {{ $cooperative->name }}
         </div>
 
-        <nav class="nav" aria-label="Navigation principale">
-            @can('viewAny', \App\Domains\Catalog\Models\Catalog::class)
-                <a href="{{ route('backoffice.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">
-                    Catalogues
-                </a>
+        <nav class="nav" aria-label="Gestion de la coopérative">
+            @can('viewAny', [\\App\\Domains\\Catalog\\Models\\Catalog::class, (string) $cooperative->getKey()])
+                <a href="{{ route('backoffice.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">Catalogues</a>
             @endcan
-
-            @can('viewAny', \App\Domains\Categories\Models\Category::class)
-                <a href="{{ route('backoffice.categories.index', ['cooperative' => $cooperative->getKey()]) }}">
-                    Catégories
-                </a>
+            @can('viewAny', [\\App\\Domains\\Categories\\Models\\Category::class, (string) $cooperative->getKey()])
+                <a href="{{ route('backoffice.categories.index', ['cooperative' => $cooperative->getKey()]) }}">Catégories</a>
             @endcan
-
-            @can('viewAny', \App\Domains\Products\Models\Product::class)
-                <a href="{{ route('backoffice.products.index', ['cooperative' => $cooperative->getKey()]) }}">
-                    Produits
-                </a>
+            @can('viewAny', [\\App\\Domains\\Products\\Models\\Product::class, (string) $cooperative->getKey()])
+                <a href="{{ route('backoffice.products.index', ['cooperative' => $cooperative->getKey()]) }}">Produits</a>
             @endcan
         </nav>
     @endif
