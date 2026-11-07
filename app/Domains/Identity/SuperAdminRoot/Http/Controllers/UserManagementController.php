@@ -250,7 +250,7 @@ final class UserManagementController
             return redirect()
                 ->route('root.backoffice.users.show', $user)
                 ->with('error', 'Le compte a été remis en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
                 ->with('error', $exception->getMessage());
@@ -340,7 +340,7 @@ final class UserManagementController
             return redirect()
                 ->route('root.backoffice.users.show', $user)
                 ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
                 ->with('error', $exception->getMessage());
@@ -383,7 +383,7 @@ final class UserManagementController
         } catch (UserInvitationDeliveryException) {
             return redirect()->route('root.backoffice.users.index')
                 ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             return redirect()->route('root.backoffice.users.index', ['deleted' => 1])
                 ->with('error', $exception->getMessage());
         }
