@@ -17,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Illuminate\Validation\Rule;
 
 final class UserManagementController
 {
@@ -103,7 +104,7 @@ final class UserManagementController
                 $data,
                 $roleSlug,
             );
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             return back()->withInput()->with('error', $exception->getMessage());
         }
 
