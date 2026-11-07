@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Password\Http\Controllers;
 
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+
 use Illuminate\View\View;
+use App\Shared\DTOs\AuditEntryDTO;
 use InvalidArgumentException;
 
 final class ForcedPasswordChangeController
@@ -30,7 +32,7 @@ final class ForcedPasswordChangeController
         return view('auth.force-password-change');
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request, AuditService $audit): RedirectResponse
     {
         $user = $request->user();
 
@@ -49,7 +51,7 @@ final class ForcedPasswordChangeController
             return back()->withErrors(['password' => $exception->getMessage()]);
         }
 
-        DB::transaction(function () use ($user, $validated): void {
+        DB::transaction(function () use ($user, $validated, $audit): void {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $lockedUser->must_change_password || $lockedUser->status->value !== 'active') {
@@ -59,6 +61,18 @@ final class ForcedPasswordChangeController
             $lockedUser->password = $validated['password'];
             $lockedUser->must_change_password = false;
             $lockedUser->save();
+
+            $audit->record(new AuditEntryDTO(
+                eventKey: 'identity.user.forced_password_changed',
+                action: 'forced_password_changed',
+                actorType: User::class,
+                actorId: (string) $lockedUser->getKey(),
+                cooperativeId: $lockedUser->cooperative_id ? (string) $lockedUser->cooperative_id : null,
+                subjectType: User::class,
+                subjectId: (string) $lockedUser->getKey(),
+                oldValues: ['must_change_password' => true],
+                newValues: ['must_change_password' => false],
+            ));
         });
 
         return $this->dashboardRedirect($user->fresh());
