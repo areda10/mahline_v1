@@ -96,6 +96,47 @@ final class CatalogPolicyTest extends TestCase
         $this->assertFalse($this->policy->update($user, $catalog));
     }
 
+    public function test_root_can_update_catalog_from_any_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $catalog = Catalog::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $root = $this->userWithPermission('catalogs.update', 'super_admin_root');
+
+        $this->assertTrue($this->policy->update($root, $catalog));
+    }
+
+    public function test_super_admin_can_update_catalog_of_assigned_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $catalog = Catalog::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $admin = $this->userWithPermission('catalogs.update', 'super_admin');
+        $admin->cooperatives()->attach($cooperative->getKey());
+
+        $this->assertTrue($this->policy->update($admin, $catalog));
+    }
+
+    public function test_super_admin_cannot_update_catalog_of_unassigned_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $catalog = Catalog::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $admin = $this->userWithPermission('catalogs.update', 'super_admin');
+
+        $this->assertFalse($this->policy->update($admin, $catalog));
+    }
+
+    public function test_cooperative_admin_can_update_catalog_of_own_cooperative(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $catalog = Catalog::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $admin = $this->userWithPermission(
+            'catalogs.update',
+            'cooperative_admin',
+            (string) $cooperative->getKey(),
+        );
+
+        $this->assertTrue($this->policy->update($admin, $catalog));
+    }
+
     private function userWithPermission(
         string $permissionSlug,
         string $roleName = 'test-role',
