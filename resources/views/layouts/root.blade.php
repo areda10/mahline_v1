@@ -100,7 +100,8 @@
                 <a href="{{ route('root.backoffice.categories.index') }}">Catégories globales</a>
                 <a href="{{ route('root.backoffice.cooperatives.index') }}">Coopératives</a>
                 <a href="{{ route('root.backoffice.users.index') }}">Utilisateurs</a>
-                <a href="{{ route('root.backoffice.security.sessions.index') }}">Sécurité</a>
+                <a href="{{ route('security.password.edit') }}">Changer le mot de passe</a>
+                <a href="{{ route('root.backoffice.security.sessions.index') }}">Appareils connectés</a>
             </nav>
         @endif
     @endauth
