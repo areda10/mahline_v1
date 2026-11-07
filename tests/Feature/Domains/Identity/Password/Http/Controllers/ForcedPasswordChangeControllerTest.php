@@ -104,6 +104,32 @@ final class ForcedPasswordChangeControllerTest extends TestCase
         }
     }
 
+    public function test_forced_password_change_returns_each_role_to_its_own_dashboard(): void
+    {
+        $destinations = [
+            'super_admin_root' => 'root.backoffice.dashboard',
+            'super_admin' => 'backoffice.dashboard',
+            'cooperative_admin' => 'backoffice.dashboard',
+            'user' => 'user.dashboard',
+        ];
+
+        foreach ($destinations as $role => $route) {
+            $user = $this->actor($role, [
+                'password' => 'MahlineMahline',
+                'must_change_password' => true,
+            ]);
+
+            $this->actingAs($user)
+                ->put(route('password.force-change.update'), [
+                    'password' => 'NewPassword123',
+                    'password_confirmation' => 'NewPassword123',
+                ])
+                ->assertRedirect(route($route));
+
+            $this->assertFalse($user->fresh()->must_change_password);
+        }
+    }
+
     public function test_password_change_rejects_a_new_password_that_matches_the_current_password(): void
     {
         $user = $this->actor('user', [
