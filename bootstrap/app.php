@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withMiddleware(function (Middleware $middleware): void {
 
-        $middleware->redirectGuestsTo('/authentication/login');
+        $middleware->redirectGuestsTo('/authentication/login');\n\n        $middleware->alias([\n            'role' => EnsureUserHasRole::class,\n        ]);
 
         /*
         |--------------------------------------------------------------------------
