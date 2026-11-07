@@ -111,13 +111,13 @@
         </div>
 
         <nav class="nav" aria-label="Gestion de la coopérative">
-            @can('viewAny', \App\Domains\Catalog\\Models\\Catalog::class)
+            @can('viewAny', \App\Domains\Catalog\Models\Catalog::class)
                 <a href="{{ route('backoffice.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">Catalogues</a>
             @endcan
-            @can('viewAny', \App\Domains\Categories\\Models\\Category::class)
+            @can('viewAny', \App\Domains\Categories\Models\Category::class)
                 <a href="{{ route('backoffice.categories.index', ['cooperative' => $cooperative->getKey()]) }}">Catégories</a>
             @endcan
-            @can('viewAny', \App\Domains\Products\\Models\\Product::class)
+            @can('viewAny', \App\Domains\Products\Models\Product::class)
                 <a href="{{ route('backoffice.products.index', ['cooperative' => $cooperative->getKey()]) }}">Produits</a>
             @endcan
         </nav>
