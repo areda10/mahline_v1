@@ -46,7 +46,7 @@ final class CooperativeResourceAccessTest extends TestCase
             ],
         ));
 
-        $role->permissions()->attach($permissions->modelKeys());
+        $role->permissions()->attach($permissions->pluck('id')->all());
         $user->roles()->attach($role->getKey());
 
         $this->actingAs($user);
