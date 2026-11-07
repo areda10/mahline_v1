@@ -355,6 +355,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             allowedRootSourceStatuses: $rootCanActivateFrom,
             allowedSuperAdminSourceStatuses: [],
             rootOnly: true,
+            resetEmailVerification: true,
         );
     }
 
@@ -423,6 +424,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             allowedRootSourceStatuses: [UserStatus::Archived],
             allowedSuperAdminSourceStatuses: [],
             rootOnly: true,
+            resetEmailVerification: true,
         );
     }
 
@@ -521,6 +523,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         array $allowedSuperAdminSourceStatuses,
         ?string $revokeReason = null,
         bool $rootOnly = false,
+        bool $resetEmailVerification = false,
     ): User {
         return DB::transaction(function () use (
             $actor,
@@ -531,6 +534,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $allowedSuperAdminSourceStatuses,
             $revokeReason,
             $rootOnly,
+            $resetEmailVerification,
         ): User {
             $lockedTarget = User::query()
                 ->whereKey($target->getKey())
@@ -565,6 +569,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $oldStatus = $lockedTarget->status;
             $lockedTarget->status = $newStatus;
+
+            if ($resetEmailVerification) {
+                $lockedTarget->email_verified_at = null;
+            }
+
             $lockedTarget->save();
 
             $this->recordLifecycleAudit(
