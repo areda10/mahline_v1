@@ -45,11 +45,21 @@ final class AuthenticationControllerTest extends TestCase
 
     public function test_web_logout_terminates_the_current_session_and_revokes_its_identity_session(): void
     {
+        $userRole = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            [
+                'name' => 'User',
+                'is_active' => true,
+            ],
+        );
+
         $user = User::factory()->create([
             'email' => 'logout-controller@example.com',
             'password' => 'password',
             'status' => UserStatus::Active,
         ]);
+
+        $user->roles()->attach($userRole->getKey());
 
         $loginResponse = $this
             ->withHeader('User-Agent', $this->userAgent)
