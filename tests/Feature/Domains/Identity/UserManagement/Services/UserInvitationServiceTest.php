@@ -130,6 +130,51 @@ final class UserInvitationServiceTest extends TestCase
         );
     }
 
+    public function test_active_user_can_accept_root_manual_verification_invitation_without_status_change(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+            'must_change_password' => true,
+        ]);
+
+        $token = 'root-manual-verification-token';
+
+        $invitation = UserInvitation::query()->create([
+            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'user_id' => $user->getKey(),
+            'purpose' => 'root_manual_verification',
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
+
+        $service = app(UserInvitationService::class);
+
+        $service->validateInvitation($token);
+
+        $acceptedUser = $service->acceptInvitation(
+            $token,
+            'MahlineSecure2026',
+        );
+
+        $this->assertSame(UserStatus::Active, $acceptedUser->status);
+        $this->assertNotNull($acceptedUser->email_verified_at);
+        $this->assertFalse((bool) $acceptedUser->must_change_password);
+        $this->assertTrue(\\Illuminate\\Support\\Facades\\Hash::check(
+            'MahlineSecure2026',
+            $acceptedUser->password,
+        ));
+
+        $this->assertNotNull($invitation->fresh()->used_at);
+        $this->assertNull($invitation->fresh()->revoked_at);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.invitation_accepted',
+            'subject_id' => $user->getKey(),
+        ]);
+    }
+
     public function test_sending_invitation_to_inactive_user_is_rejected(): void
     {
         $user = User::factory()->create([
