@@ -109,6 +109,47 @@ final class UserManagementControllerTest extends TestCase
     }
 
 
+    public function test_root_can_resend_manual_verification_invitation_to_active_unverified_user(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $target = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $oldInvitation = UserInvitation::query()->create([
+            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'user_id' => $target->getKey(),
+            'purpose' => 'root_manual_verification',
+            'token_hash' => hash('sha256', 'old-root-verification-token'),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.users.resend-invitation', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        $oldInvitation->refresh();
+
+        $this->assertNotNull($oldInvitation->revoked_at);
+
+        $newInvitation = UserInvitation::query()
+            ->where('user_id', $target->getKey())
+            ->whereNull('revoked_at')
+            ->whereNull('used_at')
+            ->firstOrFail();
+
+        $this->assertSame('root_manual_verification', $newInvitation->purpose);
+        $this->assertSame(UserStatus::Active, $target->fresh()->status);
+        $this->assertNull($target->fresh()->email_verified_at);
+
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
+    }
+
     public function test_root_reactivation_activates_account_and_sends_verification_invitation(): void
     {
         Notification::fake();
