@@ -48,6 +48,70 @@ final class UserManagementController
         ]);
     }
 
+    public function edit(Request $request, User $user): View
+    {
+        $this->authorizeRoot($request);
+        Gate::authorize('view', $user);
+
+        abort_if($user->hasRole('super_admin_root'), 404);
+
+        $user->load(['roles', 'cooperative']);
+
+        return view('super-admin-root.users.edit', [
+            'user' => $user,
+            'roles' => Role::query()
+                ->where('is_active', true)
+                ->whereIn('slug', ['super_admin', 'cooperative_admin', 'user'])
+                ->orderBy('name')
+                ->get(['name', 'slug']),
+            'cooperatives' => Cooperative::query()
+                ->orderBy('name')
+                ->get(['id', 'name']),
+        ]);
+    }
+
+    public function update(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+    ): RedirectResponse {
+        $this->authorizeRoot($request);
+        Gate::authorize('view', $user);
+        abort_if($user->hasRole('super_admin_root'), 404);
+
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
+            'telephone' => ['required', 'string', 'max:255'],
+            'role_slug' => ['required', Rule::in(['super_admin', 'cooperative_admin', 'user'])],
+            'cooperative_id' => [
+                Rule::requiredIf(fn (): bool => $request->input('role_slug') !== 'super_admin'),
+                'nullable',
+                'string',
+                Rule::exists('cooperatives', 'id')->whereNull('deleted_at'),
+            ],
+        ]);
+
+        $roleSlug = $data['role_slug'];
+        unset($data['role_slug']);
+
+        try {
+            $userManagementService->updateUserAccount(
+                $request->user(),
+                $user,
+                $data,
+                $roleSlug,
+            );
+        } catch (\\DomainException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('root.backoffice.users.show', $user)
+            ->with('success', 'Le compte et son rôle ont été mis à jour. Les anciennes sessions et les anciens jetons API ont été révoqués.');
+    }
+
     public function store(
         CreateUserRequest $request,
         UserManagementService $userManagementService,
