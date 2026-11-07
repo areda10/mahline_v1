@@ -187,7 +187,7 @@ final class UserManagementControllerTest extends TestCase
                 'password' => 'NewSecurePassword2026',
                 'password_confirmation' => 'NewSecurePassword2026',
             ])
-            ->assertRedirect(route('backoffice.dashboard'));
+            ->assertRedirect(route('root.backoffice.dashboard'));
 
         $target->refresh();
         $this->assertFalse($target->must_change_password);
