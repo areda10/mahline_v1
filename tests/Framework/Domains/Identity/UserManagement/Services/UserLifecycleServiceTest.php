@@ -226,7 +226,9 @@ final class UserLifecycleServiceTest extends TestCase
 
         $restored = $this->service->restoreArchivedUser($root, $archived);
 
-        self::assertSame(UserStatus::Active, $restored->status);
+        self::assertSame(UserStatus::Pending, $restored->status);
+        self::assertNull($restored->email_verified_at);
+        self::assertFalse($restored->must_change_password);
         self::assertNotNull($session->fresh()->revoked_at);
         self::assertNotNull($token->fresh()->revoked_at);
     }
@@ -246,7 +248,9 @@ final class UserLifecycleServiceTest extends TestCase
         $restored = $this->service->restoreDeletedUser($root, $target);
 
         self::assertFalse($restored->trashed());
-        self::assertSame(UserStatus::Active, $restored->status);
+        self::assertSame(UserStatus::Pending, $restored->status);
+        self::assertNull($restored->email_verified_at);
+        self::assertFalse($restored->must_change_password);
         self::assertNotNull($session->fresh()->revoked_at);
         self::assertNotNull($token->fresh()->revoked_at);
     }
