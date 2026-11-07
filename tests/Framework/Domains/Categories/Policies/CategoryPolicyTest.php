@@ -95,6 +95,106 @@ final class CategoryPolicyTest extends TestCase
         $this->assertFalse($this->policy->create($user));
     }
 
+    public function test_root_can_manage_global_category(): void
+    {
+        $category = Category::factory()->global()->create();
+        $root = $this->rootUserWithPermission('categories.update');
+
+        $this->assertTrue($this->policy->update($root, $category));
+    }
+
+    public function test_super_admin_cannot_manage_global_category(): void
+    {
+        $category = Category::factory()->global()->create();
+        $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
+
+        $this->assertFalse($this->policy->update($admin, $category));
+    }
+
+    public function test_super_admin_can_manage_category_of_assigned_cooperative(): void
+    {
+        $cooperative = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $category = Category::factory()->forCooperative($cooperative)->create();
+        $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
+        $admin->cooperatives()->attach($cooperative->getKey());
+
+        $this->assertTrue($this->policy->update($admin, $category));
+    }
+
+    public function test_super_admin_cannot_manage_category_of_unassigned_cooperative(): void
+    {
+        $cooperative = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $category = Category::factory()->forCooperative($cooperative)->create();
+        $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
+
+        $this->assertFalse($this->policy->update($admin, $category));
+    }
+
+    public function test_cooperative_admin_can_manage_category_of_own_cooperative(): void
+    {
+        $cooperative = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $category = Category::factory()->forCooperative($cooperative)->create();
+        $admin = $this->userWithRoleAndPermission(
+            'cooperative_admin',
+            'categories.update',
+            (string) $cooperative->getKey(),
+        );
+
+        $this->assertTrue($this->policy->update($admin, $category));
+    }
+
+    public function test_cooperative_admin_cannot_manage_category_of_another_cooperative(): void
+    {
+        $own = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $other = \\App\\Domains\\Cooperatives\\Models\\Cooperative::factory()->create();
+        $category = Category::factory()->forCooperative($other)->create();
+        $admin = $this->userWithRoleAndPermission(
+            'cooperative_admin',
+            'categories.update',
+            (string) $own->getKey(),
+        );
+
+        $this->assertFalse($this->policy->update($admin, $category));
+    }
+
+    public function test_create_permission_does_not_grant_global_category_management(): void
+    {
+        $user = $this->userWithRoleAndPermission('cooperative_admin', 'categories.create');
+
+        $this->assertTrue($this->policy->create($user));
+        $this->assertFalse($this->policy->update($user, Category::factory()->global()->create()));
+    }
+
+    private function userWithRoleAndPermission(
+        string $roleSlug,
+        string $permissionSlug,
+        ?string $cooperativeId = null,
+    ): User {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'cooperative_id' => $cooperativeId,
+        ]);
+
+        $role = Role::query()->create([
+            'name' => $roleSlug,
+            'slug' => $roleSlug,
+            'is_active' => true,
+        ]);
+
+        $permission = Permission::query()->firstOrCreate(
+            ['slug' => $permissionSlug],
+            [
+                'name' => $permissionSlug,
+                'is_active' => true,
+            ],
+        );
+
+        $role->permissions()->attach($permission->getKey());
+        $user->roles()->attach($role->getKey());
+
+        return $user;
+    }
+
     private function userWithPermission(string $slug): User
     {
         $user = User::factory()->create([
