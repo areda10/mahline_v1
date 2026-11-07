@@ -143,4 +143,31 @@ final class CatalogControllerTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_catalog_from_another_cooperative_cannot_be_updated_or_deleted(): void
+    {
+        $otherCooperative = Cooperative::factory()->active()->create();
+        $foreignCatalog = Catalog::factory()->create([
+            'cooperative_id' => $otherCooperative->getKey(),
+            'name' => 'Catalogue privé',
+        ]);
+
+        $this->patch(route('backoffice.catalogs.update', [
+            'cooperative' => $this->cooperative->getKey(),
+            'catalog' => $foreignCatalog->getKey(),
+        ]), ['name' => 'Tentative de modification'])
+            ->assertNotFound();
+
+        $this->delete(route('backoffice.catalogs.destroy', [
+            'cooperative' => $this->cooperative->getKey(),
+            'catalog' => $foreignCatalog->getKey(),
+        ]))->assertNotFound();
+
+        $this->assertDatabaseHas('catalogs', [
+            'id' => $foreignCatalog->getKey(),
+            'cooperative_id' => $otherCooperative->getKey(),
+            'name' => 'Catalogue privé',
+            'deleted_at' => null,
+        ]);
+    }
 }
