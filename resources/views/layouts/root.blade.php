@@ -26,6 +26,10 @@
         }
 
         .topbar a { color: #fff; }
+        .topbar-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+        .logout-form { margin: 0; }
+        .logout-button { border: 1px solid rgba(255,255,255,.55); border-radius: 6px; padding: 8px 12px; background: transparent; color: #fff; cursor: pointer; font: inherit; }
+        .logout-button:hover { background: rgba(255,255,255,.12); }
         .brand { font-size: 22px; font-weight: bold; }
         .nav { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 12px; }
         .container { max-width: 1200px; margin: 28px auto; padding: 0 20px; }
@@ -77,8 +81,16 @@
 </head>
 <body>
 <header class="topbar">
-    <div class="brand">
-        <a href="{{ route('root.backoffice.dashboard') }}">MAHLINE ROOT</a>
+    <div class="topbar-inner">
+        <div class="brand">
+            <a href="{{ route('root.backoffice.dashboard') }}">MAHLINE ROOT</a>
+        </div>
+        @auth
+            <form class="logout-form" method="POST" action="{{ route('authentication.logout') }}">
+                @csrf
+                <button class="logout-button" type="submit">Déconnexion</button>
+            </form>
+        @endauth
     </div>
 
     @auth
