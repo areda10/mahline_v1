@@ -75,6 +75,7 @@ final class UserManagementController
         Request $request,
         User $user,
         UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
@@ -98,12 +99,17 @@ final class UserManagementController
         unset($data['role_slug']);
 
         try {
-            $userManagementService->updateUserAccount(
+            $emailChanged = $user->email !== $data['email'];
+            $updatedUser = $userManagementService->updateUserAccount(
                 $request->user(),
                 $user,
                 $data,
                 $roleSlug,
             );
+
+            if ($emailChanged && in_array($updatedUser->status, [UserStatus::Active, UserStatus::Pending], true)) {
+                $invitationService->sendInvitation($updatedUser);
+            }
         } catch (\DomainException $exception) {
             return back()->withInput()->with('error', $exception->getMessage());
         }
