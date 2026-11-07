@@ -11,6 +11,9 @@
 
     <div class="actions">
         <a class="button button-secondary" href="{{ route('root.backoffice.users.index') }}">Retour à la liste</a>
+        @unless($user->hasRole('super_admin_root'))
+            <a class="button" href="{{ route('root.backoffice.users.edit', $user) }}">Modifier l’utilisateur</a>
+        @endunless
         @if($canViewAssignments)
             <a class="button" href="{{ route('root.backoffice.users.cooperatives.index', $user) }}">Gérer les affectations coopératives</a>
         @endif
