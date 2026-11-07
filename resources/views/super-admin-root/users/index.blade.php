@@ -8,6 +8,7 @@
         <h1>Utilisateurs</h1>
         <p class="muted">Comptes utilisateurs accessibles selon votre périmètre d’autorisation.</p>
     </div>
+    <a class="button" href="{{ route('root.backoffice.users.create') }}">Créer un utilisateur</a>
 </div>
 
 <section class="card" aria-labelledby="users-filters-heading">
