@@ -33,13 +33,14 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_non_root_user_cannot_view_global_dashboard(): void
+    public function test_super_admin_can_view_its_dedicated_backoffice_dashboard(): void
     {
         $user = $this->userWithRole('super_admin');
 
         $this->actingAs($user)
             ->get(route('backoffice.dashboard'))
-            ->assertForbidden();
+            ->assertOk()
+            ->assertViewIs('super-admin.dashboard');
     }
 
 
