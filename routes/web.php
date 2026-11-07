@@ -14,6 +14,7 @@ use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
@@ -114,6 +115,14 @@ Route::prefix('root/back-office')
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
+
+        Route::get('security/sessions', [AuthenticationSessionController::class, 'rootIndex'])
+            ->name('security.sessions.index');
+        Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
+            ->name('security.sessions.destroy');
+
+        Route::delete('users/{user}/sessions/{session}', [AuthenticationSessionController::class, 'revokeForUser'])
+            ->name('users.sessions.destroy');
 
         Route::get('users', [SuperAdminRootUserManagementController::class, 'index'])
             ->name('users.index');
@@ -221,6 +230,11 @@ Route::prefix('back-office')
 
         Route::get('dashboard', BackOfficeDashboardController::class)
             ->name('dashboard');
+
+        Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
+            ->name('security.sessions.index');
+        Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
+            ->name('security.sessions.destroy');
 
         Route::get('users', [UserManagementController::class, 'index'])
             ->name('users.index');
