@@ -64,7 +64,7 @@
 
         @can('restore', $user)
             <form method="POST" action="{{ route('backoffice.users.restore', $user) }}"
-                  onsubmit="return confirm('Restaurer ce compte avec le statut actif ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                  onsubmit="return confirm('Restaurer ce compte en attente ? Une nouvelle activation sera nécessaire. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                 @csrf
                 @method('PATCH')
                 <button class="button" type="submit">Restaurer le compte</button>
