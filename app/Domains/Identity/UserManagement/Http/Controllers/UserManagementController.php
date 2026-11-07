@@ -86,20 +86,24 @@ final class UserManagementController
             );
     }
 
-    public function resendInvitation(
+public function resendInvitation(
         User $user,
         UserInvitationService $invitationService,
     ): RedirectResponse {
         Gate::authorize('resendInvitation', $user);
 
         try {
-            $invitationService->sendInvitation($user);
+            $purpose = $user->status === UserStatus::Active
+                ? 'root_manual_verification'
+                : 'account_activation';
+
+            $invitationService->sendInvitation($user, $purpose);
         } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with(
                     'error',
-                    'L’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez réessayer.',
+                    'L’invitation n’a pas pu être envoyée. Le compte reste non vérifié ; vous pourrez réessayer.',
                 );
         } catch (\DomainException) {
             return redirect()
@@ -273,7 +277,7 @@ final class UserManagementController
         }
 
         return redirect()->route('backoffice.users.index')
-            ->with('success', 'Le compte a été restauré. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez ensuite une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
     public function index(Request $request): View
