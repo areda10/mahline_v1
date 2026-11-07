@@ -156,6 +156,41 @@
     </div>
 </section>
 
+@if($sessions->isNotEmpty())
+    <section class="card" aria-labelledby="sessions-heading">
+        <h2 id="sessions-heading">Appareils connectés de cet utilisateur</h2>
+        <p class="muted">Seules les sessions actives sont affichées. Vous pouvez révoquer chaque appareil individuellement.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Appareil</th><th>Navigateur</th><th>Adresse IP</th><th>Dernière activité</th><th>État</th><th>Action</th></tr></thead>
+                <tbody>
+                    @foreach($sessions as $session)
+                        <tr>
+                            <td>{{ $session->device ?: 'Appareil inconnu' }}</td>
+                            <td>{{ $session->browser ?: '—' }}</td>
+                            <td>{{ $session->ip_address ?: '—' }}</td>
+                            <td>{{ $session->last_activity_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                            <td>{{ $session->is_current ? 'Session actuelle' : 'Connecté' }}</td>
+                            <td>
+                                <form method="POST" action="{{ route('root.backoffice.users.sessions.destroy', ['user' => $user, 'session' => $session]) }}" onsubmit="return confirm('Révoquer cette session ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="button button-danger button-small" type="submit">Révoquer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
+@else
+    <section class="card" aria-labelledby="sessions-heading">
+        <h2 id="sessions-heading">Appareils connectés</h2>
+        <div class="empty">Aucune session active.</div>
+    </section>
+@endif
+
 @if($canViewAssignments)
     <section class="card" aria-labelledby="assignments-heading">
         <h2 id="assignments-heading">Affectations aux coopératives</h2>
