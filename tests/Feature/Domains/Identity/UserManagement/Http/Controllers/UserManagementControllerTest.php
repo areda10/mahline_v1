@@ -283,6 +283,8 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_can_activate_a_pending_user_from_the_detail_page(): void
     {
+        Notification::fake();
+
         $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
         $target = User::factory()->create([
             'display_name' => 'Compte à activer',
@@ -305,6 +307,14 @@ final class UserManagementControllerTest extends TestCase
             'actor_id' => $root->getKey(),
             'subject_id' => $target->getKey(),
         ]);
+
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'purpose' => 'root_manual_verification',
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
     public function test_super_admin_cannot_activate_pending_or_inactive_users_even_in_assigned_cooperative(): void
