@@ -25,10 +25,6 @@ final class ForcedPasswordChangeController
             return redirect()->route('authentication.login');
         }
 
-        if ($user->must_change_password) {
-            return view('auth.force-password-change');
-        }
-
         return view('identity.password.change');
     }
 
@@ -86,7 +82,7 @@ final class ForcedPasswordChangeController
                 cooperativeId: $lockedUser->cooperative_id ? (string) $lockedUser->cooperative_id : null,
                 subjectType: User::class,
                 subjectId: (string) $lockedUser->getKey(),
-                oldValues: ['must_change_password' => true],
+                oldValues: ['must_change_password' => $forced],
                 newValues: ['must_change_password' => false],
             ));
         });
