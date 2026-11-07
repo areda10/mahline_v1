@@ -634,6 +634,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             if ($resetEmailVerification) {
                 $lockedTarget->email_verified_at = null;
+                $lockedTarget->must_change_password = false;
             }
 
             $lockedTarget->save();
