@@ -128,6 +128,7 @@ final class UserPolicy extends BasePolicy
                 UserStatus::Pending,
                 UserStatus::Inactive,
                 UserStatus::Suspended,
+                UserStatus::Archived,
             ], true);
         }
 
