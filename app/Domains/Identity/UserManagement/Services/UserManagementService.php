@@ -531,7 +531,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
     /**
      * Restore a soft-deleted user without restoring its old sessions or tokens.
-     * The account status is deliberately preserved.
+     * The account returns to pending and must complete a fresh activation flow.
      */
     public function restoreDeletedUser(User $actor, User $target): User
     {
@@ -549,21 +549,32 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $oldDeletedAt = $lockedTarget->deleted_at?->toISOString();
-
-            $this->recordLifecycleAudit(
-                actor: $actor,
-                target: $lockedTarget,
-                eventKey: 'identity.user.restored',
-                action: 'restored',
-                oldValues: ['deleted_at' => $oldDeletedAt],
-                newValues: ['deleted_at' => null],
-            );
+            $oldStatus = $lockedTarget->status->value;
+            $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
 
             $lockedTarget->restore();
             $lockedTarget->status = UserStatus::Pending;
             $lockedTarget->email_verified_at = null;
             $lockedTarget->must_change_password = false;
             $lockedTarget->save();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.restored',
+                action: 'restored',
+                oldValues: [
+                    'deleted_at' => $oldDeletedAt,
+                    'status' => $oldStatus,
+                    'email_verified_at' => $oldEmailVerifiedAt,
+                ],
+                newValues: [
+                    'deleted_at' => null,
+                    'status' => UserStatus::Pending->value,
+                    'email_verified_at' => null,
+                    'must_change_password' => false,
+                ],
+            );
 
             return $lockedTarget->fresh();
         });
