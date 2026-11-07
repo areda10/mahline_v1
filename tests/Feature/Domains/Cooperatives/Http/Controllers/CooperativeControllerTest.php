@@ -84,6 +84,37 @@ final class CooperativeControllerTest extends TestCase
         ]);
     }
 
+    public function test_root_can_change_cooperative_status_from_edit_form(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $root = $this->actor('super_admin_root', [
+            'cooperatives.view',
+            'cooperatives.update',
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.cooperatives.edit', $cooperative))
+            ->assertOk()
+            ->assertSee('Statut de la coopérative')
+            ->assertSee('pending')
+            ->assertSee('active')
+            ->assertSee('inactive')
+            ->assertSee('suspended')
+            ->assertSee('archived');
+
+        $this->actingAs($root)
+            ->put(route('root.backoffice.cooperatives.update', $cooperative), [
+                'status' => CooperativeStatus::SUSPENDED->value,
+            ])
+            ->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('cooperatives', [
+            'id' => $cooperative->getKey(),
+            'status' => CooperativeStatus::SUSPENDED->value,
+        ]);
+    }
+
     public function test_super_admin_cannot_open_unassigned_cooperative_even_by_direct_url(): void
     {
         $cooperative = Cooperative::factory()->create();
