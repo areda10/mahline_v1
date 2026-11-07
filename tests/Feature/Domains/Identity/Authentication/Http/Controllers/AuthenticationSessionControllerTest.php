@@ -30,10 +30,10 @@ final class AuthenticationSessionControllerTest extends TestCase
         $target = User::factory()->create();
         $otherUser = User::factory()->create();
 
-        $targetSession = $this->session($target, 'target-device-session', 'Target laptop');
-        $this->session($target, 'target-phone-session', 'Target phone');
-        $this->session($target, 'target-revoked-session', 'Old revoked device', true);
-        $this->session($otherUser, 'other-user-session', 'Private other device');
+        $targetSession = $this->createAuthenticationSession($target, 'target-device-session', 'Target laptop');
+        $this->createAuthenticationSession($target, 'target-phone-session', 'Target phone');
+        $this->createAuthenticationSession($target, 'target-revoked-session', 'Old revoked device', true);
+        $this->createAuthenticationSession($otherUser, 'other-user-session', 'Private other device');
 
         $response = $this->actingAs($root)
             ->get(route('root.backoffice.users.show', $target));
@@ -53,8 +53,8 @@ final class AuthenticationSessionControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root', ['users.view']);
         $target = User::factory()->create();
-        $selected = $this->session($target, 'selected-device-session', 'Selected device');
-        $other = $this->session($target, 'preserved-device-session', 'Preserved device');
+        $selected = $this->createAuthenticationSession($target, 'selected-device-session', 'Selected device');
+        $other = $this->createAuthenticationSession($target, 'preserved-device-session', 'Preserved device');
 
         $this->actingAs($root)
             ->delete(route('root.backoffice.users.sessions.destroy', [
@@ -74,7 +74,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.view']);
         $target = User::factory()->create();
         $otherUser = User::factory()->create();
-        $foreignSession = $this->session($otherUser, 'foreign-device-session', 'Foreign device');
+        $foreignSession = $this->createAuthenticationSession($otherUser, 'foreign-device-session', 'Foreign device');
 
         $this->actingAs($root)
             ->delete(route('root.backoffice.users.sessions.destroy', [
@@ -90,8 +90,8 @@ final class AuthenticationSessionControllerTest extends TestCase
     {
         $user = $this->actor('user');
         $otherUser = User::factory()->create();
-        $ownSession = $this->session($user, 'own-device-session', 'My personal laptop');
-        $this->session($otherUser, 'foreign-device-session', 'Someone else device');
+        $ownSession = $this->createAuthenticationSession($user, 'own-device-session', 'My personal laptop');
+        $this->createAuthenticationSession($otherUser, 'foreign-device-session', 'Someone else device');
 
         $this->actingAs($user)
             ->get(route('backoffice.security.sessions.index'))
@@ -107,8 +107,8 @@ final class AuthenticationSessionControllerTest extends TestCase
     public function test_user_can_revoke_only_one_of_own_devices(): void
     {
         $user = $this->actor('user');
-        $selected = $this->session($user, 'my-selected-device', 'My selected device');
-        $other = $this->session($user, 'my-other-device', 'My other device');
+        $selected = $this->createAuthenticationSession($user, 'my-selected-device', 'My selected device');
+        $other = $this->createAuthenticationSession($user, 'my-other-device', 'My other device');
 
         $this->actingAs($user)
             ->delete(route('backoffice.security.sessions.destroy', $selected))
@@ -124,7 +124,7 @@ final class AuthenticationSessionControllerTest extends TestCase
     {
         $user = $this->actor('user');
         $otherUser = User::factory()->create();
-        $foreignSession = $this->session($otherUser, 'foreign-session-id', 'Foreign device');
+        $foreignSession = $this->createAuthenticationSession($otherUser, 'foreign-session-id', 'Foreign device');
 
         $this->actingAs($user)
             ->delete(route('backoffice.security.sessions.destroy', $foreignSession))
@@ -137,8 +137,8 @@ final class AuthenticationSessionControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root');
         $otherUser = User::factory()->create();
-        $this->session($root, 'root-own-device', 'Root private workstation');
-        $this->session($otherUser, 'other-private-device', 'Other private device');
+        $this->createAuthenticationSession($root, 'root-own-device', 'Root private workstation');
+        $this->createAuthenticationSession($otherUser, 'other-private-device', 'Other private device');
 
         $this->actingAs($root)
             ->get(route('root.backoffice.security.sessions.index'))
@@ -153,7 +153,7 @@ final class AuthenticationSessionControllerTest extends TestCase
     {
         $user = $this->actor('user');
         $target = User::factory()->create();
-        $session = $this->session($target, 'target-device', 'Target device');
+        $session = $this->createAuthenticationSession($target, 'target-device', 'Target device');
 
         $this->actingAs($user)
             ->get(route('root.backoffice.security.sessions.index'))
@@ -169,7 +169,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNull($session->fresh()->revoked_at);
     }
 
-    private function session(
+    private function createAuthenticationSession(
         User $user,
         string $sessionId,
         string $device,
