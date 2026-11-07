@@ -46,7 +46,7 @@ final class AuthenticationController
                 return redirect()->route('backoffice.dashboard');
             }
 
-            return redirect()->intended('/');
+            abort(403);
         }
 
         return view('auth.login');
@@ -152,7 +152,7 @@ final class AuthenticationController
             return redirect()->route('backoffice.dashboard');
         }
 
-        return redirect()->intended('/');
+        abort(403);
     }
 
     public function logout(
