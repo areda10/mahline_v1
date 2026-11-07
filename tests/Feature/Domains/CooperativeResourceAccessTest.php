@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains;
+namespace Tests\Feature\Domains;
 
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
-use App\\Domains\\Identity\\Authorization\\Models\\Permission;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class CooperativeResourceAccessTest extends TestCase
 {
