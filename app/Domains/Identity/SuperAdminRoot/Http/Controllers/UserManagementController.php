@@ -403,7 +403,7 @@ final class UserManagementController
         Gate::authorize('restoreDeleted', $deletedUser);
 
         try {
-            $service->restoreDeletedUser($request->user(), $deletedUser);
+            $restoredUser = $service->restoreDeletedUser($request->user(), $deletedUser);
         } catch (UserInvitationDeliveryException) {
             return redirect()->route('root.backoffice.users.index')
                 ->with('error', 'Le compte a été restauré en attente, mais la nouvelle invitation n’a pas pu être envoyée. Vous pourrez réessayer.');
@@ -412,7 +412,7 @@ final class UserManagementController
                 ->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('root.backoffice.users.index')
+        return redirect()->route('root.backoffice.users.show', $restoredUser)
             ->with('success', 'Le compte a été restauré en attente. Choisissez maintenant une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
