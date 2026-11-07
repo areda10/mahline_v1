@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
@@ -132,6 +133,7 @@ final class UserManagementControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root', ['users.deactivate']);
         $target = User::factory()->create(['status' => UserStatus::Active]);
+        [$session, $token] = $this->createAccessCredentials($target);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.deactivate', $target))
@@ -142,12 +144,19 @@ final class UserManagementControllerTest extends TestCase
             'id' => $target->getKey(),
             'status' => UserStatus::Inactive->value,
         ]);
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $session->getKey(),
+            'revocation_reason' => 'user_deactivated',
+        ]);
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
     }
 
     public function test_root_can_suspend_an_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.suspend']);
         $target = User::factory()->create(['status' => UserStatus::Active]);
+        [$session, $token] = $this->createAccessCredentials($target);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.suspend', $target))
@@ -158,6 +167,9 @@ final class UserManagementControllerTest extends TestCase
             'id' => $target->getKey(),
             'status' => UserStatus::Suspended->value,
         ]);
+        $this->assertSame('user_suspended', $session->fresh()->revocation_reason);
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
     }
 
     public function test_root_can_archive_and_restore_a_user(): void
@@ -167,6 +179,7 @@ final class UserManagementControllerTest extends TestCase
             'users.restore',
         ]);
         $target = User::factory()->create(['status' => UserStatus::Active]);
+        [$session, $token] = $this->createAccessCredentials($target);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.archive', $target))
@@ -177,6 +190,9 @@ final class UserManagementControllerTest extends TestCase
             'id' => $target->getKey(),
             'status' => UserStatus::Archived->value,
         ]);
+        $this->assertSame('user_archived', $session->fresh()->revocation_reason);
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore', $target))
@@ -187,6 +203,9 @@ final class UserManagementControllerTest extends TestCase
             'id' => $target->getKey(),
             'status' => UserStatus::Active->value,
         ]);
+        // Restoring the account must never reactivate its former credentials.
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
     }
 
     public function test_root_can_soft_delete_and_restore_a_user(): void
@@ -196,6 +215,7 @@ final class UserManagementControllerTest extends TestCase
             'users.restore_deleted',
         ]);
         $target = User::factory()->create();
+        [$session, $token] = $this->createAccessCredentials($target);
 
         $this->actingAs($root)
             ->delete(route('root.backoffice.users.destroy', $target))
@@ -203,6 +223,9 @@ final class UserManagementControllerTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
+        $this->assertSame('user_deleted', $session->fresh()->revocation_reason);
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
@@ -213,6 +236,9 @@ final class UserManagementControllerTest extends TestCase
             'id' => $target->getKey(),
             'deleted_at' => null,
         ]);
+        // Restoring a soft-deleted account leaves old sessions and API tokens revoked.
+        $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertNotNull($token->fresh()->revoked_at);
     }
 
     public function test_super_admin_cannot_use_root_lifecycle_routes(): void
@@ -261,6 +287,27 @@ final class UserManagementControllerTest extends TestCase
             'id' => $archived->getKey(),
             'status' => UserStatus::Archived->value,
         ]);
+    }
+
+    /**
+     * @return array{AuthenticationSession, \App\Domains\Identity\Authentication\Models\PersonalAccessToken}
+     */
+    private function createAccessCredentials(User $user): array
+    {
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => 'test-session-'.str()->random(40),
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'MAHLINE feature test',
+            'browser' => 'Test Browser',
+            'device' => 'Test Device',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+
+        $token = $user->createToken('MAHLINE feature test')->accessToken;
+
+        return [$session, $token];
     }
 
     /**
