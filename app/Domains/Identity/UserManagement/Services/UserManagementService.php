@@ -77,10 +77,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('Root accounts cannot be modified through ordinary user management.');
             }
 
+            $emailChanged = $lockedTarget->email !== $attributes['email'];
+
             $oldValues = [
                 'first_name' => $lockedTarget->first_name,
                 'last_name' => $lockedTarget->last_name,
                 'email' => $lockedTarget->email,
+                'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
                 'telephone' => $lockedTarget->telephone,
                 'cooperative_id' => $lockedTarget->cooperative_id,
                 'roles' => $lockedTarget->roles()->pluck('slug')->all(),
@@ -94,6 +97,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'telephone' => $attributes['telephone'],
                 'cooperative_id' => $cooperativeId,
             ]);
+            if ($emailChanged) {
+                $lockedTarget->email_verified_at = null;
+            }
+
             $lockedTarget->save();
 
             $lockedTarget->roles()->sync([$role->getKey()]);
@@ -106,6 +113,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'first_name' => $lockedTarget->first_name,
                 'last_name' => $lockedTarget->last_name,
                 'email' => $lockedTarget->email,
+                'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
                 'telephone' => $lockedTarget->telephone,
                 'cooperative_id' => $lockedTarget->cooperative_id,
                 'roles' => [$roleSlug],
