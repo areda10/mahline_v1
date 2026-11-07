@@ -8,7 +8,7 @@
         <h1>Modifier un utilisateur</h1>
         <p class="muted">{{ $user->display_name }} — les changements de rôle révoquent les anciennes sessions et les anciens jetons API.</p>
     </div>
-    <a class="button button-secondary" href="{{ route('root.backoffice.users.show', $user) }}">Retour à la fiche</a>
+    <a class="button button-secondary" href="{{ route('root.backoffice.dashboard') }}">Retour au tableau de bord</a>
 </div>
 
 <section class="card">
