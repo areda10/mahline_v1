@@ -10,7 +10,7 @@
     </div>
 
     <div class="actions">
-        <a class="button button-secondary" href="{{ route('backoffice.users.index') }}">Retour à la liste</a>
+        <a class="button button-secondary" href="{{ route('backoffice.dashboard') }}">Retour au tableau de bord</a>
     </div>
 </div>
 
