@@ -132,6 +132,27 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee('Renvoyer l’invitation');
     }
 
+    public function test_assigned_super_admin_cannot_resend_verification_for_an_active_unverified_user(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.view', 'users.create']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.resend-invitation', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('user_invitations', [
+            'user_id' => $target->getKey(),
+        ]);
+    }
+
     public function test_root_does_not_see_resend_invitation_button_for_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
