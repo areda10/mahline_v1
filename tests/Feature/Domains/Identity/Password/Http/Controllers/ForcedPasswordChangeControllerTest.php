@@ -127,10 +127,16 @@ final class ForcedPasswordChangeControllerTest extends TestCase
      */
     private function actor(string $roleSlug, array $attributes = []): User
     {
+        $mustChangePassword = (bool) ($attributes['must_change_password'] ?? false);
+        unset($attributes['must_change_password']);
+
         $user = User::factory()->create(array_merge([
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ], $attributes));
+
+        $user->must_change_password = $mustChangePassword;
+        $user->save();
 
         $role = Role::query()->firstOrCreate(
             ['slug' => $roleSlug],
