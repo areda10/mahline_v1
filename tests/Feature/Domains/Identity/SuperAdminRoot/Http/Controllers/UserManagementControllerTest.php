@@ -119,7 +119,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $oldInvitation = UserInvitation::query()->create([
-            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'id' => (string) \Illuminate\Support\Str::ulid(),
             'user_id' => $target->getKey(),
             'token_hash' => hash('sha256', 'old-inactive-invitation'),
             'expires_at' => now()->addMinutes(30),
@@ -507,7 +507,7 @@ final class UserManagementControllerTest extends TestCase
     private function createPendingInvitation(User $user, string $token): UserInvitation
     {
         return UserInvitation::query()->create([
-            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'id' => (string) \Illuminate\Support\Str::ulid(),
             'user_id' => $user->getKey(),
             'token_hash' => hash('sha256', $token),
             'expires_at' => now()->addHour(),
