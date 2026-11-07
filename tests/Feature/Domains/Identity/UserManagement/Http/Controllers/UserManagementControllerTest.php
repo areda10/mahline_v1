@@ -949,6 +949,33 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
+    public function test_root_cannot_create_a_user_directly_as_active(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        $payload = $this->validCreationPayload(
+            'user',
+            $cooperative->getKey(),
+            UserStatus::Active,
+        );
+
+        $this->actingAs($root)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertSessionHasErrors('status');
+
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
+    }
+
     public function test_root_can_create_user_in_pending_status_and_send_activation_invitation(): void
     {
         Notification::fake();
