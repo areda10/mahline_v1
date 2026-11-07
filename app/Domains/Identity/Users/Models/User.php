@@ -47,7 +47,6 @@ final class User extends BaseModel implements AuthenticatableContract
         'locale',
         'timezone',
         'cooperative_id',
-        'must_change_password',
     ];
 
     /**
