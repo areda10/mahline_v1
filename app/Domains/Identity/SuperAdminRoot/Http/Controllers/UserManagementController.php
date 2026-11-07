@@ -109,7 +109,10 @@ final class UserManagementController
             );
 
             if ($emailChanged && in_array($updatedUser->status, [UserStatus::Active, UserStatus::Pending], true)) {
-                $invitationService->sendInvitation($updatedUser);
+                $invitationService->sendInvitation(
+                    $updatedUser,
+                    $updatedUser->status === UserStatus::Active ? 'root_manual_verification' : 'account_activation',
+                );
             }
         } catch (UserInvitationDeliveryException) {
             return redirect()
