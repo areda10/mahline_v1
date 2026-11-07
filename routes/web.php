@@ -119,6 +119,10 @@ Route::prefix('root/back-office')
             ->name('users.index');
         Route::get('users/create', [SuperAdminRootUserManagementController::class, 'create'])
             ->name('users.create');
+        Route::get('users/{user}/edit', [SuperAdminRootUserManagementController::class, 'edit'])
+            ->name('users.edit');
+        Route::put('users/{user}', [SuperAdminRootUserManagementController::class, 'update'])
+            ->name('users.update');
         Route::post('users', [SuperAdminRootUserManagementController::class, 'store'])
             ->name('users.store');
         Route::get('users/{user}', [SuperAdminRootUserManagementController::class, 'show'])
