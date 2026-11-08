@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.9
+- **Version :** 2.0
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -962,3 +962,19 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 - [ ] Exécuter la suite complète Identity.
 
 **Portée :** cette confirmation valide uniquement la suite ciblée du service d'invitation. Elle ne valide pas encore les autres flux ni la migration.
+
+
+### 20.16 Validation locale — PasswordResetServiceTest
+
+**Retour utilisateur :** test vert confirmé après correction des fixtures.
+
+- [x] `php artisan test --filter=PasswordResetServiceTest` — **VERT**, selon confirmation utilisateur.
+- [x] Correction des fixtures du test pour respecter la politique : mots de passe conformes (12 caractères minimum, majuscule, minuscule, chiffre et caractère spécial).
+- [x] Correction du message attendu pour la réutilisation : le service applique l'interdiction du mot de passe courant et des cinq précédents.
+- [ ] Exécuter la migration de l'historique sur la base locale de test.
+- [ ] Vérifier les tests d'intégration/HTTP des parcours de changement, invitation et reset.
+- [ ] Exécuter la suite complète Identity.
+
+**Commit de correction des tests :** `c14d145adc550e8073c8770239ad545231779a11`.
+
+**Portée :** le test ciblé de reset est vert selon le retour utilisateur. Cela ne valide pas encore la migration, la suite complète Identity, ni l'ensemble des scénarios d'intégration.
