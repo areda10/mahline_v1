@@ -62,7 +62,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### ID-02 — Historique des mots de passe
 
-- [ ] **ID02-01** Exécuter la migration `2026_11_08_000001_create_user_password_histories_table.php` sur l'environnement local après vérification de son schéma et des conventions ULID/FK.
+- [x] **ID02-01** Exécuter la migration `2026_11_08_000001_create_user_password_histories_table.php` — exécutée localement avec succès le 8 novembre 2026 (Laravel : `229.90ms DONE`). La validation du schéma et des parcours reste couverte par les tests d'intégration.
 - [ ] **ID02-02** Vérifier que l'archivage de l'ancien hash et le remplacement du mot de passe sont toujours dans une transaction atomique.
 - [ ] **ID02-03** Vérifier le verrouillage concurrent de la ligne utilisateur pour empêcher deux changements simultanés de contourner l'historique.
 - [ ] **ID02-04** Tester le refus du mot de passe courant et de chacun des cinq anciens mots de passe.
@@ -233,7 +233,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 Ces tâches sont prioritaires avant d'élargir le développement. Le code a été poussé sur `feature/Identity`, mais l'exécution locale n'est pas encore confirmée.
 
 - [ ] **VAL-01** Récupérer les commits de la branche `feature/Identity`.
-- [ ] **VAL-02** Exécuter la migration de l'historique sur une base locale de test.
+- [x] **VAL-02** Exécuter la migration de l'historique — exécutée localement avec succès le 8 novembre 2026 (`229.90ms DONE`).
 - [x] **VAL-03** Exécuter `php artisan test --filter=PasswordPolicyTest` — VERT confirmé par l'utilisateur.
 - [x] **VAL-04** Exécuter `php artisan test --filter=PasswordHistoryServiceTest` — VERT confirmé par l'utilisateur.
 - [x] **VAL-05** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT confirmé par l'utilisateur.
@@ -261,7 +261,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | Audit / sécurité | 21 | 0 | Intégrité et journaux dédiés |
 | Notifications | 6 | 0 | Service multicanal |
 | Confidentialité | 7 | 0 | Export et effacement contrôlé |
-| Validation des commits | 6 | 6 | Migration, tests d'intégration et suite complète Identity |
+| Validation des commits | 5 | 7 | Tests d'intégration et suite complète Identity |
 
 > Les quantités de ce tableau sont des estimations initiales des éléments numérotés ; elles seront recalculées au fur et à mesure. Aucun élément n'est marqué validé tant qu'un test ou une preuve d'exécution n'est pas disponible.
 
@@ -279,3 +279,5 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 
 
 | 8 novembre 2026 | 1.5 | Validation utilisateur de `PasswordResetServiceTest` (vert) ; VAL-07 et VAL-08 cochées après correction des fixtures et du message attendu ; migration, tests d'intégration et suite complète Identity restent ouverts. |
+
+| 8 novembre 2026 | 1.6 | Migration locale de l'historique des mots de passe exécutée avec succès ; ID02-01 et VAL-02 cochées. Tests d'intégration et suite complète Identity restent ouverts. |
