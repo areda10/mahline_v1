@@ -167,3 +167,9 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Premiers écarts confirmés consignés dans `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md` (section 20).
 - Référence : commit d'audit de départ `926cf33b09f93f9e651dafd259fa57b3d6f4c6aa`.
 - L'audit Identity reste ouvert ; aucune modification du code applicatif n'a été effectuée.
+
+
+### 8 novembre 2026 — Complément du contrôle Identity
+- Ajout des constats sur le changement d'e-mail personnel, la vérification 24 h, la gestion des rôles existants, les transferts de coopérative, les alertes nouvel appareil, l'OTP, les messages de connexion et la gestion des tokens API.
+- Référence détaillée : section 20.5 et 20.6 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
+- Aucun code applicatif modifié ; audit toujours ouvert.
