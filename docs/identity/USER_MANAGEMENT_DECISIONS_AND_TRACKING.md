@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.1
+- **Version :** 2.2
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1048,3 +1048,26 @@ Les corrections de fixtures des commits suivants sont désormais couvertes par c
 - `851f842d20315cfafd3b7275c4583064073d69d3` — fixtures de `ResetPasswordRequestTest.php`.
 
 **Limite de validation :** ce résultat ne confirme pas encore que le filtre global `Password` est entièrement vert, ni que toute la suite Identity passe. Les tests de reset HTTP, les tests d'intégration/concurrence et la suite complète restent à exécuter séparément.
+
+
+## 20.21 — Diagnostic du filtre Password : fixtures de PasswordServiceTest
+
+Après la confirmation verte de `UserManagementControllerTest`, l'utilisateur a relancé :
+
+```bash
+php artisan test --filter=Password
+```
+
+Le filtre échoue encore avec plusieurs exceptions :
+
+`InvalidArgumentException: Password must contain at least one special character.`
+
+L'audit du dépôt `feature/Identity` a identifié une cause concrète dans :
+
+`tests/Framework/Domains/Identity/Password/Services/PasswordServiceTest.php`
+
+Plusieurs tests de changement de mot de passe fournissent comme nouveau mot de passe `MahlinePassword13`, sans caractère spécial, alors que la règle ID-01 exige une majuscule, une minuscule, un chiffre et un caractère spécial. La correction des fixtures de ce fichier doit utiliser un mot de passe conforme, par exemple `MahlinePassword13!`, pour les scénarios qui attendent une réussite.
+
+Un test supplémentaire doit être corrigé sur le plan fonctionnel : `test_change_password_rejects_password_with_spaces` affirme que les espaces sont interdits, alors que la décision ID-01 autorise explicitement les espaces et caractères Unicode. Son scénario doit devenir un test d'acceptation d'un mot de passe contenant des espaces et un caractère spécial, par exemple `Mahline Password13!`.
+
+**État :** diagnostic confirmé par lecture du code et des tests sur GitHub. Aucune modification applicative ni correction de ce fichier de test n'est encore commitée. La prochaine action est de corriger uniquement les fixtures/scénarios de tests concernés, puis de relancer d'abord `php artisan test --filter=PasswordServiceTest`, ensuite `php artisan test --filter=Password`.
