@@ -12,8 +12,8 @@ final class PasswordPolicyTest extends TestCase
 {
     public function test_valid_password_is_accepted(): void
     {
-        PasswordPolicy::validate('MahlinePassword12');
-        
+        PasswordPolicy::validate('Mahline@Password12');
+
         $this->assertTrue(true);
     }
 
@@ -21,19 +21,21 @@ final class PasswordPolicyTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        PasswordPolicy::validate('MahlinePas1');
+        PasswordPolicy::validate('MahlineP1!');
     }
 
     public function test_password_with_exactly_12_characters_is_accepted(): void
     {
-        PasswordPolicy::validate('MahlinePass1');
+        PasswordPolicy::validate('MahlinePas1!');
 
         $this->assertTrue(true);
     }
 
     public function test_password_may_contain_up_to_128_characters(): void
     {
-        $password = 'Aa1' . str_repeat('b', 125);
+        $password = 'Aa1!' . str_repeat('b', 124);
+
+        $this->assertSame(128, mb_strlen($password));
 
         PasswordPolicy::validate($password);
 
@@ -42,7 +44,9 @@ final class PasswordPolicyTest extends TestCase
 
     public function test_password_must_not_exceed_128_characters(): void
     {
-        $password = 'Aa1' . str_repeat('b', 126);
+        $password = 'Aa1!' . str_repeat('b', 125);
+
+        $this->assertSame(129, mb_strlen($password));
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -53,28 +57,28 @@ final class PasswordPolicyTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        PasswordPolicy::validate('mahlinepassword12');
+        PasswordPolicy::validate('mahlinepassword12!');
     }
 
     public function test_password_must_contain_a_lowercase_letter(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        PasswordPolicy::validate('MAHLINEPASSWORD12');
+        PasswordPolicy::validate('MAHLINEPASSWORD12!');
     }
 
     public function test_password_must_contain_a_digit(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
-        PasswordPolicy::validate('MahlinePassword');
+        PasswordPolicy::validate('MahlinePassword!!');
     }
 
-    public function test_special_character_is_optional(): void
+    public function test_password_must_contain_a_special_character(): void
     {
-        PasswordPolicy::validate('MahlinePassword12');
+        $this->expectException(InvalidArgumentException::class);
 
-        $this->assertTrue(true);
+        PasswordPolicy::validate('MahlinePassword12');
     }
 
     public function test_password_with_special_character_is_accepted(): void
@@ -84,11 +88,11 @@ final class PasswordPolicyTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function test_password_must_not_contain_spaces(): void
+    public function test_password_may_contain_spaces_when_it_has_a_special_character(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        PasswordPolicy::validate('Mahline Password12!');
 
-        PasswordPolicy::validate('Mahline Password12');
+        $this->assertTrue(true);
     }
 
     public function test_new_password_must_be_different_from_current_password(): void
@@ -96,16 +100,16 @@ final class PasswordPolicyTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         PasswordPolicy::validateChange(
-            currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword12',
+            currentPassword: 'MahlinePassword12!',
+            newPassword: 'MahlinePassword12!',
         );
     }
 
     public function test_new_password_different_from_current_password_is_accepted(): void
     {
         PasswordPolicy::validateChange(
-            currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            currentPassword: 'MahlinePassword12!',
+            newPassword: 'MahlinePassword13!',
         );
 
         $this->assertTrue(true);
