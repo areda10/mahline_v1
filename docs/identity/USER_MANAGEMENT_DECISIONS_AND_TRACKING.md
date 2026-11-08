@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.0
+- **Version :** 2.1
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1030,3 +1030,21 @@ Commits des trois corrections :
 - `851f842d20315cfafd3b7275c4583064073d69d3`
 
 **État :** corrections poussées, mais non encore confirmées vertes par exécution locale. L'erreur `all() on array` reste à isoler ; ne pas la considérer comme corrigée par les changements de fixtures.
+
+
+## 20.20 — Validation HTTP du UserManagementController
+
+Le 8 novembre 2026, l'utilisateur a confirmé que le test ciblé du contrôleur de gestion des utilisateurs est **VERT** après récupération des corrections de fixtures :
+
+```bash
+php artisan test --filter=UserManagementControllerTest
+```
+
+Cette confirmation valide la suite ciblée `UserManagementControllerTest` dans l'environnement local. L'erreur précédemment signalée `Call to a member function all() on array` n'est donc plus bloquante dans cette exécution ciblée.
+
+Les corrections de fixtures des commits suivants sont désormais couvertes par ce retour de test vert :
+- `7f67460e0a31c0ff14c42b28060241faf7dd5830` — mot de passe conforme dans `UserManagementControllerTest.php` ;
+- `f9fec3607000d1dd56938577aba71a23ec027742` — fixtures de `PasswordResetControllerTest.php` ;
+- `851f842d20315cfafd3b7275c4583064073d69d3` — fixtures de `ResetPasswordRequestTest.php`.
+
+**Limite de validation :** ce résultat ne confirme pas encore que le filtre global `Password` est entièrement vert, ni que toute la suite Identity passe. Les tests de reset HTTP, les tests d'intégration/concurrence et la suite complète restent à exécuter séparément.
