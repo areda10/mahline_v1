@@ -529,7 +529,16 @@ Le journal enregistre la trace de l'accès sans recopier les données personnell
 
 Lorsqu'un `super_admin_root` ou un `super_admin` consulte une fiche personnelle, l'utilisateur concerné ne reçoit aucune notification, ni immédiate ni par e-mail, du seul fait de cette consultation.
 
-Cette absence de notification ne supprime pas l'obligation de journaliser l'accès conformément à la décision 99. La question de savoir si l'utilisateur peut consulter lui-même un historique de ces accès reste à clarifier séparément.
+Cette absence de notification ne supprime pas l'obligation de journaliser l'accès conformément à la décision 99. L'historique de ces accès est réservé à super_admin_root, conformément à la décision 101.
+
+### Accès à l'historique des consultations administratives des fiches personnelles (décision 101)
+
+Les journaux des consultations administratives de fiches personnelles sont consultables uniquement par `super_admin_root`.
+- Les utilisateurs concernés ne peuvent pas consulter cet historique.
+- `super_admin` ne peut pas consulter ces journaux, y compris pour les utilisateurs de ses coopératives attribuées.
+- `cooperative_admin` et `user` n'y ont aucun accès.
+- La restriction concerne la consultation des journaux ; elle ne modifie pas l'obligation de journalisation append-only définie à la décision 99.
+- Toute consultation de ces journaux par `super_admin_root` doit elle-même être journalisée.
 
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
@@ -646,5 +655,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La décision 98 fixe une durée de référence de cinq ans pour les données de profil après archivage ou suppression logique. La décision 99 impose la journalisation des consultations administratives des fiches personnelles. La décision 100 confirme qu'aucune notification n'est envoyée à l'utilisateur lors de ces consultations. La prochaine question à traiter est la question 101 : l'utilisateur peut-il consulter un historique des accès administratifs à sa fiche ?
+- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La décision 98 fixe une durée de référence de cinq ans pour les données de profil après archivage ou suppression logique. La décision 99 impose la journalisation des consultations administratives des fiches personnelles. La décision 100 confirme qu'aucune notification n'est envoyée à l'utilisateur lors de ces consultations. La décision 101 réserve la consultation des journaux d'accès aux fiches personnelles à super_admin_root. La prochaine question à traiter est la question 102 : faut-il définir des restrictions supplémentaires sur les consultations effectuées par super_admin_root lui-même ?
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
