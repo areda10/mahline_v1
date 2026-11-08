@@ -978,3 +978,22 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 **Commit de correction des tests :** `c14d145adc550e8073c8770239ad545231779a11`.
 
 **Portée :** le test ciblé de reset est vert selon le retour utilisateur. Cela ne valide pas encore la migration, la suite complète Identity, ni l'ensemble des scénarios d'intégration.
+
+
+## 20.17 — Migration de l'historique des mots de passe exécutée
+
+Le 8 novembre 2026, l'utilisateur a confirmé l'exécution locale de :
+
+```bash
+php artisan migrate
+```
+
+Résultat Laravel :
+
+```
+2026_11_08_000001_create_user_password_histories_table ...... 229.90ms DONE
+```
+
+La migration `2026_11_08_000001_create_user_password_histories_table` est donc **exécutée avec succès sur la base locale**. Cette preuve confirme l'application de la migration, mais ne valide pas à elle seule l'intégrité complète du schéma, les parcours métier, l'atomicité ou la concurrence.
+
+**Prochaine étape :** exécuter les tests d'intégration liés à l'historique et aux changements/réinitialisations de mot de passe, puis la suite complète Identity. Ne marquer ces validations comme vertes qu'après confirmation des résultats.
