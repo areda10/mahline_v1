@@ -1010,3 +1010,23 @@ php artisan test --filter=PasswordHistory
 Cette validation confirme que les tests correspondant au filtre `PasswordHistory` passent dans l'environnement local. Elle ne remplace pas les tests HTTP de bout en bout, les contrôles de concurrence ni l'exécution de toute la suite Identity.
 
 **Prochaine étape :** exécuter les tests HTTP/intégration liés aux changements volontaires et forcés de mot de passe ainsi qu'à la réinitialisation, puis lancer la suite complète Identity.
+
+
+## 20.19 — Échecs révélés par le filtre Password et correction des fixtures
+
+Le 8 novembre 2026, l'exécution élargie `php artisan test --filter=Password` a révélé :
+
+- des fixtures de tests utilisant des mots de passe sans caractère spécial, incompatibles avec la politique ID-01 déjà validée ;
+- un échec distinct dans `UserManagementControllerTest` : `Call to a member function all() on array`, signalé au moment de l'assertion de redirection du parcours d'activation root avec changement forcé.
+
+Corrections apportées aux seules fixtures de tests (aucun assouplissement de la politique applicative) :
+- `UserManagementControllerTest.php` : `NewSecurePassword2026!` ;
+- `PasswordResetControllerTest.php` : `NewPassword123!` ;
+- `ResetPasswordRequestTest.php` : `ValidPassword123!` et `DifferentPassword123!`.
+
+Commits des trois corrections :
+- `7f67460e0a31c0ff14c42b28060241faf7dd5830`
+- `f9fec3607000d1dd56938577aba71a23ec027742`
+- `851f842d20315cfafd3b7275c4583064073d69d3`
+
+**État :** corrections poussées, mais non encore confirmées vertes par exécution locale. L'erreur `all() on array` reste à isoler ; ne pas la considérer comme corrigée par les changements de fixtures.
