@@ -108,8 +108,27 @@ final class PasswordResetService extends BaseService
         DB::transaction(function () use ($token, $newPassword): void {
             $tokenHash = hash('sha256', $token);
 
+            // Keep the global lock order consistent: User -> reset token.
+            $tokenReference = DB::table('password_reset_tokens')
+                ->where('token_hash', $tokenHash)
+                ->first();
+
+            if ($tokenReference === null) {
+                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
+            }
+
+            $user = User::query()
+                ->whereKey($tokenReference->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($user === null || $user->status->value !== 'active') {
+                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
+            }
+
             $record = DB::table('password_reset_tokens')
                 ->where('token_hash', $tokenHash)
+                ->where('user_id', $user->getKey())
                 ->lockForUpdate()
                 ->first();
 
@@ -121,17 +140,8 @@ final class PasswordResetService extends BaseService
                 throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
             }
 
-            if (now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($record->expires_at))) {
+            if (now()->greaterThanOrEqualTo(\\Illuminate\\Support\\Carbon::parse($record->expires_at))) {
                 throw new InvalidPasswordResetTokenException('Password reset token has expired.');
-            }
-
-            $user = User::query()
-                ->whereKey($record->user_id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($user === null || $user->status->value !== 'active') {
-                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
             }
 
             PasswordPolicy::validate($newPassword, $user);
