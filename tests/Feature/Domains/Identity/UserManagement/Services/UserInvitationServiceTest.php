@@ -126,7 +126,7 @@ final class UserInvitationServiceTest extends TestCase
         ]);
 
         Notification::assertSentOnDemand(
-            \\App\\Domains\\Identity\\UserManagement\\Notifications\\UserInvitationNotification::class,
+            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
         );
     }
 
@@ -141,7 +141,7 @@ final class UserInvitationServiceTest extends TestCase
         $token = 'root-manual-verification-token';
 
         $invitation = UserInvitation::query()->create([
-            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'id' => (string) \Illuminate\Support\Str::ulid(),
             'user_id' => $user->getKey(),
             'purpose' => 'root_manual_verification',
             'token_hash' => hash('sha256', $token),
@@ -161,7 +161,7 @@ final class UserInvitationServiceTest extends TestCase
         $this->assertSame(UserStatus::Active, $acceptedUser->status);
         $this->assertNotNull($acceptedUser->email_verified_at);
         $this->assertFalse((bool) $acceptedUser->must_change_password);
-        $this->assertTrue(\\Illuminate\\Support\\Facades\\Hash::check(
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check(
             'MahlineSecure2026',
             $acceptedUser->password,
         ));
