@@ -25,6 +25,7 @@ final class PasswordResetService extends BaseService
     public function __construct(
         private readonly SessionService $sessionService,
         private readonly AuditService $audit,
+        private readonly PasswordHistoryService $passwordHistory,
     ) {
     }
 
@@ -32,14 +33,27 @@ final class PasswordResetService extends BaseService
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
-        DB::table('password_reset_tokens')->insert([
+        DB::transaction(function () use ($user, $token): void {
+            $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($lockedUser->status->value !== 'active') {
+                throw new InvalidPasswordResetTokenException('This account cannot reset its password.');
+            }
+
+            DB::table('password_reset_tokens')
+                ->where('user_id', $lockedUser->getKey())
+                ->whereNull('used_at')
+                ->update(['used_at' => now()]);
+
+            DB::table('password_reset_tokens')->insert([
             'id' => (string) Str::ulid(),
-            'user_id' => $user->getKey(),
+            'user_id' => $lockedUser->getKey(),
             'token_hash' => hash('sha256', $token),
-            'expires_at' => now()->addMinutes(60),
+            'expires_at' => now()->addMinutes(30),
             'used_at' => null,
             'created_at' => now(),
-        ]);
+            ]);
+        });
 
         $resetBaseUrl = rtrim(
             (string) config('app.password_reset_url', config('app.url')),
@@ -80,7 +94,7 @@ final class PasswordResetService extends BaseService
 
         $user = User::query()->find($record->user_id);
 
-        if ($user === null) {
+        if ($user === null || $user->status->value !== 'active') {
             throw new InvalidPasswordResetTokenException('Invalid password reset token.');
         }
 
@@ -118,11 +132,13 @@ final class PasswordResetService extends BaseService
                 ->lockForUpdate()
                 ->first();
 
-            if ($user === null) {
+            if ($user === null || $user->status->value !== 'active') {
                 throw new InvalidPasswordResetTokenException('Invalid password reset token.');
             }
 
-            PasswordPolicy::validate($newPassword);
+            PasswordPolicy::validate($newPassword, $user);
+            $this->passwordHistory->assertNotReused($user, $newPassword);
+            $this->passwordHistory->archiveCurrentPassword($user);
 
             if (Hash::check($newPassword, (string) $user->password)) {
                 throw new InvalidArgumentException(
@@ -142,6 +158,7 @@ final class PasswordResetService extends BaseService
                 user: $user,
                 reason: 'password_reset',
             );
+            $user->tokens()->delete();
 
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.password.reset',
