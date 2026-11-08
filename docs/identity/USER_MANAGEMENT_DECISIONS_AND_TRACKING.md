@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.6
+- **Version :** 1.7
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -922,3 +922,17 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 - [ ] Suite complète Identity.
 
 **Portée de la validation :** seul `PasswordPolicyTest` est déclaré vert. Aucun autre test, migration ou parcours n'est considéré validé par cette confirmation.
+
+
+### 20.13 Validation locale — PasswordHistoryServiceTest
+
+**Retour utilisateur :** test vert confirmé.
+
+- [x] `php artisan test --filter=PasswordHistoryServiceTest` — **VERT**, selon confirmation utilisateur.
+- [ ] `php artisan test --filter=ForcedPasswordChangeControllerTest`
+- [ ] `php artisan test --filter=UserInvitationServiceTest`
+- [ ] Tests de réinitialisation du mot de passe.
+- [ ] Migration de l'historique puis tests associés.
+- [ ] Suite complète Identity.
+
+**Portée :** cette confirmation valide uniquement le test ciblé du service d'historique ; elle ne prouve pas encore l'exécution de la migration ni la validation de tous les parcours d'écriture.
