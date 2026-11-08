@@ -513,6 +513,18 @@ Durée de référence définie pour les données de profil :
 
 Les données soumises à des obligations légales, comptables, commerciales ou de sécurité suivent leurs propres durées de conservation et peuvent donc être conservées au-delà de cette durée de référence. Les délais définitifs devront être vérifiés au regard des obligations légales et réglementaires applicables avant mise en production ; la durée de cinq ans constitue la règle fonctionnelle validée, non une affirmation de délai légal universel.
 
+### Journalisation des consultations administratives de fiches personnelles (décision 99)
+
+Chaque consultation d'une fiche personnelle par un administrateur est journalisée, qu'elle soit autorisée ou refusée. L'événement conserve :
+- L'identité de l'administrateur.
+- L'identifiant de l'utilisateur dont la fiche est visée.
+- La date et l'heure.
+- La coopérative concernée, lorsqu'elle s'applique.
+- L'origine de la consultation (interface web ou API).
+- Le résultat de l'accès (autorisé ou refusé).
+
+Le journal enregistre la trace de l'accès sans recopier les données personnelles consultées. Cette règle s'applique à `super_admin_root` et `super_admin`, dans les limites de leurs périmètres respectifs. Les journaux restent soumis aux règles append-only, d'accès restreint et de conservation déjà définies.
+
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
 - [x] Données consultables et modifiables par le propriétaire — décision 93 validée.
@@ -521,7 +533,7 @@ Les données soumises à des obligations légales, comptables, commerciales ou d
 - [x] Demande d'effacement soumise par l'utilisateur à super_admin_root, sans suppression automatique ; anonymisation après vérification des obligations de conservation — décision 96 validée.
 - [x] Catégories de conservation : facturation, commandes, comptabilité, sécurité et litiges ; accès limité et durée applicable — décision 97 validée.
 - [x] Durée de référence de 5 ans après archivage ou suppression logique, sous réserve des durées spécifiques et obligations applicables — décision 98 validée.
-- [ ] Faut-il journaliser chaque consultation administrative d'une fiche personnelle ?
+- [x] Journaliser chaque consultation administrative (autorisée ou refusée) avec acteur, utilisateur visé, date/heure, coopérative, origine et résultat, sans recopier les données consultées — décision 99 validée.
 - [ ] Faut-il informer l'utilisateur lorsqu'un administrateur consulte ses données personnelles ?
 
 ## 17. Plan de tâches à réaliser
@@ -590,7 +602,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
 - [x] Processus fonctionnel de demande d'effacement et d'anonymisation défini (décision 96) ; conformité juridique et implémentation à vérifier.
 - [ ] Vérifier les durées légales/réglementaires exactes par catégorie et les documenter ; durée de référence des données de profil fixée à 5 ans après archivage/suppression logique (décision 98).
-- [ ] Journaliser les consultations administratives si cette règle est validée.
+- [x] Journaliser les consultations administratives des fiches personnelles selon la décision 99.
 
 ### G. Tests indispensables
 - [ ] Matrice de permissions par rôle et par coopérative.
@@ -628,5 +640,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La décision 98 fixe une durée de référence de cinq ans pour les données de profil après archivage ou suppression logique. La prochaine question à traiter est la question 99 : journalisation des consultations administratives de fiches personnelles.
+- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La décision 98 fixe une durée de référence de cinq ans pour les données de profil après archivage ou suppression logique. La décision 99 impose la journalisation des consultations administratives des fiches personnelles. La prochaine question à traiter est la question 100 : informer ou non l'utilisateur lorsqu'un administrateur consulte ses données personnelles.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
