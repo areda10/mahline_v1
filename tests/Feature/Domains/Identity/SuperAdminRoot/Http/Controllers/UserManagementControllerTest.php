@@ -120,7 +120,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $oldInvitation = UserInvitation::query()->create([
-            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'id' => (string) \Illuminate\Support\Str::ulid(),
             'user_id' => $target->getKey(),
             'purpose' => 'root_manual_verification',
             'token_hash' => hash('sha256', 'old-root-verification-token'),
