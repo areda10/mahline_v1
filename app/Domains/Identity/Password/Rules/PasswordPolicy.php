@@ -81,7 +81,6 @@ final class PasswordPolicy
         $candidates = [
             (string) $user->first_name,
             trim((string) $user->first_name . ' ' . (string) $user->last_name),
-            (string) $user->getKey(),
         ];
 
         $emailLocalPart = strstr((string) $user->email, '@', true);
@@ -92,6 +91,14 @@ final class PasswordPolicy
             foreach (preg_split('/[^\p{L}\p{N}]+/u', $emailLocalPart) ?: [] as $part) {
                 $candidates[] = $part;
             }
+        }
+
+        $identifier = self::normalizeForComparison((string) $user->getKey());
+
+        if ($identifier !== '' && str_contains($normalizedPassword, $identifier)) {
+            throw new InvalidArgumentException(
+                'Password must not contain recognizable personal information.'
+            );
         }
 
         foreach ($candidates as $candidate) {
