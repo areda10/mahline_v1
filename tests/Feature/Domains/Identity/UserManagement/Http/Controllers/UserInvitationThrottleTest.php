@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Identity\\UserManagement\\Http\\Controllers;
+namespace Tests\Feature\Domains\Identity\UserManagement\Http\Controllers;
 
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class UserInvitationThrottleTest extends TestCase
 {
