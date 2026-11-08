@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.5
+- **Version :** 1.6
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -901,10 +901,24 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 - Le test historique `test_special_character_is_optional` a été remplacé par un test vérifiant explicitement que l'absence de caractère spécial est refusée.
 - Le test interdisant les espaces a été remplacé par un test qui confirme que les espaces restent autorisés.
 
-**État après correction :** code des tests corrigé et poussé ; nouvelle exécution locale non encore confirmée. Aucun test n'est déclaré vert sur la seule base de cette modification.
+**État après correction :** l'utilisateur confirme que `php artisan test --filter=PasswordPolicyTest` est vert. Le test ciblé est donc validé selon le retour d'exécution local.
 
-**Action de validation utilisateur :**
-- [ ] Récupérer le commit `e613ed5`.
-- [ ] Relancer `php artisan test --filter=PasswordPolicyTest`.
-- [ ] Envoyer le résultat complet, y compris toute nouvelle erreur.
-- [ ] Ne passer les tests à l'état « Validé » qu'après résultat vert observé.
+**Validation utilisateur :**
+- [x] Résultat vert confirmé pour `php artisan test --filter=PasswordPolicyTest`.
+- [ ] Conserver le résultat détaillé de PHPUnit dans le suivi local/CI si nécessaire.
+- [ ] Continuer avec les tests de l'historique des mots de passe ; ne pas extrapoler ce résultat aux autres suites.
+
+
+### 20.12 Validation locale — PasswordPolicyTest
+
+**Retour utilisateur :** test vert confirmé après récupération de la correction des fixtures.
+
+- [x] `php artisan test --filter=PasswordPolicyTest` — **VERT**, selon confirmation utilisateur.
+- [ ] `php artisan test --filter=PasswordHistoryServiceTest`
+- [ ] `php artisan test --filter=ForcedPasswordChangeControllerTest`
+- [ ] `php artisan test --filter=UserInvitationServiceTest`
+- [ ] Tests de réinitialisation du mot de passe.
+- [ ] Migration de l'historique puis tests associés.
+- [ ] Suite complète Identity.
+
+**Portée de la validation :** seul `PasswordPolicyTest` est déclaré vert. Aucun autre test, migration ou parcours n'est considéré validé par cette confirmation.
