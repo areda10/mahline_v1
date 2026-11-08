@@ -86,10 +86,14 @@ final class PasswordPolicy
         $emailLocalPart = strstr((string) $user->email, '@', true);
 
         if (is_string($emailLocalPart)) {
-            $candidates[] = $emailLocalPart;
+            if (mb_strlen(self::normalizeForComparison($emailLocalPart)) >= 4) {
+                $candidates[] = $emailLocalPart;
+            }
 
-            foreach (preg_split('/[^\p{L}\p{N}]+/u', $emailLocalPart) ?: [] as $part) {
-                $candidates[] = $part;
+            foreach (preg_split('/[^\\p{L}\\p{N}]+/u', $emailLocalPart) ?: [] as $part) {
+                if (mb_strlen(self::normalizeForComparison($part)) >= 4) {
+                    $candidates[] = $part;
+                }
             }
         }
 
