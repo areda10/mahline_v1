@@ -463,10 +463,20 @@ Chaque utilisateur peut consulter et modifier les données suivantes de son prop
 
 L'adresse e-mail, le mot de passe, le rôle, la coopérative et le statut restent soumis à leurs procédures spécifiques de sécurité et de gestion déjà définies. L'édition du profil personnel ne permet donc pas de modifier les droits, l'appartenance à une coopérative ou le cycle de vie du compte.
 
+### Export des données personnelles par leur propriétaire (décision 94)
+
+Chaque utilisateur peut télécharger une copie de ses propres données personnelles :
+- Formats proposés : PDF (lecture) et JSON (réutilisation informatique).
+- L'accès à l'export est limité aux données du propriétaire authentifié.
+- Le téléchargement est fourni par un lien sécurisé et temporaire.
+- La génération et le téléchargement de chaque export sont journalisés.
+- Les mots de passe, tokens, codes OTP, secrets et autres données sensibles d'authentification sont exclus.
+- Les exports administratifs concernant d'autres utilisateurs restent soumis aux autorisations et périmètres définis pour le rôle concerné.
+
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
 - [x] Données consultables et modifiables par le propriétaire — décision 93 validée.
-- [ ] Faut-il un export téléchargeable des données personnelles d'un utilisateur ?
+- [x] Export personnel PDF/JSON, lien temporaire sécurisé, journalisation et exclusion des secrets — décision 94 validée.
 - [ ] Quel rôle peut demander ou effectuer une correction des données ?
 - [ ] Quel processus pour une demande de suppression ou d'anonymisation ?
 - [ ] Quelles données doivent être conservées pour les obligations comptables, commerciales, légales ou de sécurité ?
@@ -537,7 +547,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [ ] Implémenter et tester les autorisations root/super_admin/utilisateur selon la décision 91.
 - [ ] Vérifier qu'un cooperative_admin ne peut accéder aux données personnelles d'autrui, même par URL directe ou API.
 - [x] Définir les catégories de données modifiables par leur propriétaire — décision 93.
-- [ ] Clarifier et implémenter l'export des données personnelles.
+- [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
 - [ ] Clarifier le processus de correction, suppression et anonymisation.
 - [ ] Définir les règles de conservation et les exceptions légales/comptables.
 - [ ] Journaliser les consultations administratives si cette règle est validée.
@@ -578,5 +588,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. La décision 93 fixe les données personnelles consultables et modifiables par leur propriétaire. La prochaine question à traiter est la question 94 : export téléchargeable des données personnelles.
+- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La prochaine question à traiter est la question 95 : rôle autorisé à demander ou effectuer une correction des données.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
