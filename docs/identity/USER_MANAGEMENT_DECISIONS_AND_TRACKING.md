@@ -875,7 +875,7 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 **Commits de cette tranche :**
 - Documentation des décisions : `26b4e14e1174ca8f5870e5973499f13d21aa252e`
 - Politique et contrôles : commits `c7fd2af`, `9f4fd35`, `4f331ab`, `e102806`
-- Historique et intégrations : commits `c921933`, `b5d25c9`, `c24eb91`, `1c6bdf1`, `044e41e`, `13dd1c9`, `0ec9ae7`, `d9aae27`
+- Historique et intégrations : commits `c921933`, `b5d25c9`, `c24eb91`, `1c6bdf1`, `044e41e`, `13dd1c9`, `0ec9ae7`, `d9aae27`, `78a9f90`, `a070e2e`
 - Tests : commits `68ed2fa`, `4e81517`, `2d8cce0`, `5b77e1a`, `3bdd0b2`
 
 **Limites restantes avant de considérer ID-01/ID-02 terminés :**
