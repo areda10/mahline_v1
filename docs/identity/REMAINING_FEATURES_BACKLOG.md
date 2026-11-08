@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 1.0
+- **Version :** 1.5
 - **Date de création :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Document de décisions associé :** [USER_MANAGEMENT_DECISIONS_AND_TRACKING.md](./USER_MANAGEMENT_DECISIONS_AND_TRACKING.md)
@@ -238,8 +238,8 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [x] **VAL-04** Exécuter `php artisan test --filter=PasswordHistoryServiceTest` — VERT confirmé par l'utilisateur.
 - [x] **VAL-05** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT confirmé par l'utilisateur.
 - [x] **VAL-06** Exécuter `php artisan test --filter=UserInvitationServiceTest` — VERT confirmé par l'utilisateur.
-- [ ] **VAL-07** Exécuter les tests de reset de mot de passe.
-- [ ] **VAL-08** Corriger les régressions révélées par ces tests avant de poursuivre.
+- [x] **VAL-07** Exécuter les tests de reset de mot de passe — VERT confirmé par l'utilisateur (`PasswordResetServiceTest`).
+- [x] **VAL-08** Corriger les régressions révélées par ces tests avant de poursuivre — fixtures alignées sur la politique et message attendu de réutilisation corrigé ; commit `c14d145adc550e8073c8770239ad545231779a11` ; test relancé et vert.
 - [ ] **VAL-09** Exécuter toute la suite de tests du domaine Identity.
 - [ ] **VAL-10** Exécuter les vérifications de style, analyse statique et migrations dans l'environnement local/CI du projet.
 - [ ] **VAL-11** Faire un audit final du diff et confirmer que les commits respectent l'architecture V7.0 et les conventions MAHLINE.
@@ -261,7 +261,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | Audit / sécurité | 21 | 0 | Intégrité et journaux dédiés |
 | Notifications | 6 | 0 | Service multicanal |
 | Confidentialité | 7 | 0 | Export et effacement contrôlé |
-| Validation des commits | 8 | 4 | Reset, migration, tests d'intégration et suite complète Identity |
+| Validation des commits | 6 | 6 | Migration, tests d'intégration et suite complète Identity |
 
 > Les quantités de ce tableau sont des estimations initiales des éléments numérotés ; elles seront recalculées au fur et à mesure. Aucun élément n'est marqué validé tant qu'un test ou une preuve d'exécution n'est pas disponible.
 
@@ -277,3 +277,5 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | 8 novembre 2026 | 1.3 | Validation utilisateur de `ForcedPasswordChangeControllerTest` (vert) ; VAL-05 cochée, invitation, reset et migration restent ouverts. |
 | 8 novembre 2026 | 1.4 | Validation utilisateur de `UserInvitationServiceTest` (vert) ; VAL-06 cochée, reset, migration et suite complète restent ouverts. |
 
+
+| 8 novembre 2026 | 1.5 | Validation utilisateur de `PasswordResetServiceTest` (vert) ; VAL-07 et VAL-08 cochées après correction des fixtures et du message attendu ; migration, tests d'intégration et suite complète Identity restent ouverts. |
