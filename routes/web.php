@@ -2,6 +2,7 @@
 
 use App\Domains\Catalog\Http\Controllers\CatalogController;
 use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
+use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
@@ -14,11 +15,13 @@ use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
+use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,7 +49,7 @@ Route::prefix('authentication')
         Route::post(
             '/login',
             [AuthenticationController::class, 'login']
-        )->name('login.store');
+        )->middleware('throttle:5,1')->name('login.store');
 
         /*
          * Logout authenticated user.
@@ -77,7 +80,7 @@ Route::prefix('password')
         Route::post(
             '/forgot',
             [PasswordResetController::class, 'forgot']
-        )->name('email');
+        )->middleware('throttle:5,1')->name('email');
 
         // Display the password-reset form.
         Route::get(
@@ -89,8 +92,20 @@ Route::prefix('password')
         Route::post(
             '/reset',
             [PasswordResetController::class, 'reset']
-        )->name('update');
+        )->middleware('throttle:10,1')->name('update');
     });
+
+Route::prefix('password/change-required')
+    ->name('password.force-change.')
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->group(function (): void {
+        Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+        Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+    });
+
+Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit'])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->name('security.password.edit');
 
 /*
 |--------------------------------------------------------------------------
@@ -99,32 +114,74 @@ Route::prefix('password')
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    if (! auth()->check()) {
+        return view('welcome');
+    }
+
+    $user = auth()->user();
+
+    if ($user->must_change_password) {
+        return redirect()->route('password.force-change.edit');
+    }
+
+    if ($user->hasRole('super_admin_root')) {
+        return redirect()->route('root.backoffice.dashboard');
+    }
+
+    if ($user->hasRole('user')) {
+        return redirect()->route('user.dashboard');
+    }
+
+    if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+        return redirect()->route('backoffice.dashboard');
+    }
+
+    abort(403);
 });
 
+Route::get('/user/dashboard', UserDashboardController::class)
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:user'])
+    ->name('user.dashboard');
+
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
+    ->middleware('throttle:10,1')
     ->name('user-invitations.show');
 
 Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept'])
+    ->middleware('throttle:5,1')
     ->name('user-invitations.accept');
 
 Route::prefix('root/back-office')
     ->name('root.backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
+
+        Route::get('security/sessions', [AuthenticationSessionController::class, 'rootIndex'])
+            ->name('security.sessions.index');
+        Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
+            ->name('security.sessions.destroy');
+
+        Route::delete('users/{user}/sessions/{session}', [AuthenticationSessionController::class, 'revokeForUser'])
+            ->name('users.sessions.destroy');
 
         Route::get('users', [SuperAdminRootUserManagementController::class, 'index'])
             ->name('users.index');
         Route::get('users/create', [SuperAdminRootUserManagementController::class, 'create'])
             ->name('users.create');
+        Route::get('users/{user}/edit', [SuperAdminRootUserManagementController::class, 'edit'])
+            ->name('users.edit');
+        Route::put('users/{user}', [SuperAdminRootUserManagementController::class, 'update'])
+            ->name('users.update');
         Route::post('users', [SuperAdminRootUserManagementController::class, 'store'])
             ->name('users.store');
         Route::get('users/{user}', [SuperAdminRootUserManagementController::class, 'show'])
             ->name('users.show');
         Route::patch('users/{user}/activate', [SuperAdminRootUserManagementController::class, 'activate'])
             ->name('users.activate');
+        Route::patch('users/{user}/activate-and-verify', [SuperAdminRootUserManagementController::class, 'activateAndVerify'])
+            ->name('users.activate-and-verify');
         Route::patch('users/{user}/deactivate', [SuperAdminRootUserManagementController::class, 'deactivate'])
             ->name('users.deactivate');
         Route::patch('users/{user}/suspend', [SuperAdminRootUserManagementController::class, 'suspend'])
@@ -139,6 +196,13 @@ Route::prefix('root/back-office')
             ->name('users.restore-deleted');
         Route::post('users/{user}/resend-invitation', [SuperAdminRootUserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
+
+        Route::get('users/{superAdmin}/cooperatives', [SuperAdminCooperativeAssignmentController::class, 'index'])
+            ->name('users.cooperatives.index');
+        Route::post('users/{superAdmin}/cooperatives/{cooperative}', [SuperAdminCooperativeAssignmentController::class, 'store'])
+            ->name('users.cooperatives.store');
+        Route::delete('users/{superAdmin}/cooperatives/{cooperative}', [SuperAdminCooperativeAssignmentController::class, 'destroy'])
+            ->name('users.cooperatives.destroy');
 
 
         Route::resource('cooperatives', SuperAdminRootCooperativeController::class)
@@ -205,11 +269,16 @@ Route::prefix('root/back-office')
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
     ->group(function (): void {
 
         Route::get('dashboard', BackOfficeDashboardController::class)
             ->name('dashboard');
+
+        Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
+            ->name('security.sessions.index');
+        Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
+            ->name('security.sessions.destroy');
 
         Route::get('users', [UserManagementController::class, 'index'])
             ->name('users.index');

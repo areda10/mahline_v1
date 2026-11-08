@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authentication\Models;
 
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 
@@ -40,6 +41,17 @@ final class PersonalAccessToken extends SanctumPersonalAccessToken
         if (
             $personalAccessToken === null
             || $personalAccessToken->revoked_at !== null
+        ) {
+            return null;
+        }
+
+        // API credentials are valid only while their owning account is authorized.
+        // The tokenable relation also respects User soft deletes.
+        $tokenable = $personalAccessToken->tokenable;
+
+        if (
+            ! $tokenable instanceof User
+            || ! $tokenable->isAuthorized()
         ) {
             return null;
         }

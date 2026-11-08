@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 
 @section('title', 'Fiche utilisateur — '.$user->display_name)
 
@@ -10,7 +10,13 @@
     </div>
 
     <div class="actions">
-        <a class="button button-secondary" href="{{ route('root.backoffice.users.index') }}">Retour à la liste</a>
+        <a class="button button-secondary" href="{{ route('root.backoffice.dashboard') }}">Retour au tableau de bord</a>
+        @unless($user->roles->contains('slug', 'super_admin_root'))
+            <a class="button" href="{{ route('root.backoffice.users.edit', $user) }}">Modifier l’utilisateur</a>
+        @endunless
+        @if($canViewAssignments)
+            <a class="button" href="{{ route('root.backoffice.users.cooperatives.index', $user) }}">Gérer les affectations coopératives</a>
+        @endif
     </div>
 
     <div class="actions">
@@ -28,10 +34,17 @@
 
         @can('activate', $user)
             <form method="POST" action="{{ route('root.backoffice.users.activate', $user) }}"
-                  onsubmit="return confirm('Confirmer l’activation de ce compte ?');">
+                  onsubmit="return confirm('Activer le compte et envoyer un lien de vérification ? L’utilisateur devra définir son mot de passe via le lien reçu.');">
                 @csrf
                 @method('PATCH')
-                <button class="button" type="submit">Activer le compte</button>
+                <button class="button" type="submit">Activer et envoyer une invitation</button>
+            </form>
+
+            <form method="POST" action="{{ route('root.backoffice.users.activate-and-verify', $user) }}"
+                  onsubmit="return confirm('Activer immédiatement et vérifier l’e-mail ? Le mot de passe provisoire sera MahlineMahline et son changement sera obligatoire à la première connexion.');">
+                @csrf
+                @method('PATCH')
+                <button class="button" type="submit">Activer, vérifier l’e-mail et autoriser la connexion</button>
             </form>
         @endcan
 
@@ -64,12 +77,14 @@
 
         @can('restore', $user)
             <form method="POST" action="{{ route('root.backoffice.users.restore', $user) }}"
-                  onsubmit="return confirm('Restaurer ce compte avec le statut actif ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                  onsubmit="return confirm('Restaurer ce compte en attente ? Une nouvelle activation sera nécessaire. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                 @csrf
                 @method('PATCH')
-                <button class="button" type="submit">Restaurer le compte</button>
+                <button class="button" type="submit">Restaurer le compte en attente</button>
             </form>
         @endcan
+
+
 
         @can('delete', $user)
             <form method="POST" action="{{ route('root.backoffice.users.destroy', $user) }}"
@@ -149,6 +164,41 @@
         </table>
     </div>
 </section>
+
+@if($sessions->isNotEmpty())
+    <section class="card" aria-labelledby="sessions-heading">
+        <h2 id="sessions-heading">Appareils connectés de cet utilisateur</h2>
+        <p class="muted">Seules les sessions actives sont affichées. Vous pouvez révoquer chaque appareil individuellement.</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Appareil</th><th>Navigateur</th><th>Adresse IP</th><th>Dernière activité</th><th>État</th><th>Action</th></tr></thead>
+                <tbody>
+                    @foreach($sessions as $session)
+                        <tr>
+                            <td>{{ $session->device ?: 'Appareil inconnu' }}</td>
+                            <td>{{ $session->browser ?: '—' }}</td>
+                            <td>{{ $session->ip_address ?: '—' }}</td>
+                            <td>{{ $session->last_activity_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                            <td>{{ $session->is_current ? 'Session actuelle' : 'Connecté' }}</td>
+                            <td>
+                                <form method="POST" action="{{ route('root.backoffice.users.sessions.destroy', ['user' => $user, 'session' => $session]) }}" onsubmit="return confirm('Révoquer cette session ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="button button-danger button-small" type="submit">Révoquer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
+@else
+    <section class="card" aria-labelledby="sessions-heading">
+        <h2 id="sessions-heading">Appareils connectés</h2>
+        <div class="empty">Aucune session active.</div>
+    </section>
+@endif
 
 @if($canViewAssignments)
     <section class="card" aria-labelledby="assignments-heading">

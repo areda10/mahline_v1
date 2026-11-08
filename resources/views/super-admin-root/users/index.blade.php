@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 
 @section('title', 'Utilisateurs')
 
@@ -8,6 +8,7 @@
         <h1>Utilisateurs</h1>
         <p class="muted">Comptes utilisateurs accessibles selon votre périmètre d’autorisation.</p>
     </div>
+    <a class="button" href="{{ route('root.backoffice.users.create') }}">Créer un utilisateur</a>
 </div>
 
 <section class="card" aria-labelledby="users-filters-heading">
@@ -124,7 +125,7 @@
                                 @if($user->trashed())
                                     @can('restoreDeleted', $user)
                                         <form method="POST" action="{{ route('root.backoffice.users.restore-deleted', $user->getKey()) }}"
-                                              onsubmit="return confirm('Restaurer ce compte supprimé ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                                              onsubmit="return confirm('Restaurer ce compte supprimé en attente ? Une nouvelle activation sera nécessaire. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                                             @csrf
                                             @method('PATCH')
                                             <button class="button" type="submit">Restaurer</button>

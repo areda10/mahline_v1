@@ -172,4 +172,30 @@ final class CategoryControllerTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_category_from_another_cooperative_cannot_be_updated_or_deleted(): void
+    {
+        $otherCooperative = Cooperative::factory()->active()->create();
+        $foreignCategory = Category::factory()
+            ->forCooperative($otherCooperative)
+            ->create(['name' => 'Catégorie privée']);
+
+        $this->patch(route('backoffice.categories.update', [
+            'cooperative' => $this->cooperative->getKey(),
+            'category' => $foreignCategory->getKey(),
+        ]), ['name' => 'Tentative de modification'])
+            ->assertNotFound();
+
+        $this->delete(route('backoffice.categories.destroy', [
+            'cooperative' => $this->cooperative->getKey(),
+            'category' => $foreignCategory->getKey(),
+        ]))->assertNotFound();
+
+        $this->assertDatabaseHas('categories', [
+            'id' => $foreignCategory->getKey(),
+            'cooperative_id' => $otherCooperative->getKey(),
+            'name' => 'Catégorie privée',
+            'deleted_at' => null,
+        ]);
+    }
 }

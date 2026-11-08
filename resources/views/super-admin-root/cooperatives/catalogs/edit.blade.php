@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 @section('title', 'Modifier un catalogue')
 @section('content')
 <div class="page-header"><h1>Modifier le catalogue</h1></div>

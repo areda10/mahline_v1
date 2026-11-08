@@ -30,11 +30,23 @@ final class AuthenticationController
         if (Auth::check()) {
             $user = Auth::user();
 
+            if ($user?->must_change_password) {
+                return redirect()->route('password.force-change.edit');
+            }
+
             if ($user?->hasRole('super_admin_root')) {
                 return redirect()->route('root.backoffice.dashboard');
             }
 
-            return redirect()->intended('/');
+            if ($user?->hasRole('user')) {
+                return redirect()->route('user.dashboard');
+            }
+
+            if ($user?->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+                return redirect()->route('backoffice.dashboard');
+            }
+
+            abort(403);
         }
 
         return view('auth.login');
@@ -124,11 +136,23 @@ final class AuthenticationController
          * Do not regenerate or revoke sessions here without synchronizing
          * the Laravel session ID with the Identity authentication session.
          */
+        if ($user->must_change_password) {
+            return redirect()->route('password.force-change.edit');
+        }
+
         if ($user->hasRole('super_admin_root')) {
             return redirect()->route('root.backoffice.dashboard');
         }
 
-        return redirect()->intended('/');
+        if ($user->hasRole('user')) {
+            return redirect()->route('user.dashboard');
+        }
+
+        if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
+            return redirect()->route('backoffice.dashboard');
+        }
+
+        abort(403);
     }
 
     public function logout(
@@ -146,63 +170,27 @@ final class AuthenticationController
             return redirect()->route('authentication.login');
         }
 
+        /*
+         * Revoke only the current Identity authentication session when it
+         * exists. A missing/stale Identity record must never keep the
+         * Laravel web session authenticated.
+         */
         $authenticationSessionId = $request->session()->get(
             'authentication_session_id',
         );
 
-        if (
-            ! is_string($authenticationSessionId)
-            || $authenticationSessionId === ''
-        ) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Authentication session not found.',
-                ], 401);
+        if (is_string($authenticationSessionId) && $authenticationSessionId !== '') {
+            $authenticationSession = $this->sessionService->findActiveById(
+                user: $user,
+                authenticationSessionId: $authenticationSessionId,
+            );
+
+            if ($authenticationSession !== null) {
+                $this->sessionService->revoke(
+                    session: $authenticationSession,
+                    reason: 'logout',
+                );
             }
-
-            return redirect()
-                ->route('authentication.login')
-                ->withErrors([
-                    'email' => 'Authentication session not found.',
-                ]);
-        }
-
-        $authenticationSession = $this->sessionService->findActiveById(
-            user: $user,
-            authenticationSessionId: $authenticationSessionId,
-        );
-
-        if ($authenticationSession === null) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Authentication session not found.',
-                ], 401);
-            }
-
-            return redirect()
-                ->route('authentication.login')
-                ->withErrors([
-                    'email' => 'Authentication session not found.',
-                ]);
-        }
-
-        $revoked = $this->sessionService->revoke(
-            session: $authenticationSession,
-            reason: 'logout',
-        );
-
-        if (! $revoked) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Unable to logout.',
-                ], 401);
-            }
-
-            return redirect()
-                ->route('authentication.login')
-                ->withErrors([
-                    'email' => 'Unable to logout.',
-                ]);
         }
 
         Auth::logout();

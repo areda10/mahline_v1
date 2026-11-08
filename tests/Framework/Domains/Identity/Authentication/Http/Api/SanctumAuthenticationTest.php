@@ -94,8 +94,9 @@ final class SanctumAuthenticationTest extends TestCase
         );
 
         $plainTextToken = $accessToken->plainTextToken;
-
-        $accessToken->accessToken->delete();
+        $accessToken->accessToken->forceFill([
+            'revoked_at' => now(),
+        ])->save();
 
         $response = $this
             ->withHeader(
@@ -105,5 +106,54 @@ final class SanctumAuthenticationTest extends TestCase
             ->getJson('/api/test-auth');
 
         $response->assertUnauthorized();
-}
+
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $accessToken->accessToken->getKey(),
+        ]);
+    }
+
+    public function test_suspended_user_cannot_use_an_active_api_token(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Suspended,
+            'email_verified_at' => now(),
+        ]);
+
+        $accessToken = $user->createToken('suspended-user');
+
+        $this->withHeader(
+            'Authorization',
+            'Bearer '.$accessToken->plainTextToken,
+        )->getJson('/api/test-auth')->assertUnauthorized();
+    }
+
+    public function test_inactive_user_cannot_use_an_active_api_token(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $accessToken = $user->createToken('inactive-user');
+
+        $this->withHeader(
+            'Authorization',
+            'Bearer '.$accessToken->plainTextToken,
+        )->getJson('/api/test-auth')->assertUnauthorized();
+    }
+
+    public function test_unverified_user_cannot_use_an_active_api_token(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $accessToken = $user->createToken('unverified-user');
+
+        $this->withHeader(
+            'Authorization',
+            'Bearer '.$accessToken->plainTextToken,
+        )->getJson('/api/test-auth')->assertUnauthorized();
+    }
 }

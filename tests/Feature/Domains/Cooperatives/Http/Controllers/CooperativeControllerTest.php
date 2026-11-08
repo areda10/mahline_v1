@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Cooperatives\Http\Controllers;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
@@ -71,6 +72,7 @@ final class CooperativeControllerTest extends TestCase
 
         $response = $this->actingAs($actor)->post(route('root.backoffice.cooperatives.store'), [
             ...$this->validCooperativeAttributes('Coopérative Root'),
+            ...$this->validAddressAttributes(),
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -79,6 +81,37 @@ final class CooperativeControllerTest extends TestCase
         $response->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
         $this->assertDatabaseMissing('super_admin_cooperative', [
             'cooperative_id' => $cooperative->getKey(),
+        ]);
+    }
+
+    public function test_root_can_change_cooperative_status_from_edit_form(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $root = $this->actor('super_admin_root', [
+            'cooperatives.view',
+            'cooperatives.update',
+        ]);
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.cooperatives.edit', $cooperative))
+            ->assertOk()
+            ->assertSee('Statut de la coopérative')
+            ->assertSee('pending')
+            ->assertSee('active')
+            ->assertSee('inactive')
+            ->assertSee('suspended')
+            ->assertSee('archived');
+
+        $this->actingAs($root)
+            ->put(route('root.backoffice.cooperatives.update', $cooperative), [
+                'status' => CooperativeStatus::SUSPENDED->value,
+            ])
+            ->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('cooperatives', [
+            'id' => $cooperative->getKey(),
+            'status' => CooperativeStatus::SUSPENDED->value,
         ]);
     }
 
@@ -204,6 +237,8 @@ final class CooperativeControllerTest extends TestCase
             ->assertOk()
             ->assertViewIs('super-admin-root.cooperatives.index');
 
+        $this->morocco();
+
         $this->actingAs($actor)
             ->get(route('root.backoffice.cooperatives.create'))
             ->assertOk()
@@ -255,6 +290,157 @@ final class CooperativeControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_can_update_all_five_cooperative_address_fields(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
+        $country = $this->morocco();
+
+        $this->actingAs($actor)
+            ->put(route('root.backoffice.cooperatives.update', $cooperative), [
+                'address_line_1' => '12 Avenue Hassan II',
+                'city' => 'Rabat',
+                'country_id' => $country->getKey(),
+                'postal_code' => '10000',
+                'state' => 'Rabat-Salé-Kénitra',
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $cooperative->fresh()->address_id,
+            'address_line_1' => '12 Avenue Hassan II',
+            'city' => 'Rabat',
+            'country_id' => $country->getKey(),
+            'postal_code' => '10000',
+            'state' => 'Rabat-Salé-Kénitra',
+        ]);
+    }
+
+    public function test_root_create_form_lists_all_moroccan_regions_and_morocco(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+
+        $this->morocco();
+
+        $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.create'))
+            ->assertOk()
+            ->assertSee('Maroc')
+            ->assertSee('Tanger-Tétouan-Al Hoceïma')
+            ->assertSee("L&#039;Oriental", false)
+            ->assertSee('Fès-Meknès')
+            ->assertSee('Rabat-Salé-Kénitra')
+            ->assertSee('Béni Mellal-Khénifra')
+            ->assertSee('Casablanca-Settat')
+            ->assertSee('Marrakech-Safi')
+            ->assertSee('Drâa-Tafilalet')
+            ->assertSee('Souss-Massa')
+            ->assertSee('Guelmim-Oued Noun')
+            ->assertSee('Laâyoune-Sakia El Hamra')
+            ->assertSee('Dakhla-Oued Ed-Dahab');
+    }
+
+    public function test_root_edit_form_preselects_saved_morocco_and_region(): void
+    {
+        $country = $this->morocco();
+        $address = Address::factory()->create([
+            'country_id' => $country->getKey(),
+            'state' => 'Rabat-Salé-Kénitra',
+        ]);
+        $cooperative = Cooperative::factory()->create([
+            'address_id' => $address->getKey(),
+        ]);
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
+
+        $this->actingAs($actor)
+            ->get(route('root.backoffice.cooperatives.edit', $cooperative))
+            ->assertOk()
+            ->assertViewIs('super-admin-root.cooperatives.edit')
+            ->assertSee('Maroc')
+            ->assertSee('value="'.$country->getKey().'" selected', false)
+            ->assertSee('value="Rabat-Salé-Kénitra" selected', false);
+    }
+
+    public function test_root_update_rejects_a_region_outside_the_moroccan_list(): void
+    {
+        $country = $this->morocco();
+        $address = Address::factory()->create([
+            'country_id' => $country->getKey(),
+            'state' => 'Rabat-Salé-Kénitra',
+        ]);
+        $cooperative = Cooperative::factory()->create([
+            'address_id' => $address->getKey(),
+        ]);
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
+
+        $this->actingAs($actor)
+            ->put(route('root.backoffice.cooperatives.update', $cooperative), [
+                'address_line_1' => '10 Avenue Hassan II',
+                'city' => 'Rabat',
+                'country_id' => $country->getKey(),
+                'postal_code' => '10000',
+                'state' => 'Région inconnue',
+            ])
+            ->assertSessionHasErrors(['state']);
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $address->getKey(),
+            'state' => 'Rabat-Salé-Kénitra',
+        ]);
+    }
+
+    public function test_root_cannot_select_a_country_other_than_morocco(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+        $foreignCountry = Country::factory()->create([
+            'code' => 'ES',
+            'iso3' => 'ESP',
+            'name' => 'Espagne',
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('root.backoffice.cooperatives.store'), [
+                ...$this->validCooperativeAttributes('Pays interdit'),
+                ...$this->validAddressAttributes(),
+                'country_id' => $foreignCountry->getKey(),
+            ])
+            ->assertSessionHasErrors(['country_id']);
+
+        $this->assertDatabaseMissing('cooperatives', ['name' => 'Pays interdit']);
+    }
+
+    public function test_root_cannot_create_cooperative_without_all_five_address_fields(): void
+    {
+        $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
+
+        $this->actingAs($actor)
+            ->post(route('root.backoffice.cooperatives.store'), [
+                ...$this->validCooperativeAttributes('Adresse incomplète'),
+                'address_line_1' => '1 Rue Test',
+                'city' => 'Casablanca',
+            ])
+            ->assertSessionHasErrors(['country_id', 'postal_code', 'state']);
+
+        $this->assertDatabaseMissing('cooperatives', ['name' => 'Adresse incomplète']);
+    }
+
+    private function morocco(): Country
+    {
+        return Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Maroc',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+    }
+
     /** @return array<string, mixed> */
     private function validCooperativeAttributes(string $name): array
     {
@@ -267,6 +453,31 @@ final class CooperativeControllerTest extends TestCase
             'email' => strtolower(str_replace(' ', '-', $name)).'@example.test',
             'rc' => 'RC-HTTP',
             'ice' => '001234567890123',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function validAddressAttributes(): array
+    {
+        $country = Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Maroc',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+
+        return [
+            'address_line_1' => '10 Avenue Hassan II',
+            'city' => 'Casablanca',
+            'country_id' => $country->getKey(),
+            'postal_code' => '20000',
+            'state' => 'Casablanca-Settat',
         ];
     }
 

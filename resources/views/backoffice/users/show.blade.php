@@ -10,7 +10,10 @@
     </div>
 
     <div class="actions">
-        <a class="button button-secondary" href="{{ route('backoffice.users.index') }}">Retour à la liste</a>
+        <a class="button button-secondary" href="{{ route('backoffice.dashboard') }}">Retour au tableau de bord</a>
+        @if($canViewAssignments)
+            <a class="button button-secondary" href="{{ route('backoffice.super-admins.cooperatives.index', $user) }}">Gérer les affectations</a>
+        @endif
     </div>
 
     <div class="actions">
@@ -64,7 +67,7 @@
 
         @can('restore', $user)
             <form method="POST" action="{{ route('backoffice.users.restore', $user) }}"
-                  onsubmit="return confirm('Restaurer ce compte avec le statut actif ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                  onsubmit="return confirm('Restaurer ce compte en attente ? Une nouvelle activation sera nécessaire. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                 @csrf
                 @method('PATCH')
                 <button class="button" type="submit">Restaurer le compte</button>

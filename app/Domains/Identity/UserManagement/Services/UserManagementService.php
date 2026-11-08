@@ -11,6 +11,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
@@ -32,15 +33,125 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     ) {
     }
 
+    /**
+     * Update a normal user account and its single operational role.
+     * Root accounts are managed outside the ordinary user CRUD.
+     *
+     * @param array<string, mixed> $attributes
+     */
+    public function updateUserAccount(
+        User $actor,
+        User $target,
+        array $attributes,
+        string $roleSlug,
+    ): User {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        if ($roleSlug === self::ROLE_SUPER_ADMIN_ROOT) {
+            throw new DomainException('The super admin root role cannot be assigned through user management.');
+        }
+
+        $role = $this->findRole($roleSlug);
+        $cooperativeId = $roleSlug === self::ROLE_SUPER_ADMIN
+            ? null
+            : ($attributes['cooperative_id'] ?? null);
+
+        if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+            $this->assertCooperativeExists($cooperativeId);
+        }
+
+        return DB::transaction(function () use (
+            $actor,
+            $target,
+            $attributes,
+            $role,
+            $roleSlug,
+            $cooperativeId,
+        ): User {
+            $lockedTarget = User::query()
+                ->whereKey($target->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedTarget === null || $lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
+                throw new DomainException('Root accounts cannot be modified through ordinary user management.');
+            }
+
+            $emailChanged = $lockedTarget->email !== $attributes['email'];
+
+            $oldValues = [
+                'first_name' => $lockedTarget->first_name,
+                'last_name' => $lockedTarget->last_name,
+                'status' => $lockedTarget->status->value,
+                'email' => $lockedTarget->email,
+                'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
+                'telephone' => $lockedTarget->telephone,
+                'cooperative_id' => $lockedTarget->cooperative_id,
+                'roles' => $lockedTarget->roles()->pluck('slug')->all(),
+            ];
+
+            $lockedTarget->fill([
+                'first_name' => $attributes['first_name'],
+                'last_name' => $attributes['last_name'],
+                'display_name' => trim($attributes['first_name'].' '.$attributes['last_name']),
+                'email' => $attributes['email'],
+                'telephone' => $attributes['telephone'],
+                'cooperative_id' => $cooperativeId,
+            ]);
+            if ($emailChanged) {
+                $lockedTarget->email_verified_at = null;
+                $lockedTarget->status = UserStatus::Pending;
+                $this->revokePendingInvitations($lockedTarget);
+            }
+
+            $lockedTarget->save();
+
+            $lockedTarget->roles()->sync([$role->getKey()]);
+
+            if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+                $lockedTarget->cooperatives()->detach();
+            }
+
+            $newValues = [
+                'first_name' => $lockedTarget->first_name,
+                'last_name' => $lockedTarget->last_name,
+                'status' => $lockedTarget->status->value,
+                'email' => $lockedTarget->email,
+                'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
+                'telephone' => $lockedTarget->telephone,
+                'cooperative_id' => $lockedTarget->cooperative_id,
+                'roles' => [$roleSlug],
+            ];
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.updated',
+                action: 'updated',
+                oldValues: $oldValues,
+                newValues: $newValues,
+            );
+
+            $this->revokeAccessCredentials(
+                actor: $actor,
+                target: $lockedTarget,
+                reason: 'user_role_or_profile_changed',
+            );
+
+            return $lockedTarget->fresh();
+        });
+    }
+
     public function createUser(
         User $actor,
         array $attributes,
         string $roleSlug,
         UserStatus $initialStatus = UserStatus::Pending,
     ): User {
-        if (! in_array($initialStatus, [UserStatus::Active, UserStatus::Pending], true)) {
+        if ($initialStatus !== UserStatus::Pending) {
             throw new DomainException(
-                'A newly created user must start as active or pending.',
+                'A newly created user must start as pending.',
             );
         }
 
@@ -77,8 +188,9 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
                 'password' => bin2hex(random_bytes(32)),
                 //'status' => UserStatus::Pending,
-                'status' => $initialStatus,
+                'status' => UserStatus::Pending,
                 'email_verified_at' => null,
+                'must_change_password' => false,
             ]);
 
             $user = User::query()->create($userAttributes);
@@ -230,21 +342,81 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function activateUser(User $actor, User $target): User
     {
         $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
 
         $rootCanActivateFrom = [
             UserStatus::Pending,
             UserStatus::Inactive,
             UserStatus::Suspended,
         ];
-        return $this->changeUserStatus(
-            actor: $actor,
-            target: $target,
-            newStatus: UserStatus::Active,
-            action: 'activated',
-            allowedRootSourceStatuses: $rootCanActivateFrom,
-            allowedSuperAdminSourceStatuses: [],
-            rootOnly: true,
-        );
+
+        return DB::transaction(function () use ($actor, $target, $rootCanActivateFrom): User {
+            $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
+
+            if ($lockedTarget === null || ! in_array($lockedTarget->status, $rootCanActivateFrom, true)) {
+                throw new DomainException('This account cannot be activated from its current status.');
+            }
+
+            $oldStatus = $lockedTarget->status;
+            $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+            $lockedTarget->status = UserStatus::Active;
+            $lockedTarget->email_verified_at = null;
+            $lockedTarget->must_change_password = false;
+            $lockedTarget->save();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.activated_for_email_verification',
+                action: 'activated_for_email_verification',
+                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => $oldEmailVerifiedAt],
+                newValues: ['status' => UserStatus::Active->value, 'email_verified_at' => null],
+            );
+
+            $this->revokePendingInvitations($lockedTarget);
+            $this->revokeAccessCredentials($actor, $lockedTarget, 'user_reactivated');
+
+            return $lockedTarget->fresh();
+        });
+    }
+
+    public function activateAndVerifyUser(User $actor, User $target): User
+    {
+        $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
+
+        return DB::transaction(function () use ($actor, $target): User {
+            $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
+
+            if ($lockedTarget === null || ! in_array($lockedTarget->status, [
+                UserStatus::Pending, UserStatus::Inactive, UserStatus::Suspended,
+            ], true)) {
+                throw new DomainException('This account cannot be activated from its current status.');
+            }
+
+            $oldStatus = $lockedTarget->status;
+            $oldVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+            $lockedTarget->status = UserStatus::Active;
+            $lockedTarget->email_verified_at = now();
+            $lockedTarget->password = 'MahlineMahline';
+            $lockedTarget->must_change_password = true;
+            $lockedTarget->save();
+
+            $this->recordLifecycleAudit(
+                actor: $actor,
+                target: $lockedTarget,
+                eventKey: 'identity.user.activated_with_temporary_password',
+                action: 'activated_with_temporary_password',
+                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => $oldVerifiedAt],
+                newValues: ['status' => UserStatus::Active->value, 'email_verified_at' => $lockedTarget->email_verified_at->toISOString()],
+                metadata: ['must_change_password' => true],
+            );
+
+            $this->revokePendingInvitations($lockedTarget);
+            $this->revokeAccessCredentials($actor, $lockedTarget, 'user_reactivated_with_temporary_password');
+
+            return $lockedTarget->fresh();
+        });
     }
 
     public function deactivateUser(User $actor, User $target): User
@@ -307,11 +479,12 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         return $this->changeUserStatus(
             actor: $actor,
             target: $target,
-            newStatus: UserStatus::Active,
-            action: 'restored',
+            newStatus: UserStatus::Pending,
+            action: 'restored_pending_invitation',
             allowedRootSourceStatuses: [UserStatus::Archived],
             allowedSuperAdminSourceStatuses: [],
             rootOnly: true,
+            resetEmailVerification: true,
         );
     }
 
@@ -343,6 +516,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 newValues: ['deleted_at' => now()->toISOString()],
             );
 
+            $this->revokePendingInvitations($lockedTarget);
+
             $this->revokeAccessCredentials(
                 actor: $actor,
                 target: $lockedTarget,
@@ -355,7 +530,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
     /**
      * Restore a soft-deleted user without restoring its old sessions or tokens.
-     * The account status is deliberately preserved.
+     * The account returns to pending and must complete a fresh activation flow.
      */
     public function restoreDeletedUser(User $actor, User $target): User
     {
@@ -373,17 +548,32 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $oldDeletedAt = $lockedTarget->deleted_at?->toISOString();
+            $oldStatus = $lockedTarget->status->value;
+            $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+
+            $lockedTarget->restore();
+            $lockedTarget->status = UserStatus::Pending;
+            $lockedTarget->email_verified_at = null;
+            $lockedTarget->must_change_password = false;
+            $lockedTarget->save();
 
             $this->recordLifecycleAudit(
                 actor: $actor,
                 target: $lockedTarget,
                 eventKey: 'identity.user.restored',
                 action: 'restored',
-                oldValues: ['deleted_at' => $oldDeletedAt],
-                newValues: ['deleted_at' => null],
+                oldValues: [
+                    'deleted_at' => $oldDeletedAt,
+                    'status' => $oldStatus,
+                    'email_verified_at' => $oldEmailVerifiedAt,
+                ],
+                newValues: [
+                    'deleted_at' => null,
+                    'status' => UserStatus::Pending->value,
+                    'email_verified_at' => null,
+                    'must_change_password' => false,
+                ],
             );
-
-            $lockedTarget->restore();
 
             return $lockedTarget->fresh();
         });
@@ -405,6 +595,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         array $allowedSuperAdminSourceStatuses,
         ?string $revokeReason = null,
         bool $rootOnly = false,
+        bool $resetEmailVerification = false,
     ): User {
         return DB::transaction(function () use (
             $actor,
@@ -415,6 +606,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $allowedSuperAdminSourceStatuses,
             $revokeReason,
             $rootOnly,
+            $resetEmailVerification,
         ): User {
             $lockedTarget = User::query()
                 ->whereKey($target->getKey())
@@ -448,20 +640,40 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $oldStatus = $lockedTarget->status;
+            $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+            $oldMustChangePassword = $lockedTarget->must_change_password;
             $lockedTarget->status = $newStatus;
+
+            if ($resetEmailVerification) {
+                $lockedTarget->email_verified_at = null;
+                $lockedTarget->must_change_password = false;
+            }
+
             $lockedTarget->save();
+
+            $oldValues = ['status' => $oldStatus->value];
+            $newValues = ['status' => $newStatus->value];
+
+            if ($resetEmailVerification) {
+                $oldValues['email_verified_at'] = $oldEmailVerifiedAt;
+                $oldValues['must_change_password'] = $oldMustChangePassword;
+                $newValues['email_verified_at'] = null;
+                $newValues['must_change_password'] = false;
+            }
 
             $this->recordLifecycleAudit(
                 actor: $actor,
                 target: $lockedTarget,
                 eventKey: 'identity.user.status_changed',
                 action: 'status_changed',
-                oldValues: ['status' => $oldStatus->value],
-                newValues: ['status' => $newStatus->value],
+                oldValues: $oldValues,
+                newValues: $newValues,
                 metadata: ['operation' => $action],
             );
 
             if ($revokeReason !== null) {
+                $this->revokePendingInvitations($lockedTarget);
+
                 $this->revokeAccessCredentials(
                     actor: $actor,
                     target: $lockedTarget,
@@ -489,6 +701,17 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'The super admin cannot manage this user.',
             );
         }
+    }
+
+    private function revokePendingInvitations(User $target): void
+    {
+        UserInvitation::query()
+            ->where('user_id', $target->getKey())
+            ->whereNull('used_at')
+            ->whereNull('revoked_at')
+            ->update([
+                'revoked_at' => now(),
+            ]);
     }
 
     private function revokeAccessCredentials(
@@ -664,7 +887,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     {
         if (! $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
             throw new DomainException(
-                'Only the super admin root can manage super admin assignments.',
+                'Only the super admin root can perform this action.',
             );
         }
     }

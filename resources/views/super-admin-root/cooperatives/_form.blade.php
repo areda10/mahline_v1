@@ -1,5 +1,14 @@
 @php($isCooperativeAdmin = auth()->user()->hasRole('cooperative_admin'))
 <div class="form-grid">
+    @if($cooperative->exists && auth()->user()->hasRole('super_admin_root'))
+        <label>Statut de la coopérative
+            <select name="status" required>
+                @foreach(\App\Domains\Cooperatives\Enums\CooperativeStatus::cases() as $status)
+                    <option value="{{ $status->value }}" @selected(old('status', $cooperative->status?->value) === $status->value)>{{ ucfirst($status->value) }}</option>
+                @endforeach
+            </select>
+        </label>
+    @endif
     @unless($isCooperativeAdmin)
         <label>Nom <input name="name" required maxlength="255" value="{{ old('name', $cooperative->name) }}"></label>
         <label>RIB <input name="rib" required maxlength="255" value="{{ old('rib', $cooperative->rib) }}"></label>
@@ -9,18 +18,36 @@
     @endunless
     <label>Téléphone <input name="phone" required maxlength="255" value="{{ old('phone', $cooperative->phone) }}"></label>
     <label>Email <input type="email" name="email" required maxlength="255" value="{{ old('email', $cooperative->email) }}"></label>
-    <label>
-        Adresse
-        <select name="address_id" required>
-            <option value="">Sélectionner une adresse</option>
-            @foreach($addresses as $address)
-
-                <option value="{{ $address->getKey() }}" @selected((string) old('address_id', $cooperative->address_id) === (string) $address->getKey())>
-                    {{ $address->address_line_1 }}
-                    @if($address->address_line_2), {{ $address->address_line_2 }}@endif
-                    — {{ $address->city }}
-                    @if($address->country), {{ $address->country->name }}@endif
-                </option>
+    @php($address = $cooperative->address)
+    <label>Adresse <input name="address_line_1" required maxlength="255" value="{{ old('address_line_1', $address?->address_line_1) }}"></label>
+    <label>Ville <input name="city" required maxlength="255" value="{{ old('city', $address?->city) }}"></label>
+    <label>Pays
+        <select name="country_id" required>
+            <option value="">Sélectionner un pays</option>
+            @foreach($countries as $country)
+                <option value="{{ $country->getKey() }}" @selected((string) old('country_id', $address?->country_id ?? $country->getKey()) === (string) $country->getKey())>Maroc</option>
+            @endforeach
+        </select>
+    </label>
+    <label>Code postal <input name="postal_code" required maxlength="32" value="{{ old('postal_code', $address?->postal_code) }}"></label>
+    <label>Région
+        <select name="state" required>
+            <option value="">Sélectionner une région</option>
+            @foreach([
+                'Tanger-Tétouan-Al Hoceïma',
+                "L'Oriental",
+                'Fès-Meknès',
+                'Rabat-Salé-Kénitra',
+                'Béni Mellal-Khénifra',
+                'Casablanca-Settat',
+                'Marrakech-Safi',
+                'Drâa-Tafilalet',
+                'Souss-Massa',
+                'Guelmim-Oued Noun',
+                'Laâyoune-Sakia El Hamra',
+                'Dakhla-Oued Ed-Dahab',
+            ] as $region)
+                <option value="{{ $region }}" @selected(old('state', $address?->state) === $region)>{{ $region }}</option>
             @endforeach
         </select>
     </label>

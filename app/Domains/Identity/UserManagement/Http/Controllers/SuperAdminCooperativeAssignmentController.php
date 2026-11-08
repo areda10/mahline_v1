@@ -24,6 +24,12 @@ final class SuperAdminCooperativeAssignmentController
 
     public function index(User $superAdmin): View
     {
+        // L'espace Root doit rester inaccessible aux autres rôles, même si
+        // un super_admin peut consulter ses propres affectations dans son espace.
+        if (request()->routeIs('root.backoffice.users.cooperatives.*')) {
+            abort_unless($this->isSuperAdminRoot(request()->user()), 403);
+        }
+
         Gate::authorize('viewAssignments', $superAdmin);
 
         $cooperatives = $superAdmin->cooperatives()
@@ -51,7 +57,11 @@ final class SuperAdminCooperativeAssignmentController
                 ],
             );
 
-        return view('backoffice.super-admins.cooperatives.index', [
+        $view = $this->isSuperAdminRoot(request()->user())
+            ? 'super-admin-root.users.cooperatives'
+            : 'backoffice.super-admins.cooperatives.index';
+
+        return view($view, [
             'superAdmin' => $superAdmin,
             'cooperatives' => $cooperatives,
             'availableCooperatives' => $availableCooperatives,
@@ -73,18 +83,18 @@ final class SuperAdminCooperativeAssignmentController
             );
         } catch (\DomainException) {
             return redirect()
-                ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+                ->route($this->assignmentRouteName($request), $superAdmin)
                 ->with('error', 'Cette affectation n’est plus autorisée. Actualisez la page et vérifiez le statut du super administrateur.');
         } catch (QueryException $exception) {
             report($exception);
 
             return redirect()
-                ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+                ->route($this->assignmentRouteName($request), $superAdmin)
                 ->with('error', 'Un conflit de base de données a empêché l’affectation. Aucune modification partielle n’a été conservée.');
         }
 
         return redirect()
-            ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+            ->route($this->assignmentRouteName($request), $superAdmin)
             ->with('success', 'La coopérative a été affectée au super administrateur.');
     }
 
@@ -103,19 +113,26 @@ final class SuperAdminCooperativeAssignmentController
             );
         } catch (\DomainException) {
             return redirect()
-                ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+                ->route($this->assignmentRouteName($request), $superAdmin)
                 ->with('error', 'Cette désaffectation n’est plus autorisée. Actualisez la page et vérifiez le statut du super administrateur.');
         } catch (QueryException $exception) {
             report($exception);
 
             return redirect()
-                ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+                ->route($this->assignmentRouteName($request), $superAdmin)
                 ->with('error', 'Un conflit de base de données a empêché la désaffectation. Aucune modification partielle n’a été conservée.');
         }
 
         return redirect()
-            ->route('backoffice.super-admins.cooperatives.index', $superAdmin)
+            ->route($this->assignmentRouteName($request), $superAdmin)
             ->with('success', 'L’affectation de la coopérative a été retirée.');
+    }
+
+    private function assignmentRouteName(Request $request): string
+    {
+        return $this->isSuperAdminRoot($request->user())
+            ? 'root.backoffice.users.cooperatives.index'
+            : 'backoffice.super-admins.cooperatives.index';
     }
 
     private function isSuperAdminRoot(?User $user): bool

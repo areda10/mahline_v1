@@ -45,10 +45,10 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($root)
-            ->get(route('backoffice.users.index'));
+            ->get(route('root.backoffice.users.index'));
 
         $response->assertOk()
-            ->assertViewIs('backoffice.users.index')
+            ->assertViewIs('super-admin-root.users.index')
             ->assertSee('Utilisateur affecté')
             ->assertSee('Super admin non affecté')
             ->assertSee('Utilisateur sans coopérative')
@@ -72,7 +72,7 @@ final class UserManagementControllerTest extends TestCase
         $this->actor('user', [], ['display_name' => 'Autre utilisateur']);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.index', [
+            ->get(route('root.backoffice.users.index', [
                 'search' => 'amina',
                 'role' => 'super_admin',
                 'status' => UserStatus::Inactive->value,
@@ -92,9 +92,9 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', $target))
+            ->get(route('root.backoffice.users.show', $target))
             ->assertOk()
-            ->assertViewIs('backoffice.users.show')
+            ->assertViewIs('super-admin-root.users.show')
             ->assertSee('Utilisateur détaillé')
             ->assertSee('Coopérative détail');
     }
@@ -108,7 +108,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', $target))
+            ->get(route('root.backoffice.users.show', $target))
             ->assertOk()
             ->assertSee('Renvoyer l’invitation');
     }
@@ -132,6 +132,27 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee('Renvoyer l’invitation');
     }
 
+    public function test_assigned_super_admin_cannot_resend_verification_for_an_active_unverified_user(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->actor('super_admin', ['users.view', 'users.create']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        $target = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.resend-invitation', $target))
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('user_invitations', [
+            'user_id' => $target->getKey(),
+        ]);
+    }
+
     public function test_root_does_not_see_resend_invitation_button_for_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
@@ -140,7 +161,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', $target))
+            ->get(route('root.backoffice.users.show', $target))
             ->assertOk()
             ->assertDontSee('Renvoyer l’invitation');
     }
@@ -179,7 +200,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', $superAdmin))
+            ->get(route('root.backoffice.users.show', $superAdmin))
             ->assertOk()
             ->assertSee('Administrateur global')
             ->assertSee('Affectations aux coopératives')
@@ -196,7 +217,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', $target))
+            ->get(route('root.backoffice.users.show', $target))
             ->assertOk()
             ->assertSee('Compte indépendant')
             ->assertSee('Aucune coopérative');
@@ -268,7 +289,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create();
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', $target))
+            ->get(route('root.backoffice.users.show', $target))
             ->assertForbidden();
     }
 
@@ -277,12 +298,14 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', ['users.view']);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.show', '01J00000000000000000000000'))
+            ->get(route('root.backoffice.users.show', '01J00000000000000000000000'))
             ->assertNotFound();
     }
 
     public function test_root_can_activate_a_pending_user_from_the_detail_page(): void
     {
+        Notification::fake();
+
         $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
         $target = User::factory()->create([
             'display_name' => 'Compte à activer',
@@ -291,8 +314,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.activate', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->patch(route('root.backoffice.users.activate', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -301,10 +324,18 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('audit_events', [
-            'event_key' => 'identity.user.status_changed',
+            'event_key' => 'identity.user.activated_for_email_verification',
             'actor_id' => $root->getKey(),
             'subject_id' => $target->getKey(),
         ]);
+
+        $this->assertDatabaseHas('user_invitations', [
+            'user_id' => $target->getKey(),
+            'purpose' => 'root_manual_verification',
+            'used_at' => null,
+            'revoked_at' => null,
+        ]);
+        Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
     public function test_super_admin_cannot_activate_pending_or_inactive_users_even_in_assigned_cooperative(): void
@@ -338,8 +369,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.activate', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->patch(route('root.backoffice.users.activate', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -357,8 +388,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.deactivate', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->patch(route('root.backoffice.users.deactivate', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -382,8 +413,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.suspend', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->patch(route('root.backoffice.users.suspend', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -446,7 +477,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.suspend', $target))
+            ->patch(route('root.backoffice.users.suspend', $target))
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
@@ -461,7 +492,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Inactive]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.suspend', $target))
+            ->patch(route('root.backoffice.users.suspend', $target))
             ->assertForbidden();
     }
 
@@ -471,7 +502,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Pending]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.activate', $target))
+            ->patch(route('root.backoffice.users.activate', $target))
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
@@ -486,7 +517,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.deactivate', $target))
+            ->patch(route('root.backoffice.users.deactivate', $target))
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
@@ -501,7 +532,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.activate', $target))
+            ->patch(route('root.backoffice.users.activate', $target))
             ->assertForbidden();
     }
 
@@ -514,8 +545,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.archive', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->patch(route('root.backoffice.users.archive', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
@@ -530,7 +561,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
-    public function test_root_can_restore_an_archived_user_to_active(): void
+    public function test_root_can_restore_an_archived_user_to_pending(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
         $target = User::factory()->create([
@@ -539,13 +570,13 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.restore', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->patch(route('root.backoffice.users.restore', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
             'id' => $target->getKey(),
-            'status' => UserStatus::Active->value,
+            'status' => UserStatus::Pending->value,
         ]);
 
         $this->assertDatabaseHas('audit_events', [
@@ -561,7 +592,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.archive', $target))
+            ->patch(route('root.backoffice.users.archive', $target))
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
@@ -576,7 +607,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Archived]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.restore', $target))
+            ->patch(route('root.backoffice.users.restore', $target))
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
@@ -595,7 +626,7 @@ final class UserManagementControllerTest extends TestCase
             ->patch(route('backoffice.users.archive', $active))
             ->assertForbidden();
 
-        $this->patch(route('backoffice.users.restore', $archived))
+        $this->patch(route('root.backoffice.users.restore', $archived))
             ->assertForbidden();
     }
 
@@ -605,7 +636,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['status' => UserStatus::Archived]);
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.archive', $target))
+            ->patch(route('root.backoffice.users.archive', $target))
             ->assertForbidden();
     }
 
@@ -680,7 +711,7 @@ final class UserManagementControllerTest extends TestCase
         $root = $this->actor('super_admin_root', []);
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.index'))
+            ->get(route('root.backoffice.users.index'))
             ->assertForbidden();
     }
 
@@ -690,8 +721,8 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create(['display_name' => 'Compte à supprimer']);
 
         $this->actingAs($root)
-            ->delete(route('backoffice.users.destroy', $target))
-            ->assertRedirect(route('backoffice.users.index'))
+            ->delete(route('root.backoffice.users.destroy', $target))
+            ->assertRedirect(route('root.backoffice.users.index'))
             ->assertSessionHas('success');
 
         $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
@@ -708,7 +739,7 @@ final class UserManagementControllerTest extends TestCase
         $target = User::factory()->create();
 
         $this->actingAs($root)
-            ->delete(route('backoffice.users.destroy', $target))
+            ->delete(route('root.backoffice.users.destroy', $target))
             ->assertForbidden();
 
         $this->assertDatabaseHas('users', [
@@ -728,7 +759,7 @@ final class UserManagementControllerTest extends TestCase
             ->delete(route('backoffice.users.destroy', $active))
             ->assertForbidden();
 
-        $this->patch(route('backoffice.users.restore-deleted', $deleted->getKey()))
+        $this->patch(route('root.backoffice.users.restore-deleted', $deleted->getKey()))
             ->assertForbidden();
     }
 
@@ -742,20 +773,21 @@ final class UserManagementControllerTest extends TestCase
         $target->delete();
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.index', ['deleted' => 1]))
+            ->get(route('root.backoffice.users.index', ['deleted' => 1]))
             ->assertOk()
             ->assertSee('Compte supprimé à restaurer')
             ->assertSee('Comptes supprimés logiquement')
-            ->assertSee(route('backoffice.users.restore-deleted', $target->getKey()));
+            ->assertSee(route('root.backoffice.users.restore-deleted', $target->getKey()));
 
-        $this->patch(route('backoffice.users.restore-deleted', $target->getKey()))
-            ->assertRedirect(route('backoffice.users.index'))
+        $this->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
+            ->assertRedirect(route('root.backoffice.users.show', $target->getKey()))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('users', [
             'id' => $target->getKey(),
             'deleted_at' => null,
-            'status' => UserStatus::Inactive->value,
+            'status' => UserStatus::Pending->value,
+            'email_verified_at' => null,
         ]);
 
         $this->assertDatabaseHas('audit_events', [
@@ -772,7 +804,7 @@ final class UserManagementControllerTest extends TestCase
         $target->delete();
 
         $this->actingAs($root)
-            ->patch(route('backoffice.users.restore-deleted', $target->getKey()))
+            ->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
             ->assertForbidden();
 
         $this->assertSoftDeleted('users', ['id' => $target->getKey()]);
@@ -798,9 +830,9 @@ final class UserManagementControllerTest extends TestCase
         );
 
         $this->actingAs($root)
-            ->get(route('backoffice.users.create'))
+            ->get(route('root.backoffice.users.create'))
             ->assertOk()
-            ->assertViewIs('backoffice.users.create')
+            ->assertViewIs('super-admin-root.users.create')
             ->assertSee('value="super_admin"', false)
             ->assertSee('value="cooperative_admin"', false)
             ->assertSee('value="user"', false);
@@ -865,7 +897,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('user', ['users.create']);
 
         $this->actingAs($actor)
-            ->get(route('backoffice.users.create'))
+            ->get(route('root.backoffice.users.create'))
             ->assertForbidden();
     }
 
@@ -883,8 +915,8 @@ final class UserManagementControllerTest extends TestCase
         $payload = $this->validCreationPayload('super_admin');
 
         $this->actingAs($root)
-            ->post(route('backoffice.users.store'), $payload)
-            ->assertRedirect(route('backoffice.users.index'))
+            ->post(route('root.backoffice.users.store'), $payload)
+            ->assertRedirect(route('root.backoffice.users.index'))
             ->assertSessionHas('success');
 
         $created = User::query()->where('email', $payload['email'])->firstOrFail();
@@ -917,7 +949,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
-    public function test_root_can_create_active_user_and_send_verification_invitation(): void
+    public function test_root_cannot_create_a_user_directly_as_active(): void
     {
         Notification::fake();
 
@@ -936,16 +968,44 @@ final class UserManagementControllerTest extends TestCase
         );
 
         $this->actingAs($root)
-            ->post(route('backoffice.users.store'), $payload)
-            ->assertRedirect(route('backoffice.users.index'))
+            ->post(route('root.backoffice.users.store'), $payload)
+            ->assertSessionHasErrors('status');
+
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
+    }
+
+    public function test_root_can_create_user_in_pending_status_and_send_activation_invitation(): void
+    {
+        Notification::fake();
+
+        $root = $this->actor('super_admin_root', ['users.create']);
+        $cooperative = Cooperative::factory()->create();
+
+        Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        $payload = $this->validCreationPayload(
+            'user',
+            $cooperative->getKey(),
+            UserStatus::Pending,
+        );
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.users.store'), $payload)
+            ->assertRedirect(route('root.backoffice.users.index'))
             ->assertSessionHas('success');
 
         $created = User::query()->where('email', $payload['email'])->firstOrFail();
 
-        $this->assertSame(UserStatus::Active, $created->status);
+        $this->assertSame(UserStatus::Pending, $created->status);
         $this->assertNull($created->email_verified_at);
         $this->assertDatabaseHas('user_invitations', [
             'user_id' => $created->getKey(),
+            'purpose' => 'account_activation',
             'used_at' => null,
             'revoked_at' => null,
         ]);
@@ -969,8 +1029,8 @@ final class UserManagementControllerTest extends TestCase
             $payload = $this->validCreationPayload($roleSlug, $cooperative->getKey());
 
             $this->actingAs($root)
-                ->post(route('backoffice.users.store'), $payload)
-                ->assertRedirect(route('backoffice.users.index'))
+                ->post(route('root.backoffice.users.store'), $payload)
+                ->assertRedirect(route('root.backoffice.users.index'))
                 ->assertSessionHas('success');
 
             $created = User::query()->where('email', $payload['email'])->firstOrFail();
@@ -1145,7 +1205,7 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($root)
             ->post(
-                route('backoffice.users.store'),
+                route('root.backoffice.users.store'),
                 $payload,
             )
             ->assertRedirect()
@@ -1193,8 +1253,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $this->actingAs($root)
-            ->post(route('backoffice.users.resend-invitation', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->post(route('root.backoffice.users.resend-invitation', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('user_invitations', [
@@ -1285,7 +1345,7 @@ final class UserManagementControllerTest extends TestCase
             ]);
 
             $this->actingAs($actor)
-                ->post(route('backoffice.users.resend-invitation', $target))
+                ->post(route('root.backoffice.users.resend-invitation', $target))
                 ->assertForbidden();
         }
 
@@ -1313,7 +1373,7 @@ final class UserManagementControllerTest extends TestCase
             ]);
 
             $this->actingAs($root)
-                ->post(route('backoffice.users.resend-invitation', $target))
+                ->post(route('root.backoffice.users.resend-invitation', $target))
                 ->assertForbidden();
         }
 
@@ -1343,8 +1403,8 @@ final class UserManagementControllerTest extends TestCase
         });
 
         $this->actingAs($root)
-            ->post(route('backoffice.users.resend-invitation', $target))
-            ->assertRedirect(route('backoffice.users.show', $target))
+            ->post(route('root.backoffice.users.resend-invitation', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('error')
             ->assertSessionMissing('success');
 
@@ -1394,6 +1454,10 @@ final class UserManagementControllerTest extends TestCase
             ->get(route('root.backoffice.users.index'))
             ->assertOk()
             ->assertViewIs('super-admin-root.users.index');
+
+        $this->actingAs($root)
+            ->get(route('backoffice.users.index'))
+            ->assertForbidden();
     }
 
     public function test_super_admin_cannot_access_root_user_management_space(): void

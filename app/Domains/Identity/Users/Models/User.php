@@ -46,7 +46,7 @@ final class User extends BaseModel implements AuthenticatableContract
         'status',
         'locale',
         'timezone',
-        'cooperative_id'
+        'cooperative_id',
     ];
 
     /**
@@ -65,6 +65,7 @@ final class User extends BaseModel implements AuthenticatableContract
         return [
             'status' => UserStatus::class,
             'email_verified_at' => 'datetime',
+            'must_change_password' => 'boolean',
             'password' => 'hashed',
             'deleted_at' => 'datetime',
         ];

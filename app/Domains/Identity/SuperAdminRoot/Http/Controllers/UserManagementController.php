@@ -6,6 +6,7 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\Enums\UserStatus;
@@ -17,6 +18,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Illuminate\Validation\Rule;
 
 final class UserManagementController
 {
@@ -48,6 +50,85 @@ final class UserManagementController
         ]);
     }
 
+    public function edit(Request $request, User $user): View
+    {
+        $this->authorizeRoot($request);
+        Gate::authorize('view', $user);
+
+        abort_if($user->roles()->where('slug', 'super_admin_root')->exists(), 404);
+
+        $user->load(['roles', 'cooperative']);
+
+        return view('super-admin-root.users.edit', [
+            'user' => $user,
+            'roles' => Role::query()
+                ->where('is_active', true)
+                ->whereIn('slug', ['super_admin', 'cooperative_admin', 'user'])
+                ->orderBy('name')
+                ->get(['name', 'slug']),
+            'cooperatives' => Cooperative::query()
+                ->orderBy('name')
+                ->get(['id', 'name']),
+        ]);
+    }
+
+    public function update(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
+    ): RedirectResponse {
+        $this->authorizeRoot($request);
+        Gate::authorize('view', $user);
+        abort_if($user->roles()->where('slug', 'super_admin_root')->exists(), 404);
+
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
+            'telephone' => ['required', 'string', 'max:255'],
+            'role_slug' => ['required', Rule::in(['super_admin', 'cooperative_admin', 'user'])],
+            'cooperative_id' => [
+                Rule::requiredIf(fn (): bool => $request->input('role_slug') !== 'super_admin'),
+                'nullable',
+                'string',
+                Rule::exists('cooperatives', 'id')->whereNull('deleted_at'),
+            ],
+        ]);
+
+        $roleSlug = $data['role_slug'];
+        unset($data['role_slug']);
+
+        try {
+            $emailChanged = $user->email !== $data['email'];
+            $updatedUser = $userManagementService->updateUserAccount(
+                $request->user(),
+                $user,
+                $data,
+                $roleSlug,
+            );
+
+            if ($emailChanged && in_array($updatedUser->status, [UserStatus::Active, UserStatus::Pending], true)) {
+                $invitationService->sendInvitation(
+                    $updatedUser,
+                    $updatedUser->status === UserStatus::Active ? 'root_manual_verification' : 'account_activation',
+                );
+            }
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', 'Le compte a été modifié, mais le nouvel e-mail de vérification n’a pas pu être envoyé.');
+        } catch (\DomainException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('root.backoffice.users.show', $user)
+            ->with('success', $emailChanged
+                ? 'Le compte a été mis à jour. La nouvelle adresse doit être vérifiée ; une invitation a été envoyée si le statut du compte le permet. Les anciens accès ont été révoqués.'
+                : 'Le compte et son rôle ont été mis à jour. Les anciennes sessions et les anciens jetons API ont été révoqués.');
+    }
+
     public function store(
         CreateUserRequest $request,
         UserManagementService $userManagementService,
@@ -68,7 +149,10 @@ final class UserManagementController
                 $initialStatus,
             );
 
-            $invitationService->sendInvitation($user);
+            $invitationService->sendInvitation(
+                $user,
+                $user->status === UserStatus::Active ? 'root_manual_verification' : 'account_activation',
+            );
         } catch (UserInvitationDeliveryException) {
             return back()->with(
                 'error',
@@ -97,13 +181,16 @@ final class UserManagementController
         Gate::authorize('resendInvitation', $user);
 
         try {
-            $invitationService->sendInvitation($user);
+            $invitationService->sendInvitation(
+                $user,
+                $user->status === UserStatus::Active ? 'root_manual_verification' : 'account_activation',
+            );
         } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
                 ->with(
                     'error',
-                    'L’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez réessayer.',
+                    'L’invitation n’a pas pu être envoyée. Le compte reste actif mais non vérifié ; vous pourrez réessayer.',
                 );
         } catch (\DomainException) {
             return redirect()
@@ -138,13 +225,52 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->orderByDesc('last_activity_at')
+            ->get();
+
+        $currentSessionId = $request->session()->getId();
+        $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
+            $session->setAttribute('is_current', hash_equals((string) $session->session_id, $currentSessionId));
+        });
+
         return view('super-admin-root.users.show', [
             'user' => $user,
             'canViewAssignments' => $canViewAssignments,
+            'sessions' => $sessions,
         ]);
     }
 
     public function activate(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
+    ): RedirectResponse {
+        $this->authorizeRoot($request);
+        Gate::authorize('activate', $user);
+
+        try {
+            $activeUser = $userManagementService->activateUser($request->user(), $user);
+            $invitationService->sendInvitation($activeUser, 'root_manual_verification');
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', 'Le compte est actif, mais l’e-mail de vérification n’a pas pu être envoyé. Vous pourrez réessayer.');
+        } catch (\DomainException $exception) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('root.backoffice.users.show', $user)
+            ->with('success', 'Le compte est actif, mais la connexion reste bloquée jusqu’à la vérification de l’adresse e-mail. Une invitation a été envoyée.');
+    }
+
+    public function activateAndVerify(
         Request $request,
         User $user,
         UserManagementService $userManagementService,
@@ -153,16 +279,14 @@ final class UserManagementController
         Gate::authorize('activate', $user);
 
         try {
-            $userManagementService->activateUser($request->user(), $user);
-        } catch (\DomainException) {
-            return redirect()
-                ->route('root.backoffice.users.show', $user)
-                ->with('error', 'Le statut du compte a changé ou cette transition n’est plus autorisée.');
+            $userManagementService->activateAndVerifyUser($request->user(), $user);
+        } catch (\DomainException $exception) {
+            return redirect()->route('root.backoffice.users.show', $user)
+                ->with('error', $exception->getMessage());
         }
 
-        return redirect()
-            ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte utilisateur a été activé.');
+        return redirect()->route('root.backoffice.users.show', $user)
+            ->with('success', 'Le compte est actif et l’e-mail est vérifié. Le mot de passe provisoire est MahlineMahline ; son remplacement sera obligatoire à la première connexion.');
     }
 
     public function deactivate(
@@ -238,15 +362,15 @@ final class UserManagementController
 
         try {
             $userManagementService->restoreArchivedUser($request->user(), $user);
-        } catch (\DomainException) {
+        } catch (\DomainException $exception) {
             return redirect()
                 ->route('root.backoffice.users.show', $user)
-                ->with('error', 'Le compte ne peut plus être restauré : son état a changé ou cette action n’est plus autorisée.');
+                ->with('error', $exception->getMessage());
         }
 
         return redirect()
             ->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte a été restauré avec le statut actif. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez ensuite l’une des deux méthodes d’activation. Les anciens accès restent révoqués.');
     }
 
     public function destroy(Request $request, User $user, UserManagementService $service): RedirectResponse
@@ -265,21 +389,24 @@ final class UserManagementController
             ->with('success', 'Le compte a été supprimé logiquement. Ses sessions et jetons API ont été révoqués.');
     }
 
-    public function restoreDeleted(Request $request, string $user, UserManagementService $service): RedirectResponse
-    {
+    public function restoreDeleted(
+        Request $request,
+        string $user,
+        UserManagementService $service,
+    ): RedirectResponse {
         $this->authorizeRoot($request);
         $deletedUser = User::withTrashed()->findOrFail($user);
         Gate::authorize('restoreDeleted', $deletedUser);
 
         try {
-            $service->restoreDeletedUser($request->user(), $deletedUser);
-        } catch (\DomainException) {
+            $restoredUser = $service->restoreDeletedUser($request->user(), $deletedUser);
+        } catch (\DomainException $exception) {
             return redirect()->route('root.backoffice.users.index', ['deleted' => 1])
-                ->with('error', 'Le compte ne peut pas être restauré : son état a changé ou cette action n’est plus autorisée.');
+                ->with('error', $exception->getMessage());
         }
 
-        return redirect()->route('root.backoffice.users.index')
-            ->with('success', 'Le compte a été restauré. Les anciennes sessions et les anciens jetons restent révoqués.');
+        return redirect()->route('root.backoffice.users.show', $restoredUser)
+            ->with('success', 'Le compte a été restauré en attente. Choisissez maintenant une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
     public function index(Request $request): View

@@ -33,13 +33,14 @@ final class UserInvitationService
     /**
      * Create and send a new invitation to an active or pending, unverified user.
      */
-    public function sendInvitation(User $user): void
+    public function sendInvitation(User $user, string $purpose = 'account_activation'): void
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
         [$invitation, $recipientEmail] = DB::transaction(function () use (
             $user,
             $token,
+            $purpose,
         ): array {
             $lockedUser = User::query()
                 ->whereKey($user->getKey())
@@ -52,12 +53,33 @@ final class UserInvitationService
                 );
             }
 
+            if (! in_array($purpose, ['account_activation', 'root_manual_verification'], true)) {
+                throw new InvalidArgumentException(
+                    'The invitation purpose is invalid.',
+                );
+            }
+
+            if ($lockedUser->email_verified_at !== null) {
+                throw new DomainException(
+                    'The user email address is already verified.',
+                );
+            }
+
             if (
-                ! in_array($lockedUser->status, [UserStatus::Active, UserStatus::Pending], true)
-                || $lockedUser->email_verified_at !== null
+                $purpose === 'account_activation'
+                && $lockedUser->status !== UserStatus::Pending
             ) {
                 throw new DomainException(
-                    'Only active or pending, unverified users can receive an invitation.',
+                    'Only pending, unverified users can receive an activation invitation.',
+                );
+            }
+
+            if (
+                $purpose === 'root_manual_verification'
+                && $lockedUser->status !== UserStatus::Active
+            ) {
+                throw new DomainException(
+                    'Only active, unverified users can receive a root verification invitation.',
                 );
             }
 
@@ -72,6 +94,7 @@ final class UserInvitationService
             $invitation = UserInvitation::query()->create([
                 'id' => (string) Str::ulid(),
                 'user_id' => $lockedUser->getKey(),
+                'purpose' => $purpose,
                 'token_hash' => hash('sha256', $token),
                 'expires_at' => now()->addMinutes(
                     self::EXPIRATION_MINUTES,
@@ -90,6 +113,7 @@ final class UserInvitationService
                 metadata: [
                     'invitation_id' => (string) $invitation->getKey(),
                     'expires_at' => $invitation->expires_at->toISOString(),
+                    'purpose' => $purpose,
                 ],
             ));
 
@@ -153,6 +177,7 @@ final class UserInvitationService
             metadata: [
                 'invitation_id' => (string) $invitation->getKey(),
                 'expires_at' => $invitation->expires_at->toISOString(),
+                'purpose' => $purpose,
             ],
         ));
     }
@@ -203,11 +228,13 @@ final class UserInvitationService
         }
 
         if (
-            ! in_array($user->status, [UserStatus::Active, UserStatus::Pending], true)
-            || $user->email_verified_at !== null
+            $user->email_verified_at !== null
+            || ($invitation->purpose === 'account_activation' && $user->status !== UserStatus::Pending)
+            || ($invitation->purpose === 'root_manual_verification' && $user->status !== UserStatus::Active)
+            || ! in_array($invitation->purpose, ['account_activation', 'root_manual_verification'], true)
         ) {
             throw new DomainException(
-                'Only active or pending, unverified users can accept an invitation.',
+                'The account status does not allow this invitation to be accepted.',
             );
         }
     }
@@ -296,20 +323,24 @@ final class UserInvitationService
             }
 
             if (
-                ! in_array($user->status, [UserStatus::Active, UserStatus::Pending], true)
-                || $user->email_verified_at !== null
+                $user->email_verified_at !== null
+                || ($invitation->purpose === 'account_activation' && $user->status !== UserStatus::Pending)
+                || ($invitation->purpose === 'root_manual_verification' && $user->status !== UserStatus::Active)
+                || ! in_array($invitation->purpose, ['account_activation', 'root_manual_verification'], true)
             ) {
                 throw new DomainException(
-                    'Only active or pending, unverified users can accept an invitation.',
+                    'Only pending, unverified users can accept an activation invitation.',
                 );
             }
 
             $user->password = $password;
+            $user->must_change_password = false;
 
-            if ($user->status === UserStatus::Pending) {
+            if ($invitation->purpose === 'account_activation') {
                 $user->status = UserStatus::Active;
             }
             $user->email_verified_at = now();
+            $user->must_change_password = false;
             $user->save();
 
             $invitation->used_at = now();
@@ -326,6 +357,7 @@ final class UserInvitationService
                 metadata: [
                     'invitation_id' => (string) $invitation->getKey(),
                     'status' => UserStatus::Active->value,
+                    'purpose' => $invitation->purpose,
                 ],
             ));
 

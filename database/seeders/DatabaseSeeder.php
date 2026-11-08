@@ -18,6 +18,7 @@ final class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             PermissionSeeder::class,
             RolePermissionSeeder::class,
+            CountrySeeder::class,
             
             CategorySeeder::class,    
             ProductSeeder::class,

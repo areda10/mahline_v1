@@ -2,7 +2,7 @@
 @section('title', $cooperative->name)
 @section('content')
 <div class="page-header"><div><h1>{{ $cooperative->name }}</h1><p class="muted">Statut : {{ $cooperative->status->value }}</p></div>
-@can('update', $cooperative)<a class="button" href="{{ route('backoffice.cooperatives.edit', $cooperative) }}">Modifier</a>@endcan</div>
+@can('update', $cooperative)<a class="button" href="{{ route('backoffice.cooperatives.edit', $cooperative) }}">Modifier</a>@endcan<a class="button button-secondary" href="{{ route('backoffice.dashboard') }}">Retour au tableau de bord</a></div>
 <div class="card"><dl>
 <dt>Email</dt><dd>{{ $cooperative->email ?? '—' }}</dd>
 <dt>Téléphone</dt><dd>{{ $cooperative->phone ?? '—' }}</dd>

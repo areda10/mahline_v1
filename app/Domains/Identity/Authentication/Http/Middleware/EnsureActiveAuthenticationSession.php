@@ -55,6 +55,10 @@ final class EnsureActiveAuthenticationSession
 
         $this->sessions->touch($authenticationSession);
 
+        if ($user->must_change_password && ! $request->routeIs('password.force-change.edit', 'password.force-change.update', 'security.password.edit')) {
+            return redirect()->route('password.force-change.edit');
+        }
+
         return $next($request);
     }
 }

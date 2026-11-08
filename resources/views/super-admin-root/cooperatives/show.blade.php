@@ -1,11 +1,11 @@
-@extends('layouts.admin')
+@extends('layouts.root')
 @section('title', $cooperative->name)
 @section('content')
 <div class="page-header"><div><h1>{{ $cooperative->name }}</h1><p class="muted">Statut : {{ $cooperative->status->value }}</p></div>
 @can('update', $cooperative)<a class="button" href="{{ route('root.backoffice.cooperatives.edit', $cooperative) }}">Modifier</a>@endcan
 <a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.categories.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les catégories</a>
 <a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les catalogues</a>
-<a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.products.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les produits</a></div>
+<a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.products.index', ['cooperative' => $cooperative->getKey()]) }}">Gérer les produits</a><a class="button button-secondary" href="{{ route('root.backoffice.dashboard') }}">Retour au tableau de bord</a></div>
 <div class="card"><dl>
 <dt>Email</dt><dd>{{ $cooperative->email ?? '—' }}</dd>
 <dt>Téléphone</dt><dd>{{ $cooperative->phone ?? '—' }}</dd>
@@ -13,9 +13,10 @@
 <dd>
     @if($cooperative->address)
         {{ $cooperative->address->address_line_1 }}
-        @if($cooperative->address->address_line_2), {{ $cooperative->address->address_line_2 }}@endif
         — {{ $cooperative->address->city }}
-        @if($cooperative->address->country), {{ $cooperative->address->country->name }}@endif
+        — {{ $cooperative->address->country?->name ?? '—' }}
+        — {{ $cooperative->address->postal_code }}
+        — {{ $cooperative->address->state }}
     @else
         —
     @endif

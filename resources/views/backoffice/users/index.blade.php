@@ -37,13 +37,6 @@
             </select>
         </div>
 
-        <div class="field">
-            <label for="deleted">Type de comptes</label>
-            <select id="deleted" name="deleted">
-                <option value="0" @selected($filters['deleted'] === '0')>Comptes non supprimés</option>
-                <option value="1" @selected($filters['deleted'] === '1')>Comptes supprimés logiquement</option>
-            </select>
-        </div>
 
         <div class="field">
             <label for="status">Statut</label>
@@ -124,7 +117,7 @@
                                 @if($user->trashed())
                                     @can('restoreDeleted', $user)
                                         <form method="POST" action="{{ route('backoffice.users.restore-deleted', $user->getKey()) }}"
-                                              onsubmit="return confirm('Restaurer ce compte supprimé ? Les anciennes sessions et les anciens jetons resteront révoqués.');">
+                                              onsubmit="return confirm('Restaurer ce compte supprimé en attente ? Une nouvelle activation sera nécessaire. Les anciennes sessions et les anciens jetons resteront révoqués.');">
                                             @csrf
                                             @method('PATCH')
                                             <button class="button" type="submit">Restaurer</button>

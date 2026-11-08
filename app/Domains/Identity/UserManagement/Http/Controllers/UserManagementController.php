@@ -86,20 +86,24 @@ final class UserManagementController
             );
     }
 
-    public function resendInvitation(
+public function resendInvitation(
         User $user,
         UserInvitationService $invitationService,
     ): RedirectResponse {
         Gate::authorize('resendInvitation', $user);
 
         try {
-            $invitationService->sendInvitation($user);
+            $purpose = $user->status === UserStatus::Active
+                ? 'root_manual_verification'
+                : 'account_activation';
+
+            $invitationService->sendInvitation($user, $purpose);
         } catch (UserInvitationDeliveryException) {
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with(
                     'error',
-                    'L’invitation n’a pas pu être envoyée. Le compte reste en attente ; vous pourrez réessayer.',
+                    'L’invitation n’a pas pu être envoyée. Le compte reste non vérifié ; vous pourrez réessayer.',
                 );
         } catch (\DomainException) {
             return redirect()
@@ -143,11 +147,17 @@ final class UserManagementController
         Request $request,
         User $user,
         UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
     ): RedirectResponse {
         Gate::authorize('activate', $user);
 
         try {
-            $userManagementService->activateUser($request->user(), $user);
+            $activeUser = $userManagementService->activateUser($request->user(), $user);
+            $invitationService->sendInvitation($activeUser, 'root_manual_verification');
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le compte est actif, mais l’e-mail de vérification n’a pas pu être envoyé. Vous pourrez réessayer.');
         } catch (\DomainException) {
             return redirect()
                 ->route('backoffice.users.show', $user)
@@ -156,7 +166,7 @@ final class UserManagementController
 
         return redirect()
             ->route('backoffice.users.show', $user)
-            ->with('success', 'Le compte utilisateur a été activé.');
+            ->with('success', 'Le compte est actif, mais la connexion reste bloquée jusqu’à la vérification de l’adresse e-mail. Une invitation a été envoyée.');
     }
 
     public function deactivate(
@@ -236,7 +246,7 @@ final class UserManagementController
 
         return redirect()
             ->route('backoffice.users.show', $user)
-            ->with('success', 'Le compte a été restauré avec le statut actif. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez ensuite une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
     public function destroy(Request $request, User $user, UserManagementService $service): RedirectResponse
@@ -267,7 +277,7 @@ final class UserManagementController
         }
 
         return redirect()->route('backoffice.users.index')
-            ->with('success', 'Le compte a été restauré. Les anciennes sessions et les anciens jetons restent révoqués.');
+            ->with('success', 'Le compte a été restauré en attente. Choisissez ensuite une méthode d’activation. Les anciens accès restent révoqués.');
     }
 
     public function index(Request $request): View

@@ -75,12 +75,12 @@ final class UserInvitationServiceTest extends TestCase
         );
     }
 
-    public function test_sending_invitation_to_active_unverified_user_is_allowed(): void
+    public function test_sending_invitation_to_pending_unverified_user_is_allowed(): void
     {
         Notification::fake();
 
         $user = User::factory()->create([
-            'status' => UserStatus::Active,
+            'status' => UserStatus::Pending,
             'email_verified_at' => null,
         ]);
 
@@ -94,6 +94,140 @@ final class UserInvitationServiceTest extends TestCase
 
         Notification::assertSentOnDemand(
             \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
+        );
+    }
+
+    public function test_root_manual_verification_invitation_is_allowed_for_active_unverified_user(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        app(UserInvitationService::class)->sendInvitation(
+            $user,
+            'root_manual_verification',
+        );
+
+        $invitation = UserInvitation::query()
+            ->where('user_id', $user->getKey())
+            ->firstOrFail();
+
+        $this->assertSame('root_manual_verification', $invitation->purpose);
+        $this->assertNull($invitation->used_at);
+        $this->assertNull($invitation->revoked_at);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->getKey(),
+            'status' => UserStatus::Active->value,
+            'email_verified_at' => null,
+        ]);
+
+        Notification::assertSentOnDemand(
+            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
+        );
+    }
+
+    public function test_active_user_can_accept_root_manual_verification_invitation_without_status_change(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+            'must_change_password' => true,
+        ]);
+
+        $token = 'root-manual-verification-token';
+
+        $invitation = UserInvitation::query()->create([
+            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'user_id' => $user->getKey(),
+            'purpose' => 'root_manual_verification',
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
+
+        $service = app(UserInvitationService::class);
+
+        $service->validateInvitation($token);
+
+        $acceptedUser = $service->acceptInvitation(
+            $token,
+            'MahlineSecure2026',
+        );
+
+        $this->assertSame(UserStatus::Active, $acceptedUser->status);
+        $this->assertNotNull($acceptedUser->email_verified_at);
+        $this->assertFalse((bool) $acceptedUser->must_change_password);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check(
+            'MahlineSecure2026',
+            $acceptedUser->password,
+        ));
+
+        $this->assertNotNull($invitation->fresh()->used_at);
+        $this->assertNull($invitation->fresh()->revoked_at);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.user.invitation_accepted',
+            'subject_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_root_manual_verification_invitation_is_rejected_after_user_is_suspended(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $token = 'root-manual-verification-suspended-token';
+
+        UserInvitation::query()->create([
+            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'user_id' => $user->getKey(),
+            'purpose' => 'root_manual_verification',
+            'token_hash' => hash('sha256', $token),
+            'expires_at' => now()->addMinutes(30),
+            'created_at' => now(),
+        ]);
+
+        $user->status = UserStatus::Suspended;
+        $user->save();
+
+        try {
+            app(UserInvitationService::class)->validateInvitation($token);
+
+            $this->fail('A suspended user must not use a root verification invitation.');
+        } catch (\DomainException $exception) {
+            $this->assertSame(
+                'The account status does not allow this invitation to be accepted.',
+                $exception->getMessage(),
+            );
+        }
+
+        try {
+            app(UserInvitationService::class)->acceptInvitation(
+                $token,
+                'MahlineSecure2026',
+            );
+
+            $this->fail('A suspended user must not accept a root verification invitation.');
+        } catch (\DomainException $exception) {
+            $this->assertSame(
+                'Only pending, unverified users can accept an activation invitation.',
+                $exception->getMessage(),
+            );
+        }
+
+        $this->assertSame(UserStatus::Suspended, $user->fresh()->status);
+        $this->assertNull($user->fresh()->email_verified_at);
+        $this->assertNull(
+            UserInvitation::query()
+                ->where('token_hash', hash('sha256', $token))
+                ->firstOrFail()
+                ->used_at,
         );
     }
 
@@ -112,7 +246,7 @@ final class UserInvitationServiceTest extends TestCase
             );
         } catch (\DomainException $exception) {
             $this->assertSame(
-                'Only active or pending, unverified users can receive an invitation.',
+                'Only pending, unverified users can receive an activation invitation.',
                 $exception->getMessage(),
             );
         }
