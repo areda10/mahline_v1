@@ -59,6 +59,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [ ] **ID01-16** Présenter à l'utilisateur les motifs de refus utiles sans révéler les détails internes de détection.
 - [ ] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation.
 - [ ] **ID01-18** Exécuter et valider les tests existants de `PasswordPolicyTest` après le commit de correction des fixtures.
+- [ ] **ID01-19** Corriger les fixtures de `PasswordServiceTest` pour que les nouveaux mots de passe des scénarios de réussite respectent la politique ID-01 ; remplacer le test erroné qui interdit les espaces par un test confirmant qu'ils sont acceptés avec les classes de caractères requises.
 
 ### ID-02 — Historique des mots de passe
 
@@ -289,3 +290,6 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 
 
 | 8 novembre 2026 | 1.9 | Test `php artisan test --filter=UserManagementControllerTest` confirmé vert par l'utilisateur ; VAL-13 cochée. L'erreur `all() on array` n'est plus bloquante dans cette suite ciblée ; le filtre global Password et la suite complète Identity restent à confirmer. |
+
+
+| 8 novembre 2026 | 2.0 | Diagnostic du filtre global `Password` : plusieurs fixtures de `PasswordServiceTest.php` utilisent un nouveau mot de passe sans caractère spécial ; le test qui prétend interdire les espaces contredit la décision validée autorisant les espaces. ID01-19 ajoutée ; correction des tests et nouvelle exécution en attente. |
