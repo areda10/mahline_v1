@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.4
+- **Version :** 1.5
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -888,3 +888,23 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 - [ ] Exécuter localement la migration, les tests ciblés, puis toute la suite Identity ; enregistrer les résultats et le commit de validation.
 
 **Important :** « Code ajouté » ne signifie ni migration exécutée, ni test vert, ni validation de production. La mise en œuvre de la politique ID-01 reste partielle jusqu'à réalisation des limites restantes.
+
+
+### 20.11 Correction après retour des tests locaux — 8 novembre 2026
+
+**Retour utilisateur :** plusieurs cas de `Tests\\Framework\\Domains\\Identity\\Password\\Rules\\PasswordPolicyTest` échouaient car les fixtures utilisaient des mots de passe sans caractère spécial. La nouvelle politique exige bien un caractère spécial ; c'est donc le jeu de données des tests qui était obsolète, et non la règle métier.
+
+**Correction commitée :**
+- Fichier : `tests/Framework/Domains/Identity/Password/Rules/PasswordPolicyTest.php`
+- Commit : `e613ed5828b0fbe4472f6186188ae7936d474f20`
+- Fixtures alignées sur la politique : caractère spécial obligatoire, espaces autorisés, bornes 12 et 128 caractères, et mots de passe distincts dans le test de changement.
+- Le test historique `test_special_character_is_optional` a été remplacé par un test vérifiant explicitement que l'absence de caractère spécial est refusée.
+- Le test interdisant les espaces a été remplacé par un test qui confirme que les espaces restent autorisés.
+
+**État après correction :** code des tests corrigé et poussé ; nouvelle exécution locale non encore confirmée. Aucun test n'est déclaré vert sur la seule base de cette modification.
+
+**Action de validation utilisateur :**
+- [ ] Récupérer le commit `e613ed5`.
+- [ ] Relancer `php artisan test --filter=PasswordPolicyTest`.
+- [ ] Envoyer le résultat complet, y compris toute nouvelle erreur.
+- [ ] Ne passer les tests à l'état « Validé » qu'après résultat vert observé.
