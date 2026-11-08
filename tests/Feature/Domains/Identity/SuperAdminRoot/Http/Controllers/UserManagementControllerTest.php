@@ -226,14 +226,14 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($target)
             ->put(route('password.force-change.update'), [
-                'password' => 'NewSecurePassword2026',
-                'password_confirmation' => 'NewSecurePassword2026',
+                'password' => 'NewSecurePassword2026!',
+                'password_confirmation' => 'NewSecurePassword2026!',
             ])
             ->assertRedirect(route('user.dashboard'));
 
         $target->refresh();
         $this->assertFalse($target->must_change_password);
-        $this->assertTrue(Hash::check('NewSecurePassword2026', $target->password));
+        $this->assertTrue(Hash::check('NewSecurePassword2026!', $target->password));
     }
 
     public function test_archived_user_must_be_restored_before_either_root_activation_flow(): void
