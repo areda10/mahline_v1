@@ -145,7 +145,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_password_can_be_reset_with_valid_token(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $token = $this->passwordResetService->createToken(
@@ -154,21 +154,21 @@ final class PasswordResetServiceTest extends TestCase
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword13',
+            newPassword: 'Secure!NewPass2026',
         );
 
         $user->refresh();
 
         $this->assertTrue(
             \Hash::check(
-                'MahlinePassword13',
+                'Secure!NewPass2026',
                 (string) $user->password,
             )
         );
 
         $this->assertFalse(
             \Hash::check(
-                'MahlinePassword12',
+                'Secure!Current2026',
                 (string) $user->password,
             )
         );
@@ -177,7 +177,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_reset_token_is_marked_as_used_after_password_reset(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $token = $this->passwordResetService->createToken(
@@ -186,7 +186,7 @@ final class PasswordResetServiceTest extends TestCase
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword13',
+            newPassword: 'Secure!NewPass2026',
         );
 
         $record = \DB::table('password_reset_tokens')
@@ -200,7 +200,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_password_reset_rejects_invalid_password(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $token = $this->passwordResetService->createToken(
@@ -218,7 +218,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_password_reset_rejects_same_password(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $token = $this->passwordResetService->createToken(
@@ -227,19 +227,19 @@ final class PasswordResetServiceTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'New password must be different from current password.'
+            'The new password must not match the current password or any of the five previous passwords.'
         );
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword12',
+            newPassword: 'Secure!Current2026',
         );
     }
 
     public function test_password_reset_revokes_all_active_sessions(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         AuthenticationSession::query()
@@ -276,7 +276,7 @@ final class PasswordResetServiceTest extends TestCase
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword13',
+            newPassword: 'Secure!NewPass2026',
         );
 
         $sessions = AuthenticationSession::query()
@@ -298,7 +298,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_invalid_reset_token_does_not_modify_password(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $this->expectException(\RuntimeException::class);
@@ -309,21 +309,21 @@ final class PasswordResetServiceTest extends TestCase
         try {
             $this->passwordResetService->resetPassword(
                 token: 'invalid-token',
-                newPassword: 'MahlinePassword13',
+                newPassword: 'Secure!NewPass2026',
             );
         } finally {
             $user->refresh();
 
             $this->assertTrue(
                 \Hash::check(
-                    'MahlinePassword12',
+                    'Secure!Current2026',
                     (string) $user->password,
                 )
             );
 
             $this->assertFalse(
                 \Hash::check(
-                    'MahlinePassword13',
+                    'Secure!NewPass2026',
                     (string) $user->password,
                 )
             );
@@ -333,7 +333,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_expired_reset_token_does_not_modify_password(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $token = $this->passwordResetService->createToken(
@@ -354,21 +354,21 @@ final class PasswordResetServiceTest extends TestCase
         try {
             $this->passwordResetService->resetPassword(
                 token: $token,
-                newPassword: 'MahlinePassword13',
+                newPassword: 'Secure!NewPass2026',
             );
         } finally {
             $user->refresh();
 
             $this->assertTrue(
                 \Hash::check(
-                    'MahlinePassword12',
+                    'Secure!Current2026',
                     (string) $user->password,
                 )
             );
 
             $this->assertFalse(
                 \Hash::check(
-                    'MahlinePassword13',
+                    'Secure!NewPass2026',
                     (string) $user->password,
                 )
             );
@@ -378,7 +378,7 @@ final class PasswordResetServiceTest extends TestCase
     public function test_used_reset_token_does_not_modify_password(): void
     {
         $user = User::factory()->create([
-            'password' => 'MahlinePassword12',
+            'password' => 'Secure!Current2026',
         ]);
 
         $token = $this->passwordResetService->createToken(
@@ -399,21 +399,21 @@ final class PasswordResetServiceTest extends TestCase
         try {
             $this->passwordResetService->resetPassword(
                 token: $token,
-                newPassword: 'MahlinePassword13',
+                newPassword: 'Secure!NewPass2026',
             );
         } finally {
             $user->refresh();
 
             $this->assertTrue(
                 \Hash::check(
-                    'MahlinePassword12',
+                    'Secure!Current2026',
                     (string) $user->password,
                 )
             );
 
             $this->assertFalse(
                 \Hash::check(
-                    'MahlinePassword13',
+                    'Secure!NewPass2026',
                     (string) $user->password,
                 )
             );
@@ -422,12 +422,12 @@ final class PasswordResetServiceTest extends TestCase
 
     public function test_password_reset_is_recorded_in_audit(): void
     {
-        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $user = User::factory()->create(['password' => 'Secure!Current2026']);
         $token = $this->passwordResetService->createToken($user);
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword13',
+            newPassword: 'Secure!NewPass2026',
         );
 
         $this->assertDatabaseHas('audit_events', [
@@ -440,12 +440,12 @@ final class PasswordResetServiceTest extends TestCase
 
     public function test_invalid_password_reset_does_not_create_audit_event(): void
     {
-        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $user = User::factory()->create(['password' => 'Secure!Current2026']);
 
         try {
             $this->passwordResetService->resetPassword(
                 token: 'invalid-token',
-                newPassword: 'MahlinePassword13',
+                newPassword: 'Secure!NewPass2026',
             );
             $this->fail('Expected invalid reset token exception.');
         } catch (\RuntimeException $exception) {
@@ -459,12 +459,12 @@ final class PasswordResetServiceTest extends TestCase
 
     public function test_reset_audit_is_created_after_token_is_consumed(): void
     {
-        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $user = User::factory()->create(['password' => 'Secure!Current2026']);
         $token = $this->passwordResetService->createToken($user);
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword13',
+            newPassword: 'Secure!NewPass2026',
         );
 
         $record = \DB::table('password_reset_tokens')
@@ -482,12 +482,12 @@ final class PasswordResetServiceTest extends TestCase
 
     public function test_reset_audit_never_contains_plain_text_token_or_password(): void
     {
-        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $user = User::factory()->create(['password' => 'Secure!Current2026']);
         $token = $this->passwordResetService->createToken($user);
 
         $this->passwordResetService->resetPassword(
             token: $token,
-            newPassword: 'MahlinePassword13',
+            newPassword: 'Secure!NewPass2026',
         );
 
         $event = \App\Domains\Audit\Models\AuditEvent::query()
@@ -501,8 +501,8 @@ final class PasswordResetServiceTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->assertStringNotContainsString($token, $serialized);
-        $this->assertStringNotContainsString('MahlinePassword12', $serialized);
-        $this->assertStringNotContainsString('MahlinePassword13', $serialized);
+        $this->assertStringNotContainsString('Secure!Current2026', $serialized);
+        $this->assertStringNotContainsString('Secure!NewPass2026', $serialized);
     }
 
 }
