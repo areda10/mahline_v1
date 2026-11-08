@@ -71,7 +71,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [ ] **ID02-07** Vérifier l'application commune aux changements volontaires/forcés, reset, invitation et activation.
 - [ ] **ID02-08** Vérifier les cas de compte sans hash courant (si techniquement possibles) et la compatibilité avec les comptes historiques.
 - [ ] **ID02-09** Vérifier la politique de suppression des historiques lors de la suppression physique exceptionnelle d'un compte, en cohérence avec les obligations de conservation et la FK choisie.
-- [ ] **ID02-10** Ajouter tests de service, HTTP, intégration et concurrence ; consigner les résultats.
+- [ ] **ID02-10** Compléter les tests HTTP/intégration et concurrence ; les tests ciblés `php artisan test --filter=PasswordHistory` sont verts (confirmation utilisateur du 8 novembre 2026).
 
 ### Authentification — protection des réponses et des tentatives
 
@@ -281,3 +281,5 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | 8 novembre 2026 | 1.5 | Validation utilisateur de `PasswordResetServiceTest` (vert) ; VAL-07 et VAL-08 cochées après correction des fixtures et du message attendu ; migration, tests d'intégration et suite complète Identity restent ouverts. |
 
 | 8 novembre 2026 | 1.6 | Migration locale de l'historique des mots de passe exécutée avec succès ; ID02-01 et VAL-02 cochées. Tests d'intégration et suite complète Identity restent ouverts. |
+
+| 8 novembre 2026 | 1.7 | Tests `php artisan test --filter=PasswordHistory` confirmés verts par l'utilisateur ; tests HTTP/intégration complémentaires, concurrence et suite complète Identity restent à exécuter. |
