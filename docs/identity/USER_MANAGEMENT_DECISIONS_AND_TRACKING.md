@@ -492,13 +492,24 @@ Trois situations sont distinguées :
 
 Les données nécessaires à la traçabilité des commandes, factures et autres obligations de conservation ne doivent pas être supprimées automatiquement. Toute opération d'effacement ou d'anonymisation autorisée devra préserver les historiques et journaux qui doivent légalement ou techniquement être conservés, en limitant les données personnelles conservées au strict nécessaire.
 
+### Données à conserver malgré une demande d'effacement (décision 97)
+
+Les catégories suivantes peuvent nécessiter une conservation malgré une demande d'effacement, dans la limite des obligations applicables et du strict nécessaire :
+1. **Facturation :** factures, avoirs, justificatifs et données légalement obligatoires.
+2. **Commandes :** historique des commandes, transactions et livraisons.
+3. **Comptabilité :** écritures et pièces justificatives.
+4. **Sécurité :** journaux d'accès, incidents et traces d'administration.
+5. **Litiges :** preuves nécessaires aux réclamations et procédures en cours.
+
+Les données conservées doivent être accessibles uniquement aux rôles autorisés et pendant la durée applicable. Les données qui ne sont plus nécessaires doivent être supprimées ou anonymisées selon les règles validées. Aucun mot de passe, token ou code OTP ne doit être conservé en clair, y compris au titre de ces obligations de conservation.
+
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
 - [x] Données consultables et modifiables par le propriétaire — décision 93 validée.
 - [x] Export personnel PDF/JSON, lien temporaire sécurisé, journalisation et exclusion des secrets — décision 94 validée.
 - [x] Correction par le propriétaire et corrections administratives selon le périmètre root/super_admin ; cooperative_admin exclu — journalisation des changements administratifs — décision 95 validée.
 - [x] Demande d'effacement soumise par l'utilisateur à super_admin_root, sans suppression automatique ; anonymisation après vérification des obligations de conservation — décision 96 validée.
-- [ ] Quelles données doivent être conservées pour les obligations comptables, commerciales, légales ou de sécurité ?
+- [x] Catégories de conservation : facturation, commandes, comptabilité, sécurité et litiges ; accès limité et durée applicable — décision 97 validée.
 - [ ] Quelle durée de conservation appliquer aux données de profil après fermeture/suppression du compte ?
 - [ ] Faut-il journaliser chaque consultation administrative d'une fiche personnelle ?
 - [ ] Faut-il informer l'utilisateur lorsqu'un administrateur consulte ses données personnelles ?
@@ -568,7 +579,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [x] Définir les catégories de données modifiables par leur propriétaire — décision 93.
 - [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
 - [x] Processus fonctionnel de demande d'effacement et d'anonymisation défini (décision 96) ; conformité juridique et implémentation à vérifier.
-- [ ] Définir les règles de conservation et les exceptions légales/comptables.
+- [ ] Définir les durées exactes de conservation et vérifier les exceptions légales/comptables par catégorie (catégories validées en décision 97).
 - [ ] Journaliser les consultations administratives si cette règle est validée.
 
 ### G. Tests indispensables
@@ -607,5 +618,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La prochaine question à traiter est la question 97 : données à conserver au titre des obligations légales, comptables, commerciales et de sécurité.
+- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La prochaine question à traiter est la question 98 : durée de conservation des données de profil après fermeture ou suppression du compte.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
