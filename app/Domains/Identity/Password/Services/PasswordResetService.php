@@ -13,10 +13,8 @@ use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 final class PasswordResetService extends BaseService
 {
@@ -46,12 +44,12 @@ final class PasswordResetService extends BaseService
                 ->update(['used_at' => now()]);
 
             DB::table('password_reset_tokens')->insert([
-            'id' => (string) Str::ulid(),
-            'user_id' => $lockedUser->getKey(),
-            'token_hash' => hash('sha256', $token),
-            'expires_at' => now()->addMinutes(30),
-            'used_at' => null,
-            'created_at' => now(),
+                'id' => (string) Str::ulid(),
+                'user_id' => $lockedUser->getKey(),
+                'token_hash' => hash('sha256', $token),
+                'expires_at' => now()->addMinutes(30),
+                'used_at' => null,
+                'created_at' => now(),
             ]);
         });
 
@@ -139,12 +137,6 @@ final class PasswordResetService extends BaseService
             PasswordPolicy::validate($newPassword, $user);
             $this->passwordHistory->assertNotReused($user, $newPassword);
             $this->passwordHistory->archiveCurrentPassword($user);
-
-            if (Hash::check($newPassword, (string) $user->password)) {
-                throw new InvalidArgumentException(
-                    'New password must be different from current password.',
-                );
-            }
 
             $user->password = $newPassword;
             $user->save();
