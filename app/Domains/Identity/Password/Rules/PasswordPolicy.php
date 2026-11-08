@@ -47,7 +47,7 @@ final class PasswordPolicy
             );
         }
 
-        if (preg_match('/[^\p{L}\p{N}\s]/u', $password) !== 1) {
+        if (preg_match('/[^\p{L}\p{N}\p{Z}\s]/u', $password) !== 1) {
             throw new InvalidArgumentException(
                 'Password must contain at least one special character.'
             );
