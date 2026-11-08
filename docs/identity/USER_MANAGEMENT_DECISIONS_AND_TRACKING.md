@@ -544,7 +544,16 @@ Les journaux des consultations administratives de fiches personnelles sont consu
 
 L'accès de `super_admin_root` aux journaux d'audit et aux journaux de consultation des fiches personnelles reste protégé par les règles de sécurité déjà validées dans le présent document. Cette validation ne crée aucun contournement des contrôles d'authentification, de session, d'autorisation et de journalisation existants.
 
-Les autres protections supplémentaires proposées à la question 102 (journalisation spécifique de chaque consultation par root, impossibilité de modifier/effacer les journaux et alerte en cas de consultation massive ou inhabituelle) restent à confirmer séparément ; elles ne sont pas considérées comme validées par cette réponse.
+Les protections supplémentaires proposées ensuite ont été refusées comme nouvelles règles par la décision 103 ; les règles générales déjà validées restent applicables.
+
+### Protections supplémentaires proposées pour les consultations de journaux par super_admin_root (décision 103)
+
+La proposition groupée de protections supplémentaires (journalisation spécifique de chaque consultation par root, nouvelle confirmation de l'interdiction de modifier/supprimer les journaux, et alerte dédiée en cas de consultation massive ou inhabituelle) n'a pas été acceptée comme nouvel ensemble de règles.
+
+Précisions de portée :
+- Aucune nouvelle obligation spécifique de journalisation des consultations de journaux par root n'est ajoutée au titre de cette proposition.
+- Aucune nouvelle alerte dédiée liée au volume ou au caractère inhabituel des consultations de journaux n'est ajoutée au titre de cette proposition.
+- Le refus de cette proposition ne supprime pas les règles générales déjà validées, notamment le caractère append-only des journaux d'audit et les contrôles d'accès/sécurité existants.
 
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
