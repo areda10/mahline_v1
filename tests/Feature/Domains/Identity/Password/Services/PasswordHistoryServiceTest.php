@@ -60,10 +60,10 @@ final class PasswordHistoryServiceTest extends TestCase
         $history = app(PasswordHistoryService::class);
 
         for ($i = 1; $i <= 6; $i++) {
+            $history->archiveCurrentPassword($user);
+
             $user->password = 'PasswordNumber' . $i . '!';
             $user->save();
-
-            $history->archiveCurrentPassword($user);
         }
 
         $entries = DB::table('user_password_histories')
