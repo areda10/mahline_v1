@@ -503,6 +503,16 @@ Les catégories suivantes peuvent nécessiter une conservation malgré une deman
 
 Les données conservées doivent être accessibles uniquement aux rôles autorisés et pendant la durée applicable. Les données qui ne sont plus nécessaires doivent être supprimées ou anonymisées selon les règles validées. Aucun mot de passe, token ou code OTP ne doit être conservé en clair, y compris au titre de ces obligations de conservation.
 
+### Durée de conservation des données de profil après fermeture du compte (décision 98)
+
+Durée de référence définie pour les données de profil :
+- **Compte actif :** conservation pendant toute la durée d'activité du compte.
+- **Compte suspendu ou inactif :** conservation jusqu'à réactivation ou décision de fermeture.
+- **Compte archivé :** conservation pendant 5 ans à compter de l'archivage, puis examen pour anonymisation ou suppression des données qui ne sont plus nécessaires.
+- **Compte supprimé logiquement :** conservation pendant 5 ans à compter de la suppression logique, puis examen pour anonymisation ou suppression des données qui ne sont plus nécessaires.
+
+Les données soumises à des obligations légales, comptables, commerciales ou de sécurité suivent leurs propres durées de conservation et peuvent donc être conservées au-delà de cette durée de référence. Les délais définitifs devront être vérifiés au regard des obligations légales et réglementaires applicables avant mise en production ; la durée de cinq ans constitue la règle fonctionnelle validée, non une affirmation de délai légal universel.
+
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
 - [x] Données consultables et modifiables par le propriétaire — décision 93 validée.
@@ -510,7 +520,7 @@ Les données conservées doivent être accessibles uniquement aux rôles autoris
 - [x] Correction par le propriétaire et corrections administratives selon le périmètre root/super_admin ; cooperative_admin exclu — journalisation des changements administratifs — décision 95 validée.
 - [x] Demande d'effacement soumise par l'utilisateur à super_admin_root, sans suppression automatique ; anonymisation après vérification des obligations de conservation — décision 96 validée.
 - [x] Catégories de conservation : facturation, commandes, comptabilité, sécurité et litiges ; accès limité et durée applicable — décision 97 validée.
-- [ ] Quelle durée de conservation appliquer aux données de profil après fermeture/suppression du compte ?
+- [x] Durée de référence de 5 ans après archivage ou suppression logique, sous réserve des durées spécifiques et obligations applicables — décision 98 validée.
 - [ ] Faut-il journaliser chaque consultation administrative d'une fiche personnelle ?
 - [ ] Faut-il informer l'utilisateur lorsqu'un administrateur consulte ses données personnelles ?
 
@@ -579,7 +589,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [x] Définir les catégories de données modifiables par leur propriétaire — décision 93.
 - [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
 - [x] Processus fonctionnel de demande d'effacement et d'anonymisation défini (décision 96) ; conformité juridique et implémentation à vérifier.
-- [ ] Définir les durées exactes de conservation et vérifier les exceptions légales/comptables par catégorie (catégories validées en décision 97).
+- [ ] Vérifier les durées légales/réglementaires exactes par catégorie et les documenter ; durée de référence des données de profil fixée à 5 ans après archivage/suppression logique (décision 98).
 - [ ] Journaliser les consultations administratives si cette règle est validée.
 
 ### G. Tests indispensables
@@ -618,5 +628,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La prochaine question à traiter est la question 98 : durée de conservation des données de profil après fermeture ou suppression du compte.
+- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La décision 98 fixe une durée de référence de cinq ans pour les données de profil après archivage ou suppression logique. La prochaine question à traiter est la question 99 : journalisation des consultations administratives de fiches personnelles.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
