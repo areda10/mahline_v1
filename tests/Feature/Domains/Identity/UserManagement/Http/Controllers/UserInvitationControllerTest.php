@@ -8,6 +8,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -291,6 +292,7 @@ final class UserInvitationControllerTest extends TestCase
 
     public function test_only_pending_users_can_accept_an_activation_invitation(): void
     {
+        dump(RateLimiter::limiter('user-invitations.accept'));
         foreach ([
             UserStatus::Active,
             UserStatus::Inactive,
@@ -314,7 +316,8 @@ final class UserInvitationControllerTest extends TestCase
                 'token' => $token,
                 'password' => 'MahlineSecure2026',
                 'password_confirmation' => 'MahlineSecure2026',
-            ])->assertSessionHasErrors('invitation');
+            ])->assertRedirect()
+                ->assertSessionHasErrors('invitation');
 
             $this->assertSame($status, $user->fresh()->status);
             $this->assertNull($user->fresh()->email_verified_at);
