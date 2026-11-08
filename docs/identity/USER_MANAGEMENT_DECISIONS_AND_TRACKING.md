@@ -745,3 +745,27 @@ Douze fichiers Feature sont présents sous `tests/Feature/Domains/Identity/`, ai
 ### 20.4 Prochaine étape
 
 Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail, statuts, rôles, transferts de coopérative, API et audit/privacy), puis produire une matrice consolidée des écarts et un plan de correction fichier par fichier. Aucun changement de code avant validation explicite.
+
+
+### 20.5 Compléments — cycle de vie, e-mail et authentification
+
+12. **Changement d'e-mail personnel :** aucune route ni action dédiée au changement d'adresse par son propriétaire n'a été repérée. Le parcours présent est l'action `update()` de `SuperAdminRoot/Http/Controllers/UserManagementController`, protégée pour root. Cela ne couvre pas la règle selon laquelle chaque rôle peut changer sa propre adresse.
+13. **Délai de vérification après changement d'e-mail :** `UserInvitationService` applique une expiration fixe de 60 minutes à toutes ses invitations. Le contrôleur root réutilise ce service après un changement d'e-mail. La décision prévoit 24 heures pour le lien de vérification de la nouvelle adresse ; le parcours actuel ne respecte donc pas ce délai.
+14. **Rôles des utilisateurs existants :** `UserManagementService::updateUserAccount()` appelle `assertSuperAdminRoot()`. Aucun autre service/action de modification de rôle d'un utilisateur existant n'a été repéré. La création par `super_admin` de comptes `cooperative_admin` et `user` est couverte, mais pas la gestion ultérieure de leurs rôles telle que décidée.
+15. **Transfert de coopérative d'un utilisateur :** le changement de `cooperative_id` est effectué dans `updateUserAccount()`, réservé à root. Le service d'affectation existant concerne le pivot des coopératives attribuées aux `super_admin`, et non le transfert de la coopérative principale d'un utilisateur. Le transfert par `super_admin` entre ses coopératives attribuées n'est donc pas couvert par le parcours identifié.
+16. **Alerte de connexion depuis un nouvel appareil :** `UnusualActivityDetectionService::isNewDevice()` est disponible, mais le workflow ne l'appelle pas. `AppServiceProvider` lie `AuthenticationWorkflowHook` à `NullAuthenticationWorkflowHook`, dont le hook est vide. Aucun envoi d'alerte e-mail au nouvel appareil n'est donc réalisé par ce flux.
+17. **Pays inhabituel et OTP :** aucune implémentation de détection de pays, génération/envoi OTP, validation, consommation atomique ou limite de tentatives n'a été repérée dans les fichiers Identity inventoriés. L'enum `SecurityEventType` contient `UnusualActivityDetected`, mais cela ne constitue pas une implémentation OTP.
+18. **Message de connexion et divulgation d'information :** `AuthenticationController::login()` retourne au client le message des exceptions RuntimeException. `AuthenticationService` distingue notamment compte inexistant (404) et compte existant mais inactif / e-mail non vérifié / IP verrouillée (401 avec message distinct). Cela révèle des informations sur l'existence ou l'état d'un compte, contrairement à la règle de message générique. Les réponses doivent être uniformisées sans supprimer la journalisation interne détaillée.
+19. **Tentatives échouées et IP :** les compteurs métier par compte et par IP sont incrémentés dans le chemin du mot de passe incorrect d'un utilisateur actif et vérifié. Les comptes inexistants et certains états de compte sont traités avant cette incrémentation. La route web applique aussi `throttle:5,1`, mais la couverture de la limitation métier par IP et la résistance aux tentatives distribuées doivent être renforcées et testées.
+20. **Gestion des tokens API :** les routes API visibles exposent un test d'authentification, les endpoints de réinitialisation et la consultation des événements d'audit ; aucune route de création, liste, révocation individuelle ou révocation globale des tokens n'a été repérée. `config/sanctum.php` définit `expiration => null` ; la durée maximale de 30 jours n'est pas démontrée par une couche de création de tokens. Aucun nettoyage planifié des tokens expirés n'a été repéré dans `routes/console.php` ni dans la configuration de planification examinée.
+21. **Déconnexion globale :** les routes de session visibles permettent la révocation individuelle et root peut révoquer une session d'un autre utilisateur. Aucun endpoint explicite de déconnexion globale personnelle ni d'administration globale des tokens n'a été repéré dans les routes examinées.
+
+### 20.6 Couverture des tests observée
+
+- Le test Feature `UserManagementControllerTest` couvre de nombreux cas de lecture, permissions, création, activation, statuts, suppression logique et invitations.
+- Le test Feature root couvre notamment la modification de profil/rôle par root et le changement d'e-mail par root.
+- Le test `UserInvitationServiceTest` couvre l'invalidation d'une ancienne invitation, l'acceptation, les statuts et l'échec d'envoi.
+- Aucun test dédié au changement d'e-mail par le propriétaire, au délai de vérification de 24 heures, à la modification de rôle par super_admin, au transfert de coopérative principale par super_admin, aux alertes de nouvel appareil ou à l'OTP par pays inhabituel n'a été repéré dans les fichiers de tests examinés.
+- Les tests n'ont pas été exécutés dans cet audit GitHub ; les résultats restent à confirmer sur l'environnement local.
+
+**Statut de cette étape :** constats documentés ; audit Identity toujours ouvert. Aucun code applicatif modifié.
