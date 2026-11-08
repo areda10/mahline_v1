@@ -12,6 +12,7 @@ use App\Domains\Identity\Password\Notifications\PasswordResetLinkNotification;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -140,7 +141,7 @@ final class PasswordResetService extends BaseService
                 throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
             }
 
-            if (now()->greaterThanOrEqualTo(\\Illuminate\\Support\\Carbon::parse($record->expires_at))) {
+            if (now()->greaterThanOrEqualTo(Carbon::parse($record->expires_at))) {
                 throw new InvalidPasswordResetTokenException('Password reset token has expired.');
             }
 
