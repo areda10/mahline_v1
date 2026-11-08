@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.3
+- **Version :** 1.4
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -852,3 +852,39 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 - [ ] Ajouter les tests unitaires, service, HTTP et de concurrence ; exécuter les tests localement.
 
 **État :** décisions validées ; audit des fichiers ciblés effectué ; implémentation à commencer par lots.
+
+### 20.10 Suivi de la première tranche d'implémentation — 8 novembre 2026
+
+**Branche :** feature/Identity
+
+| Élément | État | Preuve / remarque |
+|---|---|---|
+| Migration `user_password_histories` | Code ajouté — migration non exécutée | `2026_11_08_000001_create_user_password_histories_table.php` |
+| Service d'historique | Code ajouté — tests à exécuter | `PasswordHistoryService`, limite à cinq hashes précédents |
+| Politique de complexité Unicode | Code ajouté — tests à exécuter | Majuscule/minuscule/chiffre/spécial ; espaces et séparateurs Unicode autorisés |
+| Détection d'informations personnelles | Code ajouté — tests à exécuter | Prénom, nom complet, fragments e-mail suffisamment longs et identifiant exact |
+| Changement volontaire | Intégration ajoutée — test à exécuter | Vérification historique, archivage transactionnel, révocation sessions et tokens API dans `PasswordService` |
+| Changement forcé | Intégration ajoutée — test à exécuter | Historique, archivage, révocation sessions et tokens API |
+| Acceptation d'invitation | Intégration ajoutée — test à exécuter | Contrôle contextualisé et archivage de l'ancien hash dans la transaction |
+| Réinitialisation | Corrections ajoutées — tests à exécuter | 30 minutes, invalidation des anciens liens, compte actif uniquement, historique et révocation sessions/tokens |
+| Réponse publique reset | Correction ajoutée — test à exécuter | Les comptes non actifs ne déclenchent pas l'envoi ; réponse générique conservée |
+| Tests de politique | Fichiers ajoutés — non exécutés | `PasswordPolicyTest` |
+| Tests d'historique | Fichiers ajoutés — non exécutés | `PasswordHistoryServiceTest` |
+| Vérification CI / suite complète | Non vérifiée | L'environnement GitHub utilisé pour cette modification ne permet pas d'exécuter PHPUnit ou les migrations du projet. |
+
+**Commits de cette tranche :**
+- Documentation des décisions : `26b4e14e1174ca8f5870e5973499f13d21aa252e`
+- Politique et contrôles : commits `c7fd2af`, `9f4fd35`, `4f331ab`, `e102806`
+- Historique et intégrations : commits `c921933`, `b5d25c9`, `c24eb91`, `1c6bdf1`, `044e41e`, `13dd1c9`, `0ec9ae7`, `d9aae27`
+- Tests : commits `68ed2fa`, `4e81517`, `2d8cce0`, `5b77e1a`, `3bdd0b2`
+
+**Limites restantes avant de considérer ID-01/ID-02 terminés :**
+- [ ] Vérifier et corriger les flux de création/activation manuelle qui ne passent pas encore par une validation complète du mot de passe final.
+- [ ] Implémenter la vérification des mots de passe courants/compromis avec k-anonymity, liste locale versionnée, intégrité, mise à jour planifiée et retour arrière.
+- [ ] Ajouter les alertes root et le tableau de bord de gestion de la liste de mots de passe compromis.
+- [ ] Vérifier le contrôle des mots de passe des comptes existants à la prochaine authentification réussie et le changement obligatoire avant dashboard.
+- [ ] Ajouter la notification e-mail correspondante et vérifier le verrouillage des routes pendant le changement obligatoire.
+- [ ] Compléter les tests de réutilisation, de rotation du cinquième/sixième hash, d'échec/rollback, de reset, d'invitation et de révocation des sessions/tokens.
+- [ ] Exécuter localement la migration, les tests ciblés, puis toute la suite Identity ; enregistrer les résultats et le commit de validation.
+
+**Important :** « Code ajouté » ne signifie ni migration exécutée, ni test vert, ni validation de production. La mise en œuvre de la politique ID-01 reste partielle jusqu'à réalisation des limites restantes.
