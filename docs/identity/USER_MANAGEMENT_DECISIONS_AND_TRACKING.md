@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.2
+- **Version :** 1.3
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -175,14 +175,35 @@ Motifs obligatoires (codes stables, traductions FR/EN/AR) :
 - Événement audité.
 
 ### Historique et robustesse
-- Interdire la réutilisation des cinq derniers mots de passe.
-- Historique conservé uniquement sous forme de hashes.
-- Minimum 12 caractères.
+- Interdire la réutilisation du mot de passe actuel et des cinq anciens mots de passe.
+- L'historique contient au maximum cinq anciens hashes, en plus du hash du mot de passe actuel stocké sur l'utilisateur.
+- Les hashes d'historique sont conservés uniquement sous forme de hashes sécurisés ; aucun mot de passe en clair n'est persisté.
+- Lors d'un changement réussi, l'ancien hash courant est ajouté à l'historique dans la même transaction que le changement. Une opération échouée ou annulée ne doit jamais ajouter d'entrée.
+- Lorsqu'une sixième entrée ancienne doit être conservée, supprimer la plus ancienne afin de maintenir exactement au maximum cinq anciens hashes.
+- Minimum 12 caractères et maximum 128 caractères.
 - Au moins une majuscule, une minuscule, un chiffre et un caractère spécial.
 - Rejeter les mots de passe courants ou compromis.
 - Espaces et caractères Unicode acceptés.
 - Aucun changement périodique obligatoire.
 - Règles applicables à la création, l'activation, la réinitialisation et au changement.
+
+### Politique renforcée des mots de passe — décisions ID-01
+- Appliquer la politique à tous les rôles, sans exception : super_admin_root, super_admin, cooperative_admin et user.
+- Refuser les mots de passe contenant des informations personnelles reconnaissables de l'utilisateur : nom complet, prénom, identifiant ou partie identifiable de l'adresse e-mail. La détection est insensible à la casse et doit éviter les faux positifs excessifs.
+- Vérifier les mots de passe courants/compromis lors de la création, de l'acceptation d'une invitation, de l'activation, du changement volontaire ou forcé et de la réinitialisation.
+- Le service externe de vérification ne reçoit jamais le mot de passe en clair. Utiliser une approche préservant la confidentialité, de type k-anonymity.
+- Si le service externe est indisponible, appliquer une liste locale de refus, conserver tous les contrôles de robustesse et refuser au minimum les mots de passe localement connus comme compromis/courants. Reprendre le contrôle externe dès que le service redevient disponible.
+- La liste locale doit pouvoir être mise à jour sans modification du code applicatif.
+- Conserver l'historique des mises à jour de la liste : version, horodatage, source et auteur/processus.
+- Autoriser deux modes de mise à jour : processus automatique contrôlé et action manuelle réservée à super_admin_root.
+- Fréquence de mise à jour configurable par super_admin_root, quotidienne par défaut.
+- Vérifier la provenance de la source et son intégrité (signature ou SHA-256). Rejeter toute liste corrompue ou incomplète, conserver la dernière version valide et permettre un retour arrière.
+- Journaliser chaque tentative de mise à jour. Après trois échecs consécutifs, alerter super_admin_root ; remettre le compteur à zéro après une mise à jour réussie.
+- Le tableau de bord de sécurité réservé à super_admin_root doit présenter la version active, la dernière mise à jour, la prochaine mise à jour planifiée, les contrôles d'intégrité, les indisponibilités externes, les erreurs et l'historique.
+- Pour les comptes existants, vérifier le mot de passe fourni lors de la prochaine authentification réussie. Si ce mot de passe ne respecte plus la politique ou est compromis, imposer un changement avant tout accès au dashboard.
+- Pendant ce changement obligatoire, seules les routes de changement de mot de passe et de déconnexion sont accessibles. Le nouveau mot de passe doit respecter la politique et l'historique.
+- Envoyer un e-mail informatif à l'utilisateur lorsqu'un changement est requis ; ne jamais inclure le mot de passe ni un lien de réinitialisation non sollicité.
+- Afficher à l'utilisateur les motifs utiles du refus (longueur, classe de caractères manquante, mot de passe courant/compromis ou information personnelle), sans révéler les détails internes de détection.
 
 ## 9. Authentification et protection contre les attaques
 
@@ -801,3 +822,33 @@ Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail
 41. **Portée des preuves :** ces constats décrivent les fichiers présents sur `feature/Identity`. Les migrations n'ont pas été exécutées et les tests n'ont pas été lancés pendant l'audit GitHub ; aucun statut de test local n'est présumé.
 
 **Statut :** contrôle des composants Audit/Identity terminé pour cette passe documentaire. L'audit fonctionnel et technique Identity peut maintenant être consolidé en matrice d'écarts et plan de correction, sans commencer les modifications de code.
+
+
+### 20.9 Décisions complémentaires — politique et historique des mots de passe
+
+**Décisions confirmées le 8 novembre 2026 :**
+1. La politique renforcée ID-01 décrite à la section 8 s'applique à tous les rôles et à tous les parcours de définition ou de remplacement d'un mot de passe.
+2. L'historique ID-02 interdit le mot de passe actuel et les cinq anciens mots de passe.
+3. Seuls cinq anciens hashes sont conservés, en plus du hash courant.
+4. L'ancien hash courant est ajouté à l'historique uniquement dans la transaction d'une opération réussie. Toute opération annulée ou échouée ne laisse aucune entrée.
+5. Lorsqu'un sixième ancien hash est ajouté, le plus ancien est supprimé automatiquement.
+6. Les mêmes contrôles doivent être appliqués aux changements volontaires/forcés, réinitialisations et acceptations d'invitation/activation.
+
+**État du dépôt au début de la correction :**
+- PasswordPolicy impose la longueur, la majuscule, la minuscule et le chiffre, mais rejette les espaces et n'exige pas de caractère spécial.
+- Aucun contrôle de données personnelles, de mots de passe courants/compromis ou de liste locale versionnée n'a été identifié dans les fichiers examinés.
+- Aucun modèle, service ou migration d'historique des mots de passe n'a été identifié.
+- PasswordService, PasswordResetService, ForcedPasswordChangeController et UserInvitationService définissent ou remplacent un mot de passe sans contrôle commun complet de l'historique.
+- Le reset reste configuré à 60 minutes, n'invalide pas les anciens liens et ne vérifie pas l'état actif du compte.
+- Les tests de politique et d'historique n'ont pas été identifiés dans l'arborescence examinée et aucun test n'a été exécuté à distance.
+
+**Plan de correction initial :**
+- [ ] Ajouter une migration append-only pour l'historique des mots de passe.
+- [ ] Ajouter un modèle/service d'historique avec transactions, verrouillage et limite stricte de cinq anciens hashes.
+- [ ] Centraliser les contrôles de politique et d'historique pour tous les flux de mot de passe.
+- [ ] Corriger l'expiration, l'invalidation et l'éligibilité des tokens de réinitialisation.
+- [ ] Révoquer les sessions et tokens API dans tous les flux où la décision l'exige.
+- [ ] Concevoir et implémenter le contrôle de mots de passe courants/compromis, sa liste locale versionnée et son mécanisme de mise à jour sécurisé.
+- [ ] Ajouter les tests unitaires, service, HTTP et de concurrence ; exécuter les tests localement.
+
+**État :** décisions validées ; audit des fichiers ciblés effectué ; implémentation à commencer par lots.
