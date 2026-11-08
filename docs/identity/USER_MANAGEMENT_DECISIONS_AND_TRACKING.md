@@ -997,3 +997,16 @@ Résultat Laravel :
 La migration `2026_11_08_000001_create_user_password_histories_table` est donc **exécutée avec succès sur la base locale**. Cette preuve confirme l'application de la migration, mais ne valide pas à elle seule l'intégrité complète du schéma, les parcours métier, l'atomicité ou la concurrence.
 
 **Prochaine étape :** exécuter les tests d'intégration liés à l'historique et aux changements/réinitialisations de mot de passe, puis la suite complète Identity. Ne marquer ces validations comme vertes qu'après confirmation des résultats.
+
+
+## 20.18 — Tests de l'historique des mots de passe
+
+Le 8 novembre 2026, l'utilisateur a confirmé que la commande suivante est **verte** :
+
+```bash
+php artisan test --filter=PasswordHistory
+```
+
+Cette validation confirme que les tests correspondant au filtre `PasswordHistory` passent dans l'environnement local. Elle ne remplace pas les tests HTTP de bout en bout, les contrôles de concurrence ni l'exécution de toute la suite Identity.
+
+**Prochaine étape :** exécuter les tests HTTP/intégration liés aux changements volontaires et forcés de mot de passe ainsi qu'à la réinitialisation, puis lancer la suite complète Identity.
