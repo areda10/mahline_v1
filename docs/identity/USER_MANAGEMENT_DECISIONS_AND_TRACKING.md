@@ -450,9 +450,22 @@ Dans le périmètre autorisé ci-dessus, `super_admin_root` et `super_admin` peu
 
 Les mots de passe, tokens, codes OTP, secrets et données confidentielles d'authentification restent exclus. Le périmètre coopératif du `super_admin` s'applique à toutes ces catégories.
 
+### Données personnelles consultables et modifiables par leur propriétaire (décision 93)
+
+Chaque utilisateur peut consulter et modifier les données suivantes de son propre profil :
+- Nom et prénom.
+- Téléphone.
+- Adresse personnelle.
+- Photo de profil.
+- Langue d'affichage.
+- Fuseau horaire.
+- Préférences de notifications.
+
+L'adresse e-mail, le mot de passe, le rôle, la coopérative et le statut restent soumis à leurs procédures spécifiques de sécurité et de gestion déjà définies. L'édition du profil personnel ne permet donc pas de modifier les droits, l'appartenance à une coopérative ou le cycle de vie du compte.
+
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
-- [ ] Quelles données chaque utilisateur peut-il consulter et modifier lui-même ?
+- [x] Données consultables et modifiables par le propriétaire — décision 93 validée.
 - [ ] Faut-il un export téléchargeable des données personnelles d'un utilisateur ?
 - [ ] Quel rôle peut demander ou effectuer une correction des données ?
 - [ ] Quel processus pour une demande de suppression ou d'anonymisation ?
@@ -523,7 +536,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [ ] Auditer les champs personnels réellement présents dans le modèle utilisateur et les domaines associés.
 - [ ] Implémenter et tester les autorisations root/super_admin/utilisateur selon la décision 91.
 - [ ] Vérifier qu'un cooperative_admin ne peut accéder aux données personnelles d'autrui, même par URL directe ou API.
-- [ ] Définir les catégories de données modifiables par leur propriétaire.
+- [x] Définir les catégories de données modifiables par leur propriétaire — décision 93.
 - [ ] Clarifier et implémenter l'export des données personnelles.
 - [ ] Clarifier le processus de correction, suppression et anonymisation.
 - [ ] Définir les règles de conservation et les exceptions légales/comptables.
@@ -565,5 +578,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. La prochaine question à traiter est la question 93 : données personnelles qu'un utilisateur peut consulter et modifier lui-même.
+- La décision 92 fixe les catégories de données consultables par root et super admin. La décision 93 fixe les données personnelles consultables et modifiables par leur propriétaire. La prochaine question à traiter est la question 94 : export téléchargeable des données personnelles.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
