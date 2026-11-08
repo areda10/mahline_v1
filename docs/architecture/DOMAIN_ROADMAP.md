@@ -173,3 +173,9 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Ajout des constats sur le changement d'e-mail personnel, la vérification 24 h, la gestion des rôles existants, les transferts de coopérative, les alertes nouvel appareil, l'OTP, les messages de connexion et la gestion des tokens API.
 - Référence détaillée : section 20.5 et 20.6 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
 - Aucun code applicatif modifié ; audit toujours ouvert.
+
+
+### 8 novembre 2026 — Audit Identity : politique de mot de passe et sessions
+- Vérification des règles de mot de passe, du reset, des migrations utilisateurs, des sessions et des routes API.
+- Constats détaillés : section 20.7 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
+- Aucun changement de code applicatif ; audit en lecture seule.
