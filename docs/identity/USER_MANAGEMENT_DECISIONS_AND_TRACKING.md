@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.1
+- **Version :** 1.2
 - **Dernière mise à jour :** 8 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -440,10 +440,18 @@ Aucun verrouillage automatique sur la seule base d'un score d'anomalie.
 - Les secrets d'authentification, tokens, codes de vérification et informations internes de sécurité restent exclus des vues administratives ordinaires.
 - L'accès doit être contrôlé côté serveur par Policies/Gates et respecter le périmètre coopératif.
 
-**Note de périmètre :** la règle ci-dessus concerne l'accès aux données personnelles d'autrui. Elle ne retire pas à chaque utilisateur le droit de consulter et modifier ses propres informations.
+### Catégories de données consultables par root et super admin (décision 92)
+Dans le périmètre autorisé ci-dessus, `super_admin_root` et `super_admin` peuvent consulter les catégories suivantes :
+1. **Identité :** nom, prénom et date de naissance si elle est collectée.
+2. **Coordonnées :** adresse e-mail, téléphone et adresse postale.
+3. **Profil :** photo de profil et autres informations personnelles renseignées.
+4. **Informations professionnelles :** rôle, coopérative, fonction et statut du compte.
+5. **Informations de gestion :** date de création du compte et date de dernière mise à jour.
+
+Les mots de passe, tokens, codes OTP, secrets et données confidentielles d'authentification restent exclus. Le périmètre coopératif du `super_admin` s'applique à toutes ces catégories.
 
 ### Questions de confidentialité restant à clarifier
-- [ ] Quelles catégories exactes de données personnelles sont visibles par root et super admin ?
+- [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
 - [ ] Quelles données chaque utilisateur peut-il consulter et modifier lui-même ?
 - [ ] Faut-il un export téléchargeable des données personnelles d'un utilisateur ?
 - [ ] Quel rôle peut demander ou effectuer une correction des données ?
@@ -557,5 +565,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La prochaine question à traiter est la question 92 : catégories exactes de données personnelles accessibles à root et super admin.
+- La décision 92 fixe les catégories de données consultables par root et super admin. La prochaine question à traiter est la question 93 : données personnelles qu'un utilisateur peut consulter et modifier lui-même.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
