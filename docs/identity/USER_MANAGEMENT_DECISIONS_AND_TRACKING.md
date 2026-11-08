@@ -632,7 +632,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
 - [x] Processus fonctionnel de demande d'effacement et d'anonymisation défini (décision 96) ; conformité juridique et implémentation à vérifier.
 - [ ] Vérifier les durées légales/réglementaires exactes par catégorie et les documenter ; durée de référence des données de profil fixée à 5 ans après archivage/suppression logique (décision 98).
-- [x] Journaliser les consultations administratives des fiches personnelles selon la décision 99.
+- [ ] Journaliser les consultations administratives des fiches personnelles selon la décision 99 — exigence validée, implémentation non repérée dans les contrôleurs examinés ; vérifier les mécanismes transversaux.
 
 ### G. Tests indispensables
 - [ ] Matrice de permissions par rôle et par coopérative.
@@ -696,3 +696,52 @@ Ces observations proviennent d'une première lecture de fichiers de la branche `
 5. Les routes API d'audit et d'authentification doivent être vérifiées avec leurs Form Requests, Policies, capacités Sanctum et services métier afin de confirmer le cumul des deux niveaux d'autorisation.
 
 **État :** audit en cours ; aucune modification du code effectuée.
+
+
+## 20. Point de contrôle de l'audit technique — 8 novembre 2026
+
+**Branche auditée :** `feature/Identity`  
+**Commit de départ du contrôle :** `926cf33b09f93f9e651dafd259fa57b3d6f4c6aa`  
+**État :** audit en cours — aucune modification du code applicatif.
+
+### 20.1 Écarts confirmés dans les fichiers examinés
+
+1. **Expiration du lien de réinitialisation :** `PasswordResetService::createToken()` utilise 60 minutes au lieu des 30 minutes validées.
+2. **Invalidation des anciens liens :** `createToken()` ajoute un nouveau jeton sans révoquer les jetons précédents non utilisés. Après une réinitialisation, le service marque uniquement le jeton courant comme utilisé.
+3. **Statut du compte :** `validateToken()` et `resetPassword()` vérifient l'existence du compte, mais pas que son statut est `active`. La réinitialisation doit être réservée aux comptes actifs.
+4. **Révocation des accès après réinitialisation :** `PasswordResetService` révoque les sessions web via `SessionService`, mais ne révoque pas les tokens API. La décision validée exige la révocation des deux.
+5. **Politique du mot de passe :** `PasswordPolicy` interdit les espaces, n'exige pas de caractère spécial et ne vérifie pas les mots de passe communs/compromis. La politique validée autorise espaces et Unicode, exige majuscule/minuscule/chiffre/caractère spécial et rejette les mots de passe communs ou compromis.
+6. **Historique des mots de passe :** aucun mécanisme ni migration d'historique n'a été repéré dans les fichiers et migrations examinés. La règle des cinq derniers mots de passe n'est donc pas démontrée.
+7. **Délai d'inactivité :** `EnsureActiveAuthenticationSession` vérifie l'état du compte et la session MAHLINE, puis actualise l'activité, mais ne vérifie pas les délais d'inactivité différenciés par rôle. La configuration de session Laravel examinée utilise un réglage global `expire_on_close`, pas les règles de persistance par rôle.
+8. **Profil personnel :** aucune route ou classe dédiée au profil personnel n'a été repérée dans l'arborescence examinée. Le modèle User ne contient pas, à ce stade, les attributs d'adresse personnelle, de photo ou de préférences de notification attendus ; les migrations supplémentaires devront être vérifiées avant de figer ce constat.
+9. **Consultation des fiches personnelles :** les méthodes `show()` des contrôleurs User Management examinés vérifient les Policies, mais n'enregistrent pas elles-mêmes la consultation. Aucun mécanisme transversal de journalisation de cette consultation n'a encore été identifié. L'exigence de journalisation reste donc à démontrer.
+10. **Tokens API :** le modèle Sanctum personnalisé et le stockage haché sont présents. Toutefois, `config/sanctum.php` fixe `expiration` à `null`, aucune couche de gestion des tokens (création, liste, révocation individuelle, capacités autorisées et limites par rôle) n'a été repérée dans les routes et contrôleurs examinés, et aucun Scheduler de purge des tokens expirés n'apparaît dans les fichiers de planification examinés.
+11. **API d'audit :** `routes/api.php` expose `/audit/events` derrière `auth:sanctum`; le contrôleur applique `viewAny` et filtre les événements par coopérative. La Policy actuelle autorise aussi un `cooperative_admin` ayant `audit.view` à consulter les événements de sa coopérative. Cette règle doit être comparée à la décision applicable au type exact de journaux concerné ; ne pas confondre l'accès général aux événements métier avec les journaux spécifiques de consultation des fiches personnelles, réservés à `super_admin_root`.
+
+### 20.2 Éléments conformes ou partiellement présents
+
+- Plusieurs sessions web simultanées sont prises en charge : `SessionService::create()` crée une nouvelle session sans révoquer les précédentes.
+- La révocation individuelle des sessions web est exposée dans les routes back-office.
+- Les tokens API sont distincts des sessions web ; un test Framework vérifie cette séparation.
+- Le modèle Sanctum personnalisé utilise des ULID et les tests Framework vérifient le stockage haché des secrets de tokens.
+- La restauration d'un utilisateur supprimé conserve la révocation de ses anciennes sessions et tokens ; le service restaure le compte en statut `pending`.
+- Le flux d'invitation invalide les invitations précédentes non utilisées avant d'en créer une nouvelle.
+- Le service de gestion des utilisateurs révoque les sessions et tokens lors de certains changements de rôle/profil ou de statut ; ce mécanisme ne couvre pas encore le flux de réinitialisation de mot de passe examiné.
+
+### 20.3 Tests repérés et tests manquants à confirmer
+
+Douze fichiers Feature sont présents sous `tests/Feature/Domains/Identity/`, ainsi qu'un test Framework dédié au modèle de token Sanctum. Les fichiers repérés ne démontrent pas encore une couverture complète des sujets suivants :
+
+- réinitialisation de mot de passe : expiration 30 minutes, invalidation des anciens liens, statut actif uniquement, usage unique, révocation de toutes les sessions et de tous les tokens ;
+- politique complète des mots de passe et historique des cinq derniers ;
+- délais d'inactivité par rôle et expiration serveur ;
+- gestion API des tokens : capacités, durée maximale de 30 jours, limites par rôle, révocation individuelle et globale, nettoyage planifié ;
+- profil personnel et contrôle d'accès à ses propres données ;
+- journalisation des consultations autorisées et refusées des fiches personnelles ;
+- règles OTP, vérification de connexion depuis un pays inhabituel et notifications de sécurité, à confirmer dans les autres composants du projet.
+
+**Important :** les tests listés dans le dépôt n'ont pas été exécutés pendant cet audit. Leur présence ne constitue pas une preuve qu'ils passent.
+
+### 20.4 Prochaine étape
+
+Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail, statuts, rôles, transferts de coopérative, API et audit/privacy), puis produire une matrice consolidée des écarts et un plan de correction fichier par fichier. Aucun changement de code avant validation explicite.
