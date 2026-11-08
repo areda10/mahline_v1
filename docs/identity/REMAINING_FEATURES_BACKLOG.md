@@ -283,3 +283,5 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | 8 novembre 2026 | 1.6 | Migration locale de l'historique des mots de passe exécutée avec succès ; ID02-01 et VAL-02 cochées. Tests d'intégration et suite complète Identity restent ouverts. |
 
 | 8 novembre 2026 | 1.7 | Tests `php artisan test --filter=PasswordHistory` confirmés verts par l'utilisateur ; tests HTTP/intégration complémentaires, concurrence et suite complète Identity restent à exécuter. |
+
+| 8 novembre 2026 | 1.8 | Le filtre `Password` a révélé des fixtures non conformes à la politique et une erreur distincte `all() on array` dans le test d'activation root. Trois fichiers de tests ont été corrigés pour utiliser des mots de passe conformes ; résultats locaux à confirmer et erreur distincte à diagnostiquer. |
