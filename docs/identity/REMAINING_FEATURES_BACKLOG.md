@@ -236,7 +236,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [ ] **VAL-02** Exécuter la migration de l'historique sur une base locale de test.
 - [x] **VAL-03** Exécuter `php artisan test --filter=PasswordPolicyTest` — VERT confirmé par l'utilisateur.
 - [x] **VAL-04** Exécuter `php artisan test --filter=PasswordHistoryServiceTest` — VERT confirmé par l'utilisateur.
-- [ ] **VAL-05** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest`.
+- [x] **VAL-05** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT confirmé par l'utilisateur.
 - [ ] **VAL-06** Exécuter `php artisan test --filter=UserInvitationServiceTest`.
 - [ ] **VAL-07** Exécuter les tests de reset de mot de passe.
 - [ ] **VAL-08** Corriger les régressions révélées par ces tests avant de poursuivre.
@@ -261,7 +261,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | Audit / sécurité | 21 | 0 | Intégrité et journaux dédiés |
 | Notifications | 6 | 0 | Service multicanal |
 | Confidentialité | 7 | 0 | Export et effacement contrôlé |
-| Validation des commits | 10 | 2 | Changement forcé, invitation, reset et migration |
+| Validation des commits | 9 | 3 | Invitation, reset, migration et suite complète Identity |
 
 > Les quantités de ce tableau sont des estimations initiales des éléments numérotés ; elles seront recalculées au fur et à mesure. Aucun élément n'est marqué validé tant qu'un test ou une preuve d'exécution n'est pas disponible.
 
@@ -274,4 +274,5 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | 8 novembre 2026 | 1.0 | Création du backlog à partir des décisions Identity et des constats d'audit ; séparation des tâches de validation des commits et des développements futurs. |
 | 8 novembre 2026 | 1.1 | Validation utilisateur de `PasswordPolicyTest` (vert) ; VAL-03 cochée, les autres validations restent ouvertes. |
 | 8 novembre 2026 | 1.2 | Validation utilisateur de `PasswordHistoryServiceTest` (vert) ; VAL-04 cochée, migration et tests de parcours restent à valider. |
+| 8 novembre 2026 | 1.3 | Validation utilisateur de `ForcedPasswordChangeControllerTest` (vert) ; VAL-05 cochée, invitation, reset et migration restent ouverts. |
 
