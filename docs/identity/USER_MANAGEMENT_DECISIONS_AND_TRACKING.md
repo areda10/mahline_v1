@@ -473,11 +473,21 @@ Chaque utilisateur peut télécharger une copie de ses propres données personne
 - Les mots de passe, tokens, codes OTP, secrets et autres données sensibles d'authentification sont exclus.
 - Les exports administratifs concernant d'autres utilisateurs restent soumis aux autorisations et périmètres définis pour le rôle concerné.
 
+### Correction des données personnelles (décision 95)
+
+Les règles de correction sont les suivantes :
+- Chaque utilisateur peut corriger lui-même ses propres données personnelles modifiables, dans les limites des règles spécifiques applicables à certains champs.
+- `super_admin` peut corriger les données personnelles des utilisateurs des seules coopératives qui lui sont attribuées.
+- `super_admin_root` peut corriger les données personnelles de tous les utilisateurs.
+- `cooperative_admin` ne peut pas modifier les données personnelles des autres utilisateurs.
+- Toute correction effectuée par un administrateur est journalisée avec l'identité de l'auteur, l'ancienne valeur, la nouvelle valeur et la date.
+- Les changements d'adresse e-mail restent soumis à la procédure dédiée de changement et de vérification déjà validée.
+
 ### Questions de confidentialité restant à clarifier
 - [x] Catégories exactes de données personnelles visibles par root et super admin — décision 92 validée.
 - [x] Données consultables et modifiables par le propriétaire — décision 93 validée.
 - [x] Export personnel PDF/JSON, lien temporaire sécurisé, journalisation et exclusion des secrets — décision 94 validée.
-- [ ] Quel rôle peut demander ou effectuer une correction des données ?
+- [x] Correction par le propriétaire et corrections administratives selon le périmètre root/super_admin ; cooperative_admin exclu — journalisation des changements administratifs — décision 95 validée.
 - [ ] Quel processus pour une demande de suppression ou d'anonymisation ?
 - [ ] Quelles données doivent être conservées pour les obligations comptables, commerciales, légales ou de sécurité ?
 - [ ] Quelle durée de conservation appliquer aux données de profil après fermeture/suppression du compte ?
@@ -548,7 +558,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [ ] Vérifier qu'un cooperative_admin ne peut accéder aux données personnelles d'autrui, même par URL directe ou API.
 - [x] Définir les catégories de données modifiables par leur propriétaire — décision 93.
 - [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
-- [ ] Clarifier le processus de correction, suppression et anonymisation.
+- [ ] Clarifier le processus de suppression et d'anonymisation ; les règles de correction sont définies (décision 95).
 - [ ] Définir les règles de conservation et les exceptions légales/comptables.
 - [ ] Journaliser les consultations administratives si cette règle est validée.
 
@@ -588,5 +598,5 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les décisions consignées dans les sections 2 à 16 sont celles validées pendant la phase de questions-réponses.
 - L'implémentation effective reste à auditer dans le dépôt.
 - Les questions ouvertes de confidentialité sont listées en section 16.
-- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La prochaine question à traiter est la question 95 : rôle autorisé à demander ou effectuer une correction des données.
+- La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La prochaine question à traiter est la question 96 : processus de suppression ou d'anonymisation des données.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
