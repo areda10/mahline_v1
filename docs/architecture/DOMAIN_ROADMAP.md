@@ -179,3 +179,9 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Vérification des règles de mot de passe, du reset, des migrations utilisateurs, des sessions et des routes API.
 - Constats détaillés : section 20.7 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
 - Aucun changement de code applicatif ; audit en lecture seule.
+
+
+### 8 novembre 2026 — Audit Identity : auditabilité et sécurité des sessions
+- Inspection du journal d'audit, des événements de sécurité, des consultations de fiches et de la gestion des sessions.
+- Constats détaillés : section 20.8 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
+- Les composants existants sont distingués des exigences non couvertes ; aucun code applicatif modifié.
