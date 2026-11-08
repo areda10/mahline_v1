@@ -50,7 +50,7 @@ Les documents d'architecture décrivent également des domaines ou périmètres 
 
 | Domaine | Périmètre de référence | Présence dans app/Domains (inventaire) | Suivi |
 |---|---|---:|---|
-| Identity | Utilisateurs, rôles, authentification, sessions, mots de passe, API, sécurité et confidentialité | Oui | En audit — cahier de décisions dédié |
+| Identity | Utilisateurs, rôles, authentification, sessions, mots de passe, API, sécurité et confidentialité | Oui | En audit — écarts initiaux consignés le 8 novembre 2026 ; voir le cahier Identity |
 | Cooperatives | Organisations, rattachements, statuts et gestion des coopératives | Oui | Audit fonctionnel en cours / suivi dédié à maintenir |
 | Catalog | Catalogue commercial et règles de présentation des produits | Oui | À auditer après consolidation des frontières avec Products et Categories |
 | Categories | Arborescence et règles de catégories globales et coopératives | Oui | Décisions et tests déjà travaillés ; conserver le suivi dédié |
@@ -160,3 +160,10 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Enregistrement de la décision : Statistics est un domaine autonome.
 - Signalement des arbitrages nécessaires concernant Sales / Orders / Delivery et Catalog / Categories / Products.
 - Confirmation que la facturation relève du périmètre Finance dans l'architecture existante.
+
+
+### 8 novembre 2026 — Point de contrôle Identity
+- Audit en lecture seule poursuivi sur `feature/Identity`.
+- Premiers écarts confirmés consignés dans `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md` (section 20).
+- Référence : commit d'audit de départ `926cf33b09f93f9e651dafd259fa57b3d6f4c6aa`.
+- L'audit Identity reste ouvert ; aucune modification du code applicatif n'a été effectuée.
