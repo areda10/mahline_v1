@@ -234,7 +234,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 
 - [ ] **VAL-01** Récupérer les commits de la branche `feature/Identity`.
 - [ ] **VAL-02** Exécuter la migration de l'historique sur une base locale de test.
-- [ ] **VAL-03** Exécuter `php artisan test --filter=PasswordPolicyTest` et enregistrer le résultat.
+- [x] **VAL-03** Exécuter `php artisan test --filter=PasswordPolicyTest` — VERT confirmé par l'utilisateur.
 - [ ] **VAL-04** Exécuter `php artisan test --filter=PasswordHistoryServiceTest` et enregistrer le résultat.
 - [ ] **VAL-05** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest`.
 - [ ] **VAL-06** Exécuter `php artisan test --filter=UserInvitationServiceTest`.
@@ -261,7 +261,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | Audit / sécurité | 21 | 0 | Intégrité et journaux dédiés |
 | Notifications | 6 | 0 | Service multicanal |
 | Confidentialité | 7 | 0 | Export et effacement contrôlé |
-| Validation des commits | 12 | 0 | Exécution locale et CI |
+| Validation des commits | 11 | 1 | Historique des mots de passe puis autres tests ciblés |
 
 > Les quantités de ce tableau sont des estimations initiales des éléments numérotés ; elles seront recalculées au fur et à mesure. Aucun élément n'est marqué validé tant qu'un test ou une preuve d'exécution n'est pas disponible.
 
@@ -272,4 +272,5 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | Date | Version | Mise à jour |
 |---|---|---|
 | 8 novembre 2026 | 1.0 | Création du backlog à partir des décisions Identity et des constats d'audit ; séparation des tâches de validation des commits et des développements futurs. |
+| 8 novembre 2026 | 1.1 | Validation utilisateur de `PasswordPolicyTest` (vert) ; VAL-03 cochée, les autres validations restent ouvertes. |
 
