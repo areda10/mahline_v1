@@ -672,3 +672,27 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - Les questions ouvertes de confidentialité sont listées en section 16.
 - La décision 92 fixe les catégories de données consultables par root et super admin. Les décisions 93 et 94 fixent respectivement les données personnelles consultables/modifiables par leur propriétaire et les règles d'export personnel. La décision 95 définit les droits de correction des données personnelles et leur journalisation. La décision 96 définit les demandes d'effacement et les conditions d'anonymisation. La décision 97 définit les catégories de données susceptibles d'être conservées malgré une demande d'effacement. La décision 98 fixe une durée de référence de cinq ans pour les données de profil après archivage ou suppression logique. La décision 99 impose la journalisation des consultations administratives des fiches personnelles. La décision 100 confirme qu'aucune notification n'est envoyée à l'utilisateur lors de ces consultations. La décision 101 réserve la consultation des journaux d'accès aux fiches personnelles à super_admin_root. La décision 102 valide que l'accès de super_admin_root aux journaux d'audit reste protégé par les règles de sécurité déjà approuvées. Les autres protections supplémentaires proposées pour ses consultations restent à confirmer.
 - Ce document doit être mis à jour dans `feature/Identity` à chaque nouvelle décision validée.
+
+
+## 19. Clôture de la clarification et lancement de l'audit technique
+
+### Q104 — Clôture de la phase de questions
+- **Décision : OUI, validée le 8 novembre 2026.**
+- La phase de clarification fonctionnelle et de sécurité est terminée.
+- L'audit technique global du domaine Identity peut commencer sur la branche `feature/Identity`.
+- L'audit doit s'appuyer sur les fichiers réellement présents dans le dépôt.
+- Il doit distinguer les fonctionnalités implémentées, incomplètes, absentes et celles dont la conformité reste à prouver par des tests.
+- Il doit relever les risques, les écarts par rapport aux décisions Q1 à Q103 et les tests manquants.
+- Un plan de correction précis, fichier par fichier, doit être présenté avant toute modification.
+- **Aucune modification du code n'est autorisée avant validation explicite du plan par l'utilisateur.**
+
+### Premières observations techniques — provisoires, à confirmer pendant l'audit
+Ces observations proviennent d'une première lecture de fichiers de la branche `feature/Identity`. Elles ne constituent pas encore le rapport final :
+
+1. `routes/web.php` et `routes/api.php` ne montrent pas, dans leur état examiné, de routes dédiées à la consultation et à la modification du profil personnel. L'existence éventuelle d'autres points d'entrée devra être vérifiée.
+2. `PasswordResetService::createToken()` crée actuellement des liens de réinitialisation valables 60 minutes, alors que la décision validée prévoit 30 minutes.
+3. `PasswordResetService` vérifie l'existence, l'utilisation et l'expiration du jeton, mais les méthodes examinées ne vérifient pas que le compte est dans un état autorisant la réinitialisation (compte actif uniquement).
+4. `EnsureActiveAuthenticationSession` vérifie l'autorisation du compte et l'existence de la session MAHLINE, puis actualise son activité. Aucun contrôle de durée d'inactivité propre au rôle n'apparaît dans ce middleware ; la conformité aux délais validés reste à vérifier dans le reste du projet.
+5. Les routes API d'audit et d'authentification doivent être vérifiées avec leurs Form Requests, Policies, capacités Sanctum et services métier afin de confirmer le cumul des deux niveaux d'autorisation.
+
+**État :** audit en cours ; aucune modification du code effectuée.
