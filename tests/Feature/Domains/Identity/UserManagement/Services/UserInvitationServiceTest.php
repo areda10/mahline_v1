@@ -185,7 +185,7 @@ final class UserInvitationServiceTest extends TestCase
         $token = 'root-manual-verification-suspended-token';
 
         UserInvitation::query()->create([
-            'id' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'id' => (string) \Illuminate\Support\Str::ulid(),
             'user_id' => $user->getKey(),
             'purpose' => 'root_manual_verification',
             'token_hash' => hash('sha256', $token),
@@ -200,7 +200,7 @@ final class UserInvitationServiceTest extends TestCase
             app(UserInvitationService::class)->validateInvitation($token);
 
             $this->fail('A suspended user must not use a root verification invitation.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             $this->assertSame(
                 'The account status does not allow this invitation to be accepted.',
                 $exception->getMessage(),
@@ -214,7 +214,7 @@ final class UserInvitationServiceTest extends TestCase
             );
 
             $this->fail('A suspended user must not accept a root verification invitation.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             $this->assertSame(
                 'Only pending, unverified users can accept an activation invitation.',
                 $exception->getMessage(),
