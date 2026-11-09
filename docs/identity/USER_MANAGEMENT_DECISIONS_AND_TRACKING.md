@@ -1610,4 +1610,21 @@ Les commits applicatifs et tests de la série AUTH-07 sont consignés en section
 
 Après clôture d'AUTH-07, l'audit Identity reprend sur la gestion de l'expiration des sessions par rôle. Le premier contrôle porte sur les délais d'inactivité serveur : 15 minutes pour super_admin_root, 30 minutes pour super_admin, 30 minutes pour cooperative_admin et 60 minutes pour user. Aucun changement applicatif n'est déclaré avant inspection des middlewares, de la configuration de session, des routes et des tests existants.
 
-**État : À AUDITER — inspection du code réel de feature/Identity.**
+L'inspection de feature/Identity a confirmé :
+- config/session.php fixe actuellement SESSION_LIFETIME à 120 minutes pour tous les rôles ;
+- EnsureActiveAuthenticationSession vérifiait l'existence et la révocation de la session, puis actualisait last_activity_at, sans contrôler l'inactivité ;
+- authentication_sessions dispose déjà de authenticated_at et last_activity_at ;
+- SessionService centralise la révocation avec LoginHistory et Audit append-only ;
+- les routes métier authentifiées utilisent déjà EnsureActiveAuthenticationSession.
+
+### Implémentation initiale sur feature/Identity
+
+- SessionService applique les délais décidés : super_admin_root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min ; si un utilisateur cumule plusieurs rôles, le délai le plus strict prévaut.
+- La limite est calculée à partir de last_activity_at, avec authenticated_at comme repli si last_activity_at est nul.
+- EnsureActiveAuthenticationSession appelle l'expiration avant de toucher la session ; une session expirée est révoquée avec le motif inactivity_timeout, puis la session Laravel est invalidée et l'utilisateur est redirigé vers la connexion.
+- L'expiration est effectuée sous verrou de ligne afin d'éviter qu'une activité concurrente et une révocation d'expiration se contredisent ; touch() utilise également un verrou.
+- Les tests de politique et de révocation/audit sont ajoutés dans SessionInactivityPolicyTest.
+
+**Point de vigilance :** config/session.php conserve son délai de stockage Laravel global de 120 minutes. Ce délai sert au cycle de vie du stockage/cookie et n'est pas la politique d'inactivité métier ; le contrôle SESS-01 est appliqué côté serveur par le middleware. Le comportement des cookies persistants/non persistants reste séparé dans SESS-04.
+
+**État : CODE ET TESTS AJOUTÉS — tests locaux, Pint et test HTTP du middleware à valider.**
