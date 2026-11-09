@@ -1347,3 +1347,24 @@ Deux protections/tests ont été ajoutés sur `feature/Identity` :
 Commit du test de cycle de vie : `b231483c25ab1fba5dfa5020fd3e8f7fbb840017`.
 
 **Limite de validation :** ces tests ne valident pas encore la compatibilité des anciens formats de hash ni le traitement des comptes historiques dont le hash aurait été créé par une ancienne version de l'application. Cet audit reste ouvert.
+
+
+## 20.34 — Rehash des mots de passe obsolètes à la connexion
+
+L'audit du parcours personnalisé `AuthenticationService` a montré que le projet utilise `Hash::check()` puis laisse le workflow effectuer la connexion. Dans ce parcours, le rehash automatique du fournisseur Laravel n'est pas déclenché.
+
+Correction sur `feature/Identity` : après vérification réussie du mot de passe, `AuthenticationService` contrôle `hashing.rehash_on_login` et `Hash::needsRehash()`. Si les paramètres du hash sont obsolètes, il enregistre un nouveau hash du même mot de passe. Cette opération ne constitue pas un changement de mot de passe : elle n'ajoute donc aucune ligne à `user_password_histories`.
+
+Tests ajoutés dans `AuthenticationServiceTest` :
+- `test_successful_login_rehashes_an_outdated_password_hash` : un hash bcrypt de coût inférieur est recalculé avec la configuration courante ; le mot de passe reste vérifiable et aucun historique de changement n'est créé.
+- `test_successful_login_does_not_rehash_when_rehash_on_login_is_disabled` : l'option désactivée préserve le hash existant.
+
+Commits :
+- `d8585f716ec2eb97be8705407ce5dfd5c8634af9` — rehash après connexion réussie ;
+- `7d01d96f7950d0ea7748c09393cb14186bcaf68e` — tests de régression.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=AuthenticationServiceTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+**Décision explicite de l'utilisateur :** l'audit de compatibilité entre algorithmes bcrypt et Argon (et la migration inter-algorithmes des anciens hashes) est reporté à une étape ultérieure. Il reste inscrit au backlog sous ID02-12 et ne doit pas être entrepris dans l'audit courant.
