@@ -157,6 +157,9 @@ Route::prefix('root/back-office')
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
 
+        Route::post('security/authentication-lockouts/unlock', [AuthenticationLockoutController::class, 'unlock'])
+            ->name('security.authentication-lockouts.unlock');
+
         Route::get('security/sessions', [AuthenticationSessionController::class, 'rootIndex'])
             ->name('security.sessions.index');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
