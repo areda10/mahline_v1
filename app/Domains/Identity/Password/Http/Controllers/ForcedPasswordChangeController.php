@@ -40,6 +40,7 @@ final class ForcedPasswordChangeController
         abort_unless($user instanceof User, 403);
 
         $forced = (bool) $user->must_change_password;
+        $currentAuthenticationSessionId = $request->session()->get('authentication_session_id');
 
         $rules = [
             'password' => ['required', 'string', 'confirmed', 'min:12', 'max:128'],
@@ -63,7 +64,15 @@ final class ForcedPasswordChangeController
             return back()->withErrors(['password' => $exception->getMessage()]);
         }
 
-        DB::transaction(function () use ($user, $validated, $audit, $forced, $passwordHistory, $sessions): void {
+        DB::transaction(function () use (
+            $user,
+            $validated,
+            $audit,
+            $forced,
+            $passwordHistory,
+            $sessions,
+            $currentAuthenticationSessionId,
+        ): void {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
             if ($lockedUser->status->value !== 'active') {
@@ -81,7 +90,16 @@ final class ForcedPasswordChangeController
             $lockedUser->must_change_password = false;
             $lockedUser->save();
 
-            $sessions->revokeForUser($lockedUser, 'password_changed');
+            if ($forced && is_string($currentAuthenticationSessionId)) {
+                $sessions->revokeOtherSessions(
+                    $lockedUser,
+                    $currentAuthenticationSessionId,
+                    'password_changed',
+                );
+            } else {
+                $sessions->revokeForUser($lockedUser, 'password_changed');
+            }
+
             $lockedUser->tokens()->delete();
 
             $audit->record(new AuditEntryDTO(
