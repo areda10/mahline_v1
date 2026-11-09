@@ -208,6 +208,24 @@ final class AuthenticationService extends BaseService
         }
 
         /*
+         * Upgrade a valid legacy hash when the configured hashing
+         * parameters have changed. This custom authentication flow uses
+         * Hash::check() and Auth::login(), so Laravel's provider-level
+         * rehash-on-login hook is not invoked automatically.
+         *
+         * Rehashing the same password is not a password change and must
+         * not create a password-history entry.
+         */
+        if (
+            (bool) config('hashing.rehash_on_login', true)
+            && Hash::needsRehash((string) $user->password)
+        ) {
+            $user->forceFill([
+                'password' => Hash::make($context->password),
+            ])->save();
+        }
+
+        /*
          * Successful authentication.
          *
          * IMPORTANT:
