@@ -1477,3 +1477,26 @@ Commits correctifs :
 - `1b4e2a498042a25122cf858c530054bf4a8afae2` — clarification du nom du test de remise à zéro explicite.
 
 **État : VALIDÉ LE 9 NOVEMBRE 2026.** L'utilisateur confirme VERT après correction pour les suites `AuthenticationSecurityServiceTest`, `AuthenticationWorkflowTransactionTest`, `AuthenticationServiceTest`, `AuthenticationControllerTest` et `php vendor/bin/pint --test`. Les seuils approuvés restent inchangés.
+
+
+## 20.38 — Déverrouillage administratif des trois compteurs (AUTH-06)
+
+**Décision validée le 9 novembre 2026 :** seul `super_admin_root` peut lever manuellement les trois blocages d'authentification.
+
+### Règle et portée
+
+- Une opération doit fournir l'e-mail normalisé du compte, l'adresse IP concernée et un motif administratif obligatoire.
+- L'opération efface explicitement le compteur du compte, le compteur partagé de l'IP et le compteur du couple IP + e-mail.
+- Le compteur IP partagé est donc remis à zéro pour tous les comptes utilisant cette IP ; cette portée est affichée dans le message de confirmation et conservée dans l'audit.
+- L'opération peut viser un e-mail qui ne correspond plus à un utilisateur existant : le compteur de compte et les compteurs IP restent effaçables. L'audit conserve alors l'identité de l'acteur et les empreintes des cibles, sans stocker l'e-mail ni l'IP fournis.
+- Les tentatives d'accès sont protégées par le groupe de routes root-only et un contrôle explicite du rôle dans le contrôleur.
+- L'événement append-only `identity.authentication.lockouts.unlocked` contient l'acteur, le sujet utilisateur lorsqu'il existe, le motif, les trois portées effacées et les empreintes HMAC des cibles.
+
+### Implémentation ajoutée — validation locale en attente
+
+- `AuthenticationSecurityService::unlockAllScopes()` centralise l'effacement des trois compteurs.
+- `AuthenticationLockoutController::unlock()` valide l'e-mail, l'IP et le motif, vérifie le rôle root, enregistre l'événement via `AuditService`, puis efface les compteurs.
+- Route : `POST root/back-office/security/authentication-lockouts/unlock`, nommée `root.backoffice.security.authentication-lockouts.unlock`.
+- Test HTTP ajouté : `AuthenticationLockoutControllerTest` couvre le succès et les trois compteurs, le refus d'un rôle non-root et la validation des champs.
+
+**État : CODE ET TESTS AJOUTÉS — TESTS LOCAUX À EXÉCUTER.** Ne pas marquer AUTH-06 validé avant confirmation des tests ciblés et de Pint.
