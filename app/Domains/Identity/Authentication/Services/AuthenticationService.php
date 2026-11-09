@@ -6,8 +6,8 @@ namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
-use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Support\Facades\Hash;
