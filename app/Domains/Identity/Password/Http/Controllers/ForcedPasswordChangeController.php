@@ -54,68 +54,78 @@ final class ForcedPasswordChangeController
         $validated = $request->validate($rules);
 
         try {
-            PasswordPolicy::validate($validated['password'], $user);
-            PasswordPolicy::validateChange(
-                $forced ? 'MahlineMahline' : (string) $validated['current_password'],
-                $validated['password'],
+            DB::transaction(function () use (
                 $user,
-            );
-        } catch (InvalidArgumentException $exception) {
-            return back()->withErrors(['password' => $exception->getMessage()]);
-        }
+                $validated,
+                $audit,
+                $forced,
+                $passwordHistory,
+                $sessions,
+                $currentAuthenticationSessionId,
+            ): void {
+                $lockedUser = User::query()
+                    ->whereKey($user->getKey())
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-        DB::transaction(function () use (
-            $user,
-            $validated,
-            $audit,
-            $forced,
-            $passwordHistory,
-            $sessions,
-            $currentAuthenticationSessionId,
-        ): void {
-            $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+                if ($lockedUser->status->value !== 'active') {
+                    abort(403);
+                }
 
-            if ($lockedUser->status->value !== 'active') {
-                abort(403);
-            }
+                if ($forced !== (bool) $lockedUser->must_change_password) {
+                    abort(403);
+                }
 
-            if ($forced !== (bool) $lockedUser->must_change_password) {
-                abort(403);
-            }
+                // Les validations contextuelles sont effectuées après le verrouillage
+                // afin d'utiliser les données utilisateur les plus récentes.
+                PasswordPolicy::validate($validated['password'], $lockedUser);
 
-            $passwordHistory->assertNotReused($lockedUser, $validated['password']);
-            $passwordHistory->archiveCurrentPassword($lockedUser);
-
-            $lockedUser->password = $validated['password'];
-            $lockedUser->must_change_password = false;
-            $lockedUser->save();
-
-            if ($forced && is_string($currentAuthenticationSessionId)) {
-                $sessions->revokeOtherSessions(
+                PasswordPolicy::validateChange(
+                    $forced ? 'MahlineMahline' : (string) $validated['current_password'],
+                    $validated['password'],
                     $lockedUser,
-                    $currentAuthenticationSessionId,
-                    'password_changed',
                 );
-            } else {
-                $sessions->revokeForUser($lockedUser, 'password_changed');
-            }
 
-            $lockedUser->tokens()->delete();
+                $passwordHistory->assertNotReused($lockedUser, $validated['password']);
+                $passwordHistory->archiveCurrentPassword($lockedUser);
 
-            $audit->record(new AuditEntryDTO(
-                eventKey: $forced
-                    ? 'identity.user.forced_password_changed'
-                    : 'identity.user.password_changed',
-                action: $forced ? 'forced_password_changed' : 'password_changed',
-                actorType: User::class,
-                actorId: (string) $lockedUser->getKey(),
-                cooperativeId: $lockedUser->cooperative_id ? (string) $lockedUser->cooperative_id : null,
-                subjectType: User::class,
-                subjectId: (string) $lockedUser->getKey(),
-                oldValues: ['must_change_password' => $forced],
-                newValues: ['must_change_password' => false],
-            ));
-        });
+                $lockedUser->password = $validated['password'];
+                $lockedUser->must_change_password = false;
+                $lockedUser->save();
+
+                if ($forced && is_string($currentAuthenticationSessionId)) {
+                    $sessions->revokeOtherSessions(
+                        $lockedUser,
+                        $currentAuthenticationSessionId,
+                        'password_changed',
+                    );
+                } else {
+                    $sessions->revokeForUser($lockedUser, 'password_changed');
+                }
+
+                $lockedUser->tokens()->delete();
+
+                $audit->record(new AuditEntryDTO(
+                    eventKey: $forced
+                        ? 'identity.user.forced_password_changed'
+                        : 'identity.user.password_changed',
+                    action: $forced ? 'forced_password_changed' : 'password_changed',
+                    actorType: User::class,
+                    actorId: (string) $lockedUser->getKey(),
+                    cooperativeId: $lockedUser->cooperative_id
+                        ? (string) $lockedUser->cooperative_id
+                        : null,
+                    subjectType: User::class,
+                    subjectId: (string) $lockedUser->getKey(),
+                    oldValues: ['must_change_password' => $forced],
+                    newValues: ['must_change_password' => false],
+                ));
+            });
+        } catch (InvalidArgumentException $exception) {
+            return back()->withErrors([
+                'password' => $exception->getMessage(),
+            ]);
+        }
 
         return $this->dashboardRedirect($user->fresh());
     }
