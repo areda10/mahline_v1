@@ -1629,3 +1629,54 @@ L'inspection de feature/Identity a confirmé :
 **Point de vigilance :** config/session.php conserve son délai de stockage Laravel global de 120 minutes. Ce délai sert au cycle de vie du stockage/cookie et n'est pas la politique d'inactivité métier ; le contrôle SESS-01 est appliqué côté serveur par le middleware. Le comportement des cookies persistants/non persistants reste séparé dans SESS-04.
 
 **État : CODE ET TESTS AJOUTÉS — tests locaux, Pint et test HTTP du middleware à valider.**
+
+
+## 20.43 — Validation de l'expiration des sessions par rôle (SESS-01)
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les commandes suivantes sur la branche locale synchronisée avec `feature/Identity` :
+
+- `php artisan test --filter=SessionInactivityPolicyTest`
+- `php artisan test --filter=EnsureActiveAuthenticationSessionTest`
+- `php artisan test --filter=SessionServiceTest`
+- `php vendor/bin/pint --test`
+
+SESS-01 est donc clôturé.
+
+### Politique validée
+
+- `super_admin_root` : 15 minutes d'inactivité.
+- `super_admin` : 30 minutes.
+- `cooperative_admin` : 30 minutes.
+- `user` : 60 minutes.
+- Utilisateur cumulant plusieurs rôles : le délai le plus court prévaut.
+
+L'expiration est appliquée côté serveur, indépendamment de la durée globale de stockage/cookie Laravel (`SESSION_LIFETIME=120`). La révocation porte uniquement sur la session concernée, avec le motif `inactivity_timeout`, et passe par la journalisation LoginHistory et Audit. Le middleware invalide ensuite la session Laravel expirée.
+
+La gestion des cookies persistants/non persistants reste séparée dans SESS-04.
+
+**État : SESS-01 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
+
+## 20.44 — Audit initial SESS-02 : avertissement et prolongation
+
+SESS-02 vise à avertir l'utilisateur deux minutes avant le seuil d'inactivité applicable à ses rôles, puis à lui permettre de prolonger la session tant qu'elle n'a pas expiré.
+
+Constats vérifiés sur `feature/Identity` :
+
+- `SessionService::inactivityTimeoutMinutes()` centralise les délais par rôle et applique déjà le délai le plus court.
+- `EnsureActiveAuthenticationSession` expire la session avant tout rafraîchissement d'activité ; une session expirée ne peut donc pas être ressuscitée par une requête tardive.
+- `SessionService::touch()` actualise `last_activity_at` pour une session active ; toute requête métier authentifiée qui traverse le middleware prolonge donc déjà l'activité côté serveur.
+- Les routes métier Web authentifiées sont protégées par `EnsureActiveAuthenticationSession`.
+- Les routes de gestion des sessions personnelles existent déjà sous `back-office/security/sessions`, mais elles ne constituent pas un mécanisme d'avertissement global.
+- `resources/js/app.js` est actuellement centré sur l'interface de connexion (traductions FR/AR/EN et visibilité du mot de passe) ; aucune logique d'avertissement d'inactivité n'y est présente.
+- La configuration Laravel conserve `SESSION_LIFETIME=120`, ce qui ne doit pas être confondu avec les délais métier de 15/30/60 minutes.
+
+### Contraintes de conception à respecter
+
+1. Le délai d'avertissement doit être calculé à partir du dernier `last_activity_at` serveur et du délai effectif renvoyé par la politique de rôles ; ne pas dupliquer en JavaScript les rôles ni leurs délais.
+2. L'avertissement apparaît à T−2 minutes. Il ne doit pas utiliser un polling périodique qui toucherait le middleware et repousserait artificiellement l'expiration.
+3. L'action « Prolonger ma session » doit appeler une route authentifiée et protégée par le même contrôle d'expiration. Elle ne peut actualiser l'activité que si la session est encore active et avant son échéance.
+4. Une requête d'extension après expiration doit échouer et suivre le parcours d'expiration existant ; elle ne doit jamais réactiver une session révoquée.
+5. Les autres sessions du même utilisateur ne doivent pas être prolongées, révoquées ni modifiées.
+6. L'interface doit être intégrée au layout réellement partagé par les espaces authentifiés, avec traductions FR/AR/EN et gestion accessible du focus/annonce.
+
+**État : AUDIT INITIAL — aucune implémentation SESS-02 déclarée à ce stade ; les chemins exacts des layouts partagés et la stratégie de transmission de l'échéance doivent encore être confirmés dans le dépôt avant modification.**
