@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.4
+- **Version :** 2.5
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -163,8 +163,8 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 ### Invitation et activation
 
 - [ ] **USR-20** Vérifier que tous les parcours d'invitation et d'activation appliquent la politique commune de mot de passe et l'historique.
-- [ ] **USR-21** Auditer l'activation manuelle root et le mot de passe initial imposant un changement avant dashboard.
-- [ ] **USR-22** Vérifier que le mot de passe initial est inutilisable après son premier remplacement.
+- [x] **USR-21** Auditer et implémenter l'activation manuelle root avec mot de passe initial imposant un changement avant tout accès métier — parcours limité à `super_admin_root`, temporaire `MahlineMahline`, communication manuelle ; validation `ForcedPasswordChangeControllerTest`, suite complète et Pint confirmées vertes le 9 novembre 2026.
+- [x] **USR-22** Vérifier que le mot de passe initial est inutilisable après son premier remplacement — le changement obligatoire applique la politique et l'historique ; tests ciblés confirmés verts le 9 novembre 2026.
 - [ ] **USR-23** Vérifier les délais, l'usage unique et l'invalidation des invitations précédentes.
 - [ ] **USR-24** Vérifier les e-mails, messages et transitions pending → active et ajouter tests HTTP/service.
 
@@ -250,6 +250,9 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [ ] **VAL-11** Faire un audit final du diff et confirmer que les commits respectent l'architecture V7.0 et les conventions MAHLINE.
 - [x] **VAL-12** Mettre à jour les deux documents de suivi avec les résultats, preuves et commits de validation — mise à jour effectuée après confirmation du test HTTP de reset, commits documentaires du 9 novembre 2026.
 - [x] **VAL-13** Exécuter `php artisan test --filter=UserManagementControllerTest` — VERT confirmé par l'utilisateur ; l'erreur `all() on array` n'est plus bloquante dans cette exécution ciblée.
+- [x] **VAL-17** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest` après l'ajout des tests de régression de session — VERT confirmé par l'utilisateur le 9 novembre 2026.
+- [x] **VAL-18** Exécuter `php vendor/bin/pint --test` après les changements d'activation manuelle — VERT confirmé par l'utilisateur le 9 novembre 2026.
+- [x] **VAL-19** Exécuter `php artisan test` après les changements d'activation manuelle — VERT confirmé par l'utilisateur le 9 novembre 2026 ; aucun décompte n'a été communiqué pour cette exécution.
 
 ---
 
@@ -313,3 +316,19 @@ Les validations suivantes sont confirmées par l'utilisateur sur la branche loca
 - [ ] **VAL-11** Faire l'audit final du diff et confirmer la conformité à l'architecture V7.0 et aux conventions MAHLINE — reste à réaliser.
 
 Cette validation globale couvre notamment les tests des domaines Identity, Catalog, Categories et Products. Elle ne signifie pas que toutes les fonctionnalités restantes du backlog sont implémentées : les tâches métier non validées restent ouvertes.
+
+
+## Validation de l'activation manuelle root — 9 novembre 2026
+
+Le parcours d'activation manuelle et de changement obligatoire du mot de passe est implémenté et validé localement sur `feature/Identity`.
+
+- [x] Bloquer l'accès aux routes métier web tant que le changement obligatoire n'est pas terminé.
+- [x] Refuser l'accès aux routes API authentifiées protégées tant que le changement obligatoire n'est pas terminé.
+- [x] Autoriser uniquement le changement obligatoire et la déconnexion pendant cette étape.
+- [x] Conserver la session web courante après le changement obligatoire réussi.
+- [x] Révoquer les autres sessions web actives.
+- [x] Supprimer les tokens API existants.
+- [x] Préserver le parcours d'invitation et le changement volontaire de mot de passe.
+- [x] Valider `ForcedPasswordChangeControllerTest`, `php vendor/bin/pint --test` et `php artisan test` — résultats verts confirmés par l'utilisateur.
+
+Le mot de passe temporaire reste `MahlineMahline` jusqu'à une évolution ultérieure vers un mot de passe aléatoire. Sa communication est manuelle ; aucune livraison automatique par e-mail ou appel vocal n'est incluse. L'audit final du diff reste à faire.
