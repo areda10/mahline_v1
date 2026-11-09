@@ -1408,6 +1408,6 @@ Commits :
 - `3627b143beea199c5cae380634c23c288369e5d9` — premiers tests ;
 - `3d7f555f01130ffd7699fbc510585bf993871fa6` — simplification des captures d'exceptions dans les tests.
 
-**État :** implémentation et tests ajoutés ; validation locale encore à confirmer. AUTH-02 ne sera marqué validé qu'après tests ciblés et Pint verts.
+**État :** VALIDÉ le 9 novembre 2026 après confirmation utilisateur : `AuthenticationServiceTest`, `AuthenticationControllerTest` et `php vendor/bin/pint --test` verts.
 
-**Correction après retour de test :** le contrôle du blocage IP a été déplacé avant le contrôle du blocage du compte. La décision existante est conservée : si les deux limites sont atteintes, `login_histories.reason` doit être `ip_locked`. Commit : `bfa963f7c0e47204fa4ede19230a609589bc826a`. Tests locaux à relancer.
+**Correction après retour de test :** le contrôle du blocage IP a été déplacé avant le contrôle du blocage du compte. La décision existante est conservée : si les deux limites sont atteintes, `login_histories.reason` doit être `ip_locked`. Commit : `bfa963f7c0e47204fa4ede19230a609589bc826a`. Tests ciblés et Pint confirmés verts par l'utilisateur le 9 novembre 2026.
