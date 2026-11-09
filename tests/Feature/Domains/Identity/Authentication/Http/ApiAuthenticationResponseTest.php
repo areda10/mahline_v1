@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Identity\\Authentication\\Http;
+namespace Tests\Feature\Domains\Identity\Authentication\Http;
 
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class ApiAuthenticationResponseTest extends TestCase
 {
