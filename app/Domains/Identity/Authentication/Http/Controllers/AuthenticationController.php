@@ -10,7 +10,6 @@ use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -69,18 +68,6 @@ final class AuthenticationController
                 sessionId: $context->sessionId,
                 request: $request,
             );
-        } catch (ModelNotFoundException) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => 'Authentication failed.',
-                ], 401);
-            }
-
-            return back()
-                ->withErrors([
-                    'email' => 'Authentication failed.',
-                ])
-                ->withInput($request->only('email'));
         } catch (AuthenticationFailedException) {
             if ($request->expectsJson()) {
                 return response()->json([
