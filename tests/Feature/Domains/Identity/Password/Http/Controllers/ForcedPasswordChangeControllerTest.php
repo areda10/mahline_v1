@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Password\Http\Controllers;
 
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
@@ -13,6 +14,8 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 final class ForcedPasswordChangeControllerTest extends TestCase
@@ -229,6 +232,39 @@ final class ForcedPasswordChangeControllerTest extends TestCase
             ->assertSessionHasErrors('password');
 
         $this->assertTrue(Hash::check('CurrentPassword12!', $user->fresh()->password));
+    }
+
+
+    public function test_audit_failure_rolls_back_forced_password_change_and_history(): void
+    {
+        $user = $this->actor('user', [
+            'password' => 'MahlineMahline',
+            'must_change_password' => true,
+        ]);
+        $user->createToken('rollback-test');
+
+        $audit = Mockery::mock(AuditService::class);
+        $audit->shouldReceive('record')->once()
+            ->andThrow(new RuntimeException('Simulated audit failure.'));
+        $this->app->instance(AuditService::class, $audit);
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->actingAs($user)
+                ->put(route('password.force-change.update'), [
+                    'password' => 'NewPassword123!',
+                    'password_confirmation' => 'NewPassword123!',
+                ]);
+            $this->fail('Expected audit failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Simulated audit failure.', $exception->getMessage());
+        }
+
+        $user->refresh();
+        $this->assertTrue(Hash::check('MahlineMahline', (string) $user->password));
+        $this->assertTrue($user->must_change_password);
+        $this->assertDatabaseCount('user_password_histories', 0);
+        $this->assertSame(1, $user->tokens()->count());
     }
 
     /**
