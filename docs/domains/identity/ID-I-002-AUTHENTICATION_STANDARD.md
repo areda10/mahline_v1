@@ -98,7 +98,7 @@ A successful login clears only the normalized account counter and the matching I
 
 Cache keys use HMAC fingerprints; raw email addresses and IP addresses are not exposed in cache key names. All application nodes serving authentication traffic must use the same shared cache backend and the same application key so that the limits are consistent across servers.
 
-The account, IP and IP + email lockouts are handled by `AuthenticationSecurityService`. The login route must not apply a second request-count throttle that also counts successful logins; the domain counters are failure-only.
+The account, IP and IP + email lockouts are handled by `AuthenticationSecurityService`. Only `super_admin_root` may manually clear all three scopes together, by submitting the normalized account email, the affected IP address and a mandatory administrative reason. This explicitly clears the shared IP counter for every account using that IP. The operation is recorded in the append-only audit log; the target email and IP are represented there by HMAC fingerprints. The login route must not apply a second request-count throttle that also counts successful logins; the domain counters are failure-only.
 
 A locked account, IP or IP + email pair must be rejected. When both the IP and account limits are reached, the existing `ip_locked` login-history reason retains priority.
 
