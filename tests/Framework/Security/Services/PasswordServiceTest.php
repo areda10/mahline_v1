@@ -16,7 +16,7 @@ final class PasswordServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->passwordService = new PasswordService();
+        $this->passwordService = new PasswordService;
     }
 
     public function test_it_hashes_a_password(): void
@@ -103,4 +103,3 @@ final class PasswordServiceTest extends TestCase
         $this->assertNotSame($password, $hashedPassword);
     }
 }
-

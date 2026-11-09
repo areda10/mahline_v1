@@ -23,6 +23,5 @@ final readonly class AuditEntryDTO
         public ?string $userAgent = null,
         public ?string $correlationId = null,
         public ?DateTimeInterface $occurredAt = null,
-    ) {
-    }
+    ) {}
 }

@@ -18,8 +18,7 @@ final class CategoryController
     public function __construct(
         private readonly CategoryRepository $categoryRepository,
         private readonly CategoryService $categoryService,
-    ) {
-    }
+    ) {}
 
     public function index(string $cooperative): View
     {
@@ -52,7 +51,7 @@ final class CategoryController
 
         return view('backoffice.categories.create', [
             'cooperative' => $cooperativeModel,
-            'category' => new Category(),
+            'category' => new Category,
             'categories' => $categories,
         ]);
     }

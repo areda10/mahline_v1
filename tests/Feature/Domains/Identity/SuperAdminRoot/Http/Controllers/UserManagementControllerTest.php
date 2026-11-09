@@ -5,17 +5,19 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Permission;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class UserManagementControllerTest extends TestCase
@@ -28,7 +30,6 @@ final class UserManagementControllerTest extends TestCase
 
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
     }
-
 
     public function test_root_can_create_super_admin_without_cooperative_and_send_invitation(): void
     {
@@ -108,7 +109,6 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertNothingSent();
     }
 
-
     public function test_root_can_resend_manual_verification_invitation_to_active_unverified_user(): void
     {
         Notification::fake();
@@ -120,7 +120,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $oldInvitation = UserInvitation::query()->create([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $target->getKey(),
             'purpose' => 'root_manual_verification',
             'token_hash' => hash('sha256', 'old-root-verification-token'),
@@ -161,7 +161,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         $oldInvitation = UserInvitation::query()->create([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $target->getKey(),
             'token_hash' => hash('sha256', 'old-inactive-invitation'),
             'expires_at' => now()->addMinutes(30),
@@ -609,12 +609,12 @@ final class UserManagementControllerTest extends TestCase
     }
 
     /**
-     * @return array{AuthenticationSession, \App\Domains\Identity\Authentication\Models\PersonalAccessToken}
+     * @return array{AuthenticationSession, PersonalAccessToken}
      */
     private function createPendingInvitation(User $user, string $token): UserInvitation
     {
         return UserInvitation::query()->create([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $user->getKey(),
             'token_hash' => hash('sha256', $token),
             'expires_at' => now()->addHour(),
@@ -746,7 +746,7 @@ final class UserManagementControllerTest extends TestCase
     }
 
     /**
-     * @param list<string> $permissions
+     * @param  list<string>  $permissions
      */
     private function actor(string $roleSlug, array $permissions): User
     {

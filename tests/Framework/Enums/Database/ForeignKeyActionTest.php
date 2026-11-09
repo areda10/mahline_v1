@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Enums\Database;
 
 use App\Core\Enums\Database\ForeignKeyAction;
+use App\Core\Foundation\Enums\Exceptions\InvalidEnumValueException;
 use PHPUnit\Framework\TestCase;
 
 final class ForeignKeyActionTest extends TestCase
@@ -184,7 +185,7 @@ final class ForeignKeyActionTest extends TestCase
 
     public function test_from_name_throws_for_invalid_name(): void
     {
-        $this->expectException(\App\Core\Foundation\Enums\Exceptions\InvalidEnumValueException::class);
+        $this->expectException(InvalidEnumValueException::class);
 
         ForeignKeyAction::fromName('INVALID');
     }

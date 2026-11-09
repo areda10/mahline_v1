@@ -25,7 +25,7 @@ final class AcceptUserInvitationRequest extends FormRequest
                 'required',
                 'string',
                 'confirmed',
-                new ValidPassword(),
+                new ValidPassword,
             ],
             'password_confirmation' => [
                 'required',

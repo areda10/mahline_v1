@@ -9,6 +9,7 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class UserCooperativeTest extends TestCase
@@ -24,15 +25,15 @@ final class UserCooperativeTest extends TestCase
 
     public function test_cooperative_id_is_nullable(): void
     {
-        $cooperativeId = collect( 
-            Schema::getColumns('users'), 
-            )->firstWhere('name', 'cooperative_id'); 
-            
-            self::assertNotNull($cooperativeId); 
-            
-            self::assertTrue( 
-                $cooperativeId['nullable'], 
-            );
+        $cooperativeId = collect(
+            Schema::getColumns('users'),
+        )->firstWhere('name', 'cooperative_id');
+
+        self::assertNotNull($cooperativeId);
+
+        self::assertTrue(
+            $cooperativeId['nullable'],
+        );
     }
 
     public function test_cooperative_id_has_expected_index(): void
@@ -43,8 +44,7 @@ final class UserCooperativeTest extends TestCase
 
         self::assertTrue(
             $indexes->contains(
-                fn (array $index): bool =>
-                    $index['name'] === 'users_cooperative_id_foreign',
+                fn (array $index): bool => $index['name'] === 'users_cooperative_id_foreign',
             ),
         );
     }
@@ -55,8 +55,7 @@ final class UserCooperativeTest extends TestCase
 
         self::assertTrue(
             collect($foreignKeys)->contains(
-                fn (array $foreignKey): bool =>
-                    $foreignKey['name'] === 'users_cooperative_id_foreign'
+                fn (array $foreignKey): bool => $foreignKey['name'] === 'users_cooperative_id_foreign'
                     && $foreignKey['columns'] === ['cooperative_id']
                     && $foreignKey['foreign_table'] === 'cooperatives'
                     && $foreignKey['foreign_columns'] === ['id'],
@@ -92,7 +91,7 @@ final class UserCooperativeTest extends TestCase
         $this->expectException(QueryException::class);
 
         User::factory()->create([
-            'cooperative_id' => (string) \Illuminate\Support\Str::ulid(),
+            'cooperative_id' => (string) Str::ulid(),
         ]);
     }
 }

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Services\AuditService;
-use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -30,14 +30,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function __construct(
         private readonly AuditService $audit,
         private readonly SessionService $sessions,
-    ) {
-    }
+    ) {}
 
     /**
      * Update a normal user account and its single operational role.
      * Root accounts are managed outside the ordinary user CRUD.
      *
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function updateUserAccount(
         User $actor,
@@ -187,7 +186,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 ),
                 // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
                 'password' => bin2hex(random_bytes(32)),
-                //'status' => UserStatus::Pending,
+                // 'status' => UserStatus::Pending,
                 'status' => UserStatus::Pending,
                 'email_verified_at' => null,
                 'must_change_password' => false,
@@ -210,7 +209,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 newValues: [
                     'role' => $roleSlug,
                     'cooperative_id' => $user->cooperative_id,
-                    //'status' => UserStatus::Pending->value,
+                    // 'status' => UserStatus::Pending->value,
                     'status' => $initialStatus->value,
                 ],
             ));
@@ -583,8 +582,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
      * Apply one validated status transition. The status and its audit event
      * are persisted before any Web session or API token is revoked.
      *
-     * @param list<UserStatus> $allowedRootSourceStatuses
-     * @param list<UserStatus> $allowedSuperAdminSourceStatuses
+     * @param  list<UserStatus>  $allowedRootSourceStatuses
+     * @param  list<UserStatus>  $allowedSuperAdminSourceStatuses
      */
     private function changeUserStatus(
         User $actor,

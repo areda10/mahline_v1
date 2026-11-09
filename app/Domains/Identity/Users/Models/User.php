@@ -6,8 +6,8 @@ namespace App\Domains\Identity\Users\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
 use Database\Factories\UserFactory;
@@ -70,6 +70,7 @@ final class User extends BaseModel implements AuthenticatableContract
             'deleted_at' => 'datetime',
         ];
     }
+
     /**
      * Call factory
      */
@@ -78,9 +79,9 @@ final class User extends BaseModel implements AuthenticatableContract
         return UserFactory::new();
     }
 
-    /** 
+    /**
      * Relation btw User and Role
-    */
+     */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -90,6 +91,7 @@ final class User extends BaseModel implements AuthenticatableContract
             'role_id',
         );
     }
+
     // reste inchangée pour cooperative_admin / user.
     public function cooperative(): BelongsTo
     {
@@ -98,17 +100,17 @@ final class User extends BaseModel implements AuthenticatableContract
             'cooperative_id',
         );
     }
+
     // sera réservée au super_admin.
-    public function cooperatives(): BelongsToMany 
-    { 
-        return $this->belongsToMany( 
-            Cooperative::class, 
-            'super_admin_cooperative', 
-            'super_admin_id', 
-            'cooperative_id', 
+    public function cooperatives(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Cooperative::class,
+            'super_admin_cooperative',
+            'super_admin_id',
+            'cooperative_id',
         )
             ->using(SuperAdminCooperative::class)
             ->withTimestamps();
     }
-
 }

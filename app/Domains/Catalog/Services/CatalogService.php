@@ -17,8 +17,7 @@ final class CatalogService
 {
     public function __construct(
         private readonly CatalogRepository $repository
-    ) {
-    }
+    ) {}
 
     public function paginateForCooperative(
         string $cooperativeId,
@@ -84,7 +83,7 @@ final class CatalogService
         array $attributes
     ): Catalog {
         if ($catalog->cooperative_id !== $cooperativeId) {
-            throw (new ModelNotFoundException())
+            throw (new ModelNotFoundException)
                 ->setModel(Catalog::class, [$catalog->getKey()]);
         }
 
@@ -216,7 +215,7 @@ final class CatalogService
         string $cooperativeId
     ): void {
         if ($catalog->cooperative_id !== $cooperativeId) {
-            throw (new ModelNotFoundException())
+            throw (new ModelNotFoundException)
                 ->setModel(Catalog::class, [$catalog->getKey()]);
         }
     }
@@ -251,7 +250,7 @@ final class CatalogService
                 )
                 ->exists()
         ) {
-            $slug = $baseSlug . '-' . $suffix;
+            $slug = $baseSlug.'-'.$suffix;
             $suffix++;
         }
 

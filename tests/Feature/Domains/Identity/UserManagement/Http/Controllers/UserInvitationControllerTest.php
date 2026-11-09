@@ -391,7 +391,7 @@ final class UserInvitationControllerTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createInvitation(
         User $user,

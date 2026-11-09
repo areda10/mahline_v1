@@ -20,8 +20,7 @@ final class PasswordService extends BaseService
         private readonly SessionService $sessionService,
         private readonly AuditService $audit,
         private readonly PasswordHistoryService $passwordHistory,
-    ) {
-    }
+    ) {}
 
     public function verifyCurrentPassword(User $user, string $password): bool
     {

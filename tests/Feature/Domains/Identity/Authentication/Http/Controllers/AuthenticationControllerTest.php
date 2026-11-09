@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,8 +21,8 @@ final class AuthenticationControllerTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -107,14 +107,12 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertJsonPath(
             'errors.email',
-            fn ($errors): bool =>
-                is_array($errors) && $errors !== [],
+            fn ($errors): bool => is_array($errors) && $errors !== [],
         );
 
         $response->assertJsonPath(
             'errors.password',
-            fn ($errors): bool =>
-                is_array($errors) && $errors !== [],
+            fn ($errors): bool => is_array($errors) && $errors !== [],
         );
     }
 
@@ -132,8 +130,7 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertJsonPath(
             'errors.email',
-            fn ($errors): bool =>
-                is_array($errors) && $errors !== [],
+            fn ($errors): bool => is_array($errors) && $errors !== [],
         );
     }
 
@@ -216,7 +213,6 @@ final class AuthenticationControllerTest extends TestCase
 
         $this->assertAuthenticatedAs($root);
     }
-
 
     public function test_regular_user_is_redirected_to_its_personal_dashboard_after_login(): void
     {

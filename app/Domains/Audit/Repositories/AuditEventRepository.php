@@ -11,7 +11,7 @@ final class AuditEventRepository
     /**
      * Persist a new event. Existing events are never updated by this repository.
      *
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function append(array $attributes): AuditEvent
     {

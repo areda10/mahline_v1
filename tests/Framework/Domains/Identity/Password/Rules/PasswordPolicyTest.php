@@ -33,7 +33,7 @@ final class PasswordPolicyTest extends TestCase
 
     public function test_password_may_contain_up_to_128_characters(): void
     {
-        $password = 'Aa1!' . str_repeat('b', 124);
+        $password = 'Aa1!'.str_repeat('b', 124);
 
         $this->assertSame(128, mb_strlen($password));
 
@@ -44,7 +44,7 @@ final class PasswordPolicyTest extends TestCase
 
     public function test_password_must_not_exceed_128_characters(): void
     {
-        $password = 'Aa1!' . str_repeat('b', 125);
+        $password = 'Aa1!'.str_repeat('b', 125);
 
         $this->assertSame(129, mb_strlen($password));
 

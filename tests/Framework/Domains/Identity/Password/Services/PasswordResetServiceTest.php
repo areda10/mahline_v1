@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\Users\Models\User;
@@ -456,7 +457,6 @@ final class PasswordResetServiceTest extends TestCase
         }
     }
 
-
     public function test_reset_audit_is_created_after_token_is_consumed(): void
     {
         $user = User::factory()->create(['password' => 'Secure!Current2026']);
@@ -490,7 +490,7 @@ final class PasswordResetServiceTest extends TestCase
             newPassword: 'Secure!NewPass2026',
         );
 
-        $event = \App\Domains\Audit\Models\AuditEvent::query()
+        $event = AuditEvent::query()
             ->where('event_key', 'identity.password.reset')
             ->firstOrFail();
 
@@ -504,5 +504,4 @@ final class PasswordResetServiceTest extends TestCase
         $this->assertStringNotContainsString('Secure!Current2026', $serialized);
         $this->assertStringNotContainsString('Secure!NewPass2026', $serialized);
     }
-
 }

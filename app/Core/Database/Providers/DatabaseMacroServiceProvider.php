@@ -35,6 +35,6 @@ final class DatabaseMacroServiceProvider extends ServiceProvider
         IndexMacros::register();
         SoftDeleteMacros::register();*/
         BlueprintMacros::register();
-        
+
     }
 }

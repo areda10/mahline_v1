@@ -25,7 +25,6 @@ final class ForeignKeyMacros
                     ?ForeignKeyAction $onUpdate = null,
                 ): void {
                     /** @var Blueprint $this */
-
                     $foreignKey = $this->foreign($column)
                         ->references($referencedColumn)
                         ->on($referencedTable);

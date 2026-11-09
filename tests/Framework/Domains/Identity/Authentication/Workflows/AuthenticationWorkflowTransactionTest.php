@@ -19,8 +19,8 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -149,5 +149,4 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
 
         $this->assertGuest();
     }
-
 }

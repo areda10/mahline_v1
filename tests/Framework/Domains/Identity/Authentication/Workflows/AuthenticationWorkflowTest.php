@@ -21,8 +21,8 @@ final class AuthenticationWorkflowTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -194,8 +194,8 @@ final class AuthenticationWorkflowTest extends TestCase
             ->withHeader(
                 'User-Agent',
                 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) '
-                . 'AppleWebKit/605.1.15 '
-                . 'Version/18.0 Safari/605.1.15',
+                .'AppleWebKit/605.1.15 '
+                .'Version/18.0 Safari/605.1.15',
             )
             ->postJson($this->loginUrl, [
                 'email' => $user->email,
@@ -216,8 +216,7 @@ final class AuthenticationWorkflowTest extends TestCase
         $this->assertNull($firstSession->revoked_at);
 
         $activeSessions = $sessions->filter(
-            static fn (AuthenticationSession $session): bool =>
-                $session->revoked_at === null,
+            static fn (AuthenticationSession $session): bool => $session->revoked_at === null,
         );
 
         $this->assertCount(2, $activeSessions);
@@ -265,13 +264,13 @@ final class AuthenticationWorkflowTest extends TestCase
 
         $computerUserAgent =
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-            . 'AppleWebKit/537.36 '
-            . 'Chrome/140.0.0.0 Safari/537.36';
+            .'AppleWebKit/537.36 '
+            .'Chrome/140.0.0.0 Safari/537.36';
 
         $phoneUserAgent =
             'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) '
-            . 'AppleWebKit/605.1.15 '
-            . 'Version/18.0 Mobile/15E148 Safari/604.1';
+            .'AppleWebKit/605.1.15 '
+            .'Version/18.0 Mobile/15E148 Safari/604.1';
 
         $computerResponse = $this
             ->withHeader('User-Agent', $computerUserAgent)

@@ -1,5 +1,6 @@
 <?php
 
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
@@ -38,8 +39,8 @@ return [
     */
 
     'guard' => ['web'],
-    
-    'personal_access_token_model' => App\Domains\Identity\Authentication\Models\PersonalAccessToken::class,
+
+    'personal_access_token_model' => PersonalAccessToken::class,
 
     /*
     |--------------------------------------------------------------------------

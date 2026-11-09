@@ -14,8 +14,7 @@ final class CatalogProductController
 {
     public function __construct(
         private readonly CatalogService $catalogService,
-    ) {
-    }
+    ) {}
 
     public function store(
         Request $request,

@@ -6,7 +6,7 @@ namespace Tests\Framework\Domains\Products\Services;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Products\Models\Product;
+use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -77,7 +77,7 @@ final class ProductServiceTest extends TestCase
         // Un filtre de repository doit exclure ce produit
         // lorsqu'on recherche les produits de la seconde coopérative.
         $repository = app(
-            \App\Domains\Products\Repositories\ProductRepository::class,
+            ProductRepository::class,
         );
 
         $this->assertSame(
@@ -119,7 +119,7 @@ final class ProductServiceTest extends TestCase
         $product = $this->service->create(
             (string) $cooperative->getKey(),
             [
-                'name' => 'Huile d' . 'argan',
+                'name' => 'Huile d'.'argan',
                 'slug' => 'huile-argan',
                 'is_active' => true,
             ],

@@ -14,8 +14,7 @@ final class EnsureActiveAuthenticationSession
 {
     public function __construct(
         private readonly SessionService $sessions,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {

@@ -17,7 +17,7 @@ final class CooperativeTest extends TestCase
 
     public function test_cooperative_extends_base_model(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $this->assertInstanceOf(BaseModel::class, $cooperative);
     }
@@ -34,7 +34,7 @@ final class CooperativeTest extends TestCase
 
     public function test_cooperative_uses_cooperatives_table(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $this->assertSame(
             'cooperatives',
@@ -44,7 +44,7 @@ final class CooperativeTest extends TestCase
 
     public function test_cooperative_uses_ulid_as_primary_key(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $this->assertSame(
             'id',
@@ -63,7 +63,7 @@ final class CooperativeTest extends TestCase
 
     public function test_cooperative_has_expected_fillable_attributes(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $this->assertSame(
             [
@@ -83,7 +83,7 @@ final class CooperativeTest extends TestCase
 
     public function test_status_is_cast_to_cooperative_status(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $casts = $cooperative->getCasts();
 
@@ -96,7 +96,7 @@ final class CooperativeTest extends TestCase
 
     public function test_deleted_at_is_cast_to_datetime(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $casts = $cooperative->getCasts();
 

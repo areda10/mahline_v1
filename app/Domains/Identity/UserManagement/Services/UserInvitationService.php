@@ -29,8 +29,7 @@ final class UserInvitationService
     public function __construct(
         private readonly AuditService $audit,
         private readonly PasswordHistoryService $passwordHistory,
-    ) {
-    }
+    ) {}
 
     /**
      * Create and send a new invitation to an active or pending, unverified user.

@@ -12,6 +12,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -55,8 +56,8 @@ final class DashboardController
     }
 
     /**
-     * @param class-string<\Illuminate\Database\Eloquent\Model> $model
-     * @param array<int, \BackedEnum> $statuses
+     * @param  class-string<Model>  $model
+     * @param  array<int, \BackedEnum>  $statuses
      * @return Collection<string, int>
      */
     private function countByStatus(string $model, array $statuses): Collection

@@ -16,21 +16,21 @@ final class RoleTest extends TestCase
 {
     public function test_role_extends_base_model(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertInstanceOf(BaseModel::class, $role);
     }
 
     public function test_role_uses_roles_table(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertSame('roles', $role->getTable());
     }
 
     public function test_role_uses_ulid_primary_key(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertSame('string', $role->getKeyType());
         $this->assertFalse($role->getIncrementing());
@@ -38,14 +38,14 @@ final class RoleTest extends TestCase
 
     public function test_role_uses_timestamps(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertTrue($role->usesTimestamps());
     }
 
     public function test_role_uses_soft_deletes(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertArrayHasKey(
             SoftDeletes::class,
@@ -67,7 +67,7 @@ final class RoleTest extends TestCase
 
     public function test_role_defines_permissions_relationship(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertInstanceOf(
             BelongsToMany::class,
@@ -82,7 +82,7 @@ final class RoleTest extends TestCase
 
     public function test_role_defines_users_relationship(): void
     {
-        $role = new Role();
+        $role = new Role;
 
         $this->assertInstanceOf(
             BelongsToMany::class,

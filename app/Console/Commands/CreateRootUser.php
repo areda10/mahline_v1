@@ -114,7 +114,7 @@ final class CreateRootUser extends Command
                     'telephone' => $telephone,
                     'password' => $password,
                     'status' => UserStatus::Active,
-                        'cooperative_id' => null,
+                    'cooperative_id' => null,
                     'locale' => 'fr',
                     'timezone' => 'UTC',
                 ]);

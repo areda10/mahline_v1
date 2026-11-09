@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Password\Services\PasswordService;
 use App\Domains\Identity\Users\Models\User;
@@ -294,14 +295,13 @@ final class PasswordServiceTest extends TestCase
                 newPassword: 'MahlinePassword13!',
             );
             $this->fail('Expected invalid current password exception.');
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $this->assertDatabaseMissing('audit_events', [
                 'event_key' => 'identity.password.changed',
                 'subject_id' => $user->getKey(),
             ]);
         }
     }
-    
 
     public function test_password_change_audits_revoked_sessions_and_password_change(): void
     {
@@ -342,7 +342,7 @@ final class PasswordServiceTest extends TestCase
             newPassword: 'MahlinePassword13!',
         );
 
-        $event = \App\Domains\Audit\Models\AuditEvent::query()
+        $event = AuditEvent::query()
             ->where('event_key', 'identity.password.changed')
             ->firstOrFail();
 
@@ -355,5 +355,4 @@ final class PasswordServiceTest extends TestCase
         $this->assertStringNotContainsString('MahlinePassword12', $serialized);
         $this->assertStringNotContainsString('MahlinePassword13!', $serialized);
     }
-
 }

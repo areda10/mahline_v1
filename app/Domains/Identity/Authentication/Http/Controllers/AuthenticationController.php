@@ -8,24 +8,22 @@ use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
 
 final class AuthenticationController
 {
     public function __construct(
         private readonly AuthenticationWorkflow $authenticationWorkflow,
         private readonly SessionService $sessionService,
-    ) {
-    }
+    ) {}
 
-
-    public function showLogin(): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
+    public function showLogin(): View|RedirectResponse
     {
         if (Auth::check()) {
             $user = Auth::user();

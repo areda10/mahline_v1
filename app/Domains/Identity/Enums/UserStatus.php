@@ -42,11 +42,11 @@ enum UserStatus: string implements BaseEnumContract
     public function label(): string
     {
         return match ($this) {
-            self::Active    => 'Active',
-            self::Pending   => 'Pending',
-            self::Inactive  => 'Inactive',
+            self::Active => 'Active',
+            self::Pending => 'Pending',
+            self::Inactive => 'Inactive',
             self::Suspended => 'Suspended',
-            self::Archived  => 'Archived',
+            self::Archived => 'Archived',
         };
     }
 
@@ -56,7 +56,7 @@ enum UserStatus: string implements BaseEnumContract
     public function toArray(): array
     {
         return [
-            'name'  => $this->name,
+            'name' => $this->name,
             'value' => $this->value,
             'label' => $this->label(),
         ];

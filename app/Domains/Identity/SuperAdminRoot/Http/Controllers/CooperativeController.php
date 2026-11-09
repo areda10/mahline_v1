@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
-use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Localization\Models\Address;
@@ -13,15 +13,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 final class CooperativeController
 {
     public function __construct(
         private readonly CooperativeService $cooperativeService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -43,7 +42,7 @@ final class CooperativeController
         Gate::authorize('create', Cooperative::class);
 
         return view('super-admin-root.cooperatives.create', [
-            'cooperative' => new Cooperative(),
+            'cooperative' => new Cooperative,
             'countries' => $this->availableCountries(),
         ]);
     }
@@ -85,6 +84,7 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         $model = $this->resolveCooperative($cooperative);
+
         return view('super-admin-root.cooperatives.show', ['cooperative' => $model->load('address.country')]);
     }
 
@@ -144,7 +144,7 @@ final class CooperativeController
                 if ($addressData !== []) {
                     $address = $model->address_id
                         ? Address::query()->findOrFail($model->address_id)
-                        : new Address();
+                        : new Address;
 
                     $address->fill($addressData);
                     if (! $address->exists) {
@@ -180,24 +180,28 @@ final class CooperativeController
     public function activate(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'activate');
     }
 
     public function deactivate(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'deactivate');
     }
 
     public function suspend(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'suspend');
     }
 
     public function archive(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'archive');
     }
 
@@ -259,7 +263,7 @@ final class CooperativeController
     /** @param array<string, mixed> $data */
     private function createAddress(Request $request, array $data): Address
     {
-        $address = new Address();
+        $address = new Address;
         $address->fill([
             'address_line_1' => $data['address_line_1'],
             'city' => $data['city'],
@@ -282,6 +286,7 @@ final class CooperativeController
     {
         $model = Cooperative::query()->findOrFail($id);
         Gate::authorize('view', $model);
+
         return $model;
     }
 }

@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\UserManagement\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -901,7 +901,6 @@ final class UserManagementControllerTest extends TestCase
             ->assertForbidden();
     }
 
-
     public function test_root_can_create_super_admin_without_cooperative_assignment_and_send_invitation(): void
     {
         Notification::fake();
@@ -1155,7 +1154,6 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertNothingSent();
     }
 
-
     public function test_failed_invitation_delivery_keeps_user_pending_and_revokes_invitation(): void
     {
         $root = $this->actor(
@@ -1185,7 +1183,8 @@ final class UserManagementControllerTest extends TestCase
         */
 
         Notification::extend('mail', function () {
-            return new class {
+            return new class
+            {
                 public function send(
                     object $notifiable,
                     object $notification,
@@ -1392,7 +1391,8 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         Notification::extend('mail', function () {
-            return new class {
+            return new class
+            {
                 public function send(
                     object $notifiable,
                     object $notification,
@@ -1443,9 +1443,8 @@ final class UserManagementControllerTest extends TestCase
     }
 
     /** @param list<string> $permissions
-     *  @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
-
     public function test_root_uses_its_dedicated_user_management_space(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
@@ -1491,5 +1490,4 @@ final class UserManagementControllerTest extends TestCase
 
         return $actor;
     }
-
 }

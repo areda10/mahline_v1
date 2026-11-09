@@ -620,5 +620,4 @@ final class AuthenticationServiceTest extends TestCase
             $securityService->remainingAttempts($user->email)
         );
     }
-
 }

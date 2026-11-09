@@ -12,7 +12,7 @@ final class ForgotPasswordRequestTest extends TestCase
 {
     public function test_email_is_required(): void
     {
-        $request = new ForgotPasswordRequest();
+        $request = new ForgotPasswordRequest;
 
         $validator = Validator::make(
             [],
@@ -31,7 +31,7 @@ final class ForgotPasswordRequestTest extends TestCase
 
     public function test_email_must_be_valid(): void
     {
-        $request = new ForgotPasswordRequest();
+        $request = new ForgotPasswordRequest;
 
         $validator = Validator::make(
             [
@@ -47,7 +47,7 @@ final class ForgotPasswordRequestTest extends TestCase
 
     public function test_valid_email_is_accepted(): void
     {
-        $request = new ForgotPasswordRequest();
+        $request = new ForgotPasswordRequest;
 
         $validator = Validator::make(
             [
@@ -63,11 +63,11 @@ final class ForgotPasswordRequestTest extends TestCase
 
     public function test_email_has_maximum_length_of_255_characters(): void
     {
-        $request = new ForgotPasswordRequest();
+        $request = new ForgotPasswordRequest;
 
         $validator = Validator::make(
             [
-                'email' => str_repeat('a', 250) . '@example.com',
+                'email' => str_repeat('a', 250).'@example.com',
             ],
             $request->rules(),
         );

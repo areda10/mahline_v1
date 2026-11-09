@@ -6,7 +6,6 @@ namespace Tests\Framework\Domains\Products\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Services\ProductVariantService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;

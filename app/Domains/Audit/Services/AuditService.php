@@ -14,8 +14,7 @@ final class AuditService
 {
     public function __construct(
         private readonly AuditEventRepository $events,
-    ) {
-    }
+    ) {}
 
     private const SENSITIVE_KEYS = [
         'password',
@@ -102,6 +101,7 @@ final class AuditService
 
             if (is_array($value)) {
                 $safe[$key] = $this->sanitize($value);
+
                 continue;
             }
 

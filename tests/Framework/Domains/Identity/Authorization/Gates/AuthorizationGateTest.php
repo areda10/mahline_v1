@@ -85,6 +85,7 @@ final class AuthorizationGateTest extends TestCase
             Gate::forUser($user)->allows('unknown.permission'),
         );
     }
+
     public function test_generic_permission_gate_does_not_authorize_an_ability_with_arguments(): void
     {
         $user = User::factory()->create([

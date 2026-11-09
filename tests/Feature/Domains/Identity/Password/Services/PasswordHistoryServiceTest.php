@@ -9,6 +9,7 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -37,7 +38,7 @@ final class PasswordHistoryServiceTest extends TestCase
         ]);
 
         DB::table('user_password_histories')->insert([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $user->getKey(),
             'password_hash' => Hash::make('PreviousPassword12!'),
             'created_at' => now(),
@@ -62,7 +63,7 @@ final class PasswordHistoryServiceTest extends TestCase
         for ($i = 1; $i <= 6; $i++) {
             $history->archiveCurrentPassword($user);
 
-            $user->password = 'PasswordNumber' . $i . '!';
+            $user->password = 'PasswordNumber'.$i.'!';
             $user->save();
         }
 

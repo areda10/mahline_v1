@@ -35,8 +35,7 @@ final class RolePermissionTest extends TestCase
 
         $this->assertTrue(
             collect($foreignKeys)->contains(
-                static fn (array $foreignKey): bool =>
-                    $foreignKey['columns'] === ['role_id']
+                static fn (array $foreignKey): bool => $foreignKey['columns'] === ['role_id']
                     && $foreignKey['foreign_table'] === 'roles'
                     && $foreignKey['foreign_columns'] === ['id'],
             ),
@@ -49,8 +48,7 @@ final class RolePermissionTest extends TestCase
 
         $this->assertTrue(
             collect($foreignKeys)->contains(
-                static fn (array $foreignKey): bool =>
-                    $foreignKey['columns'] === ['permission_id']
+                static fn (array $foreignKey): bool => $foreignKey['columns'] === ['permission_id']
                     && $foreignKey['foreign_table'] === 'permissions'
                     && $foreignKey['foreign_columns'] === ['id'],
             ),
@@ -63,8 +61,7 @@ final class RolePermissionTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['unique'] === true
+                static fn (array $index): bool => $index['unique'] === true
                     && $index['columns'] === [
                         'role_id',
                         'permission_id',

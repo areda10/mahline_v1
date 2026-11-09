@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -79,8 +80,7 @@ final class SuperAdminCooperativeTest extends TestCase
 
         $foreignKey = collect($foreignKeys)
             ->first(
-                fn (array $key): bool =>
-                    $key['columns'] === ['super_admin_id'],
+                fn (array $key): bool => $key['columns'] === ['super_admin_id'],
             );
 
         self::assertNotNull($foreignKey);
@@ -104,8 +104,7 @@ final class SuperAdminCooperativeTest extends TestCase
 
         $foreignKey = collect($foreignKeys)
             ->first(
-                fn (array $key): bool =>
-                    $key['columns'] === ['cooperative_id'],
+                fn (array $key): bool => $key['columns'] === ['cooperative_id'],
             );
 
         self::assertNotNull($foreignKey);
@@ -129,8 +128,7 @@ final class SuperAdminCooperativeTest extends TestCase
 
         $uniqueIndex = collect($indexes)
             ->first(
-                fn (array $index): bool =>
-                    $index['unique'] === true
+                fn (array $index): bool => $index['unique'] === true
                     && $index['columns'] === [
                         'super_admin_id',
                         'cooperative_id',
@@ -183,7 +181,7 @@ final class SuperAdminCooperativeTest extends TestCase
         \DB::table('super_admin_cooperative')->insert($attributes);
 
         $this->expectException(
-            \Illuminate\Database\QueryException::class,
+            QueryException::class,
         );
 
         \DB::table('super_admin_cooperative')->insert([
@@ -237,5 +235,4 @@ final class SuperAdminCooperativeTest extends TestCase
                 ->count(),
         );
     }
-
 }

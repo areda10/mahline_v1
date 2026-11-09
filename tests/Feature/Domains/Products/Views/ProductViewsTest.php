@@ -15,8 +15,8 @@ use Tests\TestCase;
 
 final class ProductViewsTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesAuthorizedCooperativeAdmin;
+    use RefreshDatabase;
 
     private Cooperative $cooperative;
 

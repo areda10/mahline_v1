@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Categories\Http\Controllers;
 
 use App\Domains\Categories\Models\Category;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;

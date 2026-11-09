@@ -19,8 +19,7 @@ final class PasswordResetController
 {
     public function __construct(
         private readonly PasswordResetService $passwordResetService,
-    ) {
-    }
+    ) {}
 
     public function showForgotForm(): View
     {

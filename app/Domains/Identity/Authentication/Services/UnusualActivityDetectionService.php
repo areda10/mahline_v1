@@ -11,13 +11,12 @@ use InvalidArgumentException;
 
 final class UnusualActivityDetectionService extends BaseService
 {
-
     public function isNewDevice(
         User $user,
         string $device,
     ): bool {
         $device = $this->normalizeDevice($device);
-        
+
         if ($device === '') {
             throw new InvalidArgumentException(
                 'Device cannot be empty.',
@@ -41,7 +40,7 @@ final class UnusualActivityDetectionService extends BaseService
         string $device,
     ): void {
         $device = $this->normalizeDevice($device);
-        
+
         if ($device === '') {
             throw new InvalidArgumentException(
                 'Device cannot be empty.',

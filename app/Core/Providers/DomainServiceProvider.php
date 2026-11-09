@@ -64,7 +64,7 @@ class DomainServiceProvider extends ServiceProvider
 
         foreach (File::directories($domainsPath) as $domainPath) {
             foreach (File::directories($domainPath) as $modulePath) {
-                $routes = $modulePath . DIRECTORY_SEPARATOR . 'routes.php';
+                $routes = $modulePath.DIRECTORY_SEPARATOR.'routes.php';
 
                 if (File::exists($routes)) {
                     $this->loadRoutesFrom($routes);

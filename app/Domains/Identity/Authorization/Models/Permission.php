@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authorization\Models;
 
 use App\Core\Foundation\Models\BaseModel;
-use App\Domains\Identity\Authorization\Models\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 

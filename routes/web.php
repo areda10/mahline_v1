@@ -1,27 +1,27 @@
 <?php
 
 use App\Domains\Catalog\Http\Controllers\CatalogController;
-use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
-use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeCategoryController as SuperAdminRootCooperativeCategoryController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogProductController as SuperAdminRootCatalogProductController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductController as SuperAdminRootProductController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
+use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
+use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
+use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogProductController as SuperAdminRootCatalogProductController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeCategoryController as SuperAdminRootCooperativeCategoryController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductController as SuperAdminRootProductController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
-use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
-use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -59,7 +59,6 @@ Route::prefix('authentication')
             [AuthenticationController::class, 'logout']
         )->name('logout');
     });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -204,7 +203,6 @@ Route::prefix('root/back-office')
         Route::delete('users/{superAdmin}/cooperatives/{cooperative}', [SuperAdminCooperativeAssignmentController::class, 'destroy'])
             ->name('users.cooperatives.destroy');
 
-
         Route::resource('cooperatives', SuperAdminRootCooperativeController::class)
             ->except(['destroy'])
             ->names('cooperatives');
@@ -330,7 +328,7 @@ Route::prefix('back-office')
 
         Route::post('users/{user}/resend-invitation', [UserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
-            
+
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
             ->group(function (): void {
@@ -402,7 +400,7 @@ Route::prefix('back-office')
                     [ProductController::class, 'reactivate'],
                 )->name('products.reactivate');
             });
-});
+    });
 
 // Route::get('/_debug/auth-session', function () {
 //     return response()->json([

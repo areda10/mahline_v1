@@ -104,5 +104,4 @@ final class Cooperative extends BaseModel
             ->using(SuperAdminCooperative::class)
             ->withTimestamps();
     }
-
 }

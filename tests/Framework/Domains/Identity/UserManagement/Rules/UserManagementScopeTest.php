@@ -8,8 +8,8 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class UserManagementScopeTest extends TestCase
@@ -206,10 +206,9 @@ final class UserManagementScopeTest extends TestCase
         $superAdmin->cooperatives()->attach($cooperative->id);
 
         $this->expectException(
-            \Illuminate\Database\QueryException::class,
+            QueryException::class,
         );
 
         $superAdmin->cooperatives()->attach($cooperative->id);
     }
-
 }

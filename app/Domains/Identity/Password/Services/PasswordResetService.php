@@ -25,8 +25,7 @@ final class PasswordResetService extends BaseService
         private readonly SessionService $sessionService,
         private readonly AuditService $audit,
         private readonly PasswordHistoryService $passwordHistory,
-    ) {
-    }
+    ) {}
 
     public function createToken(User $user): string
     {
@@ -59,7 +58,7 @@ final class PasswordResetService extends BaseService
             '/',
         );
 
-        $resetUrl = $resetBaseUrl . '/password/reset?' . http_build_query([
+        $resetUrl = $resetBaseUrl.'/password/reset?'.http_build_query([
             'token' => $token,
             'email' => $user->email,
         ]);
@@ -87,7 +86,7 @@ final class PasswordResetService extends BaseService
             throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
         }
 
-        if (now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($record->expires_at))) {
+        if (now()->greaterThanOrEqualTo(Carbon::parse($record->expires_at))) {
             throw new InvalidPasswordResetTokenException('Password reset token has expired.');
         }
 

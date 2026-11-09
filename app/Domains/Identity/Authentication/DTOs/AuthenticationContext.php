@@ -66,6 +66,5 @@ final readonly class AuthenticationContext
          * - macOS
          */
         public ?string $device = null,
-    ) {
-    }
+    ) {}
 }

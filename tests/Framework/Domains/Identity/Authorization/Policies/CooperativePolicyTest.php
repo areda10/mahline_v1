@@ -272,7 +272,6 @@ final class CooperativePolicyTest extends TestCase
         );
     }
 
-
     public function test_visible_to_scope_applies_role_perimeters(): void
     {
         $first = $this->createCooperative();
@@ -335,8 +334,8 @@ final class CooperativePolicyTest extends TestCase
     }
 
     /**
-     * @param array<string> $permissionSlugs
-     * @param array<string, mixed> $userAttributes
+     * @param  array<string>  $permissionSlugs
+     * @param  array<string, mixed>  $userAttributes
      */
     private function userWithRoleAndPermissions(
         string $roleSlug,

@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Models;
 
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
-use ReflectionNamedType;
-use ReflectionClass;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 final class LoginHistoryTest extends TestCase
@@ -44,7 +41,7 @@ final class LoginHistoryTest extends TestCase
         $history = LoginHistory::factory()->create();
 
         $this->assertInstanceOf(
-            \Illuminate\Support\Carbon::class,
+            Carbon::class,
             $history->occurred_at
         );
     }
@@ -118,5 +115,4 @@ final class LoginHistoryTest extends TestCase
             ]
         );
     }
-
 }

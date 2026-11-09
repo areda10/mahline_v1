@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -92,33 +93,33 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void 
-    { 
-        $superAdmin = $this->createUserWithRole('super_admin'); 
-        $country = Country::factory()->create(); 
-        $assignedCooperative = $this->createCooperative($country); 
-        $unassignedCooperative = $this->createCooperative($country); 
-        
-        $superAdmin->cooperatives()->attach( 
-            $assignedCooperative->id, 
-        ); 
-        
-        $this->expectException(\DomainException::class); 
-        
-        $this->service->createUser( 
-            $superAdmin, 
-            [ 
-                'first_name' => 'Blocked', 
-                'last_name' => 'User', 
-                'display_name' => 'Blocked User', 
-                'email' => 'blocked@example.com', 
-                'telephone' => '+212600000003', 
-                'password' => 'Password123', 
-                'status' => UserStatus::Active, 
-                'cooperative_id' => $unassignedCooperative->id, 
-            ], 
-            'user', 
-        ); 
+    public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void
+    {
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $country = Country::factory()->create();
+        $assignedCooperative = $this->createCooperative($country);
+        $unassignedCooperative = $this->createCooperative($country);
+
+        $superAdmin->cooperatives()->attach(
+            $assignedCooperative->id,
+        );
+
+        $this->expectException(\DomainException::class);
+
+        $this->service->createUser(
+            $superAdmin,
+            [
+                'first_name' => 'Blocked',
+                'last_name' => 'User',
+                'display_name' => 'Blocked User',
+                'email' => 'blocked@example.com',
+                'telephone' => '+212600000003',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $unassignedCooperative->id,
+            ],
+            'user',
+        );
     }
 
     public function test_cooperative_admin_cannot_create_user_in_own_cooperative(): void
@@ -271,29 +272,29 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    private function createUserWithRole( 
-        string $roleSlug, 
-        ?string $cooperativeId = null, 
-    ): User { 
-        $user = User::factory()->create([ 
-            'cooperative_id' => $cooperativeId, 
-        ]); 
-        
+    private function createUserWithRole(
+        string $roleSlug,
+        ?string $cooperativeId = null,
+    ): User {
+        $user = User::factory()->create([
+            'cooperative_id' => $cooperativeId,
+        ]);
+
         $role = Role::query()->firstOrCreate(
-            [ 
-                'slug' => $roleSlug, 
-            ], 
-            [ 
-                'name' => $roleSlug, 
-                'is_active' => true, 
-            ], 
-        ); 
-        
-        $user->roles()->syncWithoutDetaching([ 
-            $role->id, 
-        ]); 
-        
-        return $user; 
+            [
+                'slug' => $roleSlug,
+            ],
+            [
+                'name' => $roleSlug,
+                'is_active' => true,
+            ],
+        );
+
+        $user->roles()->syncWithoutDetaching([
+            $role->id,
+        ]);
+
+        return $user;
     }
 
     private function createCooperative(
@@ -566,7 +567,7 @@ final class UserManagementServiceTest extends TestCase
             'subject_id' => $user->id,
         ]);
 
-        $event = \App\Domains\Audit\Models\AuditEvent::query()
+        $event = AuditEvent::query()
             ->where('event_key', 'identity.user.created')
             ->where('subject_id', $user->id)
             ->firstOrFail();
@@ -676,7 +677,7 @@ final class UserManagementServiceTest extends TestCase
         $cooperative = $this->createCooperative();
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(
+            DB::transaction(
                 function () use ($root, $cooperative): void {
                     $this->service->createUser(
                         $root,

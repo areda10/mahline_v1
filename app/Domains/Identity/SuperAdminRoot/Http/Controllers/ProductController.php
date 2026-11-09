@@ -20,8 +20,7 @@ final class ProductController
     public function __construct(
         private readonly ProductRepository $productRepository,
         private readonly ProductService $productService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request, string $cooperative): View
     {
@@ -47,7 +46,7 @@ final class ProductController
 
         return view('super-admin-root.cooperatives.products.create', [
             'cooperative' => $coop,
-            'product' => new Product(),
+            'product' => new Product,
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Models;
 
-use \App\Domains\Identity\Authentication\Models\SecurityEvent;
+use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -92,7 +94,7 @@ final class SecurityEventTest extends TestCase
         self::assertSame(5, $event->metadata['attempts']);
 
         self::assertInstanceOf(
-            \Illuminate\Support\Carbon::class,
+            Carbon::class,
             $event->occurred_at,
         );
     }
@@ -170,7 +172,7 @@ final class SecurityEventTest extends TestCase
 
     public function test_security_event_requires_occurred_at(): void
     {
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         SecurityEvent::query()->create([
             'event' => 'security_incident',

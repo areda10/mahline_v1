@@ -22,6 +22,7 @@ final class ProductCatalogCategoryPolicyTest extends TestCase
     use RefreshDatabase;
 
     private Cooperative $cooperativeA;
+
     private Cooperative $cooperativeB;
 
     private array $permissions = [

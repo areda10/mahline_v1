@@ -276,119 +276,118 @@ final class HasAuthorizationTest extends TestCase
         );
     }
 
-public function test_inactive_role_does_not_grant_permission(): void
-{
-    $user = $this->createUserWithPermission(
-        UserStatus::Active,
-    );
+    public function test_inactive_role_does_not_grant_permission(): void
+    {
+        $user = $this->createUserWithPermission(
+            UserStatus::Active,
+        );
 
-    $user->roles()->first()->update([
-        'is_active' => false,
-    ]);
+        $user->roles()->first()->update([
+            'is_active' => false,
+        ]);
 
-    $this->assertFalse(
-        $user->hasPermission('products.view'),
-    );
-}
+        $this->assertFalse(
+            $user->hasPermission('products.view'),
+        );
+    }
 
-public function test_inactive_permission_is_not_granted(): void
-{
-    $user = $this->createUserWithPermission(
-        UserStatus::Active,
-    );
+    public function test_inactive_permission_is_not_granted(): void
+    {
+        $user = $this->createUserWithPermission(
+            UserStatus::Active,
+        );
 
-    Permission::query()
-        ->where('slug', 'products.view')
-        ->update(['is_active' => false]);
+        Permission::query()
+            ->where('slug', 'products.view')
+            ->update(['is_active' => false]);
 
-    $this->assertFalse(
-        $user->hasPermission('products.view'),
-    );
-}
+        $this->assertFalse(
+            $user->hasPermission('products.view'),
+        );
+    }
 
-public function test_deleted_role_does_not_grant_permission(): void
-{
-    $user = $this->createUserWithPermission(
-        UserStatus::Active,
-    );
+    public function test_deleted_role_does_not_grant_permission(): void
+    {
+        $user = $this->createUserWithPermission(
+            UserStatus::Active,
+        );
 
-    $user->roles()->first()->delete();
+        $user->roles()->first()->delete();
 
-    $this->assertFalse(
-        $user->hasPermission('products.view'),
-    );
-}
+        $this->assertFalse(
+            $user->hasPermission('products.view'),
+        );
+    }
 
-public function test_deleted_permission_is_not_granted(): void
-{
-    $user = $this->createUserWithPermission(
-        UserStatus::Active,
-    );
+    public function test_deleted_permission_is_not_granted(): void
+    {
+        $user = $this->createUserWithPermission(
+            UserStatus::Active,
+        );
 
-    Permission::query()
-        ->where('slug', 'products.view')
-        ->firstOrFail()
-        ->delete();
+        Permission::query()
+            ->where('slug', 'products.view')
+            ->firstOrFail()
+            ->delete();
 
-    $this->assertFalse(
-        $user->hasPermission('products.view'),
-    );
-}
+        $this->assertFalse(
+            $user->hasPermission('products.view'),
+        );
+    }
 
-public function test_has_role_accepts_role_model(): void
-{
-    $user = User::factory()->create([
-        'status' => UserStatus::Active,
-    ]);
+    public function test_has_role_accepts_role_model(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
-    $role = Role::create([
-        'name' => 'Manager',
-        'slug' => 'manager',
-        'is_active' => true,
-    ]);
+        $role = Role::create([
+            'name' => 'Manager',
+            'slug' => 'manager',
+            'is_active' => true,
+        ]);
 
-    $user->roles()->attach($role);
+        $user->roles()->attach($role);
 
-    $this->assertTrue(
-        $user->hasRole($role),
-    );
-}
+        $this->assertTrue(
+            $user->hasRole($role),
+        );
+    }
 
-public function test_has_permission_accepts_permission_model(): void
-{
-    $user = $this->createUserWithPermission(
-        UserStatus::Active,
-    );
+    public function test_has_permission_accepts_permission_model(): void
+    {
+        $user = $this->createUserWithPermission(
+            UserStatus::Active,
+        );
 
-    $permission = Permission::query()
-        ->where('slug', 'products.view')
-        ->firstOrFail();
+        $permission = Permission::query()
+            ->where('slug', 'products.view')
+            ->firstOrFail();
 
-    $this->assertTrue(
-        $user->hasPermission($permission),
-    );
-}
+        $this->assertTrue(
+            $user->hasPermission($permission),
+        );
+    }
 
-public function test_has_any_role_returns_false_for_empty_array(): void
-{
-    $user = User::factory()->create([
-        'status' => UserStatus::Active,
-    ]);
+    public function test_has_any_role_returns_false_for_empty_array(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
-    $this->assertFalse(
-        $user->hasAnyRole([]),
-    );
-}
+        $this->assertFalse(
+            $user->hasAnyRole([]),
+        );
+    }
 
-public function test_has_any_permission_returns_false_for_empty_array(): void
-{
-    $user = User::factory()->create([
-        'status' => UserStatus::Active,
-    ]);
+    public function test_has_any_permission_returns_false_for_empty_array(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
 
-    $this->assertFalse(
-        $user->hasAnyPermission([]),
-    );
-}
-
+        $this->assertFalse(
+            $user->hasAnyPermission([]),
+        );
+    }
 }

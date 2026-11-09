@@ -6,6 +6,7 @@ namespace Tests\Framework\Domains\Categories\Policies;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Policies\CategoryPolicy;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -24,7 +25,7 @@ final class CategoryPolicyTest extends TestCase
     {
         parent::setUp();
 
-        $this->policy = new CategoryPolicy();
+        $this->policy = new CategoryPolicy;
     }
 
     public function test_view_any_requires_view_permission(): void
@@ -44,7 +45,7 @@ final class CategoryPolicyTest extends TestCase
     public function test_view_requires_view_permission(): void
     {
         $user = $this->userWithPermission('categories.view');
-        $category = new Category();
+        $category = new Category;
 
         $this->assertTrue($this->policy->view($user, $category));
     }
@@ -59,7 +60,7 @@ final class CategoryPolicyTest extends TestCase
     public function test_update_requires_update_permission(): void
     {
         $user = $this->rootUserWithPermission('categories.update');
-        $category = new Category();
+        $category = new Category;
 
         $this->assertTrue($this->policy->update($user, $category));
     }
@@ -67,7 +68,7 @@ final class CategoryPolicyTest extends TestCase
     public function test_delete_requires_delete_permission(): void
     {
         $user = $this->rootUserWithPermission('categories.delete');
-        $category = new Category();
+        $category = new Category;
 
         $this->assertTrue($this->policy->delete($user, $category));
     }
@@ -75,7 +76,7 @@ final class CategoryPolicyTest extends TestCase
     public function test_restore_requires_restore_permission(): void
     {
         $user = $this->rootUserWithPermission('categories.restore');
-        $category = new Category();
+        $category = new Category;
 
         $this->assertTrue($this->policy->restore($user, $category));
     }
@@ -83,7 +84,7 @@ final class CategoryPolicyTest extends TestCase
     public function test_force_delete_requires_force_delete_permission(): void
     {
         $user = $this->rootUserWithPermission('categories.force_delete');
-        $category = new Category();
+        $category = new Category;
 
         $this->assertTrue($this->policy->forceDelete($user, $category));
     }
@@ -113,7 +114,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_super_admin_can_manage_category_of_assigned_cooperative(): void
     {
-        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
         $admin->cooperatives()->attach($cooperative->getKey());
@@ -123,7 +124,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_super_admin_cannot_manage_category_of_unassigned_cooperative(): void
     {
-        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission('super_admin', 'categories.update');
 
@@ -132,7 +133,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_manage_category_of_own_cooperative(): void
     {
-        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission(
             'cooperative_admin',
@@ -145,8 +146,8 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_cooperative_admin_cannot_manage_category_of_another_cooperative(): void
     {
-        $own = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
-        $other = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $own = Cooperative::factory()->create();
+        $other = Cooperative::factory()->create();
         $category = Category::factory()->forCooperative($other)->create();
         $admin = $this->userWithRoleAndPermission(
             'cooperative_admin',
@@ -203,7 +204,7 @@ final class CategoryPolicyTest extends TestCase
 
         $role = Role::query()->create([
             'name' => 'Test role',
-            'slug' => 'test-role-' . str_replace('.', '-', $slug),
+            'slug' => 'test-role-'.str_replace('.', '-', $slug),
             'is_active' => true,
         ]);
 
@@ -218,7 +219,7 @@ final class CategoryPolicyTest extends TestCase
 
         return $user;
     }
-    
+
     public function test_generic_view_permission_does_not_bypass_category_policy(): void
     {
         $user = $this->userWithPermission('view');
@@ -253,5 +254,4 @@ final class CategoryPolicyTest extends TestCase
 
         return $user;
     }
-
 }

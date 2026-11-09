@@ -18,7 +18,7 @@ final class UserCooperativeRelationshipTest extends TestCase
 
     public function test_user_defines_cooperative_belongs_to_relationship(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertInstanceOf(
             BelongsTo::class,
@@ -28,7 +28,7 @@ final class UserCooperativeRelationshipTest extends TestCase
 
     public function test_user_cooperative_relationship_uses_cooperative_id(): void
     {
-        $user = new User();
+        $user = new User;
 
         $relation = $user->cooperative();
 
@@ -77,7 +77,6 @@ final class UserCooperativeRelationshipTest extends TestCase
         }
     }
 
-
     public function test_user_belongs_to_assigned_cooperative(): void
     {
         $country = Country::factory()->create();
@@ -110,5 +109,4 @@ final class UserCooperativeRelationshipTest extends TestCase
             $user->cooperative->is($cooperativeB),
         );
     }
-
 }

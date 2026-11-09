@@ -115,7 +115,6 @@ final class ProductPolicy extends BasePolicy
         return false;
     }
 
-
     public function reactivate(User $user, Product $product): bool
     {
         return $this->canAccessProduct(

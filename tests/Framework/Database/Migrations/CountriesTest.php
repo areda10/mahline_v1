@@ -81,8 +81,7 @@ final class CountriesTest extends TestCase
 
         self::assertTrue(
             collect($indexes)->contains(
-                fn (array $index): bool =>
-                    $index['name'] === 'countries_code_unique'
+                fn (array $index): bool => $index['name'] === 'countries_code_unique'
                     && $index['columns'] === ['code']
                     && $index['unique'] === true,
             ),
@@ -95,8 +94,7 @@ final class CountriesTest extends TestCase
 
         self::assertTrue(
             collect($indexes)->contains(
-                fn (array $index): bool =>
-                    $index['name'] === 'countries_iso3_unique'
+                fn (array $index): bool => $index['name'] === 'countries_iso3_unique'
                     && $index['columns'] === ['iso3']
                     && $index['unique'] === true,
             ),
@@ -117,8 +115,7 @@ final class CountriesTest extends TestCase
         foreach ($expectedIndexes as $indexName) {
             self::assertTrue(
                 collect($indexes)->contains(
-                    fn (array $index): bool =>
-                        $index['name'] === $indexName,
+                    fn (array $index): bool => $index['name'] === $indexName,
                 ),
                 "Index [{$indexName}] does not exist.",
             );

@@ -17,8 +17,7 @@ final class SessionService extends BaseService
     public function __construct(
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuditService $audit,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a new session without revoking any existing session.

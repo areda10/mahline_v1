@@ -17,8 +17,8 @@ final class KnownDeviceTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -89,7 +89,8 @@ final class KnownDeviceTest extends TestCase
             $knownDevice->user->is($user),
         );
     }
-    //function added from other files 
+
+    // function added from other files
     public function test_successful_authentication_remembers_a_new_device(): void
     {
         $user = User::factory()->create([
@@ -154,13 +155,13 @@ final class KnownDeviceTest extends TestCase
 
         $computerUserAgent =
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-            . 'AppleWebKit/537.36 '
-            . 'Chrome/140.0.0.0 Safari/537.36';
+            .'AppleWebKit/537.36 '
+            .'Chrome/140.0.0.0 Safari/537.36';
 
         $phoneUserAgent =
             'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) '
-            . 'AppleWebKit/605.1.15 '
-            . 'Version/18.0 Mobile/15E148 Safari/604.1';
+            .'AppleWebKit/605.1.15 '
+            .'Version/18.0 Mobile/15E148 Safari/604.1';
 
         $computerResponse = $this
             ->withHeader('User-Agent', $computerUserAgent)

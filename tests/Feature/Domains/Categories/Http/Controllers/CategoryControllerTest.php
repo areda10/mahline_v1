@@ -13,8 +13,8 @@ use Tests\TestCase;
 
 final class CategoryControllerTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesAuthorizedCooperativeAdmin;
+    use RefreshDatabase;
 
     private Cooperative $cooperative;
 

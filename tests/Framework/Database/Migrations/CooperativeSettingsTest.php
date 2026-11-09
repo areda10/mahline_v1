@@ -89,8 +89,7 @@ final class CooperativeSettingsTest extends TestCase
         $indexes = Schema::getIndexes('cooperative_settings');
 
         $cooperativeIdIndex = collect($indexes)->first(
-            fn (array $index): bool =>
-                $index['name'] === 'cooperative_settings_cooperative_id_unique',
+            fn (array $index): bool => $index['name'] === 'cooperative_settings_cooperative_id_unique',
         );
 
         $this->assertNotNull($cooperativeIdIndex);
@@ -124,7 +123,6 @@ final class CooperativeSettingsTest extends TestCase
             $indexNames,
         );
     }
-
 
     public function test_default_values_are_correct(): void
     {
@@ -175,5 +173,4 @@ final class CooperativeSettingsTest extends TestCase
         $this->assertTrue((bool) $settings->notify_order_status);
         $this->assertTrue((bool) $settings->notify_low_stock);
     }
-
 }

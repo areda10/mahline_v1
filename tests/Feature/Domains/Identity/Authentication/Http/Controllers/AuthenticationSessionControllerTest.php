@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Tests\TestCase;
 
 final class AuthenticationSessionControllerTest extends TestCase
@@ -40,7 +41,7 @@ final class AuthenticationSessionControllerTest extends TestCase
 
         $response->assertOk()
             ->assertViewIs('super-admin-root.users.show')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \Illuminate\Support\Collection && $sessions->count() === 2)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof Collection && $sessions->count() === 2)
             ->assertSee('Target laptop')
             ->assertSee('Target phone')
             ->assertDontSee('Old revoked device')
@@ -97,7 +98,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->get(route('backoffice.security.sessions.index'))
             ->assertOk()
             ->assertViewIs('identity.security.sessions.index')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \Illuminate\Support\Collection && $sessions->count() === 1)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof Collection && $sessions->count() === 1)
             ->assertSee('My personal laptop')
             ->assertDontSee('Someone else device');
 
@@ -144,7 +145,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->get(route('root.backoffice.security.sessions.index'))
             ->assertOk()
             ->assertViewIs('identity.security.sessions.index')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \Illuminate\Support\Collection && $sessions->count() === 1)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof Collection && $sessions->count() === 1)
             ->assertSee('Root private workstation')
             ->assertDontSee('Other private device');
     }
@@ -190,7 +191,7 @@ final class AuthenticationSessionControllerTest extends TestCase
     }
 
     /**
-     * @param list<string> $permissions
+     * @param  list<string>  $permissions
      */
     private function actor(string $roleSlug, array $permissions = []): User
     {

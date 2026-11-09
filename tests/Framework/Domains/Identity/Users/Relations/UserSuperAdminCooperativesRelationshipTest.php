@@ -19,7 +19,7 @@ final class UserSuperAdminCooperativesRelationshipTest extends TestCase
 
     public function test_user_defines_cooperatives_belongs_to_many_relationship(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertInstanceOf(
             BelongsToMany::class,
@@ -29,7 +29,7 @@ final class UserSuperAdminCooperativesRelationshipTest extends TestCase
 
     public function test_user_cooperatives_relationship_uses_expected_pivot(): void
     {
-        $user = new User();
+        $user = new User;
 
         $relation = $user->cooperatives();
 
@@ -85,15 +85,13 @@ final class UserSuperAdminCooperativesRelationshipTest extends TestCase
 
         self::assertTrue(
             $user->cooperatives->contains(
-                fn (Cooperative $cooperative): bool =>
-                    $cooperative->is($cooperativeA),
+                fn (Cooperative $cooperative): bool => $cooperative->is($cooperativeA),
             ),
         );
 
         self::assertTrue(
             $user->cooperatives->contains(
-                fn (Cooperative $cooperative): bool =>
-                    $cooperative->is($cooperativeB),
+                fn (Cooperative $cooperative): bool => $cooperative->is($cooperativeB),
             ),
         );
     }

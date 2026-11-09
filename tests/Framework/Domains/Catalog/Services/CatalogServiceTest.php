@@ -25,7 +25,7 @@ final class CatalogServiceTest extends TestCase
         parent::setUp();
 
         $this->service = new CatalogService(
-            new CatalogRepository()
+            new CatalogRepository
         );
     }
 

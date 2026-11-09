@@ -1,7 +1,12 @@
 <?php
 
+use App\Core\Database\Providers\DatabaseMacroServiceProvider;
+use App\Domains\Identity\Authorization\Providers\AuthorizationServiceProvider;
+use App\Domains\Identity\Authorization\Providers\PermissionGateServiceProvider;
+use App\Providers\AppServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
+    AppServiceProvider::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -9,7 +14,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    App\Core\Database\Providers\DatabaseMacroServiceProvider::class,
-    App\Domains\Identity\Authorization\Providers\AuthorizationServiceProvider::class,
-    App\Domains\Identity\Authorization\Providers\PermissionGateServiceProvider::class,
+    DatabaseMacroServiceProvider::class,
+    AuthorizationServiceProvider::class,
+    PermissionGateServiceProvider::class,
 ];

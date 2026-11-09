@@ -7,6 +7,7 @@ namespace App\Domains\Catalog\Models;
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
+use Database\Factories\CatalogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,8 +67,8 @@ final class Catalog extends BaseModel
         return $query->where('is_active', true);
     }
 
-    protected static function newFactory(): \Database\Factories\CatalogFactory
+    protected static function newFactory(): CatalogFactory
     {
-        return \Database\Factories\CatalogFactory::new();
+        return CatalogFactory::new();
     }
 }

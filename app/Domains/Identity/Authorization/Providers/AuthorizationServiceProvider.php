@@ -29,7 +29,7 @@ final class AuthorizationServiceProvider extends ServiceProvider
             Catalog::class,
             CatalogPolicy::class,
         );
-        
+
         Gate::policy(
             Category::class,
             CategoryPolicy::class,

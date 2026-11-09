@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Password\Http\Controllers;
 
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
-use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\View\View;
-use App\Shared\DTOs\AuditEntryDTO;
 use InvalidArgumentException;
 
 final class ForcedPasswordChangeController
@@ -35,8 +34,7 @@ final class ForcedPasswordChangeController
         AuditService $audit,
         PasswordHistoryService $passwordHistory,
         SessionService $sessions,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $user = $request->user();
 
         abort_unless($user instanceof User, 403);

@@ -19,8 +19,7 @@ final class AuthenticationService extends BaseService
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
         private readonly SecurityEventService $securityEventService,
-    ) {
-    }
+    ) {}
 
     /**
      * Authenticate a user.
@@ -61,7 +60,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw (new ModelNotFoundException())
+            throw (new ModelNotFoundException)
                 ->setModel(
                     User::class,
                     [$context->email],

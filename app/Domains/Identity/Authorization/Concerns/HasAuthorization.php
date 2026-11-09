@@ -77,8 +77,7 @@ trait HasAuthorization
     private function normalizeSlugs(array $items): array
     {
         return array_map(
-            static fn (string|Role|Permission $item): string =>
-                $item instanceof Role || $item instanceof Permission
+            static fn (string|Role|Permission $item): string => $item instanceof Role || $item instanceof Permission
                     ? $item->slug
                     : $item,
             $items,

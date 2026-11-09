@@ -7,13 +7,14 @@ namespace Tests\Feature\Domains\Cooperatives\Http\Controllers;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class CooperativeControllerTest extends TestCase
@@ -276,9 +277,9 @@ final class CooperativeControllerTest extends TestCase
 
     public function test_root_cooperative_management_routes_are_registered_separately(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('root.backoffice.cooperatives.index'));
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('root.backoffice.cooperatives.store'));
-        $this->assertTrue(\Illuminate\Support\Facades\Route::has('root.backoffice.cooperatives.destroy'));
+        $this->assertTrue(Route::has('root.backoffice.cooperatives.index'));
+        $this->assertTrue(Route::has('root.backoffice.cooperatives.store'));
+        $this->assertTrue(Route::has('root.backoffice.cooperatives.destroy'));
     }
 
     public function test_index_requires_view_permission(): void
@@ -328,7 +329,7 @@ final class CooperativeControllerTest extends TestCase
             ->assertOk()
             ->assertSee('Maroc')
             ->assertSee('Tanger-Tétouan-Al Hoceïma')
-            ->assertSee("L&#039;Oriental", false)
+            ->assertSee('L&#039;Oriental', false)
             ->assertSee('Fès-Meknès')
             ->assertSee('Rabat-Salé-Kénitra')
             ->assertSee('Béni Mellal-Khénifra')
@@ -482,7 +483,7 @@ final class CooperativeControllerTest extends TestCase
     }
 
     /** @param list<string> $permissions
-     *  @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function actor(string $roleSlug, array $permissions, array $attributes = []): User
     {

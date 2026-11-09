@@ -149,7 +149,7 @@ final class ForcedPasswordChangeControllerTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function actor(string $roleSlug, array $attributes = []): User
     {

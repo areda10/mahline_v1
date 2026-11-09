@@ -36,7 +36,7 @@ final class CatalogController
         Gate::authorize('create', [Catalog::class, (string) $coop->getKey()]);
 
         return view('super-admin-root.cooperatives.catalogs.create', [
-            'cooperative' => $coop, 'catalog' => new Catalog(),
+            'cooperative' => $coop, 'catalog' => new Catalog,
         ]);
     }
 

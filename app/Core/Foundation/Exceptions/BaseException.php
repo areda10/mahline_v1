@@ -9,6 +9,4 @@ use Exception;
 /**
  * Classe de base de toutes les exceptions métier du framework MAHLINE.
  */
-abstract class BaseException extends Exception
-{
-}
+abstract class BaseException extends Exception {}

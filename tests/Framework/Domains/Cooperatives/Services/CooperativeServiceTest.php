@@ -8,13 +8,14 @@ use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
 use App\Domains\Localization\Models\Address;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 final class CooperativeServiceTest extends TestCase
@@ -56,7 +57,7 @@ final class CooperativeServiceTest extends TestCase
             $actor->cooperatives()->whereKey($cooperative->getKey())->exists(),
         );
         $this->assertTrue(
-            \Illuminate\Support\Facades\Gate::forUser($actor)->allows('view', $cooperative),
+            Gate::forUser($actor)->allows('view', $cooperative),
         );
     }
 
@@ -172,7 +173,6 @@ final class CooperativeServiceTest extends TestCase
             'rib' => '987654321098765432109876',
         ]);
     }
-
 
     public function test_cooperative_admin_can_update_only_phone_email_and_address(): void
     {
@@ -424,7 +424,6 @@ final class CooperativeServiceTest extends TestCase
         }
     }
 
-
     private function cooperativeAdminActor(Cooperative $cooperative): User
     {
         $actor = User::factory()->create(['cooperative_id' => $cooperative->id]);
@@ -464,7 +463,6 @@ final class CooperativeServiceTest extends TestCase
 
         return $actor;
     }
-
 
     private function superAdminActor(): User
     {

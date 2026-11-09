@@ -12,7 +12,7 @@ use Tests\TestCase;
 final class UserPasswordTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     public function test_user_password_is_hashed_when_created_through_factory(): void
     {
         $plainPassword = 'MahlineTestPassword123!';
@@ -94,5 +94,4 @@ final class UserPasswordTest extends TestCase
             )
         );
     }
-
 }

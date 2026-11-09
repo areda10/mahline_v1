@@ -16,8 +16,7 @@ final class UserInvitationController
 {
     public function __construct(
         private readonly UserInvitationService $invitationService,
-    ) {
-    }
+    ) {}
 
     public function show(Request $request): View|RedirectResponse
     {

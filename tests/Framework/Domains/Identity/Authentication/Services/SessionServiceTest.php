@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
@@ -41,7 +42,7 @@ final class SessionServiceTest extends TestCase
             try {
                 $this->sessionService->create(
                     user: $user,
-                    sessionId: 'blocked-' . $status->value,
+                    sessionId: 'blocked-'.$status->value,
                 );
 
                 self::fail(sprintf(
@@ -1555,13 +1556,12 @@ final class SessionServiceTest extends TestCase
 
         $this->assertSame(
             1,
-            \App\Domains\Audit\Models\AuditEvent::query()
+            AuditEvent::query()
                 ->where('subject_id', $session->getKey())
                 ->where('event_key', 'identity.authentication.session_revoked')
                 ->count(),
         );
     }
-
 
     public function test_each_revoked_session_creates_exactly_one_audit_event(): void
     {
@@ -1612,5 +1612,4 @@ final class SessionServiceTest extends TestCase
             'subject_id' => $session->getKey(),
         ]);
     }
-
 }

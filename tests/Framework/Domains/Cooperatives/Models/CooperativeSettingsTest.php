@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Cooperatives\Models;
 
-use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Models\CooperativeSettings;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,27 +17,27 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_cooperative_settings_extends_base_model(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertInstanceOf(
-            \App\Core\Foundation\Models\BaseModel::class,
+            BaseModel::class,
             $settings,
         );
     }
 
     public function test_cooperative_settings_uses_soft_deletes(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertContains(
-            \Illuminate\Database\Eloquent\SoftDeletes::class,
+            SoftDeletes::class,
             class_uses_recursive($settings),
         );
     }
 
     public function test_cooperative_settings_uses_expected_table(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertSame(
             'cooperative_settings',
@@ -46,7 +47,7 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_cooperative_settings_uses_ulid_as_primary_key(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertSame('id', $settings->getKeyName());
         self::assertSame('string', $settings->getKeyType());
@@ -55,7 +56,7 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_cooperative_settings_has_expected_fillable_attributes(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertSame(
             [
@@ -77,7 +78,7 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_boolean_attributes_are_cast_to_boolean(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertSame(
             'boolean',
@@ -102,7 +103,7 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_default_tax_rate_is_cast_to_decimal(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertSame(
             'decimal:2',
@@ -112,7 +113,7 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_deleted_at_is_cast_to_datetime(): void
     {
-        $settings = new CooperativeSettings();
+        $settings = new CooperativeSettings;
 
         self::assertSame(
             'datetime',

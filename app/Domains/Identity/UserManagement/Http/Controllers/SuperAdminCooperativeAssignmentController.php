@@ -11,16 +11,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 final class SuperAdminCooperativeAssignmentController
 {
     public function __construct(
         private readonly SuperAdminCooperativeAssignmentService $userManagementService,
-    ) {
-    }
+    ) {}
 
     public function index(User $superAdmin): View
     {

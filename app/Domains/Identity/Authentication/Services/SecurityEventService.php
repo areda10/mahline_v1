@@ -8,6 +8,7 @@ use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Support\Carbon;
 
 final class SecurityEventService extends BaseService
 {
@@ -20,10 +21,10 @@ final class SecurityEventService extends BaseService
         ?string $browser = null,
         ?string $device = null,
         ?array $metadata = null,
-        ?\Illuminate\Support\Carbon $occurredAt = null,
+        ?Carbon $occurredAt = null,
     ): SecurityEvent {
         return SecurityEvent::query()->create([
-            'user_id' => $user?->id,    
+            'user_id' => $user?->id,
             'event' => $event,
             'reason' => $reason,
             'ip_address' => $ipAddress,

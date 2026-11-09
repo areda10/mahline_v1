@@ -10,7 +10,6 @@ use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
-use App\Domains\Identity\Users\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +23,7 @@ final class AuthenticationWorkflow
         private readonly LoginHistoryService $loginHistoryService,
         private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
         private readonly AuthenticationWorkflowHook $hook,
-    ) {
-    }
+    ) {}
 
     public function execute(
         AuthenticationContext $context,
@@ -99,5 +97,4 @@ final class AuthenticationWorkflow
             throw $exception;
         }
     }
-
 }

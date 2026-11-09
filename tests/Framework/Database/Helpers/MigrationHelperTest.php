@@ -30,8 +30,7 @@ final class MigrationHelperTest extends TestCase
         $this->assertTrue(
             collect($columns)
                 ->contains(
-                    static fn (array $column): bool =>
-                        $column['name'] === 'id'
+                    static fn (array $column): bool => $column['name'] === 'id'
                 )
         );
 
@@ -40,8 +39,7 @@ final class MigrationHelperTest extends TestCase
         $this->assertTrue(
             collect($indexes)
                 ->contains(
-                    static fn (array $index): bool =>
-                        $index['primary'] === true
+                    static fn (array $index): bool => $index['primary'] === true
                 )
         );
     }

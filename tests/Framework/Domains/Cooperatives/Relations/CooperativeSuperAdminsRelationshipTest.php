@@ -19,7 +19,7 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
 
     public function test_cooperative_defines_super_admins_belongs_to_many_relationship(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         self::assertInstanceOf(
             BelongsToMany::class,
@@ -29,7 +29,7 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
 
     public function test_cooperative_super_admins_relationship_uses_expected_pivot(): void
     {
-        $cooperative = new Cooperative();
+        $cooperative = new Cooperative;
 
         $relation = $cooperative->superAdmins();
 
