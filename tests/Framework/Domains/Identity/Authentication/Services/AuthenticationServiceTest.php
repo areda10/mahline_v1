@@ -835,7 +835,7 @@ final class AuthenticationServiceTest extends TestCase
                         device: 'Desktop',
                     )
                 );
-            } catch (\\Throwable) {
+            } catch (\Throwable) {
                 // Every case is an expected authentication failure.
             }
 
