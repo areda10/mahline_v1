@@ -545,5 +545,4 @@ final class PasswordResetServiceTest extends TestCase
         $this->assertDatabaseCount('user_password_histories', 0);
         $this->assertSame(1, $user->tokens()->count());
     }
-
 }
