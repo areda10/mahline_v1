@@ -296,6 +296,32 @@ final class UserManagementServiceTest extends TestCase
         $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $history->password_hash));
     }
 
+    public function test_password_history_survives_soft_delete_and_cascades_on_force_delete(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $target = User::factory()->create();
+
+        DB::table('user_password_histories')->insert([
+            'id' => (string) Str::ulid(),
+            'user_id' => $target->getKey(),
+            'password_hash' => Hash::make('PreviousPassword2026!'),
+            'created_at' => now(),
+        ]);
+
+        $this->service->deleteUser($root, $target);
+
+        $this->assertDatabaseHas('user_password_histories', [
+            'user_id' => $target->getKey(),
+        ]);
+
+        $deletedUser = User::withTrashed()->findOrFail($target->getKey());
+        $deletedUser->forceDelete();
+
+        $this->assertDatabaseMissing('user_password_histories', [
+            'user_id' => $target->getKey(),
+        ]);
+    }
+
     private function createUserWithRole(
         string $roleSlug,
         ?string $cooperativeId = null,
