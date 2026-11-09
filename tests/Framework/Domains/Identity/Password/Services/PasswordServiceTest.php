@@ -455,4 +455,94 @@ final class PasswordServiceTest extends TestCase
             $primaryConnection->rollBack();
         }
     }
+    public function test_password_change_rejects_each_of_the_five_previous_passwords(): void
+    {
+        $passwords = [
+            'MahlinePassword00!',
+            'MahlinePassword01!',
+            'MahlinePassword02!',
+            'MahlinePassword03!',
+            'MahlinePassword04!',
+            'MahlinePassword05!',
+        ];
+        $user = User::factory()->create(['password' => $passwords[0]]);
+
+        for ($index = 1; $index < count($passwords); $index++) {
+            $this->passwordService->changePassword(
+                user: $user,
+                currentPassword: $passwords[$index - 1],
+                newPassword: $passwords[$index],
+            );
+        }
+
+        foreach (array_slice($passwords, 0, 5) as $previousPassword) {
+            try {
+                $this->passwordService->changePassword(
+                    user: $user,
+                    currentPassword: $passwords[5],
+                    newPassword: $previousPassword,
+                );
+                $this->fail('A password from the five-password history must be rejected.');
+            } catch (InvalidArgumentException $exception) {
+                $this->assertSame(
+                    'The new password must not match the current password or any of the five previous passwords.',
+                    $exception->getMessage(),
+                );
+            }
+        }
+
+        $this->assertTrue(Hash::check($passwords[5], (string) $user->fresh()->password));
+    }
+
+    public function test_password_history_retains_only_the_five_most_recent_password_hashes(): void
+    {
+        $passwords = [
+            'MahlinePassword00!',
+            'MahlinePassword01!',
+            'MahlinePassword02!',
+            'MahlinePassword03!',
+            'MahlinePassword04!',
+            'MahlinePassword05!',
+            'MahlinePassword06!',
+        ];
+        $user = User::factory()->create(['password' => $passwords[0]]);
+
+        for ($index = 1; $index < count($passwords); $index++) {
+            $this->passwordService->changePassword(
+                user: $user,
+                currentPassword: $passwords[$index - 1],
+                newPassword: $passwords[$index],
+            );
+        }
+
+        $history = DB::table('user_password_histories')
+            ->where('user_id', $user->getKey())
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get(['password_hash']);
+
+        $this->assertCount(5, $history);
+
+        foreach (array_slice($passwords, 1, 5) as $expectedPreviousPassword) {
+            $this->assertTrue(
+                $history->contains(
+                    static fn (object $entry): bool => Hash::check(
+                        $expectedPreviousPassword,
+                        (string) $entry->password_hash,
+                    ),
+                ),
+                'The five most recently replaced passwords must remain in history.',
+            );
+        }
+
+        $this->assertFalse(
+            $history->contains(
+                static fn (object $entry): bool => Hash::check(
+                    $passwords[0],
+                    (string) $entry->password_hash,
+                ),
+            ),
+            'The oldest password must be removed when the sixth replacement is archived.',
+        );
+    }
 }
