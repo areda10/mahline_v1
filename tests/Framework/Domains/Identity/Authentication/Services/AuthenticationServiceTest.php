@@ -699,4 +699,94 @@ final class AuthenticationServiceTest extends TestCase
 
         $this->assertSame($legacyHash, $user->fresh()->password);
     }
+    public function test_failed_attempts_are_counted_for_unknown_inactive_and_unverified_emails(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        $cases = [
+            'unknown-counter@example.com',
+            $inactive->email,
+            $unverified->email,
+        ];
+
+        foreach ($cases as $email) {
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                try {
+                    $this->authenticationService->authenticate(
+                        new AuthenticationContext(
+                            email: $email,
+                            password: 'ValidPassword123!',
+                            sessionId: 'failed-counter-'.$attempt.'-'.$email,
+                            ipAddress: null,
+                            userAgent: 'Mozilla/5.0',
+                            browser: 'Firefox',
+                            device: 'Desktop',
+                        )
+                    );
+                } catch (ModelNotFoundException|RuntimeException) {
+                    // Expected: every rejected attempt is still counted.
+                }
+            }
+
+            $this->assertSame(
+                0,
+                $securityService->remainingAttempts($email),
+                'The email counter must reach the lockout threshold for '.$email,
+            );
+
+            $this->assertTrue(
+                $securityService->isLocked($email),
+                'The email must be locked after five failed attempts: '.$email,
+            );
+        }
+    }
+
+    public function test_locked_unknown_email_does_not_increment_failed_attempts(): void
+    {
+        $email = 'already-locked-unknown@example.com';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($email);
+        }
+
+        try {
+            $this->authenticationService->authenticate(
+                new AuthenticationContext(
+                    email: $email,
+                    password: 'ValidPassword123!',
+                    sessionId: 'locked-unknown-email',
+                    ipAddress: null,
+                    userAgent: 'Mozilla/5.0',
+                    browser: 'Firefox',
+                    device: 'Desktop',
+                )
+            );
+        } catch (ModelNotFoundException|RuntimeException) {
+            // Expected: an already locked email is rejected without increment.
+        }
+
+        $this->assertSame(0, $securityService->remainingAttempts($email));
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $email,
+            'event' => 'failed',
+            'reason' => 'account_locked',
+        ]);
+    }
+
 }
