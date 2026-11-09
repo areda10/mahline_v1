@@ -1,6 +1,6 @@
 # MAHLINE — AUTHENTICATION STANDARD
 
-**Version:** 1.2
+**Version:** 1.3
 **Status:** GELÉ
 **Domain:** Identity / Authentication
 
@@ -184,3 +184,12 @@ The rule:
 must not be changed implicitly.
 
 Changing this rule requires an explicit architecture decision and corresponding test/documentation changes.
+
+
+## 6.2 Dedicated authentication failure handling
+
+Expected authentication denials are represented by `AuthenticationFailedException` (IP/account/pair lock, inactive account, unverified email and invalid credentials). The Web/JSON login controller catches this business exception and returns the same generic public response. Unknown accounts continue to use the existing `ModelNotFoundException` path and the same generic response.
+
+Unexpected runtime failures must not be translated into an authentication `401`. Infrastructure, persistence, programming and other unexpected failures must reach Laravel's exception handler so they can be treated as server-side incidents instead of being disguised as invalid credentials.
+
+The diagnostic `GET /api/test-auth` endpoint is not part of the production API. Authentication middleware and forced-password-change behavior are covered through a test-only route registered by the API feature test.
