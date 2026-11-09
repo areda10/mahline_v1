@@ -128,7 +128,10 @@ final class AuthenticationService extends BaseService
          * when no account exists. The public response remains generic.
          */
         if ($user === null) {
-            $this->securityService->recordFailedAuthentication(\n                $email,\n                $context->ipAddress,\n            );
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
 
             $this->loginHistoryService->recordFailure(
                 email: $email,
@@ -151,7 +154,10 @@ final class AuthenticationService extends BaseService
          * The account must be active.
          */
         if (! $this->isAccountActive($user)) {
-            $this->securityService->recordFailedAttempt($email);
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
 
             $this->loginHistoryService->recordFailure(
                 email: $email,
@@ -172,7 +178,10 @@ final class AuthenticationService extends BaseService
          * An active account must also have a verified email address.
          */
         if ($user->email_verified_at === null) {
-            $this->securityService->recordFailedAttempt($email);
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
 
             $this->loginHistoryService->recordFailure(
                 email: $email,
