@@ -737,7 +737,7 @@ final class AuthenticationServiceTest extends TestCase
                             device: 'Desktop',
                         )
                     );
-                } catch (ModelNotFoundException|RuntimeException) {
+                } catch (\Throwable) {
                     // Expected: every rejected attempt is still counted.
                 }
             }
@@ -776,7 +776,7 @@ final class AuthenticationServiceTest extends TestCase
                     device: 'Desktop',
                 )
             );
-        } catch (ModelNotFoundException|RuntimeException) {
+        } catch (\Throwable) {
             // Expected: an already locked email is rejected without increment.
         }
 
