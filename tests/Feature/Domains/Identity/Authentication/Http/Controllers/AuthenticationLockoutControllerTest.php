@@ -28,6 +28,12 @@ final class AuthenticationLockoutControllerTest extends TestCase
         $target = User::factory()->create(['email' => 'locked@example.com']);
         $service = app(AuthenticationSecurityService::class);
         $ipAddress = '203.0.113.45';
+        $otherEmail = 'other@example.com';
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $service->recordFailedAttempt($otherEmail);
+            $service->recordFailedAttemptByIpAndEmail($ipAddress, $otherEmail);
+        }
 
         for ($attempt = 0; $attempt < 5; $attempt++) {
             $service->recordFailedAttempt($target->email);
@@ -54,12 +60,28 @@ final class AuthenticationLockoutControllerTest extends TestCase
         self::assertFalse($service->isLocked($target->email));
         self::assertFalse($service->isIpLocked($ipAddress));
         self::assertFalse($service->isIpEmailLocked($ipAddress, $target->email));
+        self::assertTrue($service->isLocked($otherEmail));
+        self::assertTrue($service->isIpEmailLocked($ipAddress, $otherEmail));
 
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.authentication.lockouts.unlocked',
             'actor_id' => $root->getKey(),
             'subject_id' => $target->getKey(),
         ]);
+
+        $event = AuditEvent::query()
+            ->where('event_key', 'identity.authentication.lockouts.unlocked')
+            ->firstOrFail();
+        self::assertSame(
+            hash_hmac('sha256', $target->email, (string) config('app.key')),
+            $event->metadata['email_fingerprint'],
+        );
+        self::assertSame(
+            hash_hmac('sha256', $ipAddress, (string) config('app.key')),
+            $event->metadata['ip_fingerprint'],
+        );
+        self::assertArrayNotHasKey('email', $event->metadata);
+        self::assertArrayNotHasKey('ip_address', $event->metadata);
     }
 
     public function test_non_root_user_cannot_unlock_authentication_counters(): void
