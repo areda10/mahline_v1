@@ -129,5 +129,6 @@
 <footer class="footer">
     MAHLINE — Administration centrale
 </footer>
+@include('identity.security.session-warning')
 </body>
 </html>
