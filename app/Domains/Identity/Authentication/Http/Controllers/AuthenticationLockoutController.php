@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Authentication\\Http\\Controllers;
+namespace App\Domains\Identity\Authentication\Http\Controllers;
 
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authentication\\Services\\AuthenticationSecurityService;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
-use Illuminate\\Http\\RedirectResponse;
-use Illuminate\\Http\\Request;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 final class AuthenticationLockoutController
 {
