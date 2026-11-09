@@ -320,13 +320,13 @@ final class AuthenticationSessionControllerTest extends TestCase
         );
         $sessionStore->save();
 
-        // StartSession reads the browser cookie and restores the matching
-        // persisted Laravel session. withCookie() applies Laravel's normal
-        // cookie encryption for the HTTP test request.
+        // withCookie() encrypts cookie values automatically. Passing an
+        // already encrypted ID would make Laravel encrypt it twice.
+        // JSON requests omit cookies unless withCredentials() is enabled.
         return $this->withCookie(
             config('session.cookie'),
-            encrypt($sessionStore->getId()),
-        );
+            $sessionStore->getId(),
+        )->withCredentials();
     }
 
     private function createAuthenticationSession(
