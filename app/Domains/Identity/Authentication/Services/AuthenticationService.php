@@ -6,12 +6,12 @@ namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
 
 final class AuthenticationService extends BaseService
 {
@@ -68,7 +68,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'IP address is temporarily locked.',
             );
         }
@@ -89,7 +89,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'Account is temporarily locked.',
             );
         }
@@ -116,7 +116,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'IP address and email are temporarily locked.',
             );
         }
@@ -169,7 +169,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'User account is not active.',
             );
         }
@@ -193,7 +193,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'Email address is not verified.',
             );
         }
@@ -247,7 +247,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'Invalid credentials.',
             );
         }
