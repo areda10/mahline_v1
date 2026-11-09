@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 3.1
+- **Version :** 3.2
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -280,7 +280,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 ---
 
 ## 9. Historique des mises à jour
-| 9 novembre 2026 | 3.1 | Implémentation AUTH-03 sur `feature/Identity` après validation des seuils 5/30/5 sur 15 minutes : compteurs compte/IP/couple IP-e-mail, clés HMAC, comptabilisation de tous les échecs traités, remise à zéro ciblée, retrait du throttle HTTP trop strict et tests de seuils/expiration/réseau partagé. AUTH-03 à AUTH-05 restent en attente de confirmation locale des tests ciblés et de Pint. |
+| 9 novembre 2026 | 3.1 | Implémentation AUTH-03 sur `feature/Identity` après validation des seuils 5/30/5 sur 15 minutes : compteurs compte/IP/couple IP-e-mail, clés HMAC, comptabilisation de tous les échecs traités, remise à zéro ciblée, retrait du throttle HTTP trop strict et tests de seuils/expiration/réseau partagé. Un test complémentaire couvre le rejet d'un couple IP + e-mail déjà verrouillé sans incrément supplémentaire (commit `15e472431450c6ab08e65c2573354249746c1e03`). AUTH-03 à AUTH-05 restent en attente de confirmation locale des tests ciblés et de Pint. |
 
 | Date | Version | Mise à jour |
 |---|---|---|
