@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -384,6 +385,19 @@ final class AuthenticationControllerTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
+        $locked = User::factory()->create([
+            'email' => 'locked-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($locked->email);
+        }
+
         $attempts = [
             [
                 'email' => 'missing-public-response@example.com',
@@ -399,6 +413,10 @@ final class AuthenticationControllerTest extends TestCase
             ],
             [
                 'email' => $unverified->email,
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $locked->email,
                 'password' => 'ValidPassword123!',
             ],
         ];
