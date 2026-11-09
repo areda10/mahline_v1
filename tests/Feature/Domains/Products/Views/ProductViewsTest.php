@@ -8,15 +8,15 @@ use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Gate;
+use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
 use Tests\TestCase;
 
 final class ProductViewsTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesAuthorizedCooperativeAdmin;
 
     private Cooperative $cooperative;
 
@@ -32,12 +32,10 @@ final class ProductViewsTest extends TestCase
             ->active()
             ->create();
 
-        $this->actingAs(User::factory()->create([
-            'cooperative_id' => $this->cooperative->getKey(),
-        ]));
-        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+        $user = $this->createCooperativeAdminFor($this->cooperative);
 
-        Gate::before(static fn (): bool => true);
+        $this->actingAs($user);
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
         $this->category = Category::factory()
             ->forCooperative($this->cooperative)
