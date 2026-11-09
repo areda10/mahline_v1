@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 3.6
+- **Version :** 3.7
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -84,8 +84,8 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [x] **AUTH-03 — VALIDÉ** Limitation à trois niveaux : 5 échecs par compte/e-mail normalisé, 30 par IP et 5 par couple IP + e-mail, sur 15 minutes. Échecs inconnus/inactifs/non vérifiés/mot de passe incorrect comptabilisés ; clés HMAC ; route login sans throttle qui compte les succès. Tests de service et HTTP ajoutés. Détails et commits dans `USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`, section 20.37. Après première exécution, tests historiques IP alignés sur 30 et test transactionnel aligné sur la réponse publique `Authentication failed.` ; commits correctifs consignés en section 20.37. Tests `AuthenticationSecurityServiceTest`, `AuthenticationWorkflowTransactionTest`, `AuthenticationServiceTest`, `AuthenticationControllerTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.
 - [x] **AUTH-04 — VALIDÉ** Une connexion réussie efface le compteur du compte et le compteur du couple IP + e-mail, mais jamais le compteur IP partagé. Test de non-régression ajouté.
 - [x] **AUTH-05 — VALIDÉ** Seuils et expiration automatique après 15 minutes testés pour les trois compteurs ; tests de seuils et d'expiration confirmés VERTS avec `AuthenticationSecurityServiceTest` et Pint le 9 novembre 2026.
-- [ ] **AUTH-06 — CODE AJOUTÉ, TESTS LOCAUX EN ATTENTE** Déverrouillage root-only des trois compteurs (compte, IP partagée et couple IP + e-mail), page dédiée et lien de navigation Root, motif obligatoire, audit append-only et tests HTTP ajoutés le 9 novembre 2026. Voir section 20.38 du cahier de décisions. Ne pas valider avant tests verts et Pint.
-- [ ] **AUTH-07** Vérifier les réponses, statuts HTTP et messages sur toutes les routes web/API.
+- [x] **AUTH-06 — VALIDÉ** Déverrouillage root-only des trois compteurs (compte, IP partagée et couple IP + e-mail), page dédiée et lien de navigation Root, motif obligatoire, audit append-only et tests HTTP. Tests ciblés confirmés VERTS par l'utilisateur le 9 novembre 2026 ; voir section 20.38 du cahier de décisions. La validation Pint de ce lot reste à confirmer séparément.
+- [ ] **AUTH-07 — EN COURS** Vérifier les réponses, statuts HTTP et messages sur toutes les routes web/API. Premier audit effectué : correction de la négociation JSON/HTML des erreurs de validation de connexion navigateur ; tests ajoutés pour validation Web, déconnexion JSON, accès API Sanctum, changement obligatoire et reset API. Tests locaux à exécuter. Points résiduels : confirmer le statut de la route `/api/test-auth` (endpoint de test exposé dans les routes API) et examiner le mapping global des `RuntimeException` de connexion en `401`.
 
 ---
 
@@ -362,3 +362,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 
 
 | 9 novembre 2026 | 3.6 | AUTH-06 : ajout de la page root-only de déverrouillage, du formulaire, du lien de navigation, de l'action POST auditée et des tests HTTP de périmètre/confidentialité. Validation locale en attente. |
+| 9 novembre 2026 | 3.7 | AUTH-06 tests ciblés confirmés VERTS. Démarrage AUTH-07 : correction de la négociation HTML/JSON pour les erreurs de validation de connexion navigateur et ajout de tests HTTP Web/API ; validation locale en attente. |
