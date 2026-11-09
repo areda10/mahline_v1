@@ -7,6 +7,7 @@ use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
 use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
 use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
