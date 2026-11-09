@@ -1459,6 +1459,7 @@ Dans `AuthenticationControllerTest` :
 - `dc60621c3455e3667c8c4762b3e6d766a1c394af` — test HTTP de réseau partagé ;
 - `71542986bf582f8d4564feceae6149fc5a66907e` — correction syntaxique du test ;
 - `a515185afb9a86b1f63850be5cc315327c821416` — test d'expiration des trois verrouillages.
+- `15e472431450c6ab08e65c2573354249746c1e03` — test du rejet d'un couple IP + e-mail déjà verrouillé sans incrément supplémentaire.
 
 Le standard `docs/domains/identity/ID-I-002-AUTHENTICATION_STANDARD.md` est passé en version 1.1 pour formaliser les trois niveaux.
 
