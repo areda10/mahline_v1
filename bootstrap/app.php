@@ -49,11 +49,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
 
         /*
-         * Authentication endpoints return JSON responses.
-         *
-         * Laravel must therefore render validation exceptions
-         * as JSON for the authentication routes as well as
-         * the traditional API routes.
+         * API routes always return JSON. Authentication web routes
+         * negotiate JSON only when requested by the client, allowing
+         * browser form submissions to use redirects and session errors.
          */
 
         $exceptions->shouldRenderJsonWhen(
