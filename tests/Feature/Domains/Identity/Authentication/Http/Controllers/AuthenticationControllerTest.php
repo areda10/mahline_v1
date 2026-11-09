@@ -377,13 +377,20 @@ final class AuthenticationControllerTest extends TestCase
             'email_verified_at' => null,
         ]);
 
+        $active = User::factory()->create([
+            'email' => 'active-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
         $attempts = [
             [
                 'email' => 'missing-public-response@example.com',
                 'password' => 'ValidPassword123!',
             ],
             [
-                'email' => 'missing-public-response@example.com',
+                'email' => $active->email,
                 'password' => 'WrongPassword123!',
             ],
             [
