@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
@@ -14,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use RuntimeException;
 
 final class AuthenticationController
 {
@@ -81,7 +81,7 @@ final class AuthenticationController
                     'email' => 'Authentication failed.',
                 ])
                 ->withInput($request->only('email'));
-        } catch (RuntimeException $exception) {
+        } catch (AuthenticationFailedException) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Authentication failed.',
