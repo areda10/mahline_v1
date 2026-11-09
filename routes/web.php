@@ -49,7 +49,7 @@ Route::prefix('authentication')
         Route::post(
             '/login',
             [AuthenticationController::class, 'login']
-        )->middleware('throttle:5,1')->name('login.store');
+        )->name('login.store');
 
         /*
          * Logout authenticated user.
