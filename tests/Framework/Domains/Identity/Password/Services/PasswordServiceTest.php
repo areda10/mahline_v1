@@ -10,8 +10,10 @@ use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordService;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
 use RuntimeException;
@@ -385,5 +387,30 @@ final class PasswordServiceTest extends TestCase
         $this->assertFalse(Hash::check('MahlinePassword13!', (string) $user->password));
         $this->assertDatabaseCount('user_password_histories', 0);
         $this->assertSame(1, $user->tokens()->count());
+    }
+    public function test_password_change_acquires_a_user_row_lock_before_checking_and_archiving_history(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $lockedUserQueries = [];
+
+        DB::listen(static function (QueryExecuted $query) use (&$lockedUserQueries): void {
+            $sql = strtolower($query->sql);
+
+            if (str_contains($sql, 'users') && str_contains($sql, 'for update')) {
+                $lockedUserQueries[] = $sql;
+            }
+        });
+
+        $this->passwordService->changePassword(
+            user: $user,
+            currentPassword: 'MahlinePassword12',
+            newPassword: 'MahlinePassword13!',
+        );
+
+        $this->assertNotEmpty(
+            $lockedUserQueries,
+            'The password change must issue a SELECT ... FOR UPDATE against the users table.',
+        );
+        $this->assertDatabaseCount('user_password_histories', 1);
     }
 }
