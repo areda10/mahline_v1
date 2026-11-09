@@ -620,4 +620,84 @@ final class AuthenticationServiceTest extends TestCase
             $securityService->remainingAttempts($user->email)
         );
     }
+
+    public function test_successful_login_rehashes_an_outdated_password_hash(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'legacy-hash@example.com',
+            'password' => 'LegacyPassword2026!',
+            'status' => UserStatus::Active,
+        ]);
+
+        $legacyHash = password_hash(
+            'LegacyPassword2026!',
+            PASSWORD_BCRYPT,
+            ['cost' => 4],
+        );
+
+        $this->assertIsString($legacyHash);
+        $this->assertTrue(Hash::check('LegacyPassword2026!', $legacyHash));
+        $this->assertTrue(Hash::needsRehash($legacyHash));
+
+        $user->forceFill(['password' => $legacyHash])->save();
+        $user->refresh();
+
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: $user->email,
+                password: 'LegacyPassword2026!',
+                sessionId: 'session-legacy-hash-001',
+                ipAddress: '127.0.0.20',
+                userAgent: 'Mozilla/5.0',
+                browser: 'Firefox',
+                device: 'Desktop',
+            )
+        );
+
+        $user->refresh();
+
+        $this->assertNotSame($legacyHash, $user->password);
+        $this->assertTrue(Hash::check('LegacyPassword2026!', (string) $user->password));
+        $this->assertFalse(Hash::needsRehash((string) $user->password));
+        $this->assertDatabaseMissing('user_password_histories', [
+            'user_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_successful_login_does_not_rehash_when_rehash_on_login_is_disabled(): void
+    {
+        config(['hashing.rehash_on_login' => false]);
+
+        $user = User::factory()->create([
+            'email' => 'rehash-disabled@example.com',
+            'password' => 'LegacyPassword2026!',
+            'status' => UserStatus::Active,
+        ]);
+
+        $legacyHash = password_hash(
+            'LegacyPassword2026!',
+            PASSWORD_BCRYPT,
+            ['cost' => 4],
+        );
+
+        $this->assertIsString($legacyHash);
+
+        $user->forceFill(['password' => $legacyHash])->save();
+        $user->refresh();
+
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: $user->email,
+                password: 'LegacyPassword2026!',
+                sessionId: 'session-rehash-disabled-001',
+                ipAddress: '127.0.0.21',
+                userAgent: 'Mozilla/5.0',
+                browser: 'Firefox',
+                device: 'Desktop',
+            )
+        );
+
+        $this->assertSame($legacyHash, $user->fresh()->password);
+    }
+
 }
