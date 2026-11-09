@@ -1736,3 +1736,23 @@ Correction sur `feature/Identity` :
 Commit : `6131155f95d1b210c35667beef339ee9b49a2601`.
 
 **État SESS-02 : EN ATTENTE — relancer les tests ciblés et Pint après cette correction.**
+
+
+## 20.48 — Validation finale de SESS-02
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les tests ciblés SESS-02 après correction du helper HTTP du fichier AuthenticationSessionControllerTest.php.
+
+### Cause racine des échecs de fixture
+
+Le helper transmettait un identifiant de cookie déjà chiffré à withCookie(), alors que Laravel chiffre automatiquement les valeurs fournies à cette méthode. Le cookie était donc chiffré deux fois. Par ailleurs, Laravel n'inclut pas les cookies dans les requêtes JSON tant que withCredentials() n'est pas activé. Le middleware StartSession ne restaurait donc pas la session Laravel attendue, ce qui expliquait à la fois les réponses 401, l'absence du partial dans les layouts et l'impossibilité pour le test d'expiration d'atteindre la branche métier d'expiration.
+
+### Correction et garanties conservées
+
+- Le helper passe désormais l'identifiant brut à withCookie(config('session.cookie'), $sessionStore->getId()) ; Laravel effectue lui-même le chiffrement attendu.
+- Le helper active withCredentials() afin que les requêtes JSON transmettent le cookie.
+- Le contrôle strict de correspondance entre l'identifiant Laravel courant et AuthenticationSession.session_id (hash_equals) est conservé.
+- Aucun contrôle d'autorisation, de révocation ou d'expiration n'a été supprimé ou assoupli.
+
+Commit final du helper : b77f7bde74582c2079976ca0b2cbf2794d571c81.
+
+**État : SESS-02 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
