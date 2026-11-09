@@ -325,7 +325,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         // cookie encryption for the HTTP test request.
         return $this->withCookie(
             config('session.cookie'),
-            $sessionStore->getId(),
+            encrypt($sessionStore->getId()),
         );
     }
 
