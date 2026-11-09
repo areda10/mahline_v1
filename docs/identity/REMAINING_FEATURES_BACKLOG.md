@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.2
+- **Version :** 2.3
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -243,10 +243,11 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [x] **VAL-07** Exécuter les tests de reset de mot de passe — VERT confirmé par l'utilisateur (`PasswordResetServiceTest`).
 - [x] **VAL-08** Corriger les régressions révélées par ces tests avant de poursuivre — fixtures alignées sur la politique et message attendu de réutilisation corrigé ; commit `c14d145adc550e8073c8770239ad545231779a11` ; test relancé et vert.
 - [x] **VAL-14** Exécuter `php artisan test --filter=PasswordServiceTest` puis `php artisan test --filter=Password` après le commit `8a31970f8d983df7926f3a13d696903edd0471b3` — les deux commandes sont VERTES selon confirmation utilisateur du 9 novembre 2026.
+- [x] **VAL-15** Exécuter `php artisan test --filter=PasswordResetControllerTest` — VERT confirmé par l'utilisateur le 9 novembre 2026 ; validation limitée à cette suite HTTP ciblée.
 - [ ] **VAL-09** Exécuter toute la suite de tests du domaine Identity.
 - [ ] **VAL-10** Exécuter les vérifications de style, analyse statique et migrations dans l'environnement local/CI du projet.
 - [ ] **VAL-11** Faire un audit final du diff et confirmer que les commits respectent l'architecture V7.0 et les conventions MAHLINE.
-- [ ] **VAL-12** Mettre à jour les deux documents de suivi avec les résultats, preuves et commits de validation.
+- [x] **VAL-12** Mettre à jour les deux documents de suivi avec les résultats, preuves et commits de validation — mise à jour effectuée après confirmation du test HTTP de reset, commits documentaires du 9 novembre 2026.
 - [x] **VAL-13** Exécuter `php artisan test --filter=UserManagementControllerTest` — VERT confirmé par l'utilisateur ; l'erreur `all() on array` n'est plus bloquante dans cette exécution ciblée.
 
 ---
@@ -299,3 +300,4 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 
 | 9 novembre 2026 | 2.1 | Correction commitée de `PasswordServiceTest.php` : fixtures conformes à ID-01 et test d'acceptation des espaces ; ID01-19 cochée. VAL-14 ajoutée pour confirmer localement le test ciblé puis le filtre global Password. |
 | 9 novembre 2026 | 2.2 | L'utilisateur confirme vertes les commandes `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password` ; VAL-14 cochée. La suite complète Identity et les tests d'intégration complémentaires restent ouverts. |
+| 9 novembre 2026 | 2.3 | Test `php artisan test --filter=PasswordResetControllerTest` confirmé vert ; VAL-15 cochée. Les deux documents de suivi ont été mis à jour ; la suite complète Identity reste à exécuter. |
