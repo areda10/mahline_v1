@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
@@ -13,8 +14,8 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
 use RuntimeException;
@@ -385,7 +386,7 @@ final class PasswordServiceTest extends TestCase
 
         $service = new PasswordService(
             app(SessionService::class),
-            app(\App\Domains\Audit\Services\AuditService::class),
+            app(AuditService::class),
             app(PasswordHistoryService::class),
         );
 
@@ -403,6 +404,7 @@ final class PasswordServiceTest extends TestCase
         $this->assertDatabaseCount('user_password_histories', 0);
         $this->assertSame(1, $user->tokens()->count());
     }
+
     public function test_password_change_acquires_a_user_row_lock_before_checking_and_archiving_history(): void
     {
         $user = User::factory()->create(['password' => 'MahlinePassword12']);
@@ -428,6 +430,7 @@ final class PasswordServiceTest extends TestCase
         );
         $this->assertDatabaseCount('user_password_histories', 1);
     }
+
     public function test_user_row_lock_blocks_a_second_database_connection_from_acquiring_the_same_lock(): void
     {
         $user = User::factory()->create(['password' => 'MahlinePassword12']);
@@ -469,6 +472,7 @@ final class PasswordServiceTest extends TestCase
             $primaryConnection->rollBack();
         }
     }
+
     public function test_password_change_rejects_each_of_the_five_previous_passwords(): void
     {
         $passwords = [

@@ -326,5 +326,4 @@ final class PasswordPolicyTest extends TestCase
             newPassword: 'MahlinePassword12!',
         );
     }
-
 }

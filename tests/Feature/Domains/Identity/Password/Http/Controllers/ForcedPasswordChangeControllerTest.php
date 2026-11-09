@@ -15,7 +15,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use RuntimeException;
 use Tests\TestCase;
 
 final class ForcedPasswordChangeControllerTest extends TestCase
@@ -233,7 +232,6 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
         $this->assertTrue(Hash::check('CurrentPassword12!', $user->fresh()->password));
     }
-
 
     public function test_audit_failure_rolls_back_forced_password_change_and_history(): void
     {

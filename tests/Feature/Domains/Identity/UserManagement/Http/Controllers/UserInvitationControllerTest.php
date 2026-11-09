@@ -13,7 +13,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use RuntimeException;
 use Tests\TestCase;
 
 final class UserInvitationControllerTest extends TestCase
@@ -392,7 +391,6 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->assertNotNull($invitation->fresh()->used_at);
     }
-
 
     public function test_audit_failure_rolls_back_invitation_acceptance_password_and_history(): void
     {
