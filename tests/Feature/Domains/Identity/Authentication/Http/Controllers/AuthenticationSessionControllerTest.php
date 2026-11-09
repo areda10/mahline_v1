@@ -219,6 +219,26 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->assertSee(route('backoffice.security.sessions.extend'), false);
     }
 
+    public function test_root_layout_uses_the_root_timeout_and_extension_route(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $session = $this->createAuthenticationSession(
+            $root,
+            session()->getId(),
+            'Root browser',
+        );
+
+        $this->actingAs($root)
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->get(route('root.backoffice.security.sessions.index'))
+            ->assertOk()
+            ->assertSee('mahline-session-warning')
+            ->assertSee('data-timeout-seconds="900"', false)
+            ->assertSee(route('root.backoffice.security.sessions.extend'), false);
+    }
+
     public function test_expired_session_cannot_be_extended_or_revived(): void
     {
         $this->travelTo(now()->startOfSecond());
