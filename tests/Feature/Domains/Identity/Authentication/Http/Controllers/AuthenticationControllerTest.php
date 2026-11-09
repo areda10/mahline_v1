@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -156,7 +157,7 @@ final class AuthenticationControllerTest extends TestCase
         $response->assertUnauthorized();
 
         $response->assertJson([
-            'message' => 'Email address is not verified.',
+            'message' => 'Authentication failed.',
         ]);
 
         $this->assertGuest();
@@ -360,4 +361,90 @@ final class AuthenticationControllerTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_authentication_failures_return_the_same_public_response_for_unknown_invalid_inactive_and_unverified_accounts(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $active = User::factory()->create([
+            'email' => 'active-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $locked = User::factory()->create([
+            'email' => 'locked-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($locked->email);
+        }
+
+        $attempts = [
+            [
+                'email' => 'missing-public-response@example.com',
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $active->email,
+                'password' => 'WrongPassword123!',
+            ],
+            [
+                'email' => $inactive->email,
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $unverified->email,
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $locked->email,
+                'password' => 'ValidPassword123!',
+            ],
+        ];
+
+        foreach ($attempts as $credentials) {
+            $response = $this
+                ->withHeader('User-Agent', $this->userAgent)
+                ->postJson($this->loginUrl, $credentials);
+
+            $response->assertUnauthorized();
+            $response->assertExactJson([
+                'message' => 'Authentication failed.',
+            ]);
+
+            $this->assertGuest();
+        }
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $inactive->email,
+            'event' => 'failed',
+            'reason' => 'account_not_active',
+        ]);
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $unverified->email,
+            'event' => 'failed',
+            'reason' => 'email_not_verified',
+        ]);
+    }
+
 }
