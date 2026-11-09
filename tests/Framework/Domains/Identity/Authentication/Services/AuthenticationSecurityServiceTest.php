@@ -236,7 +236,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         );
     }
 
-    public function test_successful_authentication_can_clear_failed_ip_attempts(): void
+    public function test_ip_counter_can_be_cleared_explicitly(): void
     {
         $service = app(AuthenticationSecurityService::class);
         $ipAddress = '192.0.2.40';
