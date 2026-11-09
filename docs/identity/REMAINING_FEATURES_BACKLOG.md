@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 3.7
+- **Version :** 3.8
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -85,7 +85,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [x] **AUTH-04 — VALIDÉ** Une connexion réussie efface le compteur du compte et le compteur du couple IP + e-mail, mais jamais le compteur IP partagé. Test de non-régression ajouté.
 - [x] **AUTH-05 — VALIDÉ** Seuils et expiration automatique après 15 minutes testés pour les trois compteurs ; tests de seuils et d'expiration confirmés VERTS avec `AuthenticationSecurityServiceTest` et Pint le 9 novembre 2026.
 - [x] **AUTH-06 — VALIDÉ** Déverrouillage root-only des trois compteurs (compte, IP partagée et couple IP + e-mail), page dédiée et lien de navigation Root, motif obligatoire, audit append-only et tests HTTP. Tests ciblés confirmés VERTS par l'utilisateur le 9 novembre 2026 ; voir section 20.38 du cahier de décisions. La validation Pint de ce lot reste à confirmer séparément.
-- [ ] **AUTH-07 — EN COURS** Vérifier les réponses, statuts HTTP et messages sur toutes les routes web/API. Premier audit effectué : correction de la négociation JSON/HTML des erreurs de validation de connexion navigateur ; tests ajoutés pour validation Web, déconnexion JSON, accès API Sanctum, changement obligatoire et reset API. Tests locaux à exécuter. Points résiduels : confirmer le statut de la route `/api/test-auth` (endpoint de test exposé dans les routes API) et examiner le mapping global des `RuntimeException` de connexion en `401`.
+- [ ] **AUTH-07 — EN COURS** Contrat HTTP Web/API : tests Web/API ciblés confirmés VERTS ; correction de la négociation HTML/JSON ; retrait de `/api/test-auth` des routes de production (route enregistrée uniquement dans le test) ; remplacement des `RuntimeException` métier de refus de connexion par `AuthenticationFailedException`, désormais seule exception métier capturée en `401` (les erreurs techniques inattendues remontent au gestionnaire d'exceptions). Tests ciblés de régression et Pint à exécuter après ces derniers changements.
 
 ---
 
@@ -363,3 +363,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 
 | 9 novembre 2026 | 3.6 | AUTH-06 : ajout de la page root-only de déverrouillage, du formulaire, du lien de navigation, de l'action POST auditée et des tests HTTP de périmètre/confidentialité. Validation locale en attente. |
 | 9 novembre 2026 | 3.7 | AUTH-06 tests ciblés confirmés VERTS. Démarrage AUTH-07 : correction de la négociation HTML/JSON pour les erreurs de validation de connexion navigateur et ajout de tests HTTP Web/API ; validation locale en attente. |
+| 9 novembre 2026 | 3.8 | AUTH-07 : retrait de la route de diagnostic `/api/test-auth` des routes de production (conservée uniquement dans le test) ; introduction de l'exception métier `AuthenticationFailedException` pour les refus attendus et suppression de la capture générique `RuntimeException` du contrôleur. Tests locaux des derniers changements en attente. |
