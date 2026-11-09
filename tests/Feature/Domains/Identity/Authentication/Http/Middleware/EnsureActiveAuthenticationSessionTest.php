@@ -51,9 +51,7 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
     {
         $this->travelTo(now()->startOfSecond());
 
-        // The role is deliberately unrelated to this isolation test.
-        // Using the standard user role avoids the root-account forced-password
-        // workflow from redirecting the second, otherwise-valid request.
+        // This test isolates session expiration, not the forced-password workflow.
         $user = $this->userWithRole('user');
         $currentStore = $this->sessionStore();
         $expiredSession = $this->createAuthenticationSession($user, $currentStore);
@@ -68,7 +66,6 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         );
 
         $expiredSession->forceFill([
-            // Standard users have a 60-minute inactivity threshold.
             'last_activity_at' => now()->subMinutes(61),
         ])->save();
 
@@ -86,8 +83,8 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         $this->assertNotNull($expiredSession->fresh()->revoked_at);
         $this->assertNull($currentStore->get('authentication_session_id'));
 
-        $otherStore = $this->sessionStore();
-        $otherStore->setId($otherSession->session_id);
+        // Construct the store with the persisted session ID before starting it.
+        $otherStore = $this->sessionStore($otherSession->session_id);
         $otherRequest = $this->requestFor($user, $otherStore, $otherSession);
         $otherResponse = $this->middleware()->handle(
             $otherRequest,
@@ -171,9 +168,13 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         return $user->fresh();
     }
 
-    private function sessionStore(): Store
+    private function sessionStore(?string $sessionId = null): Store
     {
-        $store = new Store('mahline-test-session', new ArraySessionHandler(120));
+        $store = new Store(
+            'mahline-test-session',
+            new ArraySessionHandler(120),
+            $sessionId,
+        );
         $store->start();
 
         return $store;
