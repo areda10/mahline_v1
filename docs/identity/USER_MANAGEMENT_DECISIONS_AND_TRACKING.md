@@ -1721,3 +1721,18 @@ Correction appliquée uniquement au montage des tests :
 Aucune vérification de sécurité du contrôleur n'a été supprimée ou affaiblie. L'implémentation doit maintenant être retestée localement.
 
 **État SESS-02 : EN ATTENTE DE NOUVELLE VALIDATION LOCALE après correction du setup HTTP.**
+
+
+## 20.47 — Correction du contexte de session des tests SESS-02
+
+La seconde exécution locale a confirmé que les tests utilisaient encore un identifiant de session Laravel différent de celui du cookie simulé et de l'enregistrement métier. Les symptômes étaient cohérents : le contrôleur ne retrouvait pas la session courante (401), le partial Blade ne trouvait pas de session à afficher et le test d'expiration atteignait la réponse générique « session ne peut plus être prolongée » au lieu de la branche d'expiration.
+
+Correction sur `feature/Identity` :
+
+- Le helper HTTP `withCurrentAuthenticationSession()` aligne désormais explicitement l'identifiant du store Laravel avec `AuthenticationSession.session_id` via `setId()` avant de préparer la requête.
+- Les données de session sont ensuite injectées, puis le cookie chiffré correspondant est ajouté à la requête.
+- Aucun contrôle de sécurité du contrôleur, du middleware ou du service n'a été affaibli ; la correction porte uniquement sur le contexte de session simulé par les tests.
+
+Commit : `6131155f95d1b210c35667beef339ee9b49a2601`.
+
+**État SESS-02 : EN ATTENTE — relancer les tests ciblés et Pint après cette correction.**
