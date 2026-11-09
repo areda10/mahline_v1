@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.7
+- **Version :** 2.8
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1192,3 +1192,20 @@ php artisan test
 Les trois commandes sont confirmées vertes. Aucun nombre de tests/assertions n'est indiqué ici, car le résultat communiqué pour cette exécution complète ne précisait pas de décompte.
 
 **État :** implémentation et validation locale confirmées. L'audit final du diff et les vérifications CI éventuelles restent distincts de ces résultats.
+
+
+## Validation du verrouillage concurrent — ForcedPasswordChangeController
+
+Le contrôle de concurrence de la modification du mot de passe a été corrigé et validé localement par l'utilisateur le 9 novembre 2026.
+
+- Les validations contextuelles `PasswordPolicy::validate()` et `PasswordPolicy::validateChange()` sont désormais exécutées à l'intérieur de la transaction.
+- Elles sont exécutées après `lockForUpdate()` et les contrôles d'état du compte.
+- Elles utilisent l'instance fraîchement verrouillée `$lockedUser`, et non l'instance utilisateur chargée avant la transaction.
+- Les exceptions `InvalidArgumentException` sont toujours converties en erreurs de validation affichées à l'utilisateur.
+- L'historique, la révocation des sessions, la suppression des tokens API, la journalisation et la distinction entre changement forcé et volontaire sont conservés.
+
+**Validation locale confirmée par l'utilisateur :**
+- `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT.
+- `php vendor/bin/pint --test` — VERT.
+
+**État :** correction appliquée dans le fichier local et tests ciblés/style confirmés verts par l'utilisateur. Le SHA du commit applicatif n'est pas enregistré dans ce suivi.
