@@ -96,6 +96,33 @@ final class SessionService extends BaseService
     }
 
     /**
+     * Atomically expire a session when its role-based inactivity limit is reached.
+     * The row lock prevents a concurrent activity update from racing revocation.
+     */
+    public function expireIfInactive(
+        User $user,
+        AuthenticationSession $session,
+    ): bool {
+        return DB::transaction(function () use ($user, $session): bool {
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->where('user_id', $user->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSession === null || ! $this->isActive($lockedSession)) {
+                return false;
+            }
+
+            if (! $this->hasExceededInactivityLimit($user, $lockedSession)) {
+                return false;
+            }
+
+            return $this->revoke($lockedSession, 'inactivity_timeout');
+        });
+    }
+
+    /**
      * Determine whether the authentication session exceeded its role-based
      * server-side inactivity limit. This does not depend on cookie lifetime.
      */
@@ -272,13 +299,21 @@ final class SessionService extends BaseService
 
     public function touch(AuthenticationSession $session): bool
     {
-        if (! $this->isActive($session)) {
-            return false;
-        }
+        return DB::transaction(function () use ($session): bool {
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->lockForUpdate()
+                ->first();
 
-        $session->last_activity_at = now();
-        $session->save();
+            if ($lockedSession === null || ! $this->isActive($lockedSession)) {
+                return false;
+            }
 
-        return true;
+            $lockedSession->last_activity_at = now();
+            $lockedSession->save();
+            $session->setRawAttributes($lockedSession->getAttributes(), true);
+
+            return true;
+        });
     }
 }
