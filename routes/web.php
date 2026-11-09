@@ -267,6 +267,26 @@ Route::prefix('root/back-office')
             ->names('categories');
     });
 
+/*
+|--------------------------------------------------------------------------
+| Personal security sessions
+|--------------------------------------------------------------------------
+|
+| Every authenticated active user may manage only their own web sessions.
+| The controller enforces session ownership; this group does not grant
+| access to back-office user or cooperative management routes.
+|
+*/
+Route::prefix('back-office')
+    ->name('backoffice.')
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
+    ->group(function (): void {
+        Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
+            ->name('security.sessions.index');
+        Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
+            ->name('security.sessions.destroy');
+    });
+
 Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
@@ -274,11 +294,6 @@ Route::prefix('back-office')
 
         Route::get('dashboard', BackOfficeDashboardController::class)
             ->name('dashboard');
-
-        Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
-            ->name('security.sessions.index');
-        Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
-            ->name('security.sessions.destroy');
 
         Route::get('users', [UserManagementController::class, 'index'])
             ->name('users.index');
