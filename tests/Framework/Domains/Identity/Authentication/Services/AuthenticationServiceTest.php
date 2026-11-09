@@ -933,4 +933,33 @@ final class AuthenticationServiceTest extends TestCase
         );
     }
 
+    public function test_all_three_lockouts_expire_after_fifteen_minutes(): void
+    {
+        $securityService = app(AuthenticationSecurityService::class);
+        $ipAddress = '198.51.100.45';
+        $email = 'lockout-expiration@example.com';
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($email);
+            $securityService->recordFailedAttemptByIpAndEmail($ipAddress, $email);
+        }
+
+        for ($attempt = 0; $attempt < 30; $attempt++) {
+            $securityService->recordFailedAttemptByIp($ipAddress);
+        }
+
+        $this->assertTrue($securityService->isLocked($email));
+        $this->assertTrue($securityService->isIpLocked($ipAddress));
+        $this->assertTrue($securityService->isIpEmailLocked($ipAddress, $email));
+
+        $this->travel(16)->minutes();
+
+        $this->assertFalse($securityService->isLocked($email));
+        $this->assertFalse($securityService->isIpLocked($ipAddress));
+        $this->assertFalse($securityService->isIpEmailLocked($ipAddress, $email));
+        $this->assertSame(5, $securityService->remainingAttempts($email));
+        $this->assertSame(30, $securityService->remainingIpAttempts($ipAddress));
+        $this->assertSame(5, $securityService->remainingIpEmailAttempts($ipAddress, $email));
+    }
+
 }
