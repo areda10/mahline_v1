@@ -1756,3 +1756,28 @@ Le helper transmettait un identifiant de cookie déjà chiffré à withCookie(),
 Commit final du helper : b77f7bde74582c2079976ca0b2cbf2794d571c81.
 
 **État : SESS-02 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
+
+
+## 20.49 — Audit SESS-03 : isolation de l'expiration par session
+
+### Constat de l'audit du code
+
+- EnsureActiveAuthenticationSession lit l'identifiant de l'AuthenticationSession présent dans la session Laravel courante, puis contrôle et actualise uniquement cet enregistrement.
+- SessionService::expireIfInactive() filtre sur la clé de l'enregistrement et sur le user_id propriétaire ; il révoque cet enregistrement avec le motif inactivity_timeout.
+- La révocation globale est une méthode séparée, SessionService::revokeForUser(), et n'est pas appelée par le middleware d'expiration normale.
+- La session Laravel courante est ensuite invalidée. Aucune suppression ni révocation des autres sessions de l'utilisateur n'est déclenchée par ce parcours.
+- Les tests préexistants vérifiaient la révocation de la session expirée, mais ne prouvaient pas explicitement qu'une deuxième session du même utilisateur restait utilisable.
+
+### Test de non-régression ajouté
+
+Dans tests/Feature/Domains/Identity/Authentication/Http/Middleware/EnsureActiveAuthenticationSessionTest.php, le nouveau test test_expiring_one_session_keeps_the_users_other_session_active() :
+
+- crée deux sessions actives pour le même utilisateur root ;
+- fait expirer la première et vérifie sa révocation avec inactivity_timeout ainsi que l'invalidation du contexte Laravel courant ;
+- rejoue une requête protégée avec la deuxième session et vérifie qu'elle reçoit 200, reste non révoquée et voit son activité actualisée.
+
+Le code métier n'a pas nécessité de modification : le comportement d'isolation était déjà correctement implémenté. Le travail SESS-03 porte ici sur la preuve de non-régression.
+
+Commit du test : d25fe2f5f8e504a0682478c9e9f88fd44beae86a.
+
+**État : SESS-03 — test ajouté, validation locale ciblée et Pint en attente.**
