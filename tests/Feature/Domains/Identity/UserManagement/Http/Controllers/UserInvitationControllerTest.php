@@ -138,7 +138,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $invitation = $this->createInvitation($user, $token);
 
-        $password = 'MahlineSecure2026';
+        $password = 'MahlineSecure2026!';
 
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
@@ -180,7 +180,7 @@ final class UserInvitationControllerTest extends TestCase
             ->assertOk()
             ->assertViewIs('auth.accept-invitation');
 
-        $password = 'MahlineSecure2026';
+        $password = 'MahlineSecure2026!';
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
             'password' => $password,
@@ -208,8 +208,8 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'DifferentSecure2026',
+            'password' => 'MahlineSecure2026!',
+            'password_confirmation' => 'DifferentSecure2026!',
         ])
             ->assertSessionHasErrors('password');
 
@@ -236,8 +236,8 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'MahlineSecure2026',
+            'password' => 'MahlineSecure2026!',
+            'password_confirmation' => 'MahlineSecure2026!',
         ])
             ->assertSessionHasErrors('invitation');
 
@@ -261,8 +261,8 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'MahlineSecure2026',
+            'password' => 'MahlineSecure2026!',
+            'password_confirmation' => 'MahlineSecure2026!',
         ])
             ->assertSessionHasErrors('invitation');
 
@@ -287,8 +287,8 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->post(route('user-invitations.accept'), [
             'token' => $token,
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'MahlineSecure2026',
+            'password' => 'MahlineSecure2026!',
+            'password_confirmation' => 'MahlineSecure2026!',
         ])
             ->assertSessionHasErrors('invitation');
 
@@ -321,8 +321,8 @@ final class UserInvitationControllerTest extends TestCase
 
             $this->post(route('user-invitations.accept'), [
                 'token' => $token,
-                'password' => 'MahlineSecure2026',
-                'password_confirmation' => 'MahlineSecure2026',
+                'password' => 'MahlineSecure2026!',
+                'password_confirmation' => 'MahlineSecure2026!',
             ])->assertRedirect()
                 ->assertSessionHasErrors('invitation');
 
@@ -371,8 +371,8 @@ final class UserInvitationControllerTest extends TestCase
 
         $payload = [
             'token' => $token,
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'MahlineSecure2026',
+            'password' => 'MahlineSecure2026!',
+            'password_confirmation' => 'MahlineSecure2026!',
         ];
 
         $this->post(route('user-invitations.accept'), $payload)
