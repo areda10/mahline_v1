@@ -61,7 +61,9 @@ final class EnsureActiveAuthenticationSession
 
             return redirect()
                 ->route('authentication.login')
-                ->with('error', 'Votre session a expiré après une période d’inactivité.');
+                ->withErrors([
+                    'email' => 'Votre session a expiré après une période d’inactivité.',
+                ]);
         }
 
         if (! $this->sessions->touch($authenticationSession)) {
