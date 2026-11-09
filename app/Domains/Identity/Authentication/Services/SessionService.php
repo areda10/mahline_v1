@@ -297,6 +297,39 @@ final class SessionService extends BaseService
         });
     }
 
+    /**
+     * Extend the current session only while it is still within its inactivity
+     * window. An expired or revoked session can never be revived.
+     */
+    public function extendIfActive(
+        User $user,
+        AuthenticationSession $session,
+    ): bool {
+        return DB::transaction(function () use ($user, $session): bool {
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->where('user_id', $user->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSession === null || ! $this->isActive($lockedSession)) {
+                return false;
+            }
+
+            if ($this->hasExceededInactivityLimit($user, $lockedSession)) {
+                $this->revoke($lockedSession, 'inactivity_timeout');
+
+                return false;
+            }
+
+            $lockedSession->last_activity_at = now();
+            $lockedSession->save();
+            $session->setRawAttributes($lockedSession->getAttributes(), true);
+
+            return true;
+        });
+    }
+
     public function touch(AuthenticationSession $session): bool
     {
         return DB::transaction(function () use ($session): bool {
