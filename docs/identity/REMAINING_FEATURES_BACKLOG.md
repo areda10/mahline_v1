@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 3.2
+- **Version :** 3.3
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -81,7 +81,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 - [x] **AUTH-01** Uniformiser les réponses publiques de connexion pour compte inexistant, mot de passe incorrect, compte inactif/suspendu, e-mail non vérifié et verrouillage ; conserver les détails uniquement dans les journaux internes. Réponses JSON et formulaire harmonisés (`401`, `Authentication failed.`), compte inexistant non distingué par un `404`, motifs internes conservés dans `login_histories`. Tests `AuthenticationControllerTest` + `AuthenticationServiceTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026. Commits applicatifs/tests : `ccb0a3d5fc24cf80b62d6c41a2562b8699e6d19e`, `d98ea4f41965c9e726fb73807c0bc1f5c3e7a1e3`, `97836aebf459b7fe182a3f0822407bdef5601aa3`, `ed274a592c8d364f6d91769c815160668e825341`.
 - [x] **AUTH-02 — VALIDÉ** Compter les tentatives échouées de façon cohérente pour les comptes connus/inconnus et les états de compte, sans créer de fuite d'information. Tests ciblés `AuthenticationServiceTest`, `AuthenticationControllerTest` et `pint --test` confirmés verts par l'utilisateur le 9 novembre 2026. La priorité du blocage IP sur le blocage du compte est également validée (`bfa963f7c0e47204fa4ede19230a609589bc826a`).
-- [ ] **AUTH-03 — IMPLÉMENTÉ, TESTS LOCAUX À CONFIRMER** Limitation à trois niveaux : 5 échecs par compte/e-mail normalisé, 30 par IP et 5 par couple IP + e-mail, sur 15 minutes. Échecs inconnus/inactifs/non vérifiés/mot de passe incorrect comptabilisés ; clés HMAC ; route login sans throttle qui compte les succès. Tests de service et HTTP ajoutés. Détails et commits dans `USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`, section 20.37.
+- [ ] **AUTH-03 — IMPLÉMENTÉ, TESTS LOCAUX À CONFIRMER** Limitation à trois niveaux : 5 échecs par compte/e-mail normalisé, 30 par IP et 5 par couple IP + e-mail, sur 15 minutes. Échecs inconnus/inactifs/non vérifiés/mot de passe incorrect comptabilisés ; clés HMAC ; route login sans throttle qui compte les succès. Tests de service et HTTP ajoutés. Détails et commits dans `USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`, section 20.37. Après première exécution, tests historiques IP alignés sur 30 et test transactionnel aligné sur la réponse publique `Authentication failed.` ; commits correctifs consignés en section 20.37. Résultats locaux à reconfirmer.
 - [ ] **AUTH-04 — IMPLÉMENTÉ, TESTS LOCAUX À CONFIRMER** Une connexion réussie efface le compteur du compte et le compteur du couple IP + e-mail, mais jamais le compteur IP partagé. Test de non-régression ajouté.
 - [ ] **AUTH-05 — IMPLÉMENTÉ, TESTS LOCAUX À CONFIRMER** Seuils et expiration automatique après 15 minutes testés pour les trois compteurs ; confirmer localement les tests ciblés avant validation.
 - [ ] **AUTH-06** Vérifier que seul `super_admin_root` peut lever manuellement un blocage lorsque cette action est autorisée.
@@ -281,6 +281,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 
 ## 9. Historique des mises à jour
 | 9 novembre 2026 | 3.1 | Implémentation AUTH-03 sur `feature/Identity` après validation des seuils 5/30/5 sur 15 minutes : compteurs compte/IP/couple IP-e-mail, clés HMAC, comptabilisation de tous les échecs traités, remise à zéro ciblée, retrait du throttle HTTP trop strict et tests de seuils/expiration/réseau partagé. Un test complémentaire couvre le rejet d'un couple IP + e-mail déjà verrouillé sans incrément supplémentaire (commit `15e472431450c6ab08e65c2573354249746c1e03`). AUTH-03 à AUTH-05 restent en attente de confirmation locale des tests ciblés et de Pint. |
+| 9 novembre 2026 | 3.3 | Correction des tests AUTH-03 révélés en échec : tests IP historiques mis à jour pour le seuil de 30, test de remise à zéro renommé, test transactionnel aligné sur la réponse publique générique `Authentication failed.`. Corrections commitées ; nouvelle validation locale en attente. |
 
 | Date | Version | Mise à jour |
 |---|---|---|
