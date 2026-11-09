@@ -193,4 +193,138 @@ final class PasswordPolicyTest extends TestCase
 
         $this->assertTrue(true);
     }
+
+    public function test_password_accepts_unicode_uppercase_and_lowercase_letters(): void
+    {
+        PasswordPolicy::validate('Éléphant12!X');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_password_accepts_unicode_digits(): void
+    {
+        PasswordPolicy::validate('AbcdefghX١٢!');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_password_accepts_unicode_special_characters(): void
+    {
+        PasswordPolicy::validate('Abcdefgh12§X');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_unicode_letters_and_spaces_do_not_satisfy_special_character_requirement(): void
+    {
+        $this->expectExceptionMessage(
+            'Password must contain at least one special character.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('Éléphant12 X');
+    }
+
+    public function test_password_length_counts_unicode_characters(): void
+    {
+        $password = 'Éléphant12!X';
+
+        $this->assertSame(12, mb_strlen($password));
+
+        PasswordPolicy::validate($password);
+
+        $this->assertTrue(true);
+    }
+
+    public function test_minimum_length_validation_message_is_exact(): void
+    {
+        $this->expectExceptionMessage(
+            'Password must contain at least 12 characters.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('Abcdefgh1!X');
+    }
+
+    public function test_maximum_length_validation_message_is_exact(): void
+    {
+        $password = 'Aa1!'.str_repeat('b', 125);
+
+        $this->expectExceptionMessage(
+            'Password must not exceed 128 characters.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate($password);
+    }
+
+    public function test_uppercase_validation_message_is_exact(): void
+    {
+        $this->expectExceptionMessage(
+            'Password must contain at least one uppercase letter.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('mahlinepassword12!');
+    }
+
+    public function test_lowercase_validation_message_is_exact(): void
+    {
+        $this->expectExceptionMessage(
+            'Password must contain at least one lowercase letter.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('MAHLINEPASSWORD12!');
+    }
+
+    public function test_digit_validation_message_is_exact(): void
+    {
+        $this->expectExceptionMessage(
+            'Password must contain at least one digit.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('MahlinePassword!!');
+    }
+
+    public function test_special_character_validation_message_is_exact(): void
+    {
+        $this->expectExceptionMessage(
+            'Password must contain at least one special character.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('MahlinePassword12');
+    }
+
+    public function test_personal_information_validation_message_is_exact(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Alexandra',
+            'last_name' => 'Karim',
+            'email' => 'contact@example.com',
+        ]);
+
+        $this->expectExceptionMessage(
+            'Password must not contain recognizable personal information.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('AlexandraSecure12!', $user);
+    }
+
+    public function test_same_password_validation_message_is_exact(): void
+    {
+        $this->expectExceptionMessage(
+            'New password must be different from current password.'
+        );
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validateChange(
+            currentPassword: 'MahlinePassword12!',
+            newPassword: 'MahlinePassword12!',
+        );
+    }
+
 }
