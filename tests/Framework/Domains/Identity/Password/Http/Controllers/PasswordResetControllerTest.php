@@ -104,8 +104,8 @@ final class PasswordResetControllerTest extends TestCase
             '/api/password/reset',
             [
                 'token' => $token,
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ],
         );
 
@@ -115,7 +115,7 @@ final class PasswordResetControllerTest extends TestCase
 
         $this->assertTrue(
             \Illuminate\Support\Facades\Hash::check(
-                'NewPassword123',
+                'NewPassword123!',
                 (string) $user->password,
             ),
         );
@@ -127,8 +127,8 @@ final class PasswordResetControllerTest extends TestCase
             '/api/password/reset',
             [
                 'token' => 'invalid-reset-token',
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ],
         );
 
@@ -158,8 +158,8 @@ final class PasswordResetControllerTest extends TestCase
             '/api/password/reset',
             [
                 'token' => $token,
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ],
         );
 
@@ -208,7 +208,7 @@ final class PasswordResetControllerTest extends TestCase
             '/api/password/reset',
             [
                 'token' => $token,
-                'password' => 'NewPassword123',
+                'password' => 'NewPassword123!',
                 'password_confirmation' => 'DifferentPassword123',
             ],
         );
@@ -221,8 +221,8 @@ final class PasswordResetControllerTest extends TestCase
         $response = $this->postJson(
             '/api/password/reset',
             [
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ],
         );
 

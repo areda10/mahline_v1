@@ -65,7 +65,7 @@ final class ResetPasswordRequestTest extends TestCase
         $validator = Validator::make(
             [
                 'token' => 'valid-token',
-                'password' => 'ValidPassword123',
+                'password' => 'ValidPassword123!',
             ],
             $request->rules(),
         );
@@ -84,8 +84,8 @@ final class ResetPasswordRequestTest extends TestCase
         $validator = Validator::make(
             [
                 'token' => 'valid-token',
-                'password' => 'ValidPassword123',
-                'password_confirmation' => 'DifferentPassword123',
+                'password' => 'ValidPassword123!',
+                'password_confirmation' => 'DifferentPassword123!',
             ],
             $request->rules(),
         );
@@ -100,8 +100,8 @@ final class ResetPasswordRequestTest extends TestCase
         $validator = Validator::make(
             [
                 'token' => 'valid-token',
-                'password' => 'ValidPassword123',
-                'password_confirmation' => 'ValidPassword123',
+                'password' => 'ValidPassword123!',
+                'password_confirmation' => 'ValidPassword123!',
             ],
             $request->rules(),
         );

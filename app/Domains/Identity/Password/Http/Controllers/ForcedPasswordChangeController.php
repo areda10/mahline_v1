@@ -6,6 +6,8 @@ namespace App\Domains\Identity\Password\Http\Controllers;
 
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +30,12 @@ final class ForcedPasswordChangeController
         return view('identity.password.change');
     }
 
-    public function update(Request $request, AuditService $audit): RedirectResponse
+    public function update(
+        Request $request,
+        AuditService $audit,
+        PasswordHistoryService $passwordHistory,
+        SessionService $sessions,
+    ): RedirectResponse
     {
         $user = $request->user();
 
@@ -48,16 +55,17 @@ final class ForcedPasswordChangeController
         $validated = $request->validate($rules);
 
         try {
-            PasswordPolicy::validate($validated['password']);
+            PasswordPolicy::validate($validated['password'], $user);
             PasswordPolicy::validateChange(
                 $forced ? 'MahlineMahline' : (string) $validated['current_password'],
                 $validated['password'],
+                $user,
             );
         } catch (InvalidArgumentException $exception) {
             return back()->withErrors(['password' => $exception->getMessage()]);
         }
 
-        DB::transaction(function () use ($user, $validated, $audit, $forced): void {
+        DB::transaction(function () use ($user, $validated, $audit, $forced, $passwordHistory, $sessions): void {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
             if ($lockedUser->status->value !== 'active') {
@@ -68,9 +76,15 @@ final class ForcedPasswordChangeController
                 abort(403);
             }
 
+            $passwordHistory->assertNotReused($lockedUser, $validated['password']);
+            $passwordHistory->archiveCurrentPassword($lockedUser);
+
             $lockedUser->password = $validated['password'];
             $lockedUser->must_change_password = false;
             $lockedUser->save();
+
+            $sessions->revokeForUser($lockedUser, 'password_changed');
+            $lockedUser->tokens()->delete();
 
             $audit->record(new AuditEntryDTO(
                 eventKey: $forced

@@ -50,7 +50,7 @@ Les documents d'architecture décrivent également des domaines ou périmètres 
 
 | Domaine | Périmètre de référence | Présence dans app/Domains (inventaire) | Suivi |
 |---|---|---:|---|
-| Identity | Utilisateurs, rôles, authentification, sessions, mots de passe, API, sécurité et confidentialité | Oui | En audit — cahier de décisions dédié |
+| Identity | Utilisateurs, rôles, authentification, sessions, mots de passe, API, sécurité et confidentialité | Oui | En audit — écarts initiaux consignés le 8 novembre 2026 ; voir le cahier Identity |
 | Cooperatives | Organisations, rattachements, statuts et gestion des coopératives | Oui | Audit fonctionnel en cours / suivi dédié à maintenir |
 | Catalog | Catalogue commercial et règles de présentation des produits | Oui | À auditer après consolidation des frontières avec Products et Categories |
 | Categories | Arborescence et règles de catégories globales et coopératives | Oui | Décisions et tests déjà travaillés ; conserver le suivi dédié |
@@ -160,3 +160,28 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Enregistrement de la décision : Statistics est un domaine autonome.
 - Signalement des arbitrages nécessaires concernant Sales / Orders / Delivery et Catalog / Categories / Products.
 - Confirmation que la facturation relève du périmètre Finance dans l'architecture existante.
+
+
+### 8 novembre 2026 — Point de contrôle Identity
+- Audit en lecture seule poursuivi sur `feature/Identity`.
+- Premiers écarts confirmés consignés dans `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md` (section 20).
+- Référence : commit d'audit de départ `926cf33b09f93f9e651dafd259fa57b3d6f4c6aa`.
+- L'audit Identity reste ouvert ; aucune modification du code applicatif n'a été effectuée.
+
+
+### 8 novembre 2026 — Complément du contrôle Identity
+- Ajout des constats sur le changement d'e-mail personnel, la vérification 24 h, la gestion des rôles existants, les transferts de coopérative, les alertes nouvel appareil, l'OTP, les messages de connexion et la gestion des tokens API.
+- Référence détaillée : section 20.5 et 20.6 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
+- Aucun code applicatif modifié ; audit toujours ouvert.
+
+
+### 8 novembre 2026 — Audit Identity : politique de mot de passe et sessions
+- Vérification des règles de mot de passe, du reset, des migrations utilisateurs, des sessions et des routes API.
+- Constats détaillés : section 20.7 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
+- Aucun changement de code applicatif ; audit en lecture seule.
+
+
+### 8 novembre 2026 — Audit Identity : auditabilité et sécurité des sessions
+- Inspection du journal d'audit, des événements de sécurité, des consultations de fiches et de la gestion des sessions.
+- Constats détaillés : section 20.8 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
+- Les composants existants sont distingués des exigences non couvertes ; aucun code applicatif modifié.

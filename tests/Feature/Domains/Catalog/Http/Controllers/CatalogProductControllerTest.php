@@ -7,15 +7,15 @@ namespace Tests\Feature\Domains\Catalog\Http\Controllers;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Gate;
+use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
 use Tests\TestCase;
 
 final class CatalogProductControllerTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesAuthorizedCooperativeAdmin;
 
     private Cooperative $cooperative;
 
@@ -29,14 +29,11 @@ final class CatalogProductControllerTest extends TestCase
             ->active()
             ->create();
 
-        $user = User::factory()->create([
-            'cooperative_id' => $this->cooperative->getKey(),
-        ]);
+        $user = $this->createCooperativeAdminFor($this->cooperative);
 
         $this->actingAs($user);
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
-        Gate::before(static fn (): bool => true);
 
         $this->catalog = Catalog::factory()->create([
             'cooperative_id' => $this->cooperative->getKey(),

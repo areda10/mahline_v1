@@ -7,6 +7,7 @@ namespace App\Domains\Identity\UserManagement\Services;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
@@ -27,6 +28,7 @@ final class UserInvitationService
 
     public function __construct(
         private readonly AuditService $audit,
+        private readonly PasswordHistoryService $passwordHistory,
     ) {
     }
 
@@ -332,6 +334,10 @@ final class UserInvitationService
                     'Only pending, unverified users can accept an activation invitation.',
                 );
             }
+
+            PasswordPolicy::validate($password, $user);
+            $this->passwordHistory->assertNotReused($user, $password);
+            $this->passwordHistory->archiveCurrentPassword($user);
 
             $user->password = $password;
             $user->must_change_password = false;

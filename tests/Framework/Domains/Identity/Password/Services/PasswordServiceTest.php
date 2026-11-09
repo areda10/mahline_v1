@@ -65,14 +65,14 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $user->refresh();
 
         $this->assertTrue(
             Hash::check(
-                'MahlinePassword13',
+                'MahlinePassword13!',
                 (string) $user->password,
             )
         );
@@ -99,7 +99,7 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'WrongPassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
     }
 
@@ -143,7 +143,7 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $session = AuthenticationSession::query()
@@ -166,19 +166,19 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $user->refresh();
 
         $this->assertNotSame(
-            'MahlinePassword13',
+            'MahlinePassword13!',
             $user->password,
         );
 
         $this->assertTrue(
             Hash::check(
-                'MahlinePassword13',
+                'MahlinePassword13!',
                 (string) $user->password,
             )
         );
@@ -214,18 +214,25 @@ final class PasswordServiceTest extends TestCase
         );
     }
 
-    public function test_change_password_rejects_password_with_spaces(): void
+    public function test_change_password_accepts_password_with_spaces(): void
     {
         $user = User::factory()->create([
             'password' => 'MahlinePassword12',
         ]);
 
-        $this->expectException(InvalidArgumentException::class);
-
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'Mahline Password13',
+            newPassword: 'Mahline Password13!',
+        );
+
+        $user->refresh();
+
+        $this->assertTrue(
+            Hash::check(
+                'Mahline Password13!',
+                (string) $user->password,
+            )
         );
     }
 
@@ -238,7 +245,7 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $user->refresh();
@@ -253,7 +260,7 @@ final class PasswordServiceTest extends TestCase
         $this->assertTrue(
             $this->passwordService->verifyCurrentPassword(
                 user: $user,
-                password: 'MahlinePassword13',
+                password: 'MahlinePassword13!',
             )
         );
     }
@@ -265,7 +272,7 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $this->assertDatabaseHas('audit_events', [
@@ -284,7 +291,7 @@ final class PasswordServiceTest extends TestCase
             $this->passwordService->changePassword(
                 user: $user,
                 currentPassword: 'WrongPassword12',
-                newPassword: 'MahlinePassword13',
+                newPassword: 'MahlinePassword13!',
             );
             $this->fail('Expected invalid current password exception.');
         } catch (\RuntimeException $exception) {
@@ -310,7 +317,7 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $this->assertDatabaseHas('audit_events', [
@@ -332,7 +339,7 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService->changePassword(
             user: $user,
             currentPassword: 'MahlinePassword12',
-            newPassword: 'MahlinePassword13',
+            newPassword: 'MahlinePassword13!',
         );
 
         $event = \App\Domains\Audit\Models\AuditEvent::query()
@@ -346,7 +353,7 @@ final class PasswordServiceTest extends TestCase
         ], JSON_THROW_ON_ERROR);
 
         $this->assertStringNotContainsString('MahlinePassword12', $serialized);
-        $this->assertStringNotContainsString('MahlinePassword13', $serialized);
+        $this->assertStringNotContainsString('MahlinePassword13!', $serialized);
     }
 
 }

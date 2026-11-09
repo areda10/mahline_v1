@@ -42,7 +42,7 @@ final class PasswordResetController
             ->where('email', $request->validated('email'))
             ->first();
 
-        if ($user !== null) {
+        if ($user !== null && $user->status->value === 'active') {
             $this->passwordResetService->createToken(
                 user: $user,
             );

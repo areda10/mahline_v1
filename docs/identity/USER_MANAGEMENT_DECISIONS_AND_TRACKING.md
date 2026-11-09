@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 1.2
-- **Dernière mise à jour :** 8 novembre 2026
+- **Version :** 2.6
+- **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
 - **Statut :** décisions fonctionnelles validées ; implémentation à auditer
@@ -175,14 +175,35 @@ Motifs obligatoires (codes stables, traductions FR/EN/AR) :
 - Événement audité.
 
 ### Historique et robustesse
-- Interdire la réutilisation des cinq derniers mots de passe.
-- Historique conservé uniquement sous forme de hashes.
-- Minimum 12 caractères.
+- Interdire la réutilisation du mot de passe actuel et des cinq anciens mots de passe.
+- L'historique contient au maximum cinq anciens hashes, en plus du hash du mot de passe actuel stocké sur l'utilisateur.
+- Les hashes d'historique sont conservés uniquement sous forme de hashes sécurisés ; aucun mot de passe en clair n'est persisté.
+- Lors d'un changement réussi, l'ancien hash courant est ajouté à l'historique dans la même transaction que le changement. Une opération échouée ou annulée ne doit jamais ajouter d'entrée.
+- Lorsqu'une sixième entrée ancienne doit être conservée, supprimer la plus ancienne afin de maintenir exactement au maximum cinq anciens hashes.
+- Minimum 12 caractères et maximum 128 caractères.
 - Au moins une majuscule, une minuscule, un chiffre et un caractère spécial.
 - Rejeter les mots de passe courants ou compromis.
 - Espaces et caractères Unicode acceptés.
 - Aucun changement périodique obligatoire.
 - Règles applicables à la création, l'activation, la réinitialisation et au changement.
+
+### Politique renforcée des mots de passe — décisions ID-01
+- Appliquer la politique à tous les rôles, sans exception : super_admin_root, super_admin, cooperative_admin et user.
+- Refuser les mots de passe contenant des informations personnelles reconnaissables de l'utilisateur : nom complet, prénom, identifiant ou partie identifiable de l'adresse e-mail. La détection est insensible à la casse et doit éviter les faux positifs excessifs.
+- Vérifier les mots de passe courants/compromis lors de la création, de l'acceptation d'une invitation, de l'activation, du changement volontaire ou forcé et de la réinitialisation.
+- Le service externe de vérification ne reçoit jamais le mot de passe en clair. Utiliser une approche préservant la confidentialité, de type k-anonymity.
+- Si le service externe est indisponible, appliquer une liste locale de refus, conserver tous les contrôles de robustesse et refuser au minimum les mots de passe localement connus comme compromis/courants. Reprendre le contrôle externe dès que le service redevient disponible.
+- La liste locale doit pouvoir être mise à jour sans modification du code applicatif.
+- Conserver l'historique des mises à jour de la liste : version, horodatage, source et auteur/processus.
+- Autoriser deux modes de mise à jour : processus automatique contrôlé et action manuelle réservée à super_admin_root.
+- Fréquence de mise à jour configurable par super_admin_root, quotidienne par défaut.
+- Vérifier la provenance de la source et son intégrité (signature ou SHA-256). Rejeter toute liste corrompue ou incomplète, conserver la dernière version valide et permettre un retour arrière.
+- Journaliser chaque tentative de mise à jour. Après trois échecs consécutifs, alerter super_admin_root ; remettre le compteur à zéro après une mise à jour réussie.
+- Le tableau de bord de sécurité réservé à super_admin_root doit présenter la version active, la dernière mise à jour, la prochaine mise à jour planifiée, les contrôles d'intégrité, les indisponibilités externes, les erreurs et l'historique.
+- Pour les comptes existants, vérifier le mot de passe fourni lors de la prochaine authentification réussie. Si ce mot de passe ne respecte plus la politique ou est compromis, imposer un changement avant tout accès au dashboard.
+- Pendant ce changement obligatoire, seules les routes de changement de mot de passe et de déconnexion sont accessibles. Le nouveau mot de passe doit respecter la politique et l'historique.
+- Envoyer un e-mail informatif à l'utilisateur lorsqu'un changement est requis ; ne jamais inclure le mot de passe ni un lien de réinitialisation non sollicité.
+- Afficher à l'utilisateur les motifs utiles du refus (longueur, classe de caractères manquante, mot de passe courant/compromis ou information personnelle), sans révéler les détails internes de détection.
 
 ## 9. Authentification et protection contre les attaques
 
@@ -632,7 +653,7 @@ Les tâches ci-dessous sont un plan d'audit et d'implémentation. Elles ne signi
 - [x] Règles fonctionnelles d'export définies (décision 94) ; implémentation et tests à réaliser.
 - [x] Processus fonctionnel de demande d'effacement et d'anonymisation défini (décision 96) ; conformité juridique et implémentation à vérifier.
 - [ ] Vérifier les durées légales/réglementaires exactes par catégorie et les documenter ; durée de référence des données de profil fixée à 5 ans après archivage/suppression logique (décision 98).
-- [x] Journaliser les consultations administratives des fiches personnelles selon la décision 99.
+- [ ] Journaliser les consultations administratives des fiches personnelles selon la décision 99 — exigence validée, implémentation non repérée dans les contrôleurs examinés ; vérifier les mécanismes transversaux.
 
 ### G. Tests indispensables
 - [ ] Matrice de permissions par rôle et par coopérative.
@@ -696,3 +717,426 @@ Ces observations proviennent d'une première lecture de fichiers de la branche `
 5. Les routes API d'audit et d'authentification doivent être vérifiées avec leurs Form Requests, Policies, capacités Sanctum et services métier afin de confirmer le cumul des deux niveaux d'autorisation.
 
 **État :** audit en cours ; aucune modification du code effectuée.
+
+
+## 20. Point de contrôle de l'audit technique — 8 novembre 2026
+
+**Branche auditée :** `feature/Identity`  
+**Commit de départ du contrôle :** `926cf33b09f93f9e651dafd259fa57b3d6f4c6aa`  
+**État :** audit en cours — aucune modification du code applicatif.
+
+### 20.1 Écarts confirmés dans les fichiers examinés
+
+1. **Expiration du lien de réinitialisation :** `PasswordResetService::createToken()` utilise 60 minutes au lieu des 30 minutes validées.
+2. **Invalidation des anciens liens :** `createToken()` ajoute un nouveau jeton sans révoquer les jetons précédents non utilisés. Après une réinitialisation, le service marque uniquement le jeton courant comme utilisé.
+3. **Statut du compte :** `validateToken()` et `resetPassword()` vérifient l'existence du compte, mais pas que son statut est `active`. La réinitialisation doit être réservée aux comptes actifs.
+4. **Révocation des accès après réinitialisation :** `PasswordResetService` révoque les sessions web via `SessionService`, mais ne révoque pas les tokens API. La décision validée exige la révocation des deux.
+5. **Politique du mot de passe :** `PasswordPolicy` interdit les espaces, n'exige pas de caractère spécial et ne vérifie pas les mots de passe communs/compromis. La politique validée autorise espaces et Unicode, exige majuscule/minuscule/chiffre/caractère spécial et rejette les mots de passe communs ou compromis.
+6. **Historique des mots de passe :** aucun mécanisme ni migration d'historique n'a été repéré dans les fichiers et migrations examinés. La règle des cinq derniers mots de passe n'est donc pas démontrée.
+7. **Délai d'inactivité :** `EnsureActiveAuthenticationSession` vérifie l'état du compte et la session MAHLINE, puis actualise l'activité, mais ne vérifie pas les délais d'inactivité différenciés par rôle. La configuration de session Laravel examinée utilise un réglage global `expire_on_close`, pas les règles de persistance par rôle.
+8. **Profil personnel :** aucune route ou classe dédiée au profil personnel n'a été repérée dans l'arborescence examinée. Le modèle User ne contient pas, à ce stade, les attributs d'adresse personnelle, de photo ou de préférences de notification attendus ; les migrations supplémentaires devront être vérifiées avant de figer ce constat.
+9. **Consultation des fiches personnelles :** les méthodes `show()` des contrôleurs User Management examinés vérifient les Policies, mais n'enregistrent pas elles-mêmes la consultation. Aucun mécanisme transversal de journalisation de cette consultation n'a encore été identifié. L'exigence de journalisation reste donc à démontrer.
+10. **Tokens API :** le modèle Sanctum personnalisé et le stockage haché sont présents. Toutefois, `config/sanctum.php` fixe `expiration` à `null`, aucune couche de gestion des tokens (création, liste, révocation individuelle, capacités autorisées et limites par rôle) n'a été repérée dans les routes et contrôleurs examinés, et aucun Scheduler de purge des tokens expirés n'apparaît dans les fichiers de planification examinés.
+11. **API d'audit :** `routes/api.php` expose `/audit/events` derrière `auth:sanctum`; le contrôleur applique `viewAny` et filtre les événements par coopérative. La Policy actuelle autorise aussi un `cooperative_admin` ayant `audit.view` à consulter les événements de sa coopérative. Cette règle doit être comparée à la décision applicable au type exact de journaux concerné ; ne pas confondre l'accès général aux événements métier avec les journaux spécifiques de consultation des fiches personnelles, réservés à `super_admin_root`.
+
+### 20.2 Éléments conformes ou partiellement présents
+
+- Plusieurs sessions web simultanées sont prises en charge : `SessionService::create()` crée une nouvelle session sans révoquer les précédentes.
+- La révocation individuelle des sessions web est exposée dans les routes back-office.
+- Les tokens API sont distincts des sessions web ; un test Framework vérifie cette séparation.
+- Le modèle Sanctum personnalisé utilise des ULID et les tests Framework vérifient le stockage haché des secrets de tokens.
+- La restauration d'un utilisateur supprimé conserve la révocation de ses anciennes sessions et tokens ; le service restaure le compte en statut `pending`.
+- Le flux d'invitation invalide les invitations précédentes non utilisées avant d'en créer une nouvelle.
+- Le service de gestion des utilisateurs révoque les sessions et tokens lors de certains changements de rôle/profil ou de statut ; ce mécanisme ne couvre pas encore le flux de réinitialisation de mot de passe examiné.
+
+### 20.3 Tests repérés et tests manquants à confirmer
+
+Douze fichiers Feature sont présents sous `tests/Feature/Domains/Identity/`, ainsi qu'un test Framework dédié au modèle de token Sanctum. Les fichiers repérés ne démontrent pas encore une couverture complète des sujets suivants :
+
+- réinitialisation de mot de passe : expiration 30 minutes, invalidation des anciens liens, statut actif uniquement, usage unique, révocation de toutes les sessions et de tous les tokens ;
+- politique complète des mots de passe et historique des cinq derniers ;
+- délais d'inactivité par rôle et expiration serveur ;
+- gestion API des tokens : capacités, durée maximale de 30 jours, limites par rôle, révocation individuelle et globale, nettoyage planifié ;
+- profil personnel et contrôle d'accès à ses propres données ;
+- journalisation des consultations autorisées et refusées des fiches personnelles ;
+- règles OTP, vérification de connexion depuis un pays inhabituel et notifications de sécurité, à confirmer dans les autres composants du projet.
+
+**Important :** les tests listés dans le dépôt n'ont pas été exécutés pendant cet audit. Leur présence ne constitue pas une preuve qu'ils passent.
+
+### 20.4 Prochaine étape
+
+Poursuivre l'audit des flux Identity (création/activation, changements d'e-mail, statuts, rôles, transferts de coopérative, API et audit/privacy), puis produire une matrice consolidée des écarts et un plan de correction fichier par fichier. Aucun changement de code avant validation explicite.
+
+
+### 20.5 Compléments — cycle de vie, e-mail et authentification
+
+12. **Changement d'e-mail personnel :** aucune route ni action dédiée au changement d'adresse par son propriétaire n'a été repérée. Le parcours présent est l'action `update()` de `SuperAdminRoot/Http/Controllers/UserManagementController`, protégée pour root. Cela ne couvre pas la règle selon laquelle chaque rôle peut changer sa propre adresse.
+13. **Délai de vérification après changement d'e-mail :** `UserInvitationService` applique une expiration fixe de 60 minutes à toutes ses invitations. Le contrôleur root réutilise ce service après un changement d'e-mail. La décision prévoit 24 heures pour le lien de vérification de la nouvelle adresse ; le parcours actuel ne respecte donc pas ce délai.
+14. **Rôles des utilisateurs existants :** `UserManagementService::updateUserAccount()` appelle `assertSuperAdminRoot()`. Aucun autre service/action de modification de rôle d'un utilisateur existant n'a été repéré. La création par `super_admin` de comptes `cooperative_admin` et `user` est couverte, mais pas la gestion ultérieure de leurs rôles telle que décidée.
+15. **Transfert de coopérative d'un utilisateur :** le changement de `cooperative_id` est effectué dans `updateUserAccount()`, réservé à root. Le service d'affectation existant concerne le pivot des coopératives attribuées aux `super_admin`, et non le transfert de la coopérative principale d'un utilisateur. Le transfert par `super_admin` entre ses coopératives attribuées n'est donc pas couvert par le parcours identifié.
+16. **Alerte de connexion depuis un nouvel appareil :** `UnusualActivityDetectionService::isNewDevice()` est disponible, mais le workflow ne l'appelle pas. `AppServiceProvider` lie `AuthenticationWorkflowHook` à `NullAuthenticationWorkflowHook`, dont le hook est vide. Aucun envoi d'alerte e-mail au nouvel appareil n'est donc réalisé par ce flux.
+17. **Pays inhabituel et OTP :** aucune implémentation de détection de pays, génération/envoi OTP, validation, consommation atomique ou limite de tentatives n'a été repérée dans les fichiers Identity inventoriés. L'enum `SecurityEventType` contient `UnusualActivityDetected`, mais cela ne constitue pas une implémentation OTP.
+18. **Message de connexion et divulgation d'information :** `AuthenticationController::login()` retourne au client le message des exceptions RuntimeException. `AuthenticationService` distingue notamment compte inexistant (404) et compte existant mais inactif / e-mail non vérifié / IP verrouillée (401 avec message distinct). Cela révèle des informations sur l'existence ou l'état d'un compte, contrairement à la règle de message générique. Les réponses doivent être uniformisées sans supprimer la journalisation interne détaillée.
+19. **Tentatives échouées et IP :** les compteurs métier par compte et par IP sont incrémentés dans le chemin du mot de passe incorrect d'un utilisateur actif et vérifié. Les comptes inexistants et certains états de compte sont traités avant cette incrémentation. La route web applique aussi `throttle:5,1`, mais la couverture de la limitation métier par IP et la résistance aux tentatives distribuées doivent être renforcées et testées.
+20. **Gestion des tokens API :** les routes API visibles exposent un test d'authentification, les endpoints de réinitialisation et la consultation des événements d'audit ; aucune route de création, liste, révocation individuelle ou révocation globale des tokens n'a été repérée. `config/sanctum.php` définit `expiration => null` ; la durée maximale de 30 jours n'est pas démontrée par une couche de création de tokens. Aucun nettoyage planifié des tokens expirés n'a été repéré dans `routes/console.php` ni dans la configuration de planification examinée.
+21. **Déconnexion globale :** les routes de session visibles permettent la révocation individuelle et root peut révoquer une session d'un autre utilisateur. Aucun endpoint explicite de déconnexion globale personnelle ni d'administration globale des tokens n'a été repéré dans les routes examinées.
+
+### 20.6 Couverture des tests observée
+
+- Le test Feature `UserManagementControllerTest` couvre de nombreux cas de lecture, permissions, création, activation, statuts, suppression logique et invitations.
+- Le test Feature root couvre notamment la modification de profil/rôle par root et le changement d'e-mail par root.
+- Le test `UserInvitationServiceTest` couvre l'invalidation d'une ancienne invitation, l'acceptation, les statuts et l'échec d'envoi.
+- Aucun test dédié au changement d'e-mail par le propriétaire, au délai de vérification de 24 heures, à la modification de rôle par super_admin, au transfert de coopérative principale par super_admin, aux alertes de nouvel appareil ou à l'OTP par pays inhabituel n'a été repéré dans les fichiers de tests examinés.
+- Les tests n'ont pas été exécutés dans cet audit GitHub ; les résultats restent à confirmer sur l'environnement local.
+
+**Statut de cette étape :** constats documentés ; audit Identity toujours ouvert. Aucun code applicatif modifié.
+
+
+### 20.7 Compléments — politique de mot de passe, profil et sessions
+
+22. **Politique de mot de passe réellement implémentée :** `PasswordPolicy` impose 12 à 128 caractères, majuscule, minuscule et chiffre, mais interdit les espaces et n'exige pas de caractère spécial. Aucun contrôle de mot de passe compromis/courant ni historique des cinq derniers mots de passe n'est implémenté. Le comportement ne correspond donc pas à la politique validée (espaces et Unicode autorisés, caractère spécial obligatoire, rejet des mots de passe compromis/communs, historique de cinq mots de passe).
+23. **Changement volontaire et forcé :** `PasswordService::changePassword()` révoque les sessions via `SessionService`, mais ne révoque pas les tokens API. Le contrôleur de changement forcé `ForcedPasswordChangeController::update()` met à jour le mot de passe et `must_change_password`, mais ne révoque ni sessions ni tokens. Le changement volontaire n'a pas de route PUT dédiée repérée ; la route `security.password.edit` ne sert que le formulaire GET, tandis que la route PUT disponible est le parcours `password.force-change`.
+24. **Reset de mot de passe — statut et tokens :** `PasswordResetService::validateToken()` et `resetPassword()` ne vérifient pas que le compte est actif. Le service crée le token avec une expiration de 60 minutes et ne révoque pas les anciens tokens non consommés à la création d'un nouveau. Après reset, il révoque les sessions mais pas les tokens API. Le parcours ne vérifie pas l'historique des cinq derniers mots de passe.
+25. **Profil personnel — schéma réel :** toutes les migrations présentes sur la branche ont été listées. Aucune migration n'ajoute les champs d'adresse personnelle, photo, ou préférences de notification. La table `users` initiale contient notamment nom/prénom, nom affiché, e-mail, téléphone, mot de passe, statut, locale, fuseau horaire et vérification e-mail ; le modèle `User` ne déclare pas non plus de champs de profil additionnels.
+26. **Sessions — expiration et rôles :** `EnsureActiveAuthenticationSession` vérifie l'autorisation et l'existence de la session, puis met à jour `last_activity_at`. Il n'applique aucun délai d'inactivité par rôle (15/30/30/60 minutes) et n'affiche aucun avertissement deux minutes avant expiration. La configuration Laravel `expire_on_close` ne fournit pas le comportement différencié demandé selon le rôle.
+27. **Sessions — révocation globale :** `SessionService::revokeForUser()` permet techniquement de révoquer toutes les sessions d'un utilisateur. Cependant, aucune route personnelle dédiée à la déconnexion globale n'a été identifiée ; les routes exposées permettent la révocation d'une session choisie et la révocation par root d'une session d'un autre utilisateur.
+28. **Protection contre les tentatives de connexion :** `AuthenticationSecurityService` compte cinq échecs par adresse e-mail et cinq échecs par IP sur 900 secondes. Toutefois, `AuthenticationService` n'incrémente ces compteurs qu'après un mauvais mot de passe pour un compte actif et vérifié. Les e-mails inconnus, les comptes non actifs et les e-mails non vérifiés sont journalisés mais ne contribuent pas aux compteurs de blocage. La limitation de route `throttle:5,1` ne remplace pas le mécanisme métier attendu par compte et IP. Il faut aussi éviter qu'une connexion réussie depuis une IP partagée efface le compteur IP alimenté par d'autres utilisateurs.
+29. **Réponses d'authentification :** le contrôleur renvoie le message des exceptions RuntimeException, et le service distingue compte inexistant, compte inactif, e-mail non vérifié, IP verrouillée et mauvais mot de passe. Cela expose des différences observables côté client, contrairement à la réponse générique validée. Conserver le détail dans les journaux internes, mais uniformiser la réponse publique.
+30. **Journaux d'audit — distinction nécessaire :** `AuditEventPolicy` autorise les rôles disposant de `audit.view` à lire les événements dans leur périmètre de coopérative ; `AuditEventController` applique ce filtrage. Ce mécanisme concerne les événements d'audit métier généraux. Il ne démontre pas l'existence du journal dédié aux consultations de fiches personnelles, dont la lecture a été réservée à `super_admin_root`. Ne pas confondre ces deux catégories.
+31. **Tests :** aucun test de politique de mot de passe, d'historique, de réinitialisation de mot de passe, d'expiration par rôle, de révocation API après changement/reset, de profil personnel ou de réponse générique de connexion n'a été identifié dans les tests Identity présents. Le seul test de changement de mot de passe actuellement visible couvre le parcours forcé et ne prouve pas la révocation des sessions/tokens. Les tests n'ont pas été exécutés pendant l'audit.
+
+**Statut :** les constats de cette section sont issus de l'inspection des fichiers et migrations présents sur `feature/Identity`. Aucune modification du code applicatif ; les tests restent à exécuter localement.
+
+
+### 20.8 Compléments — audit, journaux de sécurité et sessions
+
+32. **Audit append-only :** `AuditEvent::performUpdate()` et `performDeleteOnModel()` empêchent les modifications/suppressions via Eloquent. `AuditService` filtre récursivement plusieurs clés sensibles. En revanche, la migration `audit_events` ne contient aucun hash d'événement, hash précédent, signature ou champ d'intégrité ; aucun service de chaîne de hachage ni contrôle périodique d'intégrité n'a été repéré. L'append-only applicatif seul ne satisfait donc pas les garanties d'intégrité cryptographique, de détection de falsification et de vérification périodique validées.
+33. **Journal des consultations personnelles :** les méthodes `show()` des contrôleurs utilisateurs (back-office et root) chargent la fiche après autorisation, sans écrire d'événement dédié de consultation. Aucun journal spécialisé ne permet de vérifier acteur, utilisateur cible, date/heure, coopérative, origine UI/API et résultat autorisé/refusé. La règle de consultation silencieuse vis-à-vis de l'utilisateur n'est donc pas encore démontrée ; le journal dédié, consultable uniquement par `super_admin_root`, reste à implémenter.
+34. **Séparation des journaux :** `AuditEventController` expose les événements d'audit généraux aux utilisateurs disposant de `audit.view`, filtrés par coopérative ; `AuditEventPolicy` autorise aussi les rôles coopératifs selon leurs permissions. Il s'agit du journal d'audit général, pas du journal confidentiel des consultations de fiches personnelles. Une catégorie dédiée et une politique strictement root-only sont nécessaires pour éviter toute exposition croisée.
+35. **Événements de sécurité :** `SecurityEventService` sait créer des événements de sécurité avec utilisateur, IP, agent utilisateur, navigateur, appareil, métadonnées et date. Toutefois, aucune politique, route de consultation, filtre d'accès root-only, export ni règle de rétention dédiée n'a été identifiée pour cette table. L'existence du service ne prouve pas le cycle complet de supervision de sécurité validé.
+36. **Révocation des sessions :** `SessionService::revokeForUser()` révoque toutes les sessions actives une par une et journalise chaque révocation ; le mécanisme existe côté service. En revanche, les routes exposées ne proposent que la révocation d'une session individuelle par l'utilisateur et par root. L'action globale personnelle, sa confirmation et son test HTTP restent absents.
+37. **Sessions multi-appareils :** le contrôleur permet de consulter les sessions actives et de révoquer une session individuelle ; les tests couvrent l'isolation entre utilisateurs et la révocation individuelle. Ils ne couvrent pas les délais d'inactivité par rôle, la persistance différenciée des cookies, l'avertissement deux minutes avant expiration, ni la déconnexion globale.
+38. **Notifications de sécurité :** les notifications trouvées concernent l'invitation et la réinitialisation du mot de passe. Aucun flux de notification pour nouvel appareil, pays inhabituel, OTP, révocation d'accès, changement de profil ou événement de sécurité critique n'a été identifié. Aucun centre de préférences/historique de notifications ni canal multilingue FR/EN/AR n'a été repéré dans le domaine Identity.
+39. **Export et rétention des journaux :** aucune implémentation d'export PDF/CSV/JSON, de lien temporaire signé de 15 minutes, de suppression du fichier après 24 heures, ni de politique de purge différenciée (2 ans / 5 ans / 90 jours selon catégorie) n'a été repérée dans les composants Audit/Identity inspectés. Les exigences de rétention et de sauvegarde inviolable doivent être intégrées à la conception de correction.
+40. **Tests d'audit et sécurité :** les tests présents couvrent la révocation individuelle et les permissions générales de consultation des événements, mais aucun test spécifique n'a été identifié pour le journal de consultation personnelle root-only, la chaîne d'intégrité, le contrôle périodique, les exports sécurisés, la rétention, les notifications de sécurité ou la déconnexion globale.
+41. **Portée des preuves :** ces constats décrivent les fichiers présents sur `feature/Identity`. Les migrations n'ont pas été exécutées et les tests n'ont pas été lancés pendant l'audit GitHub ; aucun statut de test local n'est présumé.
+
+**Statut :** contrôle des composants Audit/Identity terminé pour cette passe documentaire. L'audit fonctionnel et technique Identity peut maintenant être consolidé en matrice d'écarts et plan de correction, sans commencer les modifications de code.
+
+
+### 20.9 Décisions complémentaires — politique et historique des mots de passe
+
+**Décisions confirmées le 8 novembre 2026 :**
+1. La politique renforcée ID-01 décrite à la section 8 s'applique à tous les rôles et à tous les parcours de définition ou de remplacement d'un mot de passe.
+2. L'historique ID-02 interdit le mot de passe actuel et les cinq anciens mots de passe.
+3. Seuls cinq anciens hashes sont conservés, en plus du hash courant.
+4. L'ancien hash courant est ajouté à l'historique uniquement dans la transaction d'une opération réussie. Toute opération annulée ou échouée ne laisse aucune entrée.
+5. Lorsqu'un sixième ancien hash est ajouté, le plus ancien est supprimé automatiquement.
+6. Les mêmes contrôles doivent être appliqués aux changements volontaires/forcés, réinitialisations et acceptations d'invitation/activation.
+
+**État du dépôt au début de la correction :**
+- PasswordPolicy impose la longueur, la majuscule, la minuscule et le chiffre, mais rejette les espaces et n'exige pas de caractère spécial.
+- Aucun contrôle de données personnelles, de mots de passe courants/compromis ou de liste locale versionnée n'a été identifié dans les fichiers examinés.
+- Aucun modèle, service ou migration d'historique des mots de passe n'a été identifié.
+- PasswordService, PasswordResetService, ForcedPasswordChangeController et UserInvitationService définissent ou remplacent un mot de passe sans contrôle commun complet de l'historique.
+- Le reset reste configuré à 60 minutes, n'invalide pas les anciens liens et ne vérifie pas l'état actif du compte.
+- Les tests de politique et d'historique n'ont pas été identifiés dans l'arborescence examinée et aucun test n'a été exécuté à distance.
+
+**Plan de correction initial :**
+- [ ] Ajouter une migration append-only pour l'historique des mots de passe.
+- [ ] Ajouter un modèle/service d'historique avec transactions, verrouillage et limite stricte de cinq anciens hashes.
+- [ ] Centraliser les contrôles de politique et d'historique pour tous les flux de mot de passe.
+- [ ] Corriger l'expiration, l'invalidation et l'éligibilité des tokens de réinitialisation.
+- [ ] Révoquer les sessions et tokens API dans tous les flux où la décision l'exige.
+- [ ] Concevoir et implémenter le contrôle de mots de passe courants/compromis, sa liste locale versionnée et son mécanisme de mise à jour sécurisé.
+- [ ] Ajouter les tests unitaires, service, HTTP et de concurrence ; exécuter les tests localement.
+
+**État :** décisions validées ; audit des fichiers ciblés effectué ; implémentation à commencer par lots.
+
+### 20.10 Suivi de la première tranche d'implémentation — 8 novembre 2026
+
+**Branche :** feature/Identity
+
+| Élément | État | Preuve / remarque |
+|---|---|---|
+| Migration `user_password_histories` | Code ajouté — migration non exécutée | `2026_11_08_000001_create_user_password_histories_table.php` |
+| Service d'historique | Code ajouté — tests à exécuter | `PasswordHistoryService`, limite à cinq hashes précédents |
+| Politique de complexité Unicode | Code ajouté — tests à exécuter | Majuscule/minuscule/chiffre/spécial ; espaces et séparateurs Unicode autorisés |
+| Détection d'informations personnelles | Code ajouté — tests à exécuter | Prénom, nom complet, fragments e-mail suffisamment longs et identifiant exact |
+| Changement volontaire | Intégration ajoutée — test à exécuter | Vérification historique, archivage transactionnel, révocation sessions et tokens API dans `PasswordService` |
+| Changement forcé | Intégration ajoutée — test à exécuter | Historique, archivage, révocation sessions et tokens API |
+| Acceptation d'invitation | Intégration ajoutée — test à exécuter | Contrôle contextualisé et archivage de l'ancien hash dans la transaction |
+| Réinitialisation | Corrections ajoutées — tests à exécuter | 30 minutes, invalidation des anciens liens, compte actif uniquement, historique et révocation sessions/tokens |
+| Réponse publique reset | Correction ajoutée — test à exécuter | Les comptes non actifs ne déclenchent pas l'envoi ; réponse générique conservée |
+| Tests de politique | Fichiers ajoutés — non exécutés | `PasswordPolicyTest` |
+| Tests d'historique | Fichiers ajoutés — non exécutés | `PasswordHistoryServiceTest` |
+| Vérification CI / suite complète | Non vérifiée | L'environnement GitHub utilisé pour cette modification ne permet pas d'exécuter PHPUnit ou les migrations du projet. |
+
+**Commits de cette tranche :**
+- Documentation des décisions : `26b4e14e1174ca8f5870e5973499f13d21aa252e`
+- Politique et contrôles : commits `c7fd2af`, `9f4fd35`, `4f331ab`, `e102806`
+- Historique et intégrations : commits `c921933`, `b5d25c9`, `c24eb91`, `1c6bdf1`, `044e41e`, `13dd1c9`, `0ec9ae7`, `d9aae27`, `78a9f90`, `a070e2e`
+- Tests : commits `68ed2fa`, `4e81517`, `2d8cce0`, `5b77e1a`, `3bdd0b2`
+
+**Limites restantes avant de considérer ID-01/ID-02 terminés :**
+- [ ] Vérifier et corriger les flux de création/activation manuelle qui ne passent pas encore par une validation complète du mot de passe final.
+- [ ] Implémenter la vérification des mots de passe courants/compromis avec k-anonymity, liste locale versionnée, intégrité, mise à jour planifiée et retour arrière.
+- [ ] Ajouter les alertes root et le tableau de bord de gestion de la liste de mots de passe compromis.
+- [ ] Vérifier le contrôle des mots de passe des comptes existants à la prochaine authentification réussie et le changement obligatoire avant dashboard.
+- [ ] Ajouter la notification e-mail correspondante et vérifier le verrouillage des routes pendant le changement obligatoire.
+- [ ] Compléter les tests de réutilisation, de rotation du cinquième/sixième hash, d'échec/rollback, de reset, d'invitation et de révocation des sessions/tokens.
+- [ ] Exécuter localement la migration, les tests ciblés, puis toute la suite Identity ; enregistrer les résultats et le commit de validation.
+
+**Important :** « Code ajouté » ne signifie ni migration exécutée, ni test vert, ni validation de production. La mise en œuvre de la politique ID-01 reste partielle jusqu'à réalisation des limites restantes.
+
+
+### 20.11 Correction après retour des tests locaux — 8 novembre 2026
+
+**Retour utilisateur :** plusieurs cas de `Tests\\Framework\\Domains\\Identity\\Password\\Rules\\PasswordPolicyTest` échouaient car les fixtures utilisaient des mots de passe sans caractère spécial. La nouvelle politique exige bien un caractère spécial ; c'est donc le jeu de données des tests qui était obsolète, et non la règle métier.
+
+**Correction commitée :**
+- Fichier : `tests/Framework/Domains/Identity/Password/Rules/PasswordPolicyTest.php`
+- Commit : `e613ed5828b0fbe4472f6186188ae7936d474f20`
+- Fixtures alignées sur la politique : caractère spécial obligatoire, espaces autorisés, bornes 12 et 128 caractères, et mots de passe distincts dans le test de changement.
+- Le test historique `test_special_character_is_optional` a été remplacé par un test vérifiant explicitement que l'absence de caractère spécial est refusée.
+- Le test interdisant les espaces a été remplacé par un test qui confirme que les espaces restent autorisés.
+
+**État après correction :** l'utilisateur confirme que `php artisan test --filter=PasswordPolicyTest` est vert. Le test ciblé est donc validé selon le retour d'exécution local.
+
+**Validation utilisateur :**
+- [x] Résultat vert confirmé pour `php artisan test --filter=PasswordPolicyTest`.
+- [ ] Conserver le résultat détaillé de PHPUnit dans le suivi local/CI si nécessaire.
+- [ ] Continuer avec les tests de l'historique des mots de passe ; ne pas extrapoler ce résultat aux autres suites.
+
+
+### 20.12 Validation locale — PasswordPolicyTest
+
+**Retour utilisateur :** test vert confirmé après récupération de la correction des fixtures.
+
+- [x] `php artisan test --filter=PasswordPolicyTest` — **VERT**, selon confirmation utilisateur.
+- [ ] `php artisan test --filter=PasswordHistoryServiceTest`
+- [ ] `php artisan test --filter=ForcedPasswordChangeControllerTest`
+- [ ] `php artisan test --filter=UserInvitationServiceTest`
+- [ ] Tests de réinitialisation du mot de passe.
+- [ ] Migration de l'historique puis tests associés.
+- [ ] Suite complète Identity.
+
+**Portée de la validation :** seul `PasswordPolicyTest` est déclaré vert. Aucun autre test, migration ou parcours n'est considéré validé par cette confirmation.
+
+
+### 20.13 Validation locale — PasswordHistoryServiceTest
+
+**Retour utilisateur :** test vert confirmé.
+
+- [x] `php artisan test --filter=PasswordHistoryServiceTest` — **VERT**, selon confirmation utilisateur.
+- [ ] `php artisan test --filter=ForcedPasswordChangeControllerTest`
+- [ ] `php artisan test --filter=UserInvitationServiceTest`
+- [ ] Tests de réinitialisation du mot de passe.
+- [ ] Migration de l'historique puis tests associés.
+- [ ] Suite complète Identity.
+
+**Portée :** cette confirmation valide uniquement le test ciblé du service d'historique ; elle ne prouve pas encore l'exécution de la migration ni la validation de tous les parcours d'écriture.
+
+
+### 20.14 Validation locale — ForcedPasswordChangeControllerTest
+
+**Retour utilisateur :** test vert confirmé.
+
+- [x] `php artisan test --filter=ForcedPasswordChangeControllerTest` — **VERT**, selon confirmation utilisateur.
+- [ ] `php artisan test --filter=UserInvitationServiceTest`
+- [ ] Tests de réinitialisation du mot de passe.
+- [ ] Migration de l'historique puis tests associés.
+- [ ] Suite complète Identity.
+
+**Portée :** cette confirmation valide uniquement la suite ciblée du contrôleur de changement forcé. Les autres parcours et la migration restent à valider séparément.
+
+
+### 20.15 Validation locale — UserInvitationServiceTest
+
+**Retour utilisateur :** test vert confirmé.
+
+- [x] `php artisan test --filter=UserInvitationServiceTest` — **VERT**, selon confirmation utilisateur.
+- [ ] Tests de réinitialisation du mot de passe.
+- [ ] Exécuter la migration de l'historique sur la base locale de test.
+- [ ] Vérifier les tests d'intégration/HTTP des parcours de changement, invitation et reset.
+- [ ] Exécuter la suite complète Identity.
+
+**Portée :** cette confirmation valide uniquement la suite ciblée du service d'invitation. Elle ne valide pas encore les autres flux ni la migration.
+
+
+### 20.16 Validation locale — PasswordResetServiceTest
+
+**Retour utilisateur :** test vert confirmé après correction des fixtures.
+
+- [x] `php artisan test --filter=PasswordResetServiceTest` — **VERT**, selon confirmation utilisateur.
+- [x] Correction des fixtures du test pour respecter la politique : mots de passe conformes (12 caractères minimum, majuscule, minuscule, chiffre et caractère spécial).
+- [x] Correction du message attendu pour la réutilisation : le service applique l'interdiction du mot de passe courant et des cinq précédents.
+- [ ] Exécuter la migration de l'historique sur la base locale de test.
+- [ ] Vérifier les tests d'intégration/HTTP des parcours de changement, invitation et reset.
+- [ ] Exécuter la suite complète Identity.
+
+**Commit de correction des tests :** `c14d145adc550e8073c8770239ad545231779a11`.
+
+**Portée :** le test ciblé de reset est vert selon le retour utilisateur. Cela ne valide pas encore la migration, la suite complète Identity, ni l'ensemble des scénarios d'intégration.
+
+
+## 20.17 — Migration de l'historique des mots de passe exécutée
+
+Le 8 novembre 2026, l'utilisateur a confirmé l'exécution locale de :
+
+```bash
+php artisan migrate
+```
+
+Résultat Laravel :
+
+```
+2026_11_08_000001_create_user_password_histories_table ...... 229.90ms DONE
+```
+
+La migration `2026_11_08_000001_create_user_password_histories_table` est donc **exécutée avec succès sur la base locale**. Cette preuve confirme l'application de la migration, mais ne valide pas à elle seule l'intégrité complète du schéma, les parcours métier, l'atomicité ou la concurrence.
+
+**Prochaine étape :** exécuter les tests d'intégration liés à l'historique et aux changements/réinitialisations de mot de passe, puis la suite complète Identity. Ne marquer ces validations comme vertes qu'après confirmation des résultats.
+
+
+## 20.18 — Tests de l'historique des mots de passe
+
+Le 8 novembre 2026, l'utilisateur a confirmé que la commande suivante est **verte** :
+
+```bash
+php artisan test --filter=PasswordHistory
+```
+
+Cette validation confirme que les tests correspondant au filtre `PasswordHistory` passent dans l'environnement local. Elle ne remplace pas les tests HTTP de bout en bout, les contrôles de concurrence ni l'exécution de toute la suite Identity.
+
+**Prochaine étape :** exécuter les tests HTTP/intégration liés aux changements volontaires et forcés de mot de passe ainsi qu'à la réinitialisation, puis lancer la suite complète Identity.
+
+
+## 20.19 — Échecs révélés par le filtre Password et correction des fixtures
+
+Le 8 novembre 2026, l'exécution élargie `php artisan test --filter=Password` a révélé :
+
+- des fixtures de tests utilisant des mots de passe sans caractère spécial, incompatibles avec la politique ID-01 déjà validée ;
+- un échec distinct dans `UserManagementControllerTest` : `Call to a member function all() on array`, signalé au moment de l'assertion de redirection du parcours d'activation root avec changement forcé.
+
+Corrections apportées aux seules fixtures de tests (aucun assouplissement de la politique applicative) :
+- `UserManagementControllerTest.php` : `NewSecurePassword2026!` ;
+- `PasswordResetControllerTest.php` : `NewPassword123!` ;
+- `ResetPasswordRequestTest.php` : `ValidPassword123!` et `DifferentPassword123!`.
+
+Commits des trois corrections :
+- `7f67460e0a31c0ff14c42b28060241faf7dd5830`
+- `f9fec3607000d1dd56938577aba71a23ec027742`
+- `851f842d20315cfafd3b7275c4583064073d69d3`
+
+**État :** corrections poussées, mais non encore confirmées vertes par exécution locale. L'erreur `all() on array` reste à isoler ; ne pas la considérer comme corrigée par les changements de fixtures.
+
+
+## 20.20 — Validation HTTP du UserManagementController
+
+Le 8 novembre 2026, l'utilisateur a confirmé que le test ciblé du contrôleur de gestion des utilisateurs est **VERT** après récupération des corrections de fixtures :
+
+```bash
+php artisan test --filter=UserManagementControllerTest
+```
+
+Cette confirmation valide la suite ciblée `UserManagementControllerTest` dans l'environnement local. L'erreur précédemment signalée `Call to a member function all() on array` n'est donc plus bloquante dans cette exécution ciblée.
+
+Les corrections de fixtures des commits suivants sont désormais couvertes par ce retour de test vert :
+- `7f67460e0a31c0ff14c42b28060241faf7dd5830` — mot de passe conforme dans `UserManagementControllerTest.php` ;
+- `f9fec3607000d1dd56938577aba71a23ec027742` — fixtures de `PasswordResetControllerTest.php` ;
+- `851f842d20315cfafd3b7275c4583064073d69d3` — fixtures de `ResetPasswordRequestTest.php`.
+
+**Limite de validation :** ce résultat ne confirme pas encore que le filtre global `Password` est entièrement vert, ni que toute la suite Identity passe. Les tests de reset HTTP, les tests d'intégration/concurrence et la suite complète restent à exécuter séparément.
+
+
+## 20.21 — Diagnostic du filtre Password : fixtures de PasswordServiceTest
+
+Après la confirmation verte de `UserManagementControllerTest`, l'utilisateur a relancé :
+
+```bash
+php artisan test --filter=Password
+```
+
+Le filtre échoue encore avec plusieurs exceptions :
+
+`InvalidArgumentException: Password must contain at least one special character.`
+
+L'audit du dépôt `feature/Identity` a identifié une cause concrète dans :
+
+`tests/Framework/Domains/Identity/Password/Services/PasswordServiceTest.php`
+
+Plusieurs tests de changement de mot de passe fournissent comme nouveau mot de passe `MahlinePassword13`, sans caractère spécial, alors que la règle ID-01 exige une majuscule, une minuscule, un chiffre et un caractère spécial. La correction des fixtures de ce fichier doit utiliser un mot de passe conforme, par exemple `MahlinePassword13!`, pour les scénarios qui attendent une réussite.
+
+Un test supplémentaire doit être corrigé sur le plan fonctionnel : `test_change_password_rejects_password_with_spaces` affirme que les espaces sont interdits, alors que la décision ID-01 autorise explicitement les espaces et caractères Unicode. Son scénario doit devenir un test d'acceptation d'un mot de passe contenant des espaces et un caractère spécial, par exemple `Mahline Password13!`.
+
+**Correction appliquée le 9 novembre 2026 :**
+- Tous les scénarios de réussite et les scénarios où l'erreur attendue porte sur le mot de passe courant utilisent désormais `MahlinePassword13!`, conforme à ID-01.
+- Le scénario qui rejetait les espaces a été remplacé par `test_change_password_accepts_password_with_spaces`, qui vérifie qu'un mot de passe valide contenant un espace (`Mahline Password13!`) est accepté et correctement haché.
+- Aucun changement n'a été apporté à `PasswordPolicy.php` ni au comportement applicatif.
+
+**Commit :** `8a31970f8d983df7926f3a13d696903edd0471b3`.
+
+**Vérification du dépôt :** le fichier a été relu après commit ; aucune occurrence de `MahlinePassword13` sans caractère spécial ne subsiste dans ce test, le nouveau test d'acceptation des espaces est présent.
+
+**État des tests :** l'utilisateur a confirmé le 9 novembre 2026 que les deux commandes suivantes sont vertes : `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password`.
+
+
+## 20.22 — Correction des tests PasswordService
+
+Le 9 novembre 2026, après accord de l'utilisateur, le fichier `PasswordServiceTest.php` a été corrigé sur `feature/Identity` selon la politique ID-01 : fixtures conformes avec caractère spécial et test d'acceptation des espaces. La politique applicative n'a pas été modifiée.
+
+Commit : `8a31970f8d983df7926f3a13d696903edd0471b3`.
+
+La correction est commitée et vérifiée sur GitHub. Le 9 novembre 2026, l'utilisateur a confirmé vertes les deux commandes : `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password`. Le filtre global Password est donc validé dans l'environnement local.
+
+
+## 20.23 — Validation locale des tests Password
+
+Le 9 novembre 2026, l'utilisateur a confirmé que les deux commandes suivantes sont **VERTES** dans son environnement local :
+
+```bash
+php artisan test --filter=PasswordServiceTest
+php artisan test --filter=Password
+```
+
+Cette validation confirme le test ciblé du service et l'ensemble des tests sélectionnés par le filtre global `Password`. Elle ne vaut pas validation de toute la suite Identity, ni des tests non sélectionnés par ce filtre.
+
+**Prochaine étape :** poursuivre les tests d'intégration/HTTP et exécuter la suite complète du domaine Identity.
+
+
+## 20.24 — Validation du contrôleur HTTP de réinitialisation
+
+Le 9 novembre 2026, l'utilisateur a confirmé que le test ciblé suivant est **VERT** :
+
+```bash
+php artisan test --filter=PasswordResetControllerTest
+```
+
+Cette validation couvre uniquement les tests sélectionnés par `PasswordResetControllerTest` dans l'environnement local. Elle ne vaut pas validation de l'ensemble des parcours Identity ni de la suite complète.
+
+**Prochaine étape :** poursuivre les tests HTTP/intégration ciblés restants, puis exécuter la suite complète du domaine Identity.
+
+
+## 20.25 — Validation des sessions personnelles et des invitations HTTP
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les trois tests HTTP suivants après corrections sur `feature/Identity` :
+
+```bash
+php artisan test --filter=AuthenticationSessionControllerTest
+php artisan test --filter=UserInvitationControllerTest
+php artisan test --filter=UserInvitationThrottleTest
+```
+
+Corrections associées :
+
+- `routes/web.php` : déplacement des routes de gestion des sessions personnelles dans un groupe dédié autorisant `super_admin`, `cooperative_admin` et `user`, tout en conservant `auth` et `EnsureActiveAuthenticationSession`. Les routes d'administration restent dans le groupe back-office réservé à `super_admin` et `cooperative_admin`. Le contrôleur conserve le contrôle de propriété des sessions.
+- `UserInvitationControllerTest.php` : fixtures de mots de passe valides mises en conformité avec ID-01 ; le scénario de confirmation différente conserve deux valeurs distinctes et conformes ; le scénario `weakpassword` reste volontairement invalide.
+- `UserInvitationThrottleTest.php` : fixture conforme à ID-01 afin que les requêtes atteignent effectivement la validation du token et le middleware de limitation.
+
+Commits de correction :
+- Routes de sessions personnelles : `8ab1be9d1dd5c054e6e0e688fb18e07c37f94e32`.
+- Tests d'invitation : `4cc1c74e99aa63dfe0258ab32bf72db72b0dd784`.
+- Test de limitation des invitations : `4a7d2028ec03b26224efe70c5afc90c02b07abb7`.
+
+La validation est limitée à ces trois suites ciblées. Elle ne vaut pas validation de toute la suite Identity. La suite complète et les contrôles de style/analyse statique restent à exécuter.

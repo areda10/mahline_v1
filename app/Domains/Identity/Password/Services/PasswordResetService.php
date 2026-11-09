@@ -12,11 +12,10 @@ use App\Domains\Identity\Password\Notifications\PasswordResetLinkNotification;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 
 final class PasswordResetService extends BaseService
 {
@@ -25,6 +24,7 @@ final class PasswordResetService extends BaseService
     public function __construct(
         private readonly SessionService $sessionService,
         private readonly AuditService $audit,
+        private readonly PasswordHistoryService $passwordHistory,
     ) {
     }
 
@@ -32,14 +32,27 @@ final class PasswordResetService extends BaseService
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
-        DB::table('password_reset_tokens')->insert([
-            'id' => (string) Str::ulid(),
-            'user_id' => $user->getKey(),
-            'token_hash' => hash('sha256', $token),
-            'expires_at' => now()->addMinutes(60),
-            'used_at' => null,
-            'created_at' => now(),
-        ]);
+        DB::transaction(function () use ($user, $token): void {
+            $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($lockedUser->status->value !== 'active') {
+                throw new InvalidPasswordResetTokenException('This account cannot reset its password.');
+            }
+
+            DB::table('password_reset_tokens')
+                ->where('user_id', $lockedUser->getKey())
+                ->whereNull('used_at')
+                ->update(['used_at' => now()]);
+
+            DB::table('password_reset_tokens')->insert([
+                'id' => (string) Str::ulid(),
+                'user_id' => $lockedUser->getKey(),
+                'token_hash' => hash('sha256', $token),
+                'expires_at' => now()->addMinutes(30),
+                'used_at' => null,
+                'created_at' => now(),
+            ]);
+        });
 
         $resetBaseUrl = rtrim(
             (string) config('app.password_reset_url', config('app.url')),
@@ -80,7 +93,7 @@ final class PasswordResetService extends BaseService
 
         $user = User::query()->find($record->user_id);
 
-        if ($user === null) {
+        if ($user === null || $user->status->value !== 'active') {
             throw new InvalidPasswordResetTokenException('Invalid password reset token.');
         }
 
@@ -96,8 +109,27 @@ final class PasswordResetService extends BaseService
         DB::transaction(function () use ($token, $newPassword): void {
             $tokenHash = hash('sha256', $token);
 
+            // Keep the global lock order consistent: User -> reset token.
+            $tokenReference = DB::table('password_reset_tokens')
+                ->where('token_hash', $tokenHash)
+                ->first();
+
+            if ($tokenReference === null) {
+                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
+            }
+
+            $user = User::query()
+                ->whereKey($tokenReference->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($user === null || $user->status->value !== 'active') {
+                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
+            }
+
             $record = DB::table('password_reset_tokens')
                 ->where('token_hash', $tokenHash)
+                ->where('user_id', $user->getKey())
                 ->lockForUpdate()
                 ->first();
 
@@ -109,26 +141,13 @@ final class PasswordResetService extends BaseService
                 throw new InvalidPasswordResetTokenException('Password reset token has already been used.');
             }
 
-            if (now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($record->expires_at))) {
+            if (now()->greaterThanOrEqualTo(Carbon::parse($record->expires_at))) {
                 throw new InvalidPasswordResetTokenException('Password reset token has expired.');
             }
 
-            $user = User::query()
-                ->whereKey($record->user_id)
-                ->lockForUpdate()
-                ->first();
-
-            if ($user === null) {
-                throw new InvalidPasswordResetTokenException('Invalid password reset token.');
-            }
-
-            PasswordPolicy::validate($newPassword);
-
-            if (Hash::check($newPassword, (string) $user->password)) {
-                throw new InvalidArgumentException(
-                    'New password must be different from current password.',
-                );
-            }
+            PasswordPolicy::validate($newPassword, $user);
+            $this->passwordHistory->assertNotReused($user, $newPassword);
+            $this->passwordHistory->archiveCurrentPassword($user);
 
             $user->password = $newPassword;
             $user->save();
@@ -142,6 +161,7 @@ final class PasswordResetService extends BaseService
                 user: $user,
                 reason: 'password_reset',
             );
+            $user->tokens()->delete();
 
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.password.reset',

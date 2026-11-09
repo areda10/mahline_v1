@@ -15,8 +15,8 @@ final class UserInvitationThrottleTest extends TestCase
     {
         $payload = [
             'token' => 'invalid-invitation-token',
-            'password' => 'MahlineSecure2026',
-            'password_confirmation' => 'MahlineSecure2026',
+            'password' => 'MahlineSecure2026!',
+            'password_confirmation' => 'MahlineSecure2026!',
         ];
 
         $this->withServerVariables([

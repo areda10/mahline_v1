@@ -85,4 +85,27 @@ final class AuthorizationGateTest extends TestCase
             Gate::forUser($user)->allows('unknown.permission'),
         );
     }
+    public function test_generic_permission_gate_does_not_authorize_an_ability_with_arguments(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $role = Role::query()->create([
+            'name' => 'Administrator',
+            'slug' => 'administrator',
+        ]);
+
+        $permission = Permission::query()->create([
+            'name' => 'Manage Users',
+            'slug' => 'users.manage',
+        ]);
+
+        $role->permissions()->attach($permission);
+        $user->roles()->attach($role);
+
+        $this->assertFalse(
+            Gate::forUser($user)->allows('users.manage', ['resource']),
+        );
+    }
 }

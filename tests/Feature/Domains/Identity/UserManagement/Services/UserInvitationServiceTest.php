@@ -155,14 +155,14 @@ final class UserInvitationServiceTest extends TestCase
 
         $acceptedUser = $service->acceptInvitation(
             $token,
-            'MahlineSecure2026',
+            'MahlineSecure2026!',
         );
 
         $this->assertSame(UserStatus::Active, $acceptedUser->status);
         $this->assertNotNull($acceptedUser->email_verified_at);
         $this->assertFalse((bool) $acceptedUser->must_change_password);
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check(
-            'MahlineSecure2026',
+            'MahlineSecure2026!',
             $acceptedUser->password,
         ));
 
@@ -210,7 +210,7 @@ final class UserInvitationServiceTest extends TestCase
         try {
             app(UserInvitationService::class)->acceptInvitation(
                 $token,
-                'MahlineSecure2026',
+                'MahlineSecure2026!',
             );
 
             $this->fail('A suspended user must not accept a root verification invitation.');

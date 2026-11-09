@@ -26,31 +26,31 @@ final class ForcedPasswordChangeControllerTest extends TestCase
     public function test_voluntary_password_change_requires_the_current_password_and_updates_the_password(): void
     {
         $user = $this->actor('user', [
-            'password' => 'CurrentPassword12',
+            'password' => 'CurrentPassword12!',
             'must_change_password' => false,
         ]);
 
         $this->actingAs($user)
             ->put(route('password.force-change.update'), [
                 'current_password' => 'IncorrectPassword12',
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ])
             ->assertSessionHasErrors('current_password');
 
-        $this->assertTrue(Hash::check('CurrentPassword12', $user->fresh()->password));
+        $this->assertTrue(Hash::check('CurrentPassword12!', $user->fresh()->password));
 
         $this->actingAs($user)
             ->put(route('password.force-change.update'), [
-                'current_password' => 'CurrentPassword12',
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'current_password' => 'CurrentPassword12!',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ])
             ->assertRedirect(route('user.dashboard'));
 
         $user->refresh();
 
-        $this->assertTrue(Hash::check('NewPassword123', $user->password));
+        $this->assertTrue(Hash::check('NewPassword123!', $user->password));
         $this->assertFalse($user->must_change_password);
     }
 
@@ -68,14 +68,14 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
         $this->actingAs($user)
             ->put(route('password.force-change.update'), [
-                'password' => 'NewPassword123',
-                'password_confirmation' => 'NewPassword123',
+                'password' => 'NewPassword123!',
+                'password_confirmation' => 'NewPassword123!',
             ])
             ->assertRedirect(route('user.dashboard'));
 
         $user->refresh();
 
-        $this->assertTrue(Hash::check('NewPassword123', $user->password));
+        $this->assertTrue(Hash::check('NewPassword123!', $user->password));
         $this->assertFalse($user->must_change_password);
     }
 
@@ -90,15 +90,15 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
         foreach ($destinations as $role => $route) {
             $user = $this->actor($role, [
-                'password' => 'CurrentPassword12',
+                'password' => 'CurrentPassword12!',
                 'must_change_password' => false,
             ]);
 
             $this->actingAs($user)
                 ->put(route('password.force-change.update'), [
-                    'current_password' => 'CurrentPassword12',
-                    'password' => 'NewPassword123',
-                    'password_confirmation' => 'NewPassword123',
+                    'current_password' => 'CurrentPassword12!',
+                    'password' => 'NewPassword123!',
+                    'password_confirmation' => 'NewPassword123!',
                 ])
                 ->assertRedirect(route($route));
         }
@@ -121,8 +121,8 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
             $this->actingAs($user)
                 ->put(route('password.force-change.update'), [
-                    'password' => 'NewPassword123',
-                    'password_confirmation' => 'NewPassword123',
+                    'password' => 'NewPassword123!',
+                    'password_confirmation' => 'NewPassword123!',
                 ])
                 ->assertRedirect(route($route));
 
@@ -133,19 +133,19 @@ final class ForcedPasswordChangeControllerTest extends TestCase
     public function test_password_change_rejects_a_new_password_that_matches_the_current_password(): void
     {
         $user = $this->actor('user', [
-            'password' => 'CurrentPassword12',
+            'password' => 'CurrentPassword12!',
             'must_change_password' => false,
         ]);
 
         $this->actingAs($user)
             ->put(route('password.force-change.update'), [
-                'current_password' => 'CurrentPassword12',
-                'password' => 'CurrentPassword12',
-                'password_confirmation' => 'CurrentPassword12',
+                'current_password' => 'CurrentPassword12!',
+                'password' => 'CurrentPassword12!',
+                'password_confirmation' => 'CurrentPassword12!',
             ])
             ->assertSessionHasErrors('password');
 
-        $this->assertTrue(Hash::check('CurrentPassword12', $user->fresh()->password));
+        $this->assertTrue(Hash::check('CurrentPassword12!', $user->fresh()->password));
     }
 
     /**

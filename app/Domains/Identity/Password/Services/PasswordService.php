@@ -19,6 +19,7 @@ final class PasswordService extends BaseService
     public function __construct(
         private readonly SessionService $sessionService,
         private readonly AuditService $audit,
+        private readonly PasswordHistoryService $passwordHistory,
     ) {
     }
 
@@ -49,7 +50,11 @@ final class PasswordService extends BaseService
             PasswordPolicy::validateChange(
                 currentPassword: $currentPassword,
                 newPassword: $newPassword,
+                user: $lockedUser,
             );
+
+            $this->passwordHistory->assertNotReused($lockedUser, $newPassword);
+            $this->passwordHistory->archiveCurrentPassword($lockedUser);
 
             $lockedUser->password = $newPassword;
             $lockedUser->save();
@@ -58,6 +63,7 @@ final class PasswordService extends BaseService
                 user: $lockedUser,
                 reason: 'password_changed',
             );
+            $lockedUser->tokens()->delete();
 
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.password.changed',

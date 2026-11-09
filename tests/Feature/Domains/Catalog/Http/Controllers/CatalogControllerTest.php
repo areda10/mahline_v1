@@ -7,14 +7,14 @@ namespace Tests\Feature\Domains\Catalog\Http\Controllers;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Gate;
+use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
 use Tests\TestCase;
 
 final class CatalogControllerTest extends TestCase
 {
     use RefreshDatabase;
+    use CreatesAuthorizedCooperativeAdmin;
 
     private Cooperative $cooperative;
 
@@ -26,9 +26,7 @@ final class CatalogControllerTest extends TestCase
             ->active()
             ->create();
 
-        $user = User::factory()->create([
-            'cooperative_id' => $this->cooperative->getKey(),
-        ]);
+        $user = $this->createCooperativeAdminFor($this->cooperative);
 
         // Ces tests vérifient le contrôleur et ses réponses HTTP.
         // Le middleware MAHLINE possède ses propres tests d'intégration.
@@ -37,9 +35,6 @@ final class CatalogControllerTest extends TestCase
         // cookie régénéré entre deux requêtes simulées par le client de test.
         $this->actingAs($user);
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
-
-        // Les règles d'autorisation sont testées séparément.
-        Gate::before(static fn (): bool => true);
     }
 
     public function test_catalog_index_returns_successful_response(): void
