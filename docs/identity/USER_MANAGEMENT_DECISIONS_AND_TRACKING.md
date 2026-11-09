@@ -1623,7 +1623,8 @@ L'inspection de feature/Identity a confirmé :
 - La limite est calculée à partir de last_activity_at, avec authenticated_at comme repli si last_activity_at est nul.
 - EnsureActiveAuthenticationSession appelle l'expiration avant de toucher la session ; une session expirée est révoquée avec le motif inactivity_timeout, puis la session Laravel est invalidée et l'utilisateur est redirigé vers la connexion.
 - L'expiration est effectuée sous verrou de ligne afin d'éviter qu'une activité concurrente et une révocation d'expiration se contredisent ; touch() utilise également un verrou.
-- Les tests de politique et de révocation/audit sont ajoutés dans SessionInactivityPolicyTest.
+- Les tests de politique, de révocation/audit sont ajoutés dans SessionInactivityPolicyTest ; le test HTTP EnsureActiveAuthenticationSessionTest couvre l'expiration, le refus d'une session révoquée pendant le rafraîchissement d'activité et la poursuite d'une session valide.
+- Après vérification du formulaire auth.login, le message d'expiration utilise withErrors() afin d'être effectivement présenté dans l'interface. Si le rafraîchissement d'activité échoue car la session a été révoquée concurremment, le middleware invalide également la session Laravel et refuse la requête.
 
 **Point de vigilance :** config/session.php conserve son délai de stockage Laravel global de 120 minutes. Ce délai sert au cycle de vie du stockage/cookie et n'est pas la politique d'inactivité métier ; le contrôle SESS-01 est appliqué côté serveur par le middleware. Le comportement des cookies persistants/non persistants reste séparé dans SESS-04.
 
