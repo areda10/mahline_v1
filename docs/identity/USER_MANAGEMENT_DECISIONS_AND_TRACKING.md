@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.5
+- **Version :** 2.6
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1116,3 +1116,27 @@ php artisan test --filter=PasswordResetControllerTest
 Cette validation couvre uniquement les tests sélectionnés par `PasswordResetControllerTest` dans l'environnement local. Elle ne vaut pas validation de l'ensemble des parcours Identity ni de la suite complète.
 
 **Prochaine étape :** poursuivre les tests HTTP/intégration ciblés restants, puis exécuter la suite complète du domaine Identity.
+
+
+## 20.25 — Validation des sessions personnelles et des invitations HTTP
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les trois tests HTTP suivants après corrections sur `feature/Identity` :
+
+```bash
+php artisan test --filter=AuthenticationSessionControllerTest
+php artisan test --filter=UserInvitationControllerTest
+php artisan test --filter=UserInvitationThrottleTest
+```
+
+Corrections associées :
+
+- `routes/web.php` : déplacement des routes de gestion des sessions personnelles dans un groupe dédié autorisant `super_admin`, `cooperative_admin` et `user`, tout en conservant `auth` et `EnsureActiveAuthenticationSession`. Les routes d'administration restent dans le groupe back-office réservé à `super_admin` et `cooperative_admin`. Le contrôleur conserve le contrôle de propriété des sessions.
+- `UserInvitationControllerTest.php` : fixtures de mots de passe valides mises en conformité avec ID-01 ; le scénario de confirmation différente conserve deux valeurs distinctes et conformes ; le scénario `weakpassword` reste volontairement invalide.
+- `UserInvitationThrottleTest.php` : fixture conforme à ID-01 afin que les requêtes atteignent effectivement la validation du token et le middleware de limitation.
+
+Commits de correction :
+- Routes de sessions personnelles : `8ab1be9d1dd5c054e6e0e688fb18e07c37f94e32`.
+- Tests d'invitation : `4cc1c74e99aa63dfe0258ab32bf72db72b0dd784`.
+- Test de limitation des invitations : `4a7d2028ec03b26224efe70c5afc90c02b07abb7`.
+
+La validation est limitée à ces trois suites ciblées. Elle ne vaut pas validation de toute la suite Identity. La suite complète et les contrôles de style/analyse statique restent à exécuter.
