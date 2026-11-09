@@ -35,6 +35,20 @@ final class PasswordServiceTest extends TestCase
         );
     }
 
+    public function test_password_history_refuses_to_archive_an_empty_current_hash(): void
+    {
+        $user = new User([
+            'password' => null,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'A current password hash is required before it can be archived.',
+        );
+
+        app(PasswordHistoryService::class)->archiveCurrentPassword($user);
+    }
+
     public function test_current_password_is_verified(): void
     {
         $user = User::factory()->create([
