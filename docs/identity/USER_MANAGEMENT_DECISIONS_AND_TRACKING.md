@@ -1688,7 +1688,7 @@ Constats vérifiés sur `feature/Identity` :
 - Deux routes POST distinctes sont ajoutées pour les espaces root et standard ; elles restent sous `auth`, le middleware `EnsureActiveAuthenticationSession` et les contraintes de rôle existantes.
 - `AuthenticationSessionController::extend()` ne cible que la session courante du compte authentifié et vérifie la correspondance avec l'identifiant de session Laravel.
 - `SessionService::extendIfActive()` verrouille la ligne, vérifie à nouveau l'échéance et actualise uniquement cette session. Une session arrivée à expiration est révoquée avec `inactivity_timeout` et ne peut pas être ressuscitée.
-- Tests HTTP ajoutés pour la prolongation d'un utilisateur, le refus après expiration et la route dédiée root.
+- Tests HTTP ajoutés pour la prolongation d'un utilisateur, le refus après expiration, la route dédiée root et le rendu des deux layouts avec leurs délais/URLs respectifs. Commits de la série : `f7ba6c6` (service), `02eda32` (contrôleur), `66c664e` (routes), `36176db` (partial), `6ba4cdb`/`8176c61` (layouts), `73dde6f`/`413ecb8`/`cd94c36` (tests), corrections du partial `486e595`/`7d2e3d8`/`e9b6631`.
 
 ### Fichiers modifiés
 
