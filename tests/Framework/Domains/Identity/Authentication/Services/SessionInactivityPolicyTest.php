@@ -103,4 +103,38 @@ final class SessionInactivityPolicyTest extends TestCase
             'revocation_reason' => null,
         ]);
     }
+
+    public function test_expired_session_is_revoked_and_audited_with_inactivity_reason(): void
+    {
+        $user = $this->userWithRole('super_admin_root');
+        $session = $this->sessionFor($user, now()->subMinutes(15));
+
+        $this->assertTrue(app(SessionService::class)->expireIfInactive($user, $session));
+
+        $session->refresh();
+
+        $this->assertNotNull($session->revoked_at);
+        $this->assertSame('inactivity_timeout', $session->revocation_reason);
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $user->getKey(),
+            'event' => 'session_revoked',
+            'reason' => 'inactivity_timeout',
+            'authentication_session_id' => $session->getKey(),
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'subject_id' => $session->getKey(),
+        ]);
+    }
+
+    public function test_recently_active_session_is_not_revoked(): void
+    {
+        $user = $this->userWithRole('super_admin_root');
+        $session = $this->sessionFor($user, now()->subMinutes(5));
+
+        $this->assertFalse(app(SessionService::class)->expireIfInactive($user, $session));
+        $this->assertNull($session->fresh()->revoked_at);
+    }
 }
