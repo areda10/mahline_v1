@@ -165,6 +165,8 @@ Route::prefix('root/back-office')
 
         Route::get('security/sessions', [AuthenticationSessionController::class, 'rootIndex'])
             ->name('security.sessions.index');
+        Route::post('security/sessions/extend', [AuthenticationSessionController::class, 'extend'])
+            ->name('security.sessions.extend');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
 
@@ -287,6 +289,8 @@ Route::prefix('back-office')
     ->group(function (): void {
         Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
             ->name('security.sessions.index');
+        Route::post('security/sessions/extend', [AuthenticationSessionController::class, 'extend'])
+            ->name('security.sessions.extend');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
     });
