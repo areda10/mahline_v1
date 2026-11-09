@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use RuntimeException;
 
 final class AuthenticationWorkflowTest extends TestCase
 {
@@ -316,4 +318,38 @@ final class AuthenticationWorkflowTest extends TestCase
             $phoneSession->session_id,
         );
     }
+
+    public function test_unexpected_runtime_failure_is_not_returned_as_invalid_credentials(): void
+    {
+        $this->app->instance(
+            AuthenticationWorkflowHook::class,
+            new class implements AuthenticationWorkflowHook
+            {
+                public function afterDeviceRemembered(
+                    User $user,
+                    AuthenticationSession $session,
+                ): void {
+                    throw new RuntimeException('Simulated persistence failure.');
+                }
+            },
+        );
+
+        $user = User::factory()->create([
+            'email' => 'workflow-runtime-failure@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $response->assertInternalServerError();
+        $this->assertGuest();
+        $this->assertDatabaseCount('authentication_sessions', 0);
+    }
+
 }
