@@ -1476,4 +1476,4 @@ Commits correctifs :
 - `cfe87ae5376cd9d5b35b76a5802353ca3466457b` — vérification du message public générique dans le test transactionnel ;
 - `1b4e2a498042a25122cf858c530054bf4a8afae2` — clarification du nom du test de remise à zéro explicite.
 
-**État : CORRECTIONS COMMITÉES — VALIDATION LOCALE EN ATTENTE.** Ne pas marquer AUTH-03 comme validé avant confirmation des tests ciblés et de Pint par l'utilisateur.
+**État : VALIDÉ LE 9 NOVEMBRE 2026.** L'utilisateur confirme VERT après correction pour les suites `AuthenticationSecurityServiceTest`, `AuthenticationWorkflowTransactionTest`, `AuthenticationServiceTest`, `AuthenticationControllerTest` et `php vendor/bin/pint --test`. Les seuils approuvés restent inchangés.
