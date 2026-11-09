@@ -962,4 +962,61 @@ final class AuthenticationServiceTest extends TestCase
         $this->assertSame(5, $securityService->remainingIpEmailAttempts($ipAddress, $email));
     }
 
+    public function test_locked_ip_email_pair_is_rejected_without_incrementing_its_counter_again(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'locked-pair@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $ipAddress = '198.51.100.46';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttemptByIpAndEmail(
+                $ipAddress,
+                $user->email,
+            );
+        }
+
+        try {
+            $this->authenticationService->authenticate(
+                new AuthenticationContext(
+                    email: $user->email,
+                    password: 'ValidPassword123!',
+                    sessionId: 'locked-pair-no-increment',
+                    ipAddress: $ipAddress,
+                    userAgent: 'Mozilla/5.0',
+                    browser: 'Firefox',
+                    device: 'Desktop',
+                )
+            );
+        } catch (RuntimeException) {
+            // Expected: the IP + email pair is already locked.
+        }
+
+        $this->assertSame(
+            0,
+            $securityService->remainingIpEmailAttempts($ipAddress, $user->email),
+        );
+
+        $this->assertSame(
+            5,
+            $securityService->remainingAttempts($user->email),
+        );
+
+        $this->assertSame(
+            30,
+            $securityService->remainingIpAttempts($ipAddress),
+        );
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $user->email,
+            'event' => 'failed',
+            'reason' => 'ip_email_locked',
+        ]);
+    }
+
 }
