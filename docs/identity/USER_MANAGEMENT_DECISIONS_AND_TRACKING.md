@@ -1463,4 +1463,17 @@ Dans `AuthenticationControllerTest` :
 
 Le standard `docs/domains/identity/ID-I-002-AUTHENTICATION_STANDARD.md` est passé en version 1.1 pour formaliser les trois niveaux.
 
-**État : IMPLÉMENTATION COMMITÉE — VALIDATION LOCALE EN ATTENTE.** Ne pas marquer AUTH-03 comme validé avant confirmation des tests ciblés et de Pint par l'utilisateur.
+### Corrections après la première exécution locale
+
+Les échecs signalés par l'utilisateur ont été analysés et corrigés dans les tests, sans changement des règles de sécurité :
+
+- Les tests historiques de `AuthenticationSecurityServiceTest` utilisaient encore le seuil IP de 5. Ils vérifient maintenant 30 tentatives par IP et les compteurs restants correspondants (30, 29, 27, etc.).
+- Le test de remise à zéro IP a été renommé `test_ip_counter_can_be_cleared_explicitly` afin de ne pas suggérer qu'une connexion réussie efface le compteur IP partagé.
+- `AuthenticationWorkflowTransactionTest` vérifie désormais la réponse publique générique exacte `Authentication failed.` après une erreur interne du workflow ; le détail de l'exception n'est pas exposé au client.
+
+Commits correctifs :
+- `2087b31c50901411cdaf20b25331a5cdcd644bf9` — alignement des tests IP historiques sur le seuil 30 ;
+- `cfe87ae5376cd9d5b35b76a5802353ca3466457b` — vérification du message public générique dans le test transactionnel ;
+- `1b4e2a498042a25122cf858c530054bf4a8afae2` — clarification du nom du test de remise à zéro explicite.
+
+**État : CORRECTIONS COMMITÉES — VALIDATION LOCALE EN ATTENTE.** Ne pas marquer AUTH-03 comme validé avant confirmation des tests ciblés et de Pint par l'utilisateur.
