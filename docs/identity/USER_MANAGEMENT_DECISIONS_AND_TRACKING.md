@@ -1706,3 +1706,18 @@ Constats vérifiés sur `feature/Identity` :
 
 
 | 9 novembre 2026 | 20.45 | SESS-02 implémenté sur `feature/Identity` : dialogue T−2 min, prolongation atomique de la seule session courante, protections anti-résurrection, routes standard/root et tests HTTP. En attente de validation locale. |
+
+
+## 20.46 — Correction des tests HTTP SESS-02 : liaison avec le cookie de session
+
+À la première exécution locale, les tests SESS-02 ont révélé que les enregistrements `AuthenticationSession` étaient créés avec `session()->getId()` hors requête, sans garantir que le navigateur simulé envoyait ce même identifiant au middleware Laravel `StartSession`. Le contrôleur a correctement rejeté les requêtes dont le cookie de session ne correspondait pas à `AuthenticationSession.session_id`; le composant Blade ne trouvait donc pas non plus la session courante.
+
+Correction appliquée uniquement au montage des tests :
+
+- Les tests génèrent un identifiant de session Laravel explicite.
+- Le helper `withCurrentAuthenticationSession()` envoie le cookie de session chiffré correspondant et l'identifiant de l'enregistrement métier dans les données de session.
+- Les tests couvrent le succès utilisateur/root, l'affichage du dialogue dans les deux layouts, le refus d'une session d'un autre appareil et l'expiration réelle avec révocation `inactivity_timeout`.
+
+Aucune vérification de sécurité du contrôleur n'a été supprimée ou affaiblie. L'implémentation doit maintenant être retestée localement.
+
+**État SESS-02 : EN ATTENTE DE NOUVELLE VALIDATION LOCALE après correction du setup HTTP.**
