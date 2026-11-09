@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.3
+- **Version :** 2.4
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1079,7 +1079,7 @@ Un test supplémentaire doit être corrigé sur le plan fonctionnel : `test_chan
 
 **Vérification du dépôt :** le fichier a été relu après commit ; aucune occurrence de `MahlinePassword13` sans caractère spécial ne subsiste dans ce test, le nouveau test d'acceptation des espaces est présent.
 
-**État des tests :** à confirmer par l'utilisateur. Exécuter d'abord `php artisan test --filter=PasswordServiceTest`, puis, si vert, `php artisan test --filter=Password`.
+**État des tests :** l'utilisateur a confirmé le 9 novembre 2026 que les deux commandes suivantes sont vertes : `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password`.
 
 
 ## 20.22 — Correction des tests PasswordService
@@ -1088,4 +1088,18 @@ Le 9 novembre 2026, après accord de l'utilisateur, le fichier `PasswordServiceT
 
 Commit : `8a31970f8d983df7926f3a13d696903edd0471b3`.
 
-La correction est commitée et vérifiée sur GitHub, mais les tests locaux ne sont pas encore confirmés verts. Commande suivante : `php artisan test --filter=PasswordServiceTest`.
+La correction est commitée et vérifiée sur GitHub. Le 9 novembre 2026, l'utilisateur a confirmé vertes les deux commandes : `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password`. Le filtre global Password est donc validé dans l'environnement local.
+
+
+## 20.23 — Validation locale des tests Password
+
+Le 9 novembre 2026, l'utilisateur a confirmé que les deux commandes suivantes sont **VERTES** dans son environnement local :
+
+```bash
+php artisan test --filter=PasswordServiceTest
+php artisan test --filter=Password
+```
+
+Cette validation confirme le test ciblé du service et l'ensemble des tests sélectionnés par le filtre global `Password`. Elle ne vaut pas validation de toute la suite Identity, ni des tests non sélectionnés par ce filtre.
+
+**Prochaine étape :** poursuivre les tests d'intégration/HTTP et exécuter la suite complète du domaine Identity.
