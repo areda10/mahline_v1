@@ -446,6 +446,7 @@ final class AuthenticationControllerTest extends TestCase
             'reason' => 'email_not_verified',
         ]);
     }
+
     public function test_more_than_five_login_requests_from_one_ip_are_not_blocked_before_domain_failure_limits_apply(): void
     {
         for ($attempt = 1; $attempt <= 6; $attempt++) {
@@ -464,7 +465,6 @@ final class AuthenticationControllerTest extends TestCase
             ]);
         }
     }
-
 
     public function test_browser_login_validation_errors_redirect_back_to_the_form(): void
     {
@@ -523,5 +523,4 @@ final class AuthenticationControllerTest extends TestCase
         $this->assertGuest();
         $this->assertNotNull($authenticationSession->fresh()->revoked_at);
     }
-
 }

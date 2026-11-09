@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -351,5 +351,4 @@ final class AuthenticationWorkflowTest extends TestCase
         $this->assertGuest();
         $this->assertDatabaseCount('authentication_sessions', 0);
     }
-
 }

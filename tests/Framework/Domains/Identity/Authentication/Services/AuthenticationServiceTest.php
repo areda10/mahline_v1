@@ -698,6 +698,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $this->assertSame($legacyHash, $user->fresh()->password);
     }
+
     public function test_failed_attempts_are_counted_for_unknown_inactive_and_unverified_emails(): void
     {
         $inactive = User::factory()->create([
@@ -1017,5 +1018,4 @@ final class AuthenticationServiceTest extends TestCase
             'reason' => 'ip_email_locked',
         ]);
     }
-
 }
