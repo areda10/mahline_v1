@@ -1387,3 +1387,25 @@ Les tests HTTP couvrent les comptes inexistants, les mots de passe incorrects, l
 Commits : `ccb0a3d5fc24cf80b62d6c41a2562b8699e6d19e`, `d98ea4f41965c9e726fb73807c0bc1f5c3e7a1e3`, `97836aebf459b7fe182a3f0822407bdef5601aa3`, `ed274a592c8d364f6d91769c815160668e825341`.
 
 **État :** AUTH-01 validé par tests ciblés et Pint. L'audit se poursuit sur AUTH-02, comptabilisation cohérente des tentatives échouées.
+
+
+## 20.36 — Comptabilisation cohérente des échecs de connexion (AUTH-02)
+
+L'audit du 9 novembre 2026 a révélé que le compteur de tentatives par adresse e-mail n'était incrémenté que pour un mot de passe incorrect sur un compte actif et vérifié. Les adresses inconnues, les comptes inactifs et les comptes dont l'e-mail n'est pas vérifié étaient journalisés sans consommer le compteur.
+
+Correction sur `feature/Identity` :
+- contrôle du verrouillage par e-mail avant les contrôles d'existence et d'état du compte ;
+- incrément du compteur normalisé pour les adresses inconnues, les comptes inactifs et les comptes non vérifiés ;
+- maintien de la règle selon laquelle une adresse déjà verrouillée n'incrémente pas davantage son compteur ;
+- conservation des raisons internes détaillées dans `login_histories` et de la réponse publique générique validée par AUTH-01.
+
+Tests ajoutés dans `AuthenticationServiceTest` :
+- `test_failed_attempts_are_counted_for_unknown_inactive_and_unverified_emails` ;
+- `test_locked_unknown_email_does_not_increment_failed_attempts`.
+
+Commits :
+- `9aaff962e0809e5582b3adef6a8baa78a4e182a2` — service ;
+- `3627b143beea199c5cae380634c23c288369e5d9` — premiers tests ;
+- `3d7f555f01130ffd7699fbc510585bf993871fa6` — simplification des captures d'exceptions dans les tests.
+
+**État :** implémentation et tests ajoutés ; validation locale encore à confirmer. AUTH-02 ne sera marqué validé qu'après tests ciblés et Pint verts.
