@@ -79,7 +79,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Authentification — protection des réponses et des tentatives
 
-- [ ] **AUTH-01** Uniformiser les réponses publiques de connexion pour compte inexistant, mot de passe incorrect, compte inactif/suspendu, e-mail non vérifié et verrouillage ; conserver les détails uniquement dans les journaux internes.
+- [x] **AUTH-01** Uniformiser les réponses publiques de connexion pour compte inexistant, mot de passe incorrect, compte inactif/suspendu, e-mail non vérifié et verrouillage ; conserver les détails uniquement dans les journaux internes. Réponses JSON et formulaire harmonisés (`401`, `Authentication failed.`), compte inexistant non distingué par un `404`, motifs internes conservés dans `login_histories`. Tests `AuthenticationControllerTest` + `AuthenticationServiceTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026. Commits applicatifs/tests : `ccb0a3d5fc24cf80b62d6c41a2562b8699e6d19e`, `d98ea4f41965c9e726fb73807c0bc1f5c3e7a1e3`, `97836aebf459b7fe182a3f0822407bdef5601aa3`, `ed274a592c8d364f6d91769c815160668e825341`.
 - [ ] **AUTH-02** Compter les tentatives échouées de façon cohérente pour les comptes connus/inconnus et les états de compte, sans créer de fuite d'information.
 - [ ] **AUTH-03** Renforcer la limitation par compte et par IP contre les attaques distribuées et les contournements via IP partagée.
 - [ ] **AUTH-04** Vérifier la remise à zéro des compteurs après authentification réussie sans effacer abusivement les compteurs IP communs.
