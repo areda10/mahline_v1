@@ -11,6 +11,7 @@ use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\DB;
@@ -412,5 +413,40 @@ final class PasswordServiceTest extends TestCase
             'The password change must issue a SELECT ... FOR UPDATE against the users table.',
         );
         $this->assertDatabaseCount('user_password_histories', 1);
+    }
+    public function test_user_row_lock_blocks_a_second_database_connection_from_acquiring_the_same_lock(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $primaryConnectionName = DB::getDefaultConnection();
+        $secondaryConnectionName = 'identity_concurrency_test';
+        $secondaryConfig = config('database.connections.'.$primaryConnectionName);
+
+        config(['database.connections.'.$secondaryConnectionName => $secondaryConfig]);
+        DB::purge($secondaryConnectionName);
+
+        $primaryConnection = DB::connection($primaryConnectionName);
+        $primaryConnection->beginTransaction();
+
+        try {
+            $primaryConnection->table('users')
+                ->where('id', $user->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            try {
+                DB::connection($secondaryConnectionName)
+                    ->table('users')
+                    ->where('id', $user->getKey())
+                    ->lock('for update nowait')
+                    ->first();
+
+                $this->fail('A second connection must not acquire a row lock already held by the first connection.');
+            } catch (QueryException) {
+                $this->assertTrue(true);
+            }
+        } finally {
+            DB::purge($secondaryConnectionName);
+            $primaryConnection->rollBack();
+        }
     }
 }
