@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.8
+- **Version :** 2.9
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -65,11 +65,11 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 ### ID-02 — Historique des mots de passe
 
 - [x] **ID02-01** Exécuter la migration `2026_11_08_000001_create_user_password_histories_table.php` — exécutée localement avec succès le 8 novembre 2026 (Laravel : `229.90ms DONE`). La validation du schéma et des parcours reste couverte par les tests d'intégration.
-- [ ] **ID02-02** Vérifier que l'archivage de l'ancien hash et le remplacement du mot de passe sont toujours dans une transaction atomique.
+- [x] **ID02-02** Vérifier l'atomicité de l'archivage de l'ancien hash et du remplacement du mot de passe : les quatre parcours testés (changement volontaire, reset, changement forcé et acceptation d'invitation) exécutent ces opérations dans une transaction ; les tests de panne d'audit confirment le rollback complet. Validation locale confirmée le 9 novembre 2026.
 - [ ] **ID02-03** Vérifier le verrouillage concurrent de la ligne utilisateur pour empêcher deux changements simultanés de contourner l'historique.
 - [ ] **ID02-04** Tester le refus du mot de passe courant et de chacun des cinq anciens mots de passe.
 - [ ] **ID02-05** Tester la rotation : conservation de cinq anciens hashes et suppression du plus ancien lors de l'ajout du sixième.
-- [ ] **ID02-06** Tester qu'un échec de validation, une exception ou un rollback ne crée aucune entrée d'historique.
+- [x] **ID02-06** Tester le rollback après une exception pendant la persistance de l'audit : aucun historique n'est conservé et les mutations associées sont annulées dans les quatre parcours testés. Les cas généraux d'échec de validation restent couverts par les tests de chaque service ; validation ciblée confirmée le 9 novembre 2026.
 - [ ] **ID02-07** Vérifier l'application commune aux changements volontaires/forcés, reset, invitation et activation.
 - [ ] **ID02-08** Vérifier les cas de compte sans hash courant (si techniquement possibles) et la compatibilité avec les comptes historiques.
 - [ ] **ID02-09** Vérifier la politique de suppression des historiques lors de la suppression physique exceptionnelle d'un compte, en cohérence avec les obligations de conservation et la FK choisie.
