@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.0
+- **Version :** 3.1
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1503,3 +1503,53 @@ Commits correctifs :
 Commits principaux : `a77a802835b39bfa3a22684119a1147610f71838` (service), `481fdd6e9b9d95ab45b7cae3b97919a1f5ddb959` / `05d1adcd74512e2d6809c24f325a005da70d6312` / `d36bacd01eb2a45a3f8e5c1ed2af39d55aa78dee` (contrôleur), `0be2e6ca9be03a0407b26f3968e70869f704cb21` / `f6f3e448dbb2fcbd8878265c2d32a273a26a196c` / `78b73f7292bcbfa34177a63878a26d9c2edf8b89` (routes), `b33eba9bca1610e0284a7f8ba5e527264f8b51bc` (vue), `df96ca4e211101a97db9207b8c629d3105cba5b6` (navigation), `0c2218a575ab20d243eb9f241b6ff92176ff7991` / `b5793dca418a9340ad4cb64772b2e5a97ed66ae9` / `dc1a88125b802dc607b561a98fc5733f959bc8ca` / `093dbdaad9731fb402e72265f7e84d86825c73f8` (tests).
 
 **État : CODE ET TESTS AJOUTÉS — TESTS LOCAUX À EXÉCUTER.** Ne pas marquer AUTH-06 validé avant confirmation des tests ciblés et de Pint.
+
+
+## 20.39 — Contrat des réponses HTTP Web/API (AUTH-07)
+
+### Validation AUTH-06
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERT** les tests ciblés du déverrouillage administratif AUTH-06. Le code et les tests sont donc validés localement. La commande Pint de ce lot n'a pas été confirmée séparément.
+
+### Audit initial AUTH-07
+
+L'audit des routes et contrôleurs sur `feature/Identity` a établi le périmètre actuel :
+
+- Web : `GET/POST /authentication/login`, `POST /authentication/logout`.
+- API : `GET /api/test-auth`, `GET /api/audit/events`, `POST /api/password/forgot`, `POST /api/password/reset`.
+- Les ressources API protégées utilisent `auth:sanctum` ; les routes API sont rendues en JSON par le traitement global des exceptions.
+- Le changement obligatoire du mot de passe bloque les ressources API par une réponse JSON `403`.
+- Aucun endpoint stateless dédié de connexion/déconnexion API n'est ajouté dans AUTH-07 ; le cycle de vie des tokens demeure dans le lot API-01 à API-09.
+
+### Incohérence corrigée
+
+`bootstrap/app.php` forçait auparavant le rendu JSON pour toute exception sur `authentication/*`, y compris les soumissions HTML du formulaire de connexion. Cela contredisait les réponses HTML prévues par `AuthenticationController` (redirection et erreurs de formulaire).
+
+Correction : les routes `api/*` restent toujours JSON ; les routes `authentication/*` ne sont rendues JSON que lorsque la requête annonce qu'elle attend du JSON (`expectsJson()`). Les navigateurs retrouvent donc les redirections et erreurs de session, tandis que les clients JSON conservent les réponses JSON et le statut `422` pour les erreurs de validation.
+
+### Tests ajoutés
+
+Dans `AuthenticationControllerTest` :
+- validation HTML de connexion : redirection vers le formulaire et erreurs de session ;
+- échec HTML : message générique `Authentication failed.` dans les erreurs du formulaire ;
+- déconnexion JSON : `200`, message `Logout successful.`, révocation de la session courante.
+
+Nouveau fichier `tests/Feature/Domains/Identity/Authentication/Http/ApiAuthenticationResponseTest.php` :
+- API sans token : `401` JSON ;
+- token Sanctum valide : `200` ;
+- changement obligatoire non terminé : `403` JSON ;
+- validation des demandes API de reset : `422` JSON ;
+- demande de reset pour une adresse inconnue : réponse générique `200`, sans révéler l'existence du compte.
+
+Commits :
+- `ee47d7ae9d485d2dd91642a45b0fc21248b9e1d3` — négociation JSON/HTML dans le gestionnaire d'exceptions ;
+- `db64ebbd816a0fa2959a32bf21df919bb15711f3` — tests de réponses du contrôleur Web ;
+- `3f3402761802189e5102c991558aea11f6b77cb3` — premiers tests de réponses API ;
+- `36c533746517eff4eddf64c78fadd3511e690e0a` — correction des namespaces du nouveau fichier de tests.
+
+### Points encore ouverts avant clôture d'AUTH-07
+
+1. Confirmer si `GET /api/test-auth` est un endpoint de diagnostic temporaire à retirer avant production ou une route de test intentionnellement conservée.
+2. Examiner le fait que `AuthenticationController::login()` transforme toute `RuntimeException` remontée du workflow en `401`. Le message reste générique conformément à la décision de non-divulgation ; il faut toutefois distinguer une authentification refusée d'une panne technique inattendue afin de ne pas masquer un incident serveur. Aucun changement n'est fait ici, car un test transactionnel antérieur attend explicitement une réponse publique générique après un échec du workflow.
+
+**État : AUTH-07 EN COURS — code et tests ajoutés, validation locale en attente.**
