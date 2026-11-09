@@ -518,7 +518,7 @@ final class PasswordResetServiceTest extends TestCase
 
         $audit = Mockery::mock(AuditService::class);
         $audit->shouldReceive('record')->once()
-            ->andThrow(new \\RuntimeException('Simulated audit failure.'));
+            ->andThrow(new \RuntimeException('Simulated audit failure.'));
 
         $service = new PasswordResetService(
             app(SessionService::class),
@@ -529,12 +529,12 @@ final class PasswordResetServiceTest extends TestCase
         try {
             $service->resetPassword($token, 'Secure!NewPass2026');
             $this->fail('Expected audit failure.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             $this->assertSame('Simulated audit failure.', $exception->getMessage());
         }
 
         $user->refresh();
-        $resetRecord = \\DB::table('password_reset_tokens')
+        $resetRecord = \DB::table('password_reset_tokens')
             ->where('user_id', $user->getKey())
             ->first();
 
