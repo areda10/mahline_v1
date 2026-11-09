@@ -441,8 +441,14 @@ final class PasswordServiceTest extends TestCase
                     ->first();
 
                 $this->fail('A second connection must not acquire a row lock already held by the first connection.');
-            } catch (QueryException) {
-                $this->assertTrue(true);
+            } catch (QueryException $exception) {
+                $driverErrorCode = (int) ($exception->errorInfo[1] ?? 0);
+
+                $this->assertContains(
+                    $driverErrorCode,
+                    [1205, 3572],
+                    'The second connection must fail because the row is locked, not because of a SQL syntax error.',
+                );
             }
         } finally {
             DB::purge($secondaryConnectionName);
