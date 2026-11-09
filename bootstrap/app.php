@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domains\Audit\Http\Middleware\CorrelationIdMiddleware;
 use App\Domains\Identity\Authorization\Http\Middleware\EnsureUserHasRole;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             CorrelationIdMiddleware::class,
+            EnsureForcedPasswordChangeCompleted::class,
         ]);
 
         $middleware->api(append: [
