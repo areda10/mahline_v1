@@ -126,6 +126,8 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
 
     private function requestFor(User $user, Store $store): Request
     {
+        $store->put('authentication_session_id', 'authentication-session-id');
+
         $request = Request::create('/protected', 'GET');
         $request->setLaravelSession($store);
         $request->setUserResolver(static fn (): User => $user);
