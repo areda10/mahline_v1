@@ -446,4 +446,23 @@ final class AuthenticationControllerTest extends TestCase
             'reason' => 'email_not_verified',
         ]);
     }
+    public function test_more_than_five_login_requests_from_one_ip_are_not_blocked_before_domain_failure_limits_apply(): void
+    {
+        for ($attempt = 1; $attempt <= 6; $attempt++) {
+            $response = $this
+                ->withServerVariables([
+                    'REMOTE_ADDR' => '198.51.100.55',
+                ])
+                ->postJson($this->loginUrl, [
+                    'email' => 'unknown-shared-network-'.$attempt.'@example.com',
+                    'password' => 'ValidPassword123!',
+                ]);
+
+            $response->assertUnauthorized();
+            $response->assertExactJson([
+                'message' => 'Authentication failed.',
+            ]);
+        }
+    }
+
 }
