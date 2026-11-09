@@ -26,6 +26,7 @@ final class ForcedPasswordChangeControllerTest extends TestCase
         parent::setUp();
 
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+        $this->registerTestAuthenticationRoute();
     }
 
     public function test_voluntary_password_change_requires_the_current_password_and_updates_the_password(): void
