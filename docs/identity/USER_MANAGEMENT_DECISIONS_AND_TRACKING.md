@@ -1368,3 +1368,22 @@ Commits :
 - `php vendor/bin/pint --test` — VERT.
 
 **Décision explicite de l'utilisateur :** l'audit de compatibilité entre algorithmes bcrypt et Argon (et la migration inter-algorithmes des anciens hashes) est reporté à une étape ultérieure. Il reste inscrit au backlog sous ID02-12 et ne doit pas être entrepris dans l'audit courant.
+
+
+## 20.35 — Harmonisation des réponses publiques d'authentification
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les commandes locales :
+
+```bash
+php artisan test --filter=AuthenticationControllerTest
+php artisan test --filter=AuthenticationServiceTest
+php vendor/bin/pint --test
+```
+
+Le contrôleur de connexion renvoie désormais une réponse publique identique pour les échecs de connexion traités : statut HTTP `401` et message `Authentication failed.` pour les réponses JSON ; le formulaire web utilise le même message. Un compte inexistant ne se distingue plus par un `404`. Les raisons détaillées restent enregistrées dans `login_histories`. Les erreurs de validation des champs restent des réponses `422`.
+
+Les tests HTTP couvrent les comptes inexistants, les mots de passe incorrects, les comptes inactifs, les e-mails non vérifiés et les comptes verrouillés, et vérifient l'uniformité de la réponse publique.
+
+Commits : `ccb0a3d5fc24cf80b62d6c41a2562b8699e6d19e`, `d98ea4f41965c9e726fb73807c0bc1f5c3e7a1e3`, `97836aebf459b7fe182a3f0822407bdef5601aa3`, `ed274a592c8d364f6d91769c815160668e825341`.
+
+**État :** AUTH-01 validé par tests ciblés et Pint. L'audit se poursuit sur AUTH-02, comptabilisation cohérente des tentatives échouées.
