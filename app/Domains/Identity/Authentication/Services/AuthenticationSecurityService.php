@@ -155,6 +155,26 @@ final class AuthenticationSecurityService extends BaseService
         );
     }
 
+    /**
+     * Clear all authentication lockout scopes for one normalized account and IP.
+     *
+     * This operation is intentionally exposed only through the root-only
+     * administrative workflow. The shared IP counter is cleared because the
+     * administrator explicitly selected that IP address.
+     */
+    public function unlockAllScopes(string $email, string $ipAddress): void
+    {
+        $normalizedEmail = mb_strtolower(trim($email));
+        $normalizedIpAddress = trim($ipAddress);
+
+        $this->clearFailedAttempts($normalizedEmail);
+        $this->clearFailedIpAttempts($normalizedIpAddress);
+        $this->clearFailedIpEmailAttempts(
+            $normalizedIpAddress,
+            $normalizedEmail,
+        );
+    }
+
     private function accountKey(string $email): string
     {
         return 'authentication:failed:account:'.$this->fingerprint(
