@@ -68,7 +68,8 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         );
 
         $expiredSession->forceFill([
-            'last_activity_at' => now()->subMinutes(15),
+            // Standard users have a 60-minute inactivity threshold.
+            'last_activity_at' => now()->subMinutes(61),
         ])->save();
 
         $expiredRequest = $this->requestFor($user, $currentStore, $expiredSession);
