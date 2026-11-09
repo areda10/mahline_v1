@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.7
+- **Version :** 2.8
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -58,7 +58,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [ ] **ID01-14** Pendant le changement obligatoire, bloquer l'accès au dashboard et aux autres routes métier ; autoriser uniquement changement de mot de passe et déconnexion.
 - [ ] **ID01-15** Envoyer l'e-mail informatif prévu lorsqu'un changement devient obligatoire, sans mot de passe ni lien de reset non sollicité.
 - [ ] **ID01-16** Présenter à l'utilisateur les motifs de refus utiles sans révéler les détails internes de détection.
-- [ ] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation. Couverture ajoutée pour prénom, nom complet, partie locale et fragments d'e-mail, normalisation casse/séparateurs et acceptation sans information personnelle ; les cas Unicode, limites détaillées et messages restent à compléter.
+- [x] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation. Couverture vérifiée : prénom, nom complet, partie locale et fragments d'e-mail, normalisation casse/séparateurs, acceptation sans information personnelle, lettres/chiffres/caractères spéciaux Unicode, longueur Unicode et messages exacts des erreurs. Tests ciblés et Pint confirmés VERTS le 9 novembre 2026 ; commit `45290bceefc84158f1158ecf7b626537e9682c43`.
 - [x] **ID01-18** Exécuter et valider `php artisan test --filter=PasswordPolicyTest` après l'ajout des tests de données personnelles — VERT confirmé par l'utilisateur le 9 novembre 2026 ; Pint `php vendor/bin/pint --test` également VERT.
 - [x] **ID01-19** Corriger les fixtures de `PasswordServiceTest` pour respecter ID-01 et remplacer le rejet erroné des espaces par un test d'acceptation (`Mahline Password13!`). Commit `8a31970f8d983df7926f3a13d696903edd0471b3` ; exécution locale du test ciblé encore à confirmer.
 
