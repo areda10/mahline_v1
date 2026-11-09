@@ -12,6 +12,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class AuthenticationSessionControllerTest extends TestCase
@@ -175,7 +176,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->travelTo(now()->startOfSecond());
 
         $user = $this->actor('user');
-        $sessionId = session()->getId();
+        $sessionId = Str::random(40);
         $session = $this->createAuthenticationSession($user, $sessionId, 'Current browser');
         $previousActivity = now()->subMinutes(59);
 
@@ -183,10 +184,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             'last_activity_at' => $previousActivity,
         ])->save();
 
-        $this->actingAs($user)
-            ->withSession([
-                'authentication_session_id' => (string) $session->getKey(),
-            ])
+        $this->withCurrentAuthenticationSession($user, $session)
             ->postJson(route('backoffice.security.sessions.extend'))
             ->assertOk()
             ->assertJson([
@@ -203,14 +201,11 @@ final class AuthenticationSessionControllerTest extends TestCase
         $user = $this->actor('user');
         $session = $this->createAuthenticationSession(
             $user,
-            session()->getId(),
+            Str::random(40),
             'Current browser',
         );
 
-        $this->actingAs($user)
-            ->withSession([
-                'authentication_session_id' => (string) $session->getKey(),
-            ])
+        $this->withCurrentAuthenticationSession($user, $session)
             ->get(route('backoffice.security.sessions.index'))
             ->assertOk()
             ->assertSee('mahline-session-warning')
@@ -228,10 +223,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             'Root browser',
         );
 
-        $this->actingAs($root)
-            ->withSession([
-                'authentication_session_id' => (string) $session->getKey(),
-            ])
+        $this->withCurrentAuthenticationSession($root, $session)
             ->get(route('root.backoffice.security.sessions.index'))
             ->assertOk()
             ->assertSee('mahline-session-warning')
@@ -279,10 +271,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             'Root browser',
         );
 
-        $this->actingAs($root)
-            ->withSession([
-                'authentication_session_id' => (string) $session->getKey(),
-            ])
+        $this->withCurrentAuthenticationSession($root, $session)
             ->postJson(route('root.backoffice.security.sessions.extend'))
             ->assertOk()
             ->assertJson([
@@ -291,6 +280,20 @@ final class AuthenticationSessionControllerTest extends TestCase
             ]);
 
         $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    private function withCurrentAuthenticationSession(
+        User $user,
+        AuthenticationSession $session,
+    ): static {
+        return $this->actingAs($user)
+            ->withCookie(
+                config('session.cookie'),
+                encrypt($session->session_id),
+            )
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ]);
     }
 
     private function createAuthenticationSession(
