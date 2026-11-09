@@ -132,6 +132,32 @@ final class SessionService extends BaseService
     }
 
     /**
+     * Revoke every active session except the one currently completing
+     * a mandatory password change.
+     */
+    public function revokeOtherSessions(
+        User $user,
+        string $currentAuthenticationSessionId,
+        string $reason = 'logout',
+    ): bool {
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereKeyNot($currentAuthenticationSessionId)
+            ->whereNull('revoked_at')
+            ->get();
+
+        $revoked = false;
+
+        foreach ($sessions as $session) {
+            if ($this->revoke($session, $reason)) {
+                $revoked = true;
+            }
+        }
+
+        return $revoked;
+    }
+
+    /**
      * Revoke one session and atomically persist its specialized
      * LoginHistory record and its immutable Audit event.
      */
