@@ -219,7 +219,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         $root = $this->actor('super_admin_root');
         $session = $this->createAuthenticationSession(
             $root,
-            session()->getId(),
+            Str::random(40),
             'Root browser',
         );
 
@@ -238,7 +238,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         $user = $this->actor('user');
         $session = $this->createAuthenticationSession(
             $user,
-            session()->getId(),
+            Str::random(40),
             'Expired browser',
         );
 
@@ -246,10 +246,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             'last_activity_at' => now()->subMinutes(60),
         ])->save();
 
-        $this->actingAs($user)
-            ->withSession([
-                'authentication_session_id' => (string) $session->getKey(),
-            ])
+        $this->withCurrentAuthenticationSession($user, $session)
             ->postJson(route('backoffice.security.sessions.extend'))
             ->assertUnauthorized()
             ->assertJson([
