@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Password\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class ForcedPasswordChangeControllerTest extends TestCase
@@ -78,6 +80,58 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
         $this->assertTrue(Hash::check('NewPassword123!', $user->password));
         $this->assertFalse($user->must_change_password);
+    }
+
+    public function test_forced_password_change_preserves_current_session_and_revokes_other_sessions_and_api_tokens(): void
+    {
+        $user = $this->actor('user', [
+            'password' => 'MahlineMahline',
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user);
+
+        $sessions = app(SessionService::class);
+
+        $currentSession = $sessions->create(
+            $user,
+            Str::uuid()->toString(),
+            device: 'Current device',
+        );
+
+        $otherSession = $sessions->create(
+            $user,
+            Str::uuid()->toString(),
+            device: 'Other device',
+        );
+
+        $user->createToken('existing-api-token');
+
+        $this->withSession([
+            'authentication_session_id' => (string) $currentSession->getKey(),
+        ])->put(route('password.force-change.update'), [
+            'password' => 'NewPassword123!',
+            'password_confirmation' => 'NewPassword123!',
+        ])->assertRedirect(route('user.dashboard'));
+
+        $this->assertNull(
+            $currentSession->fresh()->revoked_at,
+            'The session used to complete the forced password change must remain active.',
+        );
+
+        $this->assertNotNull(
+            $otherSession->fresh()->revoked_at,
+            'Other active sessions must be revoked.',
+        );
+
+        $this->assertSame(0, $user->fresh()->tokens()->count());
+
+        $this->assertTrue(
+            AuthenticationSession::query()
+                ->whereKey($currentSession->getKey())
+                ->whereNull('revoked_at')
+                ->exists(),
+        );
     }
 
     public function test_forced_password_change_blocks_business_routes_until_the_password_is_updated(): void
