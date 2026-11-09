@@ -10,9 +10,17 @@ use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 final class AuthenticationLockoutController
 {
+    public function index(Request $request): View
+    {
+        abort_unless($request->user()?->hasRole('super_admin_root'), 403);
+
+        return view('identity.security.lockouts.index');
+    }
+
     public function unlock(
         Request $request,
         AuthenticationSecurityService $securityService,
