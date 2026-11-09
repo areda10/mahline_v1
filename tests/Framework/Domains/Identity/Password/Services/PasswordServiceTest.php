@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
-use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
@@ -14,7 +13,6 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
-use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -365,21 +363,19 @@ final class PasswordServiceTest extends TestCase
         $user = User::factory()->create(['password' => 'MahlinePassword12']);
         $user->createToken('rollback-test');
 
-        $audit = Mockery::mock(AuditService::class);
-        $audit->shouldReceive('record')->once()
-            ->andThrow(new RuntimeException('Simulated audit failure.'));
+        AuditEvent::creating(static fn () => abort(500));
 
         $service = new PasswordService(
             app(SessionService::class),
-            $audit,
+            app(\App\Domains\Audit\Services\AuditService::class),
             app(PasswordHistoryService::class),
         );
 
         try {
             $service->changePassword($user, 'MahlinePassword12', 'MahlinePassword13!');
             $this->fail('Expected audit failure.');
-        } catch (RuntimeException $exception) {
-            $this->assertSame('Simulated audit failure.', $exception->getMessage());
+        } catch (\\Throwable $exception) {
+            $this->assertSame(500, $exception->getStatusCode());
         }
 
         $user->refresh();
