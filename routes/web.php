@@ -158,6 +158,8 @@ Route::prefix('root/back-office')
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
 
+        Route::get('security/authentication-lockouts', [AuthenticationLockoutController::class, 'index'])
+            ->name('security.authentication-lockouts.index');
         Route::post('security/authentication-lockouts/unlock', [AuthenticationLockoutController::class, 'unlock'])
             ->name('security.authentication-lockouts.unlock');
 
