@@ -79,6 +79,37 @@ final class SessionService extends BaseService
         });
     }
 
+    /**
+     * Return the maximum server-side inactivity period for the user's role.
+     *
+     * When a user has multiple roles, the shortest applicable timeout wins.
+     */
+    public function inactivityTimeoutMinutes(User $user): int
+    {
+        return match (true) {
+            $user->hasRole('super_admin_root') => 15,
+            $user->hasRole('super_admin') => 30,
+            $user->hasRole('cooperative_admin') => 30,
+            $user->hasRole('user') => 60,
+            default => 60,
+        };
+    }
+
+    /**
+     * Determine whether the authentication session exceeded its role-based
+     * server-side inactivity limit. This does not depend on cookie lifetime.
+     */
+    public function hasExceededInactivityLimit(
+        User $user,
+        AuthenticationSession $session,
+    ): bool {
+        $lastActivity = $session->last_activity_at ?? $session->authenticated_at;
+
+        return $lastActivity->lessThanOrEqualTo(
+            now()->subMinutes($this->inactivityTimeoutMinutes($user)),
+        );
+    }
+
     public function isActive(AuthenticationSession $session): bool
     {
         return ! $session->trashed() && $session->revoked_at === null;
