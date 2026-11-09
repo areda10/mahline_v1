@@ -1415,30 +1415,51 @@ Commits :
 
 ## 20.37 — Audit de la limitation des tentatives par compte et par IP (AUTH-03)
 
-Audit du code sur `feature/Identity` le 9 novembre 2026.
+Audit et implémentation sur `feature/Identity`, le 9 novembre 2026. Les seuils ci-dessous ont été explicitement validés par l'utilisateur.
 
-### État actuel constaté
+### Règles retenues et implémentées
 
-- `AuthenticationSecurityService` utilise le même seuil de 5 échecs et la même durée de 15 minutes pour le compte et pour l'adresse IP.
-- Le compteur IP est incrémenté uniquement lors d'un mot de passe incorrect sur un compte actif et vérifié. Les adresses inconnues, les comptes inactifs et les e-mails non vérifiés ne consomment pas ce compteur.
-- Une authentification réussie efface le compteur IP complet. Comme ce compteur est partagé par tous les utilisateurs d'une même IP, un utilisateur peut effacer les échecs d'autres utilisateurs.
-- La route POST `authentication.login.store` applique en plus `throttle:5,1`, une limitation Laravel par IP qui peut bloquer un réseau partagé avant les contrôles métier Identity.
-- Le compteur par e-mail est global à l'adresse normalisée et protège donc déjà contre une rotation d'adresses IP pour attaquer un compte donné.
+| Niveau | Seuil | Fenêtre |
+|---|---:|---:|
+| Compte / e-mail normalisé | 5 échecs | 15 minutes |
+| Adresse IP | 30 échecs | 15 minutes |
+| Couple IP + e-mail normalisé | 5 échecs | 15 minutes |
 
-### Risques identifiés
+### Modifications
 
-1. Faux blocage des utilisateurs derrière une IP partagée avec un seuil IP de seulement cinq tentatives.
-2. Contournement partiel du compteur IP en utilisant des comptes inconnus, inactifs ou non vérifiés.
-3. Effacement des compteurs IP par une connexion réussie provenant du même réseau.
-4. Limitation de route trop stricte et indépendante des compteurs métier.
+- `AuthenticationSecurityService` centralise les trois compteurs via le cache Laravel et applique une durée de 900 secondes.
+- Les clés de cache utilisent des empreintes HMAC-SHA-256 basées sur `app.key` : les adresses e-mail et IP brutes ne figurent pas dans les noms de clés.
+- `AuthenticationService` vérifie les blocages dans cet ordre : IP, compte, couple IP + e-mail. La priorité historique `ip_locked` sur `account_locked` est conservée.
+- Chaque échec d'authentification traité incrémente le compte, l'IP et le couple lorsqu'une IP est disponible : adresse inconnue, compte inactif, e-mail non vérifié et mot de passe incorrect.
+- Une tentative déjà bloquée n'incrémente pas de nouveau le compteur correspondant.
+- Après une connexion réussie, seuls le compteur du compte et celui du couple IP + e-mail sont effacés. Le compteur IP partagé reste intact.
+- Le middleware de route `throttle:5,1` a été retiré de `authentication.login.store`. Ce middleware comptait aussi les connexions réussies et risquait de bloquer les réseaux partagés avant les contrôles métier. La limitation par domaine compte désormais uniquement les échecs traités.
+- En production multi-serveurs, toutes les instances doivent partager le même backend de cache et la même valeur `APP_KEY`, condition nécessaire à la cohérence des compteurs.
 
-### Proposition de correction
+### Tests ajoutés ou adaptés
 
-- Conserver le seuil par compte à 5 échecs sur 15 minutes.
-- Porter le seuil de blocage IP à 30 échecs sur 15 minutes afin de réduire les faux positifs sur les réseaux partagés.
-- Incrémenter le compteur IP pour chaque échec d'authentification effectivement traité : compte inconnu, compte inactif, e-mail non vérifié et mot de passe incorrect. Ne pas incrémenter à nouveau un compteur déjà verrouillé.
-- Ne jamais effacer le compteur IP partagé après la connexion réussie d'un utilisateur ; son expiration reste gérée par sa fenêtre de 15 minutes.
-- Remplacer `throttle:5,1` par une limitation nommée combinant une limite IP globale plus tolérante et une limite courte par couple IP/e-mail normalisé, tout en laissant le compteur métier par compte protéger contre les attaques distribuées.
-- Protéger les clés de cache en utilisant des identifiants hachés plutôt que des adresses e-mail/IP en clair.
+Dans `AuthenticationServiceTest` :
+- `test_all_processed_failure_types_increment_ip_and_ip_email_counters` ;
+- `test_ip_email_counter_is_cleared_on_success_without_clearing_shared_ip_counter` ;
+- `test_ip_lockout_threshold_is_thirty_failures` ;
+- `test_ip_email_lockout_threshold_is_five_failures` ;
+- `test_all_three_lockouts_expire_after_fifteen_minutes` ;
+- adaptation des tests de blocage IP et de priorité IP sur le nouveau seuil de 30.
 
-**État :** audit effectué ; implémentation et tests de non-régression à réaliser. La proposition de seuil IP (30 échecs / 15 minutes) est une recommandation technique à valider avant modification du comportement.
+Dans `AuthenticationControllerTest` :
+- `test_more_than_five_login_requests_from_one_ip_are_not_blocked_before_domain_failure_limits_apply` confirme que la route ne bloque plus arbitrairement au sixième appel depuis une IP partagée.
+
+### Commits applicatifs et tests
+
+- `c2343856f2bdc69192cee5d10b8d1d8a71eb3856` — trois compteurs, seuils et clés HMAC ;
+- `d40d8f70afe01294844ac47849c0029aff8ace15` — intégration des trois contrôles dans le service ;
+- `6cded32fe0e839bc5252621d2c2278ed6a1a2028` — comptabilisation de tous les types d'échec ;
+- `385a821838f3380fdd1cd93808b18abd773325e8` — suppression du throttle de requêtes sur la route login ;
+- `a4ff8c53df7c5a7c41a7f4cdc7535fa2b4345fec` — tests de seuils, compteurs et remise à zéro ;
+- `dc60621c3455e3667c8c4762b3e6d766a1c394af` — test HTTP de réseau partagé ;
+- `71542986bf582f8d4564feceae6149fc5a66907e` — correction syntaxique du test ;
+- `a515185afb9a86b1f63850be5cc315327c821416` — test d'expiration des trois verrouillages.
+
+Le standard `docs/domains/identity/ID-I-002-AUTHENTICATION_STANDARD.md` est passé en version 1.1 pour formaliser les trois niveaux.
+
+**État : IMPLÉMENTATION COMMITÉE — VALIDATION LOCALE EN ATTENTE.** Ne pas marquer AUTH-03 comme validé avant confirmation des tests ciblés et de Pint par l'utilisateur.
