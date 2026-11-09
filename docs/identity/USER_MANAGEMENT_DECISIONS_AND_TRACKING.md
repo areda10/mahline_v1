@@ -1327,3 +1327,23 @@ Commits :
 **Validation locale confirmée par l'utilisateur le 9 novembre 2026 :** `php artisan test --filter=UserManagementServiceTest` et `php vendor/bin/pint --test` — VERTS.
 
 **État :** ID02-07 validé pour les cinq parcours de remplacement recensés. Les comptes sans hash courant, la compatibilité des comptes historiques et la suppression physique restent à examiner.
+
+
+## 20.33 — Cas limites et cycle de vie de l'historique des mots de passe
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les commandes locales :
+
+```bash
+php artisan test --filter=PasswordServiceTest
+php artisan test --filter=UserManagementServiceTest
+php vendor/bin/pint --test
+```
+
+Deux protections/tests ont été ajoutés sur `feature/Identity` :
+
+- **Hash courant absent :** `PasswordHistoryService::archiveCurrentPassword()` refuse désormais d'archiver un hash nul ou vide et lève une `InvalidArgumentException` explicite. Test : `test_password_history_refuses_to_archive_an_empty_current_hash`.
+- **Cycle de vie du compte :** `test_password_history_survives_soft_delete_and_cascades_on_force_delete` confirme que la suppression logique conserve l'historique et que la suppression physique exceptionnelle le supprime par cascade de la clé étrangère.
+
+Commit du test de cycle de vie : `b231483c25ab1fba5dfa5020fd3e8f7fbb840017`.
+
+**Limite de validation :** ces tests ne valident pas encore la compatibilité des anciens formats de hash ni le traitement des comptes historiques dont le hash aurait été créé par une ancienne version de l'application. Cet audit reste ouvert.
