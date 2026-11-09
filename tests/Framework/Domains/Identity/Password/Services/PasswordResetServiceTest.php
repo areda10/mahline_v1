@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
-use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
-use Mockery;
 use Tests\TestCase;
 
 final class PasswordResetServiceTest extends TestCase
@@ -522,7 +521,7 @@ final class PasswordResetServiceTest extends TestCase
 
         $service = new PasswordResetService(
             app(SessionService::class),
-            $audit,
+            app(\\App\\Domains\\Audit\\Services\\AuditService::class),
             app(PasswordHistoryService::class),
         );
 
