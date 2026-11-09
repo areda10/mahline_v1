@@ -52,6 +52,20 @@ final class EnsureActiveAuthenticationSession
             return redirect()->route('authentication.login');
         }
 
+        if ($this->sessions->hasExceededInactivityLimit($user, $authenticationSession)) {
+            $this->sessions->revoke($authenticationSession, 'inactivity_timeout');
+
+            Auth::logout();
+
+            $request->session()->invalidate();
+
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('authentication.login')
+                ->with('error', 'Votre session a expiré après une période d’inactivité.');
+        }
+
         $this->sessions->touch($authenticationSession);
 
         if ($user->must_change_password && ! $request->routeIs('password.force-change.edit', 'password.force-change.update', 'security.password.edit')) {
