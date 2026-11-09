@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.4
+- **Version :** 2.5
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1103,3 +1103,16 @@ php artisan test --filter=Password
 Cette validation confirme le test ciblé du service et l'ensemble des tests sélectionnés par le filtre global `Password`. Elle ne vaut pas validation de toute la suite Identity, ni des tests non sélectionnés par ce filtre.
 
 **Prochaine étape :** poursuivre les tests d'intégration/HTTP et exécuter la suite complète du domaine Identity.
+
+
+## 20.24 — Validation du contrôleur HTTP de réinitialisation
+
+Le 9 novembre 2026, l'utilisateur a confirmé que le test ciblé suivant est **VERT** :
+
+```bash
+php artisan test --filter=PasswordResetControllerTest
+```
+
+Cette validation couvre uniquement les tests sélectionnés par `PasswordResetControllerTest` dans l'environnement local. Elle ne vaut pas validation de l'ensemble des parcours Identity ni de la suite complète.
+
+**Prochaine étape :** poursuivre les tests HTTP/intégration ciblés restants, puis exécuter la suite complète du domaine Identity.
