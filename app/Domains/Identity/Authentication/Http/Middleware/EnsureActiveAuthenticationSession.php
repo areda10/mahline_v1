@@ -52,9 +52,7 @@ final class EnsureActiveAuthenticationSession
             return redirect()->route('authentication.login');
         }
 
-        if ($this->sessions->hasExceededInactivityLimit($user, $authenticationSession)) {
-            $this->sessions->revoke($authenticationSession, 'inactivity_timeout');
-
+        if ($this->sessions->expireIfInactive($user, $authenticationSession)) {
             Auth::logout();
 
             $request->session()->invalidate();
