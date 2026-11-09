@@ -1,6 +1,6 @@
 # MAHLINE — AUTHENTICATION STANDARD
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** GELÉ
 **Domain:** Identity / Authentication
 
@@ -84,14 +84,23 @@ A successful login must:
 
 ## 6. Failed authentication
 
-Authentication security tracks failed attempts independently for:
+Authentication security tracks failed attempts independently at three levels:
 
-* normalized email;
-* IP address.
+| Scope | Threshold | Window |
+|---|---:|---:|
+| Normalized account email | 5 failures | 15 minutes |
+| IP address | 30 failures | 15 minutes |
+| IP address + normalized email pair | 5 failures | 15 minutes |
 
-Account and IP lockouts are handled by `AuthenticationSecurityService`.
+All processed authentication failures consume the applicable counters, including unknown accounts, inactive accounts, unverified email addresses and invalid passwords. Requests rejected because a relevant counter is already locked do not increment that locked counter again.
 
-A locked account or locked IP must be rejected.
+A successful login clears only the normalized account counter and the matching IP + email pair counter. It never clears the shared IP counter, which expires naturally after its 15-minute window.
+
+Cache keys use HMAC fingerprints; raw email addresses and IP addresses are not exposed in cache key names. All application nodes serving authentication traffic must use the same shared cache backend and the same application key so that the limits are consistent across servers.
+
+The account, IP and IP + email lockouts are handled by `AuthenticationSecurityService`. The login route must not apply a second request-count throttle that also counts successful logins; the domain counters are failure-only.
+
+A locked account, IP or IP + email pair must be rejected. When both the IP and account limits are reached, the existing `ip_locked` login-history reason retains priority.
 
 ## 7. Client tracking
 
