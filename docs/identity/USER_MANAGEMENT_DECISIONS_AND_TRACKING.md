@@ -1553,3 +1553,38 @@ Commits :
 2. Examiner le fait que `AuthenticationController::login()` transforme toute `RuntimeException` remontée du workflow en `401`. Le message reste générique conformément à la décision de non-divulgation ; il faut toutefois distinguer une authentification refusée d'une panne technique inattendue afin de ne pas masquer un incident serveur. Aucun changement n'est fait ici, car un test transactionnel antérieur attend explicitement une réponse publique générique après un échec du workflow.
 
 **État : AUTH-07 EN COURS — code et tests ajoutés, validation locale en attente.**
+
+
+## 20.40 — Durcissement final des réponses de connexion AUTH-07
+
+Après la confirmation VERT des premiers tests AUTH-07, les deux points ouverts de l'audit ont été traités sur `feature/Identity`.
+
+### 1. Retrait de la route de diagnostic API
+
+- La route `GET /api/test-auth` a été retirée de `routes/api.php` : elle ne doit pas être exposée dans l'API de production.
+- Les tests de contrat Sanctum continuent de vérifier les statuts `401`, `200` et `403), mais enregistrent désormais leur route de diagnostic directement dans le contexte de test.
+- Les vraies routes API conservées sont les demandes de reset et la consultation autorisée des événements d'audit.
+
+### 2. Exceptions de refus d'authentification dédiées
+
+- L'exception existante `AuthenticationFailedException` est désormais utilisée pour les refus métier attendus dans `AuthenticationService` : IP verrouillée, compte verrouillé, compte inactif, e-mail non vérifié et identifiants incorrects.
+- `AuthenticationController::login()` capture uniquement `AuthenticationFailedException` et `ModelNotFoundException` pour produire le message public générique `Authentication failed.`.
+- Une `RuntimeException` inattendue (panne technique, erreur d'infrastructure ou autre incident) n'est plus convertie artificiellement en `401` ; elle remonte au gestionnaire d'exceptions et peut être signalée comme incident serveur.
+- Les tests de service ont été alignés sur le type d'exception métier explicite. Les tests de non-divulgation des réponses publiques restent en place.
+
+### Fichiers modifiés
+
+- `routes/api.php`
+- `app/Domains/Identity/Authentication/Services/AuthenticationService.php`
+- `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationController.php`
+- `tests/Feature/Domains/Identity/Authentication/Http/ApiAuthenticationResponseTest.php`
+- `tests/Framework/Domains/Identity/Authentication/Services/AuthenticationServiceTest.php`
+
+Commits :
+- `d5ecc18acb0bf77e4d05643d9c4ed3882e96bd82` — exception métier dédiée dans le service ;
+- `18db2a0140d9c6c7846b8a89c518fce549072837` — capture ciblée dans le contrôleur ;
+- `759803306490ea30f6cc111105a65856168b9d86` — retrait de la route diagnostic de production ;
+- `18d06053c3316f77a2306781662045c6fc1f09ba` — route de test déplacée dans le test API ;
+- `28c3f958d2af3a1af44126894ce6d5ceab27e5d8` — tests service alignés sur l'exception métier.
+
+**État : CODE MODIFIÉ — tests ciblés et Pint de cette dernière série à exécuter. AUTH-07 ne sera clôturé qu'après confirmation VERT.**
