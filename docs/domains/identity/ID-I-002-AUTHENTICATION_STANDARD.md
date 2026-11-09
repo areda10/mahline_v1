@@ -188,8 +188,10 @@ Changing this rule requires an explicit architecture decision and corresponding 
 
 ## 6.2 Dedicated authentication failure handling
 
-Expected authentication denials are represented by `AuthenticationFailedException` (IP/account/pair lock, inactive account, unverified email and invalid credentials). The Web/JSON login controller catches this business exception and returns the same generic public response. Unknown accounts continue to use the existing `ModelNotFoundException` path and the same generic response.
+Expected authentication denials are represented by `AuthenticationFailedException` (IP/account/pair lock, inactive account, unverified email and invalid credentials). The Web/JSON login controller catches only this business exception and returns the same generic public response. Unknown accounts are also represented by this dedicated exception, so unexpected Eloquent or infrastructure exceptions cannot be mistaken for invalid credentials.
 
 Unexpected runtime failures must not be translated into an authentication `401`. Infrastructure, persistence, programming and other unexpected failures must reach Laravel's exception handler so they can be treated as server-side incidents instead of being disguised as invalid credentials.
 
 The diagnostic `GET /api/test-auth` endpoint is not part of the production API. Authentication middleware and forced-password-change behavior are covered through a test-only route registered by the API feature test.
+
+Unexpected workflow failures are covered by a regression test: a simulated runtime/persistence failure must return `500`, not `401`, and must not leave an active Identity authentication session.
