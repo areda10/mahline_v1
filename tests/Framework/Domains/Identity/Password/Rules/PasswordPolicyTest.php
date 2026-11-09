@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Rules;
 
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
+use App\Domains\Identity\Users\Models\User;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -111,6 +112,84 @@ final class PasswordPolicyTest extends TestCase
             currentPassword: 'MahlinePassword12!',
             newPassword: 'MahlinePassword13!',
         );
+
+        $this->assertTrue(true);
+    }
+
+    public function test_password_must_not_contain_the_users_first_name(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Alexandra',
+            'last_name' => 'Karim',
+            'email' => 'contact@example.com',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('AlexandraSecure12!', $user);
+    }
+
+    public function test_password_must_not_contain_the_users_full_name(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Mina',
+            'last_name' => 'Karim',
+            'email' => 'contact@example.com',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('MinaKarimSecure12!', $user);
+    }
+
+    public function test_password_must_not_contain_the_users_email_local_part(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Mina',
+            'last_name' => 'Karim',
+            'email' => 'support-team42@example.com',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('SupportTeam42!Secure', $user);
+    }
+
+    public function test_password_must_not_contain_a_recognizable_email_fragment(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Mina',
+            'last_name' => 'Karim',
+            'email' => 'contact.support@example.com',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('ContactSecure12!', $user);
+    }
+
+    public function test_personal_information_check_ignores_case_and_separators(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Alexandra',
+            'last_name' => 'Karim',
+            'email' => 'contact@example.com',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        PasswordPolicy::validate('aLeX-anDraSecure12!', $user);
+    }
+
+    public function test_password_without_recognizable_personal_information_is_accepted(): void
+    {
+        $user = User::factory()->make([
+            'first_name' => 'Alexandra',
+            'last_name' => 'Karim',
+            'email' => 'contact@example.com',
+        ]);
+
+        PasswordPolicy::validate('DifferentSecure12!', $user);
 
         $this->assertTrue(true);
     }
