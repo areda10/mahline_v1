@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
+use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -355,4 +359,34 @@ final class PasswordServiceTest extends TestCase
         $this->assertStringNotContainsString('MahlinePassword12', $serialized);
         $this->assertStringNotContainsString('MahlinePassword13!', $serialized);
     }
+
+    public function test_audit_failure_rolls_back_password_change_and_history(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $user->createToken('rollback-test');
+
+        $audit = Mockery::mock(AuditService::class);
+        $audit->shouldReceive('record')->once()
+            ->andThrow(new RuntimeException('Simulated audit failure.'));
+
+        $service = new PasswordService(
+            app(SessionService::class),
+            $audit,
+            app(PasswordHistoryService::class),
+        );
+
+        try {
+            $service->changePassword($user, 'MahlinePassword12', 'MahlinePassword13!');
+            $this->fail('Expected audit failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Simulated audit failure.', $exception->getMessage());
+        }
+
+        $user->refresh();
+        $this->assertTrue(Hash::check('MahlinePassword12', (string) $user->password));
+        $this->assertFalse(Hash::check('MahlinePassword13!', (string) $user->password));
+        $this->assertDatabaseCount('user_password_histories', 0);
+        $this->assertSame(1, $user->tokens()->count());
+    }
+
 }
