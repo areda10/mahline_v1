@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.8
+- **Version :** 2.9
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1209,3 +1209,26 @@ Le contrôle de concurrence de la modification du mot de passe a été corrigé 
 - `php vendor/bin/pint --test` — VERT.
 
 **État :** correction appliquée dans le fichier local et tests ciblés/style confirmés verts par l'utilisateur. Le SHA du commit applicatif n'est pas enregistré dans ce suivi.
+
+
+## 20.27 — Tests de rejet des informations personnelles dans les mots de passe
+
+Des tests complémentaires ont été ajoutés à `tests/Framework/Domains/Identity/Password/Rules/PasswordPolicyTest.php` afin de couvrir le contrôle des informations personnelles déjà implémenté dans `PasswordPolicy`.
+
+Couverture ajoutée :
+- rejet du prénom ;
+- rejet du nom complet ;
+- rejet de la partie locale de l'adresse e-mail ;
+- rejet d'un fragment reconnaissable de l'adresse e-mail ;
+- détection insensible à la casse et aux séparateurs ;
+- acceptation d'un mot de passe ne contenant pas d'information personnelle reconnaissable.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordPolicyTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+Commit des tests : `8814862caca5dae7c7e9e226e6dc766ed9cb74db`.
+
+Aucune modification de la politique applicative n'a été faite dans cette étape. Les tests Unicode détaillés, les limites et les messages de validation restent à compléter dans le backlog.
+
+**Décision de suivi :** le contrôle des mots de passe courants ou compromis (ID01-03) est reporté à une étape ultérieure à la demande de l'utilisateur. Il reste explicitement ouvert dans le backlog et ne doit pas être considéré comme implémenté ou validé.
