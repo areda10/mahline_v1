@@ -1255,3 +1255,25 @@ Aucun code applicatif n'a été modifié.
 - `php vendor/bin/pint --test` — VERT.
 
 **État :** ID01-17 est validé pour cette couverture. Le contrôle des mots de passe courants/compromis ID01-03 reste reporté à la demande de l'utilisateur.
+
+
+## 20.29 — Atomicité de l'historique des mots de passe et rollback des parcours
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les quatre suites de tests ciblées couvrant une panne de persistance du journal d'audit pendant une opération de changement de mot de passe :
+
+```bash
+php artisan test tests/Framework/Domains/Identity/Password/Services/PasswordServiceTest.php tests/Framework/Domains/Identity/Password/Services/PasswordResetServiceTest.php tests/Feature/Domains/Identity/Password/Http/Controllers/ForcedPasswordChangeControllerTest.php tests/Feature/Domains/Identity/UserManagement/Http/Controllers/UserInvitationControllerTest.php
+php vendor/bin/pint --test
+```
+
+Les tests provoquent une exception lors de la création de l'événement d'audit, puis vérifient que la transaction annule les modifications déjà effectuées :
+- changement volontaire : ancien mot de passe conservé, aucun historique ajouté et token API non révoqué ;
+- reset : ancien mot de passe conservé, token de reset toujours inutilisé, aucun historique ajouté et token API non révoqué ;
+- changement forcé : mot de passe temporaire conservé, obligation de changement maintenue, aucun historique ajouté et token API non révoqué ;
+- acceptation d'invitation : compte toujours pending, e-mail non vérifié, ancien mot de passe conservé, invitation non consommée et aucun historique ajouté.
+
+Aucun code applicatif n'a été modifié dans cette étape. Le service `PasswordHistoryService` documente que l'archivage doit être exécuté dans la même transaction que le remplacement du mot de passe ; les quatre tests de régression vérifient désormais le rollback en cas d'échec d'audit.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :** les quatre suites ciblées et `php vendor/bin/pint --test` sont VERTS.
+
+**État :** ID02-02 et la couverture rollback d'ID02-06 sont validés pour les quatre parcours testés. Les contrôles de concurrence, de réutilisation des cinq anciens mots de passe, de rotation, de compatibilité et de suppression restent à auditer.
