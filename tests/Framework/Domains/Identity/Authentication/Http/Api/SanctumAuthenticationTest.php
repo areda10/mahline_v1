@@ -13,6 +13,13 @@ final class SanctumAuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->registerTestAuthenticationRoute();
+    }
+
     public function test_guest_cannot_access_protected_api(): void
     {
         $response = $this->getJson('/api/test-auth');
