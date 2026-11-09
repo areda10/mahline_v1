@@ -10,8 +10,8 @@ use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use RuntimeException;
+use Tests\TestCase;
 
 final class AuthenticationWorkflowTest extends TestCase
 {
