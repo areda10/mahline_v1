@@ -16,6 +16,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -270,6 +271,29 @@ final class UserManagementServiceTest extends TestCase
             $target,
             $cooperative,
         );
+    }
+
+    public function test_root_temporary_activation_archives_the_existing_password(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+            'password' => 'ExistingPassword2026!',
+            'email_verified_at' => null,
+        ]);
+
+        $activated = $this->service->activateAndVerifyUser($root, $target);
+
+        $this->assertSame(UserStatus::Active, $activated->status);
+        $this->assertTrue($activated->must_change_password);
+        $this->assertTrue(Hash::check('MahlineMahline', (string) $activated->password));
+
+        $history = DB::table('user_password_histories')
+            ->where('user_id', $target->getKey())
+            ->first();
+
+        $this->assertNotNull($history);
+        $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $history->password_hash));
     }
 
     private function createUserWithRole(
