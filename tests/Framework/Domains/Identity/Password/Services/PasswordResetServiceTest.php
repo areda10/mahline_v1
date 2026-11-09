@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Mockery;
 use Tests\TestCase;
 
 final class PasswordResetServiceTest extends TestCase
@@ -504,4 +509,41 @@ final class PasswordResetServiceTest extends TestCase
         $this->assertStringNotContainsString('Secure!Current2026', $serialized);
         $this->assertStringNotContainsString('Secure!NewPass2026', $serialized);
     }
+
+    public function test_audit_failure_rolls_back_reset_password_history_token_and_api_token_revocation(): void
+    {
+        $user = User::factory()->create(['password' => 'Secure!Current2026']);
+        $token = $this->passwordResetService->createToken($user);
+        $user->createToken('rollback-test');
+
+        $audit = Mockery::mock(AuditService::class);
+        $audit->shouldReceive('record')->once()
+            ->andThrow(new \\RuntimeException('Simulated audit failure.'));
+
+        $service = new PasswordResetService(
+            app(SessionService::class),
+            $audit,
+            app(PasswordHistoryService::class),
+        );
+
+        try {
+            $service->resetPassword($token, 'Secure!NewPass2026');
+            $this->fail('Expected audit failure.');
+        } catch (\\RuntimeException $exception) {
+            $this->assertSame('Simulated audit failure.', $exception->getMessage());
+        }
+
+        $user->refresh();
+        $resetRecord = \\DB::table('password_reset_tokens')
+            ->where('user_id', $user->getKey())
+            ->first();
+
+        $this->assertTrue(Hash::check('Secure!Current2026', (string) $user->password));
+        $this->assertFalse(Hash::check('Secure!NewPass2026', (string) $user->password));
+        $this->assertNotNull($resetRecord);
+        $this->assertNull($resetRecord->used_at);
+        $this->assertDatabaseCount('user_password_histories', 0);
+        $this->assertSame(1, $user->tokens()->count());
+    }
+
 }
