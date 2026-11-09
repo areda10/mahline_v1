@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.6
+- **Version :** 2.7
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -44,7 +44,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 - [ ] **ID01-01** Auditer tous les points d'entrée qui créent ou modifient un mot de passe : création administrative, activation manuelle, invitation, activation, changement volontaire, changement forcé, reset et éventuels endpoints API.
 - [ ] **ID01-02** Faire passer chaque parcours par un validateur commun, sans possibilité de contourner la politique.
-- [ ] **ID01-03** Implémenter la vérification des mots de passe courants/compromis avec une approche respectueuse de la confidentialité (k-anonymity ou mécanisme équivalent).
+- [ ] **ID01-03** (REPORTÉ — à reprendre ultérieurement à la demande de l'utilisateur) Implémenter la vérification des mots de passe courants/compromis avec une approche respectueuse de la confidentialité (k-anonymity ou mécanisme équivalent).
 - [ ] **ID01-04** Concevoir la liste locale de mots de passe refusés : format documenté, source, version, date, taille, empreinte SHA-256 et statut de validité.
 - [ ] **ID01-05** Implémenter l'import sécurisé de la liste : provenance vérifiée, intégrité vérifiée, rejet des listes incomplètes/corrompues et conservation de la dernière version valide.
 - [ ] **ID01-06** Permettre la mise à jour sans modification du code applicatif.
@@ -58,8 +58,8 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [ ] **ID01-14** Pendant le changement obligatoire, bloquer l'accès au dashboard et aux autres routes métier ; autoriser uniquement changement de mot de passe et déconnexion.
 - [ ] **ID01-15** Envoyer l'e-mail informatif prévu lorsqu'un changement devient obligatoire, sans mot de passe ni lien de reset non sollicité.
 - [ ] **ID01-16** Présenter à l'utilisateur les motifs de refus utiles sans révéler les détails internes de détection.
-- [ ] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation.
-- [ ] **ID01-18** Exécuter et valider les tests existants de `PasswordPolicyTest` après le commit de correction des fixtures.
+- [ ] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation. Couverture ajoutée pour prénom, nom complet, partie locale et fragments d'e-mail, normalisation casse/séparateurs et acceptation sans information personnelle ; les cas Unicode, limites détaillées et messages restent à compléter.
+- [x] **ID01-18** Exécuter et valider `php artisan test --filter=PasswordPolicyTest` après l'ajout des tests de données personnelles — VERT confirmé par l'utilisateur le 9 novembre 2026 ; Pint `php vendor/bin/pint --test` également VERT.
 - [x] **ID01-19** Corriger les fixtures de `PasswordServiceTest` pour respecter ID-01 et remplacer le rejet erroné des espaces par un test d'acceptation (`Mahline Password13!`). Commit `8a31970f8d983df7926f3a13d696903edd0471b3` ; exécution locale du test ciblé encore à confirmer.
 
 ### ID-02 — Historique des mots de passe
@@ -334,6 +334,17 @@ Le parcours d'activation manuelle et de changement obligatoire du mot de passe e
 
 Le mot de passe temporaire reste `MahlineMahline` jusqu'à une évolution ultérieure vers un mot de passe aléatoire. Sa communication est manuelle ; aucune livraison automatique par e-mail ou appel vocal n'est incluse. L'audit final du diff reste à faire.
 
+
+## Validation des tests de données personnelles — 9 novembre 2026
+
+- [x] Ajouter les tests de rejet du prénom, du nom complet, de la partie locale de l'e-mail et d'un fragment d'e-mail reconnaissable.
+- [x] Ajouter un test confirmant que la détection ignore la casse et les séparateurs.
+- [x] Ajouter un test confirmant qu'un mot de passe ne contenant pas d'information personnelle reconnaissable reste accepté.
+- [x] Confirmer `php artisan test --filter=PasswordPolicyTest` — VERT selon l'utilisateur.
+- [x] Confirmer `php vendor/bin/pint --test` — VERT selon l'utilisateur.
+- Commit des tests : `8814862caca5dae7c7e9e226e6dc766ed9cb74db`.
+
+La tâche ID01-17 reste partiellement ouverte pour les cas Unicode, les limites détaillées et les messages de validation. La vérification des mots de passe courants/compromis (ID01-03) est explicitement reportée et reste au backlog.
 
 ## Validation de la correction de concurrence du changement de mot de passe — 9 novembre 2026
 
