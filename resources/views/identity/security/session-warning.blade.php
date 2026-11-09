@@ -30,7 +30,6 @@
             <div style="width:min(100%,480px);background:#fff;border-radius:12px;padding:26px;box-shadow:0 18px 55px rgba(0,0,0,.25)">
                 <h2 id="mahline-session-warning-title" style="margin-top:0">Votre session va expirer</h2>
                 <p id="mahline-session-warning-description">
-                    Pour protéger votre compte, votre session expirera dans
                     <span id="mahline-session-description-text">Pour protéger votre compte, votre session expirera dans</span>
                     <strong id="mahline-session-countdown" aria-live="off">02:00</strong>
                     <span id="mahline-session-reason">en raison de l’inactivité.</span>
@@ -105,7 +104,6 @@
 
                 const dictionary = messages[language] || messages.fr;
                 const title = document.getElementById('mahline-session-warning-title');
-                const description = document.getElementById('mahline-session-warning-description');
                 const descriptionText = document.getElementById('mahline-session-description-text');
                 const reasonText = document.getElementById('mahline-session-reason');
                 const logoutButton = warning.querySelector('form button');
