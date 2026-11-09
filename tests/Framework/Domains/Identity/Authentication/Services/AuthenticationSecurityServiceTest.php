@@ -169,7 +169,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $service = app(AuthenticationSecurityService::class);
         $ipAddress = '192.0.2.10';
 
-        for ($attempt = 0; $attempt < 5; $attempt++) {
+        for ($attempt = 0; $attempt < 30; $attempt++) {
             $service->recordFailedAttemptByIp($ipAddress);
         }
 
@@ -185,7 +185,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $email = 'independent@example.com';
         $ipAddress = '192.0.2.20';
 
-        for ($attempt = 0; $attempt < 5; $attempt++) {
+        for ($attempt = 0; $attempt < 30; $attempt++) {
             $service->recordFailedAttemptByIp($ipAddress);
         }
 
@@ -216,14 +216,14 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $ipAddress = '192.0.2.30';
 
         self::assertSame(
-            5,
+            30,
             $service->remainingIpAttempts($ipAddress),
         );
 
         $service->recordFailedAttemptByIp($ipAddress);
 
         self::assertSame(
-            4,
+            29,
             $service->remainingIpAttempts($ipAddress),
         );
 
@@ -231,7 +231,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $service->recordFailedAttemptByIp($ipAddress);
 
         self::assertSame(
-            2,
+            27,
             $service->remainingIpAttempts($ipAddress),
         );
     }
@@ -241,20 +241,19 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $service = app(AuthenticationSecurityService::class);
         $ipAddress = '192.0.2.40';
 
-        $service->recordFailedAttemptByIp($ipAddress);
-        $service->recordFailedAttemptByIp($ipAddress);
-        $service->recordFailedAttemptByIp($ipAddress);
-        $service->recordFailedAttemptByIp($ipAddress);
+        for ($attempt = 0; $attempt < 4; $attempt++) {
+            $service->recordFailedAttemptByIp($ipAddress);
+        }
 
         self::assertSame(
-            1,
+            26,
             $service->remainingIpAttempts($ipAddress),
         );
 
         $service->clearFailedIpAttempts($ipAddress);
 
         self::assertSame(
-            5,
+            30,
             $service->remainingIpAttempts($ipAddress),
         );
 
@@ -287,7 +286,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $service = app(AuthenticationSecurityService::class);
         $ipAddress = '192.0.2.50';
 
-        for ($attempt = 0; $attempt < 5; $attempt++) {
+        for ($attempt = 0; $attempt < 30; $attempt++) {
             $service->recordFailedAttemptByIp($ipAddress);
         }
 
@@ -306,7 +305,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $service = app(AuthenticationSecurityService::class);
         $ipAddress = '192.0.2.60';
 
-        for ($attempt = 0; $attempt < 5; $attempt++) {
+        for ($attempt = 0; $attempt < 30; $attempt++) {
             $service->recordFailedAttemptByIp($ipAddress);
         }
 
@@ -333,12 +332,12 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $service->recordFailedAttemptByIp($secondIp);
 
         self::assertSame(
-            3,
+            28,
             $service->remainingIpAttempts($firstIp),
         );
 
         self::assertSame(
-            4,
+            29,
             $service->remainingIpAttempts($secondIp),
         );
 
@@ -358,7 +357,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         $lockedIp = '192.0.2.80';
         $otherIp = '192.0.2.81';
 
-        for ($attempt = 0; $attempt < 5; $attempt++) {
+        for ($attempt = 0; $attempt < 30; $attempt++) {
             $service->recordFailedAttemptByIp($lockedIp);
         }
 
@@ -373,7 +372,7 @@ final class AuthenticationSecurityServiceTest extends TestCase
         );
 
         self::assertSame(
-            4,
+            29,
             $service->remainingIpAttempts($otherIp),
         );
     }
