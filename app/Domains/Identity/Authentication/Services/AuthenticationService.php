@@ -45,6 +45,35 @@ final class AuthenticationService extends BaseService
             ->first();
 
         /*
+         * IP lock takes precedence over account lock. This is an explicit
+         * security decision: when both limits are exhausted, the event
+         * recorded in login history must be ip_locked.
+         */
+        /*
+         * Verify IP lock.
+         */
+        if (
+            $context->ipAddress !== null
+            && $this->securityService->isIpLocked(
+                $context->ipAddress,
+            )
+        ) {
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'ip_locked',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new RuntimeException(
+                'IP address is temporarily locked.',
+            );
+        }
+
+        /*
          * Apply the account-based lock consistently, including email
          * addresses that do not currently belong to a user. This avoids
          * making the lockout behavior depend on account existence.
@@ -130,30 +159,6 @@ final class AuthenticationService extends BaseService
 
             throw new RuntimeException(
                 'Email address is not verified.',
-            );
-        }
-
-        /*
-         * Verify IP lock.
-         */
-        if (
-            $context->ipAddress !== null
-            && $this->securityService->isIpLocked(
-                $context->ipAddress,
-            )
-        ) {
-            $this->loginHistoryService->recordFailure(
-                email: $email,
-                reason: 'ip_locked',
-                user: $user,
-                ipAddress: $context->ipAddress,
-                userAgent: $context->userAgent,
-                browser: $context->browser,
-                device: $context->device,
-            );
-
-            throw new RuntimeException(
-                'IP address is temporarily locked.',
             );
         }
 
