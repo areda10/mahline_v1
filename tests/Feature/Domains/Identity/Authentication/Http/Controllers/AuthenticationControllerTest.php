@@ -465,4 +465,63 @@ final class AuthenticationControllerTest extends TestCase
         }
     }
 
+
+    public function test_browser_login_validation_errors_redirect_back_to_the_form(): void
+    {
+        $response = $this
+            ->from(route('authentication.login'))
+            ->post($this->loginUrl, []);
+
+        $response->assertRedirect(route('authentication.login'));
+        $response->assertSessionHasErrors(['email', 'password']);
+    }
+
+    public function test_browser_login_failure_redirects_with_the_generic_error(): void
+    {
+        $response = $this
+            ->from(route('authentication.login'))
+            ->post($this->loginUrl, [
+                'email' => 'unknown-browser-login@example.com',
+                'password' => 'WrongPassword123!',
+            ]);
+
+        $response->assertRedirect(route('authentication.login'));
+        $response->assertSessionHasErrors([
+            'email' => 'Authentication failed.',
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_json_logout_returns_success_after_revoking_only_the_current_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'json-logout@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+        ]);
+
+        $loginResponse = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'ValidPassword123!',
+            ]);
+
+        $loginResponse->assertOk();
+
+        $authenticationSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        $this->postJson($this->logoutUrl)
+            ->assertOk()
+            ->assertExactJson([
+                'message' => 'Logout successful.',
+            ]);
+
+        $this->assertGuest();
+        $this->assertNotNull($authenticationSession->fresh()->revoked_at);
+    }
+
 }
