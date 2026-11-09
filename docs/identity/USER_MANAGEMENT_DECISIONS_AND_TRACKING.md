@@ -1293,3 +1293,20 @@ Cette couverture confirme l'émission du verrou par le service et le comportemen
 **Commit du test :** `ed0261c97ade2bdebc9320e9c3e7f395265a753c` (dernier commit du fichier de test).
 
 **État :** ID02-03 validé pour le verrouillage du service et la contention MySQL. Les tests de réutilisation des cinq anciens mots de passe, rotation, application à tous les parcours, compatibilité et suppression restent à auditer.
+
+## 20.31 — Refus de réutilisation et rotation de l'historique des mots de passe
+
+Deux tests complémentaires ont été ajoutés dans `tests/Framework/Domains/Identity/Password/Services/PasswordServiceTest.php` :
+
+- `test_password_change_rejects_each_of_the_five_previous_passwords` : après cinq changements successifs, chacun des cinq anciens mots de passe est refusé ; le mot de passe courant reste inchangé après les tentatives de réutilisation.
+- `test_password_history_retains_only_the_five_most_recent_password_hashes` : après six changements, l'historique conserve exactement les cinq hashes les plus récents et élimine le plus ancien.
+
+Aucun code applicatif n'a été modifié dans cette étape : le service d'historique existant est couvert par ces tests supplémentaires.
+
+**Commit des tests :** `f4595f26502e0e74d4853fb0dbe09a5d70f6d11d`.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordServiceTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+**État :** ID02-04 et ID02-05 validés. La vérification de l'application commune de l'historique aux différents parcours, des comptes historiques et de la suppression physique reste à réaliser.
