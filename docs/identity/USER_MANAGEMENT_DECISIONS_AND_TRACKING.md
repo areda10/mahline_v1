@@ -1411,3 +1411,34 @@ Commits :
 **État :** VALIDÉ le 9 novembre 2026 après confirmation utilisateur : `AuthenticationServiceTest`, `AuthenticationControllerTest` et `php vendor/bin/pint --test` verts.
 
 **Correction après retour de test :** le contrôle du blocage IP a été déplacé avant le contrôle du blocage du compte. La décision existante est conservée : si les deux limites sont atteintes, `login_histories.reason` doit être `ip_locked`. Commit : `bfa963f7c0e47204fa4ede19230a609589bc826a`. Tests ciblés et Pint confirmés verts par l'utilisateur le 9 novembre 2026.
+
+
+## 20.37 — Audit de la limitation des tentatives par compte et par IP (AUTH-03)
+
+Audit du code sur `feature/Identity` le 9 novembre 2026.
+
+### État actuel constaté
+
+- `AuthenticationSecurityService` utilise le même seuil de 5 échecs et la même durée de 15 minutes pour le compte et pour l'adresse IP.
+- Le compteur IP est incrémenté uniquement lors d'un mot de passe incorrect sur un compte actif et vérifié. Les adresses inconnues, les comptes inactifs et les e-mails non vérifiés ne consomment pas ce compteur.
+- Une authentification réussie efface le compteur IP complet. Comme ce compteur est partagé par tous les utilisateurs d'une même IP, un utilisateur peut effacer les échecs d'autres utilisateurs.
+- La route POST `authentication.login.store` applique en plus `throttle:5,1`, une limitation Laravel par IP qui peut bloquer un réseau partagé avant les contrôles métier Identity.
+- Le compteur par e-mail est global à l'adresse normalisée et protège donc déjà contre une rotation d'adresses IP pour attaquer un compte donné.
+
+### Risques identifiés
+
+1. Faux blocage des utilisateurs derrière une IP partagée avec un seuil IP de seulement cinq tentatives.
+2. Contournement partiel du compteur IP en utilisant des comptes inconnus, inactifs ou non vérifiés.
+3. Effacement des compteurs IP par une connexion réussie provenant du même réseau.
+4. Limitation de route trop stricte et indépendante des compteurs métier.
+
+### Proposition de correction
+
+- Conserver le seuil par compte à 5 échecs sur 15 minutes.
+- Porter le seuil de blocage IP à 30 échecs sur 15 minutes afin de réduire les faux positifs sur les réseaux partagés.
+- Incrémenter le compteur IP pour chaque échec d'authentification effectivement traité : compte inconnu, compte inactif, e-mail non vérifié et mot de passe incorrect. Ne pas incrémenter à nouveau un compteur déjà verrouillé.
+- Ne jamais effacer le compteur IP partagé après la connexion réussie d'un utilisateur ; son expiration reste gérée par sa fenêtre de 15 minutes.
+- Remplacer `throttle:5,1` par une limitation nommée combinant une limite IP globale plus tolérante et une limite courte par couple IP/e-mail normalisé, tout en laissant le compteur métier par compte protéger contre les attaques distribuées.
+- Protéger les clés de cache en utilisant des identifiants hachés plutôt que des adresses e-mail/IP en clair.
+
+**État :** audit effectué ; implémentation et tests de non-régression à réaliser. La proposition de seuil IP (30 échecs / 15 minutes) est une recommandation technique à valider avant modification du comportement.
