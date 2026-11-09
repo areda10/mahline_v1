@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.5
+- **Version :** 2.6
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -253,6 +253,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [x] **VAL-17** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest` après l'ajout des tests de régression de session — VERT confirmé par l'utilisateur le 9 novembre 2026.
 - [x] **VAL-18** Exécuter `php vendor/bin/pint --test` après les changements d'activation manuelle — VERT confirmé par l'utilisateur le 9 novembre 2026.
 - [x] **VAL-19** Exécuter `php artisan test` après les changements d'activation manuelle — VERT confirmé par l'utilisateur le 9 novembre 2026 ; aucun décompte n'a été communiqué pour cette exécution.
+- [x] **VAL-20** Corriger la validation contextuelle du mot de passe dans `ForcedPasswordChangeController` : exécuter `PasswordPolicy::validate()` et `PasswordPolicy::validateChange()` après `lockForUpdate()`, sur `$lockedUser`, dans la transaction ; tests `ForcedPasswordChangeControllerTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.
 
 ---
 
@@ -332,3 +333,14 @@ Le parcours d'activation manuelle et de changement obligatoire du mot de passe e
 - [x] Valider `ForcedPasswordChangeControllerTest`, `php vendor/bin/pint --test` et `php artisan test` — résultats verts confirmés par l'utilisateur.
 
 Le mot de passe temporaire reste `MahlineMahline` jusqu'à une évolution ultérieure vers un mot de passe aléatoire. Sa communication est manuelle ; aucune livraison automatique par e-mail ou appel vocal n'est incluse. L'audit final du diff reste à faire.
+
+
+## Validation de la correction de concurrence du changement de mot de passe — 9 novembre 2026
+
+- [x] Déplacer les validations contextuelles du mot de passe à l'intérieur de la transaction, après le verrouillage de l'utilisateur.
+- [x] Utiliser les données de l'utilisateur verrouillé (`$lockedUser`) pour éviter une validation contextuelle sur un état devenu obsolète.
+- [x] Préserver la conversion des erreurs de politique en erreurs de formulaire.
+- [x] Confirmer `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT selon l'utilisateur.
+- [x] Confirmer `php vendor/bin/pint --test` — VERT selon l'utilisateur.
+
+Le changement ne modifie pas les workflows d'invitation ni le changement volontaire de mot de passe. La validation globale complète devra être relancée après les prochains changements significatifs.
