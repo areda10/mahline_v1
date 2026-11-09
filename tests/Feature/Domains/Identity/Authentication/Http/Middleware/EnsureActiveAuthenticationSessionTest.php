@@ -58,9 +58,14 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         $currentStore = $this->sessionStore();
         $expiredSession = $this->createAuthenticationSession($user, $currentStore);
 
+        // Generate the Laravel session ID first, then persist that exact ID
+        // in AuthenticationSession. This avoids testing with a hand-crafted
+        // identifier that may not satisfy the session handler's ID rules.
+        $otherStore = $this->sessionStore();
+
         $otherSession = app(SessionService::class)->create(
             user: $user,
-            sessionId: 'other-active-device-session',
+            sessionId: $otherStore->getId(),
             ipAddress: '127.0.0.2',
             userAgent: 'Other PHPUnit browser',
             browser: 'Other Test Browser',
@@ -85,8 +90,6 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         $this->assertNotNull($expiredSession->fresh()->revoked_at);
         $this->assertNull($currentStore->get('authentication_session_id'));
 
-        // Construct the store with the persisted session ID before starting it.
-        $otherStore = $this->sessionStore($otherSession->session_id);
         $otherRequest = $this->requestFor($user, $otherStore, $otherSession);
         $otherResponse = $this->middleware()->handle(
             $otherRequest,
