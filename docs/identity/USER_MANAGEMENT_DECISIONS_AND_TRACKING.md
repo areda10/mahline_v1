@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.2
-- **Dernière mise à jour :** 8 novembre 2026
+- **Version :** 2.3
+- **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
 - **Statut :** décisions fonctionnelles validées ; implémentation à auditer
@@ -1070,4 +1070,22 @@ Plusieurs tests de changement de mot de passe fournissent comme nouveau mot de p
 
 Un test supplémentaire doit être corrigé sur le plan fonctionnel : `test_change_password_rejects_password_with_spaces` affirme que les espaces sont interdits, alors que la décision ID-01 autorise explicitement les espaces et caractères Unicode. Son scénario doit devenir un test d'acceptation d'un mot de passe contenant des espaces et un caractère spécial, par exemple `Mahline Password13!`.
 
-**État :** diagnostic confirmé par lecture du code et des tests sur GitHub. Aucune modification applicative ni correction de ce fichier de test n'est encore commitée. La prochaine action est de corriger uniquement les fixtures/scénarios de tests concernés, puis de relancer d'abord `php artisan test --filter=PasswordServiceTest`, ensuite `php artisan test --filter=Password`.
+**Correction appliquée le 9 novembre 2026 :**
+- Tous les scénarios de réussite et les scénarios où l'erreur attendue porte sur le mot de passe courant utilisent désormais `MahlinePassword13!`, conforme à ID-01.
+- Le scénario qui rejetait les espaces a été remplacé par `test_change_password_accepts_password_with_spaces`, qui vérifie qu'un mot de passe valide contenant un espace (`Mahline Password13!`) est accepté et correctement haché.
+- Aucun changement n'a été apporté à `PasswordPolicy.php` ni au comportement applicatif.
+
+**Commit :** `8a31970f8d983df7926f3a13d696903edd0471b3`.
+
+**Vérification du dépôt :** le fichier a été relu après commit ; aucune occurrence de `MahlinePassword13` sans caractère spécial ne subsiste dans ce test, le nouveau test d'acceptation des espaces est présent.
+
+**État des tests :** à confirmer par l'utilisateur. Exécuter d'abord `php artisan test --filter=PasswordServiceTest`, puis, si vert, `php artisan test --filter=Password`.
+
+
+## 20.22 — Correction des tests PasswordService
+
+Le 9 novembre 2026, après accord de l'utilisateur, le fichier `PasswordServiceTest.php` a été corrigé sur `feature/Identity` selon la politique ID-01 : fixtures conformes avec caractère spécial et test d'acceptation des espaces. La politique applicative n'a pas été modifiée.
+
+Commit : `8a31970f8d983df7926f3a13d696903edd0471b3`.
+
+La correction est commitée et vérifiée sur GitHub, mais les tests locaux ne sont pas encore confirmés verts. Commande suivante : `php artisan test --filter=PasswordServiceTest`.
