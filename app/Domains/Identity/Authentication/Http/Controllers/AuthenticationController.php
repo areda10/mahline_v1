@@ -73,7 +73,7 @@ final class AuthenticationController
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Authentication failed.',
-                ], 404);
+                ], 401);
             }
 
             return back()
@@ -84,13 +84,13 @@ final class AuthenticationController
         } catch (RuntimeException $exception) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => $exception->getMessage(),
+                    'message' => 'Authentication failed.',
                 ], 401);
             }
 
             return back()
                 ->withErrors([
-                    'email' => $exception->getMessage(),
+                    'email' => 'Authentication failed.',
                 ])
                 ->withInput($request->only('email'));
         }
