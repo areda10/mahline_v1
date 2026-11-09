@@ -1589,3 +1589,25 @@ Commits :
 - `28c3f958d2af3a1af44126894ce6d5ceab27e5d8` — tests service alignés sur l'exception métier.
 
 **État : CODE MODIFIÉ — tests ciblés et Pint de cette dernière série à exécuter. AUTH-07 ne sera clôturé qu'après confirmation VERT.**
+
+
+## 20.41 — Validation du contrat HTTP Web/API (AUTH-07)
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERT** les tests ciblés de la dernière série AUTH-07 ainsi que Pint. AUTH-07 est donc clôturé.
+
+La validation porte sur :
+- négociation correcte HTML/JSON du gestionnaire d'exceptions ;
+- réponses publiques génériques et uniformes pour les refus d'authentification ;
+- distinction entre refus métier (AuthenticationFailedException, réponse 401) et erreur technique inattendue (remontée au gestionnaire d'exceptions, réponse 500) ;
+- retrait de la route de diagnostic /api/test-auth de l'API de production ;
+- tests de contrat API exécutés avec une route de test enregistrée uniquement dans le contexte de test.
+
+Les commits applicatifs et tests de la série AUTH-07 sont consignés en sections 20.39 et 20.40.
+
+**État : AUTH-07 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
+
+## 20.42 — Début de l'audit des sessions (SESS-01)
+
+Après clôture d'AUTH-07, l'audit Identity reprend sur la gestion de l'expiration des sessions par rôle. Le premier contrôle porte sur les délais d'inactivité serveur : 15 minutes pour super_admin_root, 30 minutes pour super_admin, 30 minutes pour cooperative_admin et 60 minutes pour user. Aucun changement applicatif n'est déclaré avant inspection des middlewares, de la configuration de session, des routes et des tests existants.
+
+**État : À AUDITER — inspection du code réel de feature/Identity.**
