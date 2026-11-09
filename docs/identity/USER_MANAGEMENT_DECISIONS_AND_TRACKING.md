@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.9
+- **Version :** 3.0
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1232,3 +1232,26 @@ Commit des tests : `8814862caca5dae7c7e9e226e6dc766ed9cb74db`.
 Aucune modification de la politique applicative n'a été faite dans cette étape. Les tests Unicode détaillés, les limites et les messages de validation restent à compléter dans le backlog.
 
 **Décision de suivi :** le contrôle des mots de passe courants ou compromis (ID01-03) est reporté à une étape ultérieure à la demande de l'utilisateur. Il reste explicitement ouvert dans le backlog et ne doit pas être considéré comme implémenté ou validé.
+
+
+## 20.28 — Couverture Unicode et messages de la politique de mot de passe
+
+Le 9 novembre 2026, les tests de `tests/Framework/Domains/Identity/Password/Rules/PasswordPolicyTest.php` ont été complétés pour couvrir les comportements Unicode et les messages exacts des erreurs de `PasswordPolicy`.
+
+Couverture ajoutée :
+- acceptation des majuscules et minuscules accentuées ;
+- acceptation des chiffres arabes Unicode ;
+- acceptation d'un caractère spécial Unicode ;
+- vérification que les lettres Unicode et les espaces ne satisfont pas l'exigence de caractère spécial ;
+- vérification du calcul de longueur en caractères Unicode ;
+- vérification exacte des messages pour longueur minimale/maximale, majuscule, minuscule, chiffre, caractère spécial, information personnelle et nouveau mot de passe identique à l'ancien.
+
+Aucun code applicatif n'a été modifié.
+
+**Commit des tests :** `45290bceefc84158f1158ecf7b626537e9682c43`.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordPolicyTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+**État :** ID01-17 est validé pour cette couverture. Le contrôle des mots de passe courants/compromis ID01-03 reste reporté à la demande de l'utilisateur.
