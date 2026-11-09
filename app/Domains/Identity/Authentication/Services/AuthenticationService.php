@@ -45,11 +45,35 @@ final class AuthenticationService extends BaseService
             ->first();
 
         /*
+         * Apply the account-based lock consistently, including email
+         * addresses that do not currently belong to a user. This avoids
+         * making the lockout behavior depend on account existence.
+         */
+        if ($this->securityService->isLocked($email)) {
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'account_locked',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new RuntimeException(
+                'Account is temporarily locked.',
+            );
+        }
+
+        /*
          * Unknown user.
          *
-         * No authentication session is created.
+         * Count the failed attempt against the normalized email key even
+         * when no account exists. The public response remains generic.
          */
         if ($user === null) {
+            $this->securityService->recordFailedAttempt($email);
+
             $this->loginHistoryService->recordFailure(
                 email: $email,
                 reason: 'user_not_found',
@@ -71,6 +95,8 @@ final class AuthenticationService extends BaseService
          * The account must be active.
          */
         if (! $this->isAccountActive($user)) {
+            $this->securityService->recordFailedAttempt($email);
+
             $this->loginHistoryService->recordFailure(
                 email: $email,
                 reason: 'account_not_active',
@@ -90,6 +116,8 @@ final class AuthenticationService extends BaseService
          * An active account must also have a verified email address.
          */
         if ($user->email_verified_at === null) {
+            $this->securityService->recordFailedAttempt($email);
+
             $this->loginHistoryService->recordFailure(
                 email: $email,
                 reason: 'email_not_verified',
@@ -126,25 +154,6 @@ final class AuthenticationService extends BaseService
 
             throw new RuntimeException(
                 'IP address is temporarily locked.',
-            );
-        }
-
-        /*
-         * Verify account lock.
-         */
-        if ($this->securityService->isLocked($email)) {
-            $this->loginHistoryService->recordFailure(
-                email: $email,
-                reason: 'account_locked',
-                user: $user,
-                ipAddress: $context->ipAddress,
-                userAgent: $context->userAgent,
-                browser: $context->browser,
-                device: $context->device,
-            );
-
-            throw new RuntimeException(
-                'Account is temporarily locked.',
             );
         }
 
