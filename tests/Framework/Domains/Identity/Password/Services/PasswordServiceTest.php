@@ -11,6 +11,7 @@ use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
 use RuntimeException;
@@ -374,7 +375,8 @@ final class PasswordServiceTest extends TestCase
         try {
             $service->changePassword($user, 'MahlinePassword12', 'MahlinePassword13!');
             $this->fail('Expected audit failure.');
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
+            Event::forget('eloquent.creating: '.AuditEvent::class);
             $this->assertSame(500, $exception->getStatusCode());
         }
 
