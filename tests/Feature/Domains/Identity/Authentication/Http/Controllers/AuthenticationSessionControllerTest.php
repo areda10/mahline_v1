@@ -170,6 +170,88 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNull($session->fresh()->revoked_at);
     }
 
+    public function test_user_can_extend_only_their_current_unexpired_session(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->actor('user');
+        $sessionId = session()->getId();
+        $session = $this->createAuthenticationSession($user, $sessionId, 'Current browser');
+        $previousActivity = now()->subMinutes(59);
+
+        $session->forceFill([
+            'last_activity_at' => $previousActivity,
+        ])->save();
+
+        $this->actingAs($user)
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->postJson(route('backoffice.security.sessions.extend'))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'extended',
+                'timeout_seconds' => 3600,
+            ]);
+
+        $this->assertTrue($session->fresh()->last_activity_at->equalTo(now()));
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_expired_session_cannot_be_extended_or_revived(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->actor('user');
+        $session = $this->createAuthenticationSession(
+            $user,
+            session()->getId(),
+            'Expired browser',
+        );
+
+        $session->forceFill([
+            'last_activity_at' => now()->subMinutes(60),
+        ])->save();
+
+        $this->actingAs($user)
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->postJson(route('backoffice.security.sessions.extend'))
+            ->assertUnauthorized()
+            ->assertJson([
+                'message' => 'La session a expiré. Veuillez vous reconnecter.',
+            ]);
+
+        $this->assertSame('inactivity_timeout', $session->fresh()->revocation_reason);
+        $this->assertNotNull($session->fresh()->revoked_at);
+    }
+
+    public function test_root_can_extend_its_own_session_using_the_root_route(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $root = $this->actor('super_admin_root');
+        $session = $this->createAuthenticationSession(
+            $root,
+            session()->getId(),
+            'Root browser',
+        );
+
+        $this->actingAs($root)
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->postJson(route('root.backoffice.security.sessions.extend'))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'extended',
+                'timeout_seconds' => 900,
+            ]);
+
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
     private function createAuthenticationSession(
         User $user,
         string $sessionId,
