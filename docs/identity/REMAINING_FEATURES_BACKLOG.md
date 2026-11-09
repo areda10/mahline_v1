@@ -93,7 +93,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Sessions multi-appareils et expiration
 
-- [ ] **SESS-01** Implémenter et tester les délais d'inactivité serveur par rôle : root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min.
+- [ ] **SESS-01 — EN COURS** Implémentation des délais d'inactivité serveur par rôle (root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min) ajoutée dans SessionService et EnsureActiveAuthenticationSession ; tests de politique et de révocation/audit ajoutés. Validation locale et couverture HTTP du middleware encore à confirmer.
 - [ ] **SESS-02** Ajouter l'avertissement côté interface deux minutes avant expiration et l'action de prolongation.
 - [ ] **SESS-03** Vérifier que l'expiration d'une session ferme uniquement la session courante et conserve les autres sessions valides.
 - [ ] **SESS-04** Implémenter le comportement de cookie demandé : non persistant pour root/super_admin ; persistant pour cooperative_admin/user jusqu'à expiration d'inactivité ou révocation.
