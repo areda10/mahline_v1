@@ -51,7 +51,10 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
     {
         $this->travelTo(now()->startOfSecond());
 
-        $user = $this->userWithRole('super_admin_root');
+        // The role is deliberately unrelated to this isolation test.
+        // Using the standard user role avoids the root-account forced-password
+        // workflow from redirecting the second, otherwise-valid request.
+        $user = $this->userWithRole('user');
         $currentStore = $this->sessionStore();
         $expiredSession = $this->createAuthenticationSession($user, $currentStore);
 
