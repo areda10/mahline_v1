@@ -1679,4 +1679,30 @@ Constats vérifiés sur `feature/Identity` :
 5. Les autres sessions du même utilisateur ne doivent pas être prolongées, révoquées ni modifiées.
 6. L'interface doit être intégrée au layout réellement partagé par les espaces authentifiés, avec traductions FR/AR/EN et gestion accessible du focus/annonce.
 
-**État : AUDIT INITIAL — aucune implémentation SESS-02 déclarée à ce stade ; les chemins exacts des layouts partagés et la stratégie de transmission de l'échéance doivent encore être confirmés dans le dépôt avant modification.**
+### Implémentation sur feature/Identity
+
+- Nouveau partial `resources/views/identity/security/session-warning.blade.php`, inclus dans `layouts.admin` et `layouts.root`.
+- Le partial récupère la session d'authentification courante côté serveur et transmet au navigateur uniquement le délai applicable et l'horodatage de dernière activité ; aucun identifiant de session Laravel n'est exposé dans le HTML.
+- Le compte à rebours déclenche le dialogue à T−120 secondes. Le dialogue utilise `role=alertdialog`, annonce le temps restant, gère le focus clavier et propose la déconnexion ou la prolongation.
+- Les libellés sont prévus en français, anglais et arabe selon la langue du document.
+- Deux routes POST distinctes sont ajoutées pour les espaces root et standard ; elles restent sous `auth`, le middleware `EnsureActiveAuthenticationSession` et les contraintes de rôle existantes.
+- `AuthenticationSessionController::extend()` ne cible que la session courante du compte authentifié et vérifie la correspondance avec l'identifiant de session Laravel.
+- `SessionService::extendIfActive()` verrouille la ligne, vérifie à nouveau l'échéance et actualise uniquement cette session. Une session arrivée à expiration est révoquée avec `inactivity_timeout` et ne peut pas être ressuscitée.
+- Tests HTTP ajoutés pour la prolongation d'un utilisateur, le refus après expiration et la route dédiée root.
+
+### Fichiers modifiés
+
+- `app/Domains/Identity/Authentication/Services/SessionService.php`
+- `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionController.php`
+- `routes/web.php`
+- `resources/views/identity/security/session-warning.blade.php` (nouveau)
+- `resources/views/layouts/admin.blade.php`
+- `resources/views/layouts/root.blade.php`
+- `tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php`
+
+**Point de comportement :** conformément à SESS-01, l'inactivité est mesurée par les requêtes authentifiées enregistrées côté serveur (`last_activity_at`). Une interaction purement locale dans le navigateur qui n'entraîne aucune requête ne repousse donc pas l'échéance.
+
+**État : CODE ET TESTS AJOUTÉS — tests ciblés et Pint à confirmer localement.**
+
+
+| 9 novembre 2026 | 20.45 | SESS-02 implémenté sur `feature/Identity` : dialogue T−2 min, prolongation atomique de la seule session courante, protections anti-résurrection, routes standard/root et tests HTTP. En attente de validation locale. |
