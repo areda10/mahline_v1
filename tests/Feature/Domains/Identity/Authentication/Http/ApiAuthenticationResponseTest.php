@@ -4,14 +4,32 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http;
 
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 final class ApiAuthenticationResponseTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Route::middleware([
+            'auth:sanctum',
+            EnsureForcedPasswordChangeCompleted::class,
+        ])->get('/api/test-auth', function (Request $request) {
+            return response()->json([
+                'authenticated' => true,
+                'user_id' => $request->user()->getKey(),
+            ]);
+        });
+    }
 
     public function test_api_protected_route_returns_json_401_without_a_token(): void
     {
