@@ -1,6 +1,6 @@
 # MAHLINE — AUTHENTICATION STANDARD
 
-**Version:** 1.1
+**Version:** 1.2
 **Status:** GELÉ
 **Domain:** Identity / Authentication
 
@@ -102,6 +102,24 @@ The account, IP and IP + email lockouts are handled by `AuthenticationSecuritySe
 
 A locked account, IP or IP + email pair must be rejected. When both the IP and account limits are reached, the existing `ip_locked` login-history reason retains priority.
 
+
+## 6.1 HTTP response contract
+
+The Web authentication endpoints negotiate HTML and JSON according to the request:
+
+| Operation | Browser response | JSON response |
+|---|---|---|
+| Login success | Redirect to the role dashboard or forced-password-change page | `200` with authenticated user and session metadata |
+| Login authentication failure | Redirect back with the generic `Authentication failed.` form error | `401` with the generic `Authentication failed.` message |
+| Login validation failure | Redirect back with field errors | `422` with field errors |
+| Logout success | Redirect to the login page | `200` with `Logout successful.` |
+| Guest logout | Redirect to the login page | `401` with `Unauthenticated.` |
+
+API routes always return JSON. Protected Sanctum routes return `401` when authentication is missing or invalid. A user with `must_change_password=true` receives `403` until the mandatory password change is completed. Password-reset API validation and invalid reset requests return `422`; a forgot-password request returns the same generic `200` response whether or not the address belongs to an active account.
+
+Browser form validation must not be forced into JSON solely because the path starts with `/authentication/`; JSON is returned when the client explicitly expects it. This preserves normal browser redirects and session errors.
+
+
 ## 7. Client tracking
 
 Authentication may record:
@@ -154,6 +172,8 @@ Authentication is covered by:
 * `AuthenticationWorkflowTest`
 * `AuthenticationWorkflowTransactionTest`
 * `SanctumAuthenticationTest`
+* `AuthenticationControllerTest`
+* `ApiAuthenticationResponseTest`
 
 ## 12. Freeze rule
 
