@@ -156,7 +156,7 @@ final class AuthenticationControllerTest extends TestCase
         $response->assertUnauthorized();
 
         $response->assertJson([
-            'message' => 'Email address is not verified.',
+            'message' => 'Authentication failed.',
         ]);
 
         $this->assertGuest();
@@ -360,4 +360,66 @@ final class AuthenticationControllerTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_authentication_failures_return_the_same_public_response_for_unknown_invalid_inactive_and_unverified_accounts(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $attempts = [
+            [
+                'email' => 'missing-public-response@example.com',
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => 'missing-public-response@example.com',
+                'password' => 'WrongPassword123!',
+            ],
+            [
+                'email' => $inactive->email,
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $unverified->email,
+                'password' => 'ValidPassword123!',
+            ],
+        ];
+
+        foreach ($attempts as $credentials) {
+            $response = $this
+                ->withHeader('User-Agent', $this->userAgent)
+                ->postJson($this->loginUrl, $credentials);
+
+            $response->assertUnauthorized();
+            $response->assertExactJson([
+                'message' => 'Authentication failed.',
+            ]);
+
+            $this->assertGuest();
+        }
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $inactive->email,
+            'event' => 'failed',
+            'reason' => 'account_not_active',
+        ]);
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $unverified->email,
+            'event' => 'failed',
+            'reason' => 'email_not_verified',
+        ]);
+    }
+
 }
