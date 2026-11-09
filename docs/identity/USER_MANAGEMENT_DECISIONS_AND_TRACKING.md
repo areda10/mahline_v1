@@ -1277,3 +1277,19 @@ Aucun code applicatif n'a été modifié dans cette étape. Le service `Password
 **Validation locale confirmée par l'utilisateur le 9 novembre 2026 :** les quatre suites ciblées et `php vendor/bin/pint --test` sont VERTS.
 
 **État :** ID02-02 et la couverture rollback d'ID02-06 sont validés pour les quatre parcours testés. Les contrôles de concurrence, de réutilisation des cinq anciens mots de passe, de rotation, de compatibilité et de suppression restent à auditer.
+
+## 20.30 — Vérification du verrouillage concurrent de l'utilisateur
+
+Le test `PasswordServiceTest` a été complété sur `feature/Identity` pour vérifier deux propriétés :
+- le service de changement de mot de passe émet une requête `SELECT ... FOR UPDATE` ciblant la ligne de l'utilisateur ;
+- une transaction ouverte sur une première connexion MySQL empêche une deuxième connexion d'obtenir le verrou exclusif de cette même ligne avec `NOWAIT`.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordServiceTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+Cette couverture confirme l'émission du verrou par le service et le comportement de verrouillage InnoDB entre deux connexions. Elle ne prétend pas simuler deux requêtes applicatives complètes qui changent simultanément le même mot de passe ; ce scénario bout-en-bout reste une couverture complémentaire possible.
+
+**Commit du test :** `ed0261c97ade2bdebc9320e9c3e7f395265a753c` (dernier commit du fichier de test).
+
+**État :** ID02-03 validé pour le verrouillage du service et la contention MySQL. Les tests de réutilisation des cinq anciens mots de passe, rotation, application à tous les parcours, compatibilité et suppression restent à auditer.
