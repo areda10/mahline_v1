@@ -23,6 +23,18 @@ final class AuthenticationLockoutControllerTest extends TestCase
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
     }
 
+    public function test_root_can_open_the_lockout_management_page(): void
+    {
+        $root = $this->actor('super_admin_root');
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.security.authentication-lockouts.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.lockouts.index')
+            ->assertSee('Déverrouillage des accès')
+            ->assertSee('compteur partagé');
+    }
+
     public function test_root_can_unlock_account_ip_and_ip_email_counters_and_audit_the_action(): void
     {
         $root = $this->actor('super_admin_root');
@@ -88,6 +100,10 @@ final class AuthenticationLockoutControllerTest extends TestCase
     public function test_non_root_user_cannot_unlock_authentication_counters(): void
     {
         $superAdmin = $this->actor('super_admin');
+
+        $this->actingAs($superAdmin)
+            ->get(route('root.backoffice.security.authentication-lockouts.index'))
+            ->assertForbidden();
 
         $this->actingAs($superAdmin)
             ->post(route('root.backoffice.security.authentication-lockouts.unlock'), [
