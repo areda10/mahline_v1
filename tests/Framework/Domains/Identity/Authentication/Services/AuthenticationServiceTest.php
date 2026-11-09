@@ -10,7 +10,6 @@ use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -75,7 +74,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(ModelNotFoundException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -94,7 +93,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (ModelNotFoundException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -287,7 +286,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(ModelNotFoundException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -310,7 +309,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(ModelNotFoundException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
