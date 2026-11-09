@@ -1310,3 +1310,20 @@ Aucun code applicatif n'a été modifié dans cette étape : le service d'histor
 - `php vendor/bin/pint --test` — VERT.
 
 **État :** ID02-04 et ID02-05 validés. La vérification de l'application commune de l'historique aux différents parcours, des comptes historiques et de la suppression physique reste à réaliser.
+
+
+## 20.32 — Historique du mot de passe lors de l'activation manuelle root
+
+L'audit a détecté que `UserManagementService::activateAndVerifyUser()` remplaçait le hash courant par `MahlineMahline` sans l'archiver. Cette opération échappait donc à la règle commune des changements de mot de passe.
+
+Correction sur `feature/Identity` : injection du `PasswordHistoryService` dans `UserManagementService` et archivage du hash courant dans la transaction, avant l'affectation du mot de passe temporaire. Le comportement fonctionnel validé reste inchangé : activation par `super_admin_root`, statut actif, e-mail vérifié, `must_change_password=true`, mot de passe temporaire `MahlineMahline`, révocation des invitations et des anciens moyens d'accès, audit métier.
+
+Test ajouté : `test_root_temporary_activation_archives_the_existing_password`, qui vérifie l'état activé, l'obligation de changement, le mot de passe temporaire et la présence/vérification de l'ancien hash dans `user_password_histories`.
+
+Commits :
+- `6b70f2065d6f1ba15f57640787bda0e8324ee30e` — correction du service ;
+- `9f5d774293fcb86ac0a05cd52da53cca8fe48d25` — test de régression.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :** `php artisan test --filter=UserManagementServiceTest` et `php vendor/bin/pint --test` — VERTS.
+
+**État :** ID02-07 validé pour les cinq parcours de remplacement recensés. Les comptes sans hash courant, la compatibilité des comptes historiques et la suppression physique restent à examiner.
