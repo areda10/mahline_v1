@@ -303,3 +303,13 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | 9 novembre 2026 | 2.2 | L'utilisateur confirme vertes les commandes `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password` ; VAL-14 cochée. La suite complète Identity et les tests d'intégration complémentaires restent ouverts. |
 | 9 novembre 2026 | 2.3 | Test `php artisan test --filter=PasswordResetControllerTest` confirmé vert ; VAL-15 cochée. Les deux documents de suivi ont été mis à jour ; la suite complète Identity reste à exécuter. |
 | 9 novembre 2026 | 2.4 | Trois suites HTTP confirmées vertes : `AuthenticationSessionControllerTest`, `UserInvitationControllerTest`, `UserInvitationThrottleTest` ; VAL-16 cochée. Corrections des routes de sessions personnelles et des fixtures d'invitation documentées ; suite complète Identity toujours ouverte. |
+
+## Validation globale — 9 novembre 2026
+
+Les validations suivantes sont confirmées par l'utilisateur sur la branche locale synchronisée avec `feature/Identity` :
+
+- [x] **VAL-09** Exécuter la suite complète : `php artisan test` — **1 189 tests réussis, 3 147 assertions réussies**.
+- [x] **VAL-10** Exécuter le contrôle de style : `php vendor/bin/pint --test` — **351 fichiers passés**.
+- [ ] **VAL-11** Faire l'audit final du diff et confirmer la conformité à l'architecture V7.0 et aux conventions MAHLINE — reste à réaliser.
+
+Cette validation globale couvre notamment les tests des domaines Identity, Catalog, Categories et Products. Elle ne signifie pas que toutes les fonctionnalités restantes du backlog sont implémentées : les tâches métier non validées restent ouvertes.
