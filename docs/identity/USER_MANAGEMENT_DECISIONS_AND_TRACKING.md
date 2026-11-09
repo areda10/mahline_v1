@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.6
+- **Version :** 2.7
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -150,11 +150,14 @@ Motifs obligatoires (codes stables, traductions FR/EN/AR) :
 - Les invitations sont à usage unique ; une nouvelle invitation invalide la précédente.
 
 ### Activation manuelle par root
-- Seul `super_admin_root` peut activer manuellement un compte.
-- Mot de passe initial : `MahlineMahline`.
-- Le mot de passe est stocké uniquement sous forme de hash et n'est jamais envoyé par e-mail.
-- Le changement de mot de passe est obligatoire à la première connexion, avant l'accès au dashboard.
-- Le mot de passe initial ne peut pas être réutilisé après son premier changement.
+- Seul `super_admin_root` peut activer manuellement un compte ; ce parcours ne s'applique pas à l'invitation classique ni aux autres workflows d'activation.
+- Mot de passe initial temporaire actuel : `MahlineMahline` ; son remplacement par un mot de passe aléatoire est reporté à une évolution ultérieure.
+- Le mot de passe est stocké uniquement sous forme de hash. Il est communiqué manuellement par `super_admin_root` (par exemple lors d'un appel téléphonique) ; aucun appel vocal automatisé ni envoi automatique par e-mail n'est prévu dans ce parcours.
+- Le changement de mot de passe est obligatoire à la première connexion, avant tout accès métier, y compris le dashboard.
+- Tant que `must_change_password` est actif, l'utilisateur ne peut accéder qu'aux routes strictement nécessaires au changement obligatoire et à la déconnexion ; les accès web métier et les routes API authentifiées protégées sont refusés.
+- Le nouveau mot de passe doit respecter la politique et l'historique validés ; le mot de passe initial ne peut pas être réutilisé.
+- Après un changement obligatoire réussi, la session web courante est conservée, les autres sessions web actives sont révoquées et les tokens API existants sont supprimés.
+- Le changement volontaire de mot de passe et l'acceptation d'une invitation conservent leurs workflows propres ; cette règle de conservation de session est limitée au changement obligatoire issu de l'activation manuelle.
 
 ## 8. Réinitialisation et changement de mot de passe
 
@@ -1149,3 +1152,43 @@ La validation est limitée à ces trois suites ciblées. Elle ne vaut pas valida
 - Résultat Pint : **351 fichiers passés**, aucune correction de formatage restante signalée.
 - Les corrections de fixtures/autorisation des tests Catalog, Categories et Products sont couvertes par cette exécution globale.
 - Cette validation atteste le résultat de tests et de style dans l'environnement local de l'utilisateur ; elle ne remplace pas l'audit final du diff ni les vérifications CI éventuelles.
+
+
+## 20.26 — Activation manuelle root et changement obligatoire du mot de passe
+
+Le parcours a été implémenté sur `feature/Identity` selon le périmètre validé : activation manuelle par `super_admin_root` uniquement. Le mot de passe temporaire reste `MahlineMahline` pour le moment et est communiqué manuellement ; aucun envoi automatique par e-mail ni appel vocal automatisé n'est ajouté.
+
+Le garde-fou bloque les accès métier web pendant que `must_change_password` est actif et protège également les routes API authentifiées actuellement déclarées. Seules les routes de changement obligatoire et de déconnexion restent accessibles. Le parcours d'invitation et le changement volontaire ne sont pas modifiés.
+
+Après le changement obligatoire réussi :
+- la session web qui réalise l'opération est conservée ;
+- les autres sessions Identity actives sont révoquées ;
+- les tokens API existants sont supprimés ;
+- l'utilisateur peut accéder à son espace selon son rôle et ses permissions.
+
+Fichiers/éléments concernés :
+- `EnsureForcedPasswordChangeCompleted` : garde-fou d'accès pendant le changement obligatoire ;
+- `bootstrap/app.php` : application du garde-fou au groupe web ;
+- `routes/api.php` : protection des routes API authentifiées présentes ;
+- `SessionService::revokeOtherSessions()` : révocation des autres sessions sans fermer la session courante ;
+- `ForcedPasswordChangeController` : conservation de la session courante uniquement pour le changement forcé ; comportement volontaire conservé ;
+- `ForcedPasswordChangeControllerTest` : tests de blocage des routes métier/API et de conservation de la session courante, révocation des autres sessions et suppression des tokens API.
+
+Commits de la séquence :
+- `0761f879299ee978816ee293b6bbd4b089a5e952` — middleware de garde-fou ;
+- `ed02919e484cfd77d909f1cdaa30fde7296a25d2` — révocation des autres sessions ;
+- `c86ff3ace34bfe07aefc8b2eb4698acab1705b80` — application au groupe web ;
+- `825235b6847911f398ab7d9ac62562f193d37c39` — protection des routes API existantes ;
+- `73454a9086a2aee4127172167a92b9314acf9d10` — tests de blocage web/API ;
+- `5cfb7e61305ff1ce4f27fddbb5410165b9037cd3` — correction du contrôleur ;
+- `8b2286f1ba6945186aea459d81f39ad9175aa985` — tests de régression de session.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+```bash
+php artisan test --filter=ForcedPasswordChangeControllerTest
+php vendor/bin/pint --test
+php artisan test
+```
+Les trois commandes sont confirmées vertes. Aucun nombre de tests/assertions n'est indiqué ici, car le résultat communiqué pour cette exécution complète ne précisait pas de décompte.
+
+**État :** implémentation et validation locale confirmées. L'audit final du diff et les vérifications CI éventuelles restent distincts de ces résultats.
