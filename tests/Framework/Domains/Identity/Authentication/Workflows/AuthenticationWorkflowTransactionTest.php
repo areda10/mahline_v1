@@ -90,8 +90,8 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
 
         $response->assertStatus(401);
 
-        $response->assertJson([
-            'message' => 'Controlled authentication workflow failure.',
+        $response->assertExactJson([
+            'message' => 'Authentication failed.',
         ]);
 
         $this->assertDatabaseMissing('authentication_sessions', [
@@ -142,6 +142,10 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
             ]);
 
         $response->assertUnauthorized();
+
+        $response->assertExactJson([
+            'message' => 'Authentication failed.',
+        ]);
 
         $this->assertDatabaseMissing('authentication_sessions', [
             'user_id' => $user->getKey(),
