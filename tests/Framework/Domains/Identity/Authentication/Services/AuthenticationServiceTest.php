@@ -441,7 +441,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $securityService = app(AuthenticationSecurityService::class);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $securityService->recordFailedAttemptByIp('127.0.0.13');
         }
 
@@ -470,7 +470,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $securityService = app(AuthenticationSecurityService::class);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $securityService->recordFailedAttemptByIp('127.0.0.14');
         }
 
@@ -507,7 +507,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $securityService = app(AuthenticationSecurityService::class);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $securityService->recordFailedAttemptByIp('127.0.0.15');
         }
 
@@ -552,10 +552,10 @@ final class AuthenticationServiceTest extends TestCase
             $securityService->recordFailedAttempt(
                 'priority-normalized@example.com'
             );
+        }
 
-            $securityService->recordFailedAttemptByIp(
-                '127.0.0.16'
-            );
+        for ($i = 0; $i < 30; $i++) {
+            $securityService->recordFailedAttemptByIp('127.0.0.16');
         }
 
         $context = new AuthenticationContext(
@@ -787,6 +787,150 @@ final class AuthenticationServiceTest extends TestCase
             'event' => 'failed',
             'reason' => 'account_locked',
         ]);
+    }
+
+    public function test_all_processed_failure_types_increment_ip_and_ip_email_counters(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-ip-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-ip-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $invalidPassword = User::factory()->create([
+            'email' => 'wrong-password-ip-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $ipAddress = '198.51.100.41';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        $attempts = [
+            ['unknown-ip-counter@example.com', 'ValidPassword123!'],
+            [$inactive->email, 'ValidPassword123!'],
+            [$unverified->email, 'ValidPassword123!'],
+            [$invalidPassword->email, 'WrongPassword123!'],
+        ];
+
+        foreach ($attempts as $index => [$email, $password]) {
+            try {
+                $this->authenticationService->authenticate(
+                    new AuthenticationContext(
+                        email: $email,
+                        password: $password,
+                        sessionId: 'all-failure-types-'.$index,
+                        ipAddress: $ipAddress,
+                        userAgent: 'Mozilla/5.0',
+                        browser: 'Firefox',
+                        device: 'Desktop',
+                    )
+                );
+            } catch (\\Throwable) {
+                // Every case is an expected authentication failure.
+            }
+
+            $this->assertSame(
+                4,
+                $securityService->remainingIpEmailAttempts($ipAddress, $email),
+            );
+        }
+
+        $this->assertSame(26, $securityService->remainingIpAttempts($ipAddress));
+    }
+
+    public function test_ip_email_counter_is_cleared_on_success_without_clearing_shared_ip_counter(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'pair-clear@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $ipAddress = '198.51.100.42';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        $securityService->recordFailedAuthentication($user->email, $ipAddress);
+        $securityService->recordFailedAuthentication($user->email, $ipAddress);
+
+        $this->assertSame(3, $securityService->remainingAttempts($user->email));
+        $this->assertSame(3, $securityService->remainingIpEmailAttempts($ipAddress, $user->email));
+        $this->assertSame(28, $securityService->remainingIpAttempts($ipAddress));
+
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: $user->email,
+                password: 'ValidPassword123!',
+                sessionId: 'pair-clear-success',
+                ipAddress: $ipAddress,
+                userAgent: 'Mozilla/5.0',
+                browser: 'Firefox',
+                device: 'Desktop',
+            )
+        );
+
+        $this->assertSame(5, $securityService->remainingAttempts($user->email));
+        $this->assertSame(5, $securityService->remainingIpEmailAttempts($ipAddress, $user->email));
+        $this->assertSame(28, $securityService->remainingIpAttempts($ipAddress));
+    }
+
+    public function test_ip_lockout_threshold_is_thirty_failures(): void
+    {
+        $securityService = app(AuthenticationSecurityService::class);
+        $ipAddress = '198.51.100.43';
+
+        for ($attempt = 1; $attempt <= 29; $attempt++) {
+            $securityService->recordFailedAttemptByIp($ipAddress);
+
+            $this->assertFalse($securityService->isIpLocked($ipAddress));
+        }
+
+        $this->assertSame(1, $securityService->remainingIpAttempts($ipAddress));
+
+        $securityService->recordFailedAttemptByIp($ipAddress);
+
+        $this->assertTrue($securityService->isIpLocked($ipAddress));
+        $this->assertSame(0, $securityService->remainingIpAttempts($ipAddress));
+    }
+
+    public function test_ip_email_lockout_threshold_is_five_failures(): void
+    {
+        $securityService = app(AuthenticationSecurityService::class);
+        $ipAddress = '198.51.100.44';
+        $email = 'pair-lock@example.com';
+
+        for ($attempt = 1; $attempt <= 4; $attempt++) {
+            $securityService->recordFailedAttemptByIpAndEmail($ipAddress, $email);
+
+            $this->assertFalse(
+                $securityService->isIpEmailLocked($ipAddress, $email),
+            );
+        }
+
+        $this->assertSame(
+            1,
+            $securityService->remainingIpEmailAttempts($ipAddress, $email),
+        );
+
+        $securityService->recordFailedAttemptByIpAndEmail($ipAddress, $email);
+
+        $this->assertTrue(
+            $securityService->isIpEmailLocked($ipAddress, $email),
+        );
+        $this->assertSame(
+            0,
+            $securityService->remainingIpEmailAttempts($ipAddress, $email),
+        );
     }
 
 }
