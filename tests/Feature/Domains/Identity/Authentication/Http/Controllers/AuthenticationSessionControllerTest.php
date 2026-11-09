@@ -198,6 +198,27 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNull($session->fresh()->revoked_at);
     }
 
+    public function test_authenticated_layout_displays_the_two_minute_session_warning(): void
+    {
+        $user = $this->actor('user');
+        $session = $this->createAuthenticationSession(
+            $user,
+            session()->getId(),
+            'Current browser',
+        );
+
+        $this->actingAs($user)
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->get(route('backoffice.security.sessions.index'))
+            ->assertOk()
+            ->assertSee('mahline-session-warning')
+            ->assertSee('data-timeout-seconds="3600"', false)
+            ->assertSee('data-warning-seconds="120"', false)
+            ->assertSee(route('backoffice.security.sessions.extend'), false);
+    }
+
     public function test_expired_session_cannot_be_extended_or_revived(): void
     {
         $this->travelTo(now()->startOfSecond());
