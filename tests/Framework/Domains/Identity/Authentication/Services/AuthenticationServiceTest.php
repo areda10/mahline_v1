@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Services;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Enums\UserStatus;
@@ -12,7 +13,6 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
 use Tests\TestCase;
 
 final class AuthenticationServiceTest extends TestCase
@@ -123,7 +123,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
         $this->expectExceptionMessage('Email address is not verified.');
 
         try {
@@ -155,7 +155,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
         $this->expectExceptionMessage('User account is not active.');
 
         $this->authenticationService->authenticate($context);
@@ -181,7 +181,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -211,7 +211,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
         $this->expectExceptionMessage('Invalid credentials.');
 
         $this->authenticationService->authenticate($context);
@@ -237,7 +237,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -341,7 +341,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -374,7 +374,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -419,7 +419,7 @@ final class AuthenticationServiceTest extends TestCase
                     device: 'Desktop',
                 )
             );
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -455,7 +455,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -486,7 +486,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -528,7 +528,7 @@ final class AuthenticationServiceTest extends TestCase
                     device: 'Desktop',
                 )
             );
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -570,7 +570,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -993,7 +993,7 @@ final class AuthenticationServiceTest extends TestCase
                     device: 'Desktop',
                 )
             );
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected: the IP + email pair is already locked.
         }
 
