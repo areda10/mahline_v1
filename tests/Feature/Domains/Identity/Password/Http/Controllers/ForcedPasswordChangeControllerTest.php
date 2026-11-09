@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Password\Http\Controllers;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
@@ -12,9 +12,9 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -243,10 +243,7 @@ final class ForcedPasswordChangeControllerTest extends TestCase
         ]);
         $user->createToken('rollback-test');
 
-        $audit = Mockery::mock(AuditService::class);
-        $audit->shouldReceive('record')->once()
-            ->andThrow(new RuntimeException('Simulated audit failure.'));
-        $this->app->instance(AuditService::class, $audit);
+        AuditEvent::creating(static fn () => abort(500));
         $this->withoutExceptionHandling();
 
         try {
@@ -256,8 +253,9 @@ final class ForcedPasswordChangeControllerTest extends TestCase
                     'password_confirmation' => 'NewPassword123!',
                 ]);
             $this->fail('Expected audit failure.');
-        } catch (RuntimeException $exception) {
-            $this->assertSame('Simulated audit failure.', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            Event::forget('eloquent.creating: '.AuditEvent::class);
+            $this->assertSame(500, $exception->getStatusCode());
         }
 
         $user->refresh();
