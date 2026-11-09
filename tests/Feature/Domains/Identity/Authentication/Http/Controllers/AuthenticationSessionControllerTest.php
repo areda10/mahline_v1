@@ -309,14 +309,18 @@ final class AuthenticationSessionControllerTest extends TestCase
         User $user,
         AuthenticationSession $session,
     ): static {
+        // Align Laravel's in-memory session store with the browser cookie and
+        // the AuthenticationSession record before the request is dispatched.
+        $this->app['session']->driver()->setId($session->session_id);
+
         return $this->actingAs($user)
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
             ->withCookie(
                 config('session.cookie'),
                 encrypt($session->session_id),
-            )
-            ->withSession([
-                'authentication_session_id' => (string) $session->getKey(),
-            ]);
+            );
     }
 
     private function createAuthenticationSession(
