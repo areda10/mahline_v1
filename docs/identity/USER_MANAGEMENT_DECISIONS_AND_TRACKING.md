@@ -1568,9 +1568,9 @@ Après la confirmation VERT des premiers tests AUTH-07, les deux points ouverts 
 ### 2. Exceptions de refus d'authentification dédiées
 
 - L'exception existante `AuthenticationFailedException` est désormais utilisée pour les refus métier attendus dans `AuthenticationService` : IP verrouillée, compte verrouillé, compte inactif, e-mail non vérifié et identifiants incorrects.
-- `AuthenticationController::login()` capture uniquement `AuthenticationFailedException` et `ModelNotFoundException` pour produire le message public générique `Authentication failed.`.
+- `AuthenticationController::login()` capture uniquement `AuthenticationFailedException` pour produire le message public générique `Authentication failed.`. Les comptes inconnus utilisent désormais aussi cette exception métier dédiée ; les exceptions techniques ou Eloquent inattendues ne sont pas interceptées.
 - Une `RuntimeException` inattendue (panne technique, erreur d'infrastructure ou autre incident) n'est plus convertie artificiellement en `401` ; elle remonte au gestionnaire d'exceptions et peut être signalée comme incident serveur.
-- Les tests de service ont été alignés sur le type d'exception métier explicite. Les tests de non-divulgation des réponses publiques restent en place.
+- Les tests de service ont été alignés sur le type d'exception métier explicite. Un test workflow injecte une panne technique inattendue et vérifie qu'elle donne `500` (et non `401`), sans créer de session. Les tests de non-divulgation des réponses publiques restent en place.
 
 ### Fichiers modifiés
 
@@ -1579,6 +1579,7 @@ Après la confirmation VERT des premiers tests AUTH-07, les deux points ouverts 
 - `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationController.php`
 - `tests/Feature/Domains/Identity/Authentication/Http/ApiAuthenticationResponseTest.php`
 - `tests/Framework/Domains/Identity/Authentication/Services/AuthenticationServiceTest.php`
+- `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php`
 
 Commits :
 - `d5ecc18acb0bf77e4d05643d9c4ed3882e96bd82` — exception métier dédiée dans le service ;
