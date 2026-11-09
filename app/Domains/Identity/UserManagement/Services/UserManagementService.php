@@ -10,6 +10,7 @@ use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
@@ -30,6 +31,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function __construct(
         private readonly AuditService $audit,
         private readonly SessionService $sessions,
+        private readonly PasswordHistoryService $passwordHistory,
     ) {}
 
     /**
@@ -395,6 +397,12 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $oldStatus = $lockedTarget->status;
             $oldVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+
+            // Preserve the existing credential before replacing it with the
+            // temporary root-activation password. The forced change must not
+            // allow the user to immediately reuse the pre-activation password.
+            $this->passwordHistory->archiveCurrentPassword($lockedTarget);
+
             $lockedTarget->status = UserStatus::Active;
             $lockedTarget->email_verified_at = now();
             $lockedTarget->password = 'MahlineMahline';
