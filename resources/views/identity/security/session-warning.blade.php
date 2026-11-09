@@ -31,8 +31,9 @@
                 <h2 id="mahline-session-warning-title" style="margin-top:0">Votre session va expirer</h2>
                 <p id="mahline-session-warning-description">
                     Pour protéger votre compte, votre session expirera dans
+                    <span id="mahline-session-description-text">Pour protéger votre compte, votre session expirera dans</span>
                     <strong id="mahline-session-countdown" aria-live="off">02:00</strong>
-                    en raison de l’inactivité.
+                    <span id="mahline-session-reason">en raison de l’inactivité.</span>
                 </p>
                 <p id="mahline-session-warning-error" role="alert" style="color:#9b1c1c" hidden>
                     La prolongation n’a pas abouti. Veuillez réessayer.
@@ -105,12 +106,14 @@
                 const dictionary = messages[language] || messages.fr;
                 const title = document.getElementById('mahline-session-warning-title');
                 const description = document.getElementById('mahline-session-warning-description');
-                const buttons = warning.querySelectorAll('button');
+                const descriptionText = document.getElementById('mahline-session-description-text');
+                const reasonText = document.getElementById('mahline-session-reason');
                 const logoutButton = warning.querySelector('form button');
+                const dialogButtons = [logoutButton, extendButton];
 
                 title.textContent = dictionary.title;
-                description.childNodes[0].textContent = dictionary.description + ' ';
-                description.lastChild.textContent = ' ' + dictionary.reason;
+                descriptionText.textContent = dictionary.description;
+                reasonText.textContent = dictionary.reason;
                 extendButton.textContent = dictionary.extend;
                 logoutButton.textContent = dictionary.logout;
                 errorMessage.textContent = dictionary.error;
@@ -181,8 +184,13 @@
                             }
                         });
 
-                        if (response.redirected || response.status === 401) {
+                        if (response.redirected) {
                             window.location.assign(response.url || loginUrl);
+                            return;
+                        }
+
+                        if (response.status === 401) {
+                            window.location.assign(loginUrl);
                             return;
                         }
 
@@ -204,6 +212,23 @@
                         errorMessage.hidden = false;
                     } finally {
                         extendButton.disabled = false;
+                    }
+                });
+
+                warning.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Tab') {
+                        return;
+                    }
+
+                    const firstButton = dialogButtons[0];
+                    const lastButton = dialogButtons[dialogButtons.length - 1];
+
+                    if (event.shiftKey && document.activeElement === firstButton) {
+                        event.preventDefault();
+                        lastButton.focus();
+                    } else if (!event.shiftKey && document.activeElement === lastButton) {
+                        event.preventDefault();
+                        firstButton.focus();
                     }
                 });
 
