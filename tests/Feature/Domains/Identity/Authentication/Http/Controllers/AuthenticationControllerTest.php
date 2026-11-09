@@ -446,5 +446,4 @@ final class AuthenticationControllerTest extends TestCase
             'reason' => 'email_not_verified',
         ]);
     }
-
 }

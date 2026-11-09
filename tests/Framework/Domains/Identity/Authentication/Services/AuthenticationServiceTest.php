@@ -699,5 +699,4 @@ final class AuthenticationServiceTest extends TestCase
 
         $this->assertSame($legacyHash, $user->fresh()->password);
     }
-
 }
