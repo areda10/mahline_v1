@@ -317,9 +317,11 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->withSession([
                 'authentication_session_id' => (string) $session->getKey(),
             ])
+            // withCookie() encrypts cookies for the test request; pass the
+            // raw session identifier to avoid double-encrypting it.
             ->withCookie(
                 config('session.cookie'),
-                encrypt($session->session_id),
+                $session->session_id,
             );
     }
 
