@@ -1495,8 +1495,11 @@ Commits correctifs :
 ### Implémentation ajoutée — validation locale en attente
 
 - `AuthenticationSecurityService::unlockAllScopes()` centralise l'effacement des trois compteurs.
-- `AuthenticationLockoutController::unlock()` valide l'e-mail, l'IP et le motif, vérifie le rôle root, enregistre l'événement via `AuditService`, puis efface les compteurs.
-- Route : `POST root/back-office/security/authentication-lockouts/unlock`, nommée `root.backoffice.security.authentication-lockouts.unlock`.
-- Test HTTP ajouté : `AuthenticationLockoutControllerTest` couvre le succès et les trois compteurs, le refus d'un rôle non-root et la validation des champs.
+- `AuthenticationLockoutController::index()` et `unlock()` fournissent la page de gestion et l'action de déverrouillage ; les deux méthodes vérifient explicitement le rôle root.
+- Routes : `GET root/back-office/security/authentication-lockouts` (`root.backoffice.security.authentication-lockouts.index`) et `POST root/back-office/security/authentication-lockouts/unlock` (`root.backoffice.security.authentication-lockouts.unlock`).
+- Vue `resources/views/identity/security/lockouts/index.blade.php` avec avertissement explicite sur la portée partagée de l'IP, e-mail, IP et motif obligatoire ; lien ajouté à la navigation Root.
+- Test HTTP `AuthenticationLockoutControllerTest` couvre l'ouverture root-only de la page, l'interdiction aux autres rôles, la remise à zéro des trois compteurs, la préservation du compteur compte/couple d'un autre e-mail, la confidentialité des empreintes d'audit et la validation des champs.
+
+Commits principaux : `a77a802835b39bfa3a22684119a1147610f71838` (service), `481fdd6e9b9d95ab45b7cae3b97919a1f5ddb959` / `05d1adcd74512e2d6809c24f325a005da70d6312` / `d36bacd01eb2a45a3f8e5c1ed2af39d55aa78dee` (contrôleur), `0be2e6ca9be03a0407b26f3968e70869f704cb21` / `f6f3e448dbb2fcbd8878265c2d32a273a26a196c` / `78b73f7292bcbfa34177a63878a26d9c2edf8b89` (routes), `b33eba9bca1610e0284a7f8ba5e527264f8b51bc` (vue), `df96ca4e211101a97db9207b8c629d3105cba5b6` (navigation), `0c2218a575ab20d243eb9f241b6ff92176ff7991` / `b5793dca418a9340ad4cb64772b2e5a97ed66ae9` / `dc1a88125b802dc607b561a98fc5733f959bc8ca` / `093dbdaad9731fb402e72265f7e84d86825c73f8` (tests).
 
 **État : CODE ET TESTS AJOUTÉS — TESTS LOCAUX À EXÉCUTER.** Ne pas marquer AUTH-06 validé avant confirmation des tests ciblés et de Pint.
