@@ -1140,3 +1140,12 @@ Commits de correction :
 - Test de limitation des invitations : `4a7d2028ec03b26224efe70c5afc90c02b07abb7`.
 
 La validation est limitée à ces trois suites ciblées. Elle ne vaut pas validation de toute la suite Identity. La suite complète et les contrôles de style/analyse statique restent à exécuter.
+
+## Validation globale du 9 novembre 2026
+
+- Exécution complète confirmée par l'utilisateur : `php artisan test`.
+- Résultat : **1 189 tests réussis, 3 147 assertions réussies**.
+- Contrôle de style confirmé par l'utilisateur : `php vendor/bin/pint --test`.
+- Résultat Pint : **351 fichiers passés**, aucune correction de formatage restante signalée.
+- Les corrections de fixtures/autorisation des tests Catalog, Categories et Products sont couvertes par cette exécution globale.
+- Cette validation atteste le résultat de tests et de style dans l'environnement local de l'utilisateur ; elle ne remplace pas l'audit final du diff ni les vérifications CI éventuelles.
