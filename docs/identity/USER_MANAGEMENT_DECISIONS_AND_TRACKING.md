@@ -1492,7 +1492,7 @@ Commits correctifs :
 - Les tentatives d'accès sont protégées par le groupe de routes root-only et un contrôle explicite du rôle dans le contrôleur.
 - L'événement append-only `identity.authentication.lockouts.unlocked` contient l'acteur, le sujet utilisateur lorsqu'il existe, le motif, les trois portées effacées et les empreintes HMAC des cibles.
 
-### Implémentation ajoutée — validation locale en attente
+### Implémentation — tests ciblés validés localement
 
 - `AuthenticationSecurityService::unlockAllScopes()` centralise l'effacement des trois compteurs.
 - `AuthenticationLockoutController::index()` et `unlock()` fournissent la page de gestion et l'action de déverrouillage ; les deux méthodes vérifient explicitement le rôle root.
@@ -1502,7 +1502,7 @@ Commits correctifs :
 
 Commits principaux : `a77a802835b39bfa3a22684119a1147610f71838` (service), `481fdd6e9b9d95ab45b7cae3b97919a1f5ddb959` / `05d1adcd74512e2d6809c24f325a005da70d6312` / `d36bacd01eb2a45a3f8e5c1ed2af39d55aa78dee` (contrôleur), `0be2e6ca9be03a0407b26f3968e70869f704cb21` / `f6f3e448dbb2fcbd8878265c2d32a273a26a196c` / `78b73f7292bcbfa34177a63878a26d9c2edf8b89` (routes), `b33eba9bca1610e0284a7f8ba5e527264f8b51bc` (vue), `df96ca4e211101a97db9207b8c629d3105cba5b6` (navigation), `0c2218a575ab20d243eb9f241b6ff92176ff7991` / `b5793dca418a9340ad4cb64772b2e5a97ed66ae9` / `dc1a88125b802dc607b561a98fc5733f959bc8ca` / `093dbdaad9731fb402e72265f7e84d86825c73f8` (tests).
 
-**État : CODE ET TESTS AJOUTÉS — TESTS LOCAUX À EXÉCUTER.** Ne pas marquer AUTH-06 validé avant confirmation des tests ciblés et de Pint.
+**État : TESTS CIBLÉS VERTS — 9 NOVEMBRE 2026.** L'utilisateur a confirmé le résultat vert après l'exécution des tests AUTH-06. La validation Pint de ce lot n'a pas été confirmée séparément.
 
 
 ## 20.39 — Contrat des réponses HTTP Web/API (AUTH-07)
