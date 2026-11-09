@@ -65,7 +65,7 @@
 
                 warning.dataset.initialized = 'true';
 
-                const timeoutSeconds = Number(warning.dataset.timeoutSeconds);
+                let timeoutSeconds = Number(warning.dataset.timeoutSeconds);
                 const warningSeconds = Number(warning.dataset.warningSeconds);
                 const countdown = document.getElementById('mahline-session-countdown');
                 const extendButton = document.getElementById('mahline-session-extend');
@@ -80,7 +80,6 @@
                         extend: 'Continuer ma session',
                         logout: 'Me déconnecter',
                         error: 'La prolongation n’a pas abouti. Veuillez réessayer.',
-                        expired: 'Votre session a expiré. Veuillez vous reconnecter.'
                     },
                     en: {
                         title: 'Your session is about to expire',
@@ -89,7 +88,6 @@
                         extend: 'Continue my session',
                         logout: 'Sign out',
                         error: 'The session could not be extended. Please try again.',
-                        expired: 'Your session has expired. Please sign in again.'
                     },
                     ar: {
                         title: 'ستنتهي جلستك قريباً',
@@ -98,7 +96,6 @@
                         extend: 'متابعة الجلسة',
                         logout: 'تسجيل الخروج',
                         error: 'تعذر تمديد الجلسة. يرجى المحاولة مرة أخرى.',
-                        expired: 'انتهت جلستك. يرجى تسجيل الدخول مجدداً.'
                     }
                 };
 
@@ -202,7 +199,8 @@
                             throw new Error('Unexpected session extension response.');
                         }
 
-                        warning.dataset.timeoutSeconds = String(result.timeout_seconds);
+                        timeoutSeconds = Number(result.timeout_seconds);
+                        warning.dataset.timeoutSeconds = String(timeoutSeconds);
                         warning.dataset.lastActivity = String(Math.floor(Date.now() / 1000));
                         hideWarning();
                         update();
