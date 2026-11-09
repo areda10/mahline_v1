@@ -7,12 +7,43 @@ namespace App\Domains\Identity\Authentication\Http\Controllers;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class AuthenticationSessionController
 {
+    public function extend(Request $request, SessionService $service): JsonResponse
+    {
+        $user = $request->user();
+        $authenticationSessionId = $request->session()->get('authentication_session_id');
+
+        $session = is_string($authenticationSessionId)
+            ? $service->findActiveById($user, $authenticationSessionId)
+            : null;
+
+        if (
+            $session === null
+            || ! hash_equals($session->session_id, $request->session()->getId())
+        ) {
+            return response()->json([
+                'message' => 'La session ne peut plus être prolongée.',
+            ], 401);
+        }
+
+        if (! $service->extendIfActive($user, $session)) {
+            return response()->json([
+                'message' => 'La session a expiré. Veuillez vous reconnecter.',
+            ], 401);
+        }
+
+        return response()->json([
+            'status' => 'extended',
+            'timeout_seconds' => $service->inactivityTimeoutMinutes($user) * 60,
+        ]);
+    }
+
     public function index(Request $request): View
     {
         abort_if($request->user()->hasRole('super_admin_root'), 404);
