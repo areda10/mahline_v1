@@ -10,7 +10,6 @@ use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
 
 final class AuthenticationService extends BaseService
@@ -143,11 +142,7 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw (new ModelNotFoundException)
-                ->setModel(
-                    User::class,
-                    [$context->email],
-                );
+            throw new AuthenticationFailedException('Invalid credentials.');
         }
 
         /*
