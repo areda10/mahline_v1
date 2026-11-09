@@ -47,6 +47,56 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
         );
     }
 
+    public function test_expiring_one_session_keeps_the_users_other_session_active(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->userWithRole('super_admin_root');
+        $currentStore = $this->sessionStore();
+        $expiredSession = $this->createAuthenticationSession($user, $currentStore);
+
+        $otherSession = app(SessionService::class)->create(
+            user: $user,
+            sessionId: 'other-active-device-session',
+            ipAddress: '127.0.0.2',
+            userAgent: 'Other PHPUnit browser',
+            browser: 'Other Test Browser',
+            device: 'Other Test Device',
+        );
+
+        $expiredSession->forceFill([
+            'last_activity_at' => now()->subMinutes(15),
+        ])->save();
+
+        $expiredRequest = $this->requestFor($user, $currentStore, $expiredSession);
+        $expiredResponse = $this->middleware()->handle(
+            $expiredRequest,
+            static fn (): Response => new Response('must not run'),
+        );
+
+        $this->assertTrue($expiredResponse->isRedirect(route('authentication.login')));
+        $this->assertSame(
+            'inactivity_timeout',
+            $expiredSession->fresh()->revocation_reason,
+        );
+        $this->assertNotNull($expiredSession->fresh()->revoked_at);
+        $this->assertNull($currentStore->get('authentication_session_id'));
+
+        $otherStore = $this->sessionStore();
+        $otherStore->setId($otherSession->session_id);
+        $otherRequest = $this->requestFor($user, $otherStore, $otherSession);
+        $otherResponse = $this->middleware()->handle(
+            $otherRequest,
+            static fn (): Response => new Response('other session remains active', 200),
+        );
+
+        $this->assertSame(200, $otherResponse->getStatusCode());
+        $this->assertSame('other session remains active', $otherResponse->getContent());
+        $this->assertNull($otherSession->fresh()->revoked_at);
+        $this->assertNull($otherSession->fresh()->revocation_reason);
+        $this->assertTrue($otherSession->fresh()->last_activity_at->equalTo(now()));
+    }
+
     public function test_revoked_session_cannot_continue_to_protected_route(): void
     {
         $user = $this->userWithRole('user');
