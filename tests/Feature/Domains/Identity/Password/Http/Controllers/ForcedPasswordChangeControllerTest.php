@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Password\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -77,6 +78,34 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
         $this->assertTrue(Hash::check('NewPassword123!', $user->password));
         $this->assertFalse($user->must_change_password);
+    }
+
+    public function test_forced_password_change_blocks_business_routes_until_the_password_is_updated(): void
+    {
+        $user = $this->actor('user', [
+            'password' => 'MahlineMahline',
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('user.dashboard'))
+            ->assertRedirect(route('password.force-change.edit'));
+
+        $this->actingAs($user)
+            ->get(route('backoffice.dashboard'))
+            ->assertRedirect(route('password.force-change.edit'));
+    }
+
+    public function test_forced_password_change_blocks_authenticated_api_routes(): void
+    {
+        $user = $this->actor('user', [
+            'password' => 'MahlineMahline',
+            'must_change_password' => true,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/test-auth')
+            ->assertForbidden();
     }
 
     public function test_password_change_returns_each_role_to_its_own_dashboard(): void
