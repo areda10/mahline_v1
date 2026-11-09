@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 3.9
+- **Version :** 4.0
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -94,7 +94,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 ### Sessions multi-appareils et expiration
 
 - [x] **SESS-01 — VALIDÉ (9 novembre 2026)** Délais d'inactivité serveur par rôle : root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min ; le délai le plus court prévaut si plusieurs rôles. Expiration atomique, révocation `inactivity_timeout`, LoginHistory/Audit, invalidation de la session Laravel et refus de la requête. Tests `SessionInactivityPolicyTest`, `EnsureActiveAuthenticationSessionTest`, `SessionServiceTest` et Pint confirmés VERTS par l'utilisateur.
-- [ ] **SESS-02** Ajouter l'avertissement côté interface deux minutes avant expiration et l'action de prolongation.
+- [ ] **SESS-02 — EN COURS, VALIDATION LOCALE EN ATTENTE** Avertissement global T−2 minutes intégré aux layouts authentifiés admin/root, compte à rebours fondé sur `last_activity_at` et le délai de rôle centralisé, interface accessible FR/AR/EN, action de prolongation via route POST protégée par `EnsureActiveAuthenticationSession` et `SessionService::extendIfActive()`. Tests HTTP ajoutés pour utilisateur, root et refus de prolongation après expiration ; tests ciblés et Pint à confirmer.
 - [ ] **SESS-03** Vérifier que l'expiration d'une session ferme uniquement la session courante et conserve les autres sessions valides.
 - [ ] **SESS-04** Implémenter le comportement de cookie demandé : non persistant pour root/super_admin ; persistant pour cooperative_admin/user jusqu'à expiration d'inactivité ou révocation.
 - [ ] **SESS-05** Ajouter la déconnexion globale personnelle avec confirmation, révocation de toutes les sessions et tokens propres, et journalisation.
@@ -365,3 +365,5 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 9 novembre 2026 | 3.7 | AUTH-06 tests ciblés confirmés VERTS. Démarrage AUTH-07 : correction de la négociation HTML/JSON pour les erreurs de validation de connexion navigateur et ajout de tests HTTP Web/API ; validation locale en attente. |
 | 9 novembre 2026 | 3.8 | AUTH-07 : retrait de la route de diagnostic `/api/test-auth` des routes de production (conservée uniquement dans le test) ; introduction de l'exception métier `AuthenticationFailedException` pour les refus attendus et suppression de la capture générique `RuntimeException` du contrôleur. Tests locaux des derniers changements en attente. |
 | 9 novembre 2026 | 3.9 | SESS-01 validé par l'utilisateur : tests de politique, middleware HTTP, service de session et Pint confirmés VERTS. SESS-02 devient la prochaine tâche d'audit. |
+
+| 9 novembre 2026 | 4.0 | SESS-02 : ajout du dialogue d'avertissement T−2 min dans les deux layouts authentifiés, routes d'extension root et standard, prolongation atomique non ressuscitable et tests HTTP utilisateur/root/expiration. Validation locale en attente. |
