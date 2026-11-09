@@ -231,6 +231,32 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->assertSee(route('root.backoffice.security.sessions.extend'), false);
     }
 
+    public function test_user_cannot_extend_a_different_active_device_session(): void
+    {
+        $user = $this->actor('user');
+        $session = $this->createAuthenticationSession(
+            $user,
+            Str::random(40),
+            'Another device',
+        );
+
+        $this->actingAs($user)
+            ->withCookie(
+                config('session.cookie'),
+                encrypt(Str::random(40)),
+            )
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->postJson(route('backoffice.security.sessions.extend'))
+            ->assertUnauthorized()
+            ->assertJson([
+                'message' => 'La session ne peut plus être prolongée.',
+            ]);
+
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
     public function test_expired_session_cannot_be_extended_or_revived(): void
     {
         $this->travelTo(now()->startOfSecond());
