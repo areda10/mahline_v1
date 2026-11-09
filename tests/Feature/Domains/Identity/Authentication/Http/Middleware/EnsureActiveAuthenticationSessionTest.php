@@ -53,6 +53,8 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
 
         // This test isolates session expiration, not the forced-password workflow.
         $user = $this->userWithRole('user');
+        $user->forceFill(['must_change_password' => false])->save();
+
         $currentStore = $this->sessionStore();
         $expiredSession = $this->createAuthenticationSession($user, $currentStore);
 
