@@ -515,21 +515,20 @@ final class PasswordResetServiceTest extends TestCase
         $token = $this->passwordResetService->createToken($user);
         $user->createToken('rollback-test');
 
-        $audit = Mockery::mock(AuditService::class);
-        $audit->shouldReceive('record')->once()
-            ->andThrow(new \RuntimeException('Simulated audit failure.'));
+        AuditEvent::creating(static fn () => abort(500));
 
         $service = new PasswordResetService(
             app(SessionService::class),
-            app(\\App\\Domains\\Audit\\Services\\AuditService::class),
+            app(\App\Domains\Audit\Services\AuditService::class),
             app(PasswordHistoryService::class),
         );
 
         try {
             $service->resetPassword($token, 'Secure!NewPass2026');
             $this->fail('Expected audit failure.');
-        } catch (\RuntimeException $exception) {
-            $this->assertSame('Simulated audit failure.', $exception->getMessage());
+        } catch (\Throwable $exception) {
+            Event::forget('eloquent.creating: '.AuditEvent::class);
+            $this->assertSame(500, $exception->getStatusCode());
         }
 
         $user->refresh();
