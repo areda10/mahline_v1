@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.1
+- **Version :** 2.2
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 9 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -242,7 +242,7 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [x] **VAL-06** Exécuter `php artisan test --filter=UserInvitationServiceTest` — VERT confirmé par l'utilisateur.
 - [x] **VAL-07** Exécuter les tests de reset de mot de passe — VERT confirmé par l'utilisateur (`PasswordResetServiceTest`).
 - [x] **VAL-08** Corriger les régressions révélées par ces tests avant de poursuivre — fixtures alignées sur la politique et message attendu de réutilisation corrigé ; commit `c14d145adc550e8073c8770239ad545231779a11` ; test relancé et vert.
-- [ ] **VAL-14** Exécuter `php artisan test --filter=PasswordServiceTest` après le commit `8a31970f8d983df7926f3a13d696903edd0471b3` ; si vert, relancer `php artisan test --filter=Password`.
+- [x] **VAL-14** Exécuter `php artisan test --filter=PasswordServiceTest` puis `php artisan test --filter=Password` après le commit `8a31970f8d983df7926f3a13d696903edd0471b3` — les deux commandes sont VERTES selon confirmation utilisateur du 9 novembre 2026.
 - [ ] **VAL-09** Exécuter toute la suite de tests du domaine Identity.
 - [ ] **VAL-10** Exécuter les vérifications de style, analyse statique et migrations dans l'environnement local/CI du projet.
 - [ ] **VAL-11** Faire un audit final du diff et confirmer que les commits respectent l'architecture V7.0 et les conventions MAHLINE.
@@ -298,3 +298,4 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 
 
 | 9 novembre 2026 | 2.1 | Correction commitée de `PasswordServiceTest.php` : fixtures conformes à ID-01 et test d'acceptation des espaces ; ID01-19 cochée. VAL-14 ajoutée pour confirmer localement le test ciblé puis le filtre global Password. |
+| 9 novembre 2026 | 2.2 | L'utilisateur confirme vertes les commandes `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password` ; VAL-14 cochée. La suite complète Identity et les tests d'intégration complémentaires restent ouverts. |
