@@ -142,6 +142,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         ]);
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.authentication.session_revoked',
+            'actor_id' => $user->getKey(),
             'subject_id' => $selected->getKey(),
         ]);
     }
