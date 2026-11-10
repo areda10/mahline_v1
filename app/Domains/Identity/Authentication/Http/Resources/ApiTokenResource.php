@@ -22,7 +22,8 @@ final class ApiTokenResource extends JsonResource
         $token = $this->resource;
 
         $isActive = $token->revoked_at === null
-            && ($token->expires_at === null || $token->expires_at->isFuture());
+            && $token->expires_at !== null
+            && $token->expires_at->isFuture();
 
         return [
             'id' => (string) $token->getKey(),
