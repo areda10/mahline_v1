@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 use App\Domains\Audit\Http\Controllers\AuditEventController;
+use App\Domains\Identity\Authentication\Http\Controllers\ApiTokenController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserApiTokenController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use Illuminate\Support\Facades\Route;
 
