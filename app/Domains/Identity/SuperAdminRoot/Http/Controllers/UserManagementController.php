@@ -225,11 +225,8 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
-        $sessions = AuthenticationSession::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('revoked_at')
-            ->orderByDesc('last_activity_at')
-            ->get();
+        $sessions = app(\App\Domains\Identity\Authentication\Services\SessionService::class)
+            ->activeSessionsFor($user);
 
         $currentSessionId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
