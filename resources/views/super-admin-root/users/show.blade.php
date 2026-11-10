@@ -168,7 +168,7 @@
 @if($sessions->isNotEmpty())
     <section class="card" aria-labelledby="sessions-heading">
         <h2 id="sessions-heading">Appareils connectés de cet utilisateur</h2>
-        <p class="muted">Seules les sessions actives sont affichées. Vous pouvez révoquer chaque appareil individuellement.</p>
+        <p class="muted">Seules les sessions encore actives selon le délai d’inactivité propre aux rôles de cet utilisateur sont affichées. Vous pouvez révoquer chaque appareil individuellement.</p>
         <div class="table-wrap">
             <table>
                 <thead><tr><th>Appareil</th><th>Navigateur</th><th>Adresse IP</th><th>Dernière activité</th><th>État</th><th>Action</th></tr></thead>
