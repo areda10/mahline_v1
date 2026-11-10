@@ -58,7 +58,11 @@ final class ApiTokenService extends BaseService
                 throw new RuntimeException('The account is not authorized to create API tokens.');
             }
 
-            $newToken = $lockedOwner->createToken($name, $abilities);
+            $newToken = $lockedOwner->createToken(
+                $name,
+                $abilities,
+                now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
+            );
             $token = $newToken->accessToken;
 
             $this->audit->record(new AuditEntryDTO(
@@ -119,7 +123,8 @@ final class ApiTokenService extends BaseService
     public function metadata(PersonalAccessToken $token): array
     {
         $isActive = $token->revoked_at === null
-            && ($token->expires_at === null || $token->expires_at->isFuture());
+            && $token->expires_at !== null
+            && $token->expires_at->isFuture();
 
         return [
             'id' => (string) $token->getKey(),
