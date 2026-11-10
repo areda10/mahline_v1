@@ -1200,3 +1200,10 @@ STATUT   : OFFICIEL — GELÉ
 ```
 
 Toute modification de cette spécification doit entraîner une revue des documents Authentication, Session, Audit et Role/Permission concernés.
+
+
+## 61. Emergency account lock
+
+An emergency lock applied by super_admin_root revokes all active API tokens owned by the target user. Each token is retained in personal_access_tokens, receives a non-null revoked_at, and produces an individual identity.authentication.token_revoked audit event with reason=emergency_lock. Token secrets are never copied to audit metadata.
+
+The lock also blocks API authentication through the user's authorization state. Releasing the emergency lock does not reactivate any revoked token; a new token must be created. This rule is independent of Web session revocation, which is recorded separately by the Session domain.
