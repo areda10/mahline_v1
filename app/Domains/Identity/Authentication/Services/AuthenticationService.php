@@ -295,6 +295,7 @@ final class AuthenticationService extends BaseService
      */
     private function isAccountActive(User $user): bool
     {
-        return $user->status === UserStatus::Active;
+        return $user->status === UserStatus::Active
+            && $user->emergency_locked_at === null;
     }
 }
