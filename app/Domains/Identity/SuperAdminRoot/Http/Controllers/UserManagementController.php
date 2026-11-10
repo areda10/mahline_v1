@@ -210,7 +210,7 @@ final class UserManagementController
             );
     }
 
-    public function show(Request $request, User $user): View
+    public function show(Request $request, User $user, SessionService $sessionService): View
     {
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
@@ -226,7 +226,7 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
-        $sessions = app(SessionService::class)->activeSessionsFor($user);
+        $sessions = $sessionService->activeSessionsFor($user);
 
         $currentSessionId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
