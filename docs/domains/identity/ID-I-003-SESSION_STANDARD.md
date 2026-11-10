@@ -125,3 +125,10 @@ Covered by:
 The multiple-active-Web-session rule is a core security decision.
 
 It cannot be replaced by a one-session-only rule without an explicit architecture change.
+
+
+## 13. Emergency lock and session revocation
+
+When super_admin_root applies an emergency lock to a user, SessionService::revokeForUser() revokes every active AuthenticationSession for that user with revocation_reason=emergency_lock. Each affected session receives its own LoginHistory revocation record and Audit event identity.authentication.session_revoked. The operation runs inside the controller's database transaction with the User emergency-lock state and token revocations.
+
+Releasing the emergency lock does not restore any session. The user must establish new independent sessions after the account is unlocked. The multiple-active-session rule remains unchanged: after release, subsequent logins may create multiple concurrent sessions.
