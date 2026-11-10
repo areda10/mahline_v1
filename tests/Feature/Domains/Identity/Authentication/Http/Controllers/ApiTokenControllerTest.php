@@ -243,4 +243,26 @@ final class ApiTokenControllerTest extends TestCase
 
         return $user;
     }
+
+    public function test_expired_api_token_is_rejected_by_sanctum_authentication(): void
+    {
+        $user = $this->actor('user');
+        $created = $user->createToken('ninety-day-expiring-token');
+
+        self::assertNotNull($created->accessToken->expires_at);
+        self::assertTrue($created->accessToken->expires_at->isFuture());
+
+        $this->withToken($created->plainTextToken)
+            ->getJson(route('identity.tokens.index'))
+            ->assertOk();
+
+        $this->travelTo($created->accessToken->expires_at->copy()->addSecond());
+
+        $this->withToken($created->plainTextToken)
+            ->getJson(route('identity.tokens.index'))
+            ->assertUnauthorized();
+
+        $this->travelBack();
+    }
+
 }
