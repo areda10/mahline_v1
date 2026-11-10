@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -195,7 +196,12 @@ final class ApiTokenControllerTest extends TestCase
         $root = $this->actor('super_admin_root');
 
         foreach (['super_admin', 'cooperative_admin', 'user'] as $roleSlug) {
+            $cooperative = Cooperative::factory()->create();
             $target = $this->actor($roleSlug);
+            $target->forceFill([
+                'cooperative_id' => $cooperative->getKey(),
+            ])->save();
+
             $created = $target->createToken($roleSlug.'-root-managed-key');
             $storedHash = $created->accessToken->token;
 
