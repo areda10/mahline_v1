@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 5.0
+- **Version :** 5.1
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -105,7 +105,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 ### Détection des appareils et alertes de connexion
 
 - [x] **SESS-09 — VALIDÉ (10 novembre 2026)** Le workflow compare l'appareil au registre `known_devices` avant mémorisation ; un premier appareil déclenche `unusual_activity_detected` et `identity.authentication.new_device_detected`. Le hook nul n'est plus utilisé par le conteneur. Tests ciblés `AuthenticationWorkflowTest`, `AuthenticationWorkflowTransactionTest`, `UnusualActivityDetectionServiceTest`, `KnownDeviceTest` et `php vendor/bin/pint --test` confirmés VERTS par l'utilisateur.
-- [ ] **SESS-10 — IMPLÉMENTÉ, À TESTER** Une notification e-mail FR/EN/AR est déclenchée uniquement pour la première connexion depuis un appareil inconnu. Elle contient date/heure dans le fuseau de l'utilisateur, navigateur, appareil et mentionne l'indisponibilité de la localisation approximative tant qu'aucun fournisseur GeoIP n'est configuré. L'envoi intervient après validation de la transaction ; un échec du transport est journalisé sans annuler la connexion ni les événements SecurityEvent/Audit. Tests ajoutés ; validation locale en attente.
+- [ ] **SESS-10 — IMPLÉMENTÉ, VALIDATION PARTIELLE** Une notification e-mail FR/EN/AR est déclenchée uniquement pour la première connexion depuis un appareil inconnu. Elle contient date/heure dans le fuseau de l'utilisateur, navigateur, appareil et mentionne l'indisponibilité de la localisation approximative tant qu'aucun fournisseur GeoIP n'est configuré. L'envoi intervient après validation de la transaction ; un échec du transport est journalisé sans annuler la connexion ni les événements SecurityEvent/Audit. `AuthenticationWorkflowTransactionTest` confirmé VERT par l'utilisateur après correction du conflit de méthode `locale()` (renommée `resolveLocale()` dans `NewDeviceLoginNotification`). `AuthenticationWorkflowTest` et Pint restent à confirmer.
 - [ ] **SESS-11** Permettre à l'utilisateur de consulter et révoquer ses propres sessions ; interdire la révocation des sessions d'un autre utilisateur sauf rôle autorisé.
 - [ ] **SESS-12** Implémenter la détection d'un pays inhabituel et le challenge OTP e-mail complémentaire.
 - [ ] **SESS-13** OTP : six chiffres, durée cinq minutes, maximum cinq tentatives, renvoi après 60 secondes, nouveau code invalidant l'ancien, stockage hashé, consommation atomique et journalisation sans code en clair.
@@ -385,3 +385,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 10 novembre 2026 | 4.8 | SESS-09 : branchement de la détection de nouvel appareil au workflow d'authentification ; création d'un SecurityEvent et d'un événement Audit pour la première apparition d'un appareil. Tests ciblés ajoutés ; validation locale en attente. |
 | 10 novembre 2026 | 4.9 | SESS-09 validé après confirmation utilisateur des tests ciblés `AuthenticationWorkflowTest`, `AuthenticationWorkflowTransactionTest`, `UnusualActivityDetectionServiceTest`, `KnownDeviceTest` et Pint. Démarrage de l'audit SESS-10 : alerte e-mail sur nouvel appareil. |
 | 10 novembre 2026 | 5.0 | SESS-10 implémenté sur `feature/Identity` : notification e-mail FR/EN/AR, date/heure selon le fuseau utilisateur, navigateur/appareil, localisation signalée indisponible faute de fournisseur GeoIP. Envoi après commit et échec e-mail non bloquant ; tests de notification unique et de résilience ajoutés, validation locale en attente. |
+| 10 novembre 2026 | 5.1 | Correction du conflit de visibilité avec `Illuminate\\Notifications\\Notification::locale()` : méthode privée renommée `resolveLocale()` dans `NewDeviceLoginNotification.php`. L'utilisateur confirme VERT `AuthenticationWorkflowTransactionTest`. `AuthenticationWorkflowTest` et `php vendor/bin/pint --test` restent à confirmer avant validation complète de SESS-10. |
