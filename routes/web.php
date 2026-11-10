@@ -190,15 +190,6 @@ Route::prefix('root/back-office')
         Route::delete('users/{user}/sessions/{session}', [AuthenticationSessionController::class, 'revokeForUser'])
             ->name('users.sessions.destroy');
 
-        Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
-            ->name('security.api-tokens.index');
-        Route::post('security/api-tokens', [ApiTokenManagementController::class, 'store'])
-            ->name('security.api-tokens.store');
-        Route::delete('security/api-tokens', [ApiTokenManagementController::class, 'destroyAll'])
-            ->name('security.api-tokens.destroy-all');
-        Route::delete('security/api-tokens/{token}', [ApiTokenManagementController::class, 'destroy'])
-            ->name('security.api-tokens.destroy');
-
         Route::delete('users/{user}/api-tokens', [UserApiTokenController::class, 'destroyAllFromBackOffice'])
             ->name('users.api-tokens.destroy-all');
         Route::delete('users/{user}/api-tokens/{token}', [UserApiTokenController::class, 'destroyFromBackOffice'])
@@ -326,6 +317,15 @@ Route::prefix('back-office')
             ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
+
+        Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
+            ->name('security.api-tokens.index');
+        Route::post('security/api-tokens', [ApiTokenManagementController::class, 'store'])
+            ->name('security.api-tokens.store');
+        Route::delete('security/api-tokens', [ApiTokenManagementController::class, 'destroyAll'])
+            ->name('security.api-tokens.destroy-all');
+        Route::delete('security/api-tokens/{token}', [ApiTokenManagementController::class, 'destroy'])
+            ->name('security.api-tokens.destroy');
     });
 
 Route::prefix('back-office')
