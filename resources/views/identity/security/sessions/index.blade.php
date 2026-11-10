@@ -8,6 +8,7 @@
         <h1>Mes appareils connectés</h1>
         <p class="muted">Consultez les appareils encore actifs selon le délai d’inactivité de votre rôle et révoquez individuellement ceux que vous ne reconnaissez plus. Révoquer cet appareil vous déconnecte immédiatement de ce navigateur.</p>
     </div>
+    <a class="button button-secondary" href="{{ route(auth()->user()->hasRole('super_admin_root') ? 'root.backoffice.security.api-tokens.index' : 'backoffice.security.api-tokens.index') }}">Gérer mes clés API</a>
 </div>
 <div class="page-actions">
     <form method="POST"
