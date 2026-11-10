@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -117,6 +118,15 @@ final class ApiTokenManagementControllerTest extends TestCase
         );
 
         $user->roles()->syncWithoutDetaching([$role->getKey()]);
+
+        if ($roleSlug === 'super_admin_root') {
+            $permission = Permission::query()->firstOrCreate(
+                ['slug' => 'users.view'],
+                ['name' => 'View users', 'is_active' => true],
+            );
+
+            $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        }
 
         return $user;
     }
