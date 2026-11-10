@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 4.2
+- **Version :** 4.6
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -378,4 +378,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 
 | 10 novembre 2026 | 4.5 | SESS-07 validé par l'utilisateur : verrouillage d'urgence root-only, révocation de toutes les sessions Web et de tous les tokens API, refus de connexion jusqu'à levée root-only, conservation des tokens révoqués et audit détaillé. Tests ciblés et Pint confirmés VERTS par l'utilisateur. Mise à jour du registre fonctionnel et des standards de relations Audit fichier par fichier. |
 
-| 10 novembre 2026 | 4.2 | SESS-08 : audit des restaurations de comptes archivés/supprimés ; révocation défensive des sessions, tokens API et invitations au moment même de la restauration. Tests de non-régression ajoutés ; validation locale en attente. |
+| 10 novembre 2026 | 4.6 | SESS-08 : audit des restaurations de comptes archivés/supprimés ; révocation défensive des sessions, tokens API et invitations au moment même de la restauration. Tests de non-régression ajoutés ; validation locale en attente. |
