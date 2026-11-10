@@ -75,3 +75,10 @@ L'implémentation Identity du verrouillage d'urgence utilise le contrat commun A
 Le contrôleur exécute l'état d'urgence, les révocations et les événements dans la même transaction. Les événements Identity spécialisés (Login History, session et sécurité) restent complémentaires et ne sont pas remplacés par l'Audit. Aucun secret de session, mot de passe ou token en clair ne doit être enregistré.
 
 Fichiers d'intégration : app/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutController.php et app/Domains/Identity/Authentication/Services/SessionService.php.
+
+
+## Intégration Identity — détection d'un nouvel appareil
+
+Lorsqu'un utilisateur s'authentifie depuis un appareil jamais enregistré pour son compte, le hook applicatif `RecordNewDeviceAuthenticationWorkflowHook` écrit l'événement append-only `identity.authentication.new_device_detected`, dont le sujet est la nouvelle `AuthenticationSession`. L'événement spécialisé `unusual_activity_detected` / `new_device_detected` est également persisté dans `security_events`. Les deux journaux sont complémentaires ; Login History conserve séparément le succès de connexion normal. Un appareil déjà connu ne génère aucun doublon.
+
+Fichiers d'intégration : `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php`, `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` et `app/Providers/AppServiceProvider.php`.
