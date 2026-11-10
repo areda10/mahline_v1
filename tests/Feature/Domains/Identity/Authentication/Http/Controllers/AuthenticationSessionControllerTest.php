@@ -327,9 +327,12 @@ final class AuthenticationSessionControllerTest extends TestCase
             'Other user device',
         );
 
-        $firstToken = $user->createToken('personal-api-token')->accessToken;
-        $secondToken = $user->createToken('mobile-api-token')->accessToken;
-        $foreignToken = $otherUser->createToken('foreign-api-token')->accessToken;
+        $firstIssuedToken = $user->createToken('personal-api-token');
+        $secondIssuedToken = $user->createToken('mobile-api-token');
+        $foreignIssuedToken = $otherUser->createToken('foreign-api-token');
+        $firstToken = $firstIssuedToken->accessToken;
+        $secondToken = $secondIssuedToken->accessToken;
+        $foreignToken = $foreignIssuedToken->accessToken;
 
         $this->actingAs($user)
             ->post(route('backoffice.security.sessions.logout-everywhere'))
@@ -351,6 +354,9 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNotNull(
             PersonalAccessToken::query()->findOrFail($secondToken->getKey())->revoked_at,
         );
+        $this->assertNull(PersonalAccessToken::findToken($firstIssuedToken->plainTextToken));
+        $this->assertNull(PersonalAccessToken::findToken($secondIssuedToken->plainTextToken));
+        $this->assertNotNull(PersonalAccessToken::findToken($foreignIssuedToken->plainTextToken));
         $this->assertNull(
             PersonalAccessToken::query()->findOrFail($foreignToken->getKey())->revoked_at,
         );
