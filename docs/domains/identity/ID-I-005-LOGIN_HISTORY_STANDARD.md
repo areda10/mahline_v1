@@ -89,3 +89,12 @@ The administrative decision itself is stored in the Audit domain as identity.aut
 ## 11. New-device detection is a separate security event
 
 A successful login from a device not previously registered for the same User is recorded in the Security Events domain as `unusual_activity_detected` with reason `new_device_detected`. The Audit domain also receives `identity.authentication.new_device_detected`, linked to the new AuthenticationSession. This does not create a synthetic LoginHistory event: the normal successful-login record remains `success` and references that same session. Known devices do not emit duplicate new-device events. Detection is performed before the device is remembered.
+
+
+## 12. Alerte e-mail de connexion depuis un nouvel appareil
+
+Lorsqu'un appareil inconnu est détecté pour un utilisateur, MAHLINE envoie une notification e-mail FR/EN/AR après validation de la transaction de connexion. Le message contient la date/heure dans le fuseau de l'utilisateur, le navigateur et l'appareil. Il ne présente jamais l'adresse IP comme une localisation.
+
+En l'absence de fournisseur GeoIP configuré, le message indique que la localisation approximative est indisponible. L'ajout ultérieur d'un fournisseur GeoIP doit rester optionnel, documenter la source et la précision, et ne jamais bloquer l'authentification en cas d'indisponibilité.
+
+Une erreur d'envoi e-mail ne doit pas annuler une connexion valide ni les traces SecurityEvent/Audit déjà persistées. Les autres sessions de l'utilisateur restent actives.
