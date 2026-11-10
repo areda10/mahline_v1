@@ -13,6 +13,44 @@ use Illuminate\Http\Request;
 
 final class UserApiTokenController
 {
+    public function destroyFromBackOffice(
+        Request $request,
+        User $user,
+        PersonalAccessToken $token,
+        ApiTokenService $service,
+    ): RedirectResponse {
+        $revoked = $service->revokeToken(
+            owner: $user,
+            token: $token,
+            actor: $request->user(),
+            reason: 'root_revocation',
+            eventKey: 'identity.authentication.root_api_token_revoked',
+            action: 'root_api_token_revoked',
+        );
+
+        abort_unless($revoked, 404);
+
+        return redirect()->route('root.backoffice.users.show', $user)
+            ->with('success', 'La clé API sélectionnée a été révoquée. Les sessions Web restent inchangées.');
+    }
+
+    public function destroyAllFromBackOffice(
+        Request $request,
+        User $user,
+        ApiTokenService $service,
+    ): RedirectResponse {
+        $count = $service->revokeForUser(
+            user: $user,
+            actor: $request->user(),
+            reason: 'root_revoked_all',
+            eventKey: 'identity.authentication.root_api_token_revoked',
+            action: 'root_api_token_revoked',
+        );
+
+        return redirect()->route('root.backoffice.users.show', $user)
+            ->with('success', $count.' clé(s) API révoquée(s). Les sessions Web restent inchangées.');
+    }
+
     public function index(User $user, ApiTokenService $service): JsonResponse
     {
         return ApiTokenResource::collection(
