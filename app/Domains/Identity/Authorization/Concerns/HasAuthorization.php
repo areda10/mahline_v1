@@ -87,6 +87,7 @@ trait HasAuthorization
     public function isAuthorized(): bool
     {
         return $this->status === UserStatus::Active
-            && $this->email_verified_at !== null;
+            && $this->email_verified_at !== null
+            && $this->emergency_locked_at === null;
     }
 }
