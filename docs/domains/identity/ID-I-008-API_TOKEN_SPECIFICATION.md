@@ -1207,3 +1207,7 @@ Toute modification de cette spécification doit entraîner une revue des documen
 An emergency lock applied by super_admin_root revokes all active API tokens owned by the target user. Each token is retained in personal_access_tokens, receives a non-null revoked_at, and produces an individual identity.authentication.token_revoked audit event with reason=emergency_lock. Token secrets are never copied to audit metadata.
 
 The lock also blocks API authentication through the user's authorization state. Releasing the emergency lock does not reactivate any revoked token; a new token must be created. This rule is independent of Web session revocation, which is recorded separately by the Session domain.
+
+## 62. User restoration and token revocation
+
+Restoring an archived or soft-deleted User never reactivates an old API token. The restoration service performs a defensive revocation pass over every token still marked active, sets `revoked_at`, retains the token row, and records `identity.authentication.api_token_revoked` with reason `user_restored`. Token secrets must never be written to Audit metadata. The restored User must complete a fresh activation/login flow and create new API tokens.
