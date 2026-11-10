@@ -93,6 +93,7 @@ final class AuthenticationWorkflowTest extends TestCase
 
     public function test_new_device_detection_records_security_event_and_audit_only_once(): void
     {
+        Notification::fake();
         $user = User::factory()->create([
             'email' => 'new-device-event@example.com',
             'password' => 'password',
@@ -106,7 +107,7 @@ final class AuthenticationWorkflowTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertDatabaseHas('security_events', [
+        Notification::assertSentTo($user, NewDeviceLoginNotification::class);\n\n        $this->assertDatabaseHas('security_events', [
             'user_id' => $user->getKey(),
             'event' => 'unusual_activity_detected',
             'reason' => 'new_device_detected',
@@ -133,9 +134,7 @@ final class AuthenticationWorkflowTest extends TestCase
                 ->count(),
         );
 
-        $this->assertSame(
-            1,
-            AuditEvent::query()
+        Notification::assertCount(1);\n\n        $this->assertSame(\n            1,\n            AuditEvent::query()
                 ->where('event_key', 'identity.authentication.new_device_detected')
                 ->count(),
         );
