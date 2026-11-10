@@ -169,8 +169,6 @@ Route::prefix('root/back-office')
             ->name('security.sessions.extend');
         Route::post('security/sessions/logout-everywhere', [AuthenticationController::class, 'logoutEverywhere'])
             ->name('security.sessions.logout-everywhere');
-        Route::post('security/sessions/logout-everywhere', [AuthenticationController::class, 'logoutEverywhere'])
-            ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
 
@@ -295,6 +293,8 @@ Route::prefix('back-office')
             ->name('security.sessions.index');
         Route::post('security/sessions/extend', [AuthenticationSessionController::class, 'extend'])
             ->name('security.sessions.extend');
+        Route::post('security/sessions/logout-everywhere', [AuthenticationController::class, 'logoutEverywhere'])
+            ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
     });
