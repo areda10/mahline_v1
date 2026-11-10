@@ -1986,3 +1986,12 @@ Le super_admin_root peut verrouiller immédiatement un compte cible (jamais son 
 - docs/framework/database/DB-008-AUDIT_STANDARD.md et docs/domains/audit/AUDIT_DOMAIN.md — événements, granularité et minimisation des secrets.
 
 État : SESS-07 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur. Prochaine étape : poursuivre l'audit Identity avec SESS-08 selon le backlog, sans modifier les décisions gelées.
+
+
+### Complément SESS-07 — précision sur les assertions Audit
+
+La cartographie fichier par fichier a été complétée par les standards User Model, Authorization et Login History. La suite HTTP d'urgence confirme les événements de synthèse applied/released, l'état persistant, la révocation des sessions et du token, le refus d'accès pendant le verrouillage et la non-réactivation après levée. Les événements Audit unitaires de session et de token sont produits par les méthodes génériques SessionService::revoke() et SessionService::revokeApiTokensForUser() ; ils sont distingués des événements de synthèse du contrôleur. Les tests génériques des services de session et de tokens couvrent ces chemins de révocation.
+
+La vue et la déclaration des routes ne créent pas d'événement Audit : elles délèguent aux fonctions métier protégées. La migration ne crée pas non plus d'événement runtime.
+
+Fichiers de spécification supplémentaires actualisés : ID-I-007-ROLE_PERMISSION_STANDARD.md, users/ID-001.3-USER_MODEL_SPECIFICATION.md et ID-I-005-LOGIN_HISTORY_STANDARD.md.
