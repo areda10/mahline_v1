@@ -161,4 +161,25 @@ final class PersonalAccessTokenTest extends TestCase
             ],
         );
     }
+
+    public function test_every_token_creation_path_enforces_ninety_days_even_when_expiry_is_supplied(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $created = $user->createToken(
+            'fixed-expiry-token',
+            [],
+            now()->addDays(365),
+        );
+
+        $this->assertEquals(
+            now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
+            $created->accessToken->fresh()->expires_at,
+        );
+    }
+
 }
