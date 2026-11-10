@@ -14,6 +14,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -146,6 +147,45 @@ final class AuthenticationWorkflowTest extends TestCase
                 ->where('event_key', 'identity.authentication.new_device_detected')
                 ->count(),
         );
+    }
+
+    public function test_mail_failure_does_not_rollback_successful_new_device_login(): void
+    {
+        $dispatcher = Mockery::mock(Dispatcher::class);
+        $dispatcher->shouldReceive('send')
+            ->once()
+            ->andThrow(new RuntimeException('Mail transport unavailable.'));
+
+        $this->app->instance(Dispatcher::class, $dispatcher);
+
+        $user = User::factory()->create([
+            'email' => 'new-device-mail-failure@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $response = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ]);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'user_id' => $user->getKey(),
+            'revoked_at' => null,
+        ]);
+
+        $this->assertDatabaseHas('security_events', [
+            'user_id' => $user->getKey(),
+            'reason' => 'new_device_detected',
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.new_device_detected',
+        ]);
     }
 
     public function test_successful_authentication_creates_login_history(): void
