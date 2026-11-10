@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.2
+- **Version :** 3.3
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -1995,3 +1995,43 @@ La cartographie fichier par fichier a été complétée par les standards User M
 La vue et la déclaration des routes ne créent pas d'événement Audit : elles délèguent aux fonctions métier protégées. La migration ne crée pas non plus d'événement runtime.
 
 Fichiers de spécification supplémentaires actualisés : ID-I-007-ROLE_PERMISSION_STANDARD.md, users/ID-001.3-USER_MODEL_SPECIFICATION.md et ID-I-005-LOGIN_HISTORY_STANDARD.md.
+
+
+## 20.58 — Audit SESS-08 : non-réactivation des accès après restauration
+
+### Règle de sécurité
+
+La restauration d'un compte archivé ou supprimé ne restaure jamais ses anciens accès. Le compte restauré revient à l'état `pending`, sans vérification d'e-mail et sans réactivation d'un ancien mot de passe temporaire. L'utilisateur doit suivre un nouveau parcours d'activation et se reconnecter ; les tokens API doivent être recréés.
+
+La restauration constitue désormais elle-même une frontière de sécurité : elle révoque défensivement tout enregistrement encore actif, même si l'archivage/la suppression avait déjà été exécuté ou si des données historiques/anciennes restent marquées actives.
+
+### Constat et correction sur `feature/Identity`
+
+- `restoreArchivedUser()` déléguait à `changeUserStatus()` sans `revokeReason`. L'archivage initial révoquait bien les accès, mais la restauration ne revalidait pas cette propriété.
+- `restoreDeletedUser()` restaurait le soft delete et remettait le statut à `pending`, mais ne révoquait pas explicitement les éventuels accès encore actifs au moment de la restauration.
+- Les deux chemins appellent maintenant `revokePendingInvitations()` et `revokeAccessCredentials()` avec le motif `user_restored`.
+- Les sessions sont révoquées individuellement via `SessionService::revokeForUser()`, avec Login History et Audit par session.
+- Les tokens API actifs sont conservés et reçoivent `revoked_at`, avec un événement Audit individuel ; aucun secret de token n'est journalisé.
+- Les invitations encore actives sont révoquées ; aucune invitation ancienne n'est réactivée ou renvoyée automatiquement.
+- Toutes ces opérations restent dans la transaction de restauration : un échec d'audit/révocation annule la transition.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation Audit |
+|---|---|---|
+| `app/Domains/Identity/UserManagement/Services/UserManagementService.php` | `restoreArchivedUser()` transmet `user_restored` à `changeUserStatus()`. `restoreDeletedUser()` restaure uniquement l'enregistrement User puis révoque les accès résiduels. | `identity.user.status_changed` pour la restauration d'un compte archivé ; `identity.user.restored` pour un compte soft-deleted ; révocations détaillées ci-dessous. |
+| `app/Domains/Identity/UserManagement/Services/UserManagementService.php::revokeAccessCredentials()` | Révoque toutes les sessions actives et tous les tokens API actifs du User restauré. | SessionService produit `identity.authentication.session_revoked` par session et Login History ; chaque token produit `identity.authentication.api_token_revoked` avec `reason=user_restored`, sans secret. |
+| `app/Domains/Identity/UserManagement/Services/UserManagementService.php::revokePendingInvitations()` | Révoque les invitations encore actives de l'utilisateur restauré. | Pas d'événement Audit individuel dédié actuellement ; la transition de restauration est auditée sur le User. |
+| `app/Domains/Identity/Authentication/Services/SessionService.php::revokeForUser()/revoke()` | Révocation idempotente de chaque session Web encore active. | Un événement Audit et une entrée Login History par session ; motif `user_restored`. |
+| `app/Domains/Identity/Authentication/Models/AuthenticationSession.php` | Conserve les enregistrements historiques et leur `revoked_at` / `revocation_reason`. | Pas d'audit au niveau du modèle ; l'écriture est effectuée par SessionService. |
+| `app/Domains/Identity/Authentication/Models/PersonalAccessToken.php` | Conserve le token révoqué ; les mécanismes d'authentification refusent un token avec `revoked_at`. | Pas d'audit au niveau du modèle ; l'événement est écrit par UserManagementService. |
+| `app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php` | Expose les actions root-only de restauration et délègue au service métier. | Ne produit pas d'audit direct ; l'audit transactionnel appartient au service. |
+| `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php` | Expose les routes de restauration dans l'espace Root dédié. | Ne produit pas d'audit direct ; délégation au service. |
+| `routes/web.php` | Protège les routes restore/archive/delete par authentification, session active, rôle root et permissions correspondantes. | Déclaration uniquement, aucun événement runtime. |
+| `tests/Feature/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementControllerTest.php` | Vérifie la restauration d'un compte archivé et d'un compte soft-deleted, y compris lorsque des sessions, tokens et invitations sont artificiellement remis à l'état actif juste avant la restauration. | Vérifie que les sessions reprennent le motif `user_restored`, que les tokens/invitations restent révoqués et qu'aucune ancienne invitation n'est réactivée. |
+
+### État de validation
+
+- Code mis à jour sur `feature/Identity`.
+- Tests HTTP renforcés pour couvrir la restauration comme barrière de sécurité indépendante de l'action d'archivage/suppression.
+- Tests locaux ciblés et `php vendor/bin/pint --test` à exécuter par l'utilisateur ; SESS-08 reste **À TESTER** jusqu'à confirmation VERT.
