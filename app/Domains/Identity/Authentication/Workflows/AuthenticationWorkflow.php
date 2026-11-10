@@ -42,7 +42,7 @@ final class AuthenticationWorkflow
 
             $newSessionId = $request->session()->getId();
 
-            $authenticationSession = DB::transaction(
+            [$authenticationSession, $isNewDevice] = DB::transaction(
                 function () use (
                     $user,
                     $context,
@@ -85,8 +85,14 @@ final class AuthenticationWorkflow
                         device: $context->device,
                     );
 
-                    return $authenticationSession;
+                    return [$authenticationSession, $isNewDevice];
                 },
+            );
+
+            $this->hook->afterAuthenticationCommitted(
+                user: $user,
+                session: $authenticationSession,
+                isNewDevice: $isNewDevice,
             );
 
             $request->session()->put(
