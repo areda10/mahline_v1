@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Domains\Identity\Authentication\Services;
+namespace App\\Domains\\Identity\\Authentication\\Services;
 
-use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
-use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
-use App\Domains\Identity\Users\Models\User;
-use App\Shared\DTOs\AuditEntryDTO;
-use Illuminate\Support\Facades\DB;
+use App\\Core\\Foundation\\Services\\BaseService;
+use App\\Domains\\Audit\\Services\\AuditService;
+use App\\Domains\\Identity\\Authentication\\Models\\PersonalAccessToken;
+use App\\Domains\\Identity\\Users\\Models\\User;
+use App\\Shared\\DTOs\\AuditEntryDTO;
+use Illuminate\\Database\\Eloquent\\Collection;
+use Illuminate\\Support\\Facades\\DB;
+use Laravel\\Sanctum\\NewAccessToken;
 use RuntimeException;
 
 final class ApiTokenService extends BaseService
@@ -17,6 +19,119 @@ final class ApiTokenService extends BaseService
     public function __construct(
         private readonly AuditService $audit,
     ) {}
+
+    /**
+     * Create an API token for its owner only.
+     *
+     * Abilities default to an empty list until the API-06 role/ability matrix
+     * is formally defined. The plaintext secret is returned only by Sanctum
+     * in this creation response and is never written to Audit.
+     */
+    public function createForOwner(
+        User $owner,
+        User $actor,
+        string $name,
+        array $abilities = [],
+    ): NewAccessToken {
+        $name = trim($name);
+
+        if ($name === '') {
+            throw new RuntimeException('An API token name is required.');
+        }
+
+        if ((string) $owner->getKey() !== (string) $actor->getKey()) {
+            throw new RuntimeException('An API token can only be created by its owner.');
+        }
+
+        return DB::transaction(function () use (
+            $owner,
+            $actor,
+            $name,
+            $abilities,
+        ): NewAccessToken {
+            $lockedOwner = User::query()
+                ->whereKey($owner->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedOwner->isAuthorized()) {
+                throw new RuntimeException('The account is not authorized to create API tokens.');
+            }
+
+            $newToken = $lockedOwner->createToken($name, $abilities);
+            $token = $newToken->accessToken;
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.api_token_created',
+                action: 'api_token_created',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: $lockedOwner->cooperative_id
+                    ? (string) $lockedOwner->cooperative_id
+                    : null,
+                subjectType: PersonalAccessToken::class,
+                subjectId: (string) $token->getKey(),
+                oldValues: [],
+                newValues: [
+                    'name' => $token->name,
+                    'abilities' => $token->abilities ?? [],
+                ],
+                metadata: [
+                    'user_id' => (string) $lockedOwner->getKey(),
+                ],
+            ));
+
+            return $newToken;
+        });
+    }
+
+    /**
+     * Return all token records for one owner, newest first.
+     *
+     * Revoked records remain visible as history. The query is always scoped
+     * to the supplied owner and never exposes the stored token hash.
+     *
+     * @return Collection<int, PersonalAccessToken>
+     */
+    public function tokensForUser(User $user): Collection
+    {
+        return PersonalAccessToken::query()
+            ->where('tokenable_type', $user->getMorphClass())
+            ->where('tokenable_id', $user->getKey())
+            ->latest('created_at')
+            ->get();
+    }
+
+    /**
+     * Return safe token metadata. The secret and stored hash are excluded.
+     *
+     * @return array{
+     *     id: string,
+     *     name: string,
+     *     abilities: array,
+     *     created_at: ?string,
+     *     last_used_at: ?string,
+     *     expires_at: ?string,
+     *     revoked_at: ?string,
+     *     is_active: bool
+     * }
+     */
+    public function metadata(PersonalAccessToken $token): array
+    {
+        $isActive = $token->revoked_at === null
+            && ($token->expires_at === null || $token->expires_at->isFuture());
+
+        return [
+            'id' => (string) $token->getKey(),
+            'name' => $token->name,
+            'abilities' => $token->abilities ?? [],
+            'created_at' => $token->created_at?->toISOString(),
+            'last_used_at' => $token->last_used_at?->toISOString(),
+            'expires_at' => $token->expires_at?->toISOString(),
+            'revoked_at' => $token->revoked_at?->toISOString(),
+            'is_active' => $isActive,
+        ];
+    }
 
     /**
      * Revoke all active API tokens owned by the given user.
