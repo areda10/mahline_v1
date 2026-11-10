@@ -202,16 +202,26 @@ final class SessionService extends BaseService
     public function revokeAllAccessForUser(User $user): array
     {
         return DB::transaction(function () use ($user): array {
+            /*
+             * SessionService::create() locks the same user row. This serializes
+             * global revocation against a concurrent web login so a new
+             * session cannot slip into the active-session set mid-operation.
+             */
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $activeSessionCount = AuthenticationSession::query()
-                ->where('user_id', $user->getKey())
+                ->where('user_id', $lockedUser->getKey())
                 ->whereNull('revoked_at')
                 ->count();
 
-            $this->revokeForUser($user, 'global_logout');
+            $this->revokeForUser($lockedUser, 'global_logout');
 
             $tokens = PersonalAccessToken::query()
                 ->where('tokenable_type', User::class)
-                ->where('tokenable_id', $user->getKey())
+                ->where('tokenable_id', $lockedUser->getKey())
                 ->whereNull('revoked_at')
                 ->lockForUpdate()
                 ->get();
@@ -244,6 +254,29 @@ final class SessionService extends BaseService
                     ],
                 ));
             }
+
+            $actor = auth()->user();
+            $actor = $actor instanceof User ? $actor : null;
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.global_logout',
+                action: 'global_logout',
+                actorType: $actor ? User::class : null,
+                actorId: $actor ? (string) $actor->getKey() : null,
+                cooperativeId: $lockedUser->cooperative_id
+                    ? (string) $lockedUser->cooperative_id
+                    : null,
+                subjectType: User::class,
+                subjectId: (string) $lockedUser->getKey(),
+                oldValues: null,
+                newValues: [
+                    'active_sessions_revoked' => $activeSessionCount,
+                    'api_tokens_revoked' => $tokens->count(),
+                ],
+                metadata: [
+                    'user_id' => (string) $lockedUser->getKey(),
+                ],
+            ));
 
             return [
                 'sessions' => $activeSessionCount,
