@@ -1825,4 +1825,36 @@ Fichiers modifiés :
 - bootstrap/app.php ;
 - tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationControllerTest.php.
 
-**État : SESS-04 — code et assertions ajoutés ; validation locale des tests et Pint en attente.**
+**État : SESS-04 VALIDÉ — le 10 novembre 2026, l'utilisateur a confirmé VERTS AuthenticationControllerTest, EnsureActiveAuthenticationSessionTest et php vendor/bin/pint --test.**
+
+## 20.52 — Audit et implémentation initiale de SESS-05 : déconnexion globale personnelle
+
+### Constat de l'audit
+
+- AuthenticationController::logout() ne révoquait que l'AuthenticationSession liée au navigateur courant, puis invalidait la session Laravel locale.
+- SessionService::revokeForUser() permettait déjà de révoquer toutes les sessions web d'un utilisateur, mais aucune action utilisateur ne l'appelait.
+- User utilise Sanctum HasApiTokens ; le modèle PersonalAccessToken possède revoked_at et findToken() refuse déjà les jetons révoqués. Les jetons sont donc révocables sans suppression physique.
+- La page Mes appareils connectés ne proposait que la révocation individuelle.
+
+### Implémentation sur feature/Identity
+
+- Nouvelle méthode SessionService::revokeAllAccessForUser() : verrouille la ligne utilisateur pour sérialiser l'opération avec la création de sessions, révoque chaque session active avec le motif global_logout, puis marque chaque jeton Sanctum actif comme révoqué.
+- Chaque session continue de passer par revoke(), qui conserve LoginHistory et l'audit existants.
+- Chaque jeton reçoit son propre événement d'audit `identity.authentication.token_revoked`, sans jamais enregistrer le secret du jeton.
+- Un événement récapitulatif `identity.authentication.global_logout` journalise le nombre de sessions et de jetons révoqués.
+- AuthenticationController::logoutEverywhere() révoque les accès de l'utilisateur authentifié, déconnecte le guard et invalide le cookie/session du navigateur courant.
+- Routes POST dédiées dans les espaces de sécurité root et back-office standard ; bouton protégé CSRF et confirmation explicite sur la page des appareils connectés.
+- La déconnexion standard actuelle reste inchangée : elle ne révoque que la session courante.
+
+### Couverture de test ajoutée
+
+Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` crée deux sessions et deux jetons pour l'utilisateur, ainsi qu'une session et un jeton appartenant à un autre utilisateur. Il vérifie la révocation des quatre accès propres, l'invalidation des jetons par PersonalAccessToken::findToken(), la préservation des accès étrangers et les événements d'audit individuels des jetons.
+
+Fichiers modifiés :
+- app/Domains/Identity/Authentication/Services/SessionService.php ;
+- app/Domains/Identity/Authentication/Http/Controllers/AuthenticationController.php ;
+- routes/web.php ;
+- resources/views/identity/security/sessions/index.blade.php ;
+- tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php.
+
+**État : SESS-05 — implémentation et test ajoutés ; validation locale ciblée et Pint en attente.**
