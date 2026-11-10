@@ -6,7 +6,7 @@ namespace App\Providers;
 
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
-use App\Domains\Identity\Authentication\Workflows\NullAuthenticationWorkflowHook;
+use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use Illuminate\Support\ServiceProvider;
