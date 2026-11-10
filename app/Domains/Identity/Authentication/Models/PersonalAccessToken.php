@@ -12,6 +12,19 @@ final class PersonalAccessToken extends SanctumPersonalAccessToken
 {
     use HasUlids;
 
+    public const int EXPIRATION_DAYS = 90;
+
+    /**
+     * Enforce the MAHLINE API-token lifetime for every creation path,
+     * including direct calls to User::createToken().
+     */
+    protected static function booted(): void
+    {
+        static::creating(static function (self $token): void {
+            $token->expires_at = now()->addDays(self::EXPIRATION_DAYS);
+        });
+    }
+
     protected $table = 'personal_access_tokens';
 
     protected $keyType = 'string';
