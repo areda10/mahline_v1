@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -378,6 +380,7 @@ final class AuthenticationWorkflowTest extends TestCase
                 public function afterDeviceRemembered(
                     User $user,
                     AuthenticationSession $session,
+                bool $isNewDevice,
                 ): void {
                     throw new RuntimeException('Simulated persistence failure.');
                 }
