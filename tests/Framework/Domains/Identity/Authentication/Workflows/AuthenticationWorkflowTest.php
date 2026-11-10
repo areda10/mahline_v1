@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Workflows;
 
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Authentication\Notifications\NewDeviceLoginNotification;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Mockery;
-use Illuminate\Contracts\Notifications\Dispatcher;
 use RuntimeException;
 use Tests\TestCase;
 

@@ -7,10 +7,10 @@ namespace App\Domains\Identity\Authentication\Workflows;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Notifications\NewDeviceLoginNotification;
 use App\Domains\Identity\Authentication\Services\SecurityEventService;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
-use App\Domains\Identity\Authentication\Notifications\NewDeviceLoginNotification;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
