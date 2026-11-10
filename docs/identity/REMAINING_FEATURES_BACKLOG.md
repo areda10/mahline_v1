@@ -374,4 +374,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 
 | 10 novembre 2026 | 4.3 | SESS-06 clôturé. Démarrage de l'audit SESS-07 : révocation individuelle, globale et déclenchée par les changements sensibles du compte. |
 
-| 10 novembre 2026 | 4.4 | SESS-07 : ajout du verrouillage d'urgence root-only persistant, de la révocation des sessions et tokens API, du blocage de l'authentification et de la levée root-only auditée ; correction du changement obligatoire de mot de passe pour conserver les tokens révoqués. Tests ciblés et Pint en attente. |
+| 10 novembre 2026 | 4.4 | SESS-07 : ajout du verrouillage d'urgence root-only persistant, de la révocation des sessions et tokens API, du blocage de l'authentification et de la levée root-only auditée ; correction du changement obligatoire de mot de passe pour conserver les tokens révoqués. Tests ciblés `AuthenticationLockoutControllerTest`, `AuthenticationServiceTest`, `ForcedPasswordChangeControllerTest`, `PasswordServiceTest`, `PasswordResetServiceTest` et Pint en attente. |
