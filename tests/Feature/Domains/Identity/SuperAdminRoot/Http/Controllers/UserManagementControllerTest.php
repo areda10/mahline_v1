@@ -331,6 +331,10 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNotNull($token->fresh()->revoked_at);
         $this->assertNotNull($invitation->fresh()->revoked_at);
 
+        $session->forceFill(['revoked_at' => null, 'revocation_reason' => null])->save();
+        $token->forceFill(['revoked_at' => null])->save();
+        $invitation->forceFill(['revoked_at' => null])->save();
+
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore', $target))
             ->assertRedirect(route('root.backoffice.users.show', $target))
@@ -342,6 +346,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
         // Restoring never reactivates former invitations or credentials.
         $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertSame('user_restored', $session->fresh()->revocation_reason);
         $this->assertNotNull($token->fresh()->revoked_at);
         $this->assertNotNull($invitation->fresh()->revoked_at);
         $this->assertDatabaseMissing('user_invitations', [
@@ -374,6 +379,10 @@ final class UserManagementControllerTest extends TestCase
         $this->assertNotNull($token->fresh()->revoked_at);
         $this->assertNotNull($invitation->fresh()->revoked_at);
 
+        $session->forceFill(['revoked_at' => null, 'revocation_reason' => null])->save();
+        $token->forceFill(['revoked_at' => null])->save();
+        $invitation->forceFill(['revoked_at' => null])->save();
+
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore-deleted', $target->getKey()))
             ->assertRedirect(route('root.backoffice.users.show', $target))
@@ -387,6 +396,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
         // Restoring a soft-deleted account leaves old sessions, tokens and invitations revoked.
         $this->assertNotNull($session->fresh()->revoked_at);
+        $this->assertSame('user_restored', $session->fresh()->revocation_reason);
         $this->assertNotNull($token->fresh()->revoked_at);
         $this->assertNotNull($invitation->fresh()->revoked_at);
         $this->assertDatabaseMissing('user_invitations', [
