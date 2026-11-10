@@ -987,10 +987,10 @@ ACTIVE USER
 AUTHENTICATED
     │
     ▼
-ONE ACTIVE AUTHENTICATED SESSION
+MULTIPLE ACTIVE AUTHENTICATED SESSIONS
 ```
 
-**ONE USER → ONE ACTIVE AUTHENTICATED SESSION** est une règle architecturale obligatoire et gelée.
+**ONE USER → MULTIPLE ACTIVE WEB SESSIONS** est une règle architecturale obligatoire et gelée.
 
 
 ## 46. Verrouillage d'urgence root-only
@@ -1006,3 +1006,7 @@ Pendant le verrouillage :
 La levée ne change pas le statut métier du User, ne réactive aucun accès révoqué et ne remet à zéro que le compteur d'échecs associé au compte. Le compteur IP partagé est préservé. La réauthentification reste obligatoire.
 
 La migration dédiée est 2026_11_10_000001_add_emergency_lock_fields_to_users_table.php. Les événements identity.authentication.emergency_lock.applied et identity.authentication.emergency_lock.released tracent les deux transitions. Les révocations individuelles des sessions et tokens conservent leurs propres événements.
+
+## 47. Restoration and credential non-reactivation
+
+Restoring an archived account returns it to `pending`, clears email verification and does not restore prior invitations, Web sessions or API tokens. Restoring a soft-deleted account follows the same pending/unverified state. Both restoration paths defensively revoke any session or token that is still marked active using reason `user_restored`; the operation is transactional and audited. The account must complete a fresh activation flow and reconnect. Previously revoked credentials remain revoked.
