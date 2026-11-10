@@ -10,6 +10,7 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 final class AuthenticationSessionController
@@ -72,6 +73,10 @@ final class AuthenticationSessionController
 
         $service->revoke($owned, $isRoot ? 'root_revocation' : 'user_revocation');
 
+        if (hash_equals((string) $owned->session_id, $request->session()->getId())) {
+            return $this->logoutCurrentBrowser($request);
+        }
+
         return redirect()
             ->route($isRoot ? 'root.backoffice.security.sessions.index' : 'backoffice.security.sessions.index')
             ->with('success', 'La session sélectionnée a été révoquée.');
@@ -87,17 +92,32 @@ final class AuthenticationSessionController
 
         $service->revoke($owned, 'root_revocation');
 
+        if (
+            $target->is($request->user())
+            && hash_equals((string) $owned->session_id, $request->session()->getId())
+        ) {
+            return $this->logoutCurrentBrowser($request);
+        }
+
         return redirect()->route('root.backoffice.users.show', $target)
             ->with('success', 'La session sélectionnée a été révoquée.');
     }
 
+    private function logoutCurrentBrowser(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('authentication.login')
+            ->with('success', 'La session de ce navigateur a été révoquée. Vous êtes déconnecté.');
+    }
+
     private function sessionsView(Request $request): View
     {
-        $sessions = AuthenticationSession::query()
-            ->where('user_id', $request->user()->getKey())
-            ->whereNull('revoked_at')
-            ->orderByDesc('last_activity_at')
-            ->get();
+        $sessions = $service->activeSessionsFor($request->user());
 
         $currentId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentId): void {
