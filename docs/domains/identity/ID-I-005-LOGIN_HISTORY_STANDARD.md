@@ -77,3 +77,10 @@ Covered by:
 ## 9. Freeze rule
 
 Changes to login-history events or security context require corresponding tests and documentation updates.
+
+
+## 10. Emergency session revocation history
+
+When an emergency account lock revokes active Web sessions, each session revocation is recorded through the existing session-revocation LoginHistory operation with reason emergency_lock. The event remains associated with the owning User and the affected AuthenticationSession, including the available client context. This does not create a normal user-initiated logout event.
+
+The administrative decision itself is stored in the Audit domain as identity.authentication.emergency_lock.applied. The per-session Audit event identity.authentication.session_revoked is complementary to LoginHistory and does not replace it. Releasing the emergency lock does not create synthetic login/logout history and does not restore any prior session.
