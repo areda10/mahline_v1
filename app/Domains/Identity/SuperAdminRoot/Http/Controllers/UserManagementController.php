@@ -6,6 +6,7 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
@@ -225,8 +226,7 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
-        $sessions = app(\App\Domains\Identity\Authentication\Services\SessionService::class)
-            ->activeSessionsFor($user);
+        $sessions = app(SessionService::class)->activeSessionsFor($user);
 
         $currentSessionId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
