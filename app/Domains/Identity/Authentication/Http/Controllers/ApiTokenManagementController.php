@@ -22,7 +22,7 @@ final class ApiTokenManagementController
     public function store(Request $request, ApiTokenService $service): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'min:1', 'max:255'],
+            'name' => ['required', 'string', 'min:1', 'max:255', 'not_regex:/^\\s*$/'],
         ]);
 
         $newToken = $service->createForOwner(
