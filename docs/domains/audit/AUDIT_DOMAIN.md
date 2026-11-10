@@ -61,3 +61,17 @@ Cette première phase fournit le contrat d'écriture commun. Elle ne branche pas
 - Ajouter les tests d'intégration MySQL et les tests de politique selon la configuration réelle du projet.
 - Décider si l'IP et le user-agent sont nécessaires pour chaque type d'événement, compte tenu de la confidentialité.
 - Ajouter des intégrations explicites dans chaque domaine après validation de son service métier.
+
+
+## Intégration Identity — verrouillage d'urgence root-only
+
+L'implémentation Identity du verrouillage d'urgence utilise le contrat commun AuditService::record(AuditEntryDTO $entry) et les événements suivants :
+
+- identity.authentication.emergency_lock.applied : opération administrative de verrouillage du User ;
+- identity.authentication.session_revoked : révocation unitaire de chaque session avec le motif emergency_lock ;
+- identity.authentication.token_revoked : révocation unitaire de chaque token API avec le motif emergency_lock ;
+- identity.authentication.emergency_lock.released : levée administrative du verrouillage.
+
+Le contrôleur exécute l'état d'urgence, les révocations et les événements dans la même transaction. Les événements Identity spécialisés (Login History, session et sécurité) restent complémentaires et ne sont pas remplacés par l'Audit. Aucun secret de session, mot de passe ou token en clair ne doit être enregistré.
+
+Fichiers d'intégration : app/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutController.php et app/Domains/Identity/Authentication/Services/SessionService.php.
