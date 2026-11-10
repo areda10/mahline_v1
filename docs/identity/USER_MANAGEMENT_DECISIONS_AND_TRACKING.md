@@ -1910,3 +1910,35 @@ Le 10 novembre 2026, l'utilisateur a confirmé VERTS :
 Les tests couvrent la conservation d'une session antérieure lors d'une nouvelle authentification, l'absence d'historique de révocation intempestive et la coexistence d'une session ordinateur avec une session téléphone.
 
 **État : SESS-06 VALIDÉ. Prochaine tâche : SESS-07 — révocations individuelles, globales et déclenchées par les changements sensibles du compte.**
+
+
+## 20.56 — SESS-07 : décision et implémentation du verrouillage d’urgence
+
+### Décision validée par l'utilisateur — 10 novembre 2026
+
+Lorsqu'un `super_admin_root` déclenche un verrouillage d'urgence sur un compte :
+- toutes les sessions web actives du compte sont immédiatement révoquées ;
+- tous les tokens API actifs sont immédiatement révoqués et conservés en base avec `revoked_at` ;
+- toute nouvelle authentification est refusée tant que le verrouillage d'urgence est actif ;
+- seul un `super_admin_root` peut lever ce verrouillage ;
+- la levée ne restaure aucune ancienne session ni aucun ancien token : l'utilisateur doit se reconnecter et recréer ses accès API.
+
+Le verrouillage d'urgence est distinct du statut métier `suspended` et des compteurs temporaires anti-brute-force. Il utilise deux colonnes dédiées `emergency_locked_at` et `emergency_lock_reason`, ajoutées par une nouvelle migration (les migrations déjà exécutées ne sont pas modifiées).
+
+### Implémentation sur `feature/Identity`
+
+- Migration `2026_11_10_000001_add_emergency_lock_fields_to_users_table.php`.
+- `User::isAuthorized()` refuse un compte verrouillé ; `AuthenticationService` refuse également sa connexion même si son statut est `active` et son e-mail vérifié.
+- `AuthenticationLockoutController` expose deux actions root-only : verrouillage d'urgence et levée du verrouillage. Le root ne peut pas verrouiller son propre compte.
+- Le verrouillage est transactionnel, verrouille la ligne cible, révoque chaque session via `SessionService::revokeForUser()` et chaque token via `revokeApiTokensForUser()`, puis écrit un événement d'audit avec le motif et le contexte de requête.
+- La levée efface uniquement le compteur de tentatives du compte (jamais le compteur IP partagé), journalise le motif et ne restaure aucun accès révoqué.
+- La page de gestion des blocages expose les formulaires avec confirmation explicite.
+- Le changement obligatoire de mot de passe utilise désormais la révocation auditée des tokens plutôt que leur suppression physique ; le test HTTP est ajusté pour exiger la conservation du token révoqué.
+
+### Tests ajoutés ou ajustés
+
+- `AuthenticationLockoutControllerTest::test_root_emergency_lock_revokes_all_sessions_and_api_tokens_and_blocks_login_until_root_releases_it()`.
+- `AuthenticationLockoutControllerTest::test_non_root_user_cannot_apply_or_release_an_emergency_lock()`.
+- `ForcedPasswordChangeControllerTest::test_forced_password_change_preserves_current_session_and_revokes_other_sessions_and_api_tokens()`.
+
+**État : implémentation sur `feature/Identity` ; validation locale ciblée et Pint en attente.**
