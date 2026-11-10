@@ -208,4 +208,78 @@ final class ApiTokenServiceTest extends TestCase
 
         $this->assertDatabaseCount('audit_events', 1);
     }
+
+    public function test_service_created_tokens_expire_after_exactly_ninety_days(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = User::factory()->create();
+
+        $created = $this->service->createForOwner(
+            owner: $user,
+            actor: $user,
+            name: 'ninety-day-token',
+        );
+
+        self::assertEquals(
+            now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
+            $created->accessToken->fresh()->expires_at,
+        );
+
+        self::assertTrue($this->service->metadata($created->accessToken->fresh())['is_active']);
+    }
+
+    public function test_expired_token_metadata_is_inactive_even_when_not_revoked(): void
+    {
+        $user = User::factory()->create();
+        $created = $user->createToken('expired-metadata-token');
+
+        $created->accessToken->forceFill([
+            'expires_at' => now()->subSecond(),
+        ])->save();
+
+        $metadata = $this->service->metadata($created->accessToken->fresh());
+
+        self::assertNull($created->accessToken->fresh()->revoked_at);
+        self::assertFalse($metadata['is_active']);
+    }
+
+    public function test_expiration_migration_normalizes_all_existing_tokens_from_creation_date(): void
+    {
+        $user = User::factory()->create();
+        $createdAt = now()->subDays(120)->startOfSecond();
+
+        DB::table('personal_access_tokens')->insert([
+            'id' => (string) str()->ulid(),
+            'tokenable_type' => $user->getMorphClass(),
+            'tokenable_id' => $user->getKey(),
+            'name' => 'legacy-permanent-token',
+            'token' => hash('sha256', 'legacy-permanent-token-secret'),
+            'abilities' => json_encode([]),
+            'last_used_at' => null,
+            'expires_at' => null,
+            'revoked_at' => null,
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ]);
+
+        $migration = require database_path(
+            'migrations/2026_11_10_220000_enforce_ninety_day_api_token_expiration.php',
+        );
+
+        $migration->up();
+
+        $legacyToken = DB::table('personal_access_tokens')
+            ->where('name', 'legacy-permanent-token')
+            ->first();
+
+        self::assertNotNull($legacyToken);
+        self::assertEquals(
+            $createdAt->copy()->addDays(90)->toDateTimeString(),
+            \Illuminate\\Support\\Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
+        );
+
+        $this->travelBack();
+    }
+
 }
