@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.6
+- **Version :** 3.7
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -2161,3 +2161,34 @@ Constats du code réel sur `feature/Identity` :
 ### État
 
 **SESS-10 — IMPLÉMENTÉ, À TESTER.** Exécuter les tests ciblés et Pint avant validation. Aucun fournisseur GeoIP n'a été ajouté ; l'intégration d'une localisation réelle reste conditionnée à un choix/configuration distincts.
+
+
+
+## 20.62 — Validation SESS-10 et démarrage de l'audit SESS-11
+
+### Validation SESS-10 — 10 novembre 2026
+
+L'utilisateur a confirmé VERTS :
+- `php artisan test --filter=AuthenticationWorkflowTransactionTest`
+- `php artisan test --filter=AuthenticationWorkflowTest`
+- `php vendor/bin/pint --test`
+
+Le conflit de visibilité entre la méthode privée `locale()` et `Illuminate\\Notifications\\Notification::locale()` a été corrigé en renommant la méthode privée `resolveLocale()` dans `NewDeviceLoginNotification.php`. SESS-10 est **VALIDÉ**.
+
+### SESS-11 — périmètre à auditer
+
+Objectif du backlog : permettre à chaque utilisateur de consulter ses propres sessions Web et de révoquer individuellement une session, sans pouvoir consulter ni révoquer celles d'un autre utilisateur. Toute capacité administrative éventuelle doit respecter les rôles et permissions déjà validés.
+
+L'audit doit vérifier le code réel avant toute modification :
+- liste des sessions actives et historique utile ;
+- affichage des métadonnées sans exposer les secrets de session ;
+- révocation d'une session autre que la session courante ;
+- traitement spécifique de la révocation de la session courante ;
+- isolation stricte par `user_id` et contrôle d'autorisation côté serveur ;
+- protection des sessions concurrentes : révoquer une session ne doit pas affecter les autres sessions actives du même utilisateur ;
+- événements Login History et Audit, avec un motif explicite ;
+- routes, contrôleurs, services, policies, vues et tests HTTP existants.
+
+La règle gelée `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` reste impérative. Aucune nouvelle connexion ne révoque les anciennes sessions.
+
+État : **AUDIT À EFFECTUER — aucune modification SESS-11 autorisée avant examen des fichiers réels et présentation des constats/propositions.**
