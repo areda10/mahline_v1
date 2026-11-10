@@ -68,6 +68,7 @@ final class User extends BaseModel implements AuthenticatableContract
             'must_change_password' => 'boolean',
             'password' => 'hashed',
             'deleted_at' => 'datetime',
+            'emergency_locked_at' => 'datetime',
         ];
     }
 
