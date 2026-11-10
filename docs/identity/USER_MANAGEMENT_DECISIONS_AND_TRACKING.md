@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.1
-- **Dernière mise à jour :** 9 novembre 2026
+- **Version :** 3.2
+- **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
 - **Statut :** décisions fonctionnelles validées ; implémentation à auditer
@@ -1943,3 +1943,46 @@ Le verrouillage d'urgence est distinct du statut métier `suspended` et des comp
 - `ForcedPasswordChangeControllerTest::test_forced_password_change_preserves_current_session_and_revokes_other_sessions_and_api_tokens()`.
 
 **État : implémentation sur `feature/Identity` ; validation locale ciblée et Pint en attente.**
+
+
+## 20.57 — Validation SESS-07 et cartographie fonctionnelle/audit du verrouillage d'urgence
+
+Le 10 novembre 2026, l'utilisateur a confirmé VERTS les tests ciblés de SESS-07 et Pint. SESS-07 est clôturé.
+
+### Règle fonctionnelle validée
+
+Le super_admin_root peut verrouiller immédiatement un compte cible (jamais son propre compte) en fournissant un motif. Le système enregistre l'état persistant, révoque toutes les sessions Web actives et tous les tokens API actifs, puis refuse toute nouvelle authentification et autorisation jusqu'à la levée explicite par un super_admin_root. La levée ne restaure aucun accès révoqué ; elle efface uniquement le compteur d'échecs du compte et préserve le compteur IP partagé.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation Audit et comportement |
+|---|---|---|
+| database/migrations/2026_11_10_000001_add_emergency_lock_fields_to_users_table.php | Persiste emergency_locked_at et emergency_lock_reason | Pas d'événement Audit au niveau migration ; le changement runtime est audité par le contrôleur. |
+| app/Domains/Identity/Users/Models/User.php | Cast emergency_locked_at en datetime ; forceFill réservé au workflow administratif | Le modèle ne journalise pas lui-même ; aucune mutation directe hors service/contrôleur autorisé. |
+| app/Domains/Identity/Authorization/Concerns/HasAuthorization.php | isAuthorized() refuse tout compte verrouillé ; les vérifications de rôles/permissions s'appuient sur ce garde | Lecture/contrôle uniquement, pas d'événement Audit. |
+| app/Domains/Identity/Authentication/Services/AuthenticationService.php | Refuse la connexion si emergency_locked_at est renseigné | Écrit l'échec spécialisé dans Login History (account_not_active) ; l'audit administratif du verrouillage est émis au moment de l'action root. |
+| app/Domains/Identity/Authentication/Services/SessionService.php | revokeForUser(..., emergency_lock) révoque chaque session ; revoke() conserve LoginHistory et l'événement Audit par session. revokeApiTokensForUser() marque chaque token révoqué sans suppression physique | identity.authentication.session_revoked par session ; identity.authentication.token_revoked par token, reason=emergency_lock. |
+| app/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutController.php | emergencyLock() applique l'état, appelle les révocations et refuse l'auto-verrouillage du root ; releaseEmergencyLock() lève l'état et efface seulement le compteur du compte | identity.authentication.emergency_lock.applied et identity.authentication.emergency_lock.released, avec acteur root, sujet User, motif et contexte IP/User-Agent. |
+| routes/web.php | Expose GET page et POST apply/release sous root.backoffice | Accès protégé par auth, EnsureActiveAuthenticationSession et role:super_admin_root ; pas d'audit propre à la déclaration de route. |
+| resources/views/identity/security/lockouts/index.blade.php | Formulaires d'application et de levée avec motif obligatoire et confirmation | Interface uniquement ; les événements sont produits par le contrôleur/service, jamais par la vue. |
+| tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutControllerTest.php | Vérifie root-only, révocations, refus de connexion pendant le lock, levée et non-réactivation des anciens accès | Vérifie les événements d'audit de synthèse et la conservation des révocations individuelles. |
+| tests/Framework/Domains/Identity/Authentication/Services/AuthenticationSecurityServiceTest.php | Vérifie les compteurs temporaires de tentatives | Les compteurs temporaires restent séparés du verrouillage d'urgence persistant. |
+| tests/Framework/Domains/Identity/Authorization/Concerns/HasAuthorizationTest.php | Vérifie le refus d'autorisation pour le User verrouillé | Teste le garde d'accès ; aucune écriture Audit attendue pour une vérification en lecture. |
+
+### Événements Audit contractuels
+
+- identity.authentication.emergency_lock.applied — acteur User (super_admin_root), sujet User cible, ancien état emergency_locked_at=null, nouvel état horodaté, motif et contexte de requête.
+- identity.authentication.session_revoked — un événement par session, revocation_reason=emergency_lock, complément de Login History.
+- identity.authentication.token_revoked — un événement par token, reason=emergency_lock, sans secret de token.
+- identity.authentication.emergency_lock.released — acteur root, sujet User, ancien horodatage et nouvel état null, motif de levée.
+
+### Fichiers de spécification actualisés
+
+- docs/domains/identity/ID-I-001-ARCHITECTURE.md — règle d'architecture et flux root-only.
+- docs/domains/identity/ID-I-002-AUTHENTICATION_STANDARD.md — refus d'authentification.
+- docs/domains/identity/ID-I-003-SESSION_STANDARD.md — révocation des sessions et conservation des sessions multiples après levée.
+- docs/domains/identity/ID-I-006-USER_STATUS_SPECIFICATION.md — séparation du verrouillage d'urgence et du statut métier.
+- docs/domains/identity/ID-I-008-API_TOKEN_SPECIFICATION.md et ID-I-009-TOKEN_STANDARD.md — révocation persistante et irréversible des tokens.
+- docs/framework/database/DB-008-AUDIT_STANDARD.md et docs/domains/audit/AUDIT_DOMAIN.md — événements, granularité et minimisation des secrets.
+
+État : SESS-07 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur. Prochaine étape : poursuivre l'audit Identity avec SESS-08 selon le backlog, sans modifier les décisions gelées.
