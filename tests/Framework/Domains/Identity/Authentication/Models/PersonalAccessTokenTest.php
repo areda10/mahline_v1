@@ -180,6 +180,8 @@ final class PersonalAccessTokenTest extends TestCase
             now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
             $created->accessToken->fresh()->expires_at,
         );
+
+        $this->travelBack();
     }
 
 }
