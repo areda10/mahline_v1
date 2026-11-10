@@ -227,6 +227,8 @@ final class ApiTokenServiceTest extends TestCase
         );
 
         self::assertTrue($this->service->metadata($created->accessToken->fresh())['is_active']);
+
+        $this->travelBack();
     }
 
     public function test_expired_token_metadata_is_inactive_even_when_not_revoked(): void
