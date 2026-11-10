@@ -108,7 +108,7 @@ final class ForcedPasswordChangeControllerTest extends TestCase
             device: 'Other device',
         );
 
-        $user->createToken('existing-api-token');
+        $plainTextToken = $user->createToken('existing-api-token')->plainTextToken;
 
         $this->withSession([
             'authentication_session_id' => (string) $currentSession->getKey(),
@@ -127,7 +127,9 @@ final class ForcedPasswordChangeControllerTest extends TestCase
             'Other active sessions must be revoked.',
         );
 
-        $this->assertSame(0, $user->fresh()->tokens()->count());
+        $this->assertSame(1, $user->fresh()->tokens()->count());
+        $this->assertNotNull($user->fresh()->tokens()->first()->revoked_at);
+        $this->assertNull(\\App\\Domains\\Identity\\Authentication\\Models\\PersonalAccessToken::findToken($plainTextToken));
 
         $this->assertTrue(
             AuthenticationSession::query()
