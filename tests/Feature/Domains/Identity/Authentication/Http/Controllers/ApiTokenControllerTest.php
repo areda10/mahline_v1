@@ -260,6 +260,11 @@ final class ApiTokenControllerTest extends TestCase
 
         $this->travelTo($created->accessToken->expires_at->copy()->addSecond());
 
+        // Sanctum's guard caches the authenticated user for the lifetime of
+        // the guard instance. Force a fresh guard so this request revalidates
+        // the bearer token against its now-expired expires_at timestamp.
+        $this->app['auth']->forgetGuards();
+
         $this->withToken($created->plainTextToken)
             ->getJson(route('identity.tokens.index'))
             ->assertUnauthorized();
