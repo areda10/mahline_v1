@@ -107,6 +107,42 @@ final class ApiTokenControllerTest extends TestCase
         self::assertNotNull($token->accessToken->fresh()->revoked_at);
     }
 
+    public function test_root_can_revoke_all_tokens_of_any_user_without_revoking_web_sessions(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $target = $this->actor('cooperative_admin');
+        $first = $target->createToken('root-first-key');
+        $second = $target->createToken('root-second-key');
+
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $target->getKey(),
+            'session_id' => 'root-api-token-global-revoke-session',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+
+        $this->actingAs($root, 'sanctum')
+            ->deleteJson(route('identity.root.users.tokens.destroy-all', $target))
+            ->assertOk()
+            ->assertJsonPath('revoked_count', 2);
+
+        self::assertNotNull($first->accessToken->fresh()->revoked_at);
+        self::assertNotNull($second->accessToken->fresh()->revoked_at);
+        self::assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_api_token_creation_rejects_whitespace_only_names(): void
+    {
+        $user = $this->actor('user');
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson(route('identity.tokens.store'), ['name' => '   '])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('name');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
     public function test_api_token_secret_is_returned_once_and_never_written_to_audit(): void
     {
         $user = $this->actor('user');
