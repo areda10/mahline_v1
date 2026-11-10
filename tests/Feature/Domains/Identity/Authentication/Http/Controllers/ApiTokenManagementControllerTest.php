@@ -14,6 +14,13 @@ final class ApiTokenManagementControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+    }
+
     public function test_each_role_can_open_personal_api_token_management_page(): void
     {
         foreach (['super_admin_root', 'super_admin', 'cooperative_admin', 'user'] as $roleSlug) {
