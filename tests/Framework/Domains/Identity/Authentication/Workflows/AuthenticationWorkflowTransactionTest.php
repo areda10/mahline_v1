@@ -119,6 +119,7 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
             public function afterDeviceRemembered(
                 User $user,
                 AuthenticationSession $session,
+            bool $isNewDevice,
             ): void {
                 throw new RuntimeException(
                     'Controlled authentication workflow failure.',
