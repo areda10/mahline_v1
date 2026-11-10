@@ -39,7 +39,7 @@ final class AuthenticationLockoutController
         $email = mb_strtolower(trim($data['email']));
         $actor = $request->user();
 
-        DB::transaction(function () use ($email, $data, $actor, $sessions, $auditService): void {
+        DB::transaction(function () use ($email, $data, $actor, $sessions, $auditService, $request): void {
             $target = User::query()
                 ->where('email', $email)
                 ->lockForUpdate()
