@@ -1858,3 +1858,17 @@ Fichiers modifiés :
 - tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php.
 
 **État : SESS-05 — implémentation et test ajoutés ; validation locale ciblée et Pint en attente.**
+
+
+## 20.53 — Validation finale de SESS-05 : déconnexion globale personnelle
+
+Le 10 novembre 2026, l'utilisateur a confirmé **VERTS** les tests ciblés de SESS-05 ainsi que Pint.
+
+- `php artisan test --filter=AuthenticationSessionControllerTest` — VERT.
+- `php artisan test --filter=AuthenticationControllerTest` — VERT.
+- `php artisan test --filter=PersonalAccessTokenTest` — VERT.
+- `php vendor/bin/pint --test` — VERT.
+
+Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` prouve que la déconnexion globale révoque les sessions web et les jetons Sanctum de l'utilisateur courant, invalide les jetons révoqués lors de leur recherche, préserve la session et le jeton d'un autre utilisateur et conserve les événements d'audit des révocations de jetons. La déconnexion standard reste limitée à la session courante.
+
+**État : SESS-05 VALIDÉ. Prochaine tâche : audit SESS-06 — garantir qu'une nouvelle connexion ne révoque pas les sessions web actives antérieures du même utilisateur.**
