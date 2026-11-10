@@ -2227,3 +2227,43 @@ Objectif : détecter une connexion depuis un pays inhabituel et décider, selon 
 Aucune localisation ne doit être devinée à partir d'une IP. Une donnée pays absente ou un fournisseur indisponible ne doit pas créer un faux pays ni bloquer arbitrairement une connexion. La règle SESS-09/10 relative au nouvel appareil reste distincte et doit être préservée.
 
 État : **AUDIT EN COURS — aucune modification applicative SESS-12 avant examen du dépôt réel et présentation des constats/propositions.**
+
+
+## 20.64 — Résultats de l'audit SESS-12 (sans modification applicative)
+
+### Constat sur le dépôt réel de `feature/Identity`
+
+Fichiers et ressources examinés : `AuthenticationContext`, `AuthenticationController`, `AuthenticationService`, `AuthenticationWorkflow`, `AuthenticationWorkflowHook`, `RecordNewDeviceAuthenticationWorkflowHook`, `UnusualActivityDetectionService`, `SecurityEventService`, `KnownDevice`, `SecurityEvent`, migrations `known_devices`, `security_events` et `authentication_sessions`, `NewDeviceLoginNotification`, `config/services.php`, `composer.json`, routes Web, tests d'authentification/workflow et standards ID-I-002 / ID-I-004.
+
+Constats confirmés :
+- La détection actuelle porte uniquement sur le couple utilisateur/appareil normalisé. Aucun pays connu par utilisateur n'est enregistré.
+- `AuthenticationContext` transporte l'IP, le User-Agent, le navigateur et l'appareil, mais aucun pays ou résultat GeoIP.
+- Les tables `known_devices`, `authentication_sessions` et `security_events` ne possèdent pas de champ pays/code ISO. Les événements peuvent toutefois porter des métadonnées JSON.
+- `composer.json` ne déclare aucun fournisseur/bibliothèque GeoIP ; `config/services.php` ne configure aucun fournisseur de géolocalisation.
+- Aucune table, entité, notification, route ou service OTP/challenge n'a été trouvé dans le périmètre Identity audité.
+- Le workflow actuel authentifie par mot de passe, fait `Auth::login()`, crée la session Web et mémorise l'appareil dans la transaction ; la notification nouvel appareil part après commit. Il n'existe pas de point de suspension pré-session pour un challenge pays.
+- Le comportement SESS-09/10 « nouvel appareil » est déjà transactionnel et résilient ; il ne doit pas être réutilisé comme équivalent d'un pays inhabituel.
+- Le code de sécurité actuel n'autorise pas à déduire un pays à partir du texte d'IP. Une localisation doit provenir d'un fournisseur explicite et fiable, tenant compte de la configuration des proxies de confiance.
+
+### Risques et décisions de conception à préserver
+
+1. Une IP privée, locale, invalide, absente ou non résolue doit produire un résultat « pays inconnu », jamais un pays supposé.
+2. Une panne GeoIP ne doit pas bloquer arbitrairement les utilisateurs ni convertir un pays inconnu en pays inhabituel.
+3. Le challenge doit intervenir après vérification des identifiants, mais avant `Auth::login()`, création de `AuthenticationSession`, enregistrement de l'appareil et réponse de connexion réussie.
+4. Le pays ne doit être ajouté à la liste des pays de confiance qu'après authentification complète, notamment après OTP si un challenge est requis. Un mot de passe valide seul ne doit pas permettre à un attaquant de faire approuver son pays.
+5. Le pays inhabituel et le nouvel appareil sont deux signaux distincts ; les événements et notifications SESS-09/10 restent conservés.
+6. Le challenge ne doit jamais stocker le code OTP en clair, exposer le code dans les logs, ni créer une session authentifiée prématurément.
+
+### Proposition de mise en œuvre à valider avant modification
+
+- Ajouter un contrat de résolution IP → code pays ISO 3166-1 alpha-2 et un adaptateur fournisseur configurable, avec tests sur IP privée/invalide, absence de résultat, timeout et indisponibilité.
+- Ajouter un registre indépendant des pays approuvés par utilisateur (nouveau modèle/table avec contrainte unique utilisateur + code pays). Ne pas fusionner ce registre avec `known_devices`, car appareil et pays sont des signaux indépendants.
+- Transporter le résultat pays via un DTO d'authentification explicite ; ne pas faire dépendre les services métier de `Request`.
+- Ajouter une étape de décision pays inhabituel avant l'ouverture de session. Si le pays est nouveau et résolu, demander un challenge OTP et interrompre le workflow normal jusqu'à vérification ; pays inconnu ou GeoIP indisponible suit une règle fail-open explicitement journalisée, sans faux positif.
+- Enregistrer les événements SecurityEvent/Audit pour pays inhabituel, challenge demandé, vérification réussie/échouée et pays approuvé, sans code OTP ni donnée sensible inutile.
+- Développer le moteur OTP selon SESS-13 (hash, cinq minutes, cinq tentatives, renvoi 60 secondes, invalidation atomique, rate limiting, notifications FR/EN/AR), puis raccorder le challenge au workflow pays. La validation du challenge doit être le seul chemin qui autorise la création de session pour un pays nouveau.
+- Ajouter tests unitaires, transactionnels et HTTP prouvant l'absence de session avant OTP, le refus des codes invalides/expirés/réutilisés, l'approbation du pays uniquement après succès, le maintien des sessions concurrentes et l'absence de régression SESS-09/10.
+
+**Aucune modification applicative SESS-12 n'a été effectuée.** Le dépôt ne contient actuellement ni source GeoIP ni socle OTP ; les ajouter sans décision sur le fournisseur et les règles fail-open serait prématuré.
+
+État : **AUDIT SESS-12 EFFECTUÉ — conception proposée, implémentation en attente de validation des choix de fournisseur GeoIP et du comportement en cas d'indisponibilité.**
