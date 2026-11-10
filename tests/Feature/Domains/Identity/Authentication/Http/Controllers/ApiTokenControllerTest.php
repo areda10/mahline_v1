@@ -1,0 +1,151 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
+
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+final class ApiTokenControllerTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_each_role_can_manage_its_own_api_tokens(): void
+    {
+        foreach (['super_admin_root', 'super_admin', 'cooperative_admin', 'user'] as $roleSlug) {
+            $user = $this->actor($roleSlug);
+
+            $this->actingAs($user, 'sanctum')
+                ->postJson(route('identity.tokens.store'), ['name' => $roleSlug.'-key'])
+                ->assertCreated()
+                ->assertJsonPath('data.name', $roleSlug.'-key')
+                ->assertJsonPath('data.abilities', [])
+                ->assertJsonStructure(['plain_text_token']);
+
+            $this->getJson(route('identity.tokens.index'))
+                ->assertOk()
+                ->assertJsonFragment(['name' => $roleSlug.'-key']);
+        }
+    }
+
+    public function test_personal_token_listing_and_revoke_are_owner_scoped(): void
+    {
+        $owner = $this->actor('user');
+        $other = $this->actor('cooperative_admin');
+
+        $owned = $owner->createToken('owned-key');
+        $foreign = $other->createToken('foreign-key');
+
+        $this->actingAs($owner, 'sanctum')
+            ->getJson(route('identity.tokens.index'))
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'owned-key'])
+            ->assertJsonMissing(['name' => 'foreign-key'])
+            ->assertJsonMissing(['token' => $owned->accessToken->token]);
+
+        $this->deleteJson(route('identity.tokens.destroy', $foreign->accessToken))
+            ->assertNotFound();
+
+        $this->deleteJson(route('identity.tokens.destroy', $owned->accessToken))
+            ->assertOk();
+
+        self::assertNotNull($owned->accessToken->fresh()->revoked_at);
+        self::assertNull($foreign->accessToken->fresh()->revoked_at);
+    }
+
+    public function test_owner_can_revoke_all_api_tokens_without_revoking_web_sessions(): void
+    {
+        $owner = $this->actor('user');
+        $first = $owner->createToken('first-key');
+        $second = $owner->createToken('second-key');
+
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $owner->getKey(),
+            'session_id' => 'api-owner-global-revoke-session',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+
+        $this->actingAs($owner, 'sanctum')
+            ->deleteJson(route('identity.tokens.destroy-all'))
+            ->assertOk()
+            ->assertJsonPath('revoked_count', 2);
+
+        self::assertNotNull($first->accessToken->fresh()->revoked_at);
+        self::assertNotNull($second->accessToken->fresh()->revoked_at);
+        self::assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_only_root_can_manage_other_users_api_tokens(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $superAdmin = $this->actor('super_admin');
+        $target = $this->actor('user');
+        $token = $target->createToken('target-key');
+
+        $this->actingAs($superAdmin, 'sanctum')
+            ->getJson(route('identity.root.users.tokens.index', $target))
+            ->assertForbidden();
+
+        $this->actingAs($root, 'sanctum')
+            ->getJson(route('identity.root.users.tokens.index', $target))
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'target-key']);
+
+        $this->deleteJson(route('identity.root.users.tokens.destroy', [
+            'user' => $target,
+            'token' => $token->accessToken,
+        ]))->assertOk();
+
+        self::assertNotNull($token->accessToken->fresh()->revoked_at);
+    }
+
+    public function test_api_token_secret_is_returned_once_and_never_written_to_audit(): void
+    {
+        $user = $this->actor('user');
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson(route('identity.tokens.store'), ['name' => 'one-time-secret']);
+
+        $response->assertCreated();
+
+        $secret = $response->json('plain_text_token');
+        self::assertIsString($secret);
+        self::assertNotSame('', $secret);
+
+        $auditRows = DB::table('audit_events')->get();
+        self::assertCount(1, $auditRows);
+        self::assertStringNotContainsString($secret, json_encode($auditRows));
+
+        $storedToken = PersonalAccessToken::query()->firstOrFail();
+        self::assertStringNotContainsString($secret, $storedToken->token);
+    }
+
+    private function actor(string $roleSlug): User
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+            'must_change_password' => false,
+        ]);
+
+        $role = Role::query()->firstOrCreate(
+            ['slug' => $roleSlug],
+            [
+                'name' => str($roleSlug)->replace('_', ' ')->title()->toString(),
+                'is_active' => true,
+            ],
+        );
+
+        $user->roles()->syncWithoutDetaching([$role->getKey()]);
+
+        return $user;
+    }
+}
