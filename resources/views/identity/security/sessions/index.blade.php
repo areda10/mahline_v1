@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h1>Mes appareils connectés</h1>
-        <p class="muted">Consultez les appareils connectés à votre compte et révoquez individuellement ceux que vous ne reconnaissez plus.</p>
+        <p class="muted">Consultez les appareils encore actifs selon le délai d’inactivité de votre rôle et révoquez individuellement ceux que vous ne reconnaissez plus. Révoquer cet appareil vous déconnecte immédiatement de ce navigateur.</p>
     </div>
 </div>
 <div class="page-actions">
