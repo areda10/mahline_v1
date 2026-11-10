@@ -8,10 +8,12 @@ use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Models\SecurityEvent;
+use App\Domains\Identity\Authentication\Notifications\NewDeviceLoginNotification;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -107,7 +109,9 @@ final class AuthenticationWorkflowTest extends TestCase
             ])
             ->assertOk();
 
-        Notification::assertSentTo($user, NewDeviceLoginNotification::class);\n\n        $this->assertDatabaseHas('security_events', [
+        Notification::assertSentTo($user, NewDeviceLoginNotification::class);
+
+        $this->assertDatabaseHas('security_events', [
             'user_id' => $user->getKey(),
             'event' => 'unusual_activity_detected',
             'reason' => 'new_device_detected',
@@ -134,7 +138,11 @@ final class AuthenticationWorkflowTest extends TestCase
                 ->count(),
         );
 
-        Notification::assertCount(1);\n\n        $this->assertSame(\n            1,\n            AuditEvent::query()
+        Notification::assertCount(1);
+
+        $this->assertSame(
+            1,
+            AuditEvent::query()
                 ->where('event_key', 'identity.authentication.new_device_detected')
                 ->count(),
         );
@@ -379,9 +387,17 @@ final class AuthenticationWorkflowTest extends TestCase
                 public function afterDeviceRemembered(
                     User $user,
                     AuthenticationSession $session,
-                bool $isNewDevice,
+                    bool $isNewDevice,
                 ): void {
                     throw new RuntimeException('Simulated persistence failure.');
+                }
+
+                public function afterAuthenticationCommitted(
+                    User $user,
+                    AuthenticationSession $session,
+                    bool $isNewDevice,
+                ): void {
+                    // No post-commit action is reached after the controlled rollback.
                 }
             },
         );
