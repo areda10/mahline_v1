@@ -1797,3 +1797,32 @@ Le scénario validé prouve qu'après expiration et révocation d'une session, u
 Aucun changement du comportement métier de production n'a été requis.
 
 **État : SESS-03 VALIDÉ. Prochaine tâche d'audit : SESS-04 — comportement des cookies persistants/non persistants selon le rôle.**
+
+## 20.51 — Audit et implémentation initiale de SESS-04 : cookies selon le rôle
+
+### Constat de l'audit
+
+- config/session.php exposait uniquement SESSION_EXPIRE_ON_CLOSE, avec false par défaut : aucun comportement par rôle n'était appliqué.
+- AuthenticationWorkflow régénérait correctement l'identifiant Laravel puis créait l'enregistrement AuthenticationSession, mais ne déterminait pas la persistance du cookie.
+- La politique serveur SESS-01 reste indépendante de SESSION_LIFETIME=120 ; le cookie persistant ne doit jamais permettre de contourner l'expiration ou la révocation métier.
+
+### Implémentation sur feature/Identity
+
+- Nouveau middleware ApplyRoleBasedSessionCookiePolicy, enregistré à la fin du groupe web dans bootstrap/app.php.
+- Le middleware laisse la requête et le contrôleur terminer leur traitement, puis définit session.expire_on_close avant que le middleware StartSession externe ajoute le cookie à la réponse.
+- super_admin_root et super_admin reçoivent un cookie de session navigateur (expiration 0).
+- cooperative_admin et user reçoivent un cookie persistant (date d'expiration future selon SESSION_LIFETIME).
+- L'utilisateur authentifié avant la requête est conservé pour les réponses de déconnexion, car Auth::logout() vide le guard avant le retour de la réponse.
+- La politique est recalculée à chaque réponse web pour éviter de conserver la valeur d'un rôle précédent dans un processus PHP persistant.
+- Aucun délai SESS-01, aucune règle de sessions multiples et aucune révocation n'ont été modifiés.
+
+### Couverture de test ajoutée
+
+AuthenticationControllerTest vérifie désormais la date d'expiration du cookie après connexion pour chacun des quatre rôles : root et super_admin sans date persistante ; cooperative_admin et user avec une date future.
+
+Fichiers modifiés :
+- app/Domains/Identity/Authentication/Http/Middleware/ApplyRoleBasedSessionCookiePolicy.php (nouveau) ;
+- bootstrap/app.php ;
+- tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationControllerTest.php.
+
+**État : SESS-04 — code et assertions ajoutés ; validation locale des tests et Pint en attente.**
