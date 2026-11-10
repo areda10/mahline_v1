@@ -1898,3 +1898,15 @@ Dans `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWo
 Le comportement métier SESS-06 est déjà implémenté et dispose de tests de service et d'intégration HTTP couvrant les connexions successives et multi-appareils. Aucun changement du code de production n'est requis à ce stade. Il reste à exécuter localement les deux suites ciblées et Pint avant de clôturer SESS-06.
 
 **État : CODE CONFORME ET TESTS EXISTANTS — validation locale en attente.**
+
+
+## 20.55 — Validation finale de SESS-06 : coexistence de plusieurs sessions actives
+
+Le 10 novembre 2026, l'utilisateur a confirmé VERTS :
+- `php artisan test --filter=SessionServiceTest` ;
+- `php artisan test --filter=AuthenticationWorkflowTest` ;
+- `php vendor/bin/pint --test`.
+
+Les tests couvrent la conservation d'une session antérieure lors d'une nouvelle authentification, l'absence d'historique de révocation intempestive et la coexistence d'une session ordinateur avec une session téléphone.
+
+**État : SESS-06 VALIDÉ. Prochaine tâche : SESS-07 — révocations individuelles, globales et déclenchées par les changements sensibles du compte.**
