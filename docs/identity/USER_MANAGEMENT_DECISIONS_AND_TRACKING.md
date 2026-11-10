@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.5
+- **Version :** 3.6
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -2128,3 +2128,36 @@ Constats du code réel sur `feature/Identity` :
 ### État SESS-10
 
 **À AUDITER / conception établie — aucune modification applicative SESS-10 n'est encore effectuée.** L'implémentation doit d'abord vérifier si un fournisseur GeoIP est présent dans les dépendances/configurations et choisir un déclenchement e-mail résilient après commit. La détection SESS-09 et les règles multi-sessions restent gelées.
+
+
+## 20.61 — SESS-10 : implémentation de l'alerte e-mail nouvel appareil
+
+### Comportement implémenté sur `feature/Identity`
+
+- Une alerte est envoyée uniquement lorsque `isNewDevice` est vrai pour l'utilisateur.
+- L'écriture SecurityEvent et Audit reste dans la transaction d'authentification ; l'envoi e-mail intervient après le retour réussi de cette transaction.
+- Une panne du dispatcher ou du transport e-mail est interceptée et journalisée en warning avec uniquement l'identifiant utilisateur, l'identifiant de session et la classe d'exception. Elle ne transforme pas une connexion valide en échec.
+- Le message est disponible en français, anglais et arabe.
+- La date/heure utilise le fuseau IANA de l'utilisateur ; un fuseau absent/invalide retombe sur `app.timezone`.
+- Le message contient navigateur et appareil. Aucun IP brut n'est exposé dans le mail.
+- Aucun fournisseur GeoIP n'existe dans les dépendances/configurations auditées. La notification indique donc explicitement que la localisation approximative est indisponible ; aucune ville ou aucun pays n'est deviné.
+- Une connexion depuis un appareil déjà connu ne renvoie pas d'e-mail.
+- Les autres sessions web restent actives : la règle `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` n'est pas modifiée.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation sécurité / Audit |
+|---|---|---|
+| `app/Domains/Identity/Users/Models/User.php` | Ajoute le trait Laravel `Notifiable` nécessaire à l'envoi via `$user->notify()`. | Aucun changement de données ni événement Audit ; active le canal de notification standard. |
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php` | Récupère le couple session/détection depuis la transaction, puis appelle `afterAuthenticationCommitted()` uniquement après commit. | Les écritures SecurityEvent/Audit restent atomiques ; la notification est hors transaction. |
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowHook.php` | Ajoute le contrat post-commit `afterAuthenticationCommitted()`. | Contrat uniquement, aucune écriture. |
+| `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` | Conserve `afterDeviceRemembered()` pour SecurityEvent/Audit ; ajoute l'envoi e-mail post-commit et intercepte les exceptions du transport. | `unusual_activity_detected` et `identity.authentication.new_device_detected` sont écrits avant l'envoi ; l'échec mail ne supprime pas ces événements. |
+| `app/Domains/Identity/Authentication/Workflows/NullAuthenticationWorkflowHook.php` | Implémente le nouveau contrat post-commit sans action. | Aucun événement. |
+| `app/Domains/Identity/Authentication/Notifications/NewDeviceLoginNotification.php` | Construit le MailMessage FR/EN/AR, date locale, navigateur, appareil et disponibilité de localisation. | Notification uniquement ; ne crée pas de trace Audit additionnelle et ne révèle pas l'IP. |
+| `app/Providers/AppServiceProvider.php` | Conserve le binding vers `RecordNewDeviceAuthenticationWorkflowHook`. | Active le hook applicatif réel. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` | Vérifie l'envoi unique pour un nouvel appareil et l'absence de doublon sur le même appareil ; couvre aussi l'échec du dispatcher. | Vérifie que session, SecurityEvent et Audit persistent même si le mail échoue. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTransactionTest.php` | Adapte les doubles de test au contrat étendu. | Préserve la couverture d'atomicité/rollback avant commit. |
+
+### État
+
+**SESS-10 — IMPLÉMENTÉ, À TESTER.** Exécuter les tests ciblés et Pint avant validation. Aucun fournisseur GeoIP n'a été ajouté ; l'intégration d'une localisation réelle reste conditionnée à un choix/configuration distincts.
