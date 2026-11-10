@@ -490,6 +490,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             action: 'restored_pending_invitation',
             allowedRootSourceStatuses: [UserStatus::Archived],
             allowedSuperAdminSourceStatuses: [],
+            revokeReason: 'user_restored',
             rootOnly: true,
             resetEmailVerification: true,
         );
@@ -580,6 +581,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                     'email_verified_at' => null,
                     'must_change_password' => false,
                 ],
+            );
+
+            $this->revokePendingInvitations($lockedTarget);
+            $this->revokeAccessCredentials(
+                actor: $actor,
+                target: $lockedTarget,
+                reason: 'user_restored',
             );
 
             return $lockedTarget->fresh();
