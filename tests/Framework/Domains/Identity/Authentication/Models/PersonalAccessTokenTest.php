@@ -132,16 +132,24 @@ final class PersonalAccessTokenTest extends TestCase
 
         $accessToken = $user->createToken('test-api-token');
 
-        $accessToken->accessToken->delete();
+        app(\App\Domains\Identity\Authentication\Services\ApiTokenService::class)
+            ->revokeToken(
+                owner: $user,
+                token: $accessToken->accessToken,
+                actor: $user,
+                reason: 'test_revocation',
+            );
 
         $session->refresh();
 
         $this->assertNull($session->revoked_at);
         $this->assertNull($session->revocation_reason);
 
+        $this->assertNotNull($accessToken->accessToken->fresh()->revoked_at);
+
         $this->assertDatabaseCount(
             'personal_access_tokens',
-            0,
+            1,
         );
 
         $this->assertDatabaseHas(
