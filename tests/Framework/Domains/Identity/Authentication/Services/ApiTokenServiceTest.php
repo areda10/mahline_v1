@@ -162,6 +162,33 @@ final class ApiTokenServiceTest extends TestCase
         $this->assertDatabaseCount('audit_events', 1);
     }
 
+    public function test_root_revocation_audit_records_actor_and_reason_without_token_secret_or_hash(): void
+    {
+        $owner = User::factory()->create();
+        $root = User::factory()->create();
+        $created = $owner->createToken('root-audited-token');
+
+        self::assertTrue($this->service->revokeToken(
+            owner: $owner,
+            token: $created->accessToken,
+            actor: $root,
+            reason: 'root_revocation',
+            eventKey: 'identity.authentication.root_api_token_revoked',
+            action: 'root_api_token_revoked',
+        ));
+
+        $audit = DB::table('audit_events')
+            ->where('event_key', 'identity.authentication.root_api_token_revoked')
+            ->first();
+
+        self::assertNotNull($audit);
+        self::assertSame((string) $root->getKey(), (string) $audit->actor_id);
+        self::assertSame((string) $created->accessToken->getKey(), (string) $audit->subject_id);
+        self::assertStringContainsString('root_revocation', json_encode($audit));
+        self::assertStringNotContainsString($created->plainTextToken, json_encode($audit));
+        self::assertStringNotContainsString($created->accessToken->token, json_encode($audit));
+    }
+
     public function test_repeated_revocation_does_not_create_duplicate_audit_events(): void
     {
         $user = User::factory()->create();
