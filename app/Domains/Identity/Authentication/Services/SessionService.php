@@ -138,6 +138,31 @@ final class SessionService extends BaseService
         );
     }
 
+    /**
+     * Return sessions that are active now under the same role-based inactivity
+     * policy enforced by EnsureActiveAuthenticationSession. Listing sessions
+     * never revokes or mutates them.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, AuthenticationSession>
+     */
+    public function activeSessionsFor(User $user): \Illuminate\Database\Eloquent\Collection
+    {
+        $cutoff = now()->subMinutes($this->inactivityTimeoutMinutes($user));
+
+        return AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->where(function ($query) use ($cutoff): void {
+                $query->where('last_activity_at', '>', $cutoff)
+                    ->orWhere(function ($fallback) use ($cutoff): void {
+                        $fallback->whereNull('last_activity_at')
+                            ->where('authenticated_at', '>', $cutoff);
+                    });
+            })
+            ->orderByDesc('last_activity_at')
+            ->get();
+    }
+
     public function isActive(AuthenticationSession $session): bool
     {
         return ! $session->trashed() && $session->revoked_at === null;
