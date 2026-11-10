@@ -32,6 +32,8 @@ final class ApiTokenControllerTest extends TestCase
                 ->assertJsonPath('data.abilities', [])
                 ->assertJsonStructure(['plain_text_token']);
 
+            self::assertNotNull($created->json('data.expires_at'));
+
             $this->getJson(route('identity.tokens.index'))
                 ->assertOk()
                 ->assertJsonFragment(['name' => $roleSlug.'-key']);
