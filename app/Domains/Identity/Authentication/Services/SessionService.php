@@ -7,6 +7,7 @@ namespace App\Domains\Identity\Authentication\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -187,6 +188,68 @@ final class SessionService extends BaseService
         }
 
         return $revoked;
+    }
+
+    /**
+     * Revoke every active web session and API token owned by one user.
+     *
+     * Each web session is revoked through revoke(), preserving its login
+     * history and audit trail. API tokens are individually marked revoked
+     * and receive an immutable audit event; token secrets are never logged.
+     *
+     * @return array{sessions: int, tokens: int}
+     */
+    public function revokeAllAccessForUser(User $user): array
+    {
+        return DB::transaction(function () use ($user): array {
+            $activeSessionCount = AuthenticationSession::query()
+                ->where('user_id', $user->getKey())
+                ->whereNull('revoked_at')
+                ->count();
+
+            $this->revokeForUser($user, 'global_logout');
+
+            $tokens = PersonalAccessToken::query()
+                ->where('tokenable_type', User::class)
+                ->where('tokenable_id', $user->getKey())
+                ->whereNull('revoked_at')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($tokens as $token) {
+                $token->revoked_at = now();
+                $token->save();
+
+                $actor = auth()->user();
+                $actor = $actor instanceof User ? $actor : null;
+
+                $this->audit->record(new AuditEntryDTO(
+                    eventKey: 'identity.authentication.token_revoked',
+                    action: 'token_revoked',
+                    actorType: $actor ? User::class : null,
+                    actorId: $actor ? (string) $actor->getKey() : null,
+                    cooperativeId: $user->cooperative_id
+                        ? (string) $user->cooperative_id
+                        : null,
+                    subjectType: PersonalAccessToken::class,
+                    subjectId: (string) $token->getKey(),
+                    oldValues: ['revoked_at' => null],
+                    newValues: [
+                        'revoked_at' => $token->revoked_at?->toISOString(),
+                    ],
+                    metadata: [
+                        'user_id' => (string) $user->getKey(),
+                        'token_name' => $token->name,
+                        'reason' => 'global_logout',
+                    ],
+                ));
+            }
+
+            return [
+                'sessions' => $activeSessionCount,
+                'tokens' => $tokens->count(),
+            ];
+        });
     }
 
     /**
