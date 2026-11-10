@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Identity\Password\Http\Controllers;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -129,7 +130,7 @@ final class ForcedPasswordChangeControllerTest extends TestCase
 
         $this->assertSame(1, $user->fresh()->tokens()->count());
         $this->assertNotNull($user->fresh()->tokens()->first()->revoked_at);
-        $this->assertNull(\\App\\Domains\\Identity\\Authentication\\Models\\PersonalAccessToken::findToken($plainTextToken));
+        $this->assertNull(PersonalAccessToken::findToken($plainTextToken));
 
         $this->assertTrue(
             AuthenticationSession::query()

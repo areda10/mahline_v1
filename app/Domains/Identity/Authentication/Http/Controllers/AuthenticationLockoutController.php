@@ -11,8 +11,8 @@ use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 final class AuthenticationLockoutController
 {
@@ -22,7 +22,6 @@ final class AuthenticationLockoutController
 
         return view('identity.security.lockouts.index');
     }
-
 
     public function emergencyLock(
         Request $request,

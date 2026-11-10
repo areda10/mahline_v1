@@ -6,7 +6,9 @@ namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -128,7 +130,6 @@ final class AuthenticationLockoutControllerTest extends TestCase
             ->assertSessionHasErrors(['email', 'ip_address', 'reason']);
     }
 
-
     public function test_root_emergency_lock_revokes_all_sessions_and_api_tokens_and_blocks_login_until_root_releases_it(): void
     {
         $root = $this->actor('super_admin_root');
@@ -136,7 +137,7 @@ final class AuthenticationLockoutControllerTest extends TestCase
             'email' => 'emergency@example.com',
             'email_verified_at' => now(),
         ]);
-        $sessions = app(\App\Domains\Identity\Authentication\Services\SessionService::class);
+        $sessions = app(SessionService::class);
         $first = $sessions->create($target, 'emergency-session-one');
         $second = $sessions->create($target, 'emergency-session-two');
         $plainToken = $target->createToken('emergency-api')->plainTextToken;
@@ -155,7 +156,7 @@ final class AuthenticationLockoutControllerTest extends TestCase
         self::assertNotNull($first->fresh()->revoked_at);
         self::assertNotNull($second->fresh()->revoked_at);
         self::assertSame('emergency_lock', $first->fresh()->revocation_reason);
-        self::assertNull(\App\Domains\Identity\Authentication\Models\PersonalAccessToken::findToken($plainToken));
+        self::assertNull(PersonalAccessToken::findToken($plainToken));
 
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.authentication.emergency_lock.applied',
@@ -174,7 +175,7 @@ final class AuthenticationLockoutControllerTest extends TestCase
         self::assertNull($target->emergency_locked_at);
         self::assertTrue($target->isAuthorized());
         self::assertNotNull($first->fresh()->revoked_at);
-        self::assertNull(\App\Domains\Identity\Authentication\Models\PersonalAccessToken::findToken($plainToken));
+        self::assertNull(PersonalAccessToken::findToken($plainToken));
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.authentication.emergency_lock.released',
             'subject_id' => $target->getKey(),

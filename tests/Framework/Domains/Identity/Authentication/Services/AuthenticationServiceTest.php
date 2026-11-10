@@ -136,7 +136,6 @@ final class AuthenticationServiceTest extends TestCase
         }
     }
 
-
     public function test_emergency_locked_account_cannot_authenticate_even_when_active_and_email_verified(): void
     {
         $user = User::factory()->create([
