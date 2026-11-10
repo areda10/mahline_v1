@@ -7,7 +7,6 @@ namespace App\Domains\Identity\Authentication\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -18,6 +17,7 @@ final class SessionService extends BaseService
     public function __construct(
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuditService $audit,
+        private readonly ApiTokenService $apiTokens,
     ) {}
 
     /**
@@ -292,39 +292,11 @@ final class SessionService extends BaseService
         User $actor,
         string $reason,
     ): int {
-        $tokens = PersonalAccessToken::query()
-            ->where('tokenable_type', $user->getMorphClass())
-            ->where('tokenable_id', $user->getKey())
-            ->whereNull('revoked_at')
-            ->lockForUpdate()
-            ->get();
-
-        foreach ($tokens as $token) {
-            $revokedAt = now();
-            $token->revoked_at = $revokedAt;
-            $token->save();
-
-            $this->audit->record(new AuditEntryDTO(
-                eventKey: 'identity.authentication.token_revoked',
-                action: 'token_revoked',
-                actorType: User::class,
-                actorId: (string) $actor->getKey(),
-                cooperativeId: $user->cooperative_id
-                    ? (string) $user->cooperative_id
-                    : null,
-                subjectType: PersonalAccessToken::class,
-                subjectId: (string) $token->getKey(),
-                oldValues: ['revoked_at' => null],
-                newValues: ['revoked_at' => $revokedAt->toISOString()],
-                metadata: [
-                    'user_id' => (string) $user->getKey(),
-                    'token_name' => $token->name,
-                    'reason' => $reason,
-                ],
-            ));
-        }
-
-        return $tokens->count();
+        return $this->apiTokens->revokeForUser(
+            user: $user,
+            actor: $actor,
+            reason: $reason,
+        );
     }
 
     /**
