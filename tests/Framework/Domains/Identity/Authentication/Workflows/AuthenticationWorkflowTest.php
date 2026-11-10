@@ -14,6 +14,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Mockery;
 use Illuminate\Contracts\Notifications\Dispatcher;
 use RuntimeException;
 use Tests\TestCase;
