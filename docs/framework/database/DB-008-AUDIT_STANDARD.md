@@ -1294,3 +1294,19 @@ STATUT   : OFFICIEL — GELÉ
 ```
 
 Toute modification du modèle d'audit doit entraîner une revue des documents Identity, Database et Security concernés.
+
+
+## 64. Audit du verrouillage d'urgence Identity
+
+Le verrouillage d'urgence root-only est une opération administrative sensible et doit conserver une chaîne d'audit complète, atomique avec la mutation de l'état du compte et les révocations effectuées.
+
+| Opération | Événement | Sujet | Granularité |
+|---|---|---|---|
+| Appliquer le verrouillage d'urgence | identity.authentication.emergency_lock.applied | User | Un événement de synthèse par verrouillage |
+| Révoquer une session active | identity.authentication.session_revoked | AuthenticationSession | Un événement par session, motif emergency_lock |
+| Révoquer un token API actif | identity.authentication.token_revoked | PersonalAccessToken | Un événement par token, motif emergency_lock |
+| Lever le verrouillage d'urgence | identity.authentication.emergency_lock.released | User | Un événement par levée |
+
+L'acteur d'application et de levée est obligatoirement super_admin_root. Les événements de session et de token identifient le même acteur lorsqu'il est disponible. Les événements de synthèse conservent le motif administratif ; les événements individuels conservent le motif technique de révocation.
+
+Les valeurs auditées ne doivent jamais inclure de mot de passe, de secret API, de token en clair ou d'identifiant de session Laravel secret. Les métadonnées peuvent contenir le nom public du token et l'identifiant du User, jamais le secret. L'application et la levée du verrouillage sont exécutées dans une transaction de base de données afin que l'état du compte, les révocations et les événements d'audit ne divergent pas.
