@@ -26,7 +26,7 @@ final class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             AuthenticationWorkflowHook::class,
-            NullAuthenticationWorkflowHook::class,
+            RecordNewDeviceAuthenticationWorkflowHook::class,
         );
     }
 
