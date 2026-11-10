@@ -12,5 +12,6 @@ interface AuthenticationWorkflowHook
     public function afterDeviceRemembered(
         User $user,
         AuthenticationSession $session,
+        bool $isNewDevice,
     ): void;
 }
