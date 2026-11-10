@@ -200,6 +200,64 @@
     </section>
 @endif
 
+<section class="card" aria-labelledby="api-tokens-heading">
+    <div class="page-header">
+        <div>
+            <h2 id="api-tokens-heading">Clés API de l’utilisateur</h2>
+            <p class="muted">Consultation et révocation des clés API de tous les rôles. La révocation des clés API ne modifie pas les sessions Web.</p>
+        </div>
+        @if($apiTokens->contains(fn ($token) => $token->revoked_at === null))
+            <form method="POST"
+                  action="{{ route('root.backoffice.users.api-tokens.destroy-all', $user) }}"
+                  onsubmit="return confirm('Révoquer toutes les clés API de cet utilisateur ? Ses sessions Web resteront actives.');">
+                @csrf
+                @method('DELETE')
+                <button class="button button-danger" type="submit">Révoquer toutes les clés API</button>
+            </form>
+        @endif
+    </div>
+
+    @if($apiTokens->isEmpty())
+        <div class="empty">Aucune clé API créée pour cet utilisateur.</div>
+    @else
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Nom</th><th>Créée le</th><th>Dernière utilisation</th><th>Expiration</th><th>État</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    @foreach($apiTokens as $token)
+                        @php
+                            $active = $token->revoked_at === null
+                                && ($token->expires_at === null || $token->expires_at->isFuture());
+                        @endphp
+                        <tr>
+                            <td>{{ $token->name }}</td>
+                            <td>{{ $token->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                            <td>{{ $token->last_used_at?->format('d/m/Y H:i') ?? 'Jamais' }}</td>
+                            <td>{{ $token->expires_at?->format('d/m/Y H:i') ?? 'Aucune' }}</td>
+                            <td>{{ $active ? 'Active' : ($token->revoked_at ? 'Révoquée' : 'Expirée') }}</td>
+                            <td>
+                                @if($token->revoked_at === null)
+                                    <form method="POST"
+                                          action="{{ route('root.backoffice.users.api-tokens.destroy', ['user' => $user, 'token' => $token]) }}"
+                                          onsubmit="return confirm('Révoquer cette clé API ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="button button-danger button-small" type="submit">Révoquer</button>
+                                    </form>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</section>
+
 @if($canViewAssignments)
     <section class="card" aria-labelledby="assignments-heading">
         <h2 id="assignments-heading">Affectations aux coopératives</h2>
