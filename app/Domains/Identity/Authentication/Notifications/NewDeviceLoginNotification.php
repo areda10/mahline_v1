@@ -31,7 +31,7 @@ final class NewDeviceLoginNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         /** @var User $notifiable */
-        $locale = $this->locale($notifiable->locale);
+        $locale = $this->resolveLocale($notifiable->locale);
         $timezone = $this->timezone($notifiable->timezone);
         $authenticatedAt = Carbon::parse($this->session->authenticated_at)
             ->setTimezone($timezone)
@@ -85,7 +85,7 @@ final class NewDeviceLoginNotification extends Notification
             ->line($messages['ignore']);
     }
 
-    private function locale(?string $locale): string
+    private function resolveLocale(?string $locale): string
     {
         $locale = strtolower(substr((string) $locale, 0, 2));
 
