@@ -45,18 +45,18 @@ final class AuthenticationSessionController
         ]);
     }
 
-    public function index(Request $request): View
+    public function index(Request $request, SessionService $service): View
     {
         abort_if($request->user()->hasRole('super_admin_root'), 404);
 
-        return $this->sessionsView($request);
+        return $this->sessionsView($request, $service);
     }
 
-    public function rootIndex(Request $request): View
+    public function rootIndex(Request $request, SessionService $service): View
     {
         abort_unless($request->user()->hasRole('super_admin_root'), 403);
 
-        return $this->sessionsView($request);
+        return $this->sessionsView($request, $service);
     }
 
     public function revokeOwn(Request $request, AuthenticationSession $session, SessionService $service): RedirectResponse
@@ -115,9 +115,9 @@ final class AuthenticationSessionController
             ->with('success', 'La session de ce navigateur a été révoquée. Vous êtes déconnecté.');
     }
 
-    private function sessionsView(Request $request): View
+    private function sessionsView(Request $request, SessionService $service): View
     {
-        $sessions = app(SessionService::class)->activeSessionsFor($request->user());
+        $sessions = $service->activeSessionsFor($request->user());
 
         $currentId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentId): void {
