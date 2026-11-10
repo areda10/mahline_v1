@@ -74,7 +74,24 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
                 throw new RuntimeException(
                     'Controlled authentication workflow failure.',
                 );
-            }\n\n            public function afterAuthenticationCommitted(\n                User $user,\n                AuthenticationSession $session,\n                bool $isNewDevice,\n            ): void {\n                // The controlled failure is raised inside the transaction hook.\n            }\n        };
+            }
+
+            public function afterAuthenticationCommitted(
+                User $user,
+                AuthenticationSession $session,
+                bool $isNewDevice,
+            ): void {
+                // The controlled failure is raised inside the transaction hook.
+            }
+
+            public function afterAuthenticationCommitted(
+                User $user,
+                AuthenticationSession $session,
+                bool $isNewDevice,
+            ): void {
+                // The controlled failure is raised inside the transaction hook.
+            }
+        };
 
         $this->app->instance(
             AuthenticationWorkflowHook::class,
