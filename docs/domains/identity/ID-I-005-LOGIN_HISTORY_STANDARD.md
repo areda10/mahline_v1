@@ -84,3 +84,8 @@ Changes to login-history events or security context require corresponding tests 
 When an emergency account lock revokes active Web sessions, each session revocation is recorded through the existing session-revocation LoginHistory operation with reason emergency_lock. The event remains associated with the owning User and the affected AuthenticationSession, including the available client context. This does not create a normal user-initiated logout event.
 
 The administrative decision itself is stored in the Audit domain as identity.authentication.emergency_lock.applied. The per-session Audit event identity.authentication.session_revoked is complementary to LoginHistory and does not replace it. Releasing the emergency lock does not create synthetic login/logout history and does not restore any prior session.
+
+
+## 11. New-device detection is a separate security event
+
+A successful login from a device not previously registered for the same User is recorded in the Security Events domain as `unusual_activity_detected` with reason `new_device_detected`. The Audit domain also receives `identity.authentication.new_device_detected`, linked to the new AuthenticationSession. This does not create a synthetic LoginHistory event: the normal successful-login record remains `success` and references that same session. Known devices do not emit duplicate new-device events. Detection is performed before the device is remembered.
