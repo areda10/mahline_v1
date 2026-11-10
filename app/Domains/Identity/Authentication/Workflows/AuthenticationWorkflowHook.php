@@ -14,4 +14,10 @@ interface AuthenticationWorkflowHook
         AuthenticationSession $session,
         bool $isNewDevice,
     ): void;
+
+    public function afterAuthenticationCommitted(
+        User $user,
+        AuthenticationSession $session,
+        bool $isNewDevice,
+    ): void;
 }
