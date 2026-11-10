@@ -205,10 +205,10 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->travelTo(now()->startOfSecond());
 
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create();
+        $target = $this->actor('super_admin_root');
         $active = $this->createAuthenticationSession($target, 'root-visible-session', 'Visible target browser');
         $expired = $this->createAuthenticationSession($target, 'root-expired-session', 'Expired target browser');
-        $expired->forceFill(['last_activity_at' => now()->subMinutes(60)])->save();
+        $expired->forceFill(['last_activity_at' => now()->subMinutes(15)])->save();
 
         $this->actingAs($root)
             ->get(route('root.backoffice.users.show', $target))
