@@ -1939,6 +1939,7 @@ Le verrouillage d'urgence est distinct du statut métier `suspended` et des comp
 
 - `AuthenticationLockoutControllerTest::test_root_emergency_lock_revokes_all_sessions_and_api_tokens_and_blocks_login_until_root_releases_it()`.
 - `AuthenticationLockoutControllerTest::test_non_root_user_cannot_apply_or_release_an_emergency_lock()`.
+- `AuthenticationServiceTest::test_emergency_locked_account_cannot_authenticate_even_when_active_and_email_verified()`.
 - `ForcedPasswordChangeControllerTest::test_forced_password_change_preserves_current_session_and_revokes_other_sessions_and_api_tokens()`.
 
 **État : implémentation sur `feature/Identity` ; validation locale ciblée et Pint en attente.**
