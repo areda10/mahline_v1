@@ -160,7 +160,11 @@ final class PasswordResetService extends BaseService
                 user: $user,
                 reason: 'password_reset',
             );
-            $user->tokens()->delete();
+            $this->sessionService->revokeApiTokensForUser(
+                user: $user,
+                actor: $user,
+                reason: 'password_reset',
+            );
 
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.password.reset',
