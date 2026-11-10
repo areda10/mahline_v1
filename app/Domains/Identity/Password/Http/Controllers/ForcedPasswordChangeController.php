@@ -103,7 +103,11 @@ final class ForcedPasswordChangeController
                     $sessions->revokeForUser($lockedUser, 'password_changed');
                 }
 
-                $lockedUser->tokens()->delete();
+                $sessions->revokeApiTokensForUser(
+                    user: $lockedUser,
+                    actor: $lockedUser,
+                    reason: 'password_changed',
+                );
 
                 $audit->record(new AuditEntryDTO(
                     eventKey: $forced
