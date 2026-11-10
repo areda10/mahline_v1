@@ -29,6 +29,8 @@ final class ApiTokenService extends BaseService
         User $user,
         User $actor,
         string $reason,
+        string $eventKey = 'identity.authentication.token_revoked',
+        string $action = 'token_revoked',
     ): int {
         if (trim($reason) === '') {
             throw new RuntimeException('An API token revocation reason is required.');
@@ -53,6 +55,8 @@ final class ApiTokenService extends BaseService
                     owner: $lockedUser,
                     actor: $actor,
                     reason: $reason,
+                    eventKey: $eventKey,
+                    action: $action,
                 );
             }
 
@@ -71,6 +75,8 @@ final class ApiTokenService extends BaseService
         PersonalAccessToken $token,
         User $actor,
         string $reason = 'user_revoked',
+        string $eventKey = 'identity.authentication.token_revoked',
+        string $action = 'token_revoked',
     ): bool {
         if (trim($reason) === '') {
             throw new RuntimeException('An API token revocation reason is required.');
@@ -98,6 +104,8 @@ final class ApiTokenService extends BaseService
                 owner: $lockedOwner,
                 actor: $actor,
                 reason: $reason,
+                eventKey: $eventKey,
+                action: $action,
             );
 
             return true;
@@ -109,6 +117,8 @@ final class ApiTokenService extends BaseService
         User $owner,
         User $actor,
         string $reason,
+        string $eventKey,
+        string $action,
     ): void {
         $revokedAt = now();
 
@@ -116,8 +126,8 @@ final class ApiTokenService extends BaseService
         $token->save();
 
         $this->audit->record(new AuditEntryDTO(
-            eventKey: 'identity.authentication.token_revoked',
-            action: 'token_revoked',
+            eventKey: $eventKey,
+            action: $action,
             actorType: User::class,
             actorId: (string) $actor->getKey(),
             cooperativeId: $owner->cooperative_id
