@@ -82,3 +82,10 @@ Fichiers d'intégration : app/Domains/Identity/Authentication/Http/Controllers/A
 Lorsqu'un utilisateur s'authentifie depuis un appareil jamais enregistré pour son compte, le hook applicatif `RecordNewDeviceAuthenticationWorkflowHook` écrit l'événement append-only `identity.authentication.new_device_detected`, dont le sujet est la nouvelle `AuthenticationSession`. L'événement spécialisé `unusual_activity_detected` / `new_device_detected` est également persisté dans `security_events`. Les deux journaux sont complémentaires ; Login History conserve séparément le succès de connexion normal. Un appareil déjà connu ne génère aucun doublon.
 
 Fichiers d'intégration : `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php`, `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` et `app/Providers/AppServiceProvider.php`.
+
+
+## Intégration — alerte de nouvel appareil (SESS-10)
+
+La détection de première apparition déclenche d'abord les écritures SecurityEvent et Audit dans la transaction d'authentification. Après commit, une notification e-mail est tentée. L'envoi n'écrit pas un deuxième événement Audit de détection : `identity.authentication.new_device_detected` reste la trace canonique de l'événement, avec la session comme sujet.
+
+Une panne de transport e-mail est interceptée et journalisée sans secret, sans IP brute et sans annuler la connexion. L'état de notification n'est pas encore conservé dans une table d'historique dédiée ; cette traçabilité appartient au futur service transversal de notifications (NOT-01 à NOT-06). Aucun fournisseur GeoIP n'est actuellement configuré ; la localisation est donc annoncée indisponible plutôt que supposée.
