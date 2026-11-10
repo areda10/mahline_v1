@@ -200,6 +200,7 @@ final class AuthenticationControllerTest extends TestCase
         );
 
         $this->assertNotNull($sessionCookie);
+        $this->assertSame(0, $sessionCookie->getExpiresTime());
 
         $this->withCookie(
             config('session.cookie'),
@@ -239,6 +240,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertRedirect(route('user.dashboard'));
         $this->assertAuthenticatedAs($user);
+
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertGreaterThan(now()->getTimestamp(), $sessionCookie->getExpiresTime());
     }
 
     public function test_super_admin_is_redirected_to_the_backoffice_dashboard_after_login(): void
@@ -261,6 +266,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertRedirect(route('backoffice.dashboard'));
         $this->assertAuthenticatedAs($user);
+
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertSame(0, $sessionCookie->getExpiresTime());
     }
 
     public function test_cooperative_admin_is_redirected_to_the_cooperative_dashboard_after_login(): void
@@ -283,6 +292,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertRedirect(route('backoffice.dashboard'));
         $this->assertAuthenticatedAs($user);
+
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertGreaterThan(now()->getTimestamp(), $sessionCookie->getExpiresTime());
     }
 
     public function test_user_can_keep_multiple_active_web_sessions_on_different_devices(): void
