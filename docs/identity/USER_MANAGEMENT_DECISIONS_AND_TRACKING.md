@@ -1872,3 +1872,29 @@ Le 10 novembre 2026, l'utilisateur a confirmé **VERTS** les tests ciblés de SE
 Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` prouve que la déconnexion globale révoque les sessions web et les jetons Sanctum de l'utilisateur courant, invalide les jetons révoqués lors de leur recherche, préserve la session et le jeton d'un autre utilisateur et conserve les événements d'audit des révocations de jetons. La déconnexion standard reste limitée à la session courante.
 
 **État : SESS-05 VALIDÉ. Prochaine tâche : audit SESS-06 — garantir qu'une nouvelle connexion ne révoque pas les sessions web actives antérieures du même utilisateur.**
+
+
+## 20.54 — Audit SESS-06 : coexistence de plusieurs sessions actives
+
+### Constat de l'audit du code sur `feature/Identity`
+
+- `SessionService::create()` verrouille la ligne de l'utilisateur, revérifie son statut actif et son e-mail vérifié, puis insère une nouvelle ligne `AuthenticationSession` avec un nouvel identifiant Laravel.
+- Cette méthode ne recherche pas les anciennes sessions pour les révoquer et n'appelle pas `revokeForUser()` ; la création d'une nouvelle connexion ne ferme donc pas les appareils déjà authentifiés.
+- `AuthenticationWorkflow` régénère l'identifiant de session Laravel puis appelle `SessionService::create()` pour chaque authentification réussie. Il associe ensuite le nouvel enregistrement à la session courante et écrit l'historique de connexion.
+- Le verrouillage de la ligne utilisateur dans `create()` sérialise les créations concurrentes pour le même compte ; le verrou utilisé par la déconnexion globale SESS-05 porte sur la même ligne.
+
+### Couverture existante repérée
+
+Dans `tests/Framework/Domains/Identity/Authentication/Services/SessionServiceTest.php` :
+- `test_previous_session_is_retained_without_revocation()` vérifie que deux créations successives laissent les deux sessions actives et ne produisent pas d'historique de révocation de la première.
+- `test_new_login_does_not_create_session_revocation_history()` confirme explicitement l'absence d'événement de révocation lors d'une nouvelle connexion.
+
+Dans `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` :
+- `test_new_login_keeps_previous_session_active()` réalise deux connexions HTTP réussies pour le même utilisateur et vérifie deux sessions actives.
+- `test_phone_login_keeps_previous_computer_session_active()` vérifie qu'une connexion depuis un iPhone conserve la session Windows active, avec deux identifiants de session distincts.
+
+### Conclusion d'audit
+
+Le comportement métier SESS-06 est déjà implémenté et dispose de tests de service et d'intégration HTTP couvrant les connexions successives et multi-appareils. Aucun changement du code de production n'est requis à ce stade. Il reste à exécuter localement les deux suites ciblées et Pint avant de clôturer SESS-06.
+
+**État : CODE CONFORME ET TESTS EXISTANTS — validation locale en attente.**
