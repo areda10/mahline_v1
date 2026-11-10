@@ -47,6 +47,10 @@ final class ApiTokenServiceTest extends TestCase
         $audit = DB::table('audit_events')->first();
         self::assertStringNotContainsString($newToken->plainTextToken, json_encode($audit));
         self::assertStringNotContainsString($newToken->accessToken->token, json_encode($audit));
+        self::assertStringContainsString(
+            $newToken->accessToken->expires_at->toISOString(),
+            json_encode($audit),
+        );
     }
 
     public function test_owner_token_listing_and_metadata_never_expose_token_hash(): void
