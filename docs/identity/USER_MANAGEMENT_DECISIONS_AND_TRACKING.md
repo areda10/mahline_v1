@@ -2192,3 +2192,38 @@ L'audit doit vérifier le code réel avant toute modification :
 La règle gelée `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` reste impérative. Aucune nouvelle connexion ne révoque les anciennes sessions.
 
 État : **AUDIT À EFFECTUER — aucune modification SESS-11 autorisée avant examen des fichiers réels et présentation des constats/propositions.**
+
+
+## 20.63 — Validation SESS-11 et audit SESS-12
+
+### Validation SESS-11 — 10 novembre 2026
+
+L'utilisateur confirme VERTS :
+- `php artisan test --filter=AuthenticationSessionControllerTest`
+- `php artisan test --filter=SessionServiceTest`
+- `php vendor/bin/pint --test`
+
+SESS-11 est **VALIDÉ**. Renforcements effectués sur `feature/Identity` :
+- Révocation de la session du navigateur courant suivie d'une déconnexion immédiate et invalidation du cookie/session Laravel.
+- Application du délai d'inactivité par rôle pour filtrer les sessions affichées, dans l'espace personnel et la fiche utilisateur root ; le listing ne révoque ni ne modifie les sessions expirées.
+- Maintien de l'isolation des autres sessions Web du même utilisateur.
+- Assertions explicites de la traçabilité Login History et Audit, incluant acteur, utilisateur cible, session et motif dans les tests HTTP.
+
+Fichiers applicatifs concernés :
+- `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionController.php`
+- `app/Domains/Identity/Authentication/Services/SessionService.php`
+- `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php`
+- `resources/views/identity/security/sessions/index.blade.php`
+- `resources/views/super-admin-root/users/show.blade.php`
+
+Tests renforcés :
+- `tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php`
+- `tests/Framework/Domains/Identity/Authentication/Services/SessionServiceTest.php`
+
+### SESS-12 — démarrage de l'audit
+
+Objectif : détecter une connexion depuis un pays inhabituel et décider, selon les règles de sécurité déjà gelées, si un challenge OTP e-mail complémentaire est requis. L'audit doit vérifier l'existant (données de localisation, fournisseur GeoIP éventuel, registre d'appareils/pays, workflow d'authentification, notifications, OTP, rate limits, tests et journalisation) avant toute proposition de modification.
+
+Aucune localisation ne doit être devinée à partir d'une IP. Une donnée pays absente ou un fournisseur indisponible ne doit pas créer un faux pays ni bloquer arbitrairement une connexion. La règle SESS-09/10 relative au nouvel appareil reste distincte et doit être préservée.
+
+État : **AUDIT EN COURS — aucune modification applicative SESS-12 avant examen du dépôt réel et présentation des constats/propositions.**
