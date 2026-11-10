@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -303,6 +304,67 @@ final class AuthenticationSessionControllerTest extends TestCase
             ]);
 
         $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens(): void
+    {
+        $user = $this->actor('user');
+        $otherUser = User::factory()->create();
+
+        $firstSession = $this->createAuthenticationSession(
+            $user,
+            'global-logout-first-session',
+            'First personal device',
+        );
+        $secondSession = $this->createAuthenticationSession(
+            $user,
+            'global-logout-second-session',
+            'Second personal device',
+        );
+        $otherSession = $this->createAuthenticationSession(
+            $otherUser,
+            'global-logout-foreign-session',
+            'Other user device',
+        );
+
+        $firstToken = $user->createToken('personal-api-token')->accessToken;
+        $secondToken = $user->createToken('mobile-api-token')->accessToken;
+        $foreignToken = $otherUser->createToken('foreign-api-token')->accessToken;
+
+        $this->actingAs($user)
+            ->post(route('backoffice.security.sessions.logout-everywhere'))
+            ->assertRedirect(route('authentication.login'))
+            ->assertSessionHas('success');
+
+        $this->assertGuest();
+
+        $this->assertNotNull($firstSession->fresh()->revoked_at);
+        $this->assertNotNull($secondSession->fresh()->revoked_at);
+        $this->assertSame('global_logout', $firstSession->fresh()->revocation_reason);
+        $this->assertSame('global_logout', $secondSession->fresh()->revocation_reason);
+
+        $this->assertNull($otherSession->fresh()->revoked_at);
+
+        $this->assertNotNull(
+            PersonalAccessToken::query()->findOrFail($firstToken->getKey())->revoked_at,
+        );
+        $this->assertNotNull(
+            PersonalAccessToken::query()->findOrFail($secondToken->getKey())->revoked_at,
+        );
+        $this->assertNull(
+            PersonalAccessToken::query()->findOrFail($foreignToken->getKey())->revoked_at,
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.token_revoked',
+            'subject_type' => PersonalAccessToken::class,
+            'subject_id' => $firstToken->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.token_revoked',
+            'subject_type' => PersonalAccessToken::class,
+            'subject_id' => $secondToken->getKey(),
+        ]);
     }
 
     private function withCurrentAuthenticationSession(
