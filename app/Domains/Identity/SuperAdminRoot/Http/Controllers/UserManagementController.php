@@ -210,7 +210,7 @@ final class UserManagementController
             );
     }
 
-    public function show(Request $request, User $user, SessionService $sessionService): View
+    public function show(Request $request, User $user, SessionService $sessionService, ApiTokenService $apiTokenService): View
     {
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
@@ -227,6 +227,7 @@ final class UserManagementController
         }
 
         $sessions = $sessionService->activeSessionsFor($user);
+        $apiTokens = $apiTokenService->tokensForUser($user);
 
         $currentSessionId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
@@ -237,6 +238,7 @@ final class UserManagementController
             'user' => $user,
             'canViewAssignments' => $canViewAssignments,
             'sessions' => $sessions,
+            'apiTokens' => $apiTokens,
         ]);
     }
 
