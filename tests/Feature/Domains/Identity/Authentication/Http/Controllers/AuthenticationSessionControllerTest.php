@@ -70,6 +70,18 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNotNull($selected->fresh()->revoked_at);
         $this->assertSame('root_revocation', $selected->fresh()->revocation_reason);
         $this->assertNull($other->fresh()->revoked_at);
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $target->getKey(),
+            'event' => 'session_revoked',
+            'reason' => 'root_revocation',
+            'authentication_session_id' => $selected->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $selected->getKey(),
+        ]);
     }
 
     public function test_root_cannot_revoke_a_session_through_another_users_detail_url(): void
@@ -121,6 +133,91 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNotNull($selected->fresh()->revoked_at);
         $this->assertSame('user_revocation', $selected->fresh()->revocation_reason);
         $this->assertNull($other->fresh()->revoked_at);
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $user->getKey(),
+            'event' => 'session_revoked',
+            'reason' => 'user_revocation',
+            'authentication_session_id' => $selected->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'subject_id' => $selected->getKey(),
+        ]);
+    }
+
+    public function test_revoking_the_current_personal_session_logs_out_this_browser_only(): void
+    {
+        $user = $this->actor('user');
+        $current = $this->createAuthenticationSession($user, Str::random(40), 'Current browser');
+        $other = $this->createAuthenticationSession($user, 'preserved-other-browser', 'Other browser');
+
+        $this->withCurrentAuthenticationSession($user, $current)
+            ->delete(route('backoffice.security.sessions.destroy', $current))
+            ->assertRedirect(route('authentication.login'));
+
+        $this->assertGuest();
+        $this->assertNotNull($current->fresh()->revoked_at);
+        $this->assertSame('user_revocation', $current->fresh()->revocation_reason);
+        $this->assertNull($other->fresh()->revoked_at);
+    }
+
+    public function test_root_revoking_its_current_session_from_user_detail_logs_out_root_browser_only(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $current = $this->createAuthenticationSession($root, Str::random(40), 'Root current browser');
+        $other = $this->createAuthenticationSession($root, 'root-preserved-browser', 'Root other browser');
+
+        $this->withCurrentAuthenticationSession($root, $current)
+            ->delete(route('root.backoffice.users.sessions.destroy', [
+                'user' => $root,
+                'session' => $current,
+            ]))
+            ->assertRedirect(route('authentication.login'));
+
+        $this->assertGuest();
+        $this->assertNotNull($current->fresh()->revoked_at);
+        $this->assertSame('root_revocation', $current->fresh()->revocation_reason);
+        $this->assertNull($other->fresh()->revoked_at);
+    }
+
+    public function test_session_lists_hide_sessions_past_the_users_inactivity_limit_without_revoking_them(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->actor('user');
+        $active = $this->createAuthenticationSession($user, 'visible-active-session', 'Visible active browser');
+        $expired = $this->createAuthenticationSession($user, 'hidden-expired-session', 'Hidden expired browser');
+        $expired->forceFill(['last_activity_at' => now()->subMinutes(60)])->save();
+
+        $this->actingAs($user)
+            ->get(route('backoffice.security.sessions.index'))
+            ->assertOk()
+            ->assertSee('Visible active browser')
+            ->assertDontSee('Hidden expired browser');
+
+        $this->assertNull($active->fresh()->revoked_at);
+        $this->assertNull($expired->fresh()->revoked_at);
+    }
+
+    public function test_root_user_detail_hides_sessions_past_root_inactivity_limit_without_revoking_them(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = User::factory()->create();
+        $active = $this->createAuthenticationSession($target, 'root-visible-session', 'Visible target browser');
+        $expired = $this->createAuthenticationSession($target, 'root-expired-session', 'Expired target browser');
+        $expired->forceFill(['last_activity_at' => now()->subMinutes(60)])->save();
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Visible target browser')
+            ->assertDontSee('Expired target browser');
+
+        $this->assertNull($active->fresh()->revoked_at);
+        $this->assertNull($expired->fresh()->revoked_at);
     }
 
     public function test_user_cannot_revoke_another_users_session_by_identifier(): void
