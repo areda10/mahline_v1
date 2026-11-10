@@ -89,6 +89,56 @@ final class AuthenticationWorkflowTest extends TestCase
         $this->assertNotEmpty($session->session_id);
     }
 
+    public function test_new_device_detection_records_security_event_and_audit_only_once(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'new-device-event@example.com',
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+
+        $this->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('security_events', [
+            'user_id' => $user->getKey(),
+            'event' => 'unusual_activity_detected',
+            'reason' => 'new_device_detected',
+            'device' => 'Windows',
+        ]);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.new_device_detected',
+            'action' => 'new_device_detected',
+        ]);
+
+        $this->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'password',
+            ])
+            ->assertOk();
+
+        $this->assertSame(
+            1,
+            SecurityEvent::query()
+                ->where('user_id', $user->getKey())
+                ->where('reason', 'new_device_detected')
+                ->count(),
+        );
+
+        $this->assertSame(
+            1,
+            AuditEvent::query()
+                ->where('event_key', 'identity.authentication.new_device_detected')
+                ->count(),
+        );
+    }
+
     public function test_successful_authentication_creates_login_history(): void
     {
         $user = User::factory()->create([
