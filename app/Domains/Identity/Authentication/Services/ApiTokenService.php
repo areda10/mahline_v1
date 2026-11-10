@@ -36,7 +36,7 @@ final class ApiTokenService extends BaseService
             throw new RuntimeException('An API token revocation reason is required.');
         }
 
-        return DB::transaction(function () use ($user, $actor, $reason): int {
+        return DB::transaction(function () use ($user, $actor, $reason, $eventKey, $action): int {
             $lockedUser = User::withTrashed()
                 ->whereKey($user->getKey())
                 ->lockForUpdate()
@@ -82,7 +82,7 @@ final class ApiTokenService extends BaseService
             throw new RuntimeException('An API token revocation reason is required.');
         }
 
-        return DB::transaction(function () use ($owner, $token, $actor, $reason): bool {
+        return DB::transaction(function () use ($owner, $token, $actor, $reason, $eventKey, $action): bool {
             $lockedOwner = User::withTrashed()
                 ->whereKey($owner->getKey())
                 ->lockForUpdate()
