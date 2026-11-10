@@ -19,7 +19,7 @@ final class StoreApiTokenRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:1', 'max:255'],
+            'name' => ['required', 'string', 'min:1', 'max:255', 'not_regex:/^\\s*$/'],
         ];
     }
 }
