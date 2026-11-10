@@ -263,6 +263,20 @@ final class ApiTokenServiceTest extends TestCase
             'updated_at' => $createdAt,
         ]);
 
+        DB::table('personal_access_tokens')->insert([
+            'id' => (string) str()->ulid(),
+            'tokenable_type' => $user->getMorphClass(),
+            'tokenable_id' => $user->getKey(),
+            'name' => 'legacy-custom-expiry-token',
+            'token' => hash('sha256', 'legacy-custom-expiry-token-secret'),
+            'abilities' => json_encode([]),
+            'last_used_at' => null,
+            'expires_at' => $createdAt->copy()->addDays(365),
+            'revoked_at' => null,
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ]);
+
         $migration = require database_path(
             'migrations/2026_11_10_220000_enforce_ninety_day_api_token_expiration.php',
         );
@@ -277,6 +291,16 @@ final class ApiTokenServiceTest extends TestCase
         self::assertEquals(
             $createdAt->copy()->addDays(90)->toDateTimeString(),
             \Illuminate\Support\Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
+        );
+
+        $customExpiryToken = DB::table('personal_access_tokens')
+            ->where('name', 'legacy-custom-expiry-token')
+            ->first();
+
+        self::assertNotNull($customExpiryToken);
+        self::assertEquals(
+            $createdAt->copy()->addDays(90)->toDateTimeString(),
+            \Illuminate\Support\Carbon::parse($customExpiryToken->expires_at)->toDateTimeString(),
         );
 
         $this->travelBack();
