@@ -6,7 +6,7 @@ namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -31,6 +31,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function __construct(
         private readonly AuditService $audit,
         private readonly SessionService $sessions,
+        private readonly ApiTokenService $apiTokens,
         private readonly PasswordHistoryService $passwordHistory,
     ) {}
 
@@ -737,38 +738,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         // SessionService writes one LoginHistory and one Audit event per session.
         $this->sessions->revokeForUser($target, $reason);
 
-        // The revoked_at column is part of the MAHLINE token lifecycle migration.
-        $tokens = PersonalAccessToken::query()
-            ->where('tokenable_type', $target->getMorphClass())
-            ->where('tokenable_id', $target->getKey())
-            ->whereNull('revoked_at')
-            ->lockForUpdate()
-            ->get();
-
-        foreach ($tokens as $token) {
-            $revokedAt = now();
-            $token->revoked_at = $revokedAt;
-            $token->save();
-
-            $this->audit->record(new AuditEntryDTO(
-                eventKey: 'identity.authentication.api_token_revoked',
-                action: 'api_token_revoked',
-                actorType: User::class,
-                actorId: (string) $actor->getKey(),
-                cooperativeId: $target->cooperative_id
-                    ? (string) $target->cooperative_id
-                    : null,
-                subjectType: PersonalAccessToken::class,
-                subjectId: (string) $token->getKey(),
-                oldValues: ['revoked_at' => null],
-                newValues: ['revoked_at' => $revokedAt->toISOString()],
-                metadata: [
-                    'user_id' => (string) $target->getKey(),
-                    'token_name' => $token->name,
-                    'reason' => $reason,
-                ],
-            ));
-        }
+        $this->apiTokens->revokeForUser(
+            user: $target,
+            actor: $actor,
+            reason: $reason,
+        );
     }
 
     private function recordLifecycleAudit(
