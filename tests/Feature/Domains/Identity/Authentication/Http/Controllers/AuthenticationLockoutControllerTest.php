@@ -128,6 +128,81 @@ final class AuthenticationLockoutControllerTest extends TestCase
             ->assertSessionHasErrors(['email', 'ip_address', 'reason']);
     }
 
+
+    public function test_root_emergency_lock_revokes_all_sessions_and_api_tokens_and_blocks_login_until_root_releases_it(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $target = User::factory()->create([
+            'email' => 'emergency@example.com',
+            'email_verified_at' => now(),
+        ]);
+        $sessions = app(\App\Domains\Identity\Authentication\Services\SessionService::class);
+        $first = $sessions->create($target, 'emergency-session-one');
+        $second = $sessions->create($target, 'emergency-session-two');
+        $plainToken = $target->createToken('emergency-api')->plainTextToken;
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.security.authentication-lockouts.emergency-lock'), [
+                'email' => $target->email,
+                'reason' => 'Suspicion confirmée de compromission du compte.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $target->refresh();
+        self::assertNotNull($target->emergency_locked_at);
+        self::assertFalse($target->isAuthorized());
+        self::assertNotNull($first->fresh()->revoked_at);
+        self::assertNotNull($second->fresh()->revoked_at);
+        self::assertSame('emergency_lock', $first->fresh()->revocation_reason);
+        self::assertNull(\App\Domains\Identity\Authentication\Models\PersonalAccessToken::findToken($plainToken));
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.emergency_lock.applied',
+            'subject_id' => $target->getKey(),
+        ]);
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.security.authentication-lockouts.emergency-unlock'), [
+                'email' => $target->email,
+                'reason' => 'Investigation terminée, accès réautorisé.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $target->refresh();
+        self::assertNull($target->emergency_locked_at);
+        self::assertTrue($target->isAuthorized());
+        self::assertNotNull($first->fresh()->revoked_at);
+        self::assertNull(\App\Domains\Identity\Authentication\Models\PersonalAccessToken::findToken($plainToken));
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.emergency_lock.released',
+            'subject_id' => $target->getKey(),
+        ]);
+    }
+
+    public function test_non_root_user_cannot_apply_or_release_an_emergency_lock(): void
+    {
+        $superAdmin = $this->actor('super_admin');
+        $target = User::factory()->create(['email' => 'target@example.com']);
+
+        $this->actingAs($superAdmin)
+            ->post(route('root.backoffice.security.authentication-lockouts.emergency-lock'), [
+                'email' => $target->email,
+                'reason' => 'Suspicion confirmée de compromission.',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($superAdmin)
+            ->post(route('root.backoffice.security.authentication-lockouts.emergency-unlock'), [
+                'email' => $target->email,
+                'reason' => 'Fin de vérification administrative.',
+            ])
+            ->assertForbidden();
+
+        self::assertNull($target->fresh()->emergency_locked_at);
+    }
+
     private function actor(string $roleSlug): User
     {
         $actor = User::factory()->create();
