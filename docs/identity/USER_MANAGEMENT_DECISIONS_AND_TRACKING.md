@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.3
+- **Version :** 3.4
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -2035,3 +2035,42 @@ La restauration constitue désormais elle-même une frontière de sécurité : e
 - Code mis à jour sur `feature/Identity`.
 - Tests HTTP renforcés pour couvrir la restauration comme barrière de sécurité indépendante de l'action d'archivage/suppression.
 - Tests locaux ciblés et `php vendor/bin/pint --test` à exécuter par l'utilisateur ; SESS-08 reste **À TESTER** jusqu'à confirmation VERT.
+
+
+## 20.59 — Audit SESS-09 : détection effective des nouveaux appareils
+
+### Constat
+
+Le domaine disposait déjà de `UnusualActivityDetectionService::isNewDevice()` et de la table `known_devices`, mais `AuthenticationWorkflow::execute()` mémorisait l'appareil sans tester le résultat de détection. En outre, `AppServiceProvider` liait `AuthenticationWorkflowHook` à `NullAuthenticationWorkflowHook`. Aucune alerte de sécurité ni trace Audit dédiée n'était donc créée pour un nouvel appareil.
+
+### Implémentation sur `feature/Identity`
+
+- Le workflow calcule `isNewDevice` avant l'appel à `rememberDevice()`, dans la transaction qui crée la session.
+- Le résultat est transmis au hook `afterDeviceRemembered()`.
+- `AppServiceProvider` utilise maintenant `RecordNewDeviceAuthenticationWorkflowHook`, et non le hook nul.
+- Si l'appareil est nouveau pour cet utilisateur, le hook enregistre un `SecurityEventType::UnusualActivityDetected` avec le motif `new_device_detected`, puis un événement Audit `identity.authentication.new_device_detected`.
+- Les métadonnées associent l'événement à la session concernée et contiennent le type de détection ; aucun secret d'authentification n'est enregistré.
+- Un appareil déjà connu n'émet pas de nouvel événement.
+- L'opération reste dans la transaction du workflow : un échec du hook annule la création de session, l'ajout de l'appareil et l'historique de connexion.
+- La règle `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` reste inchangée : une nouvelle connexion ne révoque aucune session existante.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation sécurité / Audit |
+|---|---|---|
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php` | Appelle `isNewDevice()` avant `rememberDevice()`, puis transmet le booléen au hook dans la transaction de connexion. | Point d'orchestration ; aucune écriture Audit directe. |
+| `app/Domains/Identity/Authentication/Services/UnusualActivityDetectionService.php` | Compare l'appareil normalisé à `known_devices` par utilisateur ; mémorise ensuite le nouvel appareil. | Détection isolée par User ; pas d'écriture Audit dans ce service. |
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowHook.php` | Contrat du hook, reçoit `isNewDevice`. | Contrat uniquement. |
+| `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` | Ignore les appareils connus ; pour un nouvel appareil, écrit l'événement de sécurité et l'événement Audit. | `unusual_activity_detected` / `new_device_detected` dans SecurityEvent ; `identity.authentication.new_device_detected` dans Audit, sujet AuthenticationSession. |
+| `app/Domains/Identity/Authentication/Workflows/NullAuthenticationWorkflowHook.php` | Implémentation neutre conservée pour compatibilité/tests, mais n'est plus le binding applicatif. | Aucun événement. |
+| `app/Providers/AppServiceProvider.php` | Lie `AuthenticationWorkflowHook` à `RecordNewDeviceAuthenticationWorkflowHook`. | Active le chemin runtime effectif. |
+| `app/Domains/Identity/Authentication/Services/SecurityEventService.php` | Persiste l'événement spécialisé avec IP, User-Agent, navigateur, appareil et session en metadata. | Table `security_events`. |
+| `app/Domains/Audit/Services/AuditService.php` / `app/Domains/Audit/Models/AuditEvent.php` | Persiste l'événement append-only via `AuditEntryDTO`. | Événement `identity.authentication.new_device_detected`. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` | Vérifie l'événement SecurityEvent et Audit à la première connexion, puis l'absence de doublon lors d'une connexion depuis le même appareil. | Assertions sur `security_events` et `audit_events`. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTransactionTest.php` | Vérifie l'atomicité session/appareil et le rollback en cas d'échec du hook. | Aucun état partiel ni session authentifiée après échec. |
+
+### État de validation
+
+- Code et tests ajoutés sur `feature/Identity`.
+- Tests ciblés et `php vendor/bin/pint --test` à exécuter localement.
+- SESS-09 reste **À TESTER** jusqu'à confirmation VERT.
