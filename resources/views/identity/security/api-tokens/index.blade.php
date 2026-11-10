@@ -65,13 +65,14 @@
                     @foreach($tokens as $token)
                         @php
                             $active = $token->revoked_at === null
-                                && ($token->expires_at === null || $token->expires_at->isFuture());
+                                && $token->expires_at !== null
+                                && $token->expires_at->isFuture();
                         @endphp
                         <tr>
                             <td>{{ $token->name }}</td>
                             <td>{{ $token->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td>{{ $token->last_used_at?->format('d/m/Y H:i') ?? 'Jamais' }}</td>
-                            <td>{{ $token->expires_at?->format('d/m/Y H:i') ?? 'Aucune' }}</td>
+                            <td>{{ $token->expires_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td>{{ $active ? 'Active' : ($token->revoked_at ? 'Révoquée' : 'Expirée') }}</td>
                             <td>
                                 @if($token->revoked_at === null)
