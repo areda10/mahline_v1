@@ -79,6 +79,7 @@ final class ApiTokenService extends BaseService
                 newValues: [
                     'name' => $token->name,
                     'abilities' => $token->abilities ?? [],
+                    'expires_at' => $token->expires_at?->toISOString(),
                 ],
                 metadata: [
                     'user_id' => (string) $lockedOwner->getKey(),
