@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 4.7
+- **Version :** 4.8
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -104,7 +104,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Détection des appareils et alertes de connexion
 
-- [ ] **SESS-09 — EN AUDIT** Remplacer le hook d'authentification nul par une intégration effective du workflow de détection de nouvel appareil.
+- [ ] **SESS-09 — IMPLÉMENTÉ, À TESTER** Le workflow compare l'appareil au registre `known_devices` avant mémorisation ; un premier appareil déclenche `unusual_activity_detected` et `identity.authentication.new_device_detected`. Le hook nul n'est plus utilisé par le conteneur. Tests de non-régression ajoutés ; validation locale en attente.
 - [ ] **SESS-10** Envoyer une alerte e-mail lors d'une connexion depuis un nouvel appareil avec date/heure, navigateur, appareil et localisation approximative.
 - [ ] **SESS-11** Permettre à l'utilisateur de consulter et révoquer ses propres sessions ; interdire la révocation des sessions d'un autre utilisateur sauf rôle autorisé.
 - [ ] **SESS-12** Implémenter la détection d'un pays inhabituel et le challenge OTP e-mail complémentaire.
@@ -381,3 +381,5 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 10 novembre 2026 | 4.6 | SESS-08 : audit des restaurations de comptes archivés/supprimés ; révocation défensive des sessions, tokens API et invitations au moment même de la restauration. Tests de non-régression ajoutés ; validation locale en attente. |
 
 | 10 novembre 2026 | 4.7 | SESS-08 validé par l'utilisateur : restauration sécurisée des comptes archivés/supprimés, révocation défensive des sessions, tokens et invitations résiduels ; tests ciblés et Pint confirmés VERTS. Démarrage de l'audit SESS-09 : détection effective des nouveaux appareils. |
+
+| 10 novembre 2026 | 4.8 | SESS-09 : branchement de la détection de nouvel appareil au workflow d'authentification ; création d'un SecurityEvent et d'un événement Audit pour la première apparition d'un appareil. Tests ciblés ajoutés ; validation locale en attente. |
