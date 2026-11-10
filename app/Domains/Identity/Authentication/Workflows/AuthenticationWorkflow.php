@@ -57,6 +57,12 @@ final class AuthenticationWorkflow
                         device: $context->device,
                     );
 
+                    $isNewDevice = $context->device !== null
+                        && $this->unusualActivityDetectionService->isNewDevice(
+                            user: $user,
+                            device: $context->device,
+                        );
+
                     if ($context->device !== null) {
                         $this->unusualActivityDetectionService->rememberDevice(
                             user: $user,
@@ -67,6 +73,7 @@ final class AuthenticationWorkflow
                     $this->hook->afterDeviceRemembered(
                         user: $user,
                         session: $authenticationSession,
+                        isNewDevice: $isNewDevice,
                     );
 
                     $this->loginHistoryService->recordSuccess(
