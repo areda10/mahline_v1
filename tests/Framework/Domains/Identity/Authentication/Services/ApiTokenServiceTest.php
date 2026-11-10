@@ -276,7 +276,7 @@ final class ApiTokenServiceTest extends TestCase
         self::assertNotNull($legacyToken);
         self::assertEquals(
             $createdAt->copy()->addDays(90)->toDateTimeString(),
-            \Illuminate\\Support\\Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
+            \Illuminate\Support\Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
         );
 
         $this->travelBack();
