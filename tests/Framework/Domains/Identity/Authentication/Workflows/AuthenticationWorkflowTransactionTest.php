@@ -141,6 +141,14 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
                     'Controlled authentication workflow failure.',
                 );
             }
+
+            public function afterAuthenticationCommitted(
+                User $user,
+                AuthenticationSession $session,
+                bool $isNewDevice,
+            ): void {
+                // The controlled failure is raised inside the transaction hook.
+            }
         };
 
         $this->app->instance(
