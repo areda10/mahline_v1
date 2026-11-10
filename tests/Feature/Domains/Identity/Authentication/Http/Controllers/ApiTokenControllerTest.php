@@ -169,6 +169,27 @@ final class ApiTokenControllerTest extends TestCase
         self::assertStringNotContainsString($secret, $storedToken->token);
     }
 
+    public function test_wildcard_token_ability_does_not_bypass_audit_policy(): void
+    {
+        $user = $this->actor('user');
+        $token = $user->createToken('wildcard-audit-attempt', ['*']);
+
+        $this->withToken($token->plainTextToken)
+            ->getJson(route('audit.events.index'))
+            ->assertForbidden();
+    }
+
+    public function test_wildcard_token_ability_does_not_bypass_root_role_middleware(): void
+    {
+        $superAdmin = $this->actor('super_admin');
+        $target = $this->actor('user');
+        $token = $superAdmin->createToken('wildcard-root-attempt', ['*']);
+
+        $this->withToken($token->plainTextToken)
+            ->getJson(route('identity.root.users.tokens.index', $target))
+            ->assertForbidden();
+    }
+
     private function actor(string $roleSlug): User
     {
         $user = User::factory()->create([
