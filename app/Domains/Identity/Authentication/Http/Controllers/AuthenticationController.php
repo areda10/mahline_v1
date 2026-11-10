@@ -193,6 +193,43 @@ final class AuthenticationController
         return redirect()->route('authentication.login');
     }
 
+    /**
+     * Revoke every web session and API token belonging to the authenticated user.
+     */
+    public function logoutEverywhere(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                ], 401);
+            }
+
+            return redirect()->route('authentication.login');
+        }
+
+        $revoked = $this->sessionService->revokeAllAccessForUser($user);
+
+        Auth::logout();
+
+        $request->session()->forget('authentication_session_id');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Déconnexion globale effectuée.',
+                'revoked' => $revoked,
+            ], 200);
+        }
+
+        return redirect()
+            ->route('authentication.login')
+            ->with('success', 'Toutes les sessions et clés API de votre compte ont été révoquées.');
+    }
+
     private function detectBrowser(Request $request): ?string
     {
         $userAgent = strtolower((string) $request->userAgent());
