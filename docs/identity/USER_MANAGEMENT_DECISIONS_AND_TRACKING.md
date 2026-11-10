@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.4
+- **Version :** 3.5
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
@@ -2074,3 +2074,57 @@ Le domaine disposait déjà de `UnusualActivityDetectionService::isNewDevice()` 
 - Code et tests ajoutés sur `feature/Identity`.
 - Tests ciblés et `php vendor/bin/pint --test` à exécuter localement.
 - SESS-09 reste **À TESTER** jusqu'à confirmation VERT.
+
+
+## 20.60 — Validation SESS-09 et audit initial SESS-10
+
+### Validation SESS-09 — 10 novembre 2026
+
+L'utilisateur a confirmé VERTS les commandes suivantes :
+
+- `php artisan test --filter=AuthenticationWorkflowTest`
+- `php artisan test --filter=AuthenticationWorkflowTransactionTest`
+- `php artisan test --filter=UnusualActivityDetectionServiceTest`
+- `php artisan test --filter=KnownDeviceTest`
+- `php vendor/bin/pint --test`
+
+SESS-09 est donc **VALIDÉ**. Le workflow de connexion détecte un appareil avant sa mémorisation ; un premier appareil déclenche un SecurityEvent et un événement Audit, tandis qu'un appareil déjà connu ne crée pas de doublon.
+
+### SESS-10 — audit du périmètre e-mail nouvel appareil
+
+Décision de référence déjà présente dans la section « Nouvel appareil » : l'authentification reste autorisée si les identifiants et le compte sont valides ; une alerte e-mail informe l'utilisateur de la date/heure, de l'appareil, du navigateur et de la localisation approximative si disponible. Les autres sessions restent actives.
+
+Constats du code réel sur `feature/Identity` :
+
+- `AuthenticationWorkflow::execute()` appelle le hook dans la transaction qui crée la session et persiste la détection du nouvel appareil.
+- `RecordNewDeviceAuthenticationWorkflowHook` écrit actuellement le SecurityEvent et l'événement Audit, mais n'envoie aucune notification.
+- `AppServiceProvider` lie effectivement le hook de détection au workflow d'authentification.
+- Le domaine Identity possède déjà des notifications Laravel envoyées par `$user->notify(...)`, notamment `PasswordResetLinkNotification` et `UserInvitationNotification`.
+- Le modèle `User` expose les attributs e-mail, locale et timezone ; le contexte de connexion expose IP, User-Agent, navigateur et appareil via `AuthenticationSession`.
+- Le transport e-mail est configurable par `config/mail.php` ; le mailer par défaut est `log` en configuration de développement si aucun transport n'est défini.
+
+### Points à traiter avant implémentation
+
+1. Ajouter une notification dédiée au nouvel appareil, avec date/heure formatée selon le fuseau et la langue de l'utilisateur.
+2. Ajouter une localisation approximative uniquement si un fournisseur GeoIP fiable est déjà disponible ou est explicitement configuré ; ne jamais présenter l'IP comme une localisation exacte et ne pas inventer ville/pays en l'absence de résultat.
+3. Définir le comportement d'échec d'envoi : une panne e-mail ne doit pas annuler ni faire échouer une authentification valide. L'envoi doit être isolé du commit de connexion (événement après commit ou traitement résilient).
+4. Préserver la trace SecurityEvent/Audit même si l'envoi e-mail échoue ; journaliser l'état d'envoi sans stocker de secret.
+5. Tester nouvel appareil (mail envoyé une seule fois), appareil connu (aucun mail), données de notification, localisation absente/présente, échec du transport et conservation des autres sessions.
+
+### Cartographie initiale des fichiers
+
+| Fichier | Responsabilité actuelle / modification proposée | Relation Audit / sécurité |
+|---|---|---|
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php` | Détecte le nouvel appareil et orchestre la session ; devra déclencher l'alerte après validation transactionnelle, sans retarder ni annuler la connexion. | Garde l'événement dans le workflow transactionnel ; le déclenchement e-mail doit être découplé du succès d'authentification. |
+| `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` | Enregistre déjà SecurityEvent et Audit ; à conserver comme source de détection et à compléter par un déclenchement résilient après commit. | `unusual_activity_detected` et `identity.authentication.new_device_detected` restent les traces de sécurité/audit canoniques. |
+| `app/Domains/Identity/Authentication/Services/SecurityEventService.php` | Persiste l'événement de sécurité avec IP, User-Agent, navigateur, appareil et métadonnées de session. | Ne doit pas contenir de contenu e-mail ni de secrets. |
+| `app/Domains/Identity/Authentication/Models/AuthenticationSession.php` | Porte l'horodatage de connexion, IP, navigateur, appareil et User-Agent nécessaires au message. | Source de contexte de connexion ; aucun audit depuis le modèle. |
+| `app/Domains/Identity/Users/Models/User.php` | Fournit e-mail, locale et timezone pour le destinataire et le formatage. | Aucune mutation de User ; pas d'événement Audit supplémentaire attendu. |
+| `app/Domains/Identity/Password/Notifications/PasswordResetLinkNotification.php` et `app/Domains/Identity/UserManagement/Notifications/UserInvitationNotification.php` | Exemples existants de notifications Laravel synchrones par canal mail. | Références de convention ; la nouvelle notification doit rester dans un domaine Identity cohérent. |
+| `app/Providers/AppServiceProvider.php` | Binding actuel du hook de détection ; pas nécessairement à modifier si le déclenchement est intégré au hook/workflow. | Aucun événement Audit dans le provider. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` | Tests de détection première apparition et absence de doublon. | À compléter pour prouver l'envoi unique et l'absence d'envoi pour appareil connu. |
+| `tests/Feature/Domains/Identity/Authentication/...` | À créer/compléter pour le rendu de notification et les pannes d'envoi. | Vérifier que le mail n'expose pas de données excessives et qu'une panne n'annule pas la session. |
+
+### État SESS-10
+
+**À AUDITER / conception établie — aucune modification applicative SESS-10 n'est encore effectuée.** L'implémentation doit d'abord vérifier si un fournisseur GeoIP est présent dans les dépendances/configurations et choisir un déclenchement e-mail résilient après commit. La détection SESS-09 et les règles multi-sessions restent gelées.
