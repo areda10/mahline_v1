@@ -83,14 +83,6 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
             ): void {
                 // The controlled failure is raised inside the transaction hook.
             }
-
-            public function afterAuthenticationCommitted(
-                User $user,
-                AuthenticationSession $session,
-                bool $isNewDevice,
-            ): void {
-                // The controlled failure is raised inside the transaction hook.
-            }
         };
 
         $this->app->instance(
