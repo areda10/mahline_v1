@@ -62,4 +62,24 @@ final class RecordNewDeviceAuthenticationWorkflowHook implements AuthenticationW
             userAgent: $session->user_agent,
         ));
     }
+
+    public function afterAuthenticationCommitted(
+        User $user,
+        AuthenticationSession $session,
+        bool $isNewDevice,
+    ): void {
+        if (! $isNewDevice) {
+            return;
+        }
+
+        try {
+            $user->notify(new NewDeviceLoginNotification($session));
+        } catch (Throwable $exception) {
+            Log::warning('Unable to send new-device login notification.', [
+                'user_id' => (string) $user->getKey(),
+                'authentication_session_id' => (string) $session->getKey(),
+                'exception' => $exception::class,
+            ]);
+        }
+    }
 }
