@@ -136,6 +136,42 @@ final class AuthenticationServiceTest extends TestCase
         }
     }
 
+
+    public function test_emergency_locked_account_cannot_authenticate_even_when_active_and_email_verified(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'emergency-locked@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+            'emergency_locked_at' => now(),
+            'emergency_lock_reason' => 'Confirmed account compromise.',
+        ]);
+
+        $this->expectException(AuthenticationFailedException::class);
+        $this->expectExceptionMessage('User account is not active.');
+
+        try {
+            $this->authenticationService->authenticate(
+                new AuthenticationContext(
+                    email: $user->email,
+                    password: 'ValidPassword123!',
+                    sessionId: 'emergency-locked-login-attempt',
+                    ipAddress: '192.0.2.45',
+                    userAgent: 'Mozilla/5.0',
+                    browser: 'Firefox',
+                    device: 'Desktop',
+                ),
+            );
+        } finally {
+            $this->assertDatabaseHas('login_histories', [
+                'user_id' => $user->getKey(),
+                'event' => 'failed',
+                'reason' => 'account_not_active',
+            ]);
+        }
+    }
+
     public function test_inactive_user_is_rejected(): void
     {
         $user = User::factory()->create([
