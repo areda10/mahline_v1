@@ -132,3 +132,7 @@ It cannot be replaced by a one-session-only rule without an explicit architectur
 When super_admin_root applies an emergency lock to a user, SessionService::revokeForUser() revokes every active AuthenticationSession for that user with revocation_reason=emergency_lock. Each affected session receives its own LoginHistory revocation record and Audit event identity.authentication.session_revoked. The operation runs inside the controller's database transaction with the User emergency-lock state and token revocations.
 
 Releasing the emergency lock does not restore any session. The user must establish new independent sessions after the account is unlocked. The multiple-active-session rule remains unchanged: after release, subsequent logins may create multiple concurrent sessions.
+
+## 14. Restoration of archived or deleted users
+
+Restoring an archived or soft-deleted User never restores an old Web session. Both restoration paths must call the credential-revocation workflow with reason `user_restored`, including a defensive pass over any session still marked active. `SessionService::revokeForUser()` records one Login History entry and one `identity.authentication.session_revoked` Audit event per affected session. Old session rows remain available as immutable history and cannot be used to authenticate.
