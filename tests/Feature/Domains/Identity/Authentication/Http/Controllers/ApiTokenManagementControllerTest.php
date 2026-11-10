@@ -101,6 +101,30 @@ final class ApiTokenManagementControllerTest extends TestCase
         self::assertNull($token->accessToken->fresh()->revoked_at);
     }
 
+    public function test_root_can_revoke_all_target_tokens_from_user_detail_without_revoking_web_sessions(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $target = $this->actor('cooperative_admin');
+        $first = $target->createToken('root-web-first-key')->accessToken;
+        $second = $target->createToken('root-web-second-key')->accessToken;
+
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $target->getKey(),
+            'session_id' => 'root-web-api-token-global-revoke-session',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+
+        $this->actingAs($root)
+            ->delete(route('root.backoffice.users.api-tokens.destroy-all', $target))
+            ->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('success');
+
+        self::assertNotNull($first->fresh()->revoked_at);
+        self::assertNotNull($second->fresh()->revoked_at);
+        self::assertNull($session->fresh()->revoked_at);
+    }
+
     private function actor(string $roleSlug): User
     {
         $user = User::factory()->create([
