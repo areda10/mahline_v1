@@ -162,6 +162,10 @@ Route::prefix('root/back-office')
             ->name('security.authentication-lockouts.index');
         Route::post('security/authentication-lockouts/unlock', [AuthenticationLockoutController::class, 'unlock'])
             ->name('security.authentication-lockouts.unlock');
+        Route::post('security/authentication-lockouts/emergency-lock', [AuthenticationLockoutController::class, 'emergencyLock'])
+            ->name('security.authentication-lockouts.emergency-lock');
+        Route::post('security/authentication-lockouts/emergency-unlock', [AuthenticationLockoutController::class, 'releaseEmergencyLock'])
+            ->name('security.authentication-lockouts.emergency-unlock');
 
         Route::get('security/sessions', [AuthenticationSessionController::class, 'rootIndex'])
             ->name('security.sessions.index');
