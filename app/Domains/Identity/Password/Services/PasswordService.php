@@ -62,7 +62,11 @@ final class PasswordService extends BaseService
                 user: $lockedUser,
                 reason: 'password_changed',
             );
-            $lockedUser->tokens()->delete();
+            $this->sessionService->revokeApiTokensForUser(
+                user: $lockedUser,
+                actor: $lockedUser,
+                reason: 'password_changed',
+            );
 
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.password.changed',
