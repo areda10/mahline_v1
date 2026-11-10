@@ -117,7 +117,7 @@ final class AuthenticationSessionController
 
     private function sessionsView(Request $request): View
     {
-        $sessions = $service->activeSessionsFor($request->user());
+        $sessions = app(SessionService::class)->activeSessionsFor($request->user());
 
         $currentId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentId): void {
