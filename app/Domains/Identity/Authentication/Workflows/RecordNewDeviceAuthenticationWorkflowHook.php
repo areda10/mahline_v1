@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Authentication\\Workflows;
+namespace App\Domains\Identity\Authentication\Workflows;
 
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authentication\\Enums\\SecurityEventType;
-use App\\Domains\\Identity\\Authentication\\Models\\AuthenticationSession;
-use App\\Domains\\Identity\\Authentication\\Services\\SecurityEventService;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Enums\SecurityEventType;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SecurityEventService;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 
 final class RecordNewDeviceAuthenticationWorkflowHook implements AuthenticationWorkflowHook
 {
