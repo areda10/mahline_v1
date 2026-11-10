@@ -363,6 +363,12 @@ final class SessionServiceTest extends TestCase
                 'authentication_session_id' => $session->getKey(),
             ],
         );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'subject_type' => AuthenticationSession::class,
+            'subject_id' => $session->getKey(),
+        ]);
     }
 
     /**
