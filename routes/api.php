@@ -17,6 +17,32 @@ Route::post(
     [PasswordResetController::class, 'reset'],
 )->middleware('throttle:10,1');
 
+Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])
+    ->prefix('identity')
+    ->name('identity.')
+    ->group(function (): void {
+        Route::get('/tokens', [ApiTokenController::class, 'index'])
+            ->name('tokens.index');
+        Route::post('/tokens', [ApiTokenController::class, 'store'])
+            ->name('tokens.store');
+        Route::delete('/tokens', [ApiTokenController::class, 'destroyAll'])
+            ->name('tokens.destroy-all');
+        Route::delete('/tokens/{token}', [ApiTokenController::class, 'destroy'])
+            ->name('tokens.destroy');
+
+        Route::prefix('root/users/{user}/tokens')
+            ->name('root.users.tokens.')
+            ->middleware('role:super_admin_root')
+            ->group(function (): void {
+                Route::get('/', [UserApiTokenController::class, 'index'])
+                    ->name('index');
+                Route::delete('/', [UserApiTokenController::class, 'destroyAll'])
+                    ->name('destroy-all');
+                Route::delete('/{token}', [UserApiTokenController::class, 'destroy'])
+                    ->name('destroy');
+            });
+    });
+
 Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])->get(
     '/audit/events',
     [AuditEventController::class, 'index'],
