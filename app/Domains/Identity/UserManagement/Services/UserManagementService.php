@@ -742,6 +742,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             user: $target,
             actor: $actor,
             reason: $reason,
+            eventKey: 'identity.authentication.api_token_revoked',
+            action: 'api_token_revoked',
         );
     }
 
