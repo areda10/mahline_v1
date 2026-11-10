@@ -9,6 +9,7 @@ use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class ApiTokenServiceTest extends TestCase
@@ -43,7 +44,7 @@ final class ApiTokenServiceTest extends TestCase
             'subject_id' => $newToken->accessToken->getKey(),
         ]);
 
-        $audit = \\Illuminate\\Support\\Facades\\DB::table('audit_events')->first();
+        $audit = DB::table('audit_events')->first();
         self::assertStringNotContainsString($newToken->plainTextToken, json_encode($audit));
         self::assertStringNotContainsString($newToken->accessToken->token, json_encode($audit));
     }
@@ -81,7 +82,7 @@ final class ApiTokenServiceTest extends TestCase
             );
 
             self::fail('Creating a token for another user must be rejected.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame(
                 'An API token can only be created by its owner.',
                 $exception->getMessage(),

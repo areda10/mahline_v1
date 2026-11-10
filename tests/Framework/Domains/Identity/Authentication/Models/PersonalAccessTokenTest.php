@@ -6,6 +6,7 @@ namespace Tests\Framework\Domains\Identity\Authentication\Models;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -132,7 +133,7 @@ final class PersonalAccessTokenTest extends TestCase
 
         $accessToken = $user->createToken('test-api-token');
 
-        app(\App\Domains\Identity\Authentication\Services\ApiTokenService::class)
+        app(ApiTokenService::class)
             ->revokeToken(
                 owner: $user,
                 token: $accessToken->accessToken,

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Identity\\Authentication\\Services;
+namespace App\Domains\Identity\Authentication\Services;
 
-use App\\Core\\Foundation\\Services\\BaseService;
-use App\\Domains\\Audit\\Services\\AuditService;
-use App\\Domains\\Identity\\Authentication\\Models\\PersonalAccessToken;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Shared\\DTOs\\AuditEntryDTO;
-use Illuminate\\Database\\Eloquent\\Collection;
-use Illuminate\\Support\\Facades\\DB;
-use Laravel\\Sanctum\\NewAccessToken;
+use App\Core\Foundation\Services\BaseService;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\NewAccessToken;
 use RuntimeException;
 
 final class ApiTokenService extends BaseService

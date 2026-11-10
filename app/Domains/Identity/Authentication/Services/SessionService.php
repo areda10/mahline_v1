@@ -10,6 +10,7 @@ use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class SessionService extends BaseService
@@ -143,9 +144,9 @@ final class SessionService extends BaseService
      * policy enforced by EnsureActiveAuthenticationSession. Listing sessions
      * never revokes or mutates them.
      *
-     * @return \Illuminate\Database\Eloquent\Collection<int, AuthenticationSession>
+     * @return Collection<int, AuthenticationSession>
      */
-    public function activeSessionsFor(User $user): \Illuminate\Database\Eloquent\Collection
+    public function activeSessionsFor(User $user): Collection
     {
         $cutoff = now()->subMinutes($this->inactivityTimeoutMinutes($user));
 
