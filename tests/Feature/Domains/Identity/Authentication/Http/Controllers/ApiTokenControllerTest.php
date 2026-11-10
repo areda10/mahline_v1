@@ -22,8 +22,10 @@ final class ApiTokenControllerTest extends TestCase
         foreach (['super_admin_root', 'super_admin', 'cooperative_admin', 'user'] as $roleSlug) {
             $user = $this->actor($roleSlug);
 
-            $this->actingAs($user, 'sanctum')
-                ->postJson(route('identity.tokens.store'), ['name' => $roleSlug.'-key'])
+            $created = $this->actingAs($user, 'sanctum')
+                ->postJson(route('identity.tokens.store'), ['name' => $roleSlug.'-key']);
+
+            $created
                 ->assertCreated()
                 ->assertJsonPath('data.name', $roleSlug.'-key')
                 ->assertJsonPath('data.abilities', [])
@@ -32,6 +34,9 @@ final class ApiTokenControllerTest extends TestCase
             $this->getJson(route('identity.tokens.index'))
                 ->assertOk()
                 ->assertJsonFragment(['name' => $roleSlug.'-key']);
+
+            $this->deleteJson(route('identity.tokens.destroy', $created->json('data.id')))
+                ->assertOk();
         }
     }
 
