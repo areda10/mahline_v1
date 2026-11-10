@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 4.6
+- **Version :** 4.7
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -100,11 +100,11 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [x] **SESS-05 — VALIDÉ (10 novembre 2026)** Déconnexion globale personnelle avec confirmation, révocation des sessions web et jetons Sanctum appartenant à l'utilisateur courant, invalidation du navigateur courant et journalisation individuelle + événement global. Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` et les tests ciblés `AuthenticationSessionControllerTest`, `AuthenticationControllerTest`, `PersonalAccessTokenTest` ainsi que `php vendor/bin/pint --test` sont confirmés VERTS par l'utilisateur le 10 novembre 2026.
 - [x] **SESS-06 — VALIDÉ (10 novembre 2026)** Conserver plusieurs sessions web actives simultanément ; une nouvelle connexion ne doit pas révoquer les anciennes. `SessionService::create()` crée une nouvelle ligne sans révoquer les précédentes et verrouille la ligne utilisateur ; `AuthenticationWorkflow` utilise ce service à chaque connexion. Tests existants confirmés VERTS par l'utilisateur : `test_previous_session_is_retained_without_revocation()`, `test_new_login_does_not_create_session_revocation_history()`, `test_new_login_keeps_previous_session_active()` et `test_phone_login_keeps_previous_computer_session_active()` ; suites `SessionServiceTest`, `AuthenticationWorkflowTest` et Pint confirmés VERTS.
 - [x] **SESS-07 — VALIDÉ (10 novembre 2026)** Révocations individuelles/globales et liées aux changements sensibles ; tokens conservés avec revoked_at et audit ; verrouillage d’urgence root-only persistant, révocation immédiate des sessions et tokens, refus d’authentification et levée root-only sans restauration des anciens accès.
-- [ ] **SESS-08 — À TESTER** Renforcer les restaurations de comptes archivés/supprimés : chaque restauration révoque à nouveau toute session Web, tout token API et toute invitation encore actifs (`user_restored`). Tests de non-régression ajoutés pour simuler des enregistrements d'accès encore actifs au moment de la restauration ; exécution locale ciblée et Pint en attente.
+- [x] **SESS-08 — VALIDÉ (10 novembre 2026)** La restauration d'un compte archivé ou soft-deleted révoque défensivement toute session Web, tout token API et toute invitation encore actifs (`user_restored`). Tests HTTP de restauration archivage/suppression et Pint confirmés VERTS par l'utilisateur.
 
 ### Détection des appareils et alertes de connexion
 
-- [ ] **SESS-09** Remplacer le hook d'authentification nul par une intégration effective du workflow de détection de nouvel appareil.
+- [ ] **SESS-09 — EN AUDIT** Remplacer le hook d'authentification nul par une intégration effective du workflow de détection de nouvel appareil.
 - [ ] **SESS-10** Envoyer une alerte e-mail lors d'une connexion depuis un nouvel appareil avec date/heure, navigateur, appareil et localisation approximative.
 - [ ] **SESS-11** Permettre à l'utilisateur de consulter et révoquer ses propres sessions ; interdire la révocation des sessions d'un autre utilisateur sauf rôle autorisé.
 - [ ] **SESS-12** Implémenter la détection d'un pays inhabituel et le challenge OTP e-mail complémentaire.
@@ -379,3 +379,5 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 10 novembre 2026 | 4.5 | SESS-07 validé par l'utilisateur : verrouillage d'urgence root-only, révocation de toutes les sessions Web et de tous les tokens API, refus de connexion jusqu'à levée root-only, conservation des tokens révoqués et audit détaillé. Tests ciblés et Pint confirmés VERTS par l'utilisateur. Mise à jour du registre fonctionnel et des standards de relations Audit fichier par fichier. |
 
 | 10 novembre 2026 | 4.6 | SESS-08 : audit des restaurations de comptes archivés/supprimés ; révocation défensive des sessions, tokens API et invitations au moment même de la restauration. Tests de non-régression ajoutés ; validation locale en attente. |
+
+| 10 novembre 2026 | 4.7 | SESS-08 validé par l'utilisateur : restauration sécurisée des comptes archivés/supprimés, révocation défensive des sessions, tokens et invitations résiduels ; tests ciblés et Pint confirmés VERTS. Démarrage de l'audit SESS-09 : détection effective des nouveaux appareils. |
