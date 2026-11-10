@@ -1,0 +1,137 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domains\Identity\Authentication\Services;
+
+use App\Core\Foundation\Services\BaseService;
+use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
+
+final class ApiTokenService extends BaseService
+{
+    public function __construct(
+        private readonly AuditService $audit,
+    ) {}
+
+    /**
+     * Revoke all active API tokens owned by the given user.
+     *
+     * Token records are retained for history. Every token is revoked
+     * individually and receives exactly one audit event. Web sessions
+     * are deliberately outside this service.
+     */
+    public function revokeForUser(
+        User $user,
+        User $actor,
+        string $reason,
+    ): int {
+        if (trim($reason) === '') {
+            throw new RuntimeException('An API token revocation reason is required.');
+        }
+
+        return DB::transaction(function () use ($user, $actor, $reason): int {
+            $lockedUser = User::withTrashed()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $tokens = PersonalAccessToken::query()
+                ->where('tokenable_type', $lockedUser->getMorphClass())
+                ->where('tokenable_id', $lockedUser->getKey())
+                ->whereNull('revoked_at')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($tokens as $token) {
+                $this->revokeLockedToken(
+                    token: $token,
+                    owner: $lockedUser,
+                    actor: $actor,
+                    reason: $reason,
+                );
+            }
+
+            return $tokens->count();
+        });
+    }
+
+    /**
+     * Revoke one token while preserving its historical row.
+     *
+     * The token must belong to the supplied owner. Authorization to manage
+     * another user's token is enforced by the calling workflow/controller.
+     */
+    public function revokeToken(
+        User $owner,
+        PersonalAccessToken $token,
+        User $actor,
+        string $reason = 'user_revoked',
+    ): bool {
+        if (trim($reason) === '') {
+            throw new RuntimeException('An API token revocation reason is required.');
+        }
+
+        return DB::transaction(function () use ($owner, $token, $actor, $reason): bool {
+            $lockedOwner = User::withTrashed()
+                ->whereKey($owner->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedToken = PersonalAccessToken::query()
+                ->whereKey($token->getKey())
+                ->where('tokenable_type', $lockedOwner->getMorphClass())
+                ->where('tokenable_id', $lockedOwner->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedToken === null || $lockedToken->revoked_at !== null) {
+                return false;
+            }
+
+            $this->revokeLockedToken(
+                token: $lockedToken,
+                owner: $lockedOwner,
+                actor: $actor,
+                reason: $reason,
+            );
+
+            return true;
+        });
+    }
+
+    private function revokeLockedToken(
+        PersonalAccessToken $token,
+        User $owner,
+        User $actor,
+        string $reason,
+    ): void {
+        $revokedAt = now();
+
+        $token->revoked_at = $revokedAt;
+        $token->save();
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: 'identity.authentication.token_revoked',
+            action: 'token_revoked',
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: $owner->cooperative_id
+                ? (string) $owner->cooperative_id
+                : null,
+            subjectType: PersonalAccessToken::class,
+            subjectId: (string) $token->getKey(),
+            oldValues: ['revoked_at' => null],
+            newValues: ['revoked_at' => $revokedAt->toISOString()],
+            metadata: [
+                'user_id' => (string) $owner->getKey(),
+                'token_name' => $token->name,
+                'reason' => $reason,
+            ],
+        ));
+    }
+}
