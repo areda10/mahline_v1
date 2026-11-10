@@ -195,3 +195,14 @@ Unexpected runtime failures must not be translated into an authentication `401`.
 The diagnostic `GET /api/test-auth` endpoint is not part of the production API. Authentication middleware and forced-password-change behavior are covered through a test-only route registered by the API feature test.
 
 Unexpected workflow failures are covered by a regression test: a simulated runtime/persistence failure must return `500`, not `401`, and must not leave an active Identity authentication session.
+
+
+## 13. Emergency account lock — root-only
+
+An emergency account lock is a persistent security state, separate from the business user status and temporary rate-limit lockouts.
+
+Only super_admin_root may apply or release it. While users.emergency_locked_at is non-null, AuthenticationService rejects new authentication and User::isAuthorized() denies authorization checks. Applying the lock revokes every active Web session with reason emergency_lock and revokes every active Sanctum token by setting revoked_at; historical session, token and audit records are retained.
+
+The release action clears the emergency-lock fields and only the account-specific failed-attempt counter. It does not clear shared IP counters and never restores previously revoked sessions or API tokens. The account must authenticate again and create new API tokens.
+
+The root-only controller writes identity.authentication.emergency_lock.applied and identity.authentication.emergency_lock.released. Session and token revocations additionally write their own per-resource audit events. See ID-I-003-SESSION_STANDARD.md, ID-I-008-API_TOKEN_SPECIFICATION.md and DB-008-AUDIT_STANDARD.md.
