@@ -47,7 +47,7 @@ final class AuthenticationWorkflow
                     $user,
                     $context,
                     $newSessionId,
-                ): AuthenticationSession {
+                ): array {
                     $authenticationSession = $this->sessionService->create(
                         user: $user,
                         sessionId: $newSessionId,
