@@ -6,11 +6,13 @@ namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 final class AuthenticationLockoutController
 {
@@ -19,6 +21,122 @@ final class AuthenticationLockoutController
         abort_unless($request->user()?->hasRole('super_admin_root'), 403);
 
         return view('identity.security.lockouts.index');
+    }
+
+
+    public function emergencyLock(
+        Request $request,
+        SessionService $sessions,
+        AuditService $auditService,
+    ): RedirectResponse {
+        abort_unless($request->user()?->hasRole('super_admin_root'), 403);
+
+        $data = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+        ]);
+
+        $email = mb_strtolower(trim($data['email']));
+        $actor = $request->user();
+
+        DB::transaction(function () use ($email, $data, $actor, $sessions, $auditService): void {
+            $target = User::query()
+                ->where('email', $email)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            abort_if($target->is($actor), 422, 'Le super administrateur racine ne peut pas verrouiller son propre compte.');
+
+            if ($target->emergency_locked_at !== null) {
+                return;
+            }
+
+            $lockedAt = now();
+            $target->forceFill([
+                'emergency_locked_at' => $lockedAt,
+                'emergency_lock_reason' => trim($data['reason']),
+            ])->save();
+
+            $sessions->revokeForUser($target, 'emergency_lock');
+            $sessions->revokeApiTokensForUser(
+                user: $target,
+                actor: $actor,
+                reason: 'emergency_lock',
+            );
+
+            $auditService->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.emergency_lock.applied',
+                action: 'emergency_lock',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: $target->cooperative_id ? (string) $target->cooperative_id : null,
+                subjectType: User::class,
+                subjectId: (string) $target->getKey(),
+                oldValues: ['emergency_locked_at' => null],
+                newValues: ['emergency_locked_at' => $lockedAt->toISOString()],
+                metadata: [
+                    'reason' => trim($data['reason']),
+                    'sessions_and_tokens_revoked' => true,
+                ],
+                ipAddress: $request->ip(),
+                userAgent: $request->userAgent(),
+            ));
+        });
+
+        return back()->with('success', 'Compte verrouillé immédiatement : toutes les sessions web et les clés API ont été révoquées.');
+    }
+
+    public function releaseEmergencyLock(
+        Request $request,
+        AuthenticationSecurityService $securityService,
+        AuditService $auditService,
+    ): RedirectResponse {
+        abort_unless($request->user()?->hasRole('super_admin_root'), 403);
+
+        $data = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+        ]);
+
+        $email = mb_strtolower(trim($data['email']));
+        $actor = $request->user();
+
+        DB::transaction(function () use ($email, $data, $actor, $securityService, $auditService, $request): void {
+            $target = User::query()
+                ->where('email', $email)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($target->emergency_locked_at === null) {
+                abort(422, 'Ce compte ne possède aucun verrouillage d’urgence actif.');
+            }
+
+            $oldLockedAt = $target->emergency_locked_at->toISOString();
+            $target->forceFill([
+                'emergency_locked_at' => null,
+                'emergency_lock_reason' => null,
+            ])->save();
+
+            // Only the account counter is cleared; shared IP protection remains intact.
+            $securityService->clearFailedAttempts($email);
+
+            $auditService->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.emergency_lock.released',
+                action: 'emergency_unlock',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: $target->cooperative_id ? (string) $target->cooperative_id : null,
+                subjectType: User::class,
+                subjectId: (string) $target->getKey(),
+                oldValues: ['emergency_locked_at' => $oldLockedAt],
+                newValues: ['emergency_locked_at' => null],
+                metadata: ['reason' => trim($data['reason'])],
+                ipAddress: $request->ip(),
+                userAgent: $request->userAgent(),
+            ));
+        });
+
+        return back()->with('success', 'Verrouillage d’urgence levé. Les anciens accès restent révoqués : l’utilisateur devra se reconnecter.');
     }
 
     public function unlock(
