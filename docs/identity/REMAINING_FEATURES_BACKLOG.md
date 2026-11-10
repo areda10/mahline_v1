@@ -1,9 +1,9 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 4.0
+- **Version :** 4.1
 - **Date de création :** 8 novembre 2026
-- **Dernière mise à jour :** 9 novembre 2026
+- **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Document de décisions associé :** [USER_MANAGEMENT_DECISIONS_AND_TRACKING.md](./USER_MANAGEMENT_DECISIONS_AND_TRACKING.md)
 - **Statut :** backlog initial établi à partir des décisions validées et des constats d'audit ; tâches à revalider au fur et à mesure des tests et des nouveaux audits.
@@ -99,7 +99,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [x] **SESS-04 — VALIDÉ (10 novembre 2026)** Cookies non persistants pour super_admin_root/super_admin ; cookies persistants pour cooperative_admin/user. ApplyRoleBasedSessionCookiePolicy applique la politique avant l'ajout du cookie par StartSession ; les délais d'inactivité serveur restent indépendants. Tests AuthenticationControllerTest, EnsureActiveAuthenticationSessionTest et Pint confirmés VERTS par l'utilisateur.
 - [x] **SESS-05 — VALIDÉ (10 novembre 2026)** Déconnexion globale personnelle avec confirmation, révocation des sessions web et jetons Sanctum appartenant à l'utilisateur courant, invalidation du navigateur courant et journalisation individuelle + événement global. Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` et les tests ciblés `AuthenticationSessionControllerTest`, `AuthenticationControllerTest`, `PersonalAccessTokenTest` ainsi que `php vendor/bin/pint --test` sont confirmés VERTS par l'utilisateur le 10 novembre 2026.
 - [x] **SESS-06 — VALIDÉ (10 novembre 2026)** Conserver plusieurs sessions web actives simultanément ; une nouvelle connexion ne doit pas révoquer les anciennes. `SessionService::create()` crée une nouvelle ligne sans révoquer les précédentes et verrouille la ligne utilisateur ; `AuthenticationWorkflow` utilise ce service à chaque connexion. Tests existants confirmés VERTS par l'utilisateur : `test_previous_session_is_retained_without_revocation()`, `test_new_login_does_not_create_session_revocation_history()`, `test_new_login_keeps_previous_session_active()` et `test_phone_login_keeps_previous_computer_session_active()` ; suites `SessionServiceTest`, `AuthenticationWorkflowTest` et Pint confirmés VERTS.
-- [ ] **SESS-07 — IMPLÉMENTATION EN COURS, VALIDATION LOCALE EN ATTENTE** Révocation individuelle, globale et lors des changements sensibles ; tokens conservés avec `revoked_at` et audit ; verrouillage d’urgence root-only bloquant les connexions et révoquant immédiatement sessions et tokens jusqu’à levée root-only.
+- [x] **SESS-07 — VALIDÉ (10 novembre 2026)** Révocations individuelles/globales et liées aux changements sensibles ; tokens conservés avec revoked_at et audit ; verrouillage d’urgence root-only persistant, révocation immédiate des sessions et tokens, refus d’authentification et levée root-only sans restauration des anciens accès.
 - [ ] **SESS-08** Vérifier que les anciennes sessions et anciens tokens ne sont pas restaurés après restauration d'un compte archivé/supprimé.
 
 ### Détection des appareils et alertes de connexion
@@ -375,3 +375,5 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 10 novembre 2026 | 4.3 | SESS-06 clôturé. Démarrage de l'audit SESS-07 : révocation individuelle, globale et déclenchée par les changements sensibles du compte. |
 
 | 10 novembre 2026 | 4.4 | SESS-07 : ajout du verrouillage d'urgence root-only persistant, de la révocation des sessions et tokens API, du blocage de l'authentification et de la levée root-only auditée ; correction du changement obligatoire de mot de passe pour conserver les tokens révoqués. Tests ciblés `AuthenticationLockoutControllerTest`, `AuthenticationServiceTest`, `ForcedPasswordChangeControllerTest`, `PasswordServiceTest`, `PasswordResetServiceTest` et Pint en attente. |
+
+| 10 novembre 2026 | 4.5 | SESS-07 validé par l'utilisateur : verrouillage d'urgence root-only, révocation de toutes les sessions Web et de tous les tokens API, refus de connexion jusqu'à levée root-only, conservation des tokens révoqués et audit détaillé. Tests ciblés et Pint confirmés VERTS par l'utilisateur. Mise à jour du registre fonctionnel et des standards de relations Audit fichier par fichier. |
