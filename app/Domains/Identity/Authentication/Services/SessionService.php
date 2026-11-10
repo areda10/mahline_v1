@@ -219,41 +219,14 @@ final class SessionService extends BaseService
 
             $this->revokeForUser($lockedUser, 'global_logout');
 
-            $tokens = PersonalAccessToken::query()
-                ->where('tokenable_type', User::class)
-                ->where('tokenable_id', $lockedUser->getKey())
-                ->whereNull('revoked_at')
-                ->lockForUpdate()
-                ->get();
+            $actor = auth()->user();
+            $actor = $actor instanceof User ? $actor : $lockedUser;
 
-            foreach ($tokens as $token) {
-                $token->revoked_at = now();
-                $token->save();
-
-                $actor = auth()->user();
-                $actor = $actor instanceof User ? $actor : null;
-
-                $this->audit->record(new AuditEntryDTO(
-                    eventKey: 'identity.authentication.token_revoked',
-                    action: 'token_revoked',
-                    actorType: $actor ? User::class : null,
-                    actorId: $actor ? (string) $actor->getKey() : null,
-                    cooperativeId: $user->cooperative_id
-                        ? (string) $user->cooperative_id
-                        : null,
-                    subjectType: PersonalAccessToken::class,
-                    subjectId: (string) $token->getKey(),
-                    oldValues: ['revoked_at' => null],
-                    newValues: [
-                        'revoked_at' => $token->revoked_at?->toISOString(),
-                    ],
-                    metadata: [
-                        'user_id' => (string) $user->getKey(),
-                        'token_name' => $token->name,
-                        'reason' => 'global_logout',
-                    ],
-                ));
-            }
+            $revokedTokenCount = $this->revokeApiTokensForUser(
+                user: $lockedUser,
+                actor: $actor,
+                reason: 'global_logout',
+            );
 
             $actor = auth()->user();
             $actor = $actor instanceof User ? $actor : null;
@@ -271,7 +244,7 @@ final class SessionService extends BaseService
                 oldValues: null,
                 newValues: [
                     'active_sessions_revoked' => $activeSessionCount,
-                    'api_tokens_revoked' => $tokens->count(),
+                    'api_tokens_revoked' => $revokedTokenCount,
                 ],
                 metadata: [
                     'user_id' => (string) $lockedUser->getKey(),
@@ -280,9 +253,53 @@ final class SessionService extends BaseService
 
             return [
                 'sessions' => $activeSessionCount,
-                'tokens' => $tokens->count(),
+                'tokens' => $revokedTokenCount,
             ];
         });
+    }
+
+    /**
+     * Revoke every active Sanctum token for a user without deleting its
+     * historical record. Each token receives an immutable audit event.
+     */
+    public function revokeApiTokensForUser(
+        User $user,
+        User $actor,
+        string $reason,
+    ): int {
+        $tokens = PersonalAccessToken::query()
+            ->where('tokenable_type', $user->getMorphClass())
+            ->where('tokenable_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($tokens as $token) {
+            $revokedAt = now();
+            $token->revoked_at = $revokedAt;
+            $token->save();
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.token_revoked',
+                action: 'token_revoked',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                cooperativeId: $user->cooperative_id
+                    ? (string) $user->cooperative_id
+                    : null,
+                subjectType: PersonalAccessToken::class,
+                subjectId: (string) $token->getKey(),
+                oldValues: ['revoked_at' => null],
+                newValues: ['revoked_at' => $revokedAt->toISOString()],
+                metadata: [
+                    'user_id' => (string) $user->getKey(),
+                    'token_name' => $token->name,
+                    'reason' => $reason,
+                ],
+            ));
+        }
+
+        return $tokens->count();
     }
 
     /**
