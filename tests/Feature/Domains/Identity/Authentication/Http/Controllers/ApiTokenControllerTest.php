@@ -190,6 +190,33 @@ final class ApiTokenControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_can_list_and_revoke_tokens_for_every_role_without_exposing_secrets(): void
+    {
+        $root = $this->actor('super_admin_root');
+
+        foreach (['super_admin', 'cooperative_admin', 'user'] as $roleSlug) {
+            $target = $this->actor($roleSlug);
+            $created = $target->createToken($roleSlug.'-root-managed-key');
+            $storedHash = $created->accessToken->token;
+
+            $listing = $this->actingAs($root, 'sanctum')
+                ->getJson(route('identity.root.users.tokens.index', $target));
+
+            $listing
+                ->assertOk()
+                ->assertJsonFragment(['name' => $roleSlug.'-root-managed-key'])
+                ->assertJsonMissing(['token' => $storedHash])
+                ->assertJsonMissing(['plain_text_token' => $created->plainTextToken]);
+
+            $this->deleteJson(route('identity.root.users.tokens.destroy', [
+                'user' => $target,
+                'token' => $created->accessToken,
+            ]))->assertOk();
+
+            self::assertNotNull($created->accessToken->fresh()->revoked_at);
+        }
+    }
+
     private function actor(string $roleSlug): User
     {
         $user = User::factory()->create([
