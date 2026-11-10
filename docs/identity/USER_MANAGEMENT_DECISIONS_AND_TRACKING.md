@@ -1772,12 +1772,28 @@ Commit final du helper : b77f7bde74582c2079976ca0b2cbf2794d571c81.
 
 Dans tests/Feature/Domains/Identity/Authentication/Http/Middleware/EnsureActiveAuthenticationSessionTest.php, le nouveau test test_expiring_one_session_keeps_the_users_other_session_active() :
 
-- crée deux sessions actives pour le même utilisateur root ;
+- crée deux sessions actives pour le même utilisateur avec le rôle user ;
 - fait expirer la première et vérifie sa révocation avec inactivity_timeout ainsi que l'invalidation du contexte Laravel courant ;
 - rejoue une requête protégée avec la deuxième session et vérifie qu'elle reçoit 200, reste non révoquée et voit son activité actualisée.
 
-Le code métier n'a pas nécessité de modification : le comportement d'isolation était déjà correctement implémenté. Le travail SESS-03 porte ici sur la preuve de non-régression.
+Le code métier n'a pas nécessité de modification : le comportement d'isolation était déjà correctement implémenté. Le travail SESS-03 porte ici sur la preuve de non-régression. Le montage de la deuxième session de test a été corrigé pour utiliser un identifiant Laravel réellement généré, partagé exactement avec l'enregistrement AuthenticationSession.
 
-Commit du test : d25fe2f5f8e504a0682478c9e9f88fd44beae86a.
+Commit final du test : ae09c0e1c0ef159305f875ca742375d554e5173c.
 
-**État : SESS-03 — test ajouté, validation locale ciblée et Pint en attente.**
+**État : SESS-03 VALIDÉ — EnsureActiveAuthenticationSessionTest, SessionServiceTest et php vendor/bin/pint --test confirmés VERTS par l'utilisateur le 10 novembre 2026.**
+
+
+
+## 20.50 — Validation finale de SESS-03
+
+Le 10 novembre 2026, l'utilisateur a confirmé VERTS les tests ciblés SESS-03 et Pint après la correction du test de non-régression.
+
+- php artisan test --filter=EnsureActiveAuthenticationSessionTest — VERT.
+- php artisan test --filter=SessionServiceTest — VERT.
+- php vendor/bin/pint --test — VERT.
+
+Le scénario validé prouve qu'après expiration et révocation d'une session, une autre session active du même utilisateur conserve son accès HTTP (200), n'est pas révoquée et voit son activité actualisée. La cause du dernier échec était le montage du contexte de test : la deuxième session utilise maintenant un identifiant généré par Laravel, identique à celui persisté dans AuthenticationSession.
+
+Aucun changement du comportement métier de production n'a été requis.
+
+**État : SESS-03 VALIDÉ. Prochaine tâche d'audit : SESS-04 — comportement des cookies persistants/non persistants selon le rôle.**
