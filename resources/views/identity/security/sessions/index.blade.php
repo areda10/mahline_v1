@@ -9,6 +9,14 @@
         <p class="muted">Consultez les appareils connectés à votre compte et révoquez individuellement ceux que vous ne reconnaissez plus.</p>
     </div>
 </div>
+<div class="page-actions">
+    <form method="POST"
+          action="{{ route(auth()->user()->hasRole('super_admin_root') ? 'root.backoffice.security.sessions.logout-everywhere' : 'backoffice.security.sessions.logout-everywhere') }}"
+          onsubmit="return confirm('Déconnecter tous les appareils et révoquer toutes les clés API de votre compte ? Vous devrez vous reconnecter sur chaque appareil.');">
+        @csrf
+        <button class="button button-danger" type="submit">Déconnecter tous les appareils</button>
+    </form>
+</div>
 <section class="card" aria-labelledby="sessions-heading">
     <h2 id="sessions-heading">Sessions actives</h2>
     @if($sessions->isEmpty())
