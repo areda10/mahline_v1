@@ -2306,3 +2306,16 @@ Constats confirmés :
 - API-06 (matrice d'abilities) reste explicitement à définir. Les autres tâches API du backlog qui ne sont pas cochées restent ouvertes ; cette clôture ne les déclare pas implémentées.
 
 **Statut : API-01 et API-02 VALIDÉS localement sur la branche synchronisée `feature/Identity`. Aucun merge n'a été effectué.**
+
+## 20.66 — Décision validée API-03 : rétention avant purge des tokens expirés
+
+**Décision confirmée le 11 novembre 2026 :**
+- Un token est conservé pendant **90 jours supplémentaires après sa date `expires_at`**.
+- Il devient éligible à la suppression physique lorsque `expires_at <= now() - 90 jours`.
+- La date de révocation anticipée (`revoked_at`) ne raccourcit pas cette période : même un token révoqué avant son expiration est conservé jusqu'à l'expiration + 90 jours.
+- Un token sans `expires_at` n'est jamais purgé par cette tâche ; les tokens existants ont vocation à être régularisés par la migration API-02.
+- La purge ne supprime et ne modifie aucune session Web.
+- Les événements Audit restent indépendants et sont conservés après la suppression de la ligne du token. L'événement de purge ne doit contenir ni secret ni hash.
+- La purge doit être exécutée automatiquement par Laravel Scheduler, de manière quotidienne, avec traitement par lots et protection contre les exécutions concurrentes.
+
+**État :** décision fonctionnelle validée ; audit des fichiers et relations API-03 effectué ; implémentation non commencée.
