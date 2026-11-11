@@ -136,7 +136,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Profil personnel et données
 
-- [ ] **USR-01** Auditer les routes, migrations et contrôleurs existants du profil ; confirmer les éléments réellement absents.
+- [x] **USR-01 — AUDIT TERMINÉ (11 novembre 2026)** Aucun endpoint ni écran de profil personnel identifié. Les données existantes couvrent identité, e-mail, téléphone, locale et timezone ; adresse personnelle, photo/avatar et préférences de notification sont absentes du modèle et de la migration initiale. Les contrôleurs existants sont des parcours d'administration et ne doivent pas être détournés en self-service. Voir section 20.70 du registre de décisions.
 - [ ] **USR-02** Ajouter les champs/migrations manquants pour adresse personnelle, photo et préférences de notification, sans modifier les migrations déjà exécutées.
 - [ ] **USR-03** Implémenter consultation et modification de ses propres informations par tout utilisateur.
 - [ ] **USR-04** Appliquer les droits de consultation/modification d'autres profils selon rôle et périmètre coopératif.
