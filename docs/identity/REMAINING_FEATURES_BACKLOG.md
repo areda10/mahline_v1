@@ -1,9 +1,9 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 5.2
+- **Version :** 5.3
 - **Date de création :** 8 novembre 2026
-- **Dernière mise à jour :** 10 novembre 2026
+- **Dernière mise à jour :** 11 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Document de décisions associé :** [USER_MANAGEMENT_DECISIONS_AND_TRACKING.md](./USER_MANAGEMENT_DECISIONS_AND_TRACKING.md)
 - **Statut :** backlog initial établi à partir des décisions validées et des constats d'audit ; tâches à revalider au fur et à mesure des tests et des nouveaux audits.
@@ -113,15 +113,15 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Tokens API Sanctum
 
-- [ ] **API-01** Créer les parcours autorisés de création, liste, consultation des métadonnées, révocation individuelle et révocation globale des tokens.
-- [ ] **API-02** Appliquer une durée maximale de 30 jours et vérifier l'expiration côté serveur à chaque authentification API.
+- [x] **API-01 — VALIDÉ (11 novembre 2026)** Parcours personnels API/back-office pour tous les rôles, gestion des tokens d'autres utilisateurs réservée à root (liste/métadonnées/révocations), aucune création pour autrui, secret affiché une seule fois, métadonnées/Audit sans secret ni hash, révocation API indépendante des sessions Web. Tests ciblés et validation globale confirmés VERTS par l'utilisateur.
+- [x] **API-02 — VALIDÉ (11 novembre 2026)** Durée fixe de 90 jours pour tous les rôles et tokens, sans personnalisation ni token permanent ; date imposée par le modèle, migration des tokens existants à `created_at + 90 jours`, expiration vérifiée à l'authentification Sanctum, `config('sanctum.expiration')` conservé à `null`. Tests ciblés, suite complète et Pint confirmés VERTS par l'utilisateur.
 - [ ] **API-03** Ajouter le nettoyage périodique des tokens expirés via Laravel Scheduler.
 - [ ] **API-04** Limiter les tokens actifs : root 10, super_admin 5, cooperative_admin 5, user 3.
 - [ ] **API-05** Permettre à l'utilisateur de voir le nom du token, sa date de création et sa dernière utilisation ; le secret complet n'est affiché qu'une seule fois.
 - [ ] **API-06** Proposer une sélection explicite de capacités autorisées selon le rôle ; refuser toute capacité excédant les droits métier.
 - [ ] **API-07** Vérifier systématiquement que les abilities Sanctum ne contournent jamais Policies/Gates, propriété et appartenance à une coopérative.
 - [ ] **API-08** Révoquer les tokens lors des événements déjà décidés : changement mot de passe, changement rôle/e-mail, transfert, suspension/désactivation, suppression logique, verrouillage d'urgence et déconnexion globale.
-- [ ] **API-09** Ajouter tests HTTP et sécurité couvrant expiration, limite, capacité, révocation et cloisonnement coopératif.
+- [x] **API-09 — TESTS RENFORCÉS / VALIDÉS (11 novembre 2026)** Tests HTTP et service couvrant gestion root multi-rôles et inter-coopératives, révocation globale root sans révocation des sessions Web, et Audit sans secret/hash. Tests ciblés, suite complète et Pint confirmés VERTS par l'utilisateur. Les limites et capacités qui ne sont pas encore spécifiées restent suivies par API-04/API-06.
 
 ### Verrouillage d'urgence
 
@@ -389,3 +389,6 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 10 novembre 2026 | 5.2 | SESS-10 validé après confirmation utilisateur des tests `AuthenticationWorkflowTransactionTest`, `AuthenticationWorkflowTest` et Pint. Démarrage de l'audit SESS-11 : consultation et révocation individuelle des sessions propres. |
 
 | 10 novembre 2026 | 5.3 | SESS-11 renforcé et validé : déconnexion immédiate du navigateur courant, listes filtrées par délai d'inactivité du compte, isolation des autres sessions et assertions Login History/Audit. Tests ciblés `AuthenticationSessionControllerTest`, `SessionServiceTest` et Pint confirmés VERTS par l'utilisateur. Démarrage de l'audit SESS-12 : pays inhabituel et challenge OTP e-mail. |
+
+
+| 11 novembre 2026 | 5.3 | API-01 et API-02 validés après confirmation utilisateur de `php artisan test` et `php vendor/bin/pint --test` VERTS. API-01 couvre la gestion personnelle et l'administration root des tokens, le secret à usage unique, l'absence de fuite dans Audit et la séparation sessions/tokens. API-02 fixe l'expiration à 90 jours pour tous les rôles, avec migration des tokens existants et contrôle à l'authentification. API-09 renforcé par tests root multi-rôles/inter-coopératives, révocation globale sans effet sur les sessions Web et absence de secret/hash dans Audit. API-03 à API-06 restent ouverts selon leur périmètre ; API-06 (abilities) reste reporté à une décision dédiée. |
