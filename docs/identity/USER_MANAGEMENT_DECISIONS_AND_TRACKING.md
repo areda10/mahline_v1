@@ -2351,3 +2351,21 @@ Constats confirmés :
 - Commit : `2fee6eaa768bb34a983d86d02bd4e9cfc1744d9e`.
 - SHA vérifié du fichier corrigé : `17008dd07ea58a74022292f82477f37c38680cfa`.
 - Cette confirmation valide uniquement la suite UserManagementServiceTest et Pint ; elle ne clôt pas les autres suites API-04 à API-08, qui restent à confirmer.
+
+
+## 20.69 — Validation ciblée du lot API-04 à API-08
+
+L'utilisateur confirme VERTS les suites complémentaires suivantes sur la branche locale synchronisée avec `feature/Identity` :
+
+- `php artisan test --filter=ApiTokenServiceTest` — quotas, abilities disponibles, création, révocation, expiration, rétention et audit du service.
+- `php artisan test --filter=UserInvitationControllerTest` — révocation des tokens API résiduels après acceptation et vérification d'invitation.
+- Les confirmations précédentes couvrent également `ApiTokenControllerTest`, `ApiTokenManagementControllerTest`, `UserManagementServiceTest` et `php vendor/bin/pint --test`.
+
+**État par tâche :**
+- **API-04 — VALIDÉ :** quotas actifs par rôle (root 10, super_admin 5, cooperative_admin 5, user 3), exclusion des tokens expirés/révoqués et verrouillage de l'utilisateur pendant la création.
+- **API-05 — VALIDÉ :** nom, date de création et dernière utilisation accessibles ; secret en clair affiché une seule fois ; ni secret ni hash dans les listes, métadonnées ou Audit.
+- **API-06 — VALIDÉ :** abilities limitées aux slugs des permissions MAHLINE actives réellement accordées ; sélection d'un sous-ensemble, rejet de `*` et des permissions non accordées ; défaut `[]`.
+- **API-07 — VALIDÉ :** middleware Sanctum combiné aux contrôles métier Gate/Policy, rôle, propriété et périmètre coopératif ; une ability ne contourne pas l'autorisation métier.
+- **API-08 — VALIDÉ :** révocation centralisée des tokens lors des événements sensibles déjà prévus, notamment affectation/retrait coopératif d'un super_admin et acceptation/vérification d'une invitation ; les changements API-only ne révoquent pas les sessions Web.
+
+La validation est limitée aux suites ciblées listées ci-dessus et à Pint ; aucune nouvelle confirmation de la suite complète du domaine Identity n'est revendiquée ici. Aucun merge n'a été effectué.
