@@ -10,6 +10,10 @@
 
 ---
 
+## 0. Feuille de route globale des domaines
+
+L'inventaire global des domaines présents/absents, les priorités de développement, les dépendances et le parcours vers la mise en production sont suivis dans [`docs/roadmap/DOMAIN_DEVELOPMENT_ROADMAP.md`](../roadmap/DOMAIN_DEVELOPMENT_ROADMAP.md). Ce backlog reste le registre détaillé des fonctionnalités Identity ; les deux documents sont complémentaires.
+
 ## 1. Règles de gestion du backlog
 
 Ce fichier est le registre des fonctionnalités qui restent à développer, compléter ou valider après les commits initiaux du suivi Identity.
