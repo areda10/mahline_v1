@@ -78,13 +78,7 @@ final class ApiTokenService extends BaseService
                 ]);
             }
 
-            $activeTokenCount = PersonalAccessToken::query()
-                ->where('tokenable_type', $lockedOwner->getMorphClass())
-                ->where('tokenable_id', $lockedOwner->getKey())
-                ->whereNull('revoked_at')
-                ->whereNotNull('expires_at')
-                ->where('expires_at', '>', now())
-                ->count();
+            $activeTokenCount = $this->activeTokenCount($lockedOwner);
 
             $tokenLimit = $this->tokenLimitForUser($lockedOwner);
 
