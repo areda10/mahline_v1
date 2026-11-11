@@ -384,10 +384,19 @@ final class ApiTokenServiceTest extends TestCase
 
         self::assertCount(2, $auditEvents);
 
+        $sensitiveTokenValues = [
+            $eligible->plainTextToken,
+            $eligible->accessToken->token,
+            $eligibleRevoked->plainTextToken,
+            $eligibleRevoked->accessToken->token,
+        ];
+
         foreach ($auditEvents as $event) {
             self::assertNull($event->actor_id);
-            self::assertStringNotContainsString($eligible->plainTextToken, json_encode($event));
-            self::assertStringNotContainsString($eligible->accessToken->token, json_encode($event));
+
+            foreach ($sensitiveTokenValues as $sensitiveValue) {
+                self::assertStringNotContainsString($sensitiveValue, json_encode($event));
+            }
         }
 
         self::assertNull($session->fresh()->revoked_at);
