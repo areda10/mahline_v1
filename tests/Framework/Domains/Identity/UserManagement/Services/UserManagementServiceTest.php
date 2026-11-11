@@ -210,6 +210,27 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_cooperative_assignment_changes_revoke_existing_api_tokens(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $beforeAssignment = $superAdmin->createToken('before-assignment');
+        $this->service->assignSuperAdminToCooperative($root, $superAdmin, $cooperative);
+
+        self::assertNotNull($beforeAssignment->accessToken->fresh()->revoked_at);
+
+        $afterAssignment = $superAdmin->createToken('after-assignment');
+        $this->service->removeSuperAdminFromCooperative($root, $superAdmin, $cooperative);
+
+        self::assertNotNull($afterAssignment->accessToken->fresh()->revoked_at);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.api_token_revoked',
+            'subject_id' => $afterAssignment->accessToken->getKey(),
+        ]);
+    }
+
     public function test_super_admin_root_can_assign_super_admin_to_cooperative(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
