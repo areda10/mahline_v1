@@ -2318,4 +2318,12 @@ Constats confirmés :
 - Les événements Audit restent indépendants et sont conservés après la suppression de la ligne du token. L'événement de purge ne doit contenir ni secret ni hash.
 - La purge doit être exécutée automatiquement par Laravel Scheduler, de manière quotidienne, avec traitement par lots et protection contre les exécutions concurrentes.
 
-**État :** décision fonctionnelle validée ; audit des fichiers et relations API-03 effectué ; implémentation non commencée.
+**Implémentation réalisée sur `feature/Identity` :**
+- `ApiTokenService::pruneExpiredTokens()` supprime par lots de 500 (taille configurable et bornée) les lignes dont `expires_at` a dépassé la période de rétention ; chaque ligne est relue et verrouillée dans une transaction avant suppression.
+- La révocation anticipée n'exclut pas le token de la purge après la date d'éligibilité ; les dates `expires_at` nulles sont exclues.
+- Un événement Audit indépendant `identity.authentication.api_token_purged` est enregistré dans la même transaction avant la suppression ; il ne contient ni secret ni hash.
+- La commande `identity:tokens:prune-expired` est enregistrée dans `app/Console/Commands/PruneExpiredApiTokens.php`.
+- `routes/console.php` programme la commande quotidiennement avec `withoutOverlapping()`.
+- Tests ajoutés pour la limite de rétention, les tokens révoqués, les expirations nulles, les tokens encore récents/futurs, l'absence de fuite dans Audit, l'isolation des sessions Web, la commande et le Scheduler.
+
+**État :** implémentation et tests ajoutés sur `feature/Identity` ; validation locale par l'utilisateur en attente (`php artisan test --filter=ApiTokenServiceTest`, `php artisan test --filter=PruneExpiredApiTokensCommandTest`, puis `php vendor/bin/pint --test`). Aucun merge effectué.
