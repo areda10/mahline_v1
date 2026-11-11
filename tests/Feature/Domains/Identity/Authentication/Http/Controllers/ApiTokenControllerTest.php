@@ -95,6 +95,7 @@ final class ApiTokenControllerTest extends TestCase
     public function test_only_root_can_manage_other_users_api_tokens(): void
     {
         $root = $this->actor('super_admin_root');
+        $this->grantPermission($root, 'users.view');
         $superAdmin = $this->actor('super_admin');
         $target = $this->actor('user');
         $token = $target->createToken('target-key');
@@ -119,6 +120,7 @@ final class ApiTokenControllerTest extends TestCase
     public function test_root_can_revoke_all_tokens_of_any_user_without_revoking_web_sessions(): void
     {
         $root = $this->actor('super_admin_root');
+        $this->grantPermission($root, 'users.view');
         $target = $this->actor('cooperative_admin');
         $first = $target->createToken('root-first-key');
         $second = $target->createToken('root-second-key');
@@ -208,6 +210,7 @@ final class ApiTokenControllerTest extends TestCase
     public function test_root_can_list_and_revoke_tokens_for_every_role_without_exposing_secrets(): void
     {
         $root = $this->actor('super_admin_root');
+        $this->grantPermission($root, 'users.view');
 
         foreach (['super_admin', 'cooperative_admin', 'user'] as $roleSlug) {
             $cooperative = Cooperative::factory()->create();
@@ -350,6 +353,22 @@ final class ApiTokenControllerTest extends TestCase
         $this->withToken($withAbility->plainTextToken)
             ->getJson(route('audit.events.index'))
             ->assertOk();
+    }
+
+    private function grantPermission(User $user, string $slug): void
+    {
+        $permission = Permission::query()->firstOrCreate(
+            ['slug' => $slug],
+            [
+                'name' => $slug,
+                'description' => $slug,
+                'is_active' => true,
+            ],
+        );
+
+        $user->roles()->firstOrFail()->permissions()->syncWithoutDetaching([
+            $permission->getKey(),
+        ]);
     }
 
     private function actor(string $roleSlug): User
