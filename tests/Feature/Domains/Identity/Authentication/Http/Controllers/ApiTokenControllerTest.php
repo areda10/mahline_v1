@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -223,6 +224,95 @@ final class ApiTokenControllerTest extends TestCase
 
             self::assertNotNull($created->accessToken->fresh()->revoked_at);
         }
+    }
+
+    public function test_active_api_token_quotas_are_enforced_per_role(): void
+    {
+        $limits = [
+            'super_admin_root' => 10,
+            'super_admin' => 5,
+            'cooperative_admin' => 5,
+            'user' => 3,
+        ];
+
+        foreach ($limits as $roleSlug => $limit) {
+            $user = $this->actor($roleSlug);
+
+            for ($index = 1; $index <= $limit; $index++) {
+                $this->actingAs($user, 'sanctum')
+                    ->postJson(route('identity.tokens.store'), [
+                        'name' => $roleSlug.'-quota-'.$index,
+                    ])
+                    ->assertCreated();
+            }
+
+            $this->actingAs($user, 'sanctum')
+                ->postJson(route('identity.tokens.store'), [
+                    'name' => $roleSlug.'-quota-overflow',
+                ])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('quota');
+
+            $this->assertDatabaseCount('personal_access_tokens', array_sum(array_slice($limits, 0, array_search($roleSlug, array_keys($limits), true) + 1)));
+        }
+    }
+
+    public function test_token_abilities_must_be_active_permissions_granted_to_the_owner(): void
+    {
+        $user = $this->actor('user');
+        $role = $user->roles()->firstOrFail();
+        $permission = Permission::query()->create([
+            'name' => 'View products',
+            'slug' => 'products.view',
+            'description' => 'View products',
+            'is_active' => true,
+        ]);
+        $role->permissions()->attach($permission->getKey());
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson(route('identity.tokens.store'), [
+                'name' => 'unauthorized-abilities',
+                'abilities' => ['products.view', 'users.view'],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('abilities');
+
+        $this->postJson(route('identity.tokens.store'), [
+            'name' => 'permitted-ability',
+            'abilities' => ['products.view'],
+        ])
+            ->assertCreated()
+            ->assertJsonPath('data.abilities', ['products.view']);
+
+        $this->postJson(route('identity.tokens.store'), [
+            'name' => 'wildcard-ability',
+            'abilities' => ['*'],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('abilities');
+    }
+
+    public function test_permission_ability_and_policy_are_both_required_for_audit_api(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $role = $root->roles()->firstOrFail();
+        $permission = Permission::query()->create([
+            'name' => 'View audit',
+            'slug' => 'audit.view',
+            'description' => 'View audit',
+            'is_active' => true,
+        ]);
+        $role->permissions()->attach($permission->getKey());
+
+        $withoutAbility = $root->createToken('audit-without-ability', []);
+        $this->withToken($withoutAbility->plainTextToken)
+            ->getJson(route('audit.events.index'))
+            ->assertForbidden();
+
+        $withAbility = $root->createToken('audit-with-ability', ['audit.view']);
+        $this->withToken($withAbility->plainTextToken)
+            ->getJson(route('audit.events.index'))
+            ->assertOk();
     }
 
     private function actor(string $roleSlug): User
