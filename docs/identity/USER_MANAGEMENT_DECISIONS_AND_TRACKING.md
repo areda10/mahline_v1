@@ -2369,3 +2369,21 @@ L'utilisateur confirme VERTS les suites complémentaires suivantes sur la branch
 - **API-08 — VALIDÉ :** révocation centralisée des tokens lors des événements sensibles déjà prévus, notamment affectation/retrait coopératif d'un super_admin et acceptation/vérification d'une invitation ; les changements API-only ne révoquent pas les sessions Web.
 
 La validation est limitée aux suites ciblées listées ci-dessus et à Pint ; aucune nouvelle confirmation de la suite complète du domaine Identity n'est revendiquée ici. Aucun merge n'a été effectué.
+
+
+## 20.70 — Audit USR-01 : état réel du profil utilisateur
+
+Audit effectué sur les fichiers réels de `feature/Identity`, sans modification applicative.
+
+**Constats vérifiés :**
+- `routes/web.php` (SHA `94d6754f544dcceb1cccefc8339d5c320feecd31`) expose les parcours d'administration des utilisateurs (root et back-office), les sessions, les tokens et les invitations ; aucun endpoint de consultation ou de modification du profil personnel n'est défini.
+- `app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php` (SHA `7e030581b14feacbe596624719c6bfc6c7e5cadd`) gère la création, consultation et transitions administratives des utilisateurs ; il ne fournit pas de workflow de profil personnel.
+- `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php` (SHA `9e6348946dc609b1d0eb0e7e139c0416aa237ca4`) permet à root de modifier les données d'un autre compte ; ce parcours administratif n'est pas un profil self-service.
+- `app/Domains/Identity/Users/Models/User.php` (SHA `37af822f1cbbd5573095082b66fa7fe6e23a6032`) expose notamment prénom, nom, nom affiché, e-mail, téléphone, locale et fuseau horaire ; aucun attribut d'adresse personnelle, photo/avatar ou préférences de notification n'est présent dans le modèle.
+- `database/migrations/2026_09_15_151055_create_users_table.php` (SHA `bdccd16309a85a23f673613f227dc676af6b9fdd`) crée les champs d'identité/contact/localisation et de sécurité, mais ne contient pas les champs adresse personnelle, photo/avatar ou préférences de notification.
+- Les vues listées sous `resources/views/user` se limitent au dashboard ; les vues `backoffice/users` et `super-admin-root/users` correspondent à l'administration des comptes, pas à un espace profil personnel.
+- L'arborescence de tests `tests/Feature/Domains/Identity/UserManagement` couvre les parcours HTTP d'administration/invitation ; aucun parcours HTTP de profil personnel n'a été identifié.
+
+**Conclusion USR-01 :** audit terminé. Les champs d'identité de base existent déjà, mais le profil personnel self-service est absent ; adresse personnelle, photo/avatar et préférences de notification ne sont pas modélisés. Les parcours administratifs existants doivent être préservés et ne doivent pas être réutilisés comme substitut au profil personnel.
+
+**Périmètre proposé pour USR-02 / USR-03 :** concevoir les ajouts de données et le workflow de profil dans des fichiers dédiés, utiliser de nouvelles migrations uniquement, préserver les workflows séparés d'e-mail/mot de passe/rôle/statut/cooperative, et définir explicitement les champs éditables par l'utilisateur avant implémentation. Aucun code n'a été modifié pendant cet audit.
