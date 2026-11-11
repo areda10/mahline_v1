@@ -7,7 +7,6 @@ namespace App\Domains\Identity\Authentication\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
-use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Collection;
