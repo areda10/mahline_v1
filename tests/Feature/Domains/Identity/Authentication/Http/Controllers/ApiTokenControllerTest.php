@@ -194,6 +194,17 @@ final class ApiTokenControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_wildcard_ability_does_not_bypass_users_view_permission(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $target = $this->actor('user');
+        $token = $root->createToken('root-wildcard-without-permission', ['*']);
+
+        $this->withToken($token->plainTextToken)
+            ->getJson(route('identity.root.users.tokens.index', $target))
+            ->assertForbidden();
+    }
+
     public function test_root_can_list_and_revoke_tokens_for_every_role_without_exposing_secrets(): void
     {
         $root = $this->actor('super_admin_root');
