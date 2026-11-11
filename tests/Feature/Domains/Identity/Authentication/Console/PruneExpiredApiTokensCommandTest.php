@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Console;
 
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Console\Scheduling\Schedule;
 use Tests\TestCase;
 
 final class PruneExpiredApiTokensCommandTest extends TestCase
