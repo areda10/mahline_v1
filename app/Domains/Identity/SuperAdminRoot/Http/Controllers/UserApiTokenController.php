@@ -11,6 +11,7 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 final class UserApiTokenController
 {
@@ -20,6 +21,8 @@ final class UserApiTokenController
         PersonalAccessToken $token,
         ApiTokenService $service,
     ): RedirectResponse {
+        Gate::authorize('viewAny', User::class);
+
         $revoked = $service->revokeToken(
             owner: $user,
             token: $token,
@@ -40,6 +43,8 @@ final class UserApiTokenController
         User $user,
         ApiTokenService $service,
     ): RedirectResponse {
+        Gate::authorize('viewAny', User::class);
+
         $count = $service->revokeForUser(
             user: $user,
             actor: $request->user(),
@@ -54,6 +59,8 @@ final class UserApiTokenController
 
     public function index(User $user, ApiTokenService $service): JsonResponse
     {
+        Gate::authorize('viewAny', User::class);
+
         return ApiTokenResource::collection(
             $service->tokensForUser($user),
         )->response();
@@ -65,6 +72,8 @@ final class UserApiTokenController
         PersonalAccessToken $token,
         ApiTokenService $service,
     ): JsonResponse {
+        Gate::authorize('viewAny', User::class);
+
         $revoked = $service->revokeToken(
             owner: $user,
             token: $token,
@@ -86,6 +95,8 @@ final class UserApiTokenController
         User $user,
         ApiTokenService $service,
     ): JsonResponse {
+        Gate::authorize('viewAny', User::class);
+
         $count = $service->revokeForUser(
             user: $user,
             actor: $request->user(),
