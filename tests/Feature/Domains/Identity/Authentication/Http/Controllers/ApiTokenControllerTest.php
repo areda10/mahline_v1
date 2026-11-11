@@ -257,6 +257,32 @@ final class ApiTokenControllerTest extends TestCase
         }
     }
 
+    public function test_revoked_and_expired_tokens_do_not_consume_the_active_token_quota(): void
+    {
+        $user = $this->actor('user');
+        $first = $user->createToken('quota-revoked');
+        $second = $user->createToken('quota-expired');
+        $third = $user->createToken('quota-active');
+
+        $first->accessToken->forceFill(['revoked_at' => now()])->save();
+        $second->accessToken->forceFill(['expires_at' => now()->subSecond()])->save();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson(route('identity.tokens.store'), ['name' => 'quota-new-one'])
+            ->assertCreated();
+
+        $this->postJson(route('identity.tokens.store'), ['name' => 'quota-new-two'])
+            ->assertCreated();
+
+        $this->postJson(route('identity.tokens.store'), ['name' => 'quota-overflow'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('quota');
+
+        self::assertNull($third->accessToken->fresh()->revoked_at);
+        self::assertDatabaseHas('personal_access_tokens', ['id' => $first->accessToken->getKey()]);
+        self::assertDatabaseHas('personal_access_tokens', ['id' => $second->accessToken->getKey()]);
+    }
+
     public function test_token_abilities_must_be_active_permissions_granted_to_the_owner(): void
     {
         $user = $this->actor('user');
