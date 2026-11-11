@@ -36,7 +36,25 @@
         @csrf
         <label for="token-name">Nom de la clé</label>
         <input id="token-name" name="name" type="text" maxlength="255" required value="{{ old('name') }}" autocomplete="off">
-        <button class="button" type="submit">Créer la clé API</button>
+        <p class="muted">Clés API actives : {{ $activeTokenCount }} / {{ $tokenLimit }}. Durée de validité : 90 jours.</p>
+        @if(count($availableAbilities) > 0)
+            <fieldset>
+                <legend>Permissions autorisées pour cette clé (facultatif)</legend>
+                <p class="muted">Seules vos permissions MAHLINE actives sont proposées. Aucune permission n’est accordée si vous ne sélectionnez rien.</p>
+                @foreach($availableAbilities as $ability)
+                    <label class="checkbox-label" for="ability-{{ $loop->index }}">
+                        <input id="ability-{{ $loop->index }}" type="checkbox" name="abilities[]" value="{{ $ability }}" @checked(in_array($ability, old('abilities', []), true))>
+                        {{ $ability }}
+                    </label>
+                @endforeach
+            </fieldset>
+        @else
+            <p class="muted">Aucune permission active n’est attribuée à votre compte. La clé sera créée sans ability.</p>
+        @endif
+        <button class="button" type="submit" @disabled($activeTokenCount >= $tokenLimit)>Créer la clé API</button>
+        @if($activeTokenCount >= $tokenLimit)
+            <p class="muted">Le quota de clés API actives est atteint. Révoquez une clé ou attendez son expiration avant d’en créer une nouvelle.</p>
+        @endif
     </form>
 </section>
 
