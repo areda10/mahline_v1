@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 5.4
+- **Version :** 5.5
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 11 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -394,4 +394,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 | 11 novembre 2026 | 5.3 | API-01 et API-02 validés après confirmation utilisateur de `php artisan test` et `php vendor/bin/pint --test` VERTS. API-01 couvre la gestion personnelle et l'administration root des tokens, le secret à usage unique, l'absence de fuite dans Audit et la séparation sessions/tokens. API-02 fixe l'expiration à 90 jours pour tous les rôles, avec migration des tokens existants et contrôle à l'authentification. API-09 renforcé par tests root multi-rôles/inter-coopératives, révocation globale sans effet sur les sessions Web et absence de secret/hash dans Audit. API-03 à API-06 restent ouverts selon leur périmètre ; API-06 (abilities) reste reporté à une décision dédiée. |
 
 
-| 11 novembre 2026 | 5.4 | Décision API-03 validée : conservation de chaque token jusqu'à 90 jours après `expires_at`, même en cas de révocation anticipée ; purge quotidienne par lots, exclusion des expirations nulles, audit indépendant et aucune incidence sur les sessions Web. Audit du code effectué ; implémentation et tests restent à réaliser. |
+| 11 novembre 2026 | 5.5 | API-03 implémenté sur `feature/Identity` : purge transactionnelle par lots après 90 jours post-expiration, conservation des tokens révoqués jusqu'à la date d'éligibilité, exclusion des expirations nulles, événement Audit indépendant sans secret/hash, commande Artisan et planification quotidienne anti-chevauchement. Tests service/commande/Scheduler ajoutés ; validation locale en attente. |
