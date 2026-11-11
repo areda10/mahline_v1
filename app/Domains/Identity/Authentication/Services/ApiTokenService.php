@@ -248,6 +248,67 @@ final class ApiTokenService extends BaseService
         });
     }
 
+
+    /**
+     * Permanently remove API tokens only after their 90-day post-expiry
+     * retention period. Audit events are written before deletion and are
+     * intentionally independent from the token row.
+     *
+     * Revocation does not shorten retention. Tokens without expires_at are
+     * excluded. Web authentication sessions are never queried or modified.
+     */
+    public function pruneExpiredTokens(int $chunkSize = 500): int
+    {
+        if ($chunkSize < 1 || $chunkSize > 5000) {
+            throw new RuntimeException('The API token purge chunk size must be between 1 and 5000.');
+        }
+
+        $cutoff = now()->subDays(PersonalAccessToken::EXPIRATION_DAYS);
+        $deleted = 0;
+
+        PersonalAccessToken::query()
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', $cutoff)
+            ->chunkById($chunkSize, function (Collection $tokens) use (&$deleted): void {
+                foreach ($tokens as $token) {
+                    DB::transaction(function () use ($token, &$deleted): void {
+                        $lockedToken = PersonalAccessToken::query()
+                            ->whereKey($token->getKey())
+                            ->whereNotNull('expires_at')
+                            ->where('expires_at', '<=', now()->subDays(PersonalAccessToken::EXPIRATION_DAYS))
+                            ->lockForUpdate()
+                            ->first();
+
+                        if ($lockedToken === null) {
+                            return;
+                        }
+
+                        $this->audit->record(new AuditEntryDTO(
+                            eventKey: 'identity.authentication.api_token_purged',
+                            action: 'api_token_purged',
+                            subjectType: PersonalAccessToken::class,
+                            subjectId: (string) $lockedToken->getKey(),
+                            oldValues: [
+                                'expires_at' => $lockedToken->expires_at?->toISOString(),
+                                'revoked_at' => $lockedToken->revoked_at?->toISOString(),
+                            ],
+                            metadata: [
+                                'token_name' => $lockedToken->name,
+                                'tokenable_type' => $lockedToken->tokenable_type,
+                                'tokenable_id' => (string) $lockedToken->tokenable_id,
+                                'retention_days_after_expiry' => PersonalAccessToken::EXPIRATION_DAYS,
+                            ],
+                        ));
+
+                        $lockedToken->delete();
+                        $deleted++;
+                    });
+                }
+            }, 'id');
+
+        return $deleted;
+    }
+
     private function revokeLockedToken(
         PersonalAccessToken $token,
         User $owner,
