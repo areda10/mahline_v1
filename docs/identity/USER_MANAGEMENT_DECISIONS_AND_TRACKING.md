@@ -2387,3 +2387,75 @@ Audit effectué sur les fichiers réels de `feature/Identity`, sans modification
 **Conclusion USR-01 :** audit terminé. Les champs d'identité de base existent déjà, mais le profil personnel self-service est absent ; adresse personnelle, photo/avatar et préférences de notification ne sont pas modélisés. Les parcours administratifs existants doivent être préservés et ne doivent pas être réutilisés comme substitut au profil personnel.
 
 **Périmètre proposé pour USR-02 / USR-03 :** concevoir les ajouts de données et le workflow de profil dans des fichiers dédiés, utiliser de nouvelles migrations uniquement, préserver les workflows séparés d'e-mail/mot de passe/rôle/statut/cooperative, et définir explicitement les champs éditables par l'utilisateur avant implémentation. Aucun code n'a été modifié pendant cet audit.
+
+
+## 20.71 — Audit technique préalable USR-02 / USR-03 : profil personnel et liaisons
+
+**Branche examinée :** `feature/Identity`  
+**Nature :** lecture du code et vérification des liaisons ; aucune modification applicative et aucun test exécuté pendant cette passe.
+
+### 20.71.1 Cartographie des liaisons réellement présentes
+
+| Couche | Fichier / SHA | Constat |
+|---|---|---|
+| Routes Web | `routes/web.php` — `94d6754f544dcceb1cccefc8339d5c320feecd31` | Routes d'administration, sécurité, sessions et tokens présentes ; aucune route de profil personnel. |
+| Routes API | `routes/api.php` — `8ed1e3698d785fe64a225ee6d8f9df7de311d889` | Tokens et audit uniquement pour les routes Identity ; aucun endpoint de profil. |
+| Modèle utilisateur | `app/Domains/Identity/Users/Models/User.php` — `37af822f1cbbd5573095082b66fa7fe6e23a6032` | Champs identité/contact/localisation existants ; aucune relation d'adresse personnelle, aucun chemin photo et aucune préférence de notification. `fillable` comprend aussi des attributs sensibles (email, password, status, cooperative_id) : le futur workflow devra imposer une allowlist stricte indépendante. |
+| Contrôleur de gestion | `app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php` — `7e030581b14feacbe596624719c6bfc6c7e5cadd` | Contrôleur administratif ; aucune action self-service. |
+| Service de gestion | `app/Domains/Identity/UserManagement/Services/UserManagementService.php` — `8c546c6d3f85149f9f90c9803d5fdec8a3054560` | `updateUserAccount()` est réservé à root et modifie identité, e-mail, téléphone, coopérative et rôle ; il révoque ensuite les sessions Web et tokens API. Ne pas le réutiliser pour une simple modification personnelle du profil. |
+| Request existante | `CreateUserRequest.php` — `e0c760a7873a4e9c163710c21e82918517ccf7da` | Validation dédiée à la création administrative uniquement ; aucune validation de profil personnel. |
+| Policy | `UserPolicy.php` — `839caab4d1429ece63c544d10ef969aa3d1b331f` | Policy utilisateur administrative ; méthodes de profil personnel (consultation/modification de soi) absentes. |
+| Enregistrement Policy | `AuthorizationServiceProvider.php` — `5a859ad9d154a8326a0f634ac1c9dd48ba05a61b` | `UserPolicy` est déjà enregistrée pour `User::class` ; les nouvelles méthodes pourront être ajoutées à cette Policy sans créer un second mécanisme concurrent. |
+| Session active | `EnsureActiveAuthenticationSession.php` — `a922ce1b24219513107492830621e19644082777` | Vérifie compte autorisé, session Identity active, correspondance de session et changement obligatoire de mot de passe ; middleware réutilisable pour les routes de profil. |
+| Audit | `AuditService.php` — `b13e549e49a9b13760ed1a82426b52c347ee3462`, `AuditEntryDTO.php` — `300386a461a0a2c84370e20e0d2da39669b95753` | Service append-only disponible et filtrage récursif de clés sensibles ; le futur service de profil doit produire un événement dédié et ne jamais journaliser photo binaire, secret ou contenu inutile. |
+| Vue utilisateur | `resources/views/user/dashboard.blade.php` — `39cfffe2ed89271b4a52556c47ef5c466348d02f` | Dashboard uniquement, sans écran de profil. |
+| Layouts | `layouts/admin.blade.php` — `8e45bb46c42d34d915f83c5b1fabbe5051d73f99`, `layouts/root.blade.php` — `1eae669387716ecb5d964a3c854a64b3841663f6` | Deux navigations distinctes ; aucun lien « Mon profil ». Root utilise un layout séparé. |
+| Tests HTTP | `UserManagementControllerTest.php` — `7390ce92ee0a46c65a7ccf9b10298ddcd75b7e20` | Tests d'administration/invitation ; aucun test de profil personnel dans l'arborescence Identity examinée. |
+
+### 20.71.2 Schéma et domaines transversaux
+
+- La migration initiale `create_users_table` (SHA `bdccd16309a85a23f673613f227dc676af6b9fdd`) contient prénom, nom, nom affiché, e-mail, téléphone, mot de passe, statut, locale, timezone, vérification e-mail, audit actors, timestamps et soft delete. Les migrations suivantes ajoutent notamment cooperative_id, must_change_password et emergency lock ; aucune des migrations présentes n'ajoute adresse personnelle, photo ou préférences de notification.
+- Le domaine Localization contient déjà `Address` (`app/Domains/Localization/Models/Address.php`, SHA `e98ff0250747298459c5cea5d7d0cd949f5358c1`) et sa table (`2026_10_03_150543_create_addresses_table.php`, SHA `ca57b9c90f36bbe83021991025d7bfafb749a13f`). L'adresse comprend lignes d'adresse, code postal, ville, région, pays et coordonnées. Elle est actuellement reliée à Cooperative ; User n'a aucune relation. Réutiliser ce modèle est possible, mais la relation propriétaire et les contrôles empêchant toute modification d'une adresse d'une coopérative ou d'un autre utilisateur doivent être définis explicitement.
+- L'arborescence `app/Domains` présente Audit, Catalog, Categories, Cooperatives, Countries, Dashboard, Identity, Localization et Products ; aucun domaine Media ni Communication n'est présent dans cette branche. Le workflow de photo ne doit donc pas présumer l'existence d'un service Media ou d'un stockage applicatif déjà intégré.
+- Les notifications Identity actuellement identifiées sont Laravel Notifiable, `NewDeviceLoginNotification` (mail) et `UserInvitationNotification` (mail). Aucun stockage de préférences ni service de filtrage des notifications n'a été identifié. Les tâches `NOT-01` et `NOT-03` du backlog couvrent déjà le service transversal et les préférences ; USR-02 doit s'y raccorder sans créer un second système concurrent. Les alertes critiques restent obligatoires selon les décisions fonctionnelles existantes.
+- Les champs locale et timezone existent déjà et sont utilisés par la notification de nouvel appareil ; ils ne nécessitent pas de nouvelle colonne. Leur validation doit néanmoins être normalisée (locale autorisée et identifiant timezone valide).
+
+### 20.71.3 Écarts de sécurité et de liaison à corriger / préserver
+
+1. **Séparation du self-service :** aucune méthode dédiée `viewOwnProfile` / `updateOwnProfile` n'existe. La méthode administrative `UserPolicy::view` exige `users.view` et ne constitue pas une autorisation propriétaire. Le profil doit autoriser uniquement l'utilisateur authentifié sur sa propre clé, sans dépendre d'une permission administrative.
+2. **Allowlist :** `User::fillable` comprend email, password, status et cooperative_id. Une validation générique ou un `fill($request->all())` créerait un risque d'élévation de privilèges ou de contournement des workflows. Seuls prénom, nom, téléphone, adresse personnelle, photo, locale, timezone et préférences validées par décision 93 pourront être modifiés par ce parcours. E-mail, mot de passe, rôle, coopérative et statut sont exclus.
+3. **Révocation excessive :** `UserManagementService::updateUserAccount()` appelle `revokeAccessCredentials()` après mise à jour administrative. Ce comportement est approprié au changement de rôle/compte déjà prévu, mais ne doit pas être déclenché pour une modification de nom, téléphone, adresse, photo, langue, timezone ou préférences.
+4. **Dépendance à l'adresse :** `Address` est aujourd'hui associée à Cooperative, et non à User. Une liaison utilisateur doit être ajoutée par migration additive et validée par service ; il ne faut pas exposer un identifiant d'adresse arbitraire fourni par le navigateur.
+5. **Photo :** aucun domaine Media, service d'upload, politique de stockage ou route privée de diffusion d'avatar n'a été repéré. Le chemin seul en base ne suffit pas : stockage, validation MIME/taille, remplacement, suppression de l'ancien fichier, autorisation de lecture et nettoyage en cas d'échec doivent être conçus avant implémentation.
+6. **Préférences :** aucune infrastructure de préférences n'est présente. Le stockage doit être cohérent avec NOT-01/NOT-03 et garantir côté serveur que les notifications critiques ne puissent pas être désactivées.
+7. **Audit et données personnelles :** le service Audit existant peut être réutilisé. Définir les événements et champs journalisés sans stocker de binaire, secret ou copie inutile de données personnelles. La décision 95 exige explicitement anciennes/nouvelles valeurs pour les corrections administratives ; ne pas étendre cette exposition aux journaux de self-service sans règle dédiée.
+8. **Navigation :** les layouts admin et root sont séparés ; un lien vers le profil doit être ajouté dans les deux parcours sans exposer les routes d'administration au rôle user.
+
+### 20.71.4 Écart déjà présent sur l'accès aux profils administratifs — USR-04
+
+La décision 91 indique que `cooperative_admin` n'a aucun accès aux données personnelles des autres utilisateurs. Or :
+- `UserPolicy::viewAny()` accepte `cooperative_admin` si `users.view` est accordée.
+- `UserPolicy::canAccessUser()` accepte un utilisateur de la même coopérative pour ce rôle.
+- `UserManagementController::index()` retourne les utilisateurs du périmètre ; la vue `backoffice/users/index.blade.php` affiche e-mail, téléphone, nom et prénom.
+- `backoffice/users/show.blade.php` affiche identité, e-mail et téléphone.
+- `UserManagementControllerTest` contient des tests qui confirment actuellement la consultation par cooperative_admin d'une fiche d'un utilisateur de sa coopérative.
+
+Il s'agit d'une divergence entre code/tests et décision validée, à corriger dans USR-04 avec ses propres tests. Elle ne doit pas être aggravée ni considérée comme une autorisation de consulter les profils personnels.
+
+### 20.71.5 Plan de réalisation proposé — aucun code commencé
+
+**USR-02 — données :**
+- migration additive pour relier une adresse personnelle à User en réutilisant le modèle Address après validation de la règle de propriété ;
+- colonne nullable de chemin de photo, avec stratégie de stockage privé et service Media à définir ;
+- stockage des préférences selon le contrat NOT-01/NOT-03 (pas de second système de notifications) ;
+- aucune modification des migrations déjà présentes.
+
+**USR-03 — self-service :**
+- contrôleur dédié au profil personnel dans Identity, sans réutiliser le contrôleur administratif ;
+- Form Request avec allowlist stricte et règles de validation ;
+- service dédié transactionnel, qui met à jour uniquement les champs personnels autorisés et journalise l'événement approprié ;
+- méthodes Policy dédiées au propriétaire, routes protégées par `auth` et `EnsureActiveAuthenticationSession`, accessibles aux rôles autorisés y compris root ;
+- vues de consultation/édition adaptées aux deux layouts, lien de navigation « Mon profil » ;
+- tests Feature couvrant tous les rôles, accès direct à l'ID d'un autre utilisateur, tentative de mass assignment (email/password/status/role/cooperative_id), validation, adresse étrangère, upload/remplacement/suppression photo, préférences critiques non désactivables, audit et absence de révocation des sessions/tokens pour les changements ordinaires.
+
+**Ordre conseillé :** figer les choix techniques adresse/photo/préférences ; implémenter USR-02 ; implémenter USR-03 ; exécuter les tests ciblés et Pint ; puis traiter séparément la divergence USR-04. Le présent audit ne modifie ni code, ni migrations, ni tests.
