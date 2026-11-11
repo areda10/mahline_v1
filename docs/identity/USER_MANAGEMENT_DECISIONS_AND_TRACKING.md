@@ -2326,4 +2326,4 @@ Constats confirmés :
 - `routes/console.php` programme la commande quotidiennement avec `withoutOverlapping()`.
 - Tests ajoutés pour la limite de rétention, les tokens révoqués, les expirations nulles, les tokens encore récents/futurs, l'absence de fuite dans Audit, l'isolation des sessions Web, la commande et le Scheduler.
 
-**État :** implémentation et tests ajoutés sur `feature/Identity` ; validation locale par l'utilisateur en attente (`php artisan test --filter=ApiTokenServiceTest`, `php artisan test --filter=PruneExpiredApiTokensCommandTest`, puis `php vendor/bin/pint --test`). Aucun merge effectué.
+**État :** implémentation et tests ajoutés sur `feature/Identity` ; validation locale confirmée VERT par l'utilisateur pour `ApiTokenServiceTest`, `PruneExpiredApiTokensCommandTest` et `php vendor/bin/pint --test`. Aucun merge effectué.
