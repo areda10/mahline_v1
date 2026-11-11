@@ -2327,3 +2327,15 @@ Constats confirmés :
 - Tests ajoutés pour la limite de rétention, les tokens révoqués, les expirations nulles, les tokens encore récents/futurs, l'absence de fuite dans Audit, l'isolation des sessions Web, la commande et le Scheduler.
 
 **État :** implémentation et tests ajoutés sur `feature/Identity` ; validation locale confirmée VERT par l'utilisateur pour `ApiTokenServiceTest`, `PruneExpiredApiTokensCommandTest` et `php vendor/bin/pint --test`. Aucun merge effectué.
+
+
+## 20.67 — Correction de l'authentification des tests Sanctum avec modèle final
+
+- Le modèle MAHLINE `App\\Domains\\Identity\\Authentication\\Models\\PersonalAccessToken` reste déclaré `final`. Aucun affaiblissement de cette garantie n'est introduit.
+- `Sanctum::actingAs()` ne peut pas être utilisé avec ce modèle : Sanctum tente de créer un mock Mockery du modèle configuré, ce qui échoue pour une classe finale.
+- Dans `tests/Feature/Domains/Identity/Authentication/Http/Controllers/ApiTokenControllerTest.php`, les cas d'administration root utilisent désormais un véritable bearer token créé avec `User::createToken()`, avec les abilities de test explicitement fournies. Le guard Sanctum est réinitialisé entre les identités afin d'éviter la réutilisation de l'utilisateur authentifié en cache.
+- Les contrôles de rôle `super_admin_root`, de permission métier `users.view` et les middleware d'abilities restent actifs et testés ; le modèle, les routes et les règles d'autorisation ne sont pas contournés.
+- Commit de correction : `5ab52ce48f73f331dfc5473dd12ba0c8359f3de5`.
+- SHA du fichier de test après correction : `48572ee76ec37c396fdf18886d6237b3bdb6bce3`.
+- **Validation locale confirmée par l'utilisateur le 11 novembre 2026 :** `php artisan optimize:clear`, `php artisan test --filter=ApiTokenControllerTest`, `php artisan test --filter=ApiTokenManagementControllerTest` et `php vendor/bin/pint --test` sont VERTS.
+- Cette validation confirme la correction de compatibilité et les suites ciblées exécutées. Elle ne vaut pas validation globale des implémentations API-04 à API-08 : les suites de service, UserManagement et invitations doivent encore être confirmées avant clôture de ces lots.
