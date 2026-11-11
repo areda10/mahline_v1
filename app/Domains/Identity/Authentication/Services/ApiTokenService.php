@@ -152,7 +152,8 @@ final class ApiTokenService extends BaseService
             ->map(static fn (string $slug): int => self::ACTIVE_TOKEN_LIMITS[$slug] ?? 0)
             ->all();
 
-        return $limits === [] ? 0 : max($limits);
+        // A legacy authorized account without a role receives the least-privilege user quota.
+        return $limits === [] ? self::ACTIVE_TOKEN_LIMITS['user'] : max($limits);
     }
 
     public function activeTokenCount(User $user): int
