@@ -398,7 +398,7 @@ final class ApiTokenServiceTest extends TestCase
 
     public function test_prune_rejects_unsafe_chunk_sizes(): void
     {
-        $this->expectException(\\RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
 
         $this->service->pruneExpiredTokens(chunkSize: 0);
     }
