@@ -16,6 +16,9 @@ final class ApiTokenManagementController
     {
         return view('identity.security.api-tokens.index', [
             'tokens' => $service->tokensForUser($request->user()),
+            'availableAbilities' => $service->availableAbilities($request->user()),
+            'activeTokenCount' => $service->activeTokenCount($request->user()),
+            'tokenLimit' => $service->tokenLimitForUser($request->user()),
         ]);
     }
 
@@ -23,12 +26,15 @@ final class ApiTokenManagementController
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'min:1', 'max:255', 'not_regex:/^\\s*$/'],
+            'abilities' => ['sometimes', 'array', 'max:100'],
+            'abilities.*' => ['required', 'string', 'distinct'],
         ]);
 
         $newToken = $service->createForOwner(
             owner: $request->user(),
             actor: $request->user(),
             name: $validated['name'],
+            abilities: $validated['abilities'] ?? [],
         );
 
         return redirect()
