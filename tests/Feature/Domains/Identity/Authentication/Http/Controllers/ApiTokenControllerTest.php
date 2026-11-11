@@ -13,7 +13,6 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 final class ApiTokenControllerTest extends TestCase
@@ -101,12 +100,12 @@ final class ApiTokenControllerTest extends TestCase
         $target = $this->actor('user');
         $token = $target->createToken('target-key');
 
-        Sanctum::actingAs($superAdmin, ['users.view']);
+        $this->authenticateWithBearerToken($superAdmin, ['users.view']);
 
         $this->getJson(route('identity.root.users.tokens.index', $target))
             ->assertForbidden();
 
-        Sanctum::actingAs($root, ['users.view']);
+        $this->authenticateWithBearerToken($root, ['users.view']);
 
         $this->getJson(route('identity.root.users.tokens.index', $target))
             ->assertOk()
@@ -135,7 +134,7 @@ final class ApiTokenControllerTest extends TestCase
             'last_activity_at' => now(),
         ]);
 
-        Sanctum::actingAs($root, ['users.view']);
+        $this->authenticateWithBearerToken($root, ['users.view']);
 
         $this->deleteJson(route('identity.root.users.tokens.destroy-all', $target))
             ->assertOk()
@@ -226,7 +225,7 @@ final class ApiTokenControllerTest extends TestCase
             $created = $target->createToken($roleSlug.'-root-managed-key');
             $storedHash = $created->accessToken->token;
 
-            Sanctum::actingAs($root, ['users.view']);
+            $this->authenticateWithBearerToken($root, ['users.view']);
 
             $listing = $this->getJson(route('identity.root.users.tokens.index', $target));
 
@@ -360,6 +359,22 @@ final class ApiTokenControllerTest extends TestCase
         $this->withToken($withAbility->plainTextToken)
             ->getJson(route('audit.events.index'))
             ->assertOk();
+    }
+
+    /**
+     * Authenticate through a real Sanctum bearer token.
+     * This avoids Sanctum::actingAs(), which mocks the configured token model
+     * and is incompatible with MAHLINE's intentionally final token model.
+     *
+     * @param  array<int, string>  $abilities
+     */
+    private function authenticateWithBearerToken(User $user, array $abilities): void
+    {
+        $token = $user->createToken('feature-test-authentication', $abilities);
+
+        // Sanctum's guard caches the resolved user between requests in a test.
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token->plainTextToken);
     }
 
     private function grantPermission(User $user, string $slug): void
