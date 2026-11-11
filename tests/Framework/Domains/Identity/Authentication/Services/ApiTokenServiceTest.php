@@ -312,4 +312,96 @@ final class ApiTokenServiceTest extends TestCase
         $this->travelBack();
     }
 
+
+    public function test_prune_removes_only_tokens_past_expiry_retention_and_keeps_audit_and_web_sessions(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = User::factory()->create();
+
+        $eligible = $user->createToken('eligible-expired-token');
+        $eligibleRevoked = $user->createToken('eligible-revoked-token');
+        $recent = $user->createToken('recently-expired-token');
+        $withoutExpiry = $user->createToken('legacy-without-expiry-token');
+        $future = $user->createToken('future-token');
+
+        DB::table('personal_access_tokens')
+            ->whereIn('id', [
+                $eligible->accessToken->getKey(),
+                $eligibleRevoked->accessToken->getKey(),
+            ])
+            ->update(['expires_at' => now()->subDays(90)]);
+
+        DB::table('personal_access_tokens')
+            ->where('id', $eligibleRevoked->accessToken->getKey())
+            ->update(['revoked_at' => now()->subDays(100)]);
+
+        DB::table('personal_access_tokens')
+            ->where('id', $recent->accessToken->getKey())
+            ->update(['expires_at' => now()->subDays(30)]);
+
+        DB::table('personal_access_tokens')
+            ->where('id', $withoutExpiry->accessToken->getKey())
+            ->update(['expires_at' => null]);
+
+        DB::table('personal_access_tokens')
+            ->where('id', $future->accessToken->getKey())
+            ->update(['expires_at' => now()->addDays(10)]);
+
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => 'token-prune-preserved-session',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+            'revoked_at' => null,
+            'revocation_reason' => null,
+        ]);
+
+        $deleted = $this->service->pruneExpiredTokens(chunkSize: 2);
+
+        self::assertSame(2, $deleted);
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $eligible->accessToken->getKey(),
+        ]);
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $eligibleRevoked->accessToken->getKey(),
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $recent->accessToken->getKey(),
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $withoutExpiry->accessToken->getKey(),
+            'expires_at' => null,
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $future->accessToken->getKey(),
+        ]);
+
+        $this->assertDatabaseCount('audit_events', 2);
+        $auditEvents = DB::table('audit_events')
+            ->where('event_key', 'identity.authentication.api_token_purged')
+            ->get();
+
+        self::assertCount(2, $auditEvents);
+
+        foreach ($auditEvents as $event) {
+            self::assertNull($event->actor_id);
+            self::assertStringNotContainsString($eligible->plainTextToken, json_encode($event));
+            self::assertStringNotContainsString($eligible->accessToken->token, json_encode($event));
+        }
+
+        self::assertNull($session->fresh()->revoked_at);
+        self::assertNull($session->fresh()->revocation_reason);
+
+        $this->travelBack();
+    }
+
+    public function test_prune_rejects_unsafe_chunk_sizes(): void
+    {
+        $this->expectException(\\RuntimeException::class);
+
+        $this->service->pruneExpiredTokens(chunkSize: 0);
+    }
+
+
 }
