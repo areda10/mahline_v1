@@ -7,16 +7,26 @@ namespace App\Domains\Identity\Authentication\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\NewAccessToken;
 use RuntimeException;
 
 final class ApiTokenService extends BaseService
 {
     public const int RETENTION_DAYS_AFTER_EXPIRY = 90;
+
+    /** @var array<string, int> */
+    private const ACTIVE_TOKEN_LIMITS = [
+        'super_admin_root' => 10,
+        'super_admin' => 5,
+        'cooperative_admin' => 5,
+        'user' => 3,
+    ];
     public function __construct(
         private readonly AuditService $audit,
     ) {}
@@ -24,8 +34,8 @@ final class ApiTokenService extends BaseService
     /**
      * Create an API token for its owner only.
      *
-     * Abilities default to an empty list until the API-06 role/ability matrix
-     * is formally defined. The plaintext secret is returned only by Sanctum
+     * Abilities are existing MAHLINE permission slugs granted to the owner.
+     * The plaintext secret is returned only by Sanctum
      * in this creation response and is never written to Audit.
      */
     public function createForOwner(
@@ -59,6 +69,32 @@ final class ApiTokenService extends BaseService
                 throw new RuntimeException('The account is not authorized to create API tokens.');
             }
 
+            $allowedAbilities = $this->availableAbilities($lockedOwner);
+            $requestedAbilities = array_values(array_unique($abilities));
+            $invalidAbilities = array_diff($requestedAbilities, $allowedAbilities);
+
+            if ($invalidAbilities !== [] || in_array('*', $requestedAbilities, true)) {
+                throw ValidationException::withMessages([
+                    'abilities' => 'Only active MAHLINE permissions granted to your account may be assigned to an API token.',
+                ]);
+            }
+
+            $activeTokenCount = PersonalAccessToken::query()
+                ->where('tokenable_type', $lockedOwner->getMorphClass())
+                ->where('tokenable_id', $lockedOwner->getKey())
+                ->whereNull('revoked_at')
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '>', now())
+                ->count();
+
+            $tokenLimit = $this->tokenLimitForUser($lockedOwner);
+
+            if ($tokenLimit === 0 || $activeTokenCount >= $tokenLimit) {
+                throw ValidationException::withMessages([
+                    'quota' => sprintf('Your account has reached its limit of %d active API tokens.', $tokenLimit),
+                ]);
+            }
+
             $newToken = $lockedOwner->createToken(
                 $name,
                 $abilities,
@@ -89,6 +125,46 @@ final class ApiTokenService extends BaseService
 
             return $newToken;
         });
+    }
+
+    /**
+     * Return the active MAHLINE permission slugs granted through active roles.
+     *
+     * @return array<int, string>
+     */
+    public function availableAbilities(User $user): array
+    {
+        return $user->roles()
+            ->where('roles.is_active', true)
+            ->with(['permissions' => static fn ($query) => $query->where('permissions.is_active', true)])
+            ->get()
+            ->flatMap(static fn ($role) => $role->permissions->pluck('slug'))
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    public function tokenLimitForUser(User $user): int
+    {
+        $limits = $user->roles()
+            ->where('roles.is_active', true)
+            ->pluck('slug')
+            ->map(static fn (string $slug): int => self::ACTIVE_TOKEN_LIMITS[$slug] ?? 0)
+            ->all();
+
+        return $limits === [] ? 0 : max($limits);
+    }
+
+    public function activeTokenCount(User $user): int
+    {
+        return PersonalAccessToken::query()
+            ->where('tokenable_type', $user->getMorphClass())
+            ->where('tokenable_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '>', now())
+            ->count();
     }
 
     /**
