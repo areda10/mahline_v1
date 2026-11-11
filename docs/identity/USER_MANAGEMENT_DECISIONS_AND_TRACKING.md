@@ -2339,3 +2339,15 @@ Constats confirmés :
 - SHA du fichier de test après correction : `48572ee76ec37c396fdf18886d6237b3bdb6bce3`.
 - **Validation locale confirmée par l'utilisateur le 11 novembre 2026 :** `php artisan optimize:clear`, `php artisan test --filter=ApiTokenControllerTest`, `php artisan test --filter=ApiTokenManagementControllerTest` et `php vendor/bin/pint --test` sont VERTS.
 - Cette validation confirme la correction de compatibilité et les suites ciblées exécutées. Elle ne vaut pas validation globale des implémentations API-04 à API-08 : les suites de service, UserManagement et invitations doivent encore être confirmées avant clôture de ces lots.
+
+
+## 20.68 — Correction de la fixture pays dans UserManagementServiceTest
+
+- L'utilisateur confirme VERTS pour `php artisan test --filter=UserManagementServiceTest` et `php vendor/bin/pint --test` après correction de la fixture de pays.
+- Cause : `CountryFactory` crée systématiquement le pays Maroc avec le code unique `MA`, tandis que le helper `createCooperative()` du test créait un nouveau pays à chaque appel sans partager l'enregistrement existant.
+- Correction : le helper utilise désormais `Country::query()->firstOrCreate(['code' => 'MA'], ...)`, puis réutilise ce pays pour les adresses des coopératives créées dans le test.
+- La contrainte unique `countries_code_unique`, la factory métier et le seeder ne sont pas affaiblis ou modifiés.
+- Fichier : `tests/Framework/Domains/Identity/UserManagement/Services/UserManagementServiceTest.php`.
+- Commit : `2fee6eaa768bb34a983d86d02bd4e9cfc1744d9e`.
+- SHA vérifié du fichier corrigé : `17008dd07ea58a74022292f82477f37c38680cfa`.
+- Cette confirmation valide uniquement la suite UserManagementServiceTest et Pint ; elle ne clôt pas les autres suites API-04 à API-08, qui restent à confirmer.
