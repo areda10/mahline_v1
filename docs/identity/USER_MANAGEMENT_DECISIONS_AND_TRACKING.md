@@ -2267,3 +2267,42 @@ Constats confirmés :
 **Aucune modification applicative SESS-12 n'a été effectuée.** Le dépôt ne contient actuellement ni source GeoIP ni socle OTP ; les ajouter sans décision sur le fournisseur et les règles fail-open serait prématuré.
 
 État : **AUDIT SESS-12 EFFECTUÉ — conception proposée, implémentation en attente de validation des choix de fournisseur GeoIP et du comportement en cas d'indisponibilité.**
+
+## 20.65 — Clôture fonctionnelle et validation globale API-01 / API-02
+
+### API-01 — Gestion des tokens Sanctum
+
+**Règles fonctionnelles retenues :**
+- Tous les rôles (`super_admin_root`, `super_admin`, `cooperative_admin`, `user`) peuvent gérer uniquement leurs propres tokens : création, liste, consultation des métadonnées, révocation individuelle et révocation globale.
+- Seul `super_admin_root` peut consulter et révoquer les tokens d'autres utilisateurs, sans restriction de coopérative.
+- Root ne peut jamais créer un token pour autrui : le secret doit être remis directement au propriétaire.
+- `super_admin` et `cooperative_admin` ne peuvent pas gérer les tokens d'autres utilisateurs, y compris ceux de leur périmètre.
+- Les parcours personnels sont disponibles en API et en back-office ; les parcours d'administration root sont disponibles depuis la fiche utilisateur.
+- Le secret en clair est retourné une seule fois à la création. Les listes, métadonnées, réponses de consultation et événements Audit n'exposent ni secret ni hash.
+- La révocation d'un token API ne révoque jamais une session Web. Les sessions Web et tokens Sanctum restent deux mécanismes distincts.
+- Les abilities Sanctum par défaut restent vides (`[]`) tant que la matrice API-06 n'est pas définie. Une ability `*` ne contourne jamais les Policies, Gates, contrôles de propriété ou middleware métier.
+- Les opérations de création et révocation sont centralisées dans `ApiTokenService`, transactionnelles et auditées ; les flux de révocation communs délèguent à ce service.
+
+**Validation locale :** le 11 novembre 2026, l'utilisateur confirme **VERTS** `php artisan test` et `php vendor/bin/pint --test` après les ajouts API-09 et l'implémentation API-02. Cette validation globale couvre donc API-01 et API-02 ainsi que les tests de régression associés. Les tests ciblés API-01/API-09 et Pint avaient également été confirmés verts précédemment.
+
+### API-02 — Expiration fixe des tokens
+
+**Décision définitive :**
+- Tous les tokens API ont une durée fixe de **90 jours**, tous rôles et tous tokens confondus.
+- Aucun choix de durée par utilisateur, aucune expiration personnalisée et aucun token permanent, y compris pour `super_admin_root`.
+- La date d'expiration est imposée au niveau du modèle Sanctum pour couvrir aussi les créations directes hors du service.
+- Les tokens déjà présents sont régularisés par migration à partir de leur date de création (`created_at + 90 jours`) ; aucune ligne n'est supprimée par cette migration.
+- L'expiration est vérifiée par Sanctum au moment de chaque authentification API. Une date d'expiration absente ne rend pas un token actif.
+- `config('sanctum.expiration')` reste `null` : l'expiration individuelle `expires_at` porte la règle fixe et les sessions Web restent indépendantes.
+- La migration de régularisation ne restaure pas de tokens permanents lors d'un rollback.
+
+**Validation locale :** le test d'authentification avant/après expiration, les tests du service, du modèle et de la migration ont été confirmés verts ; après correction du test d'expiration HTTP, l'utilisateur a confirmé la suite globale `php artisan test` et le contrôle `php vendor/bin/pint --test` verts le 11 novembre 2026.
+
+### Périmètre restant du lot API
+
+- API-01 : **VALIDÉ**.
+- API-02 : **VALIDÉ**.
+- API-09 : tests de renforcement ajoutés et suites ciblées confirmées vertes ; la suite complète et Pint sont désormais également confirmés verts.
+- API-06 (matrice d'abilities) reste explicitement à définir. Les autres tâches API du backlog qui ne sont pas cochées restent ouvertes ; cette clôture ne les déclare pas implémentées.
+
+**Statut : API-01 et API-02 VALIDÉS localement sur la branche synchronisée `feature/Identity`. Aucun merge n'a été effectué.**
