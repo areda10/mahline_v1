@@ -34,7 +34,7 @@ Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])
 
         Route::prefix('root/users/{user}/tokens')
             ->name('root.users.tokens.')
-            ->middleware('role:super_admin_root')
+            ->middleware(['role:super_admin_root', 'abilities:users.view'])
             ->group(function (): void {
                 Route::get('/', [UserApiTokenController::class, 'index'])
                     ->name('index');
@@ -48,4 +48,4 @@ Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])
 Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])->get(
     '/audit/events',
     [AuditEventController::class, 'index'],
-)->name('audit.events.index');
+)->middleware('abilities:audit.view')->name('audit.events.index');
