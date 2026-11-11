@@ -139,6 +139,7 @@ final class UserInvitationControllerTest extends TestCase
         ]);
 
         $invitation = $this->createInvitation($user, $token);
+        $legacyApiToken = $user->createToken('legacy-before-verification');
 
         $password = 'MahlineSecure2026!';
 
@@ -159,6 +160,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->assertNotNull($invitation->used_at);
         $this->assertNull($invitation->revoked_at);
+        $this->assertNotNull($legacyApiToken->accessToken->fresh()->revoked_at);
 
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.user.invitation_accepted',
