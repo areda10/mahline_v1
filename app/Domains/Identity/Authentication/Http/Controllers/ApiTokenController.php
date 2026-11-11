@@ -28,6 +28,7 @@ final class ApiTokenController
             owner: $request->user(),
             actor: $request->user(),
             name: $request->validated('name'),
+            abilities: $request->validated('abilities', []),
         );
 
         return response()->json([
