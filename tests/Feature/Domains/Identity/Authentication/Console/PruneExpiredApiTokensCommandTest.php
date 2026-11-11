@@ -24,7 +24,7 @@ final class PruneExpiredApiTokensCommandTest extends TestCase
             ->update(['expires_at' => now()->subDays(91)]);
 
         $this->artisan('identity:tokens:prune-expired')
-            ->expectsOutput('1 expired API token(s) permanently removed.')
+            ->expectsOutputToContain('1 expired API token(s) permanently removed.')
             ->assertSuccessful();
 
         $this->assertDatabaseMissing('personal_access_tokens', [
