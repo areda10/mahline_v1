@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 5.6
+- **Version :** 5.7
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 11 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -115,7 +115,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 - [x] **API-01 — VALIDÉ (11 novembre 2026)** Parcours personnels API/back-office pour tous les rôles, gestion des tokens d'autres utilisateurs réservée à root (liste/métadonnées/révocations), aucune création pour autrui, secret affiché une seule fois, métadonnées/Audit sans secret ni hash, révocation API indépendante des sessions Web. Tests ciblés et validation globale confirmés VERTS par l'utilisateur.
 - [x] **API-02 — VALIDÉ (11 novembre 2026)** Durée fixe de 90 jours pour tous les rôles et tokens, sans personnalisation ni token permanent ; date imposée par le modèle, migration des tokens existants à `created_at + 90 jours`, expiration vérifiée à l'authentification Sanctum, `config('sanctum.expiration')` conservé à `null`. Tests ciblés, suite complète et Pint confirmés VERTS par l'utilisateur.
-- [ ] **API-03** Ajouter une purge quotidienne via Laravel Scheduler : suppression physique uniquement lorsque `expires_at` date d'au moins 90 jours ; la révocation anticipée ne raccourcit pas la rétention ; ignorer les tokens sans expiration ; traitement par lots, verrou anti-chevauchement, Audit indépendant sans secret/hash et aucune incidence sur les sessions Web.
+- [x] **API-03 — VALIDÉ (11 novembre 2026)** Purge quotidienne via Laravel Scheduler : suppression physique uniquement lorsque `expires_at` date d'au moins 90 jours ; la révocation anticipée ne raccourcit pas la rétention ; tokens sans expiration ignorés ; traitement par lots, verrou anti-chevauchement, Audit indépendant sans secret/hash et aucune incidence sur les sessions Web. via Laravel Scheduler : suppression physique uniquement lorsque `expires_at` date d'au moins 90 jours ; la révocation anticipée ne raccourcit pas la rétention ; ignorer les tokens sans expiration ; traitement par lots, verrou anti-chevauchement, Audit indépendant sans secret/hash et aucune incidence sur les sessions Web.
 - [ ] **API-04** Limiter les tokens actifs : root 10, super_admin 5, cooperative_admin 5, user 3.
 - [ ] **API-05** Permettre à l'utilisateur de voir le nom du token, sa date de création et sa dernière utilisation ; le secret complet n'est affiché qu'une seule fois.
 - [ ] **API-06** Proposer une sélection explicite de capacités autorisées selon le rôle ; refuser toute capacité excédant les droits métier.
@@ -395,3 +395,4 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 
 
 | 11 novembre 2026 | 5.6 | API-03 validé par l'utilisateur : tests du service, de la commande, du Scheduler et Pint confirmés VERTS. Purge transactionnelle par lots après 90 jours post-expiration, conservation des tokens révoqués jusqu'à la date d'éligibilité, exclusion des expirations nulles, Audit indépendant sans secret/hash, commande Artisan et planification quotidienne anti-chevauchement. Démarrage du cadrage/audit API-04 à API-08. |
+| 11 novembre 2026 | 5.7 | Correction du test d'authentification Sanctum compatible avec le modèle `PersonalAccessToken` final : remplacement de `Sanctum::actingAs()` par de vrais bearer tokens de test, sans retirer `final` ni contourner les contrôles de rôle/permission/abilities. L'utilisateur confirme VERTS : optimize:clear, ApiTokenControllerTest, ApiTokenManagementControllerTest et Pint. Cette validation ne clôt pas encore API-04 à API-08 ; leurs suites de service, gestion utilisateur et invitation restent à confirmer. API-03 est marqué validé conformément à la confirmation antérieure des tests ciblés de service/commande/Scheduler et Pint. |
