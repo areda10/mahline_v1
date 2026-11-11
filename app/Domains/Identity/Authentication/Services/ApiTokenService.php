@@ -16,6 +16,7 @@ use RuntimeException;
 
 final class ApiTokenService extends BaseService
 {
+    public const int RETENTION_DAYS_AFTER_EXPIRY = 90;
     public function __construct(
         private readonly AuditService $audit,
     ) {}
@@ -263,7 +264,7 @@ final class ApiTokenService extends BaseService
             throw new RuntimeException('The API token purge chunk size must be between 1 and 5000.');
         }
 
-        $cutoff = now()->subDays(PersonalAccessToken::EXPIRATION_DAYS);
+        $cutoff = now()->subDays(self::RETENTION_DAYS_AFTER_EXPIRY);
         $deleted = 0;
 
         PersonalAccessToken::query()
@@ -296,7 +297,7 @@ final class ApiTokenService extends BaseService
                                 'token_name' => $lockedToken->name,
                                 'tokenable_type' => $lockedToken->tokenable_type,
                                 'tokenable_id' => (string) $lockedToken->tokenable_id,
-                                'retention_days_after_expiry' => PersonalAccessToken::EXPIRATION_DAYS,
+                                'retention_days_after_expiry' => self::RETENTION_DAYS_AFTER_EXPIRY,
                             ],
                         ));
 
