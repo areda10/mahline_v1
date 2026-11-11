@@ -13,6 +13,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 final class ApiTokenControllerTest extends TestCase
@@ -100,12 +101,14 @@ final class ApiTokenControllerTest extends TestCase
         $target = $this->actor('user');
         $token = $target->createToken('target-key');
 
-        $this->actingAs($superAdmin, 'sanctum')
-            ->getJson(route('identity.root.users.tokens.index', $target))
+        Sanctum::actingAs($superAdmin, ['users.view']);
+
+        $this->getJson(route('identity.root.users.tokens.index', $target))
             ->assertForbidden();
 
-        $this->actingAs($root, 'sanctum')
-            ->getJson(route('identity.root.users.tokens.index', $target))
+        Sanctum::actingAs($root, ['users.view']);
+
+        $this->getJson(route('identity.root.users.tokens.index', $target))
             ->assertOk()
             ->assertJsonFragment(['name' => 'target-key']);
 
@@ -132,8 +135,9 @@ final class ApiTokenControllerTest extends TestCase
             'last_activity_at' => now(),
         ]);
 
-        $this->actingAs($root, 'sanctum')
-            ->deleteJson(route('identity.root.users.tokens.destroy-all', $target))
+        Sanctum::actingAs($root, ['users.view']);
+
+        $this->deleteJson(route('identity.root.users.tokens.destroy-all', $target))
             ->assertOk()
             ->assertJsonPath('revoked_count', 2);
 
@@ -222,8 +226,9 @@ final class ApiTokenControllerTest extends TestCase
             $created = $target->createToken($roleSlug.'-root-managed-key');
             $storedHash = $created->accessToken->token;
 
-            $listing = $this->actingAs($root, 'sanctum')
-                ->getJson(route('identity.root.users.tokens.index', $target));
+            Sanctum::actingAs($root, ['users.view']);
+
+            $listing = $this->getJson(route('identity.root.users.tokens.index', $target));
 
             $listing
                 ->assertOk()
