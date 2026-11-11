@@ -20,6 +20,8 @@ final class StoreApiTokenRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'min:1', 'max:255', 'not_regex:/^\\s*$/'],
+            'abilities' => ['sometimes', 'array', 'max:100'],
+            'abilities.*' => ['required', 'string', 'distinct'],
         ];
     }
 }
