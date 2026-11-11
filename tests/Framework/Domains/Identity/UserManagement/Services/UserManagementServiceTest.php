@@ -409,7 +409,18 @@ final class UserManagementServiceTest extends TestCase
     private function createCooperative(
         ?Country $country = null,
     ): Cooperative {
-        $country ??= Country::factory()->create();
+        $country ??= Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Morocco',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
 
         $address = Address::factory()->create([
             'country_id' => $country->id,
