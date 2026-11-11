@@ -8,6 +8,7 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChan
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserApiTokenController;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 
 Route::post(
     '/password/forgot',
@@ -34,7 +35,7 @@ Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])
 
         Route::prefix('root/users/{user}/tokens')
             ->name('root.users.tokens.')
-            ->middleware(['role:super_admin_root', 'abilities:users.view'])
+            ->middleware(['role:super_admin_root', CheckAbilities::class.':users.view'])
             ->group(function (): void {
                 Route::get('/', [UserApiTokenController::class, 'index'])
                     ->name('index');
@@ -48,4 +49,4 @@ Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])
 Route::middleware(['auth:sanctum', EnsureForcedPasswordChangeCompleted::class])->get(
     '/audit/events',
     [AuditEventController::class, 'index'],
-)->middleware('abilities:audit.view')->name('audit.events.index');
+)->middleware(CheckAbilities::class.':audit.view')->name('audit.events.index');
