@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\\Console\\Commands;
+namespace App\Console\Commands;
 
-use App\\Domains\\Identity\\Authentication\\Services\\ApiTokenService;
-use Illuminate\\Console\\Command;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
+use Illuminate\Console\Command;
 
 final class PruneExpiredApiTokens extends Command
 {
