@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 5.3
+- **Version :** 5.4
 - **Date de création :** 8 novembre 2026
 - **Dernière mise à jour :** 11 novembre 2026
 - **Branche de référence :** `feature/Identity`
@@ -115,7 +115,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 - [x] **API-01 — VALIDÉ (11 novembre 2026)** Parcours personnels API/back-office pour tous les rôles, gestion des tokens d'autres utilisateurs réservée à root (liste/métadonnées/révocations), aucune création pour autrui, secret affiché une seule fois, métadonnées/Audit sans secret ni hash, révocation API indépendante des sessions Web. Tests ciblés et validation globale confirmés VERTS par l'utilisateur.
 - [x] **API-02 — VALIDÉ (11 novembre 2026)** Durée fixe de 90 jours pour tous les rôles et tokens, sans personnalisation ni token permanent ; date imposée par le modèle, migration des tokens existants à `created_at + 90 jours`, expiration vérifiée à l'authentification Sanctum, `config('sanctum.expiration')` conservé à `null`. Tests ciblés, suite complète et Pint confirmés VERTS par l'utilisateur.
-- [ ] **API-03** Ajouter le nettoyage périodique des tokens expirés via Laravel Scheduler.
+- [ ] **API-03** Ajouter une purge quotidienne via Laravel Scheduler : suppression physique uniquement lorsque `expires_at` date d'au moins 90 jours ; la révocation anticipée ne raccourcit pas la rétention ; ignorer les tokens sans expiration ; traitement par lots, verrou anti-chevauchement, Audit indépendant sans secret/hash et aucune incidence sur les sessions Web.
 - [ ] **API-04** Limiter les tokens actifs : root 10, super_admin 5, cooperative_admin 5, user 3.
 - [ ] **API-05** Permettre à l'utilisateur de voir le nom du token, sa date de création et sa dernière utilisation ; le secret complet n'est affiché qu'une seule fois.
 - [ ] **API-06** Proposer une sélection explicite de capacités autorisées selon le rôle ; refuser toute capacité excédant les droits métier.
@@ -392,3 +392,6 @@ Le changement ne modifie pas les workflows d'invitation ni le changement volonta
 
 
 | 11 novembre 2026 | 5.3 | API-01 et API-02 validés après confirmation utilisateur de `php artisan test` et `php vendor/bin/pint --test` VERTS. API-01 couvre la gestion personnelle et l'administration root des tokens, le secret à usage unique, l'absence de fuite dans Audit et la séparation sessions/tokens. API-02 fixe l'expiration à 90 jours pour tous les rôles, avec migration des tokens existants et contrôle à l'authentification. API-09 renforcé par tests root multi-rôles/inter-coopératives, révocation globale sans effet sur les sessions Web et absence de secret/hash dans Audit. API-03 à API-06 restent ouverts selon leur périmètre ; API-06 (abilities) reste reporté à une décision dédiée. |
+
+
+| 11 novembre 2026 | 5.4 | Décision API-03 validée : conservation de chaque token jusqu'à 90 jours après `expires_at`, même en cas de révocation anticipée ; purge quotidienne par lots, exclusion des expirations nulles, audit indépendant et aucune incidence sur les sessions Web. Audit du code effectué ; implémentation et tests restent à réaliser. |
