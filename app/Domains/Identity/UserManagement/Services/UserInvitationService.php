@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
@@ -29,6 +30,7 @@ final class UserInvitationService
     public function __construct(
         private readonly AuditService $audit,
         private readonly PasswordHistoryService $passwordHistory,
+        private readonly ApiTokenService $apiTokens,
     ) {}
 
     /**
@@ -347,6 +349,14 @@ final class UserInvitationService
             $user->email_verified_at = now();
             $user->must_change_password = false;
             $user->save();
+
+            $this->apiTokens->revokeForUser(
+                user: $user,
+                actor: $user,
+                reason: 'invitation_accepted_email_verified',
+                eventKey: 'identity.authentication.api_token_revoked',
+                action: 'api_token_revoked',
+            );
 
             $invitation->used_at = now();
             $invitation->save();
