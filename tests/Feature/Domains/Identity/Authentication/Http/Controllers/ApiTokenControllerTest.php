@@ -349,6 +349,8 @@ final class ApiTokenControllerTest extends TestCase
             ->getJson(route('audit.events.index'))
             ->assertForbidden();
 
+        $this->app['auth']->forgetGuards();
+
         $withAbility = $root->createToken('audit-with-ability', ['audit.view']);
         $this->withToken($withAbility->plainTextToken)
             ->getJson(route('audit.events.index'))
