@@ -96,7 +96,7 @@ final class ApiTokenService extends BaseService
 
             $newToken = $lockedOwner->createToken(
                 $name,
-                $abilities,
+                $requestedAbilities,
                 now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
             );
             $token = $newToken->accessToken;
