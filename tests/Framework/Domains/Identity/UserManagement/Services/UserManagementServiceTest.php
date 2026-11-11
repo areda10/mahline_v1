@@ -210,6 +210,44 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_email_role_and_cooperative_scope_changes_revoke_api_tokens(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperativeA = $this->createCooperative();
+        $cooperativeB = $this->createCooperative();
+        $target = $this->createUserWithRole('user', (string) $cooperativeA->getKey());
+
+        $beforeTransfer = $target->createToken('before-transfer');
+        $this->service->updateUserAccount(
+            $root,
+            $target,
+            [
+                'first_name' => $target->first_name,
+                'last_name' => $target->last_name,
+                'email' => 'identity-transfer@example.com',
+                'telephone' => $target->telephone,
+                'cooperative_id' => $cooperativeB->getKey(),
+            ],
+            'user',
+        );
+        self::assertNotNull($beforeTransfer->accessToken->fresh()->revoked_at);
+
+        $beforeRoleChange = $target->fresh()->createToken('before-role-change');
+        $this->service->updateUserAccount(
+            $root,
+            $target->fresh(),
+            [
+                'first_name' => $target->first_name,
+                'last_name' => $target->last_name,
+                'email' => 'identity-transfer@example.com',
+                'telephone' => $target->telephone,
+                'cooperative_id' => $cooperativeB->getKey(),
+            ],
+            'cooperative_admin',
+        );
+        self::assertNotNull($beforeRoleChange->accessToken->fresh()->revoked_at);
+    }
+
     public function test_cooperative_assignment_changes_revoke_existing_api_tokens(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
