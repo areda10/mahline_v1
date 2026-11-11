@@ -264,6 +264,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             // L'événement d'audit appartient à la même transaction.
+            $this->apiTokens->revokeForUser(
+                user: $lockedSuperAdmin,
+                actor: $actor,
+                reason: 'super_admin_cooperative_assignment_changed',
+                eventKey: 'identity.authentication.api_token_revoked',
+                action: 'api_token_revoked',
+            );
+
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_assigned',
                 action: 'assigned',
@@ -322,6 +330,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             // L'événement d'audit appartient à la même transaction.
+            $this->apiTokens->revokeForUser(
+                user: $lockedSuperAdmin,
+                actor: $actor,
+                reason: 'super_admin_cooperative_assignment_changed',
+                eventKey: 'identity.authentication.api_token_revoked',
+                action: 'api_token_revoked',
+            );
+
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_unassigned',
                 action: 'unassigned',
