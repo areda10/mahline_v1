@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.09
+- **Version :** 2.10
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1659,6 +1659,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** A (validation de la recommandation).
 - **Décision validée :** si la conversion vidéo échoue, Media conserve l'original et effectue jusqu'à trois tentatives automatiques. Si elles échouent toutes, l'utilisateur reçoit un message compréhensible et peut demander une nouvelle tentative manuelle.
 - **Portée :** l'original n'est pas supprimé tant qu'une conversion réussie et la lecture du fichier converti n'ont pas été vérifiées. Les nouvelles tentatives manuelles restent soumises aux permissions et aux contrôles de sécurité. Les délais entre tentatives, la détection des échecs et la politique de nettoyage des fichiers temporaires seront définis pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 208 — Conservation temporaire des originaux vidéo
+
+- **Réponse :** B (validation de la recommandation).
+- **Décision validée :** après conversion réussie et vérification effective de la lecture du fichier converti, Media conserve le fichier vidéo original pendant 24 heures, puis le supprime automatiquement.
+- **Portée :** le délai de 24 heures commence uniquement après validation complète de la conversion. Si la conversion ou sa vérification échoue, l'original est conservé et la politique de nouvelle tentative de Q207 continue de s'appliquer. La suppression automatique doit être sécurisée, journalisée et ne pas affecter la vidéo convertie ni ses références. Les modalités techniques de planification, de reprise et de traçabilité seront définies pendant l'audit.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
