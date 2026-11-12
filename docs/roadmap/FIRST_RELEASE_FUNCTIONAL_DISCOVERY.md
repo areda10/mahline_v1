@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.91
+- **Version :** 1.92
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1534,6 +1534,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** Media téléverse plusieurs fichiers simultanément, avec un nombre de téléversements parallèles limité et configurable.
 - **Portée :** la limite de parallélisme est déterminée selon les capacités réelles de l'hébergement et pourra être ajustée après les tests de charge. Elle ne modifie pas le plafond de 20 fichiers par opération. La progression, l'annulation et les erreurs restent suivies individuellement pour chaque fichier.
 - **Statut :** règle fonctionnelle enregistrée ; valeur technique du parallélisme à définir pendant l'audit ; implémentation non commencée.
+
+### Question 190 — Optimisation automatique des images
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** à l'import d'une image JPG, JPEG ou PNG, Media conserve le fichier original et génère automatiquement plusieurs versions optimisées adaptées aux usages (miniature, affichage normal et grand format).
+- **Portée :** les versions dérivées sont générées à partir de l'original, sans le remplacer. Les règles précises de dimensions, qualité, formats de sortie, génération et stockage seront fixées pendant l'audit technique, en tenant compte des capacités de l'hébergement et du quota de la coopérative. L'accès à l'original et aux variantes reste soumis aux mêmes autorisations et règles de visibilité.
+- **Statut :** règle fonctionnelle enregistrée ; paramètres techniques à définir pendant l'audit ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
