@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.68
+- **Version :** 0.69
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.69 — 12 novembre 2026
+- FR-009, Question 70 : décision A — consultation de l'historique complet des incidents réservée au `super_admin_root` ; consultations journalisées.
+
 ### Version 0.68 — 12 novembre 2026
 - FR-009, Question 69 : décision A — conservation permanente de l'historique complet des incidents de notification, sous réserve des exigences légales et de protection des données.
 
@@ -269,6 +272,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** aucune règle automatique uniforme n'est imposée pour cette récidive. Le cas est signalé au `super_admin_root`, qui décide notamment du maintien ou de la nouvelle suspension des notifications, du traitement de l'incident existant ou de sa réouverture, et des éventuelles mesures correctives. La décision, son motif, son auteur, sa date/heure et les changements d'état doivent être journalisés. La récidive ne doit pas être traitée comme une réactivation réussie sans vérification.
   - **Question 69 — conservation de l'historique des incidents de notification :** A — conserver définitivement l'intégralité de l'historique.
   - **Conséquences / contraintes :** l'historique complet doit être conservé sans suppression liée à une échéance prédéfinie : tentatives d'envoi, erreurs et résultats, changements d'adresse ou de destinataire, e-mails de test, vérifications manuelles, décisions de suspension/réactivation/clôture et réouvertures. Les événements doivent rester consultables et traçables, avec accès strictement autorisé et protection contre l'altération. Les règles techniques d'archivage, de stockage et les obligations légales applicables restent à vérifier ; « définitivement » ne dispense pas de respecter les exigences légales de protection et de conservation des données.
+  - **Question 70 — consultation de l'historique complet des incidents :** A — seul le `super_admin_root` peut consulter l'historique complet.
+  - **Conséquences / contraintes :** l'accès à l'historique intégral est strictement réservé au `super_admin_root`. Les autres rôles ne disposent pas d'un accès à cet historique complet, même lorsqu'ils sont responsables de la coopérative ou concernés par l'incident. Les éventuelles notifications opérationnelles qui leur sont adressées restent limitées aux informations nécessaires à leur rôle et ne constituent pas un accès au dossier complet. Les consultations de l'historique doivent elles-mêmes être journalisées.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
