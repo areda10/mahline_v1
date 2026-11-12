@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.11
+- **Version :** 0.12
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres d'annulation par moyen de paiement et annulation indépendante d'une sous-commande ; retours, remboursements et recalcul des frais à cadrer |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible avec procédure de retour ; modalités et coûts à cadrer |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -163,12 +163,14 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 - **Réponse :** règle différenciée selon le moyen de paiement :
   - **Paiement à la livraison (COD) :** A — le client peut annuler tant que la coopérative n'a pas confirmé la commande.
   - **Paiement en ligne (évolution post-release) :** le client peut demander l'annulation pendant la phase de préparation de la commande.
-- **Statut :** PARTIELLEMENT VALIDÉ — les fenêtres d'annulation et l'indépendance des sous-commandes sont définies ; les modalités d'exécution et les autres cas restent à préciser.
+- **Statut :** PARTIELLEMENT VALIDÉ — fenêtres d'annulation, indépendance des sous-commandes et principe de refus du colis après remise au transporteur définis ; modalités de retour et conséquences financières à préciser.
 - **Conséquences / contraintes :**
   - Pour le COD, après confirmation par la coopérative, la fenêtre d'annulation client définie ici est terminée.
   - Pour le paiement en ligne, l'annulation client reste possible pendant la préparation ; il faudra définir précisément le point de fin de cette phase et le traitement d'une demande déjà en cours lorsque la commande change d'étape.
   - Les règles de remboursement, de remboursement partiel pour un panier multi-coopératives, de frais de livraison, de commissions, de libération du stock et de notification restent à cadrer.
-  - Les retours après expédition ou livraison et les cas de colis refusé/non livré ne sont pas encore définis.
+  - Après remise du colis au transporteur, l'annulation de la commande n'est plus possible.
+  - Le client peut toutefois refuser le colis au moment de la livraison ; ce refus déclenche une procédure de retour.
+  - Le déroulement détaillé du retour (transport retour, réception par la coopérative, contrôle du produit, remise en stock éventuelle), les frais à la charge de chaque partie et les conséquences financières restent à définir.
 - **Décision complémentaire — effet de l'annulation dans un panier multi-coopératives :** A — seule la sous-commande visée par l'annulation du client est annulée ; les sous-commandes des autres coopératives continuent normalement.
 - **Conséquences / contraintes complémentaires :**
   - L'annulation est indépendante pour chaque sous-commande, même si elles proviennent d'un panier initial unique.
@@ -200,6 +202,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.12 — 12 novembre 2026
+- Complément de FR-009 : après remise du colis au transporteur, l'annulation n'est plus possible ; le client peut refuser le colis à la livraison, ce qui déclenche une procédure de retour. Les étapes opérationnelles, frais et conséquences financières du retour restent à cadrer.
 
 ### Version 0.11 — 12 novembre 2026
 - Complément de FR-009 : dans un panier multi-coopératives, l'annulation demandée par le client ne concerne que la sous-commande sélectionnée ; les autres sous-commandes continuent normalement. Le recalcul des frais, les remboursements et les notifications restent à cadrer.
