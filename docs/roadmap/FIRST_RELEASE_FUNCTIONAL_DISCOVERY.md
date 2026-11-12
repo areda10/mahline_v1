@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.26
+- **Version :** 1.27
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -669,6 +669,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Cette autorisation concerne les anciennes photos qui ne sont plus utilisées ; elle ne modifie pas les règles de suppression des médias encore référencés.
 - **Périmètre concerné :** domaine Media ; médias de profil et de présentation des coopératives, suppression explicite, autorisations par rôle, isolation multi-coopératives et audit.
 - **Points restant à préciser :** gestion technique des références partagées ou encore actives et traitement d'une éventuelle erreur de suppression.
+
+### Question 125 — Suppression d'une photo encore utilisée (VALIDÉE)
+- **Question :** Si une photo est encore utilisée comme photo principale ou photo de présentation, que doit faire MAHLINE lorsqu'un utilisateur demande sa suppression ?
+- **Choix proposés :**
+  - A. Bloquer la suppression jusqu'à ce qu'une autre photo soit sélectionnée.
+  - B. Demander de choisir une photo de remplacement avant de confirmer la suppression.
+  - C. Autoriser la suppression et retirer automatiquement la photo de son emplacement.
+  - D. Autoriser la suppression uniquement au `super_admin_root`.
+- **Réponse :** C.
+- **Décision :** la suppression d'une photo encore utilisée est autorisée. MAHLINE supprime le média demandé et le retire automatiquement de l'emplacement où il était utilisé, sans imposer au préalable la sélection d'une photo de remplacement.
+- **Conséquences :**
+  - La suppression et le retrait de toutes les associations concernées doivent être cohérents et traçables.
+  - Pour une photo principale de produit, la règle déjà validée à la question 118 s'applique : la première photo restante devient automatiquement la photo principale ; si aucune photo ne reste, le produit ne dispose plus de photo principale.
+  - Pour une photo de profil ou de présentation de coopérative, le média supprimé n'est plus utilisé dans l'emplacement concerné. Le comportement d'affichage en l'absence de photo reste à préciser.
+  - Les contrôles d'autorisation, l'isolation multi-coopératives et la confirmation de suppression restent obligatoires.
+- **Périmètre concerné :** domaine Media ; suppression de médias utilisés, retrait des associations, photos principales de produits, photos de profil et de présentation des coopératives.
+- **Points restant à préciser :** affichage de remplacement lorsqu'une coopérative ne dispose plus de photo de profil ou de présentation ; gestion des références partagées et des échecs partiels de suppression.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
