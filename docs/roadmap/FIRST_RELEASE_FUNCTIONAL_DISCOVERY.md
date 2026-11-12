@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.25
+- **Version :** 1.26
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -651,6 +651,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** le remplacement ne supprime pas automatiquement l'ancien fichier ni son enregistrement média. Les deux médias doivent rester distincts ; la photo actuellement utilisée par la coopérative est identifiée séparément de l'ancienne. Toute suppression ultérieure doit suivre les règles de suppression et d'autorisation déjà validées.
 - **Périmètre concerné :** domaine Media ; médias de profil et de présentation des coopératives, remplacement, association au profil, conservation et suppression explicite.
 - **Points restant à préciser :** éventuelle consultation d'un historique des anciennes photos, durée de conservation, et modalités de suppression explicite selon les références encore actives.
+
+### Question 124 — Rôles autorisés à supprimer une ancienne photo de coopérative (VALIDÉE)
+- **Question :** Lorsqu'une ancienne photo de profil ou de présentation n'est plus utilisée, qui peut demander sa suppression ?
+- **Choix proposés :**
+  - A. Seul le `cooperative_admin` de la coopérative.
+  - B. Le `cooperative_admin` et le `super_admin` responsable de cette coopérative.
+  - C. Le `cooperative_admin`, le `super_admin` responsable et le `super_admin_root`.
+  - D. Seul le `super_admin_root`.
+- **Réponse :** C — les trois rôles peuvent supprimer directement l'ancienne photo.
+- **Décision :** le `cooperative_admin` de la coopérative, le `super_admin` qui lui est affecté et le `super_admin_root` sont tous autorisés à supprimer directement une ancienne photo de profil ou de présentation qui n'est plus utilisée. Aucune validation préalable d'un autre rôle n'est requise.
+- **Conséquences :**
+  - Le `cooperative_admin` agit uniquement sur les médias de sa propre coopérative.
+  - Le `super_admin` agit uniquement sur les médias des coopératives qui lui sont affectées.
+  - Le `super_admin_root` peut agir sur les médias de toutes les coopératives.
+  - Chaque suppression doit respecter les contrôles d'autorisation et d'isolation multi-coopératives, être confirmée selon la règle de confirmation déjà validée et être tracée.
+  - Cette autorisation concerne les anciennes photos qui ne sont plus utilisées ; elle ne modifie pas les règles de suppression des médias encore référencés.
+- **Périmètre concerné :** domaine Media ; médias de profil et de présentation des coopératives, suppression explicite, autorisations par rôle, isolation multi-coopératives et audit.
+- **Points restant à préciser :** gestion technique des références partagées ou encore actives et traitement d'une éventuelle erreur de suppression.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
