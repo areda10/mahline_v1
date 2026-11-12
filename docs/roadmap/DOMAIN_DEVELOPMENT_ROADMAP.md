@@ -1,7 +1,7 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.0
-- **Date :** 11 novembre 2026
+- **Version :** 1.1
+- **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
 - **Nature :** inventaire structurel initial, en lecture seule
@@ -10,6 +10,10 @@
 ## 1. Objet et règles de suivi
 
 Ce document centralise la feuille de route de développement de tous les domaines MAHLINE. Il complète le backlog spécialisé Identity et ne remplace ni les décisions métier validées, ni les documents d'architecture.
+
+**Registre des décisions fonctionnelles du premier release :** [`docs/roadmap/FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md`](FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md). Toutes les questions, réponses validées, conséquences et questions ouvertes concernant le SaaS de gestion + marketplace doivent être consignées dans ce fichier au fil du cadrage.
+
+Le premier objectif produit est désormais défini comme un **SaaS de gestion pour les coopératives + marketplace publique**. Le développement des domaines nécessaires au premier release sera cadré question par question. L'harmonisation approfondie des frontières et le renforcement global des événements transversaux sont prévus dans une phase ultérieure dédiée, après le développement fonctionnel du premier release. Les exigences essentielles de sécurité, d'autorisation, d'isolation des coopératives et d'intégrité restent obligatoires à chaque étape.
 
 Un dossier ou une classe présente ne signifie pas qu'un domaine est terminé. Un domaine ne peut être marqué **VALIDÉ** qu'après :
 1. audit des fichiers réels, appels, dépendances, routes, migrations et permissions ;
@@ -298,6 +302,11 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.1 — 12 novembre 2026
+- Définition du premier objectif produit : SaaS de gestion coopérative + marketplace publique.
+- Ajout du lien vers le registre question/réponse du cadrage fonctionnel : `FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md`.
+- Confirmation du phasage : domaines du premier release d'abord ; harmonisation approfondie des frontières et renforcement transversal des événements dans une phase ultérieure dédiée.
 
 ### Version 1.0 — 11 novembre 2026
 - Création de l'inventaire global des 9 domaines présents et des 6 domaines absents au commit audité.
