@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.87
+- **Version :** 0.88
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -50,16 +50,26 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - La règle de calcul du seuil « Stock limité » et son paramétrage restent à définir.
   - La rupture de stock conserve la règle validée à la question 85 : produit visible, commande bloquée.
 
-### Question 87 — Qui définit le seuil « Stock limité » ? (EN ATTENTE)
+### Question 87 — Qui définit le seuil « Stock limité » ? (VALIDÉ)
 - **Question :** Qui doit pouvoir définir la quantité à partir de laquelle un produit passe de « En stock » à « Stock limité » ?
+- **Réponse :** D — la coopérative définit un seuil individuellement pour chaque produit.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** domaines Inventory, Products et Marketplace.
+- **Conséquences :**
+  - Chaque produit peut avoir son propre seuil de stock limité.
+  - Le seuil est paramétré par la coopérative propriétaire du produit.
+  - La valeur du seuil, son caractère obligatoire ou facultatif et sa valeur par défaut restent à définir.
+
+### Question 88 — Le seuil « Stock limité » doit-il être obligatoire ? (EN ATTENTE)
+- **Question :** Lors de la création d'un produit, comment gérer le seuil individuel « Stock limité » ?
 - **Choix proposés :**
-  - A. Un seuil fixe identique pour tous les produits, défini dans MAHLINE.
-  - B. Le `super_admin_root` définit un seuil global applicable à toutes les coopératives.
-  - C. Chaque coopérative définit un seuil général applicable à tous ses produits.
-  - D. La coopérative définit un seuil individuellement pour chaque produit.
+  - A. Le seuil est obligatoire : la coopérative doit saisir une quantité pour chaque produit.
+  - B. Le seuil est facultatif ; si la coopérative ne le renseigne pas, MAHLINE applique une valeur par défaut de 5 unités.
+  - C. Le seuil est facultatif ; sans seuil défini, le produit affiche « En stock » jusqu'à atteindre zéro.
+  - D. Le seuil est calculé automatiquement par MAHLINE selon les ventes du produit.
 - **Statut :** EN ATTENTE DE RÉPONSE.
-- **Périmètre concerné :** domaines Inventory, Products et Marketplace ; paramétrage du seuil d'alerte/affichage.
-- **Conséquences à préciser après réponse :** autorité de paramétrage, valeur du seuil, valeur par défaut éventuelle et comportement lorsque le stock atteint ce seuil.
+- **Périmètre concerné :** domaines Products et Inventory ; formulaire produit, validation et affichage de disponibilité.
+- **Conséquences à préciser après réponse :** obligation de saisie, valeur par défaut éventuelle, calcul du statut « Stock limité » et règles de modification du seuil.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
