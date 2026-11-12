@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.73
+- **Version :** 1.74
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1401,6 +1401,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** MAHLINE disposera d’une bibliothèque centrale Media, avec classement par module et possibilité de retrouver un même fichier utilisé dans plusieurs modules.
 - **Portée :** un fichier physique est enregistré une seule fois dans Media ; les modules (Produits, Coopératives, Catalogue, Marketplace et futurs modules) peuvent créer leurs propres références vers ce fichier. La suppression d’une référence ne supprime pas les autres références ni le fichier physique tant qu’il reste utilisé.
 - **Règles transversales :** les droits d’accès, la visibilité et les règles de suppression restent contrôlés côté serveur et ne sont pas contournés par la bibliothèque centrale.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 172 — Organisation de la bibliothèque Media
+
+- **Réponse :** A (validation de l’organisation recommandée).
+- **Décision validée :** classement automatique des médias par coopérative, puis par module et type de fichier.
+- **Portée :** aucun dossier personnalisé créé manuellement par les utilisateurs pour le premier release. La bibliothèque centrale permet de retrouver les médias et leurs références selon cette organisation.
+- **Règles d’accès :** l’organisation et les filtres ne donnent aucun droit supplémentaire ; l’isolation entre coopératives et les autorisations par rôle sont vérifiées côté serveur.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
