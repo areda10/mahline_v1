@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.91
+- **Version :** 0.92
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -98,6 +98,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** les quantités affectées à des commandes ou à leur préparation ne doivent pas être présentées comme disponibles à l'achat sur la marketplace. La règle devra être appliquée de façon cohérente lors de l'ajout au panier et de la validation de commande afin d'éviter la survente.
 - **Périmètre concerné :** domaines Products et Inventory, intégration avec Orders/commandes ; calcul du stock disponible, affichage marketplace et contrôle de disponibilité.
 - **Points restant à préciser :** distinguer précisément « réservé » et « en préparation » pour éviter de déduire deux fois une même quantité ; définir à quel événement chaque quantité entre dans ces catégories, quand elle en sort, et comment les annulations, refus, retours et incidents ajustent les quantités.
+ 
+### Question 91 — À quel moment réserver le stock pour une commande COD ? (VALIDÉE)
+- **Question :** À quel événement la quantité commandée doit-elle être réservée pour une commande avec paiement à la livraison (COD) ?
+- **Choix proposés :**
+  - A. Dès que le client valide sa commande.
+  - B. Lorsque la coopérative confirme la commande.
+  - C. Lorsque la coopérative commence la préparation.
+  - D. Lorsque le transporteur récupère le colis.
+- **Réponse :** B.
+- **Décision :** pour une commande COD, la quantité est réservée au moment où la coopérative confirme la commande. Cette réponse confirme la règle déjà définie à FR-007.
+- **Conséquences :** avant confirmation par la coopérative, la commande client ne déclenche pas de réservation ferme selon cette règle. À partir de la confirmation, la quantité doit être exclue du stock disponible à l'achat et suivie dans le cycle de préparation.
+- **Périmètre concerné :** domaines Orders et Inventory ; confirmation de commande, réservation de stock et calcul du stock disponible.
+- **Points restant à préciser :** traitement des commandes en attente avant confirmation, durée de réservation après confirmation, libération en cas d'annulation/refus et distinction technique entre réservation et quantité en préparation.
  
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
