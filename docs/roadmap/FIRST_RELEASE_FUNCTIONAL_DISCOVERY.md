@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.34
+- **Version :** 0.35
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par le super_admin responsable de la coopérative ; si conflit d'intérêts ou contestation par ce responsable, transfert prioritaire au super_admin_root, puis à défaut à un autre super_admin habilité et non impliqué ; le client peut contester et fournir des preuves ; réexamen par le super_admin_root en priorité, ou à défaut par un autre super_admin habilité et non impliqué ; délais, motifs, nombre de recours et effets de la contestation à définir |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par le super_admin responsable de la coopérative ; si conflit d'intérêts ou contestation par ce responsable, transfert prioritaire au super_admin_root, puis à défaut à un autre super_admin habilité et non impliqué ; le client peut contester et fournir des preuves ; réexamen par le super_admin_root en priorité, ou à défaut par un autre super_admin habilité et non impliqué ; le super_admin_root décide au cas par cas de suspendre ou non l'application de la décision initiale pendant le réexamen ; critères de suspension, délais, motifs, nombre de recours et effets détaillés à définir |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -237,6 +237,13 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - L'identité du réviseur, le motif de recours à un remplaçant, les éléments examinés, la décision de réexamen et sa justification doivent être historisés et rattachés au litige initial.
   - Les critères d'indisponibilité, les délais de recours et de traitement, les motifs recevables, le nombre de recours et les effets suspensifs ou non de la contestation restent à définir.
 
+- **Décision complémentaire — effet de la contestation sur l'exécution de la décision initiale (Question 36) :** C — le `super_admin_root` décide au cas par cas si l'application de la décision initiale doit être suspendue pendant le réexamen.
+- **Conséquences / contraintes :**
+  - Le dépôt d'une contestation ne suspend pas automatiquement la décision initiale.
+  - Une décision explicite du `super_admin_root` est nécessaire pour suspendre son application pendant le réexamen.
+  - La décision de suspendre ou de maintenir l'exécution, son motif, son auteur, sa date et sa portée doivent être historisés et rattachés au litige et à la contestation.
+  - Les critères d'octroi ou de refus de la suspension, les mesures provisoires éventuelles, les délais de réexamen et les conséquences sur les flux financiers, les stocks ou les retours restent à définir.
+
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
   - le transporteur photographie le colis au moment de sa prise en charge.
@@ -290,6 +297,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.35 — 12 novembre 2026
+- Complément de FR-009 — Question 36 : la contestation du client ne suspend pas automatiquement la décision initiale. Le `super_admin_root` décide au cas par cas de suspendre ou non son application pendant le réexamen. L'auteur, le motif, la date et la portée de cette décision doivent être historisés ; les critères de suspension et les conséquences opérationnelles restent à définir.
 
 ### Version 0.34 — 12 novembre 2026
 - Complément de FR-009 — Question 35 : la contestation du client est réexaminée en priorité par le `super_admin_root` ; s'il est indisponible, un autre `super_admin` habilité sur la coopérative et non impliqué dans le litige ni dans la décision initiale peut intervenir. Le réviseur, le motif de remplacement, les éléments examinés et la décision motivée doivent être historisés. Critères d'indisponibilité, délais, motifs recevables, nombre de recours et effets de la contestation restent à définir.
