@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.28
+- **Version :** 0.29
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; acteur habilité et procédure à définir |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par un super_admin habilité sur la coopérative concernée ; modalités d'habilitation et procédure à définir |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -195,6 +195,12 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - Le dossier doit conserver son statut de litige et réunir les preuves, événements, observations et positions des parties.
   - Aucune attribution définitive de responsabilité ni conséquence financière liée au dommage ne doit être appliquée avant la décision humaine.
   - L'identité de l'acteur humain habilité à examiner et trancher le litige, les critères de décision, les délais de traitement et les éventuelles voies de contestation restent à définir.
+- **Décision complémentaire — autorité habilitée à trancher un litige (Question 30) :** B — un `super_admin` habilité à gérer la coopérative concernée prend la décision finale.
+- **Conséquences / contraintes :**
+  - La décision finale relève d'un `super_admin` disposant explicitement de l'habilitation nécessaire sur la coopérative concernée.
+  - L'accès au dossier de litige et les actions de décision doivent être limités aux `super_admin` habilités ; un `super_admin` non habilité ne doit pas pouvoir consulter ou trancher ce dossier.
+  - La décision, son auteur, sa date, son motif et les preuves examinées doivent être conservés dans l'historique traçable du litige.
+  - Les critères de désignation/habilitation, la gestion des conflits d'intérêts, les délais, les contestations et les cas où aucun `super_admin` n'est habilité restent à définir.
 
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
@@ -249,6 +255,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.29 — 12 novembre 2026
+- Complément de FR-009 — Question 30 : la décision finale sur un litige relève d'un `super_admin` habilité à gérer la coopérative concernée. L'accès au dossier et le pouvoir de décision doivent être limités à cette habilitation et la décision doit être historisée ; les règles d'habilitation, conflits d'intérêts, délais et contestations restent à préciser.
 
 ### Version 0.28 — 12 novembre 2026
 - Complément de FR-009 — Question 29 : en cas de désaccord entre la coopérative et le transporteur sur la responsabilité d'un dommage, le dossier est placé en litige et nécessite une intervention humaine avant toute décision finale. MAHLINE ne tranche pas automatiquement ; l'acteur habilité à décider et la procédure restent à définir.
