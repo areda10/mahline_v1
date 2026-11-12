@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.3
+- **Version :** 0.4
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -83,6 +83,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - La grille réelle sera fournie ultérieurement ; aucune valeur manquante ne doit être inventée.
   - Il reste à décider comment calculer le total lorsque plusieurs coopératives expédient depuis des villes différentes dans le cadre d'un panier unique.
 
+### FR-006 — Calcul des frais pour un panier multi-coopératives
+
+- **Question :** Comment calculer les frais de livraison lorsque les produits proviennent de plusieurs coopératives expédiant depuis des villes différentes ?
+- **Réponse :** A — pour le premier release, calculer séparément les frais de chaque expédition (ville de départ de chaque coopérative vers la ville du client), puis additionner les frais pour obtenir le total de livraison du panier.
+- **Évolution prévue :** Cette règle pourra changer ultérieurement ; elle ne doit pas être considérée comme une règle métier immuable.
+- **Statut :** VALIDÉ pour le premier release.
+- **Conséquences / contraintes :**
+  - Chaque sous-commande coopérative porte les informations de son expédition et les frais correspondants.
+  - Le total des frais de livraison du panier est la somme des frais de ses expéditions.
+  - Le calcul doit rester configurable/évolutif afin de permettre une autre règle ou un autre mode de tarification sans reconstruire le parcours de commande.
+  - La grille tarifaire réelle des transporteurs reste attendue ; les exemples de FR-005 ne constituent pas une grille définitive.
+
 ## 3. Questions ouvertes
 
 Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours métier. Une question n'est considérée validée que lorsque la réponse de l'utilisateur est explicite.
@@ -90,17 +102,18 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | ID | Sujet | Statut |
 |---|---|---|
 | FR-004 | Moyens de paiement du premier release | VALIDÉ — paiement à la livraison ; paiement en ligne après le release |
-| FR-005 | Frais de livraison selon la grille trajet-ville des transporteurs | PRINCIPE VALIDÉ — grille réelle attendue ; règle multi-coopératives à préciser |
-| FR-006 | Gestion des stocks et réservation lors du panier/paiement | À poser |
-| FR-007 | Traitement et transitions de statut des commandes coopératives | À poser |
-| FR-008 | Annulation, retour et remboursement | À poser |
-| FR-009 | Factures, reçus et documents client/coopérative | À poser |
-| FR-010 | Commissions et reversements aux coopératives | À poser |
-| FR-011 | Inscription et espace personnel client | À poser |
-| FR-012 | Publication et visibilité des coopératives/produits | À poser |
-| FR-013 | Livraison nationale et internationale au premier release | À poser |
-| FR-014 | Abonnements SaaS, plans, quotas et renouvellement | À poser |
-| FR-015 | Notifications et communications indispensables au lancement | À poser |
+| FR-005 | Frais de livraison selon la grille trajet-ville des transporteurs | PRINCIPE VALIDÉ — grille réelle attendue |
+| FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
+| FR-007 | Gestion des stocks et réservation lors du panier/paiement | À poser |
+| FR-008 | Traitement et transitions de statut des commandes coopératives | À poser |
+| FR-009 | Annulation, retour et remboursement | À poser |
+| FR-010 | Factures, reçus et documents client/coopérative | À poser |
+| FR-011 | Commissions et reversements aux coopératives | À poser |
+| FR-012 | Inscription et espace personnel client | À poser |
+| FR-013 | Publication et visibilité des coopératives/produits | À poser |
+| FR-014 | Livraison nationale et internationale au premier release | À poser |
+| FR-015 | Abonnements SaaS, plans, quotas et renouvellement | À poser |
+| FR-016 | Notifications et communications indispensables au lancement | À poser |
 
 Cette liste est indicative et sera complétée selon les réponses et les parcours identifiés.
 
@@ -127,6 +140,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.4 — 12 novembre 2026
+- Enregistrement de FR-006 : au premier release, additionner les frais calculés pour chaque expédition de coopérative vers la ville du client ; règle explicitement évolutive.
 
 ### Version 0.3 — 12 novembre 2026
 - Enregistrement de FR-005 : principe de tarification par trajet entre ville de départ et ville de destination ; exemples indicatifs Casablanca–Casablanca (30 DH), Casablanca–Rabat (40 DH), Casablanca–Tanger (70 DH). Grille réelle à fournir ultérieurement ; application aux expéditions multi-coopératives encore à préciser.
