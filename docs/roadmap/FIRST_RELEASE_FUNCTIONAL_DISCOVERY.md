@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.13
+- **Version :** 2.14
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1687,6 +1687,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** A (validation de la recommandation).
 - **Décision validée :** Media fournit une interface dédiée, accessible uniquement au super_admin_root, pour consulter et gérer les fichiers mis en quarantaine.
 - **Portée :** l'interface présente au minimum le nom du fichier, la coopérative concernée, la date de détection et le motif de mise en quarantaine. Le super_admin_root peut, selon les règles déjà validées, demander une nouvelle analyse ou demander la suppression définitive après confirmation. Les fichiers restent inaccessibles tant qu'ils ne sont pas explicitement libérés après une analyse positive. L'accès à l'interface et chaque action sont contrôlés côté serveur et journalisés. Les détails complémentaires de présentation et de conservation seront vérifiés pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 212 — Cohérence des sauvegardes et suppressions Media
+
+- **Réponse :** A (validation de la recommandation).
+- **Décision validée :** les sauvegardes doivent préserver de manière cohérente les fichiers Media (originaux et variantes nécessaires) ainsi que leurs références et métadonnées associées. Une suppression définitive validée ne doit pas être annulée par une restauration ordinaire.
+- **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
