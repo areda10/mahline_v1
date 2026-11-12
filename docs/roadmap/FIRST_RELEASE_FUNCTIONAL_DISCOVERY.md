@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.13
+- **Version :** 1.14
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -468,6 +468,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaines Media, Cooperatives et Identity ; autorisations, rattachement des médias et isolation multi-coopératives.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 - **Points restant à préciser :** règles exactes d'intervention du `super_admin_root`, traitement des médias partagés entre domaines, et éventuelles permissions granulaires de téléversement/suppression.
+
+### Question 112 — Droits globaux du super_admin_root sur les médias (VALIDÉE)
+- **Question :** Le `super_admin_root` doit-il avoir accès aux médias de toutes les coopératives ?
+- **Choix proposés :**
+  - A. Oui, accès complet : ajouter, consulter, remplacer et supprimer.
+  - B. Consultation uniquement.
+  - C. Accès complet, mais suppression soumise à une confirmation avec motif obligatoire.
+  - D. Accès complet uniquement en cas d'intervention nécessaire.
+- **Réponse :** A.
+- **Décision :** le `super_admin_root` dispose d'un accès complet aux médias de toutes les coopératives : ajout, consultation, remplacement et suppression.
+- **Conséquences :**
+  - Les opérations du `super_admin_root` doivent rester authentifiées, autorisées et journalisées selon les règles de sécurité et d'audit de MAHLINE.
+  - Cet accès global ne modifie pas les limites de périmètre du `super_admin` et du `cooperative_admin` définies à la question 111.
+  - Les opérations doivent préserver l'intégrité des fichiers et les références utilisées par les domaines métier.
+- **Périmètre concerné :** domaines Media, Cooperatives, Identity et Audit ; autorisations globales, gestion des fichiers et traçabilité.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+- **Points restant à préciser :** éventuelles confirmations ou motifs obligatoires pour certaines suppressions sensibles, ainsi que les règles de conservation et de suppression physique.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
