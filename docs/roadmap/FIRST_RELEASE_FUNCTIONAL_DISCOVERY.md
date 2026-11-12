@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.30
+- **Version :** 1.31
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -738,6 +738,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
 - **Périmètre concerné :** domaine Media ; suppression des métadonnées et associations, stockage physique, gestion des erreurs et interface utilisateur.
 - **Points restant à préciser :** modalités techniques de conservation cohérente de l'état et de signalement de l'erreur pendant l'opération de suppression.
+
+### Question 129 — Traçabilité des échecs de suppression (VALIDÉE)
+- **Question :** Lorsqu'une suppression physique échoue, quelle trace MAHLINE doit-il conserver et quelle information présenter à l'utilisateur ?
+- **Choix proposés :**
+  - A. Enregistrer l'échec dans le journal d'audit, consultable uniquement par `super_admin_root`.
+  - B. Enregistrer l'erreur uniquement dans les journaux techniques internes.
+  - C. Enregistrer l'échec dans les deux : journal d'audit et journaux techniques.
+  - D. Ne conserver aucune trace ; afficher simplement un message à l'utilisateur.
+- **Réponse :** A, avec affichage d'un simple message à l'utilisateur.
+- **Décision :** chaque échec de suppression physique est enregistré dans le journal d'audit, dont la consultation est réservée au `super_admin_root`. L'utilisateur reçoit uniquement un message simple l'informant que la suppression a échoué et qu'il peut réessayer.
+- **Conséquences :**
+  - L'événement d'échec est traçable dans le journal d'audit et accessible uniquement au `super_admin_root`.
+  - L'interface ne présente pas à l'utilisateur les détails techniques de l'erreur ; elle affiche un message simple et compréhensible.
+  - Cette décision ne prévoit pas l'enregistrement supplémentaire dans les journaux techniques internes.
+  - Le média reste visible et ses références sont conservées conformément à la décision de la question 128, jusqu'à une nouvelle tentative réussie.
+- **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
+- **Périmètre concerné :** domaine Media ; journal d'audit, autorisations de consultation, gestion des erreurs de stockage et messages utilisateur.
+- **Points restant à préciser :** contenu exact de l'événement d'audit et formulation du message utilisateur lors de la conception technique et UX.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
