@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.24
+- **Version :** 1.25
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -638,6 +638,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Cooperatives, Audit.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points à vérifier :** confirmation que cette règle par défaut s'applique aux deux catégories (profil et présentation) ; comportement lors du remplacement d'une photo existante et des imports multiples.
+
+### Question 123 — Conservation de l’ancienne photo lors du remplacement (VALIDÉE)
+- **Question :** Lorsqu'une coopérative remplace une photo de profil ou de présentation, que doit-il se passer avec l'ancienne photo ?
+- **Choix proposés :**
+  - A. Elle est supprimée immédiatement après le remplacement.
+  - B. Elle est conservée pendant 30 jours.
+  - C. Elle est conservée dans l'historique et reste consultable par les personnes autorisées.
+  - D. Le remplacement crée un nouveau média ; l'ancienne photo reste inchangée jusqu'à sa suppression explicite.
+- **Réponse :** D.
+- **Décision :** le remplacement d'une photo de profil ou de présentation crée un nouveau média. L'ancienne photo reste inchangée et conservée tant qu'une suppression explicite n'a pas été demandée.
+- **Conséquences :** le remplacement ne supprime pas automatiquement l'ancien fichier ni son enregistrement média. Les deux médias doivent rester distincts ; la photo actuellement utilisée par la coopérative est identifiée séparément de l'ancienne. Toute suppression ultérieure doit suivre les règles de suppression et d'autorisation déjà validées.
+- **Périmètre concerné :** domaine Media ; médias de profil et de présentation des coopératives, remplacement, association au profil, conservation et suppression explicite.
+- **Points restant à préciser :** éventuelle consultation d'un historique des anciennes photos, durée de conservation, et modalités de suppression explicite selon les références encore actives.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
