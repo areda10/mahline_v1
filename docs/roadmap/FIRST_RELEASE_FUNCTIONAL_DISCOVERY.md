@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.81
+- **Version :** 0.82
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -20,6 +20,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 ### Version 0.81 — 12 novembre 2026
 - Complément de FR-009 — Question 82 : le `super_admin_root` décide au cas par cas s'il faut conserver l'historique des modifications apportées à un export. La décision, son motif et les éventuelles traces conservées doivent être documentés ; les règles de journalisation détaillées restent à cadrer.
 - Ajustement de méthode demandé : les prochaines questions doivent être directement orientées vers les fonctionnalités concrètes nécessaires au premier release et vers le développement des domaines MAHLINE. Prioriser les parcours utilisateurs, règles métier, écrans/actions, données, statuts, permissions et cas d'erreur réellement nécessaires au lancement ; distinguer explicitement le périmètre premier release des évolutions ultérieures.
+
+### Question 83 — Publication d'un produit sur la marketplace (EN ATTENTE)
+- **Question :** Lorsqu'une coopérative crée ou modifie un produit, à quel moment ce produit doit-il devenir visible et achetable sur la marketplace ?
+- **Choix proposés :**
+  - A. Automatiquement dès que la coopérative enregistre le produit.
+  - B. Uniquement lorsque la coopérative le publie explicitement.
+  - C. Après validation par le `super_admin` qui prend en charge la coopérative.
+  - D. Après validation par le `super_admin_root`.
+- **Statut :** EN ATTENTE DE RÉPONSE.
+- **Périmètre concerné :** domaines Products, Catalog et Cooperatives ; visibilité publique, publication et autorisations.
+- **Conséquences à préciser après réponse :** états brouillon/publié, effet des modifications, suspension et retrait de publication, contrôles obligatoires avant mise en vente.
 
 ## 2. Décisions fonctionnelles validées
 
