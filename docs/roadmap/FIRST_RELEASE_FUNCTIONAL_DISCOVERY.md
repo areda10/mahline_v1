@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.00
+- **Version :** 1.01
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -215,6 +215,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** l'action d'annulation exige un motif obligatoire et doit être attribuée et horodatée. L'événement initial reste conservé dans l'historique ; la réservation de stock est maintenue conformément à la question 97.
 - **Périmètre concerné :** domaines Identity, Cooperatives, Orders et Inventory ; autorisations, correction de workflow, historique et réservation de stock.
 - **Points restant à préciser :** définition exacte du « responsable de la coopérative », traitement d'un désaccord entre ce responsable et le `super_admin`, et permissions en cas de remplacement temporaire du responsable.
+
+### Question 100 — Arbitrage en cas de désaccord sur l'annulation de préparation (VALIDÉE)
+- **Question :** Que faire si le responsable de la coopérative et le `super_admin` chargé de cette coopérative ne sont pas d'accord sur l'annulation d'un début de préparation erroné ?
+- **Choix proposés :**
+  - A. Le responsable de la coopérative a le dernier mot.
+  - B. Le `super_admin` chargé de la coopérative a le dernier mot.
+  - C. Le `super_admin_root` tranche.
+  - D. L'annulation est bloquée jusqu'à une décision commune.
+- **Réponse :** A.
+- **Décision :** en cas de désaccord entre le responsable de la coopérative et le `super_admin` chargé de celle-ci, le responsable de la coopérative a le dernier mot sur l'annulation du début de préparation erroné.
+- **Conséquences :** l'application doit respecter cette priorité dans le contrôle d'autorisation et conserver une trace de la décision et de son auteur. Le motif obligatoire reste exigé.
+- **Périmètre concerné :** domaines Cooperatives, Identity, Orders et Inventory ; arbitrage des autorisations et correction du workflow de préparation.
+- **Points restant à préciser :** identification du responsable habilité en cas de plusieurs responsables, délégation ou absence temporaire, et procédure de contestation exceptionnelle.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
