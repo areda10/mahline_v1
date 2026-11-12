@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.27
+- **Version :** 1.28
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -686,6 +686,22 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les contrôles d'autorisation, l'isolation multi-coopératives et la confirmation de suppression restent obligatoires.
 - **Périmètre concerné :** domaine Media ; suppression de médias utilisés, retrait des associations, photos principales de produits, photos de profil et de présentation des coopératives.
 - **Points restant à préciser :** affichage de remplacement lorsqu'une coopérative ne dispose plus de photo de profil ou de présentation ; gestion des références partagées et des échecs partiels de suppression.
+
+### Question 126 — Affichage après suppression de la photo de coopérative (VALIDÉE)
+- **Question :** Lorsqu'une coopérative supprime sa photo de profil ou de présentation sans en choisir une autre, que doit afficher MAHLINE ?
+- **Choix proposés :**
+  - A. Une image générique par défaut de MAHLINE.
+  - B. Aucun emplacement photo : la zone reste vide.
+  - C. La dernière ancienne photo conservée.
+  - D. Un message invitant la coopérative à ajouter une nouvelle photo.
+- **Réponse :** D.
+- **Décision :** lorsqu'une coopérative ne dispose plus de photo de profil ou de présentation après une suppression, MAHLINE affiche un message invitant la coopérative à ajouter une nouvelle photo. Aucune ancienne photo supprimée n'est réaffichée automatiquement.
+- **Conséquences :**
+  - L'interface doit distinguer l'absence de photo de profil de l'absence de photo de présentation et proposer l'action d'ajout correspondante.
+  - Le message d'invitation ne rend pas la photo obligatoire et ne bloque pas les autres fonctions de la coopérative, sauf règle métier distincte à définir.
+  - Les règles de visibilité publique/privée déjà validées à la question 121 et la visibilité publique par défaut des nouvelles photos à la question 122 restent applicables.
+- **Périmètre concerné :** domaine Media ; interface de gestion des photos de profil et de présentation des coopératives, état sans photo et ajout d'un nouveau média.
+- **Points restant à préciser :** texte exact du message, affichage côté marketplace et éventuelle image de secours purement visuelle qui ne serait pas un média de la coopérative.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
