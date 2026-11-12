@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.51
+- **Version :** 1.52
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1105,6 +1105,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — actualisation du compteur au rechargement de la page uniquement.
 - **Périmètre concerné :** domaine Media ; centre de notifications et badge global.
 - **Points restant à préciser :** aucun pour la fréquence d’actualisation du compteur.
+ 
+### Question 150 — Ordre d’affichage des notifications (VALIDÉE)
+- **Question :** Dans le centre de notifications, dans quel ordre afficher les notifications ?
+- **Choix proposés :**
+  - A. Les plus récentes en premier.
+  - B. Les plus anciennes en premier.
+  - C. Les notifications non lues d’abord, puis les notifications lues, avec les plus récentes en premier dans chaque groupe.
+  - D. Les notifications importantes d’abord, puis les autres.
+- **Réponse :** A.
+- **Décision :** afficher les notifications par ordre chronologique décroissant, avec les plus récentes en premier.
+- **Conséquences :**
+  - L’ordre d’affichage repose sur la date de création/réception de la notification.
+  - Le statut lu/non lu ne modifie pas la priorité de tri.
+  - La règle s’applique au centre de notifications de chaque utilisateur, dans le respect des règles d’accès et de visibilité.
+- **Statut :** VALIDÉ — notifications les plus récentes en premier.
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** filtres et regroupements éventuels du centre de notifications.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
