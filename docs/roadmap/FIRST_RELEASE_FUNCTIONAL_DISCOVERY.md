@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.17
+- **Version :** 1.18
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -534,6 +534,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Products, Cooperatives, Audit.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points ouverts :** nombre maximal de photos par produit, ordre d’affichage, désignation d’une photo principale, gestion d’un média réutilisé par plusieurs éléments.
+
+### Question 116 — Nombre maximal de photos par produit
+
+- **Question :** Combien de photos un produit peut-il avoir au maximum ?
+- **Options proposées :**
+  - A. 3 photos.
+  - B. 5 photos.
+  - C. 10 photos.
+  - D. Nombre illimité, dans la limite du stockage autorisé.
+- **Réponse utilisateur :** C.
+- **Décision fonctionnelle :** Un produit peut être associé à un maximum de 10 photos.
+- **Conséquences :** Le contrôle de cette limite doit être appliqué côté serveur, y compris lors des ajouts multiples et des associations concurrentes. Les remplacements qui créent un nouveau média doivent respecter la limite de 10 photos associées au produit. Les règles de suppression et de réassociation restent celles définies dans les questions précédentes.
+- **Domaines concernés :** Media, Products, Cooperatives.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points ouverts :** ordre d’affichage et désignation de la photo principale.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
