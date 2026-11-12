@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.04
+- **Version :** 2.05
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1624,6 +1624,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** tout fichier détecté comme malveillant reste en quarantaine. Le super_admin_root reçoit une notification et peut demander sa suppression définitive après une confirmation explicite.
 - **Portée :** le fichier en quarantaine demeure inaccessible aux utilisateurs et aux modules, y compris pour l'aperçu, le téléchargement, l'association et la diffusion. La suppression est réservée au super_admin_root, contrôlée côté serveur et journalisée. La suppression physique suit les contrôles de références et les règles de suppression Media déjà validées. Aucun fichier n'est supprimé automatiquement à la seule suite d'une détection antivirus.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 203 — Traitement d'un faux positif antivirus
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** le super_admin_root peut demander une nouvelle analyse d'un fichier en quarantaine. Si cette nouvelle analyse conclut que le fichier est sain, sa libération de quarantaine nécessite encore la validation explicite du super_admin_root.
+- **Portée :** le fichier reste inaccessible pendant la nouvelle analyse et jusqu'à sa libération validée. Une nouvelle analyse qui détecte encore une menace maintient le fichier en quarantaine. La demande, les résultats et la décision de libération sont journalisés ; les contrôles d'accès et la notification des incidents restent applicables. Les modalités de seconde analyse seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
