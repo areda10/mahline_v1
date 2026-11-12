@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.80
+- **Version :** 1.81
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1453,6 +1453,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** détecter les fichiers strictement identiques à partir de leur contenu (empreinte/hash), puis proposer à l’utilisateur autorisé de réutiliser le média existant ou de conserver un nouveau fichier.
 - **Règles d’accès :** la détection et la proposition de réutilisation ne doivent pas révéler l’existence ni les métadonnées d’un média auquel l’utilisateur n’a pas accès ; la réutilisation respecte les autorisations, la visibilité et l’isolation des coopératives.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 179 — Matrice des autorisations Media
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** les permissions Media sont granulaires et indépendantes par action : ajout, consultation, modification des métadonnées, téléchargement, suppression et association/dissociation d’un média. Elles sont attribuées selon le rôle et le module concernés.
+- **Règles d’accès :** chaque action vérifie côté serveur la permission effective, le périmètre de coopérative et les règles métier du module ; `super_admin_root` agit dans toutes les coopératives, `super_admin` dans celles qui lui sont assignées, `cooperative_admin` dans sa propre coopérative et `user` uniquement selon les permissions qui lui sont accordées. Aucune permission Media ne contourne les Policies/Gates ni l’isolation des coopératives.
+- **Précision à établir :** la matrice détaillée rôle × module × action sera définie à partir des permissions existantes de MAHLINE lors du cadrage fonctionnel et vérifiée à l’audit technique ; aucune permission non validée n’est présumée accordée.
+- **Statut :** principe fonctionnel enregistré ; matrice détaillée à établir ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
