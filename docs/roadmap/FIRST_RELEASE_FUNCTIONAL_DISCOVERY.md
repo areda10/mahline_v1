@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.08
+- **Version :** 1.09
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -343,6 +343,32 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Choisir le format standard de sortie et le mécanisme de conversion.
 - Encadrer la conversion (ressources, durée, stockage, échecs, conservation éventuelle de l'original) et sécuriser le traitement des fichiers.
 - La limite de taille de 20 Mo par vidéo reste applicable, conformément à la Q105.
+
+**Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de vidéos.
+
+**Statut :** Décision fonctionnelle enregistrée ; détails techniques à auditer avant implémentation.
+
+### Question 107 — Choix du format standard de sortie vidéo (VALIDÉE)
+
+**Question :** Quel format standard utiliser après conversion ?
+
+**Options proposées :**
+- A. MP4 (H.264), pour une compatibilité maximale.
+- B. WebM (VP9), pour optimiser la diffusion web.
+- C. MP4 (H.264) et WebM (VP9), avec les deux versions générées.
+- D. Laisser le système choisir automatiquement le format optimal.
+
+**Réponse retenue :** D.
+
+**Décision fonctionnelle :**
+- Le système choisit automatiquement le format de sortie adapté à la lecture et à la diffusion.
+- Le choix du format et des paramètres de conversion est une décision technique à établir lors de l'audit.
+
+**Conséquences / règles à prévoir :**
+- Garantir une lecture compatible avec les navigateurs et appareils ciblés.
+- Définir les critères de sélection du format, la qualité, la résolution et les paramètres de compression.
+- Prévoir un comportement de repli si la conversion échoue ou si le format choisi n'est pas pris en charge.
+- La limite de 20 Mo par vidéo à l'entrée reste applicable (Q105).
 
 **Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de vidéos.
 
