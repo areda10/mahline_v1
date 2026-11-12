@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.04
+- **Version :** 1.05
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -268,6 +268,32 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** la coopérative conserve un seul `cooperative_admin`, qui devient son responsable principal. Les modalités de transfert des accès, de révocation de l'ancien compte et de traçabilité de la désignation restent à préciser.
 - **Périmètre concerné :** Identity, Cooperatives, gestion des utilisateurs et autorisations.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 104 — Types de fichiers acceptés par Media au premier release (VALIDÉE)
+
+**Question :** Quels types de fichiers le domaine Media doit-il gérer au premier release ?
+
+**Options proposées :**
+- A. Images uniquement : JPG, PNG, WebP.
+- B. Images et documents : PDF, DOC, DOCX, XLS, XLSX.
+- C. Images, documents et vidéos.
+- D. Tous les types de fichiers, avec restrictions de sécurité selon leur usage.
+
+**Réponse retenue :** Images JPG, JPEG et PNG ; documents PDF uniquement.
+
+**Décision fonctionnelle :**
+- Images autorisées : JPG, JPEG et PNG.
+- Documents autorisés : PDF uniquement.
+- Les formats WebP, DOC, DOCX, XLS, XLSX et les vidéos ne sont pas inclus dans le périmètre du premier release.
+
+**Conséquences / règles à prévoir :**
+- La validation des extensions doit être complétée par une vérification réelle du type MIME et du contenu du fichier.
+- Définir des limites de taille, des règles de stockage et des contrôles de sécurité lors de l'audit technique.
+- Les usages autorisés (produits, coopératives, catégories, etc.) et les règles d'accès restent à préciser dans les questions suivantes.
+
+**Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de fichiers.
+
+**Statut :** Décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
