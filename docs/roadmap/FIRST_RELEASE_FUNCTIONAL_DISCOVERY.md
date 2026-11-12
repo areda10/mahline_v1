@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.38
+- **Version :** 1.39
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -883,6 +883,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — règle de réinitialisation enregistrée.
 - **Périmètre concerné :** domaine Media ; suppression physique, compteur d'échecs et blocage progressif.
 - **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour la réinitialisation.
+
+### Question 137 — Notification du super_admin_root après un blocage de 60 minutes (VALIDÉE)
+- **Question :** Lorsqu'un média subit plusieurs échecs de suppression et atteint le blocage de 60 minutes, faut-il notifier le `super_admin_root` ?
+- **Choix proposés :**
+  - A. Oui, notification automatique dès le premier blocage de 60 minutes.
+  - B. Oui, mais uniquement après plusieurs blocages de 60 minutes.
+  - C. Non, les événements restent uniquement dans le journal d'audit.
+  - D. Oui, notification à chaque échec, quel que soit le délai.
+- **Réponse :** A.
+- **Décision :** une notification automatique est envoyée au `super_admin_root` dès qu'un média atteint pour la première fois un blocage de 60 minutes à la suite d'échecs répétés de suppression physique.
+- **Conséquences :**
+  - Le déclencheur de notification est le premier passage au palier de blocage de 60 minutes.
+  - Les échecs et blocages restent consignés dans le journal d'audit accessible uniquement au `super_admin_root`.
+  - Cette notification ne transforme pas le blocage temporaire en blocage définitif et ne modifie pas les autorisations de suppression.
+- **Statut :** VALIDÉ — notification automatique enregistrée.
+- **Périmètre concerné :** domaine Media ; suppression physique, blocage progressif et notification administrative.
+- **Points restant à préciser :** canal de notification et contenu exact du message à définir lors du cadrage des notifications et de l'UX.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
