@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.40
+- **Version :** 0.41
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -274,6 +274,14 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - L'événement de début du réexamen, la création de la notification interne, la tentative d'e-mail, son résultat et leurs horodatages doivent être traçables.
   - Le contenu exact du message, les règles de conservation des échecs d'envoi et les éventuelles notifications complémentaires restent à préciser.
 
+- **Décision complémentaire — événement marquant le début du réexamen (Question 42) :** A — le réexamen commence dès que le responsable ouvre le dossier du litige.
+- **Conséquences / contraintes :**
+  - L'ouverture du dossier par le responsable désigné constitue l'événement officiel de début du réexamen.
+  - À cet instant, MAHLINE doit horodater le début du réexamen et fermer la possibilité pour le client d'ajouter de nouvelles preuves à sa contestation.
+  - Cette ouverture déclenche la notification dans l'espace client et la tentative d'envoi de l'e-mail ; l'échec de l'e-mail ne bloque pas le réexamen.
+  - Le système doit distinguer l'ouverture du dossier par le responsable de sa simple consultation par d'autres acteurs non responsables.
+  - La définition technique de l'action d'ouverture, les ouvertures accidentelles, les réouvertures et les éventuels changements de responsable restent à préciser.
+
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
   - le transporteur photographie le colis au moment de sa prise en charge.
@@ -327,6 +335,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.41 — 12 novembre 2026
+- Complément de FR-009 — Question 42 : A — l'ouverture du dossier par le responsable désigné marque officiellement le début du réexamen. Cet événement ferme l'ajout de preuves par le client, déclenche la notification dans l'espace client et la tentative d'e-mail, et doit être horodaté. Les ouvertures accidentelles, réouvertures et changements de responsable restent à cadrer.
 
 ### Version 0.40 — 12 novembre 2026
 - Complément de FR-009 — Question 41 : A — la notification dans l'espace client suffit ; le réexamen continue même si l'envoi de l'e-mail échoue. L'émission de la notification interne, la tentative d'e-mail, son résultat et les horodatages doivent rester traçables.
