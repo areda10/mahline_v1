@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.89
+- **Version :** 0.90
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -73,6 +73,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaines Products et Inventory ; formulaire produit, validation et calcul/affichage de disponibilité.
 - **Points restant à préciser :** possibilité de modifier la valeur par défaut globalement, effet d'une modification de seuil sur les produits existants, et règle exacte de comparaison (stock inférieur ou égal au seuil).
 
+### Question 89 — Comment comparer le stock disponible au seuil « Stock limité » ? (VALIDÉE)
+- **Question :** Avec un seuil de 5 unités, à partir de quel niveau le produit affiche-t-il « Stock limité » ?
+- **Choix proposés :**
+  - A. « Stock limité » dès que le stock disponible est inférieur ou égal au seuil.
+  - B. « Stock limité » uniquement lorsque le stock disponible est strictement inférieur au seuil.
+  - C. La coopérative choisit individuellement si la comparaison est stricte ou inclut le seuil.
+  - D. MAHLINE applique une règle automatique selon le type de produit.
+- **Réponse :** A.
+- **Décision :** le statut « Stock limité » s'applique dès que le stock disponible est inférieur ou égal au seuil effectif. Ainsi, avec un seuil de 5 unités, un stock de 5 unités affiche déjà « Stock limité ».
+- **Conséquences :** la règle s'applique au seuil personnalisé du produit ou, en l'absence de seuil personnalisé, à la valeur par défaut de 5 unités. Le stock nul conserve le statut « Rupture de stock » défini à la question 85, prioritaire sur « Stock limité ».
+- **Périmètre concerné :** domaines Products et Inventory ; calcul du statut de disponibilité et affichage marketplace.
+- **Points restant à préciser :** définition exacte du stock disponible (notamment réservations, commandes en cours et retours en inspection) et éventuelles règles de seuil par variante.
+ 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
