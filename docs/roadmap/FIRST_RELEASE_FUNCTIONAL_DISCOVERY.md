@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.15
+- **Version :** 1.16
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -504,6 +504,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaines Media, Products, Categories, Cooperatives et Audit ; associations, suppression, confirmation utilisateur et intégrité référentielle.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 - **Points restant à préciser :** contenu exact du message de confirmation, possibilité d'annuler, traitement des échecs de suppression du fichier et conservation éventuelle dans les sauvegardes.
+
+### Question 114 — Récupération d’un média supprimé accidentellement
+
+- **Question :** Peut-on récupérer un média supprimé accidentellement ?
+- **Options proposées :**
+  - A. Non, la suppression est définitive.
+  - B. Oui, via une corbeille pendant 30 jours.
+  - C. Oui, via une corbeille pendant 90 jours.
+  - D. Oui, récupération réservée au `super_admin_root` depuis les sauvegardes.
+- **Réponse utilisateur :** A.
+- **Décision fonctionnelle :** La suppression d’un média est définitive ; aucune corbeille ni procédure de restauration utilisateur n’est prévue.
+- **Conséquences :** Après confirmation explicite de suppression (Q113), le média et son fichier associé sont supprimés sans période de rétention applicative ni restauration depuis une corbeille. La suppression doit rester autorisée selon le rôle, le périmètre coopératif et les permissions métier ; les références doivent être traitées conformément à Q113 et l’opération doit être auditée. Les sauvegardes d’infrastructure restent distinctes d’une fonctionnalité de restauration métier.
+- **Domaines concernés :** Media, Products, Categories, Cooperatives, Audit.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points à vérifier à l’audit technique :** comportement des stockages et sauvegardes, suppression physique/remote, échec partiel et reprise, cohérence des références et journaux d’audit.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
