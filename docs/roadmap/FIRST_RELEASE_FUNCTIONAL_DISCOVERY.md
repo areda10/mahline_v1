@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.96
+- **Version :** 1.97
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1569,6 +1569,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** la qualité de compression est adaptative selon l'usage de chaque variante : miniature, affichage normal et grand format. Chaque variante est optimisée pour offrir un bon équilibre entre qualité visuelle, poids du fichier et rapidité d'affichage.
 - **Portée :** les paramètres de qualité et de dimensions propres à chaque variante seront définis et vérifiés pendant l'audit technique. Les limites validées à la question 193 restent applicables à l'image source : 6 000 pixels maximum sur le côté le plus long, 24 mégapixels maximum et 2 Mo maximum. L'original reste conservé intact.
 - **Statut :** règle fonctionnelle enregistrée ; paramètres techniques des variantes à définir ; implémentation non commencée.
+
+### Question 195 — Moment de génération des variantes d'images
+
+- **Réponse :** C (validation de la recommandation).
+- **Décision validée :** la miniature est générée immédiatement après l'acceptation de l'image afin de devenir rapidement disponible dans l'interface. Les variantes d'affichage normal et grand format sont générées en arrière-plan, sans bloquer le téléversement.
+- **Portée :** le traitement asynchrone doit signaler clairement l'état des variantes encore en cours de génération. Les erreurs de génération doivent être détectables et traitables sans invalider les fichiers déjà correctement téléversés ni exposer de détails techniques sensibles. Les règles de sécurité, de quota et de conservation de l'original restent applicables.
+- **Statut :** règle fonctionnelle enregistrée ; mécanisme technique et gestion des erreurs à préciser pendant l'audit ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
