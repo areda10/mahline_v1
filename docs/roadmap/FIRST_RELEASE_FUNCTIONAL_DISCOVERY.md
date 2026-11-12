@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.50
+- **Version :** 1.51
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1089,6 +1089,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaine Media ; centre de notifications et indicateur global de lecture.
 - **Points restant à préciser :** présentation du compteur pour les valeurs élevées (ex. 99+) et mise à jour temps réel ou au rafraîchissement à préciser lors du cadrage UX/technique.
 
+### Question 149 — Mise à jour du compteur de notifications (VALIDÉE)
+- **Question :** Quand une nouvelle notification arrive, comment actualiser le compteur rouge ?
+- **Choix proposés :**
+  - A. Instantanément, sans recharger la page (temps réel).
+  - B. Toutes les 30 secondes.
+  - C. Toutes les minutes.
+  - D. Uniquement lorsque l’utilisateur actualise la page.
+- **Réponse :** D.
+- **Décision :** le compteur rouge du nombre de notifications non lues est actualisé uniquement lorsque l’utilisateur actualise/recharge la page.
+- **Conséquences :**
+  - Aucune mise à jour automatique périodique ou en temps réel n’est requise pour le premier release.
+  - Après réception d’une nouvelle notification, le compteur peut rester inchangé jusqu’au prochain rechargement de page.
+  - Les changements d’état effectués dans l’interface doivent néanmoins être reflétés selon les interactions et le rafraîchissement déjà prévus pour les notifications.
+- **Statut :** VALIDÉ — actualisation du compteur au rechargement de la page uniquement.
+- **Périmètre concerné :** domaine Media ; centre de notifications et badge global.
+- **Points restant à préciser :** aucun pour la fréquence d’actualisation du compteur.
+ 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
