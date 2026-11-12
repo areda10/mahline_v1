@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.36
+- **Version :** 1.37
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -847,6 +847,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — seuil et durée du blocage définis.
 - **Périmètre concerné :** domaine Media ; suppression physique, gestion des échecs et blocage temporaire.
 - **Points restant à préciser :** déterminer si le délai reste fixe ou augmente après de nouveaux cycles d'échecs.
+
+### Question 135 — Progression du délai de blocage après des échecs répétés (VALIDÉE)
+- **Question :** Si la suppression échoue encore après la période de blocage de 5 minutes, quelle règle appliquer ?
+- **Choix proposés :**
+  - A. Garder toujours un blocage fixe de 5 minutes après chaque série de 2 échecs.
+  - B. Augmenter progressivement le délai : 5, 15, 30 puis 60 minutes.
+  - C. Après le deuxième blocage, demander l'intervention du `super_admin_root`.
+  - D. Bloquer définitivement la suppression du média.
+- **Réponse :** B.
+- **Décision :** le délai de blocage augmente progressivement selon la séquence de 5, 15, 30 puis 60 minutes lorsque les échecs de suppression physique se répètent.
+- **Conséquences :**
+  - Le premier blocage dure 5 minutes après 2 échecs successifs (questions 133 et 134).
+  - Lors des cycles d'échecs ultérieurs, la durée progresse selon la séquence définie : 15, puis 30, puis 60 minutes.
+  - Le blocage reste temporaire ; aucune suppression définitive ni intervention obligatoire du `super_admin_root` n'est déclenchée par cette seule règle.
+  - Toute nouvelle tentative reste soumise à une confirmation explicite et à une vérification des autorisations (questions 130 et 131).
+  - Les échecs restent consignés dans le journal d'audit accessible uniquement au `super_admin_root` ; l'utilisateur reçoit un message simple (question 129).
+- **Statut :** VALIDÉ — progression du délai définie.
+- **Périmètre concerné :** domaine Media ; suppression physique, gestion des échecs répétés et blocage temporaire progressif.
+- **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour la séquence des délais ; les modalités de remise à zéro du compteur restent à cadrer si nécessaire.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
