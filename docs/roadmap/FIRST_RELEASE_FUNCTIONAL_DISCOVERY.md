@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.68
+- **Version :** 1.69
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1365,6 +1365,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** A.
 - **Décision validée :** le clic sur une notification ouvre la page concernée dans l’onglet actuel du navigateur.
 - **Portée :** la notification sert de lien vers la page ou la ressource correspondante ; aucune ouverture systématique dans un nouvel onglet ni fenêtre modale n’est prévue.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 167 — Notification liée à une ressource supprimée ou inaccessible
+
+- **Réponse :** A.
+- **Décision validée :** si la ressource visée par une notification a été supprimée ou n’est plus accessible à l’utilisateur, afficher un message simple indiquant qu’elle n’est plus disponible.
+- **Portée :** ne pas exposer de détails techniques ni d’informations sur une ressource à laquelle l’utilisateur n’a plus accès.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
