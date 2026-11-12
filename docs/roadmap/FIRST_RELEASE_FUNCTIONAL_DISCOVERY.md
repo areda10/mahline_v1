@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.11
+- **Version :** 1.12
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -425,6 +425,31 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 **Périmètre concerné :** Domaine transversal Media, Identity et tous les domaines consommateurs de fichiers.
 
 **Statut :** Décision fonctionnelle enregistrée ; matrice détaillée des permissions à préciser.
+
+### Question 110 — Gestion des médias par le cooperative_admin (VALIDÉE)
+
+**Question :** Un `cooperative_admin` peut-il gérer les médias de sa coopérative ?
+
+**Options proposées :**
+- A. Oui : ajouter, consulter, remplacer et supprimer les médias de sa coopérative.
+- B. Oui : ajouter et consulter uniquement, sans remplacement ni suppression.
+- C. Oui : ajouter, consulter et remplacer, mais suppression réservée au `super_admin`.
+- D. Non : seul le `super_admin` responsable gère les médias de la coopérative.
+
+**Réponse retenue :** A.
+
+**Décision fonctionnelle :**
+- Le `cooperative_admin` peut ajouter, consulter, remplacer et supprimer les médias rattachés à sa propre coopérative.
+- Cette gestion reste strictement limitée au périmètre de sa coopérative.
+
+**Conséquences / règles à prévoir :**
+- Vérifier systématiquement l'appartenance du média à la coopérative de l'utilisateur.
+- Interdire l'accès, le remplacement ou la suppression des médias d'une autre coopérative.
+- Conserver les contrôles d'autorisation métier et la traçabilité des opérations de gestion.
+
+**Périmètre concerné :** Media, Cooperatives et Identity.
+
+**Statut :** Décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
