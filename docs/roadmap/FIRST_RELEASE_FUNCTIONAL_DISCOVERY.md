@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.62
+- **Version :** 1.63
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1301,6 +1301,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — page dédiée et aperçu déroulant.
 - **Périmètre concerné :** domaine Media ; navigation et centre de notifications.
 - **Points restant à préciser :** nombre de notifications affichées dans l'aperçu rapide et actions disponibles directement depuis celui-ci.
+ 
+### Question 161 — Nombre de notifications dans l’aperçu rapide (VALIDÉE)
+- **Question :** Combien de notifications afficher dans la fenêtre déroulante ?
+- **Choix proposés :**
+  - A. 5 notifications.
+  - B. 10 notifications.
+  - C. 15 notifications.
+  - D. 20 notifications.
+- **Réponse :** C.
+- **Décision :** afficher les 15 notifications les plus récentes dans l'aperçu rapide de la fenêtre déroulante.
+- **Conséquences :**
+  - L'aperçu présente au maximum 15 notifications, classées de la plus récente à la plus ancienne.
+  - L'aperçu reste distinct du centre complet, qui conserve le défilement infini par lots de 10.
+  - Un accès à la page dédiée permet de consulter toutes les notifications selon les filtres et règles définis.
+- **Statut :** VALIDÉ — aperçu limité aux 15 notifications les plus récentes.
+- **Périmètre concerné :** domaine Media ; aperçu rapide du centre de notifications.
+- **Points restant à préciser :** actions disponibles directement dans l'aperçu rapide.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
