@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.41
+- **Version :** 1.42
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -934,6 +934,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — canaux de notification enregistrés.
 - **Périmètre concerné :** domaine Media ; notification administrative, blocage progressif et communication.
 - **Points restant à préciser :** modèle de l'email, présentation de la notification interne et comportement en cas d'échec d'envoi à préciser lors du cadrage UX/notifications et de l'audit technique.
+
+### Question 140 — Échec d’envoi de l’email de notification (VALIDÉE)
+- **Question :** Si l’email destiné au `super_admin_root` échoue alors que la notification interne MAHLINE a bien été créée, quel comportement appliquer ?
+- **Choix proposés :**
+  - A. Conserver la notification interne et ne pas réessayer l’email.
+  - B. Conserver la notification interne et réessayer automatiquement l’email.
+  - C. Conserver la notification interne et permettre au `super_admin_root` de relancer manuellement l’envoi.
+  - D. Combiner B et C : réessais automatiques et relance manuelle.
+- **Réponse :** A.
+- **Décision :** en cas d’échec d’envoi de l’email, conserver la notification interne MAHLINE et ne pas effectuer de nouvel envoi automatique ni proposer de relance manuelle.
+- **Conséquences :**
+  - La notification interne reste disponible pour le `super_admin_root`.
+  - L’échec d’envoi doit être journalisé et rester consultable selon les règles d’audit réservées au `super_admin_root`.
+  - Aucun mécanisme de réessai ou de relance manuelle n’est prévu par cette décision.
+- **Statut :** VALIDÉ — comportement en cas d’échec email enregistré.
+- **Périmètre concerné :** domaine Media ; notification administrative et gestion des erreurs d’envoi.
+- **Points restant à préciser :** présentation de l’échec dans l’interface et détail de la journalisation à vérifier lors de l’audit UX/technique.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
