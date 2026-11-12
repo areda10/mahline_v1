@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.98
+- **Version :** 0.99
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -189,6 +189,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** MAHLINE doit distinguer la réservation de stock de l'état de préparation. Le retour à l'étape antérieure ne doit ni libérer la quantité ni créer une seconde réservation lors du prochain démarrage de préparation.
 - **Périmètre concerné :** domaines Orders et Inventory ; transitions de préparation, réservation de stock et prévention des doubles mouvements.
 - **Points restant à préciser :** statut exact après réinitialisation, règles de reprise de préparation et traitement d'une annulation si des opérations physiques ont déjà été réalisées.
+
+### Question 98 — Autorisation de démarrer la préparation (VALIDÉE)
+- **Question :** Qui peut déclencher l'action « Commencer la préparation » ?
+- **Choix proposés :**
+  - A. Le responsable de la coopérative uniquement.
+  - B. Tous les membres de la coopérative ayant la permission de gérer les commandes.
+  - C. Le responsable et les membres qu'il autorise individuellement.
+  - D. Le `super_admin` responsable de la coopérative uniquement.
+- **Réponse :** B.
+- **Décision :** tout membre de la coopérative disposant de la permission de gérer les commandes peut déclencher « Commencer la préparation ».
+- **Conséquences :** l'autorisation repose sur la permission effective du membre, et non uniquement sur son appartenance à la coopérative ou son intitulé de rôle. L'action doit rester attribuée et horodatée.
+- **Périmètre concerné :** domaines Identity, Cooperatives, Orders et Inventory ; permissions, interface de gestion des commandes et transition de préparation.
+- **Points restant à préciser :** matrice détaillée des permissions de gestion des commandes, possibilité de délégation et permission nécessaire pour annuler un début de préparation erroné.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
