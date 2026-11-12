@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.10
+- **Version :** 1.11
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -399,6 +399,32 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 **Périmètre concerné :** Domaine transversal Media et pipeline de traitement vidéo.
 
 **Statut :** Décision fonctionnelle enregistrée ; détails techniques à auditer avant implémentation.
+
+### Question 109 — Autorisations de téléversement dans Media (VALIDÉE)
+
+**Question :** Qui peut téléverser des fichiers dans Media ?
+
+**Options proposées :**
+- A. Tous les rôles : `super_admin_root`, `super_admin`, `cooperative_admin` et `user`, selon leurs droits.
+- B. `super_admin_root` et `super_admin` uniquement.
+- C. `super_admin_root`, `super_admin` et `cooperative_admin`.
+- D. Chaque rôle peut téléverser uniquement dans son propre espace et selon les permissions de son domaine.
+
+**Réponse retenue :** D.
+
+**Décision fonctionnelle :**
+- Le téléversement est autorisé uniquement dans le périmètre auquel l'utilisateur a accès.
+- Les droits de téléversement dépendent du rôle, de l'espace concerné et des permissions du domaine consommateur.
+- Media ne doit pas créer de privilège transversal qui contourne les autorisations du domaine métier.
+
+**Conséquences / règles à prévoir :**
+- Vérifier côté serveur l'identité, le rôle, la permission métier et le périmètre coopératif avant tout téléversement.
+- Appliquer les mêmes règles lors de la consultation, du téléchargement, du remplacement et de la suppression des médias.
+- Définir les permissions précises par domaine et par type d'utilisateur dans les questions suivantes et l'audit d'autorisation.
+
+**Périmètre concerné :** Domaine transversal Media, Identity et tous les domaines consommateurs de fichiers.
+
+**Statut :** Décision fonctionnelle enregistrée ; matrice détaillée des permissions à préciser.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
