@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.66
+- **Version :** 1.67
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1351,6 +1351,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** après qu’une notification est marquée comme lue depuis l’aperçu rapide, le compteur rouge est mis à jour après un court délai automatique.
 - **Portée :** le compteur représente toujours le nombre de notifications non lues accessibles à l’utilisateur connecté. Le délai exact et le mécanisme technique seront définis pendant l’audit technique.
 - **Cohérence :** cette décision complète Q149, qui prévoit une actualisation du compteur uniquement au rechargement pour les nouvelles notifications. Le comportement après une action explicite de lecture est désormais distinct.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 165 — Fermeture de l’aperçu rapide
+
+- **Réponse :** C (confirmée après clarification).
+- **Décision validée :** l’aperçu rapide se ferme automatiquement lorsqu’on clique en dehors de la fenêtre ou lorsqu’on utilise le bouton de fermeture « X ».
+- **Portée :** la touche Échap n’est pas incluse dans cette décision.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
