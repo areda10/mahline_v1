@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.12
+- **Version :** 1.13
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -450,6 +450,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 **Périmètre concerné :** Media, Cooperatives et Identity.
 
 **Statut :** Décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 111 — Périmètre de gestion des médias par le super_admin et le cooperative_admin (VALIDÉE)
+- **Question :** Lorsqu'un `super_admin` est affecté à une coopérative, quels droits de gestion des médias possède-t-il par rapport au `cooperative_admin` ?
+- **Choix proposés :**
+  - A. Le `super_admin` et le `cooperative_admin` ont les mêmes droits de gestion.
+  - B. Le `super_admin` peut tout gérer ; le `cooperative_admin` conserve ses droits.
+  - C. Le `super_admin` supervise et consulte ; le `cooperative_admin` effectue les opérations.
+  - D. Le `super_admin` peut gérer les médias uniquement en cas de délégation ou d'intervention nécessaire.
+- **Réponse :** Précision fonctionnelle — le `super_admin` peut gérer les médias de toutes les coopératives qui lui sont assignées ; le `cooperative_admin` gère uniquement les médias de sa propre coopérative.
+- **Décision :** les droits de gestion du `super_admin` sont limités aux coopératives qui lui sont explicitement affectées. Le `cooperative_admin` conserve les opérations de gestion des médias dans le seul périmètre de sa coopérative. Il n'existe aucun accès transversal du `cooperative_admin` aux médias d'autres coopératives.
+- **Conséquences :**
+  - Le `super_admin` peut ajouter, consulter, remplacer et supprimer les médias dans chacune de ses coopératives assignées, sous réserve des permissions métier.
+  - Le `cooperative_admin` peut ajouter, consulter, remplacer et supprimer les médias de sa coopérative uniquement.
+  - L'isolation multi-coopératives doit être vérifiée côté serveur pour chaque opération et chaque accès au fichier ; masquer une action dans l'interface ne suffit pas.
+  - Le `super_admin_root` reste soumis à ses droits globaux définis par l'architecture et les politiques applicables.
+- **Périmètre concerné :** domaines Media, Cooperatives et Identity ; autorisations, rattachement des médias et isolation multi-coopératives.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+- **Points restant à préciser :** règles exactes d'intervention du `super_admin_root`, traitement des médias partagés entre domaines, et éventuelles permissions granulaires de téléversement/suppression.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
