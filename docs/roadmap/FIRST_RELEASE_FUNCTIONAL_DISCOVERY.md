@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.96
+- **Version :** 0.97
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -163,6 +163,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** l'action doit être horodatée et attribuée à l'utilisateur qui l'effectue ; l'interface et les règles métier doivent s'appuyer sur cet événement enregistré, et non sur une estimation de l'activité physique.
 - **Périmètre concerné :** domaines Orders et Inventory ; workflow de commande, action de préparation, contrôle d'annulation et historique.
 - **Points restant à préciser :** permissions des membres de la coopérative, possibilité de revenir en arrière en cas d'erreur de clic, et traitement d'une préparation commencée mais interrompue.
+
+### Question 96 — Annulation accidentelle du début de préparation (VALIDÉE)
+- **Question :** Si un membre clique accidentellement sur « Commencer la préparation », peut-on annuler cet événement ?
+- **Choix proposés :**
+  - A. Non, l'action est définitive.
+  - B. Un responsable de la coopérative peut annuler cette action avec un motif obligatoire.
+  - C. Tout membre autorisé peut annuler cette action avec un motif obligatoire.
+  - D. Seul le `super_admin` responsable de la coopérative peut annuler cette action.
+- **Réponse :** B.
+- **Décision :** un responsable de la coopérative peut annuler l'événement « Commencer la préparation » lorsqu'il a été déclenché par erreur. Un motif obligatoire doit être enregistré.
+- **Conséquences :** l'annulation de cet événement doit être tracée sans effacer l'événement initial ni son horodatage. Le workflow doit revenir à un état cohérent et recalculer les possibilités d'action selon les règles de commande et de stock.
+- **Périmètre concerné :** domaines Orders et Inventory ; permissions coopérative, workflow de préparation, audit/historique et règles d'annulation.
+- **Points restant à préciser :** définition du rôle « responsable de la coopérative », nombre de corrections autorisées, état exact après annulation et conséquences si une opération physique a déjà commencé.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
