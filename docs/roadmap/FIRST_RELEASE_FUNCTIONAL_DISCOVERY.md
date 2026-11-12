@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.6
+- **Version :** 0.7
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -111,6 +111,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision complémentaire — délai de confirmation COD :** D — aucune annulation automatique après un délai prédéfini ; la coopérative décide de confirmer ou non la commande.
 - **À préciser dans le cadrage du traitement des commandes :** conséquences exactes d'un refus de la coopérative, gestion d'une commande laissée en attente sans limite automatique, durée de réservation après confirmation et libération du stock en cas d'annulation.
 
+### FR-008 — Orchestration des étapes de commande
+
+- **Question :** Qui pilote les étapes de traitement d'une commande après sa création ?
+- **Choix proposés :** A. toutes les étapes par la coopérative ; B. préparation/expédition par la coopérative et suivi de livraison par MAHLINE ou le transporteur ; C. orchestration automatique par MAHLINE à partir des actions de la coopérative et des informations du transporteur ; D. autre fonctionnement.
+- **Réponse :** C — MAHLINE orchestre automatiquement les étapes selon les actions de la coopérative et les informations de livraison transmises par le transporteur.
+- **Statut :** PRINCIPE D'ORCHESTRATION VALIDÉ ; détail des statuts, transitions, acteurs et sources d'événements À PRÉCISER.
+- **Conséquences / contraintes :**
+  - Distinguer les actions métier effectuées par la coopérative (par exemple confirmation, préparation et remise au transporteur) des événements logistiques (prise en charge, transit, livraison ou incident).
+  - MAHLINE applique les transitions autorisées et conserve l'historique des changements de statut.
+  - Les statuts ne doivent pas être modifiables librement sans contrôle : chaque transition doit être liée à un acteur ou à un événement autorisé.
+  - Le mode de transmission des informations du transporteur (intégration technique ou saisie/mise à jour manuelle) reste à décider.
+  - Les statuts détaillés, les transitions, les refus, les incidents, les retours et les règles de clôture seront cadrés avant le développement du traitement des commandes.
+
 ## 3. Questions ouvertes
 
 Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours métier. Une question n'est considérée validée que lorsque la réponse de l'utilisateur est explicite.
@@ -121,7 +134,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-005 | Frais de livraison selon la grille trajet-ville des transporteurs | PRINCIPE VALIDÉ — grille réelle attendue |
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
-| FR-008 | Traitement et transitions de statut des commandes coopératives | À poser |
+| FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPE VALIDÉ — orchestration MAHLINE ; statuts et transitions à préciser |
 | FR-009 | Annulation, retour et remboursement | À poser |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
@@ -156,6 +169,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.7 — 12 novembre 2026
+- Enregistrement de FR-008 : MAHLINE orchestre les étapes de commande à partir des actions de la coopérative et des informations du transporteur. Les statuts, transitions, acteurs et modes de transmission restent à détailler.
 
 ### Version 0.6 — 12 novembre 2026
 - Complément de FR-007 : pour les commandes avec paiement à la livraison, aucune annulation automatique n'est déclenchée par l'expiration d'un délai de confirmation ; la coopérative décide de confirmer ou non. Les conséquences précises d'un refus et la gestion des commandes durablement en attente restent à cadrer.
