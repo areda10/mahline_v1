@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.19
+- **Version :** 1.20
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -564,6 +564,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Products, Cooperatives, Audit.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points ouverts :** comportement si la photo principale est supprimée ou dissociée ; possibilité de réordonner les photos.
+
+### Question 118 — Remplacement automatique de la photo principale supprimée
+
+- **Question :** Si la photo principale est supprimée, que doit-il se passer ?
+- **Options proposées :**
+  - A. La première photo restante devient automatiquement la photo principale.
+  - B. La deuxième photo la plus ancienne devient automatiquement la photo principale.
+  - C. Aucune photo principale n’est définie ; le responsable doit en choisir une nouvelle.
+  - D. La suppression est bloquée tant qu’une autre photo n’a pas été choisie comme principale.
+- **Réponse utilisateur :** A, avec la précision que le `cooperative_admin` peut également choisir manuellement une photo comme principale.
+- **Décision fonctionnelle :** Lorsqu’une photo principale est supprimée, la première photo restante devient automatiquement la photo principale. En dehors de ce cas automatique, le `cooperative_admin` peut choisir manuellement une photo principale parmi les photos du produit.
+- **Conséquences :** Le système doit garantir qu’une photo principale désignée appartient aux photos associées au produit. La sélection manuelle doit être réservée au `cooperative_admin` dans le périmètre de sa propre coopérative, conformément aux permissions métier. La règle d’attribution automatique après suppression doit être déterministe ; l’ordre de référence reste à définir.
+- **Domaines concernés :** Media, Products, Cooperatives, Audit.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points ouverts :** critère exact définissant la « première » photo restante (ordre d’ajout ou ordre d’affichage) ; droits éventuels des autres rôles pour changer manuellement la photo principale.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
