@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.70
+- **Version :** 0.71
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -136,6 +136,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le traitement du panier multi-coopératives doit donc permettre une évolution indépendante de chaque sous-commande.
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
+
+### Version 0.71 — 12 novembre 2026
+- FR-009, Question 72 : décision B — confirmation du mot de passe actuel du `super_admin_root` exigée avant le téléchargement d'un export ; aucun secret n'est journalisé.
 
 ### Version 0.70 — 12 novembre 2026
 - FR-009, Question 71 : décision C — export réservé au `super_admin_root` en PDF, Excel/CSV et ZIP avec pièces justificatives ; exports journalisés et protégés contre la divulgation de secrets.
@@ -279,6 +282,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** l'accès à l'historique intégral est strictement réservé au `super_admin_root`. Les autres rôles ne disposent pas d'un accès à cet historique complet, même lorsqu'ils sont responsables de la coopérative ou concernés par l'incident. Les éventuelles notifications opérationnelles qui leur sont adressées restent limitées aux informations nécessaires à leur rôle et ne constituent pas un accès au dossier complet. Les consultations de l'historique doivent elles-mêmes être journalisées.
   - **Question 71 — export de l'historique complet d'un incident :** C — le `super_admin_root` peut exporter un PDF, un fichier Excel/CSV et une archive ZIP contenant les pièces justificatives.
   - **Conséquences / contraintes :** les trois formats d'export sont prévus. L'export est réservé au `super_admin_root`, doit être limité au dossier autorisé et inclure les données et pièces justificatives pertinentes sans divulguer de secrets (mots de passe, jetons, codes ou données sensibles non nécessaires). Chaque export doit être journalisé : auteur, date/heure, incident, format, périmètre et résultat. L'archive ZIP doit préserver l'intégrité et la traçabilité des pièces ; modalités de signature, durée de disponibilité des fichiers exportés et protection contre le partage non autorisé restent à préciser.
+  - **Question 72 — protection des exports d'incidents :** B — confirmation du mot de passe du `super_admin_root` avant le téléchargement.
+  - **Conséquences / contraintes :** une réauthentification par le mot de passe actuel est exigée au moment de la demande d'export ou avant sa mise à disposition. Aucun code supplémentaire ni lien à usage unique n'est imposé par cette décision. Le mot de passe ne doit jamais être stocké dans les journaux, transmis par e-mail ou conservé après vérification. La vérification, son résultat, l'identité de l'acteur et l'export demandé sont journalisés sans enregistrer le secret. La durée de validité de la réauthentification et les protections du fichier après téléchargement restent à définir.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
