@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.89
+- **Version :** 1.90
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1519,6 +1519,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** à la fin d'une opération de téléversement multiple, Media affiche un récapitulatif global indiquant le nombre de fichiers réussis, échoués et annulés, ainsi qu'un résultat détaillé pour chaque fichier avec son nom et son état.
 - **Portée :** les erreurs affichées doivent être compréhensibles et ne pas divulguer de détails techniques sensibles. Les fichiers échoués restent identifiables pour une reprise individuelle ; les fichiers réussis ne sont pas renvoyés.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 188 — Nombre maximal de fichiers par opération
+
+- **Réponse :** C (20 fichiers maximum).
+- **Décision validée :** une opération de téléversement multiple accepte au maximum 20 fichiers sélectionnés.
+- **Portée :** cette limite s'applique à chaque opération, indépendamment des limites de taille par fichier et du quota global de stockage de la coopérative. Les contrôles restent effectués côté serveur ; une évolution du plafond pourra être décidée après les tests de charge et de performance.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
