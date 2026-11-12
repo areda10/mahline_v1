@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.82
+- **Version :** 0.83
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -17,20 +17,23 @@ Construire une première version exploitable de MAHLINE qui combine :
 
 La cohérence approfondie des frontières entre domaines et le renforcement global des événements transversaux sont planifiés dans une phase ultérieure dédiée, après le développement fonctionnel des domaines du premier release. Les règles indispensables de sécurité, d'autorisation, de propriété des données et d'intégrité restent obligatoires pendant chaque développement.
 
+### Version 0.83 — 12 novembre 2026
+- Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
+- Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
+
 ### Version 0.81 — 12 novembre 2026
 - Complément de FR-009 — Question 82 : le `super_admin_root` décide au cas par cas s'il faut conserver l'historique des modifications apportées à un export. La décision, son motif et les éventuelles traces conservées doivent être documentés ; les règles de journalisation détaillées restent à cadrer.
 - Ajustement de méthode demandé : les prochaines questions doivent être directement orientées vers les fonctionnalités concrètes nécessaires au premier release et vers le développement des domaines MAHLINE. Prioriser les parcours utilisateurs, règles métier, écrans/actions, données, statuts, permissions et cas d'erreur réellement nécessaires au lancement ; distinguer explicitement le périmètre premier release des évolutions ultérieures.
 
-### Question 83 — Publication d'un produit sur la marketplace (EN ATTENTE)
+### Question 83 — Publication d'un produit sur la marketplace (VALIDÉ)
 - **Question :** Lorsqu'une coopérative crée ou modifie un produit, à quel moment ce produit doit-il devenir visible et achetable sur la marketplace ?
-- **Choix proposés :**
-  - A. Automatiquement dès que la coopérative enregistre le produit.
-  - B. Uniquement lorsque la coopérative le publie explicitement.
-  - C. Après validation par le `super_admin` qui prend en charge la coopérative.
-  - D. Après validation par le `super_admin_root`.
-- **Statut :** EN ATTENTE DE RÉPONSE.
+- **Réponse :** A — automatiquement dès que la coopérative enregistre le produit.
+- **Statut :** VALIDÉ — premier release.
 - **Périmètre concerné :** domaines Products, Catalog et Cooperatives ; visibilité publique, publication et autorisations.
-- **Conséquences à préciser après réponse :** états brouillon/publié, effet des modifications, suspension et retrait de publication, contrôles obligatoires avant mise en vente.
+- **Conséquences :**
+  - L'enregistrement d'un produit par la coopérative déclenche automatiquement sa mise en visibilité et sa disponibilité à l'achat sur la marketplace.
+  - Aucun workflow de validation manuelle préalable par un `super_admin` ou le `super_admin_root` n'est requis selon cette décision.
+  - Les conditions de complétude et de validité des informations, les contrôles bloquants, l'effet des modifications ultérieures, ainsi que la suspension et le retrait de publication restent à définir par des questions spécifiques.
 
 ## 2. Décisions fonctionnelles validées
 
