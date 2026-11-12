@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.92
+- **Version :** 1.93
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1541,6 +1541,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** à l'import d'une image JPG, JPEG ou PNG, Media conserve le fichier original et génère automatiquement plusieurs versions optimisées adaptées aux usages (miniature, affichage normal et grand format).
 - **Portée :** les versions dérivées sont générées à partir de l'original, sans le remplacer. Les règles précises de dimensions, qualité, formats de sortie, génération et stockage seront fixées pendant l'audit technique, en tenant compte des capacités de l'hébergement et du quota de la coopérative. L'accès à l'original et aux variantes reste soumis aux mêmes autorisations et règles de visibilité.
 - **Statut :** règle fonctionnelle enregistrée ; paramètres techniques à définir pendant l'audit ; implémentation non commencée.
+
+### Question 191 — Format des images optimisées
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** les variantes d'images générées par Media utilisent un format moderne optimisé, WebP lorsque le navigateur le prend en charge, avec un format de repli compatible si nécessaire.
+- **Portée :** le fichier original JPG, JPEG ou PNG reste conservé. Le choix du format servi au navigateur doit être compatible avec ses capacités et ne doit pas contourner les règles d'autorisation, de visibilité ou de quota. Les formats de sortie exacts et la stratégie de détection/fallback seront confirmés pendant l'audit technique.
+- **Statut :** règle fonctionnelle enregistrée ; stratégie technique à préciser pendant l'audit ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
