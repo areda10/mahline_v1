@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.9
+- **Version :** 0.10
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | À poser |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — annulation client selon le moyen de paiement ; retours et remboursements à cadrer |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -156,6 +156,19 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-014 | Livraison nationale et internationale au premier release | À poser |
 | FR-015 | Abonnements SaaS, plans, quotas et renouvellement | À poser |
 | FR-016 | Notifications et communications indispensables au lancement | À poser |
+
+### FR-009 — Annulation, retour et remboursement
+
+- **Question :** Jusqu'à quel moment le client peut-il demander l'annulation d'une sous-commande ?
+- **Réponse :** règle différenciée selon le moyen de paiement :
+  - **Paiement à la livraison (COD) :** A — le client peut annuler tant que la coopérative n'a pas confirmé la commande.
+  - **Paiement en ligne (évolution post-release) :** le client peut demander l'annulation pendant la phase de préparation de la commande.
+- **Statut :** PARTIELLEMENT VALIDÉ — les fenêtres d'annulation sont définies ; les modalités d'exécution et les autres cas restent à préciser.
+- **Conséquences / contraintes :**
+  - Pour le COD, après confirmation par la coopérative, la fenêtre d'annulation client définie ici est terminée.
+  - Pour le paiement en ligne, l'annulation client reste possible pendant la préparation ; il faudra définir précisément le point de fin de cette phase et le traitement d'une demande déjà en cours lorsque la commande change d'étape.
+  - Les règles de remboursement, de remboursement partiel pour un panier multi-coopératives, de frais de livraison, de commissions, de libération du stock et de notification restent à cadrer.
+  - Les retours après expédition ou livraison et les cas de colis refusé/non livré ne sont pas encore définis.
 
 Cette liste est indicative et sera complétée selon les réponses et les parcours identifiés.
 
@@ -182,6 +195,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.10 — 12 novembre 2026
+- Enregistrement partiel de FR-009 : en COD, le client peut annuler jusqu'à la confirmation par la coopérative ; en paiement en ligne (post-release), il peut demander l'annulation pendant la préparation. Retours, remboursements et limites exactes de la phase de préparation restent à préciser.
 
 ### Version 0.9 — 12 novembre 2026
 - Complément de FR-008 : en cas de refus d'une coopérative, seule sa sous-commande est annulée ; les sous-commandes des autres coopératives continuent indépendamment. Les conséquences financières et notifications restent à cadrer.
