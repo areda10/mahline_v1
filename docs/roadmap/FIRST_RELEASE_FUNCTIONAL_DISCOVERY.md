@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.14
+- **Version :** 1.15
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -485,6 +485,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaines Media, Cooperatives, Identity et Audit ; autorisations globales, gestion des fichiers et traçabilité.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 - **Points restant à préciser :** éventuelles confirmations ou motifs obligatoires pour certaines suppressions sensibles, ainsi que les règles de conservation et de suppression physique.
+
+### Question 113 — Suppression d'un média utilisé par plusieurs éléments (VALIDÉE)
+- **Question :** Lorsqu'un média est utilisé par plusieurs éléments (produits, catégories, coopératives), que doit-il se passer si un utilisateur demande sa suppression ?
+- **Choix proposés :**
+  - A. Suppression interdite tant que le média est utilisé.
+  - B. Suppression autorisée uniquement après détachement de toutes ses utilisations.
+  - C. Suppression logique immédiate ; le fichier physique est conservé tant qu'il est encore référencé.
+  - D. Suppression automatique de toutes les références et du fichier.
+- **Réponse :** D, avec affichage préalable d'un message de confirmation.
+- **Décision :** après confirmation explicite de l'utilisateur, MAHLINE supprime toutes les références au média dans les éléments qui l'utilisent, puis supprime le média et son fichier associé.
+- **Conséquences :**
+  - Avant l'exécution, l'interface affiche un message de confirmation indiquant clairement que la suppression retirera le média de tous les éléments qui l'utilisent et supprimera le fichier.
+  - Aucune suppression ne doit être exécutée avant confirmation explicite.
+  - Le traitement doit identifier et supprimer proprement toutes les associations concernées, sans supprimer les éléments métier eux-mêmes (produits, catégories, coopératives, etc.).
+  - L'opération doit être autorisée selon le périmètre de l'acteur et tracée ; les références ne doivent pas rester orphelines.
+  - Les modalités techniques de suppression physique, notamment stockage distant, échec partiel et reprise, restent à définir lors de l'audit technique.
+- **Périmètre concerné :** domaines Media, Products, Categories, Cooperatives et Audit ; associations, suppression, confirmation utilisateur et intégrité référentielle.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+- **Points restant à préciser :** contenu exact du message de confirmation, possibilité d'annuler, traitement des échecs de suppression du fichier et conservation éventuelle dans les sauvegardes.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
