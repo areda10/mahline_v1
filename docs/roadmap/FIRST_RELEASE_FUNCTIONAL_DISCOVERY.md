@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.61
+- **Version :** 1.62
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1283,6 +1283,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — message de fin et bouton « Retour en haut ».
 - **Périmètre concerné :** domaine Media ; centre de notifications et défilement infini.
 - **Points restant à préciser :** aucun point fonctionnel spécifique identifié pour cette règle.
+ 
+### Question 160 — Accès au centre de notifications (VALIDÉE)
+- **Question :** Où afficher le centre de notifications dans MAHLINE ?
+- **Choix proposés :**
+  - A. Dans une page dédiée accessible depuis l’icône de notification.
+  - B. Dans un panneau latéral qui s’ouvre depuis l’icône.
+  - C. Dans une fenêtre déroulante sous l’icône.
+  - D. A + C : page dédiée et aperçu rapide dans une fenêtre déroulante.
+- **Réponse :** D.
+- **Décision :** proposer une page dédiée au centre de notifications ainsi qu'un aperçu rapide dans une fenêtre déroulante accessible depuis l'icône.
+- **Conséquences :**
+  - L'aperçu déroulant permet une consultation rapide sans quitter la page en cours.
+  - Un accès depuis l'aperçu ouvre la page dédiée pour consulter et gérer l'ensemble des notifications.
+  - Les deux interfaces respectent les mêmes règles de visibilité, de lecture, de masquage, de filtres et de tri.
+  - Le compteur rouge de l'icône conserve le comportement défini en Q148 et Q149.
+- **Statut :** VALIDÉ — page dédiée et aperçu déroulant.
+- **Périmètre concerné :** domaine Media ; navigation et centre de notifications.
+- **Points restant à préciser :** nombre de notifications affichées dans l'aperçu rapide et actions disponibles directement depuis celui-ci.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
