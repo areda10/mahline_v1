@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.20
+- **Version :** 1.21
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -579,6 +579,20 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Products, Cooperatives, Audit.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points ouverts :** critère exact définissant la « première » photo restante (ordre d’ajout ou ordre d’affichage) ; droits éventuels des autres rôles pour changer manuellement la photo principale.
+
+### Question 119 — Réorganisation de l’ordre des photos
+
+- **Question :** Le `cooperative_admin` doit-il pouvoir modifier manuellement l’ordre d’affichage des photos du produit ?
+- **Options proposées :**
+  - A. Oui, par glisser-déposer.
+  - B. Non, les photos restent dans leur ordre d’ajout.
+  - C. Oui, avec des boutons « Monter » et « Descendre ».
+- **Réponse utilisateur :** A ou C ; les deux modes d’interaction sont acceptables.
+- **Décision fonctionnelle :** Le `cooperative_admin` peut réorganiser manuellement les photos d’un produit. L’interface peut utiliser le glisser-déposer ou des boutons « Monter » et « Descendre » ; le choix du mécanisme d’interface sera fait lors de la conception UX/technique.
+- **Conséquences :** L’ordre choisi doit être enregistré et conservé dans l’affichage du produit. La réorganisation est limitée aux produits de la coopérative de l’acteur et soumise aux permissions métier. Elle ne doit pas modifier la désignation de la photo principale, qui reste une propriété distincte.
+- **Domaines concernés :** Media, Products, Cooperatives.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Point ouvert :** choix UX entre glisser-déposer et boutons, selon l’ergonomie et les contraintes des interfaces prises en charge.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
