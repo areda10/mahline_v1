@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.88
+- **Version :** 0.89
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -60,16 +60,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le seuil est paramétré par la coopérative propriétaire du produit.
   - La valeur du seuil, son caractère obligatoire ou facultatif et sa valeur par défaut restent à définir.
 
-### Question 88 — Le seuil « Stock limité » doit-il être obligatoire ? (EN ATTENTE)
+### Question 88 — Le seuil « Stock limité » est-il obligatoire ? (VALIDÉE)
 - **Question :** Lors de la création d'un produit, comment gérer le seuil individuel « Stock limité » ?
 - **Choix proposés :**
   - A. Le seuil est obligatoire : la coopérative doit saisir une quantité pour chaque produit.
   - B. Le seuil est facultatif ; si la coopérative ne le renseigne pas, MAHLINE applique une valeur par défaut de 5 unités.
   - C. Le seuil est facultatif ; sans seuil défini, le produit affiche « En stock » jusqu'à atteindre zéro.
   - D. Le seuil est calculé automatiquement par MAHLINE selon les ventes du produit.
-- **Statut :** EN ATTENTE DE RÉPONSE.
-- **Périmètre concerné :** domaines Products et Inventory ; formulaire produit, validation et affichage de disponibilité.
-- **Conséquences à préciser après réponse :** obligation de saisie, valeur par défaut éventuelle, calcul du statut « Stock limité » et règles de modification du seuil.
+- **Réponse :** B.
+- **Décision :** le seuil individuel reste facultatif. Lorsqu'une coopérative ne renseigne pas de seuil pour un produit, MAHLINE applique automatiquement une valeur par défaut de 5 unités pour déterminer le statut « Stock limité ».
+- **Conséquences :** chaque produit peut conserver un seuil personnalisé ; en l'absence de valeur personnalisée, le seuil effectif est de 5 unités. La valeur par défaut et le seuil personnalisé devront être distingués dans les règles métier et l'interface.
+- **Périmètre concerné :** domaines Products et Inventory ; formulaire produit, validation et calcul/affichage de disponibilité.
+- **Points restant à préciser :** possibilité de modifier la valeur par défaut globalement, effet d'une modification de seuil sur les produits existants, et règle exacte de comparaison (stock inférieur ou égal au seuil).
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
