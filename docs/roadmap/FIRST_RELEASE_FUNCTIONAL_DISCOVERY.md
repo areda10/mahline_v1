@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.02
+- **Version :** 1.03
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -241,6 +241,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** ce rôle constitue la référence pour l'arbitrage défini à la question 100 et pour l'annulation d'un début de préparation erroné définie à la question 99. L'application doit pouvoir identifier sans ambiguïté le `cooperative_admin` principal de chaque coopérative.
 - **Périmètre concerné :** domaines Identity et Cooperatives, intégration avec Orders ; identification du responsable et contrôle des autorisations.
 - **Points restant à préciser :** règles de désignation/remplacement du `cooperative_admin` principal, cas de plusieurs administrateurs, absence ou désactivation du responsable et transfert de responsabilité.
+
+### Question 102 — Nombre de responsables administrateurs par coopérative (VALIDÉE)
+- **Question :** Une coopérative peut-elle avoir plusieurs `cooperative_admin` ?
+- **Choix proposés :**
+  - A. Non, un seul `cooperative_admin` par coopérative.
+  - B. Oui, plusieurs, mais un seul est désigné comme administrateur principal.
+  - C. Oui, plusieurs avec les mêmes pouvoirs, sans administrateur principal.
+  - D. Oui, le nombre est limité par le forfait SaaS.
+- **Réponse :** A.
+- **Décision :** chaque coopérative dispose d'un seul compte `cooperative_admin`.
+- **Conséquences :** ce compte est automatiquement le responsable principal de la coopérative pour les décisions et arbitrages définis précédemment. Aucun mécanisme de désignation entre plusieurs administrateurs n'est nécessaire dans le périmètre retenu.
+- **Périmètre concerné :** Identity, Cooperatives, gestion des utilisateurs et autorisations.
+- **Points restant à préciser :** procédure de remplacement du `cooperative_admin`, notamment en cas de départ, désactivation, suspension ou indisponibilité ; transfert de ses responsabilités et continuité de gestion.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
