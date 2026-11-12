@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.12
+- **Version :** 2.13
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1680,6 +1680,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** A (validation de la recommandation).
 - **Décision validée :** si le moteur antivirus est indisponible ou ne répond pas, Media bloque les nouveaux imports jusqu'à ce que le moteur soit de nouveau opérationnel. Aucun fichier ne peut être considéré comme sain ni être utilisé, téléchargé, associé à une ressource métier ou distribué sans résultat d'analyse positif.
 - **Portée :** les fichiers déjà en attente d'analyse restent inaccessibles jusqu'à l'obtention d'un résultat positif. Le système doit signaler clairement l'indisponibilité sans exposer de détails techniques sensibles. Les délais de détection, la surveillance du moteur, les alertes destinées au super_admin_root et la reprise des analyses en attente seront définis pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 211 — Interface de gestion de la quarantaine
+
+- **Réponse :** A (validation de la recommandation).
+- **Décision validée :** Media fournit une interface dédiée, accessible uniquement au super_admin_root, pour consulter et gérer les fichiers mis en quarantaine.
+- **Portée :** l'interface présente au minimum le nom du fichier, la coopérative concernée, la date de détection et le motif de mise en quarantaine. Le super_admin_root peut, selon les règles déjà validées, demander une nouvelle analyse ou demander la suppression définitive après confirmation. Les fichiers restent inaccessibles tant qu'ils ne sont pas explicitement libérés après une analyse positive. L'accès à l'interface et chaque action sont contrôlés côté serveur et journalisés. Les détails complémentaires de présentation et de conservation seront vérifiés pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
