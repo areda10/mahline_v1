@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.08
+- **Version :** 2.09
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1652,6 +1652,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** A (validation de la recommandation).
 - **Décision validée :** au premier release, une vidéo ne peut pas dépasser 60 secondes et sa résolution maximale est de 1080p. La limite de poids de 20 Mo par vidéo, déjà validée, reste applicable indépendamment de ces deux limites.
 - **Portée :** les trois limites (durée, résolution et poids) sont contrôlées côté serveur avant que la vidéo soit acceptée et traitée. Les règles précises de détection des métadonnées, de tolérance aux fichiers mal formés et de traitement des vidéos non conformes seront définies pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 207 — Gestion des échecs de conversion vidéo
+
+- **Réponse :** A (validation de la recommandation).
+- **Décision validée :** si la conversion vidéo échoue, Media conserve l'original et effectue jusqu'à trois tentatives automatiques. Si elles échouent toutes, l'utilisateur reçoit un message compréhensible et peut demander une nouvelle tentative manuelle.
+- **Portée :** l'original n'est pas supprimé tant qu'une conversion réussie et la lecture du fichier converti n'ont pas été vérifiées. Les nouvelles tentatives manuelles restent soumises aux permissions et aux contrôles de sécurité. Les délais entre tentatives, la détection des échecs et la politique de nettoyage des fichiers temporaires seront définis pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
