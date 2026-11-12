@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.57
+- **Version :** 1.58
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1212,6 +1212,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — défilement infini avec chargement progressif.
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** taille du lot initial et des lots suivants, ainsi que l'indicateur de chargement et le comportement en cas d'erreur.
+ 
+### Question 156 — Taille des lots de notifications (VALIDÉE)
+- **Question :** Combien de notifications charger à chaque étape du défilement infini ?
+- **Choix proposés :**
+  - A. 10 notifications.
+  - B. 20 notifications.
+  - C. 30 notifications.
+  - D. 50 notifications.
+- **Réponse :** A.
+- **Décision :** charger 10 notifications par lot, y compris le lot initial.
+- **Conséquences :**
+  - Le chargement initial récupère au maximum 10 notifications.
+  - Chaque chargement complémentaire récupère au maximum 10 notifications supplémentaires.
+  - Le défilement infini conserve le tri chronologique décroissant, les filtres actifs et les contrôles d'accès.
+  - Les éléments déjà chargés ne doivent pas être dupliqués.
+- **Statut :** VALIDÉ — lots de 10 notifications.
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** présentation de l'indicateur de chargement et comportement en cas d'erreur.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
