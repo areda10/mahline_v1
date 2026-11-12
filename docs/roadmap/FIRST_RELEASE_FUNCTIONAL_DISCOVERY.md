@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.32
+- **Version :** 1.33
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -774,6 +774,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Aucune relance automatique en arrière-plan n'est prévue par cette décision.
 - **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
 - **Périmètre concerné :** domaine Media ; autorisations de suppression, périmètre coopératif, nouvelle tentative et traçabilité.
+- **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour cette règle.
+
+### Question 131 — Confirmation lors d'une nouvelle tentative de suppression (VALIDÉE)
+- **Question :** Lorsqu'une suppression physique a déjà échoué, faut-il demander une nouvelle confirmation avant chaque tentative ?
+- **Choix proposés :**
+  - A. Oui, une confirmation est obligatoire à chaque nouvelle tentative.
+  - B. Non, la confirmation initiale reste valable pour les tentatives suivantes.
+  - C. Seul le nouvel utilisateur qui reprend la suppression doit confirmer.
+  - D. La confirmation dépend du type de média.
+- **Réponse :** A.
+- **Décision :** chaque nouvelle tentative de suppression physique doit être précédée d'une nouvelle confirmation explicite de l'utilisateur qui déclenche cette tentative.
+- **Conséquences :**
+  - La confirmation initiale ne vaut que pour la tentative initiale.
+  - Toute personne autorisée qui relance la suppression, y compris le demandeur initial, doit confirmer à nouveau.
+  - Les droits de suppression et le périmètre coopératif sont revérifiés à chaque tentative, conformément à la question 130.
+  - L'échec reste tracé dans le journal d'audit accessible uniquement au `super_admin_root`, tandis que l'utilisateur reçoit un message simple, conformément à la question 129.
+- **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
+- **Périmètre concerné :** domaine Media ; confirmation, autorisations, nouvelle tentative et traçabilité de suppression.
 - **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour cette règle.
 
 ### Version 0.83 — 12 novembre 2026
