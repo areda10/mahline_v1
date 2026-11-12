@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.88
+- **Version :** 1.89
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1512,6 +1512,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** B (24 heures).
 - **Décision validée :** les données temporaires nécessaires à la reprise d'un téléversement interrompu sont conservées pendant 24 heures au maximum.
 - **Portée :** à l'expiration du délai, les données temporaires et fragments incomplets sont supprimés automatiquement et de manière sûre. Cette purge ne touche pas les fichiers déjà téléversés avec succès et enregistrés dans Media. La reprise reste soumise aux contrôles d'autorisation, de quota et d'intégrité.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 187 — Récapitulatif après un téléversement multiple
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** à la fin d'une opération de téléversement multiple, Media affiche un récapitulatif global indiquant le nombre de fichiers réussis, échoués et annulés, ainsi qu'un résultat détaillé pour chaque fichier avec son nom et son état.
+- **Portée :** les erreurs affichées doivent être compréhensibles et ne pas divulguer de détails techniques sensibles. Les fichiers échoués restent identifiables pour une reprise individuelle ; les fichiers réussis ne sont pas renvoyés.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
