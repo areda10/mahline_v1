@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.06
+- **Version :** 1.07
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -291,6 +291,32 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La validation des extensions doit être complétée par une vérification réelle du type MIME et du contenu du fichier.
 - Définir des limites de taille et de durée pour les vidéos, des règles de stockage et des contrôles de sécurité lors de l'audit technique.
 - Les usages autorisés (produits, coopératives, catégories, etc.) et les règles d'accès restent à préciser dans les questions suivantes.
+
+**Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de fichiers.
+
+**Statut :** Décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 105 — Limites de taille des fichiers Media (VALIDÉE)
+
+**Question :** Quelle taille maximale autoriser pour les fichiers ?
+
+**Options proposées :**
+- A. Images : 2 Mo / PDF : 5 Mo / Vidéos : 20 Mo.
+- B. Images : 5 Mo / PDF : 10 Mo / Vidéos : 50 Mo.
+- C. Images : 10 Mo / PDF : 20 Mo / Vidéos : 100 Mo.
+- D. Autres limites (à préciser).
+
+**Réponse retenue :** A.
+
+**Décision fonctionnelle :**
+- Images : maximum 2 Mo par fichier.
+- PDF : maximum 5 Mo par fichier.
+- Vidéos : maximum 20 Mo par fichier.
+
+**Conséquences / règles à prévoir :**
+- Appliquer les limites côté serveur, indépendamment des contrôles côté interface.
+- Définir et tester les contrôles de taille avant stockage, ainsi que les messages d'erreur associés.
+- Les limites de durée, formats vidéo précis, règles de stockage et éventuelles contraintes de traitement restent à préciser.
 
 **Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de fichiers.
 
