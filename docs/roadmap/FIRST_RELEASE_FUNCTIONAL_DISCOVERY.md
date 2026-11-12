@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.64
+- **Version :** 1.65
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1337,6 +1337,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaine Media ; aperçu rapide du centre de notifications.
 - **Points restant à préciser :** présentation des actions dans chaque élément de l'aperçu.
  
+### Question 163 — Bouton « Tout marquer comme lu » dans l’aperçu rapide
+
+- **Réponse :** A.
+- **Décision validée :** afficher le bouton « Tout marquer comme lu » directement dans la fenêtre déroulante d’aperçu rapide.
+- **Portée :** l’action marque comme lues toutes les notifications non lues accessibles à l’utilisateur connecté, sans modifier les notifications d’autres utilisateurs.
+- **Cohérence :** cette action complète la possibilité de marquer une notification individuellement comme lue depuis l’aperçu (Q162). Le masquage reste réservé à la page dédiée.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
