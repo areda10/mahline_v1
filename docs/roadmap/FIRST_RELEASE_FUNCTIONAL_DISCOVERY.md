@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.39
+- **Version :** 0.40
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -265,11 +265,14 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - La définition de l'événement qui marque le début du réexamen, l'information du client sur cette clôture, les formats et limites des pièces, ainsi que les éventuelles demandes de complément par le responsable restent à préciser.
 
 - **Décision complémentaire — information du client au début du réexamen (Question 40) :** C — notification dans l'espace client et par e-mail.
+- **Décision complémentaire — échec d'envoi de l'e-mail (Question 41) :** A — la notification dans l'espace client suffit ; le réexamen continue même si l'e-mail ne peut pas être envoyé.
 - **Conséquences / contraintes :**
-  - Au commencement effectif du réexamen, MAHLINE doit informer le client dans son espace client et lui envoyer un e-mail.
+  - Au commencement effectif du réexamen, MAHLINE doit créer une notification dans l'espace client et tenter l'envoi d'un e-mail.
+  - La notification dans l'espace client constitue le canal de référence : son émission suffit pour informer le client et permettre au réexamen de continuer.
+  - Un échec d'envoi de l'e-mail ne bloque pas le réexamen et n'impose pas de nouvelle tentative automatique selon la règle retenue.
   - La notification doit permettre au client de savoir que le réexamen a commencé et que l'ajout de preuves par lui-même est désormais fermé.
-  - L'événement de début du réexamen, les deux tentatives de notification et leurs horodatages doivent être traçables.
-  - Le contenu exact du message, la gestion d'un échec d'envoi de l'e-mail et les éventuelles notifications complémentaires restent à préciser.
+  - L'événement de début du réexamen, la création de la notification interne, la tentative d'e-mail, son résultat et leurs horodatages doivent être traçables.
+  - Le contenu exact du message, les règles de conservation des échecs d'envoi et les éventuelles notifications complémentaires restent à préciser.
 
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
@@ -324,6 +327,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.40 — 12 novembre 2026
+- Complément de FR-009 — Question 41 : A — la notification dans l'espace client suffit ; le réexamen continue même si l'envoi de l'e-mail échoue. L'émission de la notification interne, la tentative d'e-mail, son résultat et les horodatages doivent rester traçables.
 
 ### Version 0.39 — 12 novembre 2026
 - Complément de FR-009 — Question 40 : C — au début effectif du réexamen, le client est informé dans son espace client et par e-mail. L'événement de début et les notifications doivent être traçables ; le contenu du message et le traitement des échecs d'envoi restent à préciser.
