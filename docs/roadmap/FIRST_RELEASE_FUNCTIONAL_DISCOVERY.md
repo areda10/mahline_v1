@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.90
+- **Version :** 0.91
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -85,6 +85,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** la règle s'applique au seuil personnalisé du produit ou, en l'absence de seuil personnalisé, à la valeur par défaut de 5 unités. Le stock nul conserve le statut « Rupture de stock » défini à la question 85, prioritaire sur « Stock limité ».
 - **Périmètre concerné :** domaines Products et Inventory ; calcul du statut de disponibilité et affichage marketplace.
 - **Points restant à préciser :** définition exacte du stock disponible (notamment réservations, commandes en cours et retours en inspection) et éventuelles règles de seuil par variante.
+ 
+### Question 90 — Quel stock utiliser pour calculer la disponibilité ? (VALIDÉE)
+- **Question :** Quelle quantité doit servir au calcul du statut de disponibilité d'un produit ?
+- **Choix proposés :**
+  - A. Le stock physique total enregistré par la coopérative.
+  - B. Le stock disponible = stock physique moins les quantités réservées pour les commandes.
+  - C. Le stock disponible = stock physique moins les quantités réservées et les quantités en préparation.
+  - D. La coopérative choisit la méthode pour chaque produit.
+- **Réponse :** C.
+- **Décision :** le stock utilisé pour calculer la disponibilité est le stock physique diminué des quantités réservées pour les commandes et des quantités en préparation. Le statut « En stock », « Stock limité » ou « Rupture de stock » est calculé à partir de ce stock disponible, et non du stock physique brut.
+- **Conséquences :** les quantités affectées à des commandes ou à leur préparation ne doivent pas être présentées comme disponibles à l'achat sur la marketplace. La règle devra être appliquée de façon cohérente lors de l'ajout au panier et de la validation de commande afin d'éviter la survente.
+- **Périmètre concerné :** domaines Products et Inventory, intégration avec Orders/commandes ; calcul du stock disponible, affichage marketplace et contrôle de disponibilité.
+- **Points restant à préciser :** distinguer précisément « réservé » et « en préparation » pour éviter de déduire deux fois une même quantité ; définir à quel événement chaque quantité entre dans ces catégories, quand elle en sort, et comment les annulations, refus, retours et incidents ajustent les quantités.
  
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
