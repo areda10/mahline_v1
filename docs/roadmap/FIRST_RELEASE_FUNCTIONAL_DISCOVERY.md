@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.8
+- **Version :** 0.9
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -116,7 +116,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Question :** Qui pilote les étapes de traitement d'une commande après sa création ?
 - **Choix proposés :** A. toutes les étapes par la coopérative ; B. préparation/expédition par la coopérative et suivi de livraison par MAHLINE ou le transporteur ; C. orchestration automatique par MAHLINE à partir des actions de la coopérative et des informations du transporteur ; D. autre fonctionnement.
 - **Réponse :** C — MAHLINE orchestre automatiquement les étapes selon les actions de la coopérative et les informations de livraison transmises par le transporteur.
-- **Statut :** PRINCIPE D'ORCHESTRATION VALIDÉ ; détail des statuts, transitions et acteurs À PRÉCISER. Transmission transporteur : accès dédié au premier release, API après le release.
+- **Statut :** PRINCIPES D'ORCHESTRATION ET DE REFUS PARTIEL VALIDÉS ; détail des statuts, transitions et acteurs À PRÉCISER. Transmission transporteur : accès dédié au premier release, API après le release.
 - **Conséquences / contraintes :**
   - Distinguer les actions métier effectuées par la coopérative (par exemple confirmation, préparation et remise au transporteur) des événements logistiques (prise en charge, transit, livraison ou incident).
   - MAHLINE applique les transitions autorisées et conserve l'historique des changements de statut.
@@ -129,6 +129,12 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Un transporteur ne doit pas pouvoir consulter les commandes, clients ou données d'autres coopératives au-delà des informations nécessaires à ses propres livraisons.
   - Les mises à jour doivent être historisées et contrôlées avant de déclencher les transitions correspondantes.
   - L'intégration API est une évolution post-release ; sa disponibilité dépendra des capacités techniques de chaque transporteur.
+- **Décision complémentaire — refus d'une sous-commande par une coopérative :** A — seule la sous-commande de la coopérative qui refuse est annulée ; les commandes des autres coopératives continuent leur traitement.
+- **Conséquences / contraintes complémentaires :**
+  - Le refus d'une coopérative ne doit pas annuler les sous-commandes des autres coopératives du même panier.
+  - Le statut et l'historique de la sous-commande refusée doivent être distincts de ceux des autres sous-commandes.
+  - Le traitement du panier multi-coopératives doit donc permettre une évolution indépendante de chaque sous-commande.
+  - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
 ## 3. Questions ouvertes
@@ -141,7 +147,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-005 | Frais de livraison selon la grille trajet-ville des transporteurs | PRINCIPE VALIDÉ — grille réelle attendue |
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
-| FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPE VALIDÉ — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; statuts à préciser |
+| FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
 | FR-009 | Annulation, retour et remboursement | À poser |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
@@ -176,6 +182,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.9 — 12 novembre 2026
+- Complément de FR-008 : en cas de refus d'une coopérative, seule sa sous-commande est annulée ; les sous-commandes des autres coopératives continuent indépendamment. Les conséquences financières et notifications restent à cadrer.
 
 ### Version 0.8 — 12 novembre 2026
 - Complément de FR-008 : accès dédié du transporteur à MAHLINE pour mettre à jour ses livraisons au premier release ; intégration API après le release. Les accès sont limités aux expéditions attribuées au transporteur.
