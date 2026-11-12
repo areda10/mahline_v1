@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.18
+- **Version :** 1.19
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -549,6 +549,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Products, Cooperatives.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points ouverts :** ordre d’affichage et désignation de la photo principale.
+
+### Question 117 — Choix de la photo principale du produit
+
+- **Question :** Comment choisir la photo principale affichée dans la boutique ?
+- **Options proposées :**
+  - A. La première photo ajoutée devient automatiquement la photo principale.
+  - B. La dernière photo ajoutée devient automatiquement la photo principale.
+  - C. Le responsable choisit manuellement une photo principale parmi les 10 photos.
+  - D. La photo principale est choisie automatiquement, mais peut être modifiée manuellement.
+- **Réponse utilisateur :** C.
+- **Décision fonctionnelle :** La personne autorisée choisit manuellement une photo principale parmi les photos associées au produit.
+- **Conséquences :** La photo principale doit obligatoirement être l’une des photos actuellement associées au produit. Le choix et le changement de photo principale doivent respecter les permissions et le périmètre coopératif, et être contrôlés côté serveur. Un produit peut conserver jusqu’à 10 photos au total.
+- **Domaines concernés :** Media, Products, Cooperatives, Audit.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points ouverts :** comportement si la photo principale est supprimée ou dissociée ; possibilité de réordonner les photos.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
