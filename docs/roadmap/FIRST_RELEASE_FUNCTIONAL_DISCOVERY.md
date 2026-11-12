@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.93
+- **Version :** 1.94
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1548,6 +1548,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** les variantes d'images générées par Media utilisent un format moderne optimisé, WebP lorsque le navigateur le prend en charge, avec un format de repli compatible si nécessaire.
 - **Portée :** le fichier original JPG, JPEG ou PNG reste conservé. Le choix du format servi au navigateur doit être compatible avec ses capacités et ne doit pas contourner les règles d'autorisation, de visibilité ou de quota. Les formats de sortie exacts et la stratégie de détection/fallback seront confirmés pendant l'audit technique.
 - **Statut :** règle fonctionnelle enregistrée ; stratégie technique à préciser pendant l'audit ; implémentation non commencée.
+
+### Question 192 — Orientation et métadonnées EXIF des images
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** Media corrige automatiquement l'orientation des images à partir des informations EXIF lorsque cela est nécessaire. Les versions optimisées diffusées suppriment les métadonnées EXIF sensibles, notamment les coordonnées GPS et les informations sur l'appareil.
+- **Portée :** le fichier original est conservé intact ; le traitement porte sur les variantes générées. Les contrôles doivent éviter toute exposition involontaire de métadonnées sensibles via les aperçus ou les téléchargements de variantes.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
