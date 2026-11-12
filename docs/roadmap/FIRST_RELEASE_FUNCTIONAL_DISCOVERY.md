@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.84
+- **Version :** 1.85
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1485,6 +1485,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Suivi :** afficher une progression individuelle et un état distinct pour chaque fichier afin que l'utilisateur identifie les fichiers réussis, en cours ou en échec.
 - **Règles :** chaque fichier est contrôlé individuellement selon son type, sa taille, les permissions du demandeur et le quota de sa coopérative. Un échec sur un fichier ne doit pas faire perdre les fichiers déjà téléversés avec succès.
 - **Statut :** principe fonctionnel enregistré ; détails de reprise et de gestion des échecs à préciser ; implémentation non commencée.
+
+### Question 183 — Gestion des échecs de téléversement
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** pour chaque fichier en échec, Media affiche clairement la cause compréhensible de l'échec et propose une action « Réessayer » propre à ce fichier. Les fichiers déjà téléversés avec succès ne sont ni renvoyés ni annulés.
+- **Portée :** chaque tentative de reprise concerne uniquement le fichier concerné ; les contrôles de format, taille, quota, autorisations et sécurité sont réexécutés côté serveur. Les détails techniques sensibles ne sont pas exposés à l'utilisateur.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
