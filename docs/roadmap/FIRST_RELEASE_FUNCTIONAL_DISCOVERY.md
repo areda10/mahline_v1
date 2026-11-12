@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.49
+- **Version :** 1.50
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1071,6 +1071,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — lecture automatique à l’ouverture et action globale « Marquer tout comme lu ».
 - **Périmètre concerné :** domaine Media ; centre de notifications et états de lecture par utilisateur.
 - **Points restant à préciser :** libellé exact, confirmation éventuelle et comportement si la liste contient un grand nombre de notifications à vérifier lors du cadrage UX/technique.
+
+### Question 148 — Indicateur du nombre de notifications non lues (VALIDÉE)
+- **Question :** Comment afficher le nombre de notifications non lues sur l’icône de notification ?
+- **Choix proposés :**
+  - A. Un compteur numérique sur l’icône.
+  - B. Un point rouge sans nombre.
+  - C. Un compteur numérique et un point visuel.
+  - D. Aucun indicateur.
+- **Réponse :** Précision explicite : afficher un rond rouge dans un coin de l’icône de notification, contenant le nombre de notifications non lues.
+- **Décision :** afficher sur un coin de l’icône de notification un badge rond rouge avec le nombre de notifications non lues de l’utilisateur.
+- **Conséquences :**
+  - Le nombre affiché reflète les notifications non lues accessibles à l’utilisateur connecté.
+  - Le compteur se met à jour lorsqu’une notification est lue, masquée ou lorsqu’une nouvelle notification est reçue, selon les règles d’affichage validées.
+  - Le masquage d’une notification ne doit pas être confondu avec son marquage comme lu ; le calcul du compteur doit respecter séparément ces deux états.
+- **Statut :** VALIDÉ — compteur numérique dans un rond rouge positionné sur le coin de l’icône.
+- **Périmètre concerné :** domaine Media ; centre de notifications et indicateur global de lecture.
+- **Points restant à préciser :** présentation du compteur pour les valeurs élevées (ex. 99+) et mise à jour temps réel ou au rafraîchissement à préciser lors du cadrage UX/technique.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
