@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.95
+- **Version :** 0.96
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -150,6 +150,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** l'annulation par la coopérative libère la réservation de stock correspondante ; cette libération doit être cohérente, traçable et limitée à la sous-commande concernée dans un panier multi-coopératives.
 - **Périmètre concerné :** domaines Orders et Inventory ; action d'annulation coopérative, contrôle de l'étape de préparation, motif, historique et libération du stock.
 - **Points restant à préciser :** liste ou saisie libre des motifs, possibilité d'annulation exceptionnelle après le début de préparation, notifications client et traitement des frais éventuels.
+
+### Question 95 — Début officiel de la préparation (VALIDÉE)
+- **Question :** Quel événement définit officiellement le début de la préparation d'une commande ?
+- **Choix proposés :**
+  - A. Lorsque la coopérative clique sur « Commencer la préparation ».
+  - B. Dès qu'un employé commence physiquement à préparer les produits.
+  - C. Lorsque tous les produits sont rassemblés et prêts à emballer.
+  - D. Lorsque la coopérative imprime le bon de préparation.
+- **Réponse :** A.
+- **Décision :** le début de préparation est matérialisé dans MAHLINE par l'action explicite de la coopérative « Commencer la préparation ». Cet événement constitue la limite après laquelle la coopérative ne peut plus annuler la commande selon la règle validée à la question 94.
+- **Conséquences :** l'action doit être horodatée et attribuée à l'utilisateur qui l'effectue ; l'interface et les règles métier doivent s'appuyer sur cet événement enregistré, et non sur une estimation de l'activité physique.
+- **Périmètre concerné :** domaines Orders et Inventory ; workflow de commande, action de préparation, contrôle d'annulation et historique.
+- **Points restant à préciser :** permissions des membres de la coopérative, possibilité de revenir en arrière en cas d'erreur de clic, et traitement d'une préparation commencée mais interrompue.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
