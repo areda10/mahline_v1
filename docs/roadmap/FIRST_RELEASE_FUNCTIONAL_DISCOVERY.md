@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.11
+- **Version :** 2.12
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1673,6 +1673,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** A (validation de la recommandation).
 - **Décision validée :** le quota de stockage d'une coopérative comptabilise tous les fichiers physiques effectivement stockés pour son espace Media : fichiers originaux, vidéos converties, miniatures et variantes optimisées des images.
 - **Portée :** les fichiers et variantes générés automatiquement ne sont pas exclus du calcul. Le stockage mutualisé et les références partagées entre modules doivent être comptabilisés de manière cohérente, sans double comptage artificiel d'un même fichier physique dans l'espace d'une coopérative. Les modalités exactes de rattachement, de calcul, de mise à jour et d'affichage du quota seront vérifiées pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 210 — Indisponibilité du moteur antivirus
+
+- **Réponse :** A (validation de la recommandation).
+- **Décision validée :** si le moteur antivirus est indisponible ou ne répond pas, Media bloque les nouveaux imports jusqu'à ce que le moteur soit de nouveau opérationnel. Aucun fichier ne peut être considéré comme sain ni être utilisé, téléchargé, associé à une ressource métier ou distribué sans résultat d'analyse positif.
+- **Portée :** les fichiers déjà en attente d'analyse restent inaccessibles jusqu'à l'obtention d'un résultat positif. Le système doit signaler clairement l'indisponibilité sans exposer de détails techniques sensibles. Les délais de détection, la surveillance du moteur, les alertes destinées au super_admin_root et la reprise des analyses en attente seront définis pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
