@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.16
+- **Version :** 1.17
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -519,6 +519,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Products, Categories, Cooperatives, Audit.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points à vérifier à l’audit technique :** comportement des stockages et sauvegardes, suppression physique/remote, échec partiel et reprise, cohérence des références et journaux d’audit.
+
+### Question 115 — Remplacement et pluralité des photos d’un produit
+
+- **Question :** Lorsqu’un utilisateur remplace un média déjà utilisé, que doit-il advenir de l’ancien fichier ?
+- **Options proposées :**
+  - A. L’ancien fichier est supprimé immédiatement après le remplacement.
+  - B. L’ancien fichier est conservé pendant 30 jours.
+  - C. L’ancien fichier est conservé dans l’historique du média, consultable par les personnes autorisées.
+  - D. Le remplacement crée un nouveau média ; l’ancien reste inchangé jusqu’à sa suppression explicite.
+- **Réponse utilisateur :** D, avec la précision qu’un produit peut avoir plusieurs photos.
+- **Décision fonctionnelle :** Un remplacement crée un nouveau média sans modifier ni supprimer automatiquement l’ancien. Un produit peut être associé à plusieurs photos ; le modèle fonctionnel ne doit donc pas imposer une photo unique par produit.
+- **Conséquences :** Le remplacement ne doit pas entraîner la suppression implicite du média précédent. L’utilisateur peut gérer plusieurs photos pour un même produit, sous réserve de ses permissions et de son périmètre coopératif. La suppression d’un ancien média reste une action distincte, soumise à la confirmation et aux règles de suppression définies en Q113 et Q114. Les règles de nombre maximal de photos, d’ordre d’affichage et de photo principale restent à préciser.
+- **Domaines concernés :** Media, Products, Cooperatives, Audit.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points ouverts :** nombre maximal de photos par produit, ordre d’affichage, désignation d’une photo principale, gestion d’un média réutilisé par plusieurs éléments.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
