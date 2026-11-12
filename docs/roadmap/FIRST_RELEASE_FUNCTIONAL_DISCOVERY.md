@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.30
+- **Version :** 0.31
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par un super_admin habilité sur la coopérative concernée ; en l'absence de décideur habilité, litige en attente jusqu'à désignation ; responsable et délai de désignation à définir |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par un super_admin habilité sur la coopérative concernée ; en l'absence de décideur habilité, litige en attente jusqu'à désignation ; traitement confié au super_admin qui prend en charge la coopérative concernée ; absence durable de responsable et escalade à définir |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -207,6 +207,12 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - Le dossier conserve son statut de litige et reste sans décision finale tant qu'aucun `super_admin` habilité n'a été désigné.
   - La désignation d'un décideur habilité devient une étape nécessaire pour reprendre le traitement.
   - L'acteur responsable de cette désignation, le délai maximal d'attente et la procédure d'escalade si aucun décideur n'est désigné restent à préciser.
+- **Précision complémentaire — responsable du traitement/désignation du litige (Question 32) :** le `super_admin` qui prend en charge la coopérative concernée est le responsable désigné pour intervenir sur le litige de cette coopérative.
+- **Conséquences / contraintes :**
+  - Le rattachement du `super_admin` à la coopérative détermine son habilitation à traiter le litige correspondant.
+  - Le litige doit être orienté vers le `super_admin` responsable de cette coopérative ; il n'est pas attribué automatiquement à un administrateur quelconque.
+  - Si aucun `super_admin` ne prend en charge la coopérative, le litige reste en attente conformément à la décision de la Question 31.
+  - Le cas d'absence durable de responsable et son éventuelle escalade restent à définir.
 
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
@@ -261,6 +267,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.31 — 12 novembre 2026
+- Précision de FR-009 — Question 32 : le `super_admin` qui prend en charge la coopérative concernée est le responsable du traitement du litige lié à cette coopérative. Si aucun `super_admin` ne la prend en charge, le litige reste en attente. L'escalade en cas d'absence durable de responsable reste à définir.
 
 ### Version 0.30 — 12 novembre 2026
 - Complément de FR-009 — Question 31 : si aucun `super_admin` n'est habilité sur la coopérative concernée, le litige reste en attente jusqu'à la désignation d'un `super_admin` habilité. Le responsable de la désignation, le délai maximal et l'escalade restent à préciser.
