@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.59
+- **Version :** 1.60
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1247,6 +1247,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — petit indicateur animé, sans texte.
 - **Périmètre concerné :** domaine Media ; centre de notifications et défilement infini.
 - **Points restant à préciser :** comportement en cas d'erreur de chargement et message de fin de liste.
+ 
+### Question 158 — Échec du chargement des notifications (VALIDÉE)
+- **Question :** Si le chargement d’un lot de notifications échoue à cause d’un problème réseau ou serveur, que doit-il se passer ?
+- **Choix proposés :**
+  - A. Afficher un message simple et un bouton « Réessayer ».
+  - B. Réessayer automatiquement jusqu’à réussite.
+  - C. Afficher un message, sans possibilité de réessayer.
+  - D. Ignorer l’erreur et continuer silencieusement.
+- **Réponse :** A.
+- **Décision :** en cas d'échec du chargement d'un lot, afficher un message simple à l'utilisateur et un bouton « Réessayer ».
+- **Conséquences :**
+  - Aucun nouvel essai automatique n'est lancé.
+  - L'utilisateur déclenche explicitement une nouvelle tentative via « Réessayer ».
+  - Les notifications déjà affichées restent visibles et consultables.
+  - Le nouvel essai porte sur le lot qui a échoué, sans dupliquer les notifications déjà chargées.
+  - Ne pas exposer les détails techniques ou sensibles de l'erreur à l'utilisateur.
+- **Statut :** VALIDÉ — message simple et bouton « Réessayer ».
+- **Périmètre concerné :** domaine Media ; centre de notifications et défilement infini.
+- **Points restant à préciser :** formulation du message et comportement lorsque la liste est entièrement chargée.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
