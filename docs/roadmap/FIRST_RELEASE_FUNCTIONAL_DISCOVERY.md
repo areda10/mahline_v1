@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.06
+- **Version :** 2.07
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1639,6 +1639,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** conserver durablement l'historique des incidents antivirus, des analyses, des résultats, des décisions de quarantaine/libération et des suppressions. Cet historique est consultable uniquement par le super_admin_root.
 - **Portée :** l'historique est append-only et journalisé ; les utilisateurs et les autres rôles ne peuvent ni le consulter ni le modifier. Les données conservées doivent exclure les secrets et informations techniques non nécessaires. Les obligations de conservation, d'archivage et de protection des données seront vérifiées pendant l'audit technique et juridique.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 205 — Formats vidéo acceptés par Media
+
+- **Réponse :** B (validation de la recommandation).
+- **Décision validée :** Media accepte les fichiers vidéo MP4, MOV et WebM au premier release.
+- **Portée :** le système vérifie le format réel du fichier et les codecs utilisés, sans se fier uniquement à l'extension. Les vidéos acceptées sont converties automatiquement vers un format de diffusion standard adapté à la compatibilité, à la qualité et à la livraison. L'original est conservé temporairement jusqu'à vérification de la réussite de la conversion et de la lecture du fichier converti. Les codecs précis, les profils pris en charge et les limites techniques restent à fixer pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
