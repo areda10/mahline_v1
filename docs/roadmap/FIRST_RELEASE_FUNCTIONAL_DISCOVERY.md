@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.10
+- **Version :** 2.11
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1666,6 +1666,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** B (validation de la recommandation).
 - **Décision validée :** après conversion réussie et vérification effective de la lecture du fichier converti, Media conserve le fichier vidéo original pendant 24 heures, puis le supprime automatiquement.
 - **Portée :** le délai de 24 heures commence uniquement après validation complète de la conversion. Si la conversion ou sa vérification échoue, l'original est conservé et la politique de nouvelle tentative de Q207 continue de s'appliquer. La suppression automatique doit être sécurisée, journalisée et ne pas affecter la vidéo convertie ni ses références. Les modalités techniques de planification, de reprise et de traçabilité seront définies pendant l'audit.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 209 — Comptabilisation du stockage Media
+
+- **Réponse :** A (validation de la recommandation).
+- **Décision validée :** le quota de stockage d'une coopérative comptabilise tous les fichiers physiques effectivement stockés pour son espace Media : fichiers originaux, vidéos converties, miniatures et variantes optimisées des images.
+- **Portée :** les fichiers et variantes générés automatiquement ne sont pas exclus du calcul. Le stockage mutualisé et les références partagées entre modules doivent être comptabilisés de manière cohérente, sans double comptage artificiel d'un même fichier physique dans l'espace d'une coopérative. Les modalités exactes de rattachement, de calcul, de mise à jour et d'affichage du quota seront vérifiées pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
