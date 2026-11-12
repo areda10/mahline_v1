@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.33
+- **Version :** 1.34
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -793,6 +793,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
 - **Périmètre concerné :** domaine Media ; confirmation, autorisations, nouvelle tentative et traçabilité de suppression.
 - **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour cette règle.
+
+### Question 132 — Blocage temporaire après des échecs répétés de suppression (VALIDÉE)
+- **Question :** Si plusieurs tentatives de suppression physique échouent successivement, quelle règle appliquer ?
+- **Choix proposés :**
+  - A. Autoriser autant de nouvelles tentatives que nécessaire.
+  - B. Bloquer après 3 échecs et demander l'intervention du `super_admin_root`.
+  - C. Bloquer après 5 échecs et demander l'intervention du `super_admin_root`.
+  - D. Bloquer temporairement, puis autoriser une nouvelle tentative après un délai.
+- **Réponse :** D.
+- **Décision :** après plusieurs échecs successifs, MAHLINE bloque temporairement les nouvelles tentatives de suppression physique ; une nouvelle tentative redevient possible après expiration du délai de blocage.
+- **Conséquences :**
+  - Le blocage est temporaire et ne constitue pas une suppression définitive du média.
+  - À l'expiration du délai, une nouvelle tentative peut être déclenchée par un utilisateur autorisé, sous réserve d'une nouvelle confirmation (question 131) et d'une nouvelle vérification des permissions (question 130).
+  - Les échecs restent inscrits dans le journal d'audit accessible uniquement au `super_admin_root` (question 129) ; l'utilisateur reçoit un message simple.
+- **Statut :** VALIDÉ — principe fonctionnel enregistré.
+- **Périmètre concerné :** domaine Media ; gestion des échecs répétés, blocage temporaire, autorisations et confirmation.
+- **Points restant à préciser :** seuil exact d'échecs successifs déclenchant le blocage, durée du blocage et éventuelle progression du délai à définir avant ou pendant l'audit technique, sans inventer de valeurs.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
