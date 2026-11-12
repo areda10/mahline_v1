@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.4
+- **Version :** 0.5
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -95,6 +95,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le calcul doit rester configurable/évolutif afin de permettre une autre règle ou un autre mode de tarification sans reconstruire le parcours de commande.
   - La grille tarifaire réelle des transporteurs reste attendue ; les exemples de FR-005 ne constituent pas une grille définitive.
 
+### FR-007 — Moment de réservation du stock selon le moyen de paiement
+
+- **Question :** À quel moment réserver ou déduire le stock d'un produit commandé ?
+- **Choix proposés :** A. à l'ajout au panier ; B. à la validation de la commande ; C. à la livraison ; D. à la confirmation de la commande par la coopérative.
+- **Réponse :** règle différenciée selon le moyen de paiement :
+  - **Paiement à la livraison (premier release) :** D — réserver le stock lorsque la coopérative confirme la commande.
+  - **Paiement en ligne (évolution post-release) :** B — réserver le stock à la validation de la commande.
+- **Statut :** VALIDÉ pour les deux parcours, avec paiement en ligne planifié après le premier release.
+- **Conséquences / contraintes :**
+  - Pour le paiement à la livraison, une commande non encore confirmée par la coopérative ne réserve pas immédiatement le stock.
+  - À la confirmation de la commande par la coopérative, le stock correspondant doit être réservé de manière cohérente et protégée contre les réservations concurrentes.
+  - Pour le futur paiement en ligne, la réservation intervient à la validation de la commande ; les règles liées à l'autorisation, à l'échec ou à l'expiration du paiement devront être cadrées avant l'intégration du paiement en ligne.
+  - Le moment de réservation est une règle métier configurable/évolutive, pas une hypothèse à coder en dur.
+- **À préciser dans le cadrage du traitement des commandes :** comportement si la coopérative refuse la commande, ne répond pas ou confirme après un délai ; durée de réservation et libération du stock en cas d'annulation.
+
 ## 3. Questions ouvertes
 
 Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours métier. Une question n'est considérée validée que lorsque la réponse de l'utilisateur est explicite.
@@ -104,7 +119,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-004 | Moyens de paiement du premier release | VALIDÉ — paiement à la livraison ; paiement en ligne après le release |
 | FR-005 | Frais de livraison selon la grille trajet-ville des transporteurs | PRINCIPE VALIDÉ — grille réelle attendue |
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
-| FR-007 | Gestion des stocks et réservation lors du panier/paiement | À poser |
+| FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | À poser |
 | FR-009 | Annulation, retour et remboursement | À poser |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
@@ -140,6 +155,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.5 — 12 novembre 2026
+- Enregistrement de FR-007 : réservation du stock à la confirmation de la coopérative pour le paiement à la livraison du premier release ; réservation à la validation de commande pour le futur paiement en ligne. Les délais, refus et libérations de réservation restent à préciser.
 
 ### Version 0.4 — 12 novembre 2026
 - Enregistrement de FR-006 : au premier release, additionner les frais calculés pour chaque expédition de coopérative vers la ville du client ; règle explicitement évolutive.
