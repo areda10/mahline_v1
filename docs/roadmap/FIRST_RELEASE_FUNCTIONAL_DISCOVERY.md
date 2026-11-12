@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.94
+- **Version :** 1.95
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1555,6 +1555,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** Media corrige automatiquement l'orientation des images à partir des informations EXIF lorsque cela est nécessaire. Les versions optimisées diffusées suppriment les métadonnées EXIF sensibles, notamment les coordonnées GPS et les informations sur l'appareil.
 - **Portée :** le fichier original est conservé intact ; le traitement porte sur les variantes générées. Les contrôles doivent éviter toute exposition involontaire de métadonnées sensibles via les aperçus ou les téléchargements de variantes.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 193 — Dimensions maximales des images
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** le super_admin_root peut configurer les dimensions maximales acceptées par Media. Pour le premier release, la valeur par défaut recommandée est de 6 000 pixels au maximum sur le côté le plus long, avec un plafond complémentaire de 24 mégapixels par image.
+- **Portée :** la limite de poids de 2 Mo par image reste applicable indépendamment des dimensions. Cette valeur par défaut vise à accepter les photos courantes de téléphones récents tout en limitant les coûts de décodage et de traitement sur l'hébergement. Les paramètres pourront être ajustés après les essais sur l'infrastructure réelle. L'original accepté reste conservé intact ; les variantes sont générées selon les règles d'optimisation validées.
+- **Statut :** règle fonctionnelle enregistrée ; valeur par défaut recommandée à confirmer lors des tests techniques ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
