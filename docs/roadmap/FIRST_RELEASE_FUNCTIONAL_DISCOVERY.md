@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.65
+- **Version :** 1.66
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1343,6 +1343,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** afficher le bouton « Tout marquer comme lu » directement dans la fenêtre déroulante d’aperçu rapide.
 - **Portée :** l’action marque comme lues toutes les notifications non lues accessibles à l’utilisateur connecté, sans modifier les notifications d’autres utilisateurs.
 - **Cohérence :** cette action complète la possibilité de marquer une notification individuellement comme lue depuis l’aperçu (Q162). Le masquage reste réservé à la page dédiée.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 164 — Mise à jour du compteur rouge après lecture
+
+- **Réponse :** D.
+- **Décision validée :** après qu’une notification est marquée comme lue depuis l’aperçu rapide, le compteur rouge est mis à jour après un court délai automatique.
+- **Portée :** le compteur représente toujours le nombre de notifications non lues accessibles à l’utilisateur connecté. Le délai exact et le mécanisme technique seront définis pendant l’audit technique.
+- **Cohérence :** cette décision complète Q149, qui prévoit une actualisation du compteur uniquement au rechargement pour les nouvelles notifications. Le comportement après une action explicite de lecture est désormais distinct.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
