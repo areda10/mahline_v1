@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.97
+- **Version :** 1.98
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1576,6 +1576,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** la miniature est générée immédiatement après l'acceptation de l'image afin de devenir rapidement disponible dans l'interface. Les variantes d'affichage normal et grand format sont générées en arrière-plan, sans bloquer le téléversement.
 - **Portée :** le traitement asynchrone doit signaler clairement l'état des variantes encore en cours de génération. Les erreurs de génération doivent être détectables et traitables sans invalider les fichiers déjà correctement téléversés ni exposer de détails techniques sensibles. Les règles de sécurité, de quota et de conservation de l'original restent applicables.
 - **Statut :** règle fonctionnelle enregistrée ; mécanisme technique et gestion des erreurs à préciser pendant l'audit ; implémentation non commencée.
+
+### Question 196 — Échec de génération d'une variante d'image
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** lorsqu'une variante normale ou grand format ne peut pas être générée, Media utilise temporairement l'original comme solution de secours lorsque cela est possible, déclenche des tentatives automatiques de régénération et propose une relance manuelle si les tentatives automatiques échouent.
+- **Portée :** l'échec de génération d'une variante ne doit pas rendre le fichier original indisponible ni faire disparaître l'image de son emplacement autorisé. Les règles d'accès, de visibilité et de sécurité restent applicables au fichier de secours. Le nombre, l'espacement et les conditions des tentatives automatiques seront définis pendant l'audit technique.
+- **Statut :** règle fonctionnelle enregistrée ; paramètres de reprise à définir lors de l'audit technique ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
