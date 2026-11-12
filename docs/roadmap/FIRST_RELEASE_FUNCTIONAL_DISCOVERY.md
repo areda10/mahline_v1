@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.56
+- **Version :** 1.57
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1194,6 +1194,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — « Non lues » par défaut et toutes catégories incluses.
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** éventuel compteur/pagination des résultats filtrés.
+ 
+### Question 155 — Chargement progressif des notifications (VALIDÉE)
+- **Question :** Comment afficher les notifications lorsque leur nombre devient important ?
+- **Choix proposés :**
+  - A. Tout afficher sur une seule page.
+  - B. Afficher 20 notifications par page avec pagination.
+  - C. Afficher 50 notifications par page avec pagination.
+  - D. Charger progressivement les notifications en faisant défiler la page (défilement infini).
+- **Réponse :** D.
+- **Décision :** utiliser un défilement infini pour charger progressivement les notifications au fur et à mesure que l'utilisateur descend dans la liste.
+- **Conséquences :**
+  - Le chargement initial et chaque chargement complémentaire doivent rester limités afin d'éviter de récupérer toutes les notifications en une seule fois.
+  - Le tri chronologique décroissant validé en Q150 et les filtres validés en Q151 à Q154 doivent être respectés à chaque chargement.
+  - Les notifications déjà affichées ne doivent pas être dupliquées lors du chargement des éléments suivants.
+  - Les contrôles d'accès et de visibilité restent appliqués côté serveur.
+- **Statut :** VALIDÉ — défilement infini avec chargement progressif.
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** taille du lot initial et des lots suivants, ainsi que l'indicateur de chargement et le comportement en cas d'erreur.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
