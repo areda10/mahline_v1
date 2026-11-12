@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.75
+- **Version :** 1.76
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1418,6 +1418,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Portée :** les résultats restent limités aux médias que l’utilisateur est autorisé à consulter. Les filtres n’élargissent jamais les droits d’accès ni le périmètre coopératif.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
+### Question 174 — Prévisualisation des fichiers Media
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** permettre la prévisualisation intégrée de tous les fichiers acceptés lorsque le format et le navigateur le permettent ; proposer le téléchargement lorsque la prévisualisation n’est pas prise en charge.
+- **Portée :** images, PDF et vidéos acceptés par Media ; les comportements précis dépendent des capacités techniques du format et du navigateur.
+- **Orientation du premier release :** définir les fonctionnalités principales et indispensables de chaque domaine par questions-réponses, puis auditer les fonctionnalités déjà présentes dans le dépôt afin d’identifier ce qui est prêt, incomplet, absent ou à corriger pour le premier release. L’objectif est de coder les fonctionnalités validées et de limiter le périmètre au nécessaire pour lancer MAHLINE.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+ 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
