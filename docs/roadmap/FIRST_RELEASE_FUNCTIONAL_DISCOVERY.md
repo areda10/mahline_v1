@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.51
+- **Version :** 0.52
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.52 — 12 novembre 2026
+- FR-009, Question 53 : décision C — chaque destinataire reçoit la notification de décision dans son espace MAHLINE et par e-mail. Contenu adapté au rôle ; gestion des échecs, reprises et preuves de notification à préciser.
+
 ### Version 0.51 — 12 novembre 2026
 - FR-009, Question 52 : décision B — la notification communique le résultat (confirmée, modifiée ou annulée) et un résumé du motif. Le dossier complet, les preuves et les échanges ne sont pas transmis automatiquement ; adaptation du résumé par rôle, modèles et canaux restent à préciser.
 
@@ -184,6 +187,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - La communication doit être adaptée aux droits et au rôle de chaque destinataire : chaque acteur ne reçoit que les informations et pièces nécessaires à son intervention. Les canaux, le contenu détaillé et la preuve de notification restent à définir.
   - **Question 52 — contenu de la notification de décision :** B — chaque destinataire reçoit le résultat de la décision (confirmée, modifiée ou annulée) accompagné d'un résumé du motif.
   - **Conséquences / contraintes :** la notification doit distinguer clairement l'issue du réexamen et en expliquer brièvement la raison. Elle ne transmet pas automatiquement le dossier complet, toutes les preuves ou l'ensemble des échanges. Le niveau de détail du résumé selon le rôle du destinataire, les modèles de notification et les canaux restent à préciser.
+  - **Question 53 — canaux de notification de la décision définitive :** C — chaque destinataire reçoit la notification dans son espace MAHLINE et par e-mail.
+  - **Conséquences / contraintes :** la notification doit être disponible dans l'espace MAHLINE et envoyée par e-mail à chacun des destinataires concernés (client, coopérative, transporteur impliqué et `super_admin` responsable). Le contenu reste adapté au rôle et aux droits du destinataire ; l'échec d'envoi de l'e-mail, les reprises éventuelles, les preuves de remise/consultation et les règles de conservation restent à préciser.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
