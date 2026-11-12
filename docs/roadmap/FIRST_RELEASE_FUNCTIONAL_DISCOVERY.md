@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.03
+- **Version :** 2.04
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1618,6 +1618,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** à la fin de l'analyse antivirus, Media met à jour le statut du fichier et informe l'utilisateur par une notification dans MAHLINE. L'email est réservé aux incidents de sécurité importants.
 - **Portée :** la notification indique le résultat utile à l'utilisateur sans divulguer de détails techniques sensibles. Les incidents importants peuvent déclencher un email aux responsables autorisés selon des critères à définir pendant l'audit technique. La notification et les éventuels emails respectent les permissions, la confidentialité et les règles du domaine de communication.
 - **Statut :** règle fonctionnelle enregistrée ; critères d'incident important à définir lors de l'audit technique ; implémentation non commencée.
+
+### Question 202 — Traitement d'un fichier détecté comme malveillant
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** tout fichier détecté comme malveillant reste en quarantaine. Le super_admin_root reçoit une notification et peut demander sa suppression définitive après une confirmation explicite.
+- **Portée :** le fichier en quarantaine demeure inaccessible aux utilisateurs et aux modules, y compris pour l'aperçu, le téléchargement, l'association et la diffusion. La suppression est réservée au super_admin_root, contrôlée côté serveur et journalisée. La suppression physique suit les contrôles de références et les règles de suppression Media déjà validées. Aucun fichier n'est supprimé automatiquement à la seule suite d'une détection antivirus.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
