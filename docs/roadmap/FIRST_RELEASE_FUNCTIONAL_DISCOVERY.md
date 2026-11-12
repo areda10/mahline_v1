@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.55
+- **Version :** 1.56
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1176,6 +1176,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — conservation limitée à la session.
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** valeurs exactes des filtres par défaut.
+ 
+### Question 154 — Valeurs des filtres par défaut (VALIDÉE)
+- **Question :** À chaque nouvelle connexion, quels filtres doivent être appliqués par défaut ?
+- **Choix proposés :**
+  - A. Toutes les notifications, toutes les catégories.
+  - B. Notifications non lues, toutes les catégories.
+  - C. Toutes les notifications, aucune catégorie sélectionnée jusqu'au choix de l'utilisateur.
+  - D. Notifications non lues, sans catégorie sélectionnée jusqu'au choix de l'utilisateur.
+- **Réponse :** D.
+- **Décision :** à chaque nouvelle session, afficher par défaut les notifications non lues et ne présélectionner aucune catégorie spécifique.
+- **Conséquences :**
+  - Le filtre de statut initial est « Non lues ».
+  - Le filtre de catégorie initial est neutre : aucune catégorie n'est sélectionnée, ce qui signifie qu'aucune restriction par catégorie n'est appliquée.
+  - Pendant la session, les sélections de filtres restent conservées conformément à Q153.
+  - À la session suivante, les filtres reviennent à ces valeurs par défaut.
+- **Statut :** VALIDÉ — « Non lues » par défaut et toutes catégories incluses.
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** éventuel compteur/pagination des résultats filtrés.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
