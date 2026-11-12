@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.60
+- **Version :** 1.61
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1266,6 +1266,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — message simple et bouton « Réessayer ».
 - **Périmètre concerné :** domaine Media ; centre de notifications et défilement infini.
 - **Points restant à préciser :** formulation du message et comportement lorsque la liste est entièrement chargée.
+ 
+### Question 159 — Fin de la liste des notifications (VALIDÉE)
+- **Question :** Lorsque toutes les notifications ont été chargées, que doit afficher le centre de notifications ?
+- **Choix proposés :**
+  - A. Rien de particulier : la liste s’arrête simplement.
+  - B. Un message discret : « Toutes les notifications ont été chargées ».
+  - C. Un bouton « Retour en haut ».
+  - D. Le message de B et le bouton de C.
+- **Réponse :** D.
+- **Décision :** à la fin de la liste, afficher un message discret « Toutes les notifications ont été chargées » et un bouton « Retour en haut ».
+- **Conséquences :**
+  - Le message apparaît uniquement lorsqu'il n'existe plus de notifications supplémentaires à charger pour les filtres actifs.
+  - Le bouton permet de revenir en haut du centre de notifications.
+  - Si les filtres sont modifiés et que d'autres résultats existent, le message de fin est retiré et le chargement progressif reprend.
+- **Statut :** VALIDÉ — message de fin et bouton « Retour en haut ».
+- **Périmètre concerné :** domaine Media ; centre de notifications et défilement infini.
+- **Points restant à préciser :** aucun point fonctionnel spécifique identifié pour cette règle.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
