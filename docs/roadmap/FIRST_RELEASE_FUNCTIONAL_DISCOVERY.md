@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.03
+- **Version :** 1.04
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -254,6 +254,20 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** ce compte est automatiquement le responsable principal de la coopérative pour les décisions et arbitrages définis précédemment. Aucun mécanisme de désignation entre plusieurs administrateurs n'est nécessaire dans le périmètre retenu.
 - **Périmètre concerné :** Identity, Cooperatives, gestion des utilisateurs et autorisations.
 - **Points restant à préciser :** procédure de remplacement du `cooperative_admin`, notamment en cas de départ, désactivation, suspension ou indisponibilité ; transfert de ses responsabilités et continuité de gestion.
+
+### Question 103 — Remplacement du responsable de la coopérative (VALIDÉE)
+
+- **Question :** Que se passe-t-il si le `cooperative_admin` quitte la coopérative ou devient indisponible ?
+- **Choix proposés :**
+  - A. Le `super_admin` responsable peut désigner un autre membre comme nouveau `cooperative_admin`.
+  - B. Seul le `super_admin_root` peut désigner le remplaçant.
+  - C. Le `super_admin` propose un remplaçant, mais le `super_admin_root` doit valider.
+  - D. La coopérative est bloquée jusqu'à l'intervention du `super_admin_root`.
+- **Réponse :** A.
+- **Décision :** le `super_admin` responsable de la coopérative peut désigner un autre membre comme nouveau `cooperative_admin` lorsque le responsable actuel quitte la coopérative ou devient indisponible.
+- **Conséquences :** la coopérative conserve un seul `cooperative_admin`, qui devient son responsable principal. Les modalités de transfert des accès, de révocation de l'ancien compte et de traçabilité de la désignation restent à préciser.
+- **Périmètre concerné :** Identity, Cooperatives, gestion des utilisateurs et autorisations.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
