@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.39
+- **Version :** 1.40
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -900,6 +900,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — notification automatique enregistrée.
 - **Périmètre concerné :** domaine Media ; suppression physique, blocage progressif et notification administrative.
 - **Points restant à préciser :** canal de notification et contenu exact du message à définir lors du cadrage des notifications et de l'UX.
+
+### Question 138 — Contenu de la notification de blocage de 60 minutes (VALIDÉE)
+- **Question :** Quelles informations doivent apparaître dans la notification adressée au `super_admin_root` ?
+- **Choix proposés :**
+  - A. Nom du média, coopérative concernée et nombre d'échecs.
+  - B. Nom du média, coopérative, utilisateur ayant demandé la suppression, nombre d'échecs et date du dernier échec.
+  - C. Toutes les informations de B, avec le motif technique de l'échec.
+  - D. Un simple message indiquant qu'une suppression est bloquée pendant 60 minutes.
+- **Réponse :** C.
+- **Décision :** la notification adressée au `super_admin_root` contient le nom du média, la coopérative concernée, l'utilisateur ayant demandé la suppression, le nombre d'échecs, la date du dernier échec ainsi que le motif technique de l'échec.
+- **Conséquences :**
+  - La notification fournit les éléments nécessaires pour identifier le média et le contexte de la suppression bloquée.
+  - Le motif technique doit être présenté sans exposer de secrets, jetons, identifiants sensibles ou données personnelles non nécessaires.
+  - Les détails complets de l'incident restent consultables dans le journal d'audit réservé au `super_admin_root`.
+- **Statut :** VALIDÉ — contenu fonctionnel de la notification enregistré.
+- **Périmètre concerné :** domaine Media ; notification administrative, échecs de suppression et audit.
+- **Points restant à préciser :** format de présentation et canal de notification à définir lors du cadrage UX/notifications.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
