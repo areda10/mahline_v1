@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.48
+- **Version :** 1.49
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1053,6 +1053,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — conservation des notifications non lues après reconnexion.
 - **Périmètre concerné :** domaine Media ; notifications et cycle de session utilisateur.
 - **Points restant à préciser :** durée de conservation et consultation des notifications déjà lues à cadrer séparément si nécessaire.
+
+### Question 147 — Marquage individuel et global des notifications comme lues (VALIDÉE)
+- **Question :** Comment marquer les notifications comme lues ?
+- **Choix proposés :**
+  - A. Automatiquement dès que l’utilisateur ouvre la notification.
+  - B. Automatiquement dès qu’elle apparaît à l’écran.
+  - C. Manuellement, avec un bouton « Marquer comme lu ».
+  - D. Automatiquement à l’ouverture et manuellement depuis la liste.
+- **Réponse :** A, avec une précision complémentaire explicite : ajouter un bouton « Marquer comme lu » pour toutes les notifications.
+- **Décision :** une notification est automatiquement marquée comme lue dès que l’utilisateur l’ouvre. Ajouter également une action permettant de marquer toutes ses notifications comme lues en une seule opération.
+- **Conséquences :**
+  - L’ouverture d’une notification déclenche son passage à l’état lu.
+  - L’action globale ne concerne que les notifications accessibles à l’utilisateur connecté et encore non lues.
+  - Cette action ne modifie pas les notifications des autres utilisateurs.
+  - Le masquage individuel reste distinct du statut lu/non lu.
+- **Statut :** VALIDÉ — lecture automatique à l’ouverture et action globale « Marquer tout comme lu ».
+- **Périmètre concerné :** domaine Media ; centre de notifications et états de lecture par utilisateur.
+- **Points restant à préciser :** libellé exact, confirmation éventuelle et comportement si la liste contient un grand nombre de notifications à vérifier lors du cadrage UX/technique.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
