@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.83
+- **Version :** 1.84
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1477,6 +1477,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Exception :** `super_admin_root` peut accorder exceptionnellement une capacité supplémentaire à une coopérative, avec justification et traçabilité de l'opération.
 - **Continuité d'accès :** l'atteinte du quota ne supprime aucun média existant et ne bloque pas, à elle seule, la consultation ou le téléchargement des médias déjà autorisés.
 - **Statut :** règle fonctionnelle enregistrée ; modalités de l'extension exceptionnelle et notifications à préciser ; implémentation non commencée.
+
+### Question 182 — Téléversement de plusieurs fichiers
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** l'interface propose le téléversement d'un seul fichier ou de plusieurs fichiers en une seule opération.
+- **Suivi :** afficher une progression individuelle et un état distinct pour chaque fichier afin que l'utilisateur identifie les fichiers réussis, en cours ou en échec.
+- **Règles :** chaque fichier est contrôlé individuellement selon son type, sa taille, les permissions du demandeur et le quota de sa coopérative. Un échec sur un fichier ne doit pas faire perdre les fichiers déjà téléversés avec succès.
+- **Statut :** principe fonctionnel enregistré ; détails de reprise et de gestion des échecs à préciser ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
