@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.72
+- **Version :** 0.73
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -138,6 +138,8 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 
 
 ### Version 0.72 — 12 novembre 2026
+- **FR-009, Question 74 :** décision D — le `super_admin_root` définit la durée de disponibilité des fichiers exportés selon le type d'export ; leur suppression est contrôlée et journalisée.
+
 - FR-009, Question 73 : décision B — la confirmation du mot de passe actuel reste valable 5 minutes pour effectuer plusieurs exports ; une nouvelle confirmation est exigée après expiration. L'heure de validation et les exports effectués dans cette fenêtre sont journalisés ; le mot de passe n'est jamais conservé.
 
 ### Version 0.71 — 12 novembre 2026
