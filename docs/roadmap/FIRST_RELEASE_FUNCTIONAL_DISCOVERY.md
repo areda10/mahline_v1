@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.07
+- **Version :** 1.08
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -321,6 +321,32 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 **Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de fichiers.
 
 **Statut :** Décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 106 — Formats vidéo acceptés et conversion (VALIDÉE)
+
+**Question :** Quels formats vidéo accepter ?
+
+**Options proposées :**
+- A. MP4 uniquement.
+- B. MP4 et MOV.
+- C. MP4, MOV et AVI.
+- D. Tous les formats vidéo courants, avec conversion automatique vers un format standard.
+
+**Réponse retenue :** D.
+
+**Décision fonctionnelle :**
+- Accepter les formats vidéo courants au téléversement.
+- Prévoir une conversion automatique vers un format vidéo standard pour la lecture et la diffusion.
+
+**Conséquences / règles à prévoir :**
+- Définir pendant l'audit technique la liste exacte des conteneurs et codecs acceptés en entrée.
+- Choisir le format standard de sortie et le mécanisme de conversion.
+- Encadrer la conversion (ressources, durée, stockage, échecs, conservation éventuelle de l'original) et sécuriser le traitement des fichiers.
+- La limite de taille de 20 Mo par vidéo reste applicable, conformément à la Q105.
+
+**Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de vidéos.
+
+**Statut :** Décision fonctionnelle enregistrée ; détails techniques à auditer avant implémentation.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
