@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.37
+- **Version :** 1.38
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -866,6 +866,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — progression du délai définie.
 - **Périmètre concerné :** domaine Media ; suppression physique, gestion des échecs répétés et blocage temporaire progressif.
 - **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour la séquence des délais ; les modalités de remise à zéro du compteur restent à cadrer si nécessaire.
+
+### Question 136 — Réinitialisation du compteur d'échecs de suppression (VALIDÉE)
+- **Question :** Quand faut-il remettre à zéro le compteur des échecs et des blocages ?
+- **Choix proposés :**
+  - A. Dès qu'une suppression physique réussit.
+  - B. Après 24 heures sans nouvel échec.
+  - C. Après 7 jours sans nouvel échec.
+  - D. Uniquement sur intervention du `super_admin_root`.
+- **Réponse :** A.
+- **Décision :** le compteur des échecs et des blocages est remis à zéro dès qu'une suppression physique réussit.
+- **Conséquences :**
+  - Une suppression physique réussie réinitialise le compteur et la progression des délais de blocage.
+  - Si une nouvelle série d'échecs survient ensuite, la progression des blocages repart du premier délai de 5 minutes, après 2 échecs successifs.
+  - Les entrées historiques du journal d'audit ne sont pas supprimées par cette réinitialisation.
+- **Statut :** VALIDÉ — règle de réinitialisation enregistrée.
+- **Périmètre concerné :** domaine Media ; suppression physique, compteur d'échecs et blocage progressif.
+- **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour la réinitialisation.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
