@@ -935,7 +935,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaine Media ; notification administrative, blocage progressif et communication.
 - **Points restant à préciser :** modèle de l'email, présentation de la notification interne et comportement en cas d'échec d'envoi à préciser lors du cadrage UX/notifications et de l'audit technique.
 
-### Version 0.83 — 12 novembre 2026
+### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
 
