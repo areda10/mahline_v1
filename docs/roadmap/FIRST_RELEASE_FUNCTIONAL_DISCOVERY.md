@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.61
+- **Version :** 0.62
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.62 — 12 novembre 2026
+- FR-009, Question 63 : décision C — un e-mail de test n'est considéré réussi que si le destinataire le reçoit effectivement dans sa boîte de réception. La capacité du fournisseur à fournir une preuve fiable de remise doit être vérifiée.
+
 ### Version 0.61 — 12 novembre 2026
 - FR-009, Question 62 : décision C — après correction du destinataire, un e-mail de test est envoyé ; les renvois normaux reprennent uniquement si ce test réussit.
 
@@ -234,6 +237,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** ces opérations sont réservées au `super_admin_root` et doivent être journalisées (acteur, date/heure, action, motif si nécessaire et résultat). Une relance manuelle reprend l'envoi après l'arrêt automatique au seuil de 10 échecs. Une modification d'adresse ou de destinataire doit être enregistrée dans l'historique de l'incident. La clôture manuelle n'est possible qu'après vérification et doit être justifiée. Les règles exactes de reprise du compteur, les contrôles de validité du nouvel e-mail et la distinction entre acceptation par le serveur et livraison effective restent à préciser.
   - **Question 62 — après correction de l'adresse ou du destinataire :** C — MAHLINE envoie un seul e-mail de test ; si l'envoi réussit, les tentatives normales reprennent.
   - **Conséquences / contraintes :** le test est une étape préalable à la reprise des notifications de l'incident. Son résultat (date/heure, adresse ou destinataire ciblé, statut et erreur éventuelle) est journalisé. En cas d'échec du test, les tentatives normales restent suspendues et l'incident demeure ouvert pour intervention du `super_admin_root`. La définition précise d'un test réussi (acceptation par le serveur d'envoi ou confirmation de livraison), le nombre de tests autorisés et la reprise du compteur des 10 tentatives restent à préciser.
+  - **Question 63 — définition d'un e-mail de test réussi :** C — le destinataire reçoit effectivement l'e-mail dans sa boîte de réception.
+  - **Conséquences / contraintes :** la simple acceptation du message par MAHLINE ou par le fournisseur d'e-mail ne suffit pas à valider le test. La reprise des notifications normales dépend d'une preuve de remise effective dans la boîte du destinataire. Il faudra vérifier que le fournisseur et son mécanisme de suivi permettent d'obtenir un statut de remise suffisamment fiable ; une acceptation SMTP ou un statut « envoyé » ne doit pas être présenté comme une preuve de réception en boîte de réception. Le traitement des messages placés en spam, des boîtes pleines, des rejets différés et l'absence de preuve de remise restent à préciser.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
