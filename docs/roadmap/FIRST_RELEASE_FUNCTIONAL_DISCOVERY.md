@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.74
+- **Version :** 0.75
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -136,6 +136,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le traitement du panier multi-coopératives doit donc permettre une évolution indépendante de chaque sous-commande.
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
+
+### Version 0.75 — 12 novembre 2026
+- FR-009, Question 76 : décision C — lors d'une régénération, le `super_admin_root` peut choisir entre le contenu historique identique à l'export initial et les données actuelles ; la date de référence doit être clairement indiquée.
 
 ### Version 0.74 — 12 novembre 2026
 - FR-009, Question 75 : décision D — après expiration de la disponibilité d'un export, le `super_admin_root` décide au cas par cas entre sa régénération et sa restauration temporaire ; justification et journalisation obligatoires.
