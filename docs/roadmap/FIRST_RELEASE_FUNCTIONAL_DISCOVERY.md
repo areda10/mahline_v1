@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.45
+- **Version :** 1.46
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1002,6 +1002,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — suppression assimilée à un masquage individuel.
 - **Périmètre concerné :** domaine Media ; notifications et préférences d’affichage par utilisateur.
 - **Points restant à préciser :** durée de conservation technique et éventuelle fonction de réaffichage à préciser lors de l’audit technique/UX.
+
+### Question 144 — Annulation du masquage d’une notification (VALIDÉE)
+- **Question :** Comment permettre à l’utilisateur de réafficher une notification qu’il vient de masquer ?
+- **Choix proposés :**
+  - A. Une rubrique « Notifications masquées ».
+  - B. Un bouton « Annuler » disponible juste après le masquage.
+  - C. Les deux possibilités.
+  - D. Aucun réaffichage possible.
+- **Réponse :** B.
+- **Décision :** après le masquage d’une notification, proposer à l’utilisateur un bouton « Annuler » lui permettant de rétablir immédiatement son affichage.
+- **Conséquences :**
+  - Le rétablissement annule le masquage individuel et rend à nouveau la notification visible pour cet utilisateur.
+  - Aucune rubrique permanente « Notifications masquées » n’est prévue par cette décision.
+  - La notification et ses traces d’audit restent conservées en base.
+- **Statut :** VALIDÉ — annulation immédiate du masquage.
+- **Périmètre concerné :** domaine Media ; interface de notifications et préférences d’affichage par utilisateur.
+- **Points restant à préciser :** durée pendant laquelle le bouton « Annuler » reste disponible et comportement après navigation/rechargement à préciser lors du cadrage UX/technique.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
