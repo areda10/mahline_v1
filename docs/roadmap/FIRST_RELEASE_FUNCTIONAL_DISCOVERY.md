@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.93
+- **Version :** 0.94
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -125,6 +125,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** domaines Orders et Inventory ; refus de commande, libération de réservation, recalcul du stock disponible et historique des mouvements.
 - **Points restant à préciser :** traitement d'une annulation après confirmation, libération partielle, gestion des erreurs techniques et règle de libération des quantités déjà engagées dans la préparation.
  
+### Question 93 — Annulation COD après confirmation de la coopérative (VALIDÉE)
+- **Question :** Si le client souhaite annuler une commande COD après confirmation par la coopérative, mais avant la remise du colis au transporteur, que devient la commande ?
+- **Choix proposés :**
+  - A. La réservation est immédiatement libérée et le stock redevient disponible.
+  - B. La coopérative doit d'abord accepter l'annulation.
+  - C. Le stock reste réservé jusqu'à confirmation par un `super_admin`.
+  - D. L'annulation est interdite après confirmation de la coopérative.
+- **Réponse :** D — l'annulation est interdite après confirmation de la coopérative.
+- **Décision :** pour une commande COD, le client ne peut plus annuler la commande après sa confirmation par la coopérative, même si le colis n'a pas encore été remis au transporteur. La possibilité de refuser le colis à la livraison et la procédure de retour restent régies par FR-009.
+- **Conséquences :** la réservation de stock n'est pas libérée à la suite d'une demande d'annulation client postérieure à la confirmation. Le parcours doit distinguer une annulation avant confirmation d'un refus à la livraison, qui déclenche une procédure de retour.
+- **Périmètre concerné :** domaines Orders et Inventory ; règles d'annulation COD, réservation/libération du stock et interface client.
+- **Points restant à préciser :** traitement des demandes exceptionnelles d'annulation par le support ou la coopérative, erreurs de confirmation et cas où la commande est techniquement impossible à exécuter.
+
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
