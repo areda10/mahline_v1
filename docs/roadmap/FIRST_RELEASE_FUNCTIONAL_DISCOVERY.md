@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.00
+- **Version :** 2.01
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1597,6 +1597,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** après téléversement, Media vérifie que le fichier est lisible et que son format réel correspond au format annoncé. Après traitement, chaque variante générée est également contrôlée afin de confirmer qu'elle est complète et affichable.
 - **Portée :** toute variante corrompue ou invalide est écartée et ne doit pas être distribuée. L'incident est journalisé sans exposer de détails techniques sensibles à l'utilisateur. Le fichier original reste soumis à son propre contrôle d'intégrité ; un échec de validation empêche son utilisation comme média valide. Les contrôles techniques précis seront définis pendant l'audit.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 199 — Analyse de sécurité des fichiers téléversés
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** tous les fichiers téléversés dans Media font l'objet d'une analyse antivirus avant leur utilisation ou leur diffusion. Tout fichier suspect ou détecté comme malveillant est placé en quarantaine et reste inaccessible aux utilisateurs et aux modules.
+- **Portée :** l'analyse concerne les formats acceptés par Media, notamment les images, PDF et vidéos. Le fichier en quarantaine ne peut pas être prévisualisé, téléchargé, associé à une entité métier ni distribué publiquement. L'incident est journalisé et sa gestion est réservée aux rôles autorisés. Le moteur antivirus, les délais d'analyse, les règles de conservation et la procédure de levée de quarantaine seront définis pendant l'audit technique.
+- **Statut :** règle fonctionnelle enregistrée ; choix du moteur et paramètres à définir lors de l'audit technique ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
