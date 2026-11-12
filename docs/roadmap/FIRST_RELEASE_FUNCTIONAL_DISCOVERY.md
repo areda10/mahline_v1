@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.79
+- **Version :** 1.80
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1445,6 +1445,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** un utilisateur autorisé peut modifier les métadonnées d’un média sans remplacer le fichier : nom, description, classement et visibilité, selon les permissions applicables.
 - **Règles d’accès et de traçabilité :** toute modification est contrôlée côté serveur, respecte l’isolation des coopératives et les autorisations du module ; les changements sont historisés. Modifier le classement ou la visibilité ne donne aucun droit supplémentaire sur le fichier ni sur les ressources associées.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 178 — Détection des fichiers en double
+
+- **Réponse :** C (validation de la recommandation).
+- **Décision validée :** détecter les fichiers strictement identiques à partir de leur contenu (empreinte/hash), puis proposer à l’utilisateur autorisé de réutiliser le média existant ou de conserver un nouveau fichier.
+- **Règles d’accès :** la détection et la proposition de réutilisation ne doivent pas révéler l’existence ni les métadonnées d’un média auquel l’utilisateur n’a pas accès ; la réutilisation respecte les autorisations, la visibilité et l’isolation des coopératives.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
