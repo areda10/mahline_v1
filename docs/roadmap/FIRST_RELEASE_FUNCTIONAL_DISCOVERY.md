@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.23
+- **Version :** 1.24
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -623,6 +623,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Cooperatives, Audit.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Points à vérifier :** portée exacte du réglage (par photo ou par ensemble de photos) ; visibilité par défaut à la création ; comportement pour une coopérative inactive, suspendue ou non publiée.
+
+### Question 122 — Visibilité par défaut des photos d’une coopérative
+
+- **Question :** Lorsqu’une coopérative ajoute une nouvelle photo, quelle visibilité doit être appliquée par défaut ?
+- **Options proposées :**
+  - A. Publique par défaut.
+  - B. Privée par défaut.
+  - C. Reprendre automatiquement la visibilité choisie pour les autres photos de la coopérative.
+  - D. Demander de choisir la visibilité à chaque ajout.
+- **Réponse utilisateur :** A.
+- **Décision fonctionnelle :** Toute nouvelle photo de profil ou de présentation ajoutée par une coopérative est publique par défaut. Cette valeur par défaut n'empêche pas la coopérative de modifier ensuite sa visibilité conformément à la question 121.
+- **Conséquences :** L'ajout initialise la visibilité à publique. Le contrôle d'accès doit néanmoins vérifier l'état de visibilité enregistré à chaque consultation ; les photos passées explicitement en privé ne doivent pas être exposées publiquement. Le paramètre et ses changements doivent être protégés par les autorisations du périmètre coopératif et tracés.
+- **Domaines concernés :** Media, Cooperatives, Audit.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points à vérifier :** confirmation que cette règle par défaut s'applique aux deux catégories (profil et présentation) ; comportement lors du remplacement d'une photo existante et des imports multiples.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
