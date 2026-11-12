@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.34
+- **Version :** 1.35
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -810,6 +810,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — principe fonctionnel enregistré.
 - **Périmètre concerné :** domaine Media ; gestion des échecs répétés, blocage temporaire, autorisations et confirmation.
 - **Points restant à préciser :** seuil exact d'échecs successifs déclenchant le blocage, durée du blocage et éventuelle progression du délai à définir avant ou pendant l'audit technique, sans inventer de valeurs.
+
+### Question 133 — Seuil de blocage après échecs successifs de suppression (VALIDÉE)
+- **Question :** À partir de combien d'échecs successifs faut-il déclencher le blocage temporaire ?
+- **Choix proposés :**
+  - A. Après 2 échecs.
+  - B. Après 3 échecs.
+  - C. Après 5 échecs.
+  - D. Après 10 échecs.
+- **Réponse :** A.
+- **Décision :** MAHLINE déclenche le blocage temporaire des nouvelles tentatives de suppression physique après 2 échecs successifs.
+- **Conséquences :**
+  - Le seuil de déclenchement est fixé à 2 échecs successifs.
+  - Après le blocage, une nouvelle tentative ne peut être effectuée qu'après expiration du délai qui reste à définir (question 132).
+  - Chaque nouvelle tentative reste soumise à une confirmation explicite (question 131) et à une vérification des autorisations (question 130).
+  - Les échecs sont consignés dans le journal d'audit accessible uniquement au `super_admin_root` ; l'utilisateur reçoit un message simple (question 129).
+- **Statut :** VALIDÉ — seuil fonctionnel enregistré.
+- **Périmètre concerné :** domaine Media ; suppression physique, gestion des échecs et blocage temporaire.
+- **Points restant à préciser :** durée du blocage et éventuelle progression du délai.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
