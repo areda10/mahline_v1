@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.99
+- **Version :** 2.00
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1589,6 +1589,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** la suppression physique d'un média comprend son original et toutes ses variantes optimisées, mais elle n'est autorisée qu'après vérification qu'aucune référence encore valide ne dépend de ce média.
 - **Portée :** les références des différents modules doivent être vérifiées avant toute suppression physique. Une référence encore active bloque la suppression du fichier partagé et de ses variantes. La suppression des références et le traitement des échecs de suppression suivent les règles de suppression Media déjà validées, avec contrôle des permissions, confirmation explicite et journalisation.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 198 — Contrôle de l'intégrité des images
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** après téléversement, Media vérifie que le fichier est lisible et que son format réel correspond au format annoncé. Après traitement, chaque variante générée est également contrôlée afin de confirmer qu'elle est complète et affichable.
+- **Portée :** toute variante corrompue ou invalide est écartée et ne doit pas être distribuée. L'incident est journalisé sans exposer de détails techniques sensibles à l'utilisateur. Le fichier original reste soumis à son propre contrôle d'intégrité ; un échec de validation empêche son utilisation comme média valide. Les contrôles techniques précis seront définis pendant l'audit.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
