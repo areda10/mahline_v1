@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.97
+- **Version :** 0.98
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -176,6 +176,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** l'annulation de cet événement doit être tracée sans effacer l'événement initial ni son horodatage. Le workflow doit revenir à un état cohérent et recalculer les possibilités d'action selon les règles de commande et de stock.
 - **Périmètre concerné :** domaines Orders et Inventory ; permissions coopérative, workflow de préparation, audit/historique et règles d'annulation.
 - **Points restant à préciser :** définition du rôle « responsable de la coopérative », nombre de corrections autorisées, état exact après annulation et conséquences si une opération physique a déjà commencé.
+
+### Question 97 — Stock après annulation du début de préparation (VALIDÉE)
+- **Question :** Que devient la réservation de stock lorsque le début de préparation est annulé par un responsable de la coopérative ?
+- **Choix proposés :**
+  - A. Le stock reste réservé ; seule l'étape de préparation est réinitialisée.
+  - B. Le stock est libéré et redevient disponible.
+  - C. Le responsable choisit entre conserver ou libérer la réservation.
+  - D. La réservation est maintenue jusqu'à une nouvelle confirmation de la coopérative.
+- **Réponse :** A.
+- **Décision :** l'annulation de l'événement de début de préparation ne libère pas le stock. La quantité reste réservée pour la commande ; seule l'étape de préparation est réinitialisée.
+- **Conséquences :** MAHLINE doit distinguer la réservation de stock de l'état de préparation. Le retour à l'étape antérieure ne doit ni libérer la quantité ni créer une seconde réservation lors du prochain démarrage de préparation.
+- **Périmètre concerné :** domaines Orders et Inventory ; transitions de préparation, réservation de stock et prévention des doubles mouvements.
+- **Points restant à préciser :** statut exact après réinitialisation, règles de reprise de préparation et traitement d'une annulation si des opérations physiques ont déjà été réalisées.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
