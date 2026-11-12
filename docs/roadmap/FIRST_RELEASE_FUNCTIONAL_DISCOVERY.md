@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.28
+- **Version :** 1.29
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -702,6 +702,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les règles de visibilité publique/privée déjà validées à la question 121 et la visibilité publique par défaut des nouvelles photos à la question 122 restent applicables.
 - **Périmètre concerné :** domaine Media ; interface de gestion des photos de profil et de présentation des coopératives, état sans photo et ajout d'un nouveau média.
 - **Points restant à préciser :** texte exact du message, affichage côté marketplace et éventuelle image de secours purement visuelle qui ne serait pas un média de la coopérative.
+
+### Question 127 — Moment de suppression physique du fichier (VALIDÉE)
+- **Question :** Après confirmation de suppression d'un média, à quel moment le fichier physique doit-il être supprimé du stockage ?
+- **Choix proposés :**
+  - A. Immédiatement après la confirmation.
+  - B. Après vérification qu'aucune autre entité ne référence ce fichier.
+  - C. Après 30 jours de conservation.
+  - D. Le fichier est conservé jusqu'à une intervention manuelle du `super_admin_root`.
+- **Réponse :** A.
+- **Décision :** après confirmation de la suppression, MAHLINE supprime immédiatement le fichier physique du stockage ainsi que le média et ses associations conformément aux règles de suppression validées. Aucune période de conservation différée n'est prévue.
+- **Conséquences :**
+  - La suppression physique intervient immédiatement après la confirmation de l'utilisateur, sans mise en corbeille ni délai de rétention applicatif.
+  - Les références et associations du média doivent être retirées de façon cohérente afin d'éviter les références orphelines.
+  - Pour un média partagé, la règle déjà validée à la question 113 s'applique : la suppression confirmée retire toutes les références au média avant de supprimer le fichier ; les entités métier elles-mêmes ne sont pas supprimées.
+  - L'opération doit rester autorisée selon le rôle et le périmètre de coopérative, confirmée et tracée.
+- **Périmètre concerné :** domaine Media ; suppression logique/métadonnées, associations, fichier physique, stockage et médias éventuellement référencés par plusieurs entités.
+- **Points restant à préciser :** comportement de reprise et de signalement si la suppression physique échoue après la confirmation ou si le stockage est temporairement indisponible.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
