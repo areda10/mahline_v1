@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.77
+- **Version :** 1.78
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1431,6 +1431,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** C (validation de la recommandation).
 - **Décision validée :** le droit de télécharger un média dépend du rôle de l’utilisateur, du module concerné, de ses autorisations et de la visibilité du fichier.
 - **Règles d’accès :** la consultation ne donne pas automatiquement le droit de téléchargement. Les contrôles sont effectués côté serveur et respectent l’isolation des coopératives ainsi que les Policies/Gates ; connaître ou deviner l’URL du fichier ne permet pas de contourner ces contrôles.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 176 — Informations affichées sur la fiche d’un média
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** la fiche d’un média affiche le nom du fichier, son type, sa taille, sa date d’ajout, l’utilisateur qui l’a ajouté, la coopérative concernée, le module d’origine, les produits ou autres éléments auxquels il est associé, son statut de visibilité et son historique de modifications.
+- **Règles d’accès :** les informations et associations affichées sont limitées au périmètre autorisé de l’utilisateur ; l’historique et les métadonnées ne doivent pas révéler des ressources d’autres coopératives ou des informations auxquelles il n’a pas accès.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
