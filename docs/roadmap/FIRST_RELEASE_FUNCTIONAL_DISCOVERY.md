@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.85
+- **Version :** 1.86
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1491,6 +1491,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** pour chaque fichier en échec, Media affiche clairement la cause compréhensible de l'échec et propose une action « Réessayer » propre à ce fichier. Les fichiers déjà téléversés avec succès ne sont ni renvoyés ni annulés.
 - **Portée :** chaque tentative de reprise concerne uniquement le fichier concerné ; les contrôles de format, taille, quota, autorisations et sécurité sont réexécutés côté serveur. Les détails techniques sensibles ne sont pas exposés à l'utilisateur.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 184 — Annulation des téléversements en cours
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** l'utilisateur peut annuler individuellement un fichier pendant son téléversement ou annuler en une seule action tous les fichiers encore en cours.
+- **Portée :** l'annulation ne supprime ni ne renvoie les fichiers déjà téléversés avec succès. L'état de chaque fichier doit être clairement distingué (en attente, en cours, réussi, échoué ou annulé). Les éventuels fichiers partiels temporaires doivent être nettoyés de manière sûre côté serveur.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
