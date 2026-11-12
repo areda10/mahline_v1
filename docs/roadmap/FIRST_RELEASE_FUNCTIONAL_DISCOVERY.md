@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.71
+- **Version :** 0.72
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -136,6 +136,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le traitement du panier multi-coopératives doit donc permettre une évolution indépendante de chaque sous-commande.
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
+
+### Version 0.72 — 12 novembre 2026
+- FR-009, Question 73 : décision B — la confirmation du mot de passe actuel reste valable 5 minutes pour effectuer plusieurs exports ; une nouvelle confirmation est exigée après expiration. L'heure de validation et les exports effectués dans cette fenêtre sont journalisés ; le mot de passe n'est jamais conservé.
 
 ### Version 0.71 — 12 novembre 2026
 - FR-009, Question 72 : décision B — confirmation du mot de passe actuel du `super_admin_root` exigée avant le téléchargement d'un export ; aucun secret n'est journalisé.
