@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.1
+- **Version :** 0.2
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -57,13 +57,27 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le client doit pouvoir consulter l'ensemble de son achat et suivre les sous-commandes par coopérative.
 - **Points à cadrer dans les questions suivantes :** paiement et répartition des montants, frais de livraison par coopérative, échec partiel, annulation partielle, remboursement partiel, commissions MAHLINE, numérotation et documents remis au client.
 
+### FR-004 — Moyens de paiement au premier release et évolution prévue
+
+- **Question :** Quels moyens de paiement prévoir au premier release ?
+- **Choix proposés :** A. paiement à la livraison uniquement ; B. paiement en ligne uniquement ; C. paiement à la livraison + paiement en ligne ; D. virement bancaire + paiement à la livraison + paiement en ligne.
+- **Réponse :** A au premier release — paiement à la livraison uniquement. Après le premier release, intégrer l'option C — paiement à la livraison + paiement en ligne.
+- **Statut :** VALIDÉ pour le périmètre initial et planifié pour l'évolution post-release.
+- **Conséquence pour le premier release :**
+  - Le client règle sa commande à la livraison.
+  - Le paiement en ligne n'est pas nécessaire au lancement initial.
+  - Le parcours de commande doit permettre de distinguer le montant dû à la livraison et le statut de règlement.
+- **Évolution post-release :**
+  - Ajouter le paiement en ligne tout en conservant le paiement à la livraison.
+  - Le choix du prestataire de paiement, les remboursements, les paiements partiels/échoués et la répartition des fonds entre coopératives restent à spécifier avant cette évolution.
+
 ## 3. Questions ouvertes
 
 Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours métier. Une question n'est considérée validée que lorsque la réponse de l'utilisateur est explicite.
 
 | ID | Sujet | Statut |
 |---|---|---|
-| FR-004 | Paiement : moyens et moment du paiement | À poser |
+| FR-004 | Moyens de paiement du premier release | VALIDÉ — paiement à la livraison ; paiement en ligne après le release |
 | FR-005 | Frais de livraison pour un panier multi-coopératives | À poser |
 | FR-006 | Gestion des stocks et réservation lors du panier/paiement | À poser |
 | FR-007 | Traitement et transitions de statut des commandes coopératives | À poser |
@@ -101,6 +115,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.2 — 12 novembre 2026
+- Enregistrement de FR-004 : paiement à la livraison uniquement au premier release ; ajout du paiement en ligne ensuite, en conservant le paiement à la livraison.
 
 ### Version 0.1 — 12 novembre 2026
 - Création du registre de cadrage fonctionnel du premier release.
