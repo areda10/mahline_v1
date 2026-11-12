@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.99
+- **Version :** 1.00
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -202,6 +202,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** l'autorisation repose sur la permission effective du membre, et non uniquement sur son appartenance à la coopérative ou son intitulé de rôle. L'action doit rester attribuée et horodatée.
 - **Périmètre concerné :** domaines Identity, Cooperatives, Orders et Inventory ; permissions, interface de gestion des commandes et transition de préparation.
 - **Points restant à préciser :** matrice détaillée des permissions de gestion des commandes, possibilité de délégation et permission nécessaire pour annuler un début de préparation erroné.
+
+### Question 99 — Autorisation d'annuler un début de préparation erroné (VALIDÉE)
+- **Question :** Qui peut annuler un début de préparation déclenché par erreur ?
+- **Choix proposés :**
+  - A. Tout membre disposant de la permission « Gérer les commandes ».
+  - B. Uniquement le responsable de la coopérative.
+  - C. Le responsable et les membres disposant d'une permission spécifique « Annuler la préparation ».
+  - D. Le `super_admin` responsable de la coopérative.
+- **Réponse :** B et D.
+- **Décision :** l'annulation d'un début de préparation erroné est réservée au responsable de la coopérative et au `super_admin` chargé de cette coopérative. Les autres membres, même s'ils disposent de la permission « Gérer les commandes » pour démarrer la préparation, ne peuvent pas annuler cet événement.
+- **Conséquences :** l'action d'annulation exige un motif obligatoire et doit être attribuée et horodatée. L'événement initial reste conservé dans l'historique ; la réservation de stock est maintenue conformément à la question 97.
+- **Périmètre concerné :** domaines Identity, Cooperatives, Orders et Inventory ; autorisations, correction de workflow, historique et réservation de stock.
+- **Points restant à préciser :** définition exacte du « responsable de la coopérative », traitement d'un désaccord entre ce responsable et le `super_admin`, et permissions en cas de remplacement temporaire du responsable.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
