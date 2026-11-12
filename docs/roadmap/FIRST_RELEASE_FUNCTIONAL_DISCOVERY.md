@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.44
+- **Version :** 1.45
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -985,6 +985,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — droit de suppression par chaque rôle sur ses notifications accessibles.
 - **Périmètre concerné :** domaine Media ; notifications et autorisations par rôle.
 - **Points restant à préciser :** distinguer, lors de l’implémentation, la suppression individuelle de l’archivage éventuel et confirmer si une action « tout supprimer » est souhaitée.
+
+### Question 143 — Effet de la suppression d’une notification (VALIDÉE)
+- **Question :** Lorsqu’un utilisateur supprime une notification, quel effet appliquer ?
+- **Choix proposés :**
+  - A. Suppression immédiate et définitive.
+  - B. Marquer comme supprimée tout en la conservant temporairement en base.
+  - C. Déplacer dans une corbeille avec possibilité de restauration.
+  - D. Masquer uniquement dans l’interface de l’utilisateur, sans suppression en base.
+- **Réponse :** D.
+- **Décision :** la suppression demandée par un utilisateur masque la notification uniquement dans son interface ; l’enregistrement reste conservé en base.
+- **Conséquences :**
+  - L’action est individuelle à l’utilisateur : masquer une notification ne la masque pas pour les autres utilisateurs qui y ont accès.
+  - La notification reste conservée en base et aucune suppression physique n’est effectuée par cette action.
+  - Les traces d’audit restent conservées.
+- **Statut :** VALIDÉ — suppression assimilée à un masquage individuel.
+- **Périmètre concerné :** domaine Media ; notifications et préférences d’affichage par utilisateur.
+- **Points restant à préciser :** durée de conservation technique et éventuelle fonction de réaffichage à préciser lors de l’audit technique/UX.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
