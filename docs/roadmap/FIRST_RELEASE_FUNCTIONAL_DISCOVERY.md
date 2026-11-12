@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.23
+- **Version :** 0.24
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, coopérative avant remise et transporteur à la prise en charge ; matrice des autres étapes et nombres à définir |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; matrice détaillée et nombres selon situation à définir |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -158,6 +158,14 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-016 | Notifications et communications indispensables au lancement | À poser |
 
 ### FR-009 — Annulation, retour et remboursement
+
+- **Décision complémentaire — photos pendant le retour (Question 25) :** C — le transporteur prend des photos au moment de la prise en charge du colis retourné, puis la coopérative prend ses propres photos à la réception du colis retourné.
+- **Conséquences / contraintes :**
+  - Les photos du transporteur documentent l'état du colis au départ du trajet retour.
+  - Les photos de la coopérative documentent l'état du colis à son arrivée et permettent le contrôle du produit.
+  - Ces deux séries constituent des preuves distinctes ; le minimum d'une photo par étape concernée s'applique, avec un nombre supérieur si l'étape ou l'état du colis le nécessite.
+  - MAHLINE bloque la validation de l'étape suivante tant que les photos requises ne sont pas déposées.
+  - Les angles de prise de vue, la quantité exacte selon les situations, l'horodatage et la conservation restent à définir.
 
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
@@ -212,6 +220,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.24 — 12 novembre 2026
+- Complément de FR-009 — Question 25 : pendant le retour, le transporteur prend des photos au moment de la prise en charge du colis retourné, puis la coopérative prend ses propres photos à la réception. Les séries documentent respectivement l'état au départ du trajet retour et à l'arrivée ; minimum d'une photo par étape concernée, davantage selon la situation. Détails de prise de vue et conservation à définir.
 
 ### Version 0.23 — 12 novembre 2026
 - Complément de FR-009 — Question 24 : au départ du colis, la coopérative prend des photos avant la remise et le transporteur en prend au moment de la prise en charge. Les deux séries constituent des preuves distinctes de l'état du colis. Les détails techniques et les nombres précis restent à cadrer.
