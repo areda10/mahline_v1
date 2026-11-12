@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.80
+- **Version :** 0.81
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -16,6 +16,10 @@ Construire une première version exploitable de MAHLINE qui combine :
 - un parcours cohérent entre la marketplace et les espaces de gestion des coopératives.
 
 La cohérence approfondie des frontières entre domaines et le renforcement global des événements transversaux sont planifiés dans une phase ultérieure dédiée, après le développement fonctionnel des domaines du premier release. Les règles indispensables de sécurité, d'autorisation, de propriété des données et d'intégrité restent obligatoires pendant chaque développement.
+
+### Version 0.81 — 12 novembre 2026
+- Complément de FR-009 — Question 82 : le `super_admin_root` décide au cas par cas s'il faut conserver l'historique des modifications apportées à un export. La décision, son motif et les éventuelles traces conservées doivent être documentés ; les règles de journalisation détaillées restent à cadrer.
+- Ajustement de méthode demandé : les prochaines questions doivent être directement orientées vers les fonctionnalités concrètes nécessaires au premier release et vers le développement des domaines MAHLINE. Prioriser les parcours utilisateurs, règles métier, écrans/actions, données, statuts, permissions et cas d'erreur réellement nécessaires au lancement ; distinguer explicitement le périmètre premier release des évolutions ultérieures.
 
 ## 2. Décisions fonctionnelles validées
 
@@ -497,6 +501,8 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+- **Question 82 — Historique des modifications d'un export :** réponse D — le `super_admin_root` décide au cas par cas si l'historique des modifications doit être conservé. La décision et son motif doivent être traçables. Les modalités exactes de journalisation restent à définir.
 
 ### Version 0.50 — 12 novembre 2026
 - Complément de FR-009 — Question 51 : D — la décision définitive après réexamen est communiquée au client, à la coopérative concernée, au transporteur impliqué et au `super_admin` responsable. Les informations transmises doivent respecter les droits et le besoin d'en connaître de chaque acteur ; canaux, contenu détaillé et preuve de notification restent à définir.
