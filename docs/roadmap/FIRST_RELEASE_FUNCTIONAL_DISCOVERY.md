@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.98
+- **Version :** 1.99
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1583,6 +1583,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** lorsqu'une variante normale ou grand format ne peut pas être générée, Media utilise temporairement l'original comme solution de secours lorsque cela est possible, déclenche des tentatives automatiques de régénération et propose une relance manuelle si les tentatives automatiques échouent.
 - **Portée :** l'échec de génération d'une variante ne doit pas rendre le fichier original indisponible ni faire disparaître l'image de son emplacement autorisé. Les règles d'accès, de visibilité et de sécurité restent applicables au fichier de secours. Le nombre, l'espacement et les conditions des tentatives automatiques seront définis pendant l'audit technique.
 - **Statut :** règle fonctionnelle enregistrée ; paramètres de reprise à définir lors de l'audit technique ; implémentation non commencée.
+
+### Question 197 — Suppression d'une image originale et de ses variantes
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** la suppression physique d'un média comprend son original et toutes ses variantes optimisées, mais elle n'est autorisée qu'après vérification qu'aucune référence encore valide ne dépend de ce média.
+- **Portée :** les références des différents modules doivent être vérifiées avant toute suppression physique. Une référence encore active bloque la suppression du fichier partagé et de ses variantes. La suppression des références et le traitement des échecs de suppression suivent les règles de suppression Media déjà validées, avec contrôle des permissions, confirmation explicite et journalisation.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
