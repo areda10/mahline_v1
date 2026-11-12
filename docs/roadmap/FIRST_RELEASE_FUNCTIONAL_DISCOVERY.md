@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.40
+- **Version :** 1.41
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -917,6 +917,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — contenu fonctionnel de la notification enregistré.
 - **Périmètre concerné :** domaine Media ; notification administrative, échecs de suppression et audit.
 - **Points restant à préciser :** format de présentation et canal de notification à définir lors du cadrage UX/notifications.
+
+### Question 139 — Canaux de notification du blocage de suppression (VALIDÉE)
+- **Question :** Comment le `super_admin_root` doit-il recevoir la notification de blocage de 60 minutes ?
+- **Choix proposés :**
+  - A. Notification dans l'interface MAHLINE uniquement.
+  - B. Email uniquement.
+  - C. Notification dans MAHLINE et email.
+  - D. Notification dans MAHLINE, email et SMS.
+- **Réponse :** C.
+- **Décision :** le `super_admin_root` reçoit la notification à la fois dans l'interface MAHLINE et par email lorsqu'un média atteint pour la première fois le blocage de 60 minutes.
+- **Conséquences :**
+  - La notification interne MAHLINE et l'email utilisent le contenu défini à la question 138.
+  - Aucun SMS n'est prévu par cette décision.
+  - Les règles de sécurité et de confidentialité des informations de notification restent applicables.
+- **Statut :** VALIDÉ — canaux de notification enregistrés.
+- **Périmètre concerné :** domaine Media ; notification administrative, blocage progressif et communication.
+- **Points restant à préciser :** modèle de l'email, présentation de la notification interne et comportement en cas d'échec d'envoi à préciser lors du cadrage UX/notifications et de l'audit technique.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
