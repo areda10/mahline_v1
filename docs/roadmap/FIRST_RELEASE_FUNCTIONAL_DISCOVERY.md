@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.57
+- **Version :** 0.58
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.58 — 12 novembre 2026
+- FR-009, Question 59 : décision D — temporisation progressive des renvois : 5 min, 15 min, 30 min, 1 h, puis toutes les 2 h. Séquence exacte des 10 tentatives et autres règles de planification à préciser.
+
 ### Version 0.57 — 12 novembre 2026
 - FR-009, Question 58 : décision C — 10 tentatives automatiques infructueuses avant alerte au `super_admin_root`. Intervalle, compteur, typologie d'erreurs et réinitialisation à préciser.
 
@@ -214,6 +217,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** un nouvel échec après clôture réactive le même incident, sans créer un dossier distinct, et relance la politique de nouvelles tentatives. L'historique antérieur doit être conservé ; les événements de réouverture, les nouvelles tentatives et les nouvelles clôtures doivent être ajoutés à la chronologie. La règle de regroupement des échecs successifs et la durée de conservation de l'incident restent à préciser.
   - **Question 58 — nombre de tentatives automatiques avant alerte :** C — MAHLINE effectue 10 tentatives automatiques d'envoi avant d'alerter le `super_admin_root`.
   - **Conséquences / contraintes :** le seuil est fixé à 10 tentatives pour une séquence d'échec. Les tentatives et leurs résultats sont journalisés ; après la dixième tentative infructueuse, l'alerte au `super_admin_root` est déclenchée. L'intervalle entre les tentatives, le point de départ du compteur, le traitement des erreurs temporaires/permanentes et la réinitialisation du compteur après succès restent à préciser.
+  - **Question 59 — intervalle entre les tentatives automatiques :** D — délai progressif : 5 minutes, 15 minutes, 30 minutes, 1 heure, puis toutes les 2 heures.
+  - **Conséquences / contraintes :** les renvois suivent une temporisation progressive et plafonnent ensuite à un intervalle de 2 heures. La séquence exacte des délais pour les 10 tentatives, le calcul à partir de l'échec initial ou de la tentative précédente, les heures silencieuses éventuelles et le comportement après la dixième tentative restent à préciser.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
