@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.05
+- **Version :** 2.06
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1631,6 +1631,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** le super_admin_root peut demander une nouvelle analyse d'un fichier en quarantaine. Si cette nouvelle analyse conclut que le fichier est sain, sa libération de quarantaine nécessite encore la validation explicite du super_admin_root.
 - **Portée :** le fichier reste inaccessible pendant la nouvelle analyse et jusqu'à sa libération validée. Une nouvelle analyse qui détecte encore une menace maintient le fichier en quarantaine. La demande, les résultats et la décision de libération sont journalisés ; les contrôles d'accès et la notification des incidents restent applicables. Les modalités de seconde analyse seront définies pendant l'audit technique.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 204 — Conservation de l'historique des incidents antivirus
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** conserver durablement l'historique des incidents antivirus, des analyses, des résultats, des décisions de quarantaine/libération et des suppressions. Cet historique est consultable uniquement par le super_admin_root.
+- **Portée :** l'historique est append-only et journalisé ; les utilisateurs et les autres rôles ne peuvent ni le consulter ni le modifier. Les données conservées doivent exclure les secrets et informations techniques non nécessaires. Les obligations de conservation, d'archivage et de protection des données seront vérifiées pendant l'audit technique et juridique.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
