@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.53
+- **Version :** 0.54
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.54 — 12 novembre 2026
+- FR-009, Question 55 : décision D — alerte au `super_admin_root` dans son espace MAHLINE, par e-mail et indicateur persistant au tableau de bord jusqu'à résolution. Déduplication, prise en charge, escalade et clôture à préciser.
+
 ### Version 0.53 — 12 novembre 2026
 - FR-009, Question 54 : décision D — renvois automatiques de l'e-mail ; si l'échec persiste, alerte au `super_admin_root` pour intervention. Journaliser les tentatives et résultats ; nombre, intervalles, canal d'alerte et traitement manuel à préciser.
 
@@ -194,6 +197,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** la notification doit être disponible dans l'espace MAHLINE et envoyée par e-mail à chacun des destinataires concernés (client, coopérative, transporteur impliqué et `super_admin` responsable). Le contenu reste adapté au rôle et aux droits du destinataire ; l'échec d'envoi de l'e-mail, les reprises éventuelles, les preuves de remise/consultation et les règles de conservation restent à préciser.
   - **Question 54 — gestion de l'échec d'envoi de l'e-mail :** D — MAHLINE effectue des tentatives automatiques de renvoi ; si l'échec persiste, le `super_admin_root` est alerté pour intervention.
   - **Conséquences / contraintes :** l'échec de l'e-mail ne bloque pas la disponibilité de la notification dans l'espace MAHLINE. Le système doit tracer chaque tentative et son résultat, appliquer une politique de nouvelles tentatives, puis générer une alerte au `super_admin_root` lorsque l'envoi reste en échec. Le nombre de tentatives, leurs intervalles, le canal d'alerte du root, le traitement manuel et la clôture de l'incident restent à définir.
+  - **Question 55 — canaux et visibilité de l'alerte au `super_admin_root` :** D — alerte dans son espace MAHLINE, par e-mail et sous forme d'un indicateur visible dans son tableau de bord jusqu'à résolution de l'incident.
+  - **Conséquences / contraintes :** l'incident d'échec d'e-mail doit rester visiblement signalé dans le tableau de bord du `super_admin_root` tant qu'il n'est pas résolu ; une notification est également créée dans son espace MAHLINE et envoyée par e-mail. Les règles de déduplication, d'escalade, d'accusé de prise en charge, de résolution et de disparition de l'indicateur restent à préciser.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
