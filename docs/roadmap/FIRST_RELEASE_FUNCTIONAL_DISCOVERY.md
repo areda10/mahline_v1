@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.94
+- **Version :** 0.95
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** la réservation de stock n'est pas libérée à la suite d'une demande d'annulation client postérieure à la confirmation. Le parcours doit distinguer une annulation avant confirmation d'un refus à la livraison, qui déclenche une procédure de retour.
 - **Périmètre concerné :** domaines Orders et Inventory ; règles d'annulation COD, réservation/libération du stock et interface client.
 - **Points restant à préciser :** traitement des demandes exceptionnelles d'annulation par le support ou la coopérative, erreurs de confirmation et cas où la commande est techniquement impossible à exécuter.
+
+### Question 94 — Annulation d'une commande confirmée par la coopérative (VALIDÉE)
+- **Question :** La coopérative peut-elle annuler une commande COD après l'avoir confirmée ?
+- **Choix proposés :**
+  - A. Non, aucune annulation n'est possible après confirmation.
+  - B. Oui, uniquement avant le début de la préparation.
+  - C. Oui, jusqu'à la remise du colis au transporteur, avec un motif obligatoire.
+  - D. Oui, uniquement après autorisation d'un `super_admin`.
+- **Réponse :** B, avec motif obligatoire.
+- **Décision :** la coopérative peut annuler une commande qu'elle a confirmée uniquement tant que la préparation n'a pas commencé. Un motif d'annulation est obligatoire et doit être conservé dans l'historique de la commande.
+- **Conséquences :** l'annulation par la coopérative libère la réservation de stock correspondante ; cette libération doit être cohérente, traçable et limitée à la sous-commande concernée dans un panier multi-coopératives.
+- **Périmètre concerné :** domaines Orders et Inventory ; action d'annulation coopérative, contrôle de l'étape de préparation, motif, historique et libération du stock.
+- **Points restant à préciser :** liste ou saisie libre des motifs, possibilité d'annulation exceptionnelle après le début de préparation, notifications client et traitement des frais éventuels.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
