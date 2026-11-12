@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.09
+- **Version :** 1.10
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -371,6 +371,32 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La limite de 20 Mo par vidéo à l'entrée reste applicable (Q105).
 
 **Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de vidéos.
+
+**Statut :** Décision fonctionnelle enregistrée ; détails techniques à auditer avant implémentation.
+
+### Question 108 — Conservation du fichier vidéo original après conversion (VALIDÉE)
+
+**Question :** Faut-il conserver le fichier vidéo original après conversion ?
+
+**Options proposées :**
+- A. Oui, conserver l'original et la version convertie.
+- B. Non, remplacer l'original par la version convertie.
+- C. Conserver l'original temporairement, puis le supprimer après validation de la conversion.
+- D. Conserver l'original uniquement si la conversion échoue.
+
+**Réponse retenue :** C.
+
+**Décision fonctionnelle :**
+- Conserver temporairement le fichier original pendant la conversion.
+- Supprimer l'original après validation réussie de la version convertie.
+- En cas d'échec de conversion, le traitement ne doit pas supprimer l'unique fichier exploitable ; la gestion de l'échec sera précisée techniquement.
+
+**Conséquences / règles à prévoir :**
+- Définir les critères de validation de la conversion avant suppression de l'original.
+- Prévoir une durée maximale de conservation temporaire et un nettoyage des fichiers temporaires orphelins.
+- Garantir que la vidéo convertie est lisible avant de supprimer l'original.
+
+**Périmètre concerné :** Domaine transversal Media et pipeline de traitement vidéo.
 
 **Statut :** Décision fonctionnelle enregistrée ; détails techniques à auditer avant implémentation.
 
