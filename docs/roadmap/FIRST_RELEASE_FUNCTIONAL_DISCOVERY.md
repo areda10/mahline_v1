@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.29
+- **Version :** 1.30
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -719,6 +719,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - L'opération doit rester autorisée selon le rôle et le périmètre de coopérative, confirmée et tracée.
 - **Périmètre concerné :** domaine Media ; suppression logique/métadonnées, associations, fichier physique, stockage et médias éventuellement référencés par plusieurs entités.
 - **Points restant à préciser :** comportement de reprise et de signalement si la suppression physique échoue après la confirmation ou si le stockage est temporairement indisponible.
+
+### Question 128 — Échec de suppression physique du fichier (VALIDÉE)
+- **Question :** Si l'utilisateur confirme la suppression, mais que le stockage rencontre une erreur et ne parvient pas à supprimer le fichier immédiatement, que doit faire MAHLINE ?
+- **Choix proposés :**
+  - A. Annuler toute l'opération et conserver le média comme avant.
+  - B. Retirer immédiatement le média de l'application, enregistrer l'échec et réessayer automatiquement la suppression physique.
+  - C. Laisser le média visible et demander à l'utilisateur de réessayer.
+  - D. Signaler l'erreur au `super_admin_root`, qui effectuera la suppression manuellement.
+- **Réponse :** C.
+- **Décision :** en cas d'échec de suppression physique, MAHLINE conserve le média visible et signale l'échec à l'utilisateur afin qu'il puisse relancer lui-même la suppression.
+- **Conséquences :**
+  - Le média et ses références restent dans leur état antérieur tant que la suppression physique n'a pas abouti.
+  - MAHLINE ne masque pas le média et ne retire pas ses associations à la suite d'une suppression physique échouée.
+  - Aucune relance automatique ni intervention obligatoire du `super_admin_root` n'est prévue par cette décision.
+  - Une nouvelle tentative doit être déclenchée par l'utilisateur, avec les contrôles d'autorisation et de confirmation applicables.
+  - L'échec doit être communiqué clairement ; les détails techniques du stockage ne doivent pas être exposés à l'utilisateur.
+- **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
+- **Périmètre concerné :** domaine Media ; suppression des métadonnées et associations, stockage physique, gestion des erreurs et interface utilisateur.
+- **Points restant à préciser :** modalités techniques de conservation cohérente de l'état et de signalement de l'erreur pendant l'opération de suppression.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
