@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.65
+- **Version :** 0.66
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.66 — 12 novembre 2026
+- FR-009, Question 67 : décision B — réactivation par le `super_admin_root` ou le `super_admin` responsable de la coopérative, par action explicite et journalisée ; aucune réactivation automatique.
+
 ### Version 0.65 — 12 novembre 2026
 - FR-009, Question 66 : décision D — le `super_admin_root` décide au cas par cas du traitement de l'incident, avec justification et journalisation ; le statut de l'incident reste distinct de la suspension des notifications.
 
@@ -254,6 +257,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** aucune reprise automatique des notifications n'est déclenchée par le seul écoulement du temps. Les notifications restent suspendues jusqu'à une décision explicite du `super_admin_root`. La décision, sa justification, son auteur, sa date/heure et son éventuelle portée (reprise, maintien de la suspension ou autre mesure) doivent être journalisés. Aucun délai par défaut de 24 ou 48 heures n'est imposé.
   - **Question 66 — incident après décision de maintenir la suspension :** D — le `super_admin_root` décide au cas par cas du traitement de l'incident, avec justification et journalisation.
   - **Conséquences / contraintes :** aucune clôture automatique ni obligation uniforme de maintenir l'incident ouvert n'est imposée. La décision doit distinguer le statut de l'incident de l'état de suspension des notifications : clôture ou maintien de l'incident ne réactive pas implicitement les notifications. Toute décision et tout changement d'état sont justifiés et journalisés.
+  - **Question 67 — autorité de réactivation des notifications suspendues :** B — le `super_admin_root` ou le `super_admin` responsable de la coopérative peut réactiver les notifications.
+  - **Conséquences / contraintes :** le `super_admin` ne peut agir que pour une coopérative dont il est responsable ; le `super_admin_root` conserve une autorité globale. La réactivation doit être une action explicite, après vérification/correction de la cause de suspension, et être journalisée (acteur, date/heure, incident, destinataire, motif et état avant/après). Aucune réactivation automatique n'est autorisée. Les modalités précises de vérification préalable et les éventuelles restrictions selon le type d'incident restent à définir.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
