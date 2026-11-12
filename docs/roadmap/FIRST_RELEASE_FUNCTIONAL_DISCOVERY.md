@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.31
+- **Version :** 1.32
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -756,6 +756,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
 - **Périmètre concerné :** domaine Media ; journal d'audit, autorisations de consultation, gestion des erreurs de stockage et messages utilisateur.
 - **Points restant à préciser :** contenu exact de l'événement d'audit et formulation du message utilisateur lors de la conception technique et UX.
+
+### Question 130 — Autorisation d'une nouvelle tentative de suppression (VALIDÉE)
+- **Question :** Après un échec de suppression physique, qui peut relancer la suppression du média ?
+- **Choix proposés :**
+  - A. Uniquement l'utilisateur qui avait demandé la suppression initiale.
+  - B. Tout utilisateur disposant du droit de supprimer ce média.
+  - C. Uniquement le `super_admin_root`.
+  - D. Le système relance automatiquement la suppression en arrière-plan.
+- **Réponse :** A et B.
+- **Décision :** une nouvelle tentative peut être déclenchée soit par l'utilisateur ayant demandé la suppression initiale, soit par tout autre utilisateur disposant du droit de supprimer le média concerné.
+- **Conséquences :**
+  - Le demandeur initial peut relancer l'opération.
+  - Un autre utilisateur peut également la relancer s'il dispose du droit de suppression sur ce média et dans le périmètre de coopérative applicable.
+  - Les autorisations doivent être vérifiées à nouveau au moment de chaque tentative ; la demande initiale ne confère aucun droit supplémentaire.
+  - La nouvelle tentative reste soumise aux règles de confirmation, de traçabilité et de gestion d'échec définies aux questions 127 à 129.
+  - Aucune relance automatique en arrière-plan n'est prévue par cette décision.
+- **Statut :** VALIDÉ — décision fonctionnelle enregistrée.
+- **Périmètre concerné :** domaine Media ; autorisations de suppression, périmètre coopératif, nouvelle tentative et traçabilité.
+- **Points restant à préciser :** aucun point fonctionnel supplémentaire identifié pour cette règle.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
