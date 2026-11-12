@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.82
+- **Version :** 1.83
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1469,6 +1469,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Portée :** les limites chiffrées en Go ne sont pas encore fixées ; elles seront déterminées après vérification des coûts, de l’infrastructure d’hébergement et des besoins du premier release.
 - **Règles de contrôle :** le quota est calculé et appliqué côté serveur par coopérative. Le stockage consommé par les médias partagés doit être comptabilisé de manière cohérente sans permettre de contourner les limites ni l’isolation entre coopératives.
 - **Statut :** principe fonctionnel enregistré ; valeurs des quotas à définir ; implémentation non commencée.
+
+### Question 181 — Comportement lorsque le quota Media est atteint
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** avertir la coopérative lorsque son stockage atteint 80 %, puis 95 %. À 100 %, bloquer les nouveaux téléversements pour cette coopérative.
+- **Exception :** `super_admin_root` peut accorder exceptionnellement une capacité supplémentaire à une coopérative, avec justification et traçabilité de l'opération.
+- **Continuité d'accès :** l'atteinte du quota ne supprime aucun média existant et ne bloque pas, à elle seule, la consultation ou le téléchargement des médias déjà autorisés.
+- **Statut :** règle fonctionnelle enregistrée ; modalités de l'extension exceptionnelle et notifications à préciser ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
