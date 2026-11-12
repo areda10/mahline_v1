@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.81
+- **Version :** 1.82
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1461,6 +1461,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Règles d’accès :** chaque action vérifie côté serveur la permission effective, le périmètre de coopérative et les règles métier du module ; `super_admin_root` agit dans toutes les coopératives, `super_admin` dans celles qui lui sont assignées, `cooperative_admin` dans sa propre coopérative et `user` uniquement selon les permissions qui lui sont accordées. Aucune permission Media ne contourne les Policies/Gates ni l’isolation des coopératives.
 - **Précision à établir :** la matrice détaillée rôle × module × action sera définie à partir des permissions existantes de MAHLINE lors du cadrage fonctionnel et vérifiée à l’audit technique ; aucune permission non validée n’est présumée accordée.
 - **Statut :** principe fonctionnel enregistré ; matrice détaillée à établir ; implémentation non commencée.
+
+### Question 180 — Gestion du stockage Media
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** chaque coopérative dispose d’un quota de stockage associé à sa formule d’abonnement (START, PRO ou BUSINESS). Le `super_admin_root` peut configurer les limites applicables.
+- **Portée :** les limites chiffrées en Go ne sont pas encore fixées ; elles seront déterminées après vérification des coûts, de l’infrastructure d’hébergement et des besoins du premier release.
+- **Règles de contrôle :** le quota est calculé et appliqué côté serveur par coopérative. Le stockage consommé par les médias partagés doit être comptabilisé de manière cohérente sans permettre de contourner les limites ni l’isolation entre coopératives.
+- **Statut :** principe fonctionnel enregistré ; valeurs des quotas à définir ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
