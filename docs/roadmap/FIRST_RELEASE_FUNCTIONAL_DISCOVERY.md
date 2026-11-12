@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.71
+- **Version :** 1.72
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1386,6 +1386,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D.
 - **Décision validée :** toutes les notifications utilisent le même style visuel ; aucun badge « Important » ni code couleur selon la gravité.
 - **Portée :** cette uniformité concerne la présentation dans la liste et l’aperçu ; les catégories et filtres fonctionnels définis précédemment restent disponibles.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 170 — Notifications sans lien direct
+
+- **Réponse :** C.
+- **Décision validée :** lorsqu’une notification ne renvoie pas vers une ressource ou une page précise, son clic ouvre une page dédiée qui affiche son contenu détaillé.
+- **Portée :** les notifications liées à une ressource continuent d’ouvrir cette ressource dans l’onglet actuel (Q166). Les notifications générales disposent d’une page de détail dédiée.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
