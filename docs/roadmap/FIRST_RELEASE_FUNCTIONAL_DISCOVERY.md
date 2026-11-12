@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.47
+- **Version :** 1.48
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1036,6 +1036,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — fenêtre d’annulation de 30 secondes.
 - **Périmètre concerné :** domaine Media ; interface de notifications et préférences d’affichage par utilisateur.
 - **Points restant à préciser :** comportement en cas de navigation ou de rechargement de page pendant les 30 secondes à vérifier lors du cadrage UX/technique.
+
+### Question 146 — Notifications après reconnexion (VALIDÉE)
+- **Question :** Lorsqu’un utilisateur se déconnecte puis se reconnecte, que doit-il se passer avec ses notifications non masquées ?
+- **Choix proposés :**
+  - A. Toutes les notifications non lues restent affichées.
+  - B. Seules les notifications des 30 derniers jours restent affichées.
+  - C. Toutes les notifications non masquées restent accessibles, sans limite de durée.
+  - D. Les notifications sont réinitialisées à chaque déconnexion.
+- **Réponse :** A.
+- **Décision :** après reconnexion, toutes les notifications non lues restent affichées à l’utilisateur.
+- **Conséquences :**
+  - La déconnexion ne réinitialise pas les notifications non lues.
+  - Les notifications lues ne sont pas concernées par cette règle d’affichage.
+  - Le masquage individuel défini aux questions 143 à 145 reste applicable.
+- **Statut :** VALIDÉ — conservation des notifications non lues après reconnexion.
+- **Périmètre concerné :** domaine Media ; notifications et cycle de session utilisateur.
+- **Points restant à préciser :** durée de conservation et consultation des notifications déjà lues à cadrer séparément si nécessaire.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
