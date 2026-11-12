@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.86
+- **Version :** 1.87
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1498,6 +1498,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** l'utilisateur peut annuler individuellement un fichier pendant son téléversement ou annuler en une seule action tous les fichiers encore en cours.
 - **Portée :** l'annulation ne supprime ni ne renvoie les fichiers déjà téléversés avec succès. L'état de chaque fichier doit être clairement distingué (en attente, en cours, réussi, échoué ou annulé). Les éventuels fichiers partiels temporaires doivent être nettoyés de manière sûre côté serveur.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 185 — Reprise après interruption du téléversement
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** après une fermeture accidentelle de page ou une perte de connexion, Media tente de reprendre automatiquement le téléversement lorsque cela est techniquement possible ; si la reprise automatique ne peut pas aboutir, l'utilisateur retrouve le fichier interrompu et peut demander une reprise manuelle.
+- **Portée :** la reprise doit être sécurisée et vérifier à nouveau les autorisations, le quota disponible et l'intégrité du fichier. Les fichiers déjà téléversés avec succès ne sont pas recommencés. La durée de conservation des données temporaires de reprise et les mécanismes techniques seront définis pendant l'audit et la conception.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
