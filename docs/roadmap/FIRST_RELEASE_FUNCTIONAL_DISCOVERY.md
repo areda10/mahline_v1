@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.58
+- **Version :** 1.59
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1230,6 +1230,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — lots de 10 notifications.
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** présentation de l'indicateur de chargement et comportement en cas d'erreur.
+ 
+### Question 157 — Indicateur de chargement des notifications (VALIDÉE)
+- **Question :** Lorsqu’un nouveau lot de 10 notifications est en cours de chargement, que doit voir l’utilisateur ?
+- **Choix proposés :**
+  - A. Un petit indicateur animé de chargement.
+  - B. Le texte « Chargement des notifications… ».
+  - C. Un indicateur animé accompagné du texte.
+  - D. Aucun indicateur : chargement silencieux.
+- **Réponse :** A.
+- **Décision :** afficher un petit indicateur animé pendant le chargement de chaque lot complémentaire.
+- **Conséquences :**
+  - L'indicateur apparaît uniquement pendant une opération de chargement en cours.
+  - Il disparaît dès que le chargement se termine.
+  - L'indicateur ne remplace pas les notifications déjà affichées et ne bloque pas leur consultation.
+- **Statut :** VALIDÉ — petit indicateur animé, sans texte.
+- **Périmètre concerné :** domaine Media ; centre de notifications et défilement infini.
+- **Points restant à préciser :** comportement en cas d'erreur de chargement et message de fin de liste.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
