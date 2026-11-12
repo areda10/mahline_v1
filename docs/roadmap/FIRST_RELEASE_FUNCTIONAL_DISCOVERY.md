@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.83
+- **Version :** 0.84
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -16,6 +16,17 @@ Construire une première version exploitable de MAHLINE qui combine :
 - un parcours cohérent entre la marketplace et les espaces de gestion des coopératives.
 
 La cohérence approfondie des frontières entre domaines et le renforcement global des événements transversaux sont planifiés dans une phase ultérieure dédiée, après le développement fonctionnel des domaines du premier release. Les règles indispensables de sécurité, d'autorisation, de propriété des données et d'intégrité restent obligatoires pendant chaque développement.
+
+### Question 84 — Informations minimales avant mise en vente d'un produit (EN ATTENTE)
+- **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
+- **Choix proposés :**
+  - A. Nom, description, catégorie, prix, stock disponible et au moins une photo.
+  - B. Nom, catégorie, prix et stock disponible ; description et photos facultatives.
+  - C. Nom, catégorie et prix ; le stock peut être nul et les photos/description sont facultatives.
+  - D. Toutes les informations détaillées du produit (y compris caractéristiques, poids/dimensions, variantes et plusieurs photos) sont obligatoires.
+- **Statut :** EN ATTENTE DE RÉPONSE.
+- **Périmètre concerné :** domaine Products ; formulaire de création, validation des données et publication automatique sur la marketplace.
+- **Conséquences à préciser après réponse :** champs obligatoires, validation serveur, possibilité d'enregistrer un brouillon et traitement des produits incomplets.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
