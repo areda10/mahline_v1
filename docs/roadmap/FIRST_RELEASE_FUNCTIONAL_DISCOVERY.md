@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.42
+- **Version :** 1.43
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -951,6 +951,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — comportement en cas d’échec email enregistré.
 - **Périmètre concerné :** domaine Media ; notification administrative et gestion des erreurs d’envoi.
 - **Points restant à préciser :** présentation de l’échec dans l’interface et détail de la journalisation à vérifier lors de l’audit UX/technique.
+
+### Question 141 — Durée de conservation des notifications internes (VALIDÉE)
+- **Question :** Combien de temps la notification interne relative au blocage de suppression doit-elle rester consultable par le `super_admin_root` ?
+- **Choix proposés :**
+  - A. 30 jours.
+  - B. 90 jours.
+  - C. 1 an.
+  - D. Sans limite de durée, jusqu’à suppression manuelle.
+- **Réponse :** D.
+- **Décision :** la notification interne reste consultable sans limite de durée et n’est supprimée que manuellement.
+- **Conséquences :**
+  - Aucune expiration automatique de cette notification n’est appliquée.
+  - La suppression manuelle doit rester réservée au rôle autorisé et être contrôlée/auditée.
+  - La durée de conservation des traces du journal d’audit reste distincte et n’est pas modifiée par cette décision.
+- **Statut :** VALIDÉ — durée de conservation des notifications enregistrée.
+- **Périmètre concerné :** domaine Media ; notifications administratives et conservation.
+- **Points restant à préciser :** rôle exact autorisé à supprimer une notification et modalités de suppression à confirmer lors du cadrage des notifications.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
