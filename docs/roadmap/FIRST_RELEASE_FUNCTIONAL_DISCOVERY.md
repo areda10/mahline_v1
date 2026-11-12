@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.07
+- **Version :** 2.08
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1645,6 +1645,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** B (validation de la recommandation).
 - **Décision validée :** Media accepte les fichiers vidéo MP4, MOV et WebM au premier release.
 - **Portée :** le système vérifie le format réel du fichier et les codecs utilisés, sans se fier uniquement à l'extension. Les vidéos acceptées sont converties automatiquement vers un format de diffusion standard adapté à la compatibilité, à la qualité et à la livraison. L'original est conservé temporairement jusqu'à vérification de la réussite de la conversion et de la lecture du fichier converti. Les codecs précis, les profils pris en charge et les limites techniques restent à fixer pendant l'audit technique.
+- **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 206 — Limites de durée et de résolution des vidéos
+
+- **Réponse :** A (validation de la recommandation).
+- **Décision validée :** au premier release, une vidéo ne peut pas dépasser 60 secondes et sa résolution maximale est de 1080p. La limite de poids de 20 Mo par vidéo, déjà validée, reste applicable indépendamment de ces deux limites.
+- **Portée :** les trois limites (durée, résolution et poids) sont contrôlées côté serveur avant que la vidéo soit acceptée et traitée. Les règles précises de détection des métadonnées, de tolérance aux fichiers mal formés et de traitement des vidéos non conformes seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
