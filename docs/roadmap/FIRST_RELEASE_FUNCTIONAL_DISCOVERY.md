@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.92
+- **Version :** 0.93
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -111,6 +111,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Conséquences :** avant confirmation par la coopérative, la commande client ne déclenche pas de réservation ferme selon cette règle. À partir de la confirmation, la quantité doit être exclue du stock disponible à l'achat et suivie dans le cycle de préparation.
 - **Périmètre concerné :** domaines Orders et Inventory ; confirmation de commande, réservation de stock et calcul du stock disponible.
 - **Points restant à préciser :** traitement des commandes en attente avant confirmation, durée de réservation après confirmation, libération en cas d'annulation/refus et distinction technique entre réservation et quantité en préparation.
+ 
+### Question 92 — Que devient la réservation si la coopérative refuse la commande ? (VALIDÉE)
+- **Question :** Quel traitement appliquer au stock réservé lorsqu'une coopérative refuse une commande ?
+- **Choix proposés :**
+  - A. La réservation est immédiatement annulée et le stock redevient disponible.
+  - B. La réservation reste bloquée jusqu'à validation par un `super_admin`.
+  - C. La réservation est annulée uniquement après notification du client.
+  - D. La coopérative choisit entre libérer le stock ou le maintenir temporairement.
+- **Réponse :** A.
+- **Décision :** dès que la coopérative refuse la commande, la réservation correspondante est immédiatement libérée et la quantité revient dans le stock disponible.
+- **Conséquences :** le refus doit déclencher une opération cohérente et traçable sur la commande et la réservation afin d'éviter qu'une quantité reste bloquée ou soit libérée deux fois. Pour une commande multi-coopératives, cette libération concerne uniquement les lignes de la sous-commande refusée ; les autres sous-commandes continuent indépendamment.
+- **Périmètre concerné :** domaines Orders et Inventory ; refus de commande, libération de réservation, recalcul du stock disponible et historique des mouvements.
+- **Points restant à préciser :** traitement d'une annulation après confirmation, libération partielle, gestion des erreurs techniques et règle de libération des quantités déjà engagées dans la préparation.
  
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
