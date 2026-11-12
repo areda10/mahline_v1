@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.02
+- **Version :** 2.03
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1611,6 +1611,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** après le téléversement, le fichier peut apparaître dans Media avec le statut « En attente de validation » pendant l'analyse antivirus.
 - **Portée :** ce statut informe l'utilisateur que le téléversement a été reçu, sans autoriser l'utilisation du fichier. Tant que l'analyse n'est pas terminée et positive, le fichier ne peut être ni prévisualisé, ni téléchargé, ni associé à une entité métier, ni diffusé. Les accès et changements de statut sont contrôlés côté serveur.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 201 — Information de l'utilisateur après l'analyse antivirus
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** à la fin de l'analyse antivirus, Media met à jour le statut du fichier et informe l'utilisateur par une notification dans MAHLINE. L'email est réservé aux incidents de sécurité importants.
+- **Portée :** la notification indique le résultat utile à l'utilisateur sans divulguer de détails techniques sensibles. Les incidents importants peuvent déclencher un email aux responsables autorisés selon des critères à définir pendant l'audit technique. La notification et les éventuels emails respectent les permissions, la confidentialité et les règles du domaine de communication.
+- **Statut :** règle fonctionnelle enregistrée ; critères d'incident important à définir lors de l'audit technique ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
