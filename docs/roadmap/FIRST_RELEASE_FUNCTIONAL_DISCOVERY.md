@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.90
+- **Version :** 1.91
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1527,6 +1527,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** une opération de téléversement multiple accepte au maximum 20 fichiers sélectionnés.
 - **Portée :** cette limite s'applique à chaque opération, indépendamment des limites de taille par fichier et du quota global de stockage de la coopérative. Les contrôles restent effectués côté serveur ; une évolution du plafond pourra être décidée après les tests de charge et de performance.
 - **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 189 — Ordre de traitement des fichiers
+
+- **Réponse :** C (validation de la recommandation).
+- **Décision validée :** Media téléverse plusieurs fichiers simultanément, avec un nombre de téléversements parallèles limité et configurable.
+- **Portée :** la limite de parallélisme est déterminée selon les capacités réelles de l'hébergement et pourra être ajustée après les tests de charge. Elle ne modifie pas le plafond de 20 fichiers par opération. La progression, l'annulation et les erreurs restent suivies individuellement pour chaque fichier.
+- **Statut :** règle fonctionnelle enregistrée ; valeur technique du parallélisme à définir pendant l'audit ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
