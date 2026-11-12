@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.37
+- **Version :** 0.38
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par le super_admin responsable de la coopérative ; si conflit d'intérêts ou contestation par ce responsable, transfert prioritaire au super_admin_root, puis à défaut à un autre super_admin habilité et non impliqué ; le client peut contester et fournir des preuves ; réexamen par le super_admin_root en priorité, ou à défaut par un autre super_admin habilité et non impliqué ; le super_admin_root décide au cas par cas de suspendre ou non l'application de la décision initiale pendant le réexamen ; contestation dans les 48 heures suivant la notification ; canal/preuve de notification, calcul du délai, exceptions, critères de suspension, motifs, une seule contestation autorisée par litige ; modalités de complément du dossier et effets détaillés à définir |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par le super_admin responsable de la coopérative ; si conflit d'intérêts ou contestation par ce responsable, transfert prioritaire au super_admin_root, puis à défaut à un autre super_admin habilité et non impliqué ; le client peut contester et fournir des preuves ; réexamen par le super_admin_root en priorité, ou à défaut par un autre super_admin habilité et non impliqué ; le super_admin_root décide au cas par cas de suspendre ou non l'application de la décision initiale pendant le réexamen ; contestation dans les 48 heures suivant la notification ; canal/preuve de notification, calcul du délai, exceptions, critères de suspension, motifs, une seule contestation autorisée par litige ; ajout de preuves par le client autorisé jusqu'au commencement du réexamen ; événement de début du réexamen, notification de clôture et modalités des pièces à définir |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -257,6 +257,13 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - La contestation unique doit pouvoir contenir les preuves et arguments du client ; les modalités de complément éventuel du dossier avant clôture de l'instruction et les exceptions restent à définir.
   - Cette limitation s'applique au litige concerné et ne prive pas le client de ses droits concernant un autre litige.
 
+- **Décision complémentaire — ajout de preuves après le dépôt de la contestation (Question 39) :** B — le client peut ajouter des preuves jusqu'au commencement du réexamen par le responsable désigné.
+- **Conséquences / contraintes :**
+  - Le dossier de contestation reste complétable après son dépôt initial, mais uniquement avant le commencement effectif du réexamen.
+  - MAHLINE doit enregistrer chaque ajout avec son auteur et son horodatage, et rattacher les pièces à la contestation unique du litige.
+  - Le système doit matérialiser le commencement du réexamen afin de fermer ensuite la possibilité d'ajout par le client.
+  - La définition de l'événement qui marque le début du réexamen, l'information du client sur cette clôture, les formats et limites des pièces, ainsi que les éventuelles demandes de complément par le responsable restent à préciser.
+
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
   - le transporteur photographie le colis au moment de sa prise en charge.
@@ -310,6 +317,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.38 — 12 novembre 2026
+- Complément de FR-009 — Question 39 : B — le client peut ajouter des preuves après le dépôt de sa contestation, jusqu'au commencement effectif du réexamen par le responsable désigné. Chaque ajout est horodaté et rattaché au dossier unique. L'événement marquant le début du réexamen, la notification de clôture et les modalités des pièces restent à définir.
 
 ### Version 0.37 — 12 novembre 2026
 - Complément de FR-009 — Question 38 : A — une seule contestation du client est autorisée pour un même litige. Le système doit empêcher une seconde contestation du même litige. La contestation unique peut réunir les preuves et arguments du client ; les modalités de complément du dossier et les éventuelles exceptions restent à définir.
