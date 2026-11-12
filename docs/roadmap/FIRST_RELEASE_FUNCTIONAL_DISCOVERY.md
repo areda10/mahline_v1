@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.01
+- **Version :** 2.02
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1604,6 +1604,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision validée :** tous les fichiers téléversés dans Media font l'objet d'une analyse antivirus avant leur utilisation ou leur diffusion. Tout fichier suspect ou détecté comme malveillant est placé en quarantaine et reste inaccessible aux utilisateurs et aux modules.
 - **Portée :** l'analyse concerne les formats acceptés par Media, notamment les images, PDF et vidéos. Le fichier en quarantaine ne peut pas être prévisualisé, téléchargé, associé à une entité métier ni distribué publiquement. L'incident est journalisé et sa gestion est réservée aux rôles autorisés. Le moteur antivirus, les délais d'analyse, les règles de conservation et la procédure de levée de quarantaine seront définis pendant l'audit technique.
 - **Statut :** règle fonctionnelle enregistrée ; choix du moteur et paramètres à définir lors de l'audit technique ; implémentation non commencée.
+
+### Question 200 — Visibilité d'un fichier pendant l'analyse antivirus
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** après le téléversement, le fichier peut apparaître dans Media avec le statut « En attente de validation » pendant l'analyse antivirus.
+- **Portée :** ce statut informe l'utilisateur que le téléversement a été reçu, sans autoriser l'utilisation du fichier. Tant que l'analyse n'est pas terminée et positive, le fichier ne peut être ni prévisualisé, ni téléchargé, ni associé à une entité métier, ni diffusé. Les accès et changements de statut sont contrôlés côté serveur.
+- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
