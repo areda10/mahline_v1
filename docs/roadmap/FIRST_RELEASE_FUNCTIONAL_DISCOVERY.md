@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.52
+- **Version :** 1.53
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1122,6 +1122,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — notifications les plus récentes en premier.
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** filtres et regroupements éventuels du centre de notifications.
+ 
+### Question 151 — Filtres du centre de notifications (VALIDÉE)
+- **Question :** Souhaites-tu permettre à l’utilisateur de filtrer ses notifications ?
+- **Choix proposés :**
+  - A. Toutes / Non lues / Lues.
+  - B. Toutes / Non lues uniquement.
+  - C. Par catégorie de notification (produit, commande, média, compte, sécurité, etc.).
+  - D. A + C : filtres de lecture et de catégorie.
+  - E. Aucun filtre.
+- **Réponse :** D.
+- **Décision :** proposer les filtres de statut (Toutes, Non lues, Lues) ainsi qu'un filtre par catégorie de notification.
+- **Conséquences :**
+  - Les filtres de statut et de catégorie peuvent être combinés.
+  - Les catégories affichées doivent correspondre aux types de notifications réellement accessibles à l'utilisateur.
+  - Les filtres ne modifient ni le statut de lecture ni les droits d'accès aux notifications.
+  - Le tri chronologique décroissant validé en Q150 reste appliqué aux résultats filtrés.
+- **Statut :** VALIDÉ — filtres de lecture et de catégorie.
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** liste exhaustive des catégories et comportement de sélection multiple.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
