@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.05
+- **Version :** 1.06
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -279,16 +279,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - C. Images, documents et vidéos.
 - D. Tous les types de fichiers, avec restrictions de sécurité selon leur usage.
 
-**Réponse retenue :** Images JPG, JPEG et PNG ; documents PDF uniquement.
+**Réponse retenue (corrigée par l'utilisateur) :** Images JPG, JPEG et PNG ; documents PDF ; vidéos autorisées.
 
 **Décision fonctionnelle :**
 - Images autorisées : JPG, JPEG et PNG.
-- Documents autorisés : PDF uniquement.
-- Les formats WebP, DOC, DOCX, XLS, XLSX et les vidéos ne sont pas inclus dans le périmètre du premier release.
+- Documents autorisés : PDF.
+- Vidéos autorisées au premier release.
+- Formats exclus : WebP, Word (DOC/DOCX) et Excel (XLS/XLSX).
 
 **Conséquences / règles à prévoir :**
 - La validation des extensions doit être complétée par une vérification réelle du type MIME et du contenu du fichier.
-- Définir des limites de taille, des règles de stockage et des contrôles de sécurité lors de l'audit technique.
+- Définir des limites de taille et de durée pour les vidéos, des règles de stockage et des contrôles de sécurité lors de l'audit technique.
 - Les usages autorisés (produits, coopératives, catégories, etc.) et les règles d'accès restent à préciser dans les questions suivantes.
 
 **Périmètre concerné :** Domaine transversal Media et tous les domaines consommateurs de fichiers.
