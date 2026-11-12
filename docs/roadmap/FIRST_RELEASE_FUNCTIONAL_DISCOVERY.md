@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.70
+- **Version :** 1.71
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1379,6 +1379,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** B.
 - **Décision validée :** masquer immédiatement la notification, sans demander de confirmation, et proposer une possibilité d’annulation pendant 30 secondes.
 - **Portée :** le masquage reste individuel à l’utilisateur et ne supprime pas physiquement la notification ni son historique (décisions Q143–Q145).
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 169 — Distinction visuelle des notifications importantes
+
+- **Réponse :** D.
+- **Décision validée :** toutes les notifications utilisent le même style visuel ; aucun badge « Important » ni code couleur selon la gravité.
+- **Portée :** cette uniformité concerne la présentation dans la liste et l’aperçu ; les catégories et filtres fonctionnels définis précédemment restent disponibles.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
