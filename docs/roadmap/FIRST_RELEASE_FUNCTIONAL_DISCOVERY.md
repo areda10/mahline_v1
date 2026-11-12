@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.21
+- **Version :** 1.22
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -593,6 +593,21 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Domaines concernés :** Media, Products, Cooperatives.
 - **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
 - **Point ouvert :** choix UX entre glisser-déposer et boutons, selon l’ergonomie et les contraintes des interfaces prises en charge.
+
+### Question 120 — Visibilité des photos des produits dans la boutique
+
+- **Question :** Qui peut consulter les photos d’un produit publié dans la boutique ?
+- **Options proposées :**
+  - A. Tout visiteur, même sans compte.
+  - B. Uniquement les clients connectés.
+  - C. Uniquement les utilisateurs Mahline autorisés.
+  - D. Tout visiteur peut voir les photos du produit publié, mais les photos des produits non publiés restent privées.
+- **Réponse utilisateur :** A, B et D.
+- **Décision fonctionnelle :** Les photos d’un produit publié dans la boutique sont consultables par les visiteurs anonymes comme par les clients connectés. Les photos des produits non publiés restent privées. L’option D exprime la règle de visibilité générale, tandis que A et B confirment l’accès des deux catégories de visiteurs.
+- **Conséquences :** L’accès public aux médias doit être conditionné à la publication effective du produit et à son état de visibilité. Les médias de produits brouillons, non publiés, désactivés ou autrement non visibles ne doivent pas être exposés par une URL directe ou un endpoint public. La visibilité des médias ne doit pas étendre celle du produit.
+- **Domaines concernés :** Media, Products, Catalog, Audit.
+- **Statut :** Décision fonctionnelle enregistrée ; non implémentée.
+- **Points à vérifier :** définition exacte des états de publication et de visibilité du produit ; protection des fichiers et variantes par les routes/stockages publics.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
