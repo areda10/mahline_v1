@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.72
+- **Version :** 1.73
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1393,6 +1393,14 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** C.
 - **Décision validée :** lorsqu’une notification ne renvoie pas vers une ressource ou une page précise, son clic ouvre une page dédiée qui affiche son contenu détaillé.
 - **Portée :** les notifications liées à une ressource continuent d’ouvrir cette ressource dans l’onglet actuel (Q166). Les notifications générales disposent d’une page de détail dédiée.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 171 — Bibliothèque centrale des médias
+
+- **Réponse :** A (validation de l’option D proposée).
+- **Décision validée :** MAHLINE disposera d’une bibliothèque centrale Media, avec classement par module et possibilité de retrouver un même fichier utilisé dans plusieurs modules.
+- **Portée :** un fichier physique est enregistré une seule fois dans Media ; les modules (Produits, Coopératives, Catalogue, Marketplace et futurs modules) peuvent créer leurs propres références vers ce fichier. La suppression d’une référence ne supprime pas les autres références ni le fichier physique tant qu’il reste utilisé.
+- **Règles transversales :** les droits d’accès, la visibilité et les règles de suppression restent contrôlés côté serveur et ne sont pas contournés par la bibliothèque centrale.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
