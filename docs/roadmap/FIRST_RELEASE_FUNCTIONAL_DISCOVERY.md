@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.78
+- **Version :** 1.79
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1438,6 +1438,13 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** la fiche d’un média affiche le nom du fichier, son type, sa taille, sa date d’ajout, l’utilisateur qui l’a ajouté, la coopérative concernée, le module d’origine, les produits ou autres éléments auxquels il est associé, son statut de visibilité et son historique de modifications.
 - **Règles d’accès :** les informations et associations affichées sont limitées au périmètre autorisé de l’utilisateur ; l’historique et les métadonnées ne doivent pas révéler des ressources d’autres coopératives ou des informations auxquelles il n’a pas accès.
+- **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
+
+### Question 177 — Modification des métadonnées d’un média
+
+- **Réponse :** D (validation de la recommandation).
+- **Décision validée :** un utilisateur autorisé peut modifier les métadonnées d’un média sans remplacer le fichier : nom, description, classement et visibilité, selon les permissions applicables.
+- **Règles d’accès et de traçabilité :** toute modification est contrôlée côté serveur, respecte l’isolation des coopératives et les autorisations du module ; les changements sont historisés. Modifier le classement ou la visibilité ne donne aucun droit supplémentaire sur le fichier ni sur les ressources associées.
 - **Statut :** décision fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Version 0.84 — 12 novembre 2026
