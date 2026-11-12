@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.53
+- **Version :** 1.54
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1141,6 +1141,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — filtres de lecture et de catégorie.
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** liste exhaustive des catégories et comportement de sélection multiple.
+ 
+### Question 152 — Sélection des catégories de notifications (VALIDÉE)
+- **Question :** Comment l’utilisateur doit-il sélectionner les catégories de notifications ?
+- **Choix proposés :**
+  - A. Une seule catégorie à la fois.
+  - B. Plusieurs catégories simultanément.
+  - C. Une catégorie à la fois, avec une option « Toutes les catégories ».
+  - D. Plusieurs catégories simultanément, avec une option « Toutes les catégories ».
+- **Réponse :** D.
+- **Décision :** autoriser la sélection simultanée de plusieurs catégories et proposer une option « Toutes les catégories ».
+- **Conséquences :**
+  - L’utilisateur peut combiner plusieurs catégories dans un même filtre.
+  - « Toutes les catégories » réinitialise le filtre de catégorie et inclut toutes les catégories auxquelles l’utilisateur a accès.
+  - Le filtre de statut (Toutes / Non lues / Lues) reste combinable avec le filtre de catégorie.
+  - Les contrôles d'accès restent appliqués côté serveur, indépendamment des filtres choisis.
+- **Statut :** VALIDÉ — sélection multiple et option « Toutes les catégories ».
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** présentation visuelle des filtres et conservation éventuelle des préférences.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
