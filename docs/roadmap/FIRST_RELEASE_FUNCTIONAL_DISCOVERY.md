@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.46
+- **Version :** 1.47
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1019,6 +1019,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — annulation immédiate du masquage.
 - **Périmètre concerné :** domaine Media ; interface de notifications et préférences d’affichage par utilisateur.
 - **Points restant à préciser :** durée pendant laquelle le bouton « Annuler » reste disponible et comportement après navigation/rechargement à préciser lors du cadrage UX/technique.
+
+### Question 145 — Durée du bouton « Annuler » (VALIDÉE)
+- **Question :** Combien de temps le bouton « Annuler » doit-il rester disponible après le masquage d’une notification ?
+- **Choix proposés :**
+  - A. 5 secondes.
+  - B. 10 secondes.
+  - C. 30 secondes.
+  - D. 60 secondes.
+- **Réponse :** C.
+- **Décision :** le bouton « Annuler » reste disponible pendant 30 secondes après le masquage de la notification.
+- **Conséquences :**
+  - Pendant cette fenêtre, l’utilisateur peut annuler le masquage et rétablir l’affichage de la notification.
+  - À l’expiration des 30 secondes, le bouton disparaît ; la notification reste conservée en base mais masquée pour cet utilisateur.
+  - Cette décision ne crée pas de rubrique permanente de notifications masquées.
+- **Statut :** VALIDÉ — fenêtre d’annulation de 30 secondes.
+- **Périmètre concerné :** domaine Media ; interface de notifications et préférences d’affichage par utilisateur.
+- **Points restant à préciser :** comportement en cas de navigation ou de rechargement de page pendant les 30 secondes à vérifier lors du cadrage UX/technique.
 
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
