@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.35
+- **Version :** 1.36
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -828,6 +828,25 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — seuil fonctionnel enregistré.
 - **Périmètre concerné :** domaine Media ; suppression physique, gestion des échecs et blocage temporaire.
 - **Points restant à préciser :** durée du blocage et éventuelle progression du délai.
+
+### Question 134 — Durée du blocage temporaire après échecs de suppression (VALIDÉE)
+- **Question :** Après les 2 échecs successifs, combien de temps MAHLINE doit-il bloquer les nouvelles tentatives ?
+- **Choix proposés :**
+  - A. 5 minutes.
+  - B. 15 minutes.
+  - C. 30 minutes.
+  - D. 1 heure.
+  - E. 24 heures.
+- **Réponse :** A.
+- **Décision :** après 2 échecs successifs de suppression physique, MAHLINE bloque les nouvelles tentatives pendant 5 minutes.
+- **Conséquences :**
+  - Le seuil de déclenchement est de 2 échecs successifs (question 133).
+  - La durée du blocage est fixée à 5 minutes.
+  - À l'expiration du délai, une nouvelle tentative peut être déclenchée par un utilisateur autorisé, avec une nouvelle confirmation et une nouvelle vérification des permissions (questions 130 et 131).
+  - Les échecs restent consignés dans le journal d'audit accessible uniquement au `super_admin_root`, et l'utilisateur reçoit un message simple (question 129).
+- **Statut :** VALIDÉ — seuil et durée du blocage définis.
+- **Périmètre concerné :** domaine Media ; suppression physique, gestion des échecs et blocage temporaire.
+- **Points restant à préciser :** déterminer si le délai reste fixe ou augmente après de nouveaux cycles d'échecs.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
