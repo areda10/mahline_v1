@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.85
+- **Version :** 0.86
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -28,16 +28,27 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les caractéristiques complémentaires, variantes, poids et dimensions ne sont pas rendus obligatoires par cette décision.
   - Le mécanisme de brouillon pour les fiches incomplètes et les règles de validation détaillées restent à préciser.
 
-### Question 85 — Comportement d'un produit dont le stock atteint zéro (EN ATTENTE)
+### Question 85 — Comportement d'un produit dont le stock atteint zéro (VALIDÉ)
 - **Question :** Lorsqu'un produit publié n'a plus de stock disponible, que doit voir le client sur la marketplace ?
+- **Réponse :** A — le produit reste visible avec la mention « Rupture de stock », mais ne peut plus être commandé.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** domaines Products, Inventory et Marketplace.
+- **Conséquences :**
+  - Le produit reste consultable sur la marketplace même lorsque son stock disponible atteint zéro.
+  - L'ajout au panier et la validation d'une commande pour ce produit sont bloqués tant qu'aucun stock n'est disponible.
+  - Après réapprovisionnement, le produit redevient commandable selon le stock disponible.
+  - Le comportement d'un panier déjà constitué lorsque le stock tombe à zéro reste à préciser.
+
+### Question 86 — Affichage de la quantité en stock sur la marketplace (EN ATTENTE)
+- **Question :** Tant qu'un produit est disponible, quelle information de stock le client doit-il voir sur sa fiche produit ?
 - **Choix proposés :**
-  - A. Le produit reste visible avec la mention « Rupture de stock » et ne peut plus être commandé.
-  - B. Le produit est automatiquement masqué de la marketplace jusqu'au réapprovisionnement.
-  - C. Le produit reste visible et le client peut le commander en précommande.
-  - D. La coopérative choisit, produit par produit, entre masquer le produit et afficher « Rupture de stock ».
+  - A. La quantité exacte disponible (ex. : « 12 unités disponibles »).
+  - B. Une indication simple : « En stock » ou « Rupture de stock », sans quantité exacte.
+  - C. Une indication par seuil : « En stock », « Stock limité » ou « Rupture de stock ».
+  - D. La coopérative choisit le mode d'affichage pour chaque produit.
 - **Statut :** EN ATTENTE DE RÉPONSE.
-- **Périmètre concerné :** domaines Products, Inventory et Marketplace ; disponibilité publique et contrôle de commande.
-- **Conséquences à préciser après réponse :** affichage du stock nul, blocage de l'ajout au panier/commande, réactivation après réapprovisionnement et gestion des paniers contenant un produit devenu indisponible.
+- **Périmètre concerné :** domaines Products, Inventory et Marketplace ; fiche produit et confidentialité des données de stock.
+- **Conséquences à préciser après réponse :** quantité ou indicateur affiché, seuil de stock limité et cohérence entre affichage et disponibilité réelle.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
