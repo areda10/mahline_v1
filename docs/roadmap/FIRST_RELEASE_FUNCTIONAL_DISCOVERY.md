@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.31
+- **Version :** 0.32
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -148,7 +148,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-006 | Calcul des frais pour un panier multi-coopératives | VALIDÉ — somme des frais par expédition au premier release |
 | FR-007 | Gestion des stocks et réservation selon le moyen de paiement | VALIDÉ — COD à la confirmation coopérative, sans annulation automatique par délai ; paiement en ligne à la validation (post-release) |
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
-| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par un super_admin habilité sur la coopérative concernée ; en l'absence de décideur habilité, litige en attente jusqu'à désignation ; traitement confié au super_admin qui prend en charge la coopérative concernée ; absence durable de responsable et escalade à définir |
+| FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par le super_admin responsable de la coopérative ; si conflit d'intérêts ou contestation par ce responsable, transfert prioritaire au super_admin_root, puis à défaut à un autre super_admin habilité et non impliqué |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
 | FR-011 | Commissions et reversements aux coopératives | À poser |
 | FR-012 | Inscription et espace personnel client | À poser |
@@ -214,6 +214,14 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - Si aucun `super_admin` ne prend en charge la coopérative, le litige reste en attente conformément à la décision de la Question 31.
   - Le cas d'absence durable de responsable et son éventuelle escalade restent à définir.
 
+- **Décision complémentaire — conflit d'intérêts ou indisponibilité du `super_admin` responsable (Question 33) :** A ou B, selon la règle validée : A en priorité — le `super_admin_root` reprend exceptionnellement le dossier lorsque le `super_admin` responsable est lui-même impliqué dans le litige ou conteste la décision ; B en alternative — si le `super_admin_root` ne peut pas intervenir, un autre `super_admin` habilité sur la coopérative et non impliqué examine le dossier.
+- **Conséquences / contraintes :**
+  - Le `super_admin` initialement responsable ne peut pas instruire ni trancher un litige dans lequel il est impliqué ou dont il conteste la décision.
+  - Le transfert au `super_admin_root` constitue la voie prioritaire de remplacement.
+  - Si le `super_admin_root` ne peut pas intervenir, le dossier peut être confié à un autre `super_admin` habilité sur la coopérative, à condition qu'il ne soit pas impliqué dans le litige.
+  - Le motif du conflit ou de l'indisponibilité, le transfert du dossier, l'identité du nouveau responsable et toute décision doivent être historisés.
+  - La définition opérationnelle de l'impossibilité d'intervention du `super_admin_root` et les garanties de neutralité du remplaçant restent à préciser.
+
 - **Décision complémentaire — photos au départ du colis (Question 24) :** C — la coopérative et le transporteur prennent chacun des photos au départ :
   - la coopérative photographie le colis avant sa remise au transporteur ;
   - le transporteur photographie le colis au moment de sa prise en charge.
@@ -267,6 +275,9 @@ Pour chaque domaine nécessaire au premier release :
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
 ## 6. Historique des mises à jour
+
+### Version 0.32 — 12 novembre 2026
+- Complément de FR-009 — Question 33 : si le `super_admin` responsable est impliqué dans le litige ou conteste la décision, le `super_admin_root` reprend le dossier en priorité ; s'il ne peut pas intervenir, un autre `super_admin` habilité sur la coopérative et non impliqué peut l'examiner. Le motif du transfert, le nouveau responsable et les décisions doivent être historisés ; les critères d'indisponibilité et garanties de neutralité restent à préciser.
 
 ### Version 0.31 — 12 novembre 2026
 - Précision de FR-009 — Question 32 : le `super_admin` qui prend en charge la coopérative concernée est le responsable du traitement du litige lié à cette coopérative. Si aucun `super_admin` ne la prend en charge, le litige reste en attente. L'escalade en cas d'absence durable de responsable reste à définir.
