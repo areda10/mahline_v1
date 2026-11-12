@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.59
+- **Version :** 0.60
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -137,6 +137,9 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les conséquences financières détaillées, les éventuels ajustements de frais, la notification du client et les modalités de remboursement (pour les futurs paiements en ligne) restent à cadrer dans FR-009 et les questions financières associées.
 
 
+### Version 0.60 — 12 novembre 2026
+- FR-009, Question 61 : décision D — le `super_admin_root` peut relancer les envois, corriger l'adresse, modifier le destinataire et clôturer manuellement après vérification ; opérations auditées.
+
 ### Version 0.59 — 12 novembre 2026
 - FR-009, Question 60 : décision A — après 10 échecs, arrêt des renvois automatiques dans l'attente d'une intervention du `super_admin_root`. Incident maintenu ouvert ; actions manuelles et reprise à préciser.
 
@@ -224,6 +227,8 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Conséquences / contraintes :** les renvois suivent une temporisation progressive et plafonnent ensuite à un intervalle de 2 heures. La séquence exacte des délais pour les 10 tentatives, le calcul à partir de l'échec initial ou de la tentative précédente, les heures silencieuses éventuelles et le comportement après la dixième tentative restent à préciser.
   - **Question 60 — comportement après 10 tentatives infructueuses :** A — MAHLINE arrête les renvois automatiques et attend l'intervention du `super_admin_root`.
   - **Conséquences / contraintes :** après la dixième tentative infructueuse, aucun nouvel envoi automatique n'est lancé tant qu'une intervention du `super_admin_root` n'a pas eu lieu. L'incident reste ouvert et visible dans le tableau de bord jusqu'à résolution ; le root doit pouvoir examiner l'échec et décider de la suite. Les actions manuelles disponibles (relancer, corriger l'adresse, changer le destinataire ou clôturer), leur traçabilité et la reprise éventuelle des tentatives restent à définir.
+  - **Question 61 — actions du `super_admin_root` sur l'incident :** D — il peut relancer les tentatives automatiques, corriger l'adresse e-mail, modifier le destinataire et clôturer manuellement l'incident après vérification.
+  - **Conséquences / contraintes :** ces opérations sont réservées au `super_admin_root` et doivent être journalisées (acteur, date/heure, action, motif si nécessaire et résultat). Une relance manuelle reprend l'envoi après l'arrêt automatique au seuil de 10 échecs. Une modification d'adresse ou de destinataire doit être enregistrée dans l'historique de l'incident. La clôture manuelle n'est possible qu'après vérification et doit être justifiée. Les règles exactes de reprise du compteur, les contrôles de validité du nouvel e-mail et la distinction entre acceptation par le serveur et livraison effective restent à préciser.
 
 
 - **Décision complémentaire — ouverture accidentelle du dossier de réexamen (Question 43) :** C — seul le `super_admin_root` peut annuler le début du réexamen si le responsable désigné a ouvert le dossier par erreur. L'annulation exige une justification et doit être entièrement traçable.
