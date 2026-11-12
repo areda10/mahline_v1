@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.54
+- **Version :** 1.55
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1159,6 +1159,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — sélection multiple et option « Toutes les catégories ».
 - **Périmètre concerné :** domaine Media ; centre de notifications.
 - **Points restant à préciser :** présentation visuelle des filtres et conservation éventuelle des préférences.
+ 
+### Question 153 — Conservation des filtres du centre de notifications (VALIDÉE)
+- **Question :** Lorsque l’utilisateur quitte le centre de notifications puis y revient, comment gérer ses derniers filtres ?
+- **Choix proposés :**
+  - A. Réinitialiser les filtres à chaque ouverture.
+  - B. Conserver les derniers filtres uniquement pendant la session.
+  - C. Enregistrer les préférences et les conserver lors des prochaines connexions.
+  - D. Laisser l’utilisateur choisir de mémoriser ou non ses filtres.
+- **Réponse :** B.
+- **Décision :** conserver les derniers filtres sélectionnés uniquement pendant la session en cours.
+- **Conséquences :**
+  - Un retour au centre de notifications pendant la même session conserve les filtres précédemment sélectionnés.
+  - À la fin de la session ou lors d'une nouvelle connexion, les filtres sont réinitialisés aux valeurs par défaut.
+  - Aucune préférence de filtre persistante n'est enregistrée dans le profil utilisateur.
+- **Statut :** VALIDÉ — conservation limitée à la session.
+- **Périmètre concerné :** domaine Media ; centre de notifications.
+- **Points restant à préciser :** valeurs exactes des filtres par défaut.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
