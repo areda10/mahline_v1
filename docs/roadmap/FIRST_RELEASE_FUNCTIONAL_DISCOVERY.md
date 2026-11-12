@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 1.63
+- **Version :** 1.64
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -1318,6 +1318,24 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Statut :** VALIDÉ — aperçu limité aux 15 notifications les plus récentes.
 - **Périmètre concerné :** domaine Media ; aperçu rapide du centre de notifications.
 - **Points restant à préciser :** actions disponibles directement dans l'aperçu rapide.
+ 
+### Question 162 — Actions dans l’aperçu rapide (VALIDÉE)
+- **Question :** Quelles actions l’utilisateur doit-il pouvoir effectuer directement depuis la fenêtre déroulante ?
+- **Choix proposés :**
+  - A. Consulter uniquement les notifications ; cliquer ouvre la page dédiée.
+  - B. Consulter et marquer une notification comme lue.
+  - C. Consulter, marquer comme lue et masquer une notification.
+  - D. Toutes les actions disponibles dans le centre complet, directement depuis l’aperçu.
+- **Réponse :** A + B.
+- **Décision :** depuis l'aperçu rapide, l'utilisateur peut consulter les notifications, ouvrir une notification pour accéder à la page dédiée et marquer une notification comme lue directement dans l'aperçu.
+- **Conséquences :**
+  - L'aperçu rapide ne permet pas de masquer ou supprimer une notification.
+  - L'ouverture d'une notification depuis l'aperçu conduit à sa page dédiée ; conformément à Q147, son ouverture entraîne automatiquement son marquage comme lue.
+  - Une action « Marquer comme lue » est également disponible directement depuis l'aperçu, sans devoir ouvrir la page dédiée.
+  - Le compteur de notifications non lues est cohérent avec le statut de lecture, mais son actualisation visible suit la règle de rechargement validée en Q149.
+- **Statut :** VALIDÉ — consultation, ouverture de la page dédiée et marquage comme lu depuis l'aperçu.
+- **Périmètre concerné :** domaine Media ; aperçu rapide du centre de notifications.
+- **Points restant à préciser :** présentation des actions dans chaque élément de l'aperçu.
  
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
