@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 0.86
+- **Version :** 0.87
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -39,16 +39,27 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Après réapprovisionnement, le produit redevient commandable selon le stock disponible.
   - Le comportement d'un panier déjà constitué lorsque le stock tombe à zéro reste à préciser.
 
-### Question 86 — Affichage de la quantité en stock sur la marketplace (EN ATTENTE)
+### Question 86 — Affichage de la quantité en stock sur la marketplace (VALIDÉ)
 - **Question :** Tant qu'un produit est disponible, quelle information de stock le client doit-il voir sur sa fiche produit ?
+- **Réponse :** C — afficher une indication par seuil : « En stock », « Stock limité » ou « Rupture de stock ».
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** domaines Products, Inventory et Marketplace.
+- **Conséquences :**
+  - La marketplace n'affiche pas nécessairement la quantité exacte disponible.
+  - Trois états visuels sont prévus : « En stock », « Stock limité » et « Rupture de stock ».
+  - La règle de calcul du seuil « Stock limité » et son paramétrage restent à définir.
+  - La rupture de stock conserve la règle validée à la question 85 : produit visible, commande bloquée.
+
+### Question 87 — Qui définit le seuil « Stock limité » ? (EN ATTENTE)
+- **Question :** Qui doit pouvoir définir la quantité à partir de laquelle un produit passe de « En stock » à « Stock limité » ?
 - **Choix proposés :**
-  - A. La quantité exacte disponible (ex. : « 12 unités disponibles »).
-  - B. Une indication simple : « En stock » ou « Rupture de stock », sans quantité exacte.
-  - C. Une indication par seuil : « En stock », « Stock limité » ou « Rupture de stock ».
-  - D. La coopérative choisit le mode d'affichage pour chaque produit.
+  - A. Un seuil fixe identique pour tous les produits, défini dans MAHLINE.
+  - B. Le `super_admin_root` définit un seuil global applicable à toutes les coopératives.
+  - C. Chaque coopérative définit un seuil général applicable à tous ses produits.
+  - D. La coopérative définit un seuil individuellement pour chaque produit.
 - **Statut :** EN ATTENTE DE RÉPONSE.
-- **Périmètre concerné :** domaines Products, Inventory et Marketplace ; fiche produit et confidentialité des données de stock.
-- **Conséquences à préciser après réponse :** quantité ou indicateur affiché, seuil de stock limité et cohérence entre affichage et disponibilité réelle.
+- **Périmètre concerné :** domaines Inventory, Products et Marketplace ; paramétrage du seuil d'alerte/affichage.
+- **Conséquences à préciser après réponse :** autorité de paramétrage, valeur du seuil, valeur par défaut éventuelle et comportement lorsque le stock atteint ce seuil.
 
 ### Version 0.83 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
