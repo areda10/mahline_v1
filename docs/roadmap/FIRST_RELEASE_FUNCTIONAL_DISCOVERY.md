@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.75
+- **Version :** 2.76
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -610,6 +610,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Cette règle ne modifie pas la décision Q54 : le support ne peut toujours pas télécharger l'archive ZIP du dossier, dont le téléchargement reste réservé au client propriétaire depuis son espace authentifié.
 - **Périmètre concerné :** Identity (dossier de récupération et autorisations du support), Media/Storage (accès et téléchargement des PDF) et Audit (traçabilité).
 - **Points à préciser avant implémentation :** classification des pièces communicables, matrice des permissions, éventuelles restrictions par type de document et durée de conservation des journaux de téléchargement.
+
+### Question 56 — Notification du client après téléchargement d'un PDF par le support
+
+**Décision validée : A**
+
+- Le client ne reçoit pas de notification individuelle à chaque consultation ou téléchargement d'un PDF par un agent du support autorisé.
+- L'absence de notification ne supprime aucune obligation de traçabilité : chaque consultation et chaque tentative ou téléchargement effectif restent enregistrés dans les journaux internes d'audit selon les règles applicables.
+- Les journaux doivent permettre d'identifier l'agent, le dossier concerné, le document ou sa référence, la date et le résultat de l'opération, sans enregistrer le contenu du document ni de données secrètes.
+- Cette décision ne modifie pas les restrictions de la question 55 : le support ne télécharge que les PDF communicables nécessaires au traitement du dossier, et ne peut pas télécharger l'archive ZIP.
+- **Périmètre concerné :** Identity (dossier et accès du support), Media/Storage (consultation et téléchargement des PDF), Audit (journalisation) et Communication (absence de notification événementielle au client).
+- **Points à préciser avant implémentation :** modalités de consultation éventuelle de ces traces par le client, durée de conservation des journaux et règles de supervision interne.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2923,6 +2934,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.76 — 13 novembre 2026
+- Ajout de la décision Identity Q56 : A — aucune notification individuelle au client après chaque consultation ou téléchargement PDF par le support ; les opérations restent intégralement journalisées en interne.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.75 — 13 novembre 2026
 - Ajout de la décision Identity Q55 : B — les agents du support expressément autorisés peuvent télécharger uniquement les PDF communicables nécessaires au traitement du dossier, sous contrôle d'accès et journalisation ; les pièces sensibles/non communicables et l'archive ZIP restent exclues.
