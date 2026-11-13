@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.19
+- **Version :** 2.20
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2318,6 +2318,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 ### Version 2.19 — 13 novembre 2026
 - Ajout de la décision Media Q94 : historique détaillé des fusions PDF consultable par root et super_admin dans leur périmètre.
+- Aucune modification du code applicatif ; aucune fusion de branche.
+### Complément à la matrice Media — question 95
+- **Q95 — Téléchargement groupé de plusieurs PDF : A.** Root uniquement, dans son périmètre global.
+- **Conséquences / contraintes :** le téléchargement groupé reste réservé à root dans le premier release, conformément à la règle générale de téléchargement groupé des médias (Q35). Chaque PDF doit être revalidé individuellement selon les permissions, le périmètre, l'état antivirus et les règles de conservation. Les fichiers en attente, en quarantaine ou bloqués sont exclus. L'opération est journalisée.
+
+### Version 2.20 — 13 novembre 2026
+- Ajout de la décision Media Q95 : téléchargement groupé de PDF réservé à root.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
 
