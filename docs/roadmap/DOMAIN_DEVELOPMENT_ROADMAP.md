@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.14
+- **Version :** 5.15
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -33,6 +33,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
 - Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
 - Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
+- Calcul du prix minimum : exclure les variantes en rupture ou indisponibles ; seules les variantes commercialisables et disponibles participent au prix « À partir de ». Inventory fournit l'information de disponibilité, et Sales la revalide au panier/checkout. Si aucune variante n'est disponible, afficher l'indisponibilité sans prix d'appel achetable.
 - Première étape obligatoire : audit du code existant et des routes, contrôleurs, services, modèles, migrations, policies/gates, vues, tests et liaisons inter-domaines avant toute modification.
 - Développement incrémental sur une branche de travail dédiée, tests ciblés puis suite requise ; aucune fusion vers main sans demande explicite.
 
@@ -477,6 +478,11 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.15 — 13 novembre 2026
+- Enregistrement de Q258 : le prix minimum exclut les variantes en rupture ou indisponibles ; il reflète une variante réellement achetable.
+- Inventory fournit la disponibilité et Sales la revalide au panier/checkout ; si aucune variante n'est disponible, la carte indique l'indisponibilité sans prix d'appel.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 5.14 — 13 novembre 2026
 - Enregistrement de Q257 : carte produit avec variantes à prix différents = prix applicable le plus bas, précédé de « À partir de ».
