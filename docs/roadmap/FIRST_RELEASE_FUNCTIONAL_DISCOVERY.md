@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.51
+- **Version :** 3.52
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4540,7 +4540,17 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Décision :** la gestion commerciale des promotions (création, modification, suppression) est réservée au `cooperative_admin`, strictement dans le périmètre de sa coopérative. Le `super_admin` affecté et le `super_admin_root` peuvent superviser selon leurs droits, mais ne modifient pas directement les promotions commerciales au premier release. Toute action est contrôlée côté serveur et respecte l'isolation des coopératives.
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
+
+### Décision Q271 — Publication d'une promotion (VALIDÉE)
+- **Question :** Une promotion créée par une coopérative doit-elle être publiée immédiatement ou soumise à validation ?
+- **Réponse :** A — publication immédiate dès l'enregistrement si toutes les validations sont respectées.
+- **Décision :** aucune approbation préalable de `super_admin` ou `super_admin_root` n'est requise. Après validation serveur des paramètres (taux, dates, prix calculé, produit et variantes concernés, droits du `cooperative_admin` et périmètre coopératif), la promotion est automatiquement active/publicable lorsque sa période commence. Une promotion planifiée reste inactive jusqu'à sa date de début. Les actions sont journalisées ; les rôles de supervision conservent leurs droits de contrôle et peuvent appliquer les mécanismes de suspension autorisés, sans modifier les paramètres commerciaux à la place de la coopérative.
+- **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
+
 ## 6. Historique des mises à jour
+
+### Version 3.52 — 13 novembre 2026
+- Enregistrement de Q271 : publication sans approbation préalable, après validation serveur ; respect des dates de début/fin, journalisation et supervision.
 
 ### Version 3.51 — 13 novembre 2026
 - Enregistrement de Q270 : gestion des promotions réservée au `cooperative_admin` de sa coopérative ; les rôles de supervision consultent sans modifier directement les paramètres commerciaux.
