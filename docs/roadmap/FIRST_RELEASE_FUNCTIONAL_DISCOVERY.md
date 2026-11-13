@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.46
+- **Version :** 3.47
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 266 — Taux maximal de réduction
+
+- **Question :** Quel taux maximal de réduction une coopérative peut-elle définir pour une promotion ?
+- **Réponse :** C — maximum 90 %.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Le taux de réduction d'une promotion doit être strictement positif et ne peut pas dépasser 90 %.
+  - Toute valeur supérieure à 90 % doit être refusée côté serveur ; la validation côté client ne suffit pas.
+  - Une réduction de 100 % est donc interdite.
+  - Le taux est unique au niveau du produit et s'applique au prix normal applicable de chaque variante (Q264–Q265).
+  - Les règles monétaires déjà décidées restent applicables au prix final ; aucune modification silencieuse par arrondi ou troncature.
+- **À préciser avant codage :** précision autorisée pour le taux (entier ou décimales), règle exacte d'arrondi du prix remisé et traitement des prix finaux inférieurs à un centime.
+
 ### Question 265 — Mode de calcul de la promotion sur les variantes
 
 - **Question :** Comment calculer la promotion d'un produit applicable à toutes ses variantes ?
@@ -4479,6 +4492,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.47 — 13 novembre 2026
+- Enregistrement de Q266 : taux de réduction strictement positif, plafonné à 90 %, avec rejet serveur des valeurs supérieures.
+- Précision du taux et règle d'arrondi du prix remisé conservées comme décisions préalables au codage.
 
 ### Version 3.46 — 13 novembre 2026
 - Enregistrement de Q265 : taux de réduction unique au niveau du produit, appliqué au prix normal propre à chaque variante.
