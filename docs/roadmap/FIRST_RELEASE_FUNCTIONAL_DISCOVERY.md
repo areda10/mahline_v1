@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.32
+- **Version :** 2.33
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -156,6 +156,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le lien ne doit pas permettre, à lui seul, de remplacer automatiquement l'adresse e-mail ou de restaurer des identifiants sans contrôles supplémentaires.
   - Le mécanisme doit être à durée limitée, à usage contrôlé et protégé contre les abus ; ses modalités techniques, les vérifications d'identité et les actions de sécurisation seront précisées pendant la conception détaillée.
   - La notification ne révèle pas la nouvelle adresse e-mail et ne contient aucun mot de passe, token ou secret d'authentification.
+
+### Question 13 — Actions après signalement d'un changement d'e-mail non autorisé (VALIDÉ)
+- **Question :** Quelles actions déclencher lorsqu'un client signale qu'il n'est pas à l'origine du changement d'adresse e-mail ?
+- **Réponse :** A — bloquer temporairement le compte, révoquer toutes les sessions et tous les tokens, puis lancer une procédure de récupération sécurisée.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity et Communication ; traitement des incidents de sécurité, protection du compte et récupération d'accès.
+- **Conséquences :**
+  - Le signalement déclenche un blocage temporaire du compte afin de limiter toute utilisation non autorisée pendant le traitement.
+  - Toutes les sessions web actives et tous les tokens API du compte sont révoqués.
+  - Une procédure de récupération sécurisée est engagée pour vérifier le propriétaire légitime et rétablir son accès.
+  - Le signalement ne provoque pas de restauration automatique de l'ancienne adresse e-mail ; toute correction d'identité doit passer par la procédure de récupération et ses contrôles.
+  - La durée du blocage, les étapes de vérification, les critères de déblocage et les notifications associées restent à définir dans la conception détaillée.
+  - L'incident et les actions de sécurité sont journalisés sans enregistrer de mot de passe, token, lien secret ou autre donnée d'authentification.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2469,6 +2482,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.33 — 13 novembre 2026
+- Enregistrement de la Question 13 : signalement d'un changement d'e-mail non autorisé entraînant un blocage temporaire, la révocation des sessions et tokens, puis une récupération sécurisée ; durée et contrôles détaillés restent à définir.
 
 ### Version 2.32 — 13 novembre 2026
 - Enregistrement de la Question 12 : lien sécurisé dans la notification à l'ancienne adresse pour signaler un changement non autorisé et démarrer une procédure de sécurisation, sans restauration automatique du compte.
