@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.85
+- **Version :** 2.86
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -724,6 +724,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La création, la modification et la suppression des favoris sont journalisées conformément aux règles d'audit.
 - **Périmètre concerné :** Audit (recherche et traçabilité), Identity (espace personnel et contrôle réservé au `super_admin_root`).
 - **Points à préciser avant implémentation :** nombre maximal de favoris, nommage, modification, suppression, gestion des dates relatives et comportement si un critère n'est plus disponible.
+
+### Question 66 — Nombre maximal de filtres favoris du super_admin_root
+
+**Décision validée : B**
+
+- Le `super_admin_root` peut enregistrer jusqu'à 25 filtres favoris personnels pour la consultation et l'export des journaux de téléchargements PDF.
+- Le plafond est appliqué côté serveur ; une création au-delà de 25 favoris est refusée sans supprimer ni remplacer automatiquement un favori existant.
+- Le `super_admin_root` peut gérer ses favoris existants afin de libérer une place. Les favoris restent strictement personnels et ne sont pas partagés.
+- Ce plafond ne modifie ni les droits d'accès aux journaux, ni les filtres disponibles, ni les limites de période et d'export définies précédemment.
+- **Périmètre concerné :** Audit (recherche des journaux), Identity (espace personnel et autorisation du `super_admin_root`).
+- **Points à préciser avant implémentation :** règles de nommage, unicité des noms, confirmation de suppression et traitement des favoris devenus invalides.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3037,6 +3048,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.86 — 13 novembre 2026
+- Ajout de la décision Identity Q66 : B — plafond de 25 filtres favoris personnels pour le `super_admin_root`, refus côté serveur au-delà du plafond sans remplacement automatique.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.85 — 13 novembre 2026
 - Ajout de la décision Identity Q65 : B — filtres favoris personnels au `super_admin_root`, réutilisables après revalidation serveur et sans partage ni élévation de droits.
