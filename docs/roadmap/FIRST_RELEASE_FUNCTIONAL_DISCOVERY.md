@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.49
+- **Version :** 3.50
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 269 — Affichage des promotions dans la marketplace
+
+- **Question :** Quels éléments afficher au client lorsqu'une promotion est active ?
+- **Réponse :** A — prix normal barré, prix promotionnel et badge indiquant le pourcentage de réduction.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Sur la carte produit et la fiche produit, afficher le prix normal barré, le prix promotionnel applicable et le taux de réduction (ex. « -12,75 % »).
+  - N'afficher ces éléments promotionnels que pendant la période de validité active (Q263).
+  - Pour un produit à variantes, le prix promotionnel est calculé sur le prix applicable de la variante ; l'affichage doit rester cohérent avec la variante sélectionnée et ne pas annoncer un prix trompeur (Q256–Q265).
+  - Si plusieurs prix de variantes sont présentés sur la carte, le prix « À partir de » et le taux annoncé doivent correspondre à une même variante disponible ; ne jamais combiner le prix minimum d'une variante avec le taux d'une autre.
+  - Hors promotion, afficher le prix normal sans prix barré ni badge promotionnel.
+  - Catalog fournit les données d'affichage ; Sales revalide le prix de la variante sélectionnée et fige les valeurs réellement appliquées à la vente.
+- **À préciser ultérieurement :** règles d'affichage sur les listes à variantes, tri/filtre par prix, et présentation des promotions expirées (aucun badge actif après expiration).
+
 ### Question 268 — Arrondi du prix promotionnel
 
 - **Question :** Comment arrondir le résultat du calcul en pourcentage lorsqu'il comporte plus de deux décimales ?
@@ -4520,6 +4534,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.50 — 13 novembre 2026
+- Enregistrement de Q269 : affichage du prix normal barré, du prix promotionnel et du pourcentage de réduction lorsque la promotion est active.
+- Cohérence obligatoire entre variante disponible, prix « À partir de » et taux annoncé ; aucun affichage promotionnel après expiration.
 
 ### Version 3.49 — 13 novembre 2026
 - Enregistrement de Q268 : arrondi commercial du prix promotionnel au centime le plus proche, égalité au demi-centime arrondie vers le haut.
