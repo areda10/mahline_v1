@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.73
+- **Version :** 2.74
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -589,6 +589,15 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Aucun export autonome de cet historique au format PDF ou CSV n'est proposé au premier release.
 - Cette règle ne limite pas le téléchargement du dossier lui-même dans les formats déjà prévus (PDF récapitulatif du dossier ou archive ZIP avec les pièces communicables).
 - L'affichage de l'historique reste soumis au contrôle d'accès du client propriétaire et aux règles de journalisation déjà définies.
+
+### Question 54 — Téléchargement du ZIP par le support
+
+**Décision validée : A**
+
+- Les agents du support, même lorsqu'ils sont expressément autorisés à consulter le dossier et son historique de générations ZIP, ne peuvent pas télécharger le fichier ZIP généré pour le client.
+- Le téléchargement du ZIP est réservé au client propriétaire, depuis son espace authentifié, sous réserve des contrôles de session, de propriété, de disponibilité et de validité du lien temporaire déjà définis.
+- Le rôle de consultation du support ne confère aucun droit de téléchargement ou de récupération des archives ; les interfaces et contrôles serveur doivent appliquer cette séparation.
+- Les accès du support à l'historique restent journalisés selon la décision de la question 52.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2902,6 +2911,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.74 — 13 novembre 2026
+- Ajout de la décision Identity Q54 : A — les agents du support autorisés à consulter l'historique ZIP ne peuvent pas télécharger l'archive ; le téléchargement reste réservé au client propriétaire authentifié.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.73 — 13 novembre 2026
 - Ajout de la décision Identity Q53 : B — l'historique des générations ZIP est consultable uniquement dans l'espace client authentifié ; aucun export PDF/CSV autonome n'est proposé au premier release. Les exports du dossier lui-même restent inchangés.
