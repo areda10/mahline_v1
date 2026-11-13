@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.80
+- **Version :** 2.81
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -666,6 +666,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Cette limite ne modifie ni la durée de conservation des journaux ni les droits de consultation et d'export réservés au `super_admin_root` (Q58 et Q59).
 - **Périmètre concerné :** Identity (autorisation), Audit (journaux et traçabilité des exports), Media/Storage (génération des fichiers).
 - **Points à préciser avant implémentation :** fuseau horaire de référence, inclusion des bornes de période, comportement pour une période vide ou invalide, et gestion des exports volumineux.
+
+### Question 61 — Protection des fichiers d'export des journaux PDF
+
+**Décision validée : A**
+
+- Après génération d'un export PDF ou CSV des journaux, le `super_admin_root` peut le télécharger au moyen d'une URL temporaire valable 5 minutes.
+- L'accès au téléchargement exige une authentification active et une vérification côté serveur du droit du demandeur, de l'identité de l'export et de son état. L'URL temporaire ne constitue jamais un mécanisme de contournement de l'authentification ou de l'autorisation.
+- L'URL expire après 5 minutes. Un nouveau lien peut être demandé depuis l'espace sécurisé tant que le fichier exporté est encore disponible, sous réserve des contrôles d'accès et de la politique de conservation définie pour les exports.
+- Les demandes de génération, émissions de liens, tentatives de téléchargement et téléchargements aboutis ou refusés sont journalisés, sans enregistrer le jeton secret de l'URL ni le contenu du fichier dans les journaux.
+- Le fichier ne doit pas être exposé par une URL publique permanente ; son stockage et son accès doivent rester privés.
+- **Périmètre concerné :** Identity (autorisation réservée au `super_admin_root`), Audit (traçabilité des demandes et accès), Media/Storage (stockage privé, génération et téléchargement sécurisé).
+- **Points à préciser avant implémentation :** durée maximale de disponibilité du fichier exporté, suppression automatique, possibilité de réutiliser plusieurs fois le même lien avant expiration, et comportement en cas de révocation de session ou de permission.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2979,6 +2991,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.81 — 13 novembre 2026
+- Ajout de la décision Identity Q61 : A — téléchargement des exports PDF/CSV via une URL temporaire valable 5 minutes, avec authentification et autorisation serveur obligatoires.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.80 — 13 novembre 2026
 - Ajout de la décision Identity Q60 : B — période sélectionnable pour l'export des journaux PDF, limitée à 12 mois maximum par export et contrôlée côté serveur.
