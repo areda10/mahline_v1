@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.32
+- **Version :** 3.33
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -16,6 +16,28 @@ Construire une première version exploitable de MAHLINE qui combine :
 - un parcours cohérent entre la marketplace et les espaces de gestion des coopératives.
 
 La cohérence approfondie des frontières entre domaines et le renforcement global des événements transversaux sont planifiés dans une phase ultérieure dédiée, après le développement fonctionnel des domaines du premier release. Les règles indispensables de sécurité, d'autorisation, de propriété des données et d'intégrité restent obligatoires pendant chaque développement.
+
+
+## Décision de stratégie de livraison — Parcours opérationnel prioritaire MAHLINE V1 (Q252 — VALIDÉE)
+
+- **Question :** Faut-il adopter une stratégie de développement priorisant le parcours complet client → coopérative → transporteur, sans attendre la spécification exhaustive de toutes les fonctions avancées de chaque domaine ?
+- **Réponse :** A — oui. Priorité au parcours complet client → coopérative → transporteur ; les autres fonctionnalités seront développées progressivement.
+- **Décision :** le critère principal de priorité du premier release est la livraison d'un parcours métier vertical réellement utilisable : un client peut créer/ouvrir son compte, consulter les produits publiés, constituer son panier et passer une commande ; la ou les coopératives concernées reçoivent leurs sous-commandes, les examinent, peuvent proposer une modification de quantité, valident la commande selon les règles de Sales/Inventory, préparent la remise et la confient au transporteur ; le transporteur prend en charge l'expédition et communique les événements de suivi nécessaires.
+- **Principe de cadrage :** il n'est pas nécessaire de terminer l'audit exhaustif de toutes les fonctionnalités avancées de tous les domaines avant de commencer le développement du parcours prioritaire. En revanche, chaque étape doit disposer de ses règles métier indispensables, autorisations, états, exceptions, contrats inter-domaines, critères d'acceptation et tests avant son implémentation.
+- **Finance V1 minimale :** Finance peut être développée sans finaliser immédiatement toutes ses fonctions avancées. Le périmètre initial doit au minimum enregistrer les montants de commande et leurs ventilations par coopérative, les frais de livraison, le mode COD, les montants à encaisser, les informations d'encaissement/remise communiquées par Delivery, les commissions applicables et les références financières/documents indispensables. Les rapprochements complexes, contestations avancées, crédits et recouvrements complexes, automatisation complète des reversements et rapports avancés peuvent être spécifiés et livrés progressivement, sans perdre la traçabilité des opérations V1.
+- **Phasage fonctionnel recommandé :**
+  1. Socle d'accès et acteurs : Identity, comptes customer, Cooperatives, rôles, permissions et espaces nécessaires.
+  2. Offre marketplace : Catalog, Categories, Products, publication, consultation et disponibilité.
+  3. Parcours commercial : Sales, profil commercial, adresses via Localization, panier, checkout, commande multi-coopératives et sous-commandes.
+  4. Traitement coopérative : réception, examen, proposition de changement de quantité, décision du client lorsque requise, confirmation, réservation de stock via Inventory et préparation.
+  5. Expédition : Delivery, transporteur, prise en charge, statuts, preuve de remise et suivi client.
+  6. Finance minimale : enregistrement des montants, frais, COD, commission figée, encaissements et références de reversement nécessaires au suivi du parcours.
+  7. Capacités de soutien : Media et Communication pour les documents, preuves, e-mails et notifications strictement nécessaires au parcours.
+- **Frontières conservées :** Sales reste propriétaire du panier, du checkout et des commandes commerciales ; Inventory du stock et des réservations ; Delivery des expéditions, transporteurs et événements de livraison/encaissement ; Finance des écritures, commissions, fonds, rapprochements et reversements marketplace ; Subscriptions / SaaS Billing reste séparé de Finance marketplace.
+- **Règle de non-régression :** les exigences de sécurité, autorisation serveur, isolation des coopératives, audit, intégrité, versionnement et idempotence restent obligatoires même dans le périmètre minimal.
+- **Point métier non tranché par Q252 :** le traitement exact d'une diminution de quantité proposée par la coopérative, notamment la nécessité et le délai d'acceptation du client avant confirmation définitive, doit faire l'objet d'une question dédiée avant codage de cette branche du workflow.
+- **Conséquence sur le planning :** l'ordre de développement antérieur est remplacé par le phasage vertical prioritaire décrit dans la feuille de route ; les fonctions non indispensables au parcours sont conservées dans le backlog et ne sont ni supprimées ni réputées validées.
+- **Statut :** stratégie V1 validée ; spécifications détaillées, audits techniques et tests restent à réaliser par étape.
 
 ## Décision d'architecture — Compte client de la marketplace (VALIDÉE)
 
@@ -2524,6 +2546,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Décision validée :** les sauvegardes doivent préserver de manière cohérente les fichiers Media (originaux et variantes nécessaires) ainsi que leurs références et métadonnées associées. Une suppression définitive validée ne doit pas être annulée par une restauration ordinaire.
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Version 3.33 — 13 novembre 2026
+- Enregistrement de Q252 : adoption officielle d'une stratégie V1 priorisant le parcours vertical client → coopérative → transporteur.
+- Définition d'un Finance V1 minimal et d'un phasage par dépendances ; les fonctions avancées restent au backlog sans bloquer le premier parcours exploitable.
+- Maintien des frontières de domaines, des exigences de sécurité et des règles non encore tranchées (notamment l'acceptation client d'une réduction de quantité).
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.32 — 13 novembre 2026
 - Enregistrement de Finance Q251 : la dernière version validée reste officielle et utilisable pendant l'examen d'une nouvelle version.
