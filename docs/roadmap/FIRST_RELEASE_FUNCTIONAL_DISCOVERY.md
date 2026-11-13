@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.78
+- **Version :** 2.79
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -643,6 +643,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Cette règle ne modifie pas les droits opérationnels du support définis précédemment : les agents expressément autorisés peuvent télécharger uniquement les PDF communicables nécessaires au traitement (Q55), sans notification individuelle au client (Q56) ; le client ne consulte pas cet historique (Q57) et le support ne peut pas télécharger l'archive ZIP (Q54).
 - **Périmètre concerné :** Identity (dossier de récupération et séparation des rôles), Audit (journaux et accès aux traces), Media/Storage (événements de téléchargement).
 - **Points à préciser avant implémentation :** modalités de consultation et de recherche, éventuel export des journaux par le `super_admin_root`, durée de conservation et protections contre toute altération.
+
+### Question 59 — Export des journaux de téléchargements PDF
+
+**Décision validée : B**
+
+- Le rôle `super_admin_root` peut exporter l'historique des consultations et téléchargements de PDF effectués par le support, aux formats PDF et CSV.
+- L'export est réservé exclusivement au `super_admin_root`, conformément à Q58. Aucun agent ou responsable support, ni aucun autre rôle, ne peut consulter ou exporter ces journaux.
+- L'export contient uniquement les informations nécessaires à l'audit : identité de l'agent concerné, référence du dossier, référence du document, date/heure, nature de l'événement et résultat. Il exclut le contenu des documents, les mots de passe, jetons, secrets, données techniques sensibles et toute donnée non nécessaire.
+- Chaque demande d'export doit être contrôlée côté serveur et journalisée avec l'identité du `super_admin_root`, la date/heure, le périmètre demandé, le format et le résultat. La consultation des journaux reste elle-même tracée.
+- **Périmètre concerné :** Identity (séparation des rôles et dossier), Audit (consultation, export et traçabilité), Media/Storage (événements de téléchargement).
+- **Points à préciser avant implémentation :** filtres et périodes autorisés, limites de volume, génération synchrone ou asynchrone, protection et durée de disponibilité du fichier exporté, ainsi que sa durée de conservation.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2956,6 +2967,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.79 — 13 novembre 2026
+- Ajout de la décision Identity Q59 : B — export PDF ou CSV des journaux de téléchargements PDF réservé au `super_admin_root`, avec périmètre minimisé et journalisation de chaque export.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.78 — 13 novembre 2026
 - Ajout de la décision Identity Q58 : A — consultation de l'historique des téléchargements PDF du support réservée exclusivement au `super_admin_root` ; chaque consultation des journaux est elle-même tracée.
