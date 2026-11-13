@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.45
+- **Version :** 2.46
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -301,6 +301,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le suivi du dossier initial est actualisé dans l'espace client avec la réouverture et les nouvelles étapes, dates et statuts visibles.
 - L'événement de notification et la mise à jour du suivi sont historisés.
 - Le contenu exact de la notification et les règles de mise à jour du suivi seront précisés dans la conception technique et le cadrage Communication.
+
+### Question 26 — Contestation d'un refus de réouverture d'un dossier de récupération
+
+**Décision validée : C**
+
+- Le client peut contester un refus de réouverture en soumettant une demande motivée depuis son espace client.
+- La contestation est examinée par un responsable du support disposant d'une habilitation dédiée ou par `super_admin_root`.
+- Dans la mesure du possible, la personne chargée de l'examen est différente de l'agent ayant pris la décision initiale.
+- La contestation ne réactive pas automatiquement le dossier et ne débloque pas le compte.
+- Le motif de contestation, les éléments examinés, les intervenants et la décision finale sont historisés.
+- Le client est informé de la décision selon les règles de notification minimale et de consultation sécurisée déjà définies.
+- Les niveaux d'habilitation, les délais, les éventuels recours supplémentaires et les critères de décision seront précisés dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2614,6 +2626,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.46 — 13 novembre 2026
+- Enregistrement de la Question 26 : contestation possible d'un refus de réouverture, avec examen par un responsable du support habilité ou `super_admin_root`, sans réactivation ni déblocage automatiques.
 
 ### Version 2.45 — 13 novembre 2026
 - Enregistrement de la Question 25 : notification minimale automatique au client lors de la réouverture acceptée et actualisation du suivi du dossier initial dans l'espace client.
