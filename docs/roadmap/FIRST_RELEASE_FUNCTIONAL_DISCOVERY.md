@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.66
+- **Version :** 2.67
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -522,6 +522,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le lien présent dans l'email ne contourne pas l'authentification, le contrôle de propriété ni l'émission d'une URL temporaire de téléchargement valable 5 minutes.
 - La notification précise la date et l'heure d'expiration du ZIP, disponible pendant 24 heures à compter de la fin de sa génération.
 - L'envoi, son résultat et la notification dans l'espace client sont historisés ; aucun secret ni fichier confidentiel n'est inclus dans l'email.
+
+### Question 47 — Échec de l'envoi de l'email de notification du ZIP
+
+**Décision validée : A**
+
+- Si l'email de notification échoue, la notification reste disponible dans l'espace client ; l'échec de l'email ne bloque ni la génération ni le téléchargement du ZIP.
+- Le système réessaie automatiquement l'envoi selon une politique de tentatives contrôlées et différées, avec un nombre maximal de tentatives et des délais définis lors de la conception technique.
+- Les échecs et nouvelles tentatives sont journalisés ; les erreurs permanentes (adresse invalide, rejet définitif) ne font pas l'objet de répétitions inutiles.
+- Le client conserve l'accès au ZIP selon les règles déjà validées : disponibilité de 24 heures, authentification et contrôle de propriété, URL temporaire de 5 minutes.
+- L'état de livraison de l'email est distingué de l'état de disponibilité du fichier.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2835,6 +2845,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.67 — 13 novembre 2026
+- Enregistrement de la Question 47 : en cas d'échec email, notification maintenue dans l'espace client et nouvelles tentatives contrôlées, sans bloquer la disponibilité du ZIP.
 
 ### Version 2.66 — 13 novembre 2026
 - Enregistrement de la Question 46 : notification dans l'espace client et par email lorsque le ZIP est prêt, avec lien vers l'espace authentifié, sans pièce jointe, et indication de l'expiration.
