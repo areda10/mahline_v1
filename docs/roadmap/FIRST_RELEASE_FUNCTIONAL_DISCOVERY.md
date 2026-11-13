@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.31
+- **Version :** 3.32
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.32 — 13 novembre 2026
+- Enregistrement de Finance Q251 : la dernière version validée reste officielle et utilisable pendant l'examen d'une nouvelle version.
+- Après validation de la nouvelle version, l'ancienne devient « remplacée » et reste dans l'historique ; distinction à prévoir entre dernière version déposée et dernière version validée.
+- Aucun code modifié ; aucune fusion.
+
 ### Version 3.31 — 13 novembre 2026
 - Enregistrement de Finance Q250 : tout remplacement, y compris après validation, crée une nouvelle version au statut « à vérifier ».
 - Aucune version précédente n'est écrasée ; la nouvelle pièce repasse par le circuit de validation Q247-Q248. Aucun code modifié ; aucune fusion.
@@ -3339,6 +3344,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 251 — Statut de la version validée pendant le remplacement
+
+- **Question :** Lorsqu'une nouvelle version est déposée pour remplacer un justificatif déjà validé, quel statut doit conserver l'ancienne version pendant que la nouvelle est « à vérifier » ?
+- **Réponse :** A — l'ancienne version reste officiellement validée et utilisable jusqu'à la validation de la nouvelle.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; continuité de validité des justificatifs versionnés.
+- **Conséquences :**
+  - Le dépôt d'une nouvelle version ne révoque pas automatiquement la dernière version validée.
+  - L'ancienne version demeure la preuve officiellement validée et utilisable tant que la nouvelle version est en attente ou refusée.
+  - Lorsque la nouvelle version est validée, elle devient la version validée courante et l'ancienne passe au statut « remplacée », tout en restant conservée et consultable dans l'historique selon les habilitations.
+  - Les statuts « dernière version déposée », « dernière version validée » et « version remplacée » doivent être distingués pour éviter toute ambiguïté dans le dossier financier.
+  - Les changements de statut sont contrôlés côté serveur et journalisés.
+- **Impact :** assurer la continuité de validité d'une preuve financière sans interrompre le dossier pendant une nouvelle vérification.
+- **Points techniques à préciser :** représentation distincte de la version la plus récente et de la dernière version validée, comportement en cas de refus, remplacements concurrents, sélection de la preuve utilisée dans les opérations financières et idempotence.
 
 ### Question 250 — Remplacement d'un justificatif déjà validé
 
