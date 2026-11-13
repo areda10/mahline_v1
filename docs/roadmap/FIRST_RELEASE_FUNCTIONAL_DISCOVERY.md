@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.63
+- **Version :** 2.64
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -492,6 +492,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - À expiration, l'URL ne permet plus de télécharger le fichier ; le client doit être authentifié et refaire une demande depuis son espace pour obtenir une nouvelle URL, sous réserve que le ZIP soit toujours disponible dans sa fenêtre de 24 heures.
 - Le renouvellement ne prolonge pas la durée de disponibilité du ZIP et ne contourne jamais le contrôle de propriété du dossier.
 - La durée exacte, le mécanisme d'invalidation et la protection contre la réutilisation seront appliqués côté serveur et vérifiés lors de la conception technique.
+
+### Question 44 — Nombre de téléchargements du même ZIP
+
+**Décision validée : A**
+
+- Le client peut télécharger le même ZIP sans limite de nombre pendant sa période de disponibilité de 24 heures.
+- Chaque téléchargement exige une authentification valide, un contrôle serveur de propriété et une URL temporaire valide de 5 minutes.
+- Chaque demande et chaque téléchargement effectif sont journalisés afin de permettre le suivi et la détection d'abus.
+- Des protections techniques contre les abus (limitation de débit, détection d'activité anormale et mesures temporaires proportionnées) peuvent être appliquées sans instaurer de quota fonctionnel fixe de téléchargements.
+- Ces protections ne doivent pas prolonger la disponibilité du ZIP ni contourner les contrôles d'accès ; leurs seuils et modalités seront définis lors de la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2805,6 +2815,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.64 — 13 novembre 2026
+- Enregistrement de la Question 44 : téléchargements du ZIP sans quota fixe pendant les 24 heures, avec authentification, contrôle de propriété, URL temporaire de 5 minutes, journalisation et protections anti-abus.
 
 ### Version 2.63 — 13 novembre 2026
 - Enregistrement de la Question 43 : URL temporaire valable 5 minutes, renouvelable depuis l'espace client authentifié sans prolonger les 24 heures de disponibilité du ZIP.
