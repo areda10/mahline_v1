@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.17
+- **Version :** 3.18
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.18 — 13 novembre 2026
+- Enregistrement de Finance Q237 : lorsque plusieurs créances ont exactement la même date et heure de création, les départager par leur identifiant ULID en ordre croissant.
+- La date de création initiale reste le premier critère FIFO (Q236) ; l'ULID de la créance constitue le critère secondaire stable et déterministe.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.17 — 13 novembre 2026
 - Enregistrement de Finance Q236 : l'ancienneté FIFO d'une créance est déterminée par sa date de création initiale, conservée de manière immuable.
 - Les changements de statut, validations ultérieures, contestations, suspensions et reports ne modifient pas cette date ni le rang de recouvrement.
@@ -3271,6 +3276,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 237 — Départage des créances créées au même instant
+
+- **Question :** Si deux créances ont exactement la même date et heure de création, comment les départager ?
+- **Réponse :** A — par identifiant ULID croissant.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; départage déterministe des créances MAHLINE de même date de création pour l'application du FIFO.
+- **Conséquences :**
+  - Le premier critère de classement reste la date de création initiale immuable, conformément à Q236.
+  - Lorsque plusieurs créances d'une même coopérative portent exactement la même date et heure de création, elles sont départagées par leur identifiant ULID, dans l'ordre lexicographique croissant.
+  - Ce second critère fournit un ordre total, stable et reproductible, indépendant de l'ordre d'affichage, de lecture ou de traitement des créances.
+  - L'identifiant utilisé pour le départage est celui de la créance elle-même ; il ne doit pas être remplacé par un identifiant de relation, de reversement ou d'écriture d'imputation.
+- **Impact :** rendre le classement FIFO déterministe même lorsque plusieurs créances sont enregistrées avec un horodatage identique.
+- **Points techniques à préciser :** format/collation de comparaison ULID (comparaison normalisée et insensible aux différences de casse), garantie d'unicité, cohérence des ULID historiques, transactions concurrentes et tests de classement.
 
 ### Question 236 — Date de référence de l'ancienneté d'une créance MAHLINE
 
