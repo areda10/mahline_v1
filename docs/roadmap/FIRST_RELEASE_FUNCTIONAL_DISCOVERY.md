@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.21
+- **Version :** 3.22
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.22 — 13 novembre 2026
+- Enregistrement de Finance Q241 : conserver dans les rapports financiers la créance initiale, l'écriture corrective, le motif, les justificatifs et l'auteur de la décision d'annulation.
+- Garantir la traçabilité historique et distinguer l'annulation des imputations déjà exécutées et des créances distinctes de Q233.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.21 — 13 novembre 2026
 - Enregistrement de Finance Q240 : si la contestation est acceptée et la créance MAHLINE déclarée invalide, annuler uniquement le solde restant par une écriture corrective distincte.
 - Préserver la créance initiale et toutes les imputations exécutées ; les montants déjà versés restent une créance distincte à récupérer selon Q233, sans double annulation.
@@ -3291,6 +3296,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 241 — Traçabilité financière de l'annulation d'une créance MAHLINE
+
+- **Question :** Lorsqu'une créance MAHLINE est annulée après une contestation acceptée, faut-il conserver une trace de cette annulation dans les rapports financiers ?
+- **Réponse :** A — conserver la créance initiale, l'écriture corrective, le motif, les justificatifs et l'auteur de la décision.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; traçabilité comptable, rapports financiers et audit des créances MAHLINE annulées après contestation (Q240).
+- **Conséquences :**
+  - Les rapports financiers doivent conserver une présentation traçable de la créance initiale et de son écriture corrective distincte, sans effacer ni masquer l'historique de l'opération.
+  - La piste d'audit doit permettre de retrouver le motif de l'annulation, les justificatifs associés, la décision de contestation et l'identité de l'auteur de cette décision.
+  - Le montant annulé doit être distingué des imputations déjà exécutées et des créances distinctes encore recouvrables au titre de Q233 ; aucune double annulation ni double récupération ne doit être produite.
+  - Les données historiques doivent rester consultables dans les rapports et états financiers selon les droits d'accès applicables.
+- **Impact :** garantir la transparence des états financiers, la justification des corrections et la capacité de contrôle a posteriori.
+- **Points techniques à préciser :** format et fréquence des rapports, niveaux de détail et filtres, conservation des justificatifs, liens entre écritures et décision, habilitations de consultation, export PDF/CSV, horodatage, intégrité de l'audit et tests de rapprochement.
 
 ### Question 240 — Contestation acceptée et invalidation d'une créance MAHLINE
 
