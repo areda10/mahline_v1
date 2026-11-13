@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.87
+- **Version :** 2.88
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -746,6 +746,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La correction ou suppression du favori est effectuée par son propriétaire ; ces opérations restent journalisées. Les journaux sources ne sont pas modifiés.
 - **Périmètre concerné :** Audit (filtres et recherche), Identity (propriétaire et autorisations du `super_admin_root`).
 - **Points à préciser avant implémentation :** distinction entre critère supprimé, renommé ou temporairement inaccessible ; message d'erreur ; possibilité de corriger le filtre depuis l'écran de recherche.
+
+### Question 68 — Méthode de validation de la complétude fonctionnelle d'un domaine avant et pendant le développement
+
+**Décision validée : B + C — approche combinée**
+
+- **Avant le codage :** comparer systématiquement l'inventaire exhaustif des fonctions, les décisions validées, l'architecture, les relations inter-domaines et les exigences du premier release. Cette revue constitue le contrôle principal pour décider si le périmètre fonctionnel V1 est suffisamment défini pour commencer le développement.
+- **Pendant le codage et les tests :** utiliser les tests unitaires, Feature, HTTP et intégration, les revues de code et les scénarios d'acceptation pour détecter les oublis, cas limites, incohérences ou fonctions manquantes qui n'auraient pas été identifiés au cadrage.
+- La découverte d'une lacune pendant le développement ne remplace jamais la revue préalable : elle déclenche une mise à jour de la spécification officielle, l'analyse des impacts sur les domaines liés et la validation de la règle avant de modifier le comportement applicatif.
+- Chaque lacune identifiée est ajoutée à l'inventaire avec un identifiant stable, une décision ou un statut explicite, des critères d'acceptation et des liens vers les fichiers et tests concernés.
+- Le domaine ne peut être déclaré complet que lorsque la revue de couverture est terminée et que toutes les fonctions V1 sont soit implémentées et vérifiées, soit explicitement bloquées avec justification. Les fonctions reportées hors V1 restent tracées séparément.
+- **Périmètre concerné :** tous les domaines MAHLINE V1 ; gouvernance fonctionnelle, architecture, développement, assurance qualité et traçabilité.
+- **Règle de décision :** B est le contrôle préalable obligatoire ; C est le mécanisme complémentaire de détection et de correction pendant la réalisation, jamais un substitut au cadrage.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3059,6 +3071,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.88 — 13 novembre 2026
+- Ajout de la décision de méthode Q68 : B + C — revue exhaustive obligatoire avant codage, complétée par la détection des lacunes pendant le développement et les tests, avec mise à jour contrôlée des spécifications.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.87 — 13 novembre 2026
 - Ajout de la décision Identity Q67 : B — un favori contenant un critère invalide est signalé et bloqué jusqu'à correction ou suppression ; aucun critère n'est ignoré silencieusement.
