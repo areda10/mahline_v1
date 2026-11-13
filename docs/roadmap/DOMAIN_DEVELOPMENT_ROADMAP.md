@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.12
+- **Version :** 5.13
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
 - Première étape obligatoire : audit du code existant et des routes, contrôleurs, services, modèles, migrations, policies/gates, vues, tests et liaisons inter-domaines avant toute modification.
 - Développement incrémental sur une branche de travail dédiée, tests ciblés puis suite requise ; aucune fusion vers main sans demande explicite.
 
@@ -475,6 +476,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.13 — 13 novembre 2026
+- Enregistrement de Q256 : prix de base par produit et surcharge de prix facultative par variante, avec héritage du prix de base.
+- Clarification des responsabilités Products, Catalog, Sales et Finance sur l'exposition et le gel du prix.
+- Devise, arrondis, promotions et présentation des variantes à prix différents restent à définir.
+- Aucun code applicatif modifié.
 
 ### Version 5.12 — 13 novembre 2026
 - Enregistrement de Q255 : expiration configurable d'une proposition sans réponse et annulation automatique de la seule ligne concernée.
