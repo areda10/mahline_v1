@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.22
+- **Version :** 3.23
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.23 — 13 novembre 2026
+- Enregistrement de Finance Q242 : consultation des créances MAHLINE contestées ou annulées et de leurs justificatifs autorisée à `super_admin_root`, au `super_admin` affecté et au `cooperative_admin` de la coopérative concernée.
+- Restriction du périmètre par coopérative, refus d'accès aux rôles `user` et `customer` par défaut, contrôle serveur et journalisation des consultations/exports.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.22 — 13 novembre 2026
 - Enregistrement de Finance Q241 : conserver dans les rapports financiers la créance initiale, l'écriture corrective, le motif, les justificatifs et l'auteur de la décision d'annulation.
 - Garantir la traçabilité historique et distinguer l'annulation des imputations déjà exécutées et des créances distinctes de Q233.
@@ -3296,6 +3301,23 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 242 — Accès aux détails et justificatifs des créances contestées ou annulées
+
+- **Question :** Qui peut consulter les détails d'une créance MAHLINE contestée ou annulée et ses justificatifs ?
+- **Réponse :** C — `super_admin_root`, le `super_admin` affecté et le `cooperative_admin` de la coopérative concernée.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance et autorisations ; consultation des créances MAHLINE contestées ou annulées, de leurs écritures correctives, motifs, décisions et justificatifs (Q238-Q241).
+- **Conséquences :**
+  - `super_admin_root` peut consulter les dossiers de toutes les coopératives.
+  - Un `super_admin` ne peut consulter que les dossiers des coopératives qui lui sont affectées.
+  - Un `cooperative_admin` ne peut consulter que les dossiers de sa propre coopérative.
+  - Les rôles `user` et `customer` n'ont pas accès à ces dossiers ni à leurs justificatifs par défaut.
+  - Les contrôles d'accès s'appliquent côté serveur à chaque consultation, téléchargement et export ; connaître ou deviner un identifiant de créance ou une URL de justificatif ne confère aucun droit.
+  - Les utilisateurs autorisés ne voient que le périmètre de leur coopérative ; aucune donnée financière ou pièce justificative d'une autre coopérative ne doit être exposée.
+  - Toute consultation ou export de justificatif doit être journalisé avec l'acteur, la coopérative, la ressource et l'horodatage, conformément aux règles d'audit.
+- **Impact :** permettre aux responsables de la coopérative concernée de comprendre et justifier les écritures qui la touchent, tout en préservant l'isolation des données entre coopératives.
+- **Points techniques à préciser :** résolution des affectations `super_admin`-coopérative, gestion des changements d'affectation, permissions granulaires de lecture/téléchargement/export, stockage privé des justificatifs, URLs temporaires, journalisation, tests anti-IDOR et vérification des accès après révocation d'une affectation.
 
 ### Question 241 — Traçabilité financière de l'annulation d'une créance MAHLINE
 
