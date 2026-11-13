@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.21
+- **Version :** 2.22
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -16,6 +16,20 @@ Construire une première version exploitable de MAHLINE qui combine :
 - un parcours cohérent entre la marketplace et les espaces de gestion des coopératives.
 
 La cohérence approfondie des frontières entre domaines et le renforcement global des événements transversaux sont planifiés dans une phase ultérieure dédiée, après le développement fonctionnel des domaines du premier release. Les règles indispensables de sécurité, d'autorisation, de propriété des données et d'intégrité restent obligatoires pendant chaque développement.
+
+## Décision d'architecture — Compte client de la marketplace (VALIDÉE)
+
+- **Question :** Le compte obligatoire du client marketplace doit-il être géré dans Identity, dans un domaine Customer autonome avec authentification séparée, ou via le rôle interne `user` ?
+- **Réponse :** A — ajouter un rôle `customer` dans Identity.
+- **Décision :** le client marketplace possède un compte géré par le domaine Identity, avec un rôle `customer` distinct des quatre rôles internes existants (`super_admin_root`, `super_admin`, `cooperative_admin`, `user`).
+- **Conséquences :**
+  - Le socle d'authentification, de sessions, de sécurité et de gestion du cycle de vie des comptes est partagé avec Identity ; aucun système d'authentification parallèle n'est créé.
+  - Le rôle `customer` dispose de permissions et d'un espace client propres, sans hériter des droits d'administration des coopératives.
+  - Le rôle interne `user` conserve sa signification actuelle et n'est pas réutilisé pour les acheteurs de la marketplace.
+  - Les données métier du client et ses parcours d'achat (profil client, adresses, panier, commandes et historique) doivent être répartis selon les responsabilités à spécifier entre Identity, Localization et Sales ; cette décision ne fait pas de Sales un second système de comptes.
+  - Les politiques d'accès doivent empêcher un client d'accéder aux données d'un autre client ou aux espaces internes des coopératives.
+- **Périmètre concerné :** Identity, Sales et Localization ; rôles, permissions, inscription, authentification, profil client et parcours marketplace.
+- **Points restant à préciser :** champs du profil client, vérification de l'adresse e-mail, récupération du compte, consentements, suppression/anonymisation et éventuelle conversion d'un compte client en compte interne (aucune conversion automatique n'est autorisée par cette décision).
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2330,7 +2344,7 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
-### Version 2.21 — 13 novembre 2026
+### Version 2.22 — 13 novembre 2026\n- Décision d'architecture validée : le client marketplace reçoit le rôle distinct `customer` géré par Identity ; le rôle interne `user` n'est pas réutilisé et aucune authentification parallèle Customer n'est créée.\n\n### Version 2.21 — 13 novembre 2026
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
