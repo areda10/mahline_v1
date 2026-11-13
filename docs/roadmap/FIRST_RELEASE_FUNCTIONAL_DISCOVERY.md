@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.19
+- **Version :** 3.20
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.20 — 13 novembre 2026
+- Enregistrement de Finance Q239 : après rejet formel de la contestation, réactiver automatiquement la créance MAHLINE valide en conservant son rang FIFO initial et sans réimputation rétroactive.
+- Le rang reste déterminé par la date de création immuable (Q236), puis l'ULID croissant en cas d'égalité (Q237).
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.19 — 13 novembre 2026
 - Enregistrement de Finance Q238 : suspendre uniquement la créance MAHLINE contestée et l'exclure temporairement du recouvrement, sans bloquer les autres créances non contestées.
 - Précision de périmètre : cette règle concerne les créances MAHLINE issues de montants déjà versés à tort (Q233), distinctes des crédits ordinaires contestés (Q230-Q232).
@@ -3281,6 +3286,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 239 — Résolution favorable d'une contestation de créance MAHLINE
+
+- **Question :** Lorsqu'une contestation de créance MAHLINE est rejetée et que la créance est confirmée comme valide, que doit-il se passer ?
+- **Réponse :** A — réactiver automatiquement la créance avec son rang FIFO initial.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; reprise du recouvrement d'une créance MAHLINE suspendue pendant une contestation (Q238).
+- **Conséquences :**
+  - Lorsque la contestation est formellement rejetée et que la créance est confirmée valide, son état redevient éligible au recouvrement sans créer une nouvelle créance.
+  - La créance reprend son rang FIFO initial, déterminé par sa date de création immuable (Q236), puis par son ULID croissant en cas d'horodatage identique (Q237).
+  - La période de suspension liée à la contestation ne réinitialise ni la date de création, ni l'ancienneté, ni le rang de la créance.
+  - Les imputations déjà exécutées avant la suspension restent inchangées ; la reprise ne provoque aucune réimputation rétroactive des reversements passés.
+  - Les autres créances continuent d'être traitées conformément à leurs règles de priorité ; la réactivation réintègre la créance dans le classement FIFO applicable aux reversements futurs.
+- **Impact :** garantir qu'une contestation rejetée ne pénalise pas l'ancienneté de la créance et ne modifie pas l'historique des reversements déjà exécutés.
+- **Points techniques à préciser :** autorité habilitée à rejeter la contestation, preuve et horodatage de décision, transitions d'état autorisées, traitement des imputations partielles, ordre de reprise face aux autres créances, audit, concurrence et idempotence.
 
 ### Question 238 — Contestation d'une créance MAHLINE
 
