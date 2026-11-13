@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.82
+- **Version :** 2.83
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -689,6 +689,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Toute tentative d'accès après expiration doit être refusée, même si un ancien lien temporaire a été conservé.
 - **Périmètre concerné :** Audit (séparation entre journaux sources et exports), Media/Storage (stockage privé, expiration et suppression), Identity (contrôle d'accès au téléchargement).
 - **Points à préciser avant implémentation :** précision du point de départ du délai, traitement des échecs de suppression, purge de sauvegardes/caches et traçabilité des purges.
+
+### Question 63 — Informations incluses dans l'export PDF/CSV des journaux de téléchargements
+
+**Décision validée : B**
+
+- L'export PDF/CSV comprend la date et l'heure de l'événement, l'identité de l'agent, le dossier concerné, la référence du document, le résultat du téléchargement, l'adresse IP et le type de navigateur/appareil lorsqu'ils sont disponibles et pertinents.
+- Les informations techniques sont limitées à ces éléments de traçabilité ; les détails complets des requêtes, en-têtes, paramètres, contenus, secrets, jetons et données sensibles ne sont jamais inclus dans l'export.
+- L'export reste réservé au `super_admin_root`, sur une période maximale de 12 mois par export, et son téléchargement est protégé par authentification et URL temporaire de 5 minutes.
+- Chaque export est conservé au maximum 24 heures après sa génération, puis supprimé automatiquement sans altérer les journaux d'audit sources.
+- La génération, l'émission du lien, les tentatives et les téléchargements de l'export sont eux-mêmes journalisés.
+- **Périmètre concerné :** Audit (journalisation et export contrôlé), Identity (autorisation réservée au `super_admin_root`), Media/Storage (génération, stockage privé, téléchargement et purge).
+- **Points à préciser avant implémentation :** format et normalisation de l'adresse IP, définition des familles/types de navigateur et appareil, disponibilité de ces données selon le canal d'accès et règles de minimisation applicables.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3002,6 +3014,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.83 — 13 novembre 2026
+- Ajout de la décision Identity Q63 : B — export PDF/CSV incluant date/heure, agent, dossier, document, résultat, adresse IP et type de navigateur/appareil lorsque disponibles ; exclusion des détails techniques complets, secrets et contenus sensibles.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.82 — 13 novembre 2026
 - Ajout de la décision Identity Q62 : A — conservation des exports PDF/CSV pendant 24 heures maximum après génération, puis suppression automatique sans altérer les journaux d'audit sources.
