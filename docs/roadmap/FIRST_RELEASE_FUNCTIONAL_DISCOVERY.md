@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.95
+- **Version :** 2.96
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -833,7 +833,7 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 | Media | upload, validation, métadonnées, stockage privé/public, association technique, accès, remplacement, suppression, antivirus/traitement si retenus et quotas techniques | règles métier déterminant qui peut utiliser un média |
 | Inventory | quantités, disponibilité, mouvements, réservations, ajustements, entrepôts, seuils et libération de stock | commande commerciale et expédition physique |
 | Sales | profil commercial client, panier, checkout, commande multi-coopératives, sous-commandes par coopérative, lignes, prix figés, confirmation/refus, annulation et historique commercial | factures, paiements, commissions, reversements, exécution transport |
-| Finance | facturation marketplace par coopérative/commande, documents financiers client et coopérative, paiements/COD et transactions, remboursements/avoirs, commissions, reversements, rapprochement et états financiers | panier, commande commerciale, abonnement SaaS |
+| Finance | facturation marketplace par coopérative/commande, documents financiers client et coopérative, paiements/COD et transactions, remboursements/avoirs, commissions configurables par coopérative sur le montant des produits hors livraison, reversements, rapprochement et états financiers | panier, commande commerciale, abonnement SaaS |
 | Delivery | expéditions par coopérative, colis, tarifs de trajet, transporteurs, affectation, suivi, preuve de livraison, incidents, refus, retours et réexpéditions | panier, commande commerciale et comptabilisation des paiements |
 | Subscriptions / SaaS Billing | plans SaaS, souscriptions, renouvellements, changements de plan, périodes de grâce, impayés, factures et paiements dus à MAHLINE, entitlements, quotas et suspension/réactivation | factures marketplace et reversements aux coopératives |
 | Communication | modèles, e-mails, notifications, préférences techniques, files, retries, délivrabilité et historique d'envoi | règles métier déclenchant la communication |
@@ -2766,7 +2766,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
 | FR-008 | Traitement et transitions de statut des commandes coopératives | PRINCIPES VALIDÉS — orchestration MAHLINE ; accès transporteur au premier release, API ensuite ; refus limité à la sous-commande concernée ; statuts à préciser |
 | FR-009 | Annulation, retour et remboursement | PARTIELLEMENT VALIDÉ — fenêtres selon paiement ; annulation indépendante ; après remise au transporteur, pas d'annulation mais refus à la livraison possible ; frais de retour variables selon le motif ; responsabilité des frais définie pour erreur coopérative, dommage transport et changement d'avis ; photos obligatoires, minimum 1 par étape concernée ; au départ, photos coopérative + transporteur ; au retour, photos transporteur au départ du retour + coopérative à réception ; contrôle complet à réception ; produits conformes acceptés, anomalie par produit non conforme ; coopérative et transporteur fournissent les preuves, MAHLINE centralise l'enquête ; en cas de désaccord, litige et intervention humaine avant décision finale ; décision par le super_admin responsable de la coopérative ; si conflit d'intérêts ou contestation par ce responsable, transfert prioritaire au super_admin_root, puis à défaut à un autre super_admin habilité et non impliqué ; le client peut contester et fournir des preuves ; réexamen par le super_admin_root en priorité, ou à défaut par un autre super_admin habilité et non impliqué ; le super_admin_root décide au cas par cas de suspendre ou non l'application de la décision initiale pendant le réexamen ; contestation dans les 48 heures suivant la notification ; canal/preuve de notification, calcul du délai, exceptions, critères de suspension, motifs, une seule contestation autorisée par litige ; ajout ; au début du réexamen, notification dans l'espace client et par e-mail (Q40) de preuves par le client autorisé jusqu'au commencement du réexamen ; ouverture du dossier par le responsable désigné = début officiel du réexamen ; notification dans l'espace client et e-mail, mais l'échec d'e-mail ne bloque pas ; ouverture accidentelle : annulation par super_admin_root avec justification et traçabilité ; après annulation, ajout de preuves client automatiquement réactivé jusqu'à la prochaine ouverture du dossier ; annulations multiples autorisées sans limite numérique prédéfinie par le `super_admin_root`, justification et traçabilité obligatoires à chaque fois ; aucune notification dédiée au client lors de la réactivation de l'ajout de preuves (Q46) ; après réactivation, le client peut ajouter des preuves sans échéance fixe jusqu'à la prochaine ouverture du dossier par le responsable désigné (Q47) ; après réexamen, le réviseur peut confirmer, modifier ou annuler la décision initiale selon les preuves et circonstances (Q48) ; la décision rendue après réexamen est définitive et ne peut faire l'objet d'une seconde contestation (Q49) ; son application intervient selon la nature de la décision (confirmation, modification ou annulation) (Q50), avec modalités propres à préciser ; la décision définitive après réexamen est notifiée au client, à la coopérative, au transporteur et au `super_admin` responsable (Q51) ; contenu de notification : résultat et résumé du motif (Q52) |
 | FR-010 | Factures, reçus et documents client/coopérative | À poser |
-| FR-011 | Commissions et reversements aux coopératives | À poser |
+| FR-011 | Commissions et reversements aux coopératives | Partiellement défini — Q213 à Q215 validées ; modalités de calcul détaillées, rapprochement et exceptions à compléter |
 | FR-012 | Inscription et espace personnel client | À poser |
 | FR-013 | Publication et visibilité des coopératives/produits | À poser |
 | FR-014 | Livraison nationale et internationale au premier release | À poser |
@@ -3162,6 +3162,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 215 — Base de calcul de la commission MAHLINE
+
+- **Question :** Sur quelle base MAHLINE doit-elle calculer sa commission sur les commandes marketplace ?
+- **Réponse :** D — le taux de commission est configurable par coopérative et s'applique au montant des produits uniquement, hors frais de livraison.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; paramétrage des conditions de commission par coopérative et calcul des montants dus.
+- **Conséquences :**
+  - Chaque coopérative peut être associée à un taux de commission qui lui est propre.
+  - L'assiette de calcul comprend le montant des produits de la commande ; les frais de livraison en sont exclus.
+  - Le taux et les éléments de calcul appliqués doivent être conservés avec les données financières de la commande afin de garantir la traçabilité et de pouvoir expliquer le montant de commission.
+  - Les règles de modification du taux, sa date d'effet, le traitement des remises, des annulations, des remboursements partiels et des commandes multi-coopératives restent à préciser.
+- **Impact :** Finance V1 doit gérer un paramétrage de commission par coopérative et calculer la commission sur la seule part produits, indépendamment des frais de livraison.
+
 ### Question 214 — Fréquence de reversement des encaissements COD à MAHLINE
 
 - **Question :** Après avoir encaissé les paiements COD, à quelle fréquence le transporteur doit-il reverser les fonds à MAHLINE ?
@@ -3188,6 +3201,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Les règles de rapprochement, les délais et preuves de reversement du transporteur, les statuts de paiement, les écarts, les paiements partiels et les modalités exactes de versement restent à préciser par des questions dédiées.
   - Delivery fournit les informations d'encaissement et de livraison nécessaires ; Sales fournit les références et montants commerciaux figés. Aucun de ces domaines ne devient propriétaire de la comptabilisation financière.
 - **Impact :** le périmètre Finance V1 doit inclure le suivi des fonds COD reçus de la part des transporteurs, leur allocation et les reversements aux coopératives. Les détails de calcul des commissions et les cas d'exception restent ouverts.
+
+### Version 2.96 — 13 novembre 2026
+- Enregistrement de Q215 : commission MAHLINE configurable par coopérative, calculée sur le montant des produits hors livraison.
+- Mise à jour de FR-011 en statut partiellement défini ; les règles de calcul détaillées, le rapprochement et les cas d'exception restent à cadrer.
 
 ### Version 2.95 — 13 novembre 2026
 - Enregistrement de Q214 : les reversements COD du transporteur à MAHLINE sont périodiques et suivent le calendrier contractuel propre au transporteur.
