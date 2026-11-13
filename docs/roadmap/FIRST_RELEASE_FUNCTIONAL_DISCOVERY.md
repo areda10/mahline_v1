@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.27
+- **Version :** 3.28
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.28 — 13 novembre 2026
+- Enregistrement de Finance Q247 : un justificatif déposé est immédiatement visible par les personnes autorisées, mais conserve le statut « à vérifier » jusqu'à validation.
+- Le dépôt n'est pas une acceptation financière ; le statut est suivi par version et les changements sont journalisés. L'autorité de validation reste à définir.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.27 — 13 novembre 2026
 - Enregistrement de Finance Q246 : ajout et remplacement des justificatifs autorisés à `super_admin_root`, au `super_admin` affecté et au `cooperative_admin` de la coopérative concernée.
 - Chaque opération est contrôlée côté serveur et journalisée ; le remplacement crée une nouvelle version sans écraser l'historique Q245.
@@ -3321,6 +3326,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 247 — Statut initial d'un justificatif transmis
+
+- **Question :** Lorsqu'un `cooperative_admin` ajoute un justificatif, faut-il imposer une validation avant qu'il soit considéré comme officiellement accepté dans le dossier financier ?
+- **Réponse :** D — le justificatif est immédiatement visible, mais son statut reste « à vérifier » jusqu'à validation.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; cycle de vie et vérification des justificatifs ajoutés ou remplacés sur les dossiers de créances MAHLINE.
+- **Conséquences :**
+  - Dès son dépôt, le justificatif est visible dans le dossier par les utilisateurs autorisés conformément aux habilitations Q242-Q246.
+  - Son statut initial est « à vérifier » ; le dépôt ne vaut pas validation financière ni acceptation définitive de la preuve.
+  - Le justificatif reste identifié comme non vérifié tant qu'une décision de validation n'a pas été enregistrée.
+  - Les versions antérieures restent conservées conformément à Q245 ; le statut de vérification est suivi pour chaque version.
+  - Le dépôt, les changements de statut, l'auteur et l'horodatage sont journalisés.
+- **Impact :** permettre la transmission et la consultation immédiates des pièces sans confondre dépôt documentaire et contrôle financier.
+- **Points techniques à préciser :** rôle habilité à valider/refuser, transitions de statut, motifs de refus, notification du déposant, traitement d'un remplacement pendant une vérification, version vérifiée de référence et audit des décisions.
 
 ### Question 246 — Habilitations pour ajouter ou remplacer un justificatif
 
