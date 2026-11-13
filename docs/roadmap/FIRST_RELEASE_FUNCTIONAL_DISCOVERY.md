@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.39
+- **Version :** 3.40
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2578,6 +2578,26 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
   - Si aucune variante n'est disponible, aucun prix « À partir de » achetable n'est affiché ; la carte indique l'indisponibilité selon les règles de présentation du catalogue.
 - **Impact :** éviter d'attirer le client avec un prix correspondant uniquement à une variante qu'il ne peut pas acheter, tout en maintenant la séparation Catalog/Products et Inventory.
 - **Points restant à préciser :** traitement des produits sans variantes ; seuil ou statut exact définissant une variante commercialisable ; comportement en cas de retard de synchronisation de disponibilité ; promotions et affichage du prix barré.
+
+### Question 259 — Prix affiché pour un produit sans variantes (VALIDÉ)
+
+- **Question :** Comment afficher le prix d'un produit qui ne possède aucune variante ?
+- **Réponse :** A — afficher directement son prix de base.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Products et Catalog ; affichage des prix sur les cartes et fiches produits.
+- **Conséquences :**
+  - Pour un produit sans variante, la carte affiche directement le prix de base du produit, sans la mention « À partir de ».
+  - Le prix de base est obligatoire conformément à Q256 et constitue le prix applicable de ce produit.
+  - Catalog expose ce prix depuis la source de vérité Products ; Sales le revalide côté serveur et le fige dans le panier/la commande.
+  - Les règles de disponibilité du produit restent applicables : un produit non commercialisable ou indisponible ne doit pas être présenté comme immédiatement achetable.
+- **Impact :** assurer une présentation cohérente : prix direct pour un produit sans variantes, « À partir de » pour un produit à variantes lorsque les conditions de Q257-Q258 sont réunies.
+- **Points restant à préciser :** devise et formatage monétaire ; promotions/prix barrés ; comportement détaillé de disponibilité des produits sans variantes.
+
+### Version 3.40 — 13 novembre 2026
+- Enregistrement de Q259 : un produit sans variantes affiche directement son prix de base, sans « À partir de ».
+- Le prix de base Products est exposé par Catalog puis revalidé et figé par Sales ; les règles de disponibilité restent applicables.
+- Devise, formatage, promotions et disponibilité détaillée restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 3.39 — 13 novembre 2026
 - Enregistrement de Q258 : exclure du prix minimum les variantes en rupture/indisponibles ; afficher le minimum parmi les variantes réellement disponibles.
