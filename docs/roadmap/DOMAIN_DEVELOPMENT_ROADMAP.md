@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 3.0
+- **Version :** 3.1
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -306,6 +306,9 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Spécifier factures clients et documents/factures coopératives.
 - [ ] Définir paiements, transactions, remboursements, commissions et reversements.
 - [ ] Définir les règles de calcul, arrondis, devise, numérotation et immutabilité comptable.
+- [ ] Appliquer la commission sur le montant net des produits après remises, hors livraison ; conserver le taux contractuel figé à la création de la commande.
+- [ ] Pour les remboursements, annuler la commission totale correspondante ou, en cas de remboursement partiel, la part calculée sur le montant net des produits remboursés après remise et hors livraison ; enregistrer une correction distincte liée à l'écriture initiale et au remboursement.
+- [ ] Préserver l'immutabilité et l'historique des commissions initiales et corrections ; définir les règles de centimes, remboursements successifs et plafonnement du cumul des corrections.
 - [ ] Définir le traitement des commandes multi-coopératives.
 - [ ] Définir génération PDF et intégration Communication.
 - [ ] Séparer facturation marketplace et facturation des abonnements Mahline.
@@ -430,6 +433,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 3.1 — 13 novembre 2026
+- Enregistrement de Finance Q224 : assiette de correction de commission après remboursement partiel = montant net des produits effectivement remboursés, après remise et hors livraison.
+- Alignement de la matrice Finance avec Q218, Q223 et Q224 : taux figé à la commande, correction distincte liée au remboursement et conservation des écritures historiques.
+- Les règles techniques d'arrondi au centime, de remboursements successifs et de plafonnement du cumul restent à spécifier.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.0 — 13 novembre 2026
 - Enregistrement de Finance Q223 : les commissions sont corrigées proportionnellement aux montants de produits remboursés ; la correction est liée à l'écriture initiale et conserve l'historique.
