@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.45
+- **Version :** 3.46
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 265 — Mode de calcul de la promotion sur les variantes
+
+- **Question :** Comment calculer la promotion d'un produit applicable à toutes ses variantes ?
+- **Réponse :** B — appliquer un pourcentage de réduction au prix applicable de chaque variante.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - La coopérative définit un taux de réduction unique au niveau du produit.
+  - Le taux s'applique au prix normal applicable de chaque variante : prix spécifique de variante s'il existe, sinon prix de base hérité du produit (Q256).
+  - Exemple : pour une réduction de 10 %, une variante à 100 DH passe à 90 DH et une variante à 150 DH passe à 135 DH.
+  - La promotion n'est active que pendant sa période de validité (Q263) et s'applique à toutes les variantes (Q264).
+  - Le taux doit être validé côté serveur dans une plage autorisée ; la plage maximale/minimale et la précision autorisée du taux restent à définir.
+  - Le prix remisé doit respecter la limite de deux décimales et les règles de calcul monétaire exact (Q261–Q262). Aucun arrondi ou troncature silencieux n'est autorisé.
+  - Catalog expose le prix remisé applicable ; Sales revalide et fige le prix réellement appliqué à la variante dans la vente.
+- **Responsabilités :** Products stocke le taux et la période de promotion ; Catalog calcule/expose le prix promotionnel applicable ; Sales revalide et fige les montants de la vente ; Finance consomme les montants figés.
+- **À préciser avant codage :** règle d'arrondi lorsque le calcul en pourcentage produit plus de deux décimales, plage/precision du taux, cumul éventuel avec d'autres remises (actuellement hors périmètre).
+
 ### Question 264 — Portée des promotions sur les variantes
 
 - **Question :** Comment appliquer une promotion lorsqu'un produit possède plusieurs variantes ?
@@ -4463,6 +4479,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.46 — 13 novembre 2026
+- Enregistrement de Q265 : taux de réduction unique au niveau du produit, appliqué au prix normal propre à chaque variante.
+- Règle d'arrondi des prix remisés, bornes/précision du taux et éventuel cumul laissés ouverts avant codage.
 
 ### Version 3.45 — 13 novembre 2026
 - Enregistrement de Q264 : promotion définie au niveau du produit et applicable à toutes ses variantes ; aucune promotion individuelle par variante en V1.
