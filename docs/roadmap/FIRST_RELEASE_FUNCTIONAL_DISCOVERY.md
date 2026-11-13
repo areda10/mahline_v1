@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.77
+- **Version :** 2.78
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -632,6 +632,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Cette décision ne modifie pas les règles précédentes : le support ne télécharge que les PDF communicables nécessaires au traitement (Q55), aucune notification individuelle n'est envoyée au client après chaque téléchargement (Q56), et l'archive ZIP reste inaccessible au support (Q54).
 - **Périmètre concerné :** Identity (dossier de récupération et droits du client), Audit (conservation et consultation des journaux), Media/Storage (événements de téléchargement).
 - **Points à préciser avant implémentation :** rôles internes autorisés à consulter ces journaux, granularité des permissions, durée de conservation et modalités de supervision des accès aux traces.
+
+### Question 58 — Autorité de consultation des journaux de téléchargements PDF
+
+**Décision validée : A**
+
+- La consultation de l'historique des consultations et téléchargements de PDF effectués par le support est réservée exclusivement au rôle `super_admin_root`.
+- Les agents du support, les responsables support et les autres rôles ne disposent d'aucun accès à ces journaux, même lorsqu'ils sont autorisés à traiter ou consulter le dossier concerné.
+- L'accès du `super_admin_root` doit être protégé par les contrôles d'autorisation applicables et chaque consultation de ces journaux doit elle-même être journalisée afin de préserver la traçabilité.
+- Cette règle ne modifie pas les droits opérationnels du support définis précédemment : les agents expressément autorisés peuvent télécharger uniquement les PDF communicables nécessaires au traitement (Q55), sans notification individuelle au client (Q56) ; le client ne consulte pas cet historique (Q57) et le support ne peut pas télécharger l'archive ZIP (Q54).
+- **Périmètre concerné :** Identity (dossier de récupération et séparation des rôles), Audit (journaux et accès aux traces), Media/Storage (événements de téléchargement).
+- **Points à préciser avant implémentation :** modalités de consultation et de recherche, éventuel export des journaux par le `super_admin_root`, durée de conservation et protections contre toute altération.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2945,6 +2956,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.78 — 13 novembre 2026
+- Ajout de la décision Identity Q58 : A — consultation de l'historique des téléchargements PDF du support réservée exclusivement au `super_admin_root` ; chaque consultation des journaux est elle-même tracée.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.77 — 13 novembre 2026
 - Ajout de la décision Identity Q57 : A — l'historique des consultations/téléchargements PDF par le support n'est pas accessible au client ; il reste réservé à l'audit interne et aux responsables expressément autorisés.
