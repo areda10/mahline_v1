@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.29
+- **Version :** 3.30
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.30 — 13 novembre 2026
+- Enregistrement de Finance Q249 : après un refus, le `cooperative_admin` peut déposer une nouvelle version au statut « à vérifier ».
+- Conservation de la version refusée, de son motif et du lien d'historique ; le nouveau dépôt repasse par le circuit de validation Q247-Q248.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.29 — 13 novembre 2026
 - Enregistrement de Finance Q248 : validation/refus par `super_admin_root` sur toutes les coopératives et `super_admin` affecté sur son périmètre ; le `cooperative_admin` ne valide pas ses propres dépôts.
 - Séparation dépôt/contrôle, vérification serveur et journalisation de la décision par version ; aucun code modifié et aucune fusion.
@@ -3330,6 +3335,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 249 — Nouvelle version après refus d'un justificatif
+
+- **Question :** Lorsqu'un justificatif est refusé, que doit-il se passer ?
+- **Réponse :** B — le `cooperative_admin` peut déposer une nouvelle version, qui reprend le statut « à vérifier ».
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; cycle de correction et de nouvelle soumission des justificatifs refusés.
+- **Conséquences :**
+  - Le justificatif refusé et sa version restent conservés dans l'historique ; ils ne sont ni écrasés ni supprimés.
+  - Le `cooperative_admin` peut déposer une nouvelle version pour remplacer la pièce refusée dans le dossier courant de sa coopérative.
+  - La nouvelle version reçoit un statut initial « à vérifier » et doit suivre le circuit de validation défini en Q247-Q248.
+  - Le refus précédent, son motif, son auteur, sa date et le lien entre les versions restent consultables par les personnes habilitées.
+  - Le dépôt de la nouvelle version est soumis aux habilitations, au contrôle serveur et à la journalisation définis en Q246.
+- **Impact :** permettre la correction des pièces sans perdre la piste d'audit ni contourner la séparation entre dépôt et validation.
+- **Points techniques à préciser :** lien explicite entre versions successives, règles de remplacement après validation, motifs et pièces de refus, notification du déposant, prévention des dépôts concurrents et idempotence.
 
 ### Question 248 — Autorité de validation des justificatifs
 
