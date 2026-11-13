@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.60
+- **Version :** 2.61
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -464,6 +464,15 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Les deux formats appliquent les mêmes exclusions : notes internes, données de sécurité non communicables, données personnelles de tiers et pièces confidentielles non divulguables.
 - La génération et le téléchargement sont sécurisés, réservés au client concerné et journalisés.
 - Les formats techniques, la taille maximale, la durée de disponibilité, la protection des archives et les limites de génération seront définis dans la conception technique.
+
+### Question 41 — Durée de disponibilité du fichier ZIP généré
+
+**Décision validée : A**
+
+- Le fichier ZIP généré est disponible au téléchargement pendant 24 heures à compter de la fin de sa génération.
+- À l'expiration de ce délai, le fichier devient automatiquement indisponible et est supprimé automatiquement.
+- Cette durée concerne le fichier ZIP généré ; elle ne modifie pas la durée de conservation du dossier de contestation ni des pièces sources conservées selon les règles applicables.
+- Les modalités techniques de suppression effective, de gestion des échecs de génération et de traçabilité de l'opération seront précisées lors de la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2777,6 +2786,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.61 — 13 novembre 2026
+- Enregistrement de la Question 41 : disponibilité du fichier ZIP généré pendant 24 heures après sa génération, puis indisponibilité et suppression automatiques.
 
 ### Version 2.60 — 13 novembre 2026
 - Enregistrement de la Question 40 : choix entre PDF récapitulatif et ZIP contenant le PDF et les pièces communicables du dossier de contestation.
