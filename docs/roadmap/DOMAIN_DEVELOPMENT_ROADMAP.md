@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.13
+- **Version :** 5.14
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -32,6 +32,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
 - Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
+- Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
 - Première étape obligatoire : audit du code existant et des routes, contrôleurs, services, modèles, migrations, policies/gates, vues, tests et liaisons inter-domaines avant toute modification.
 - Développement incrémental sur une branche de travail dédiée, tests ciblés puis suite requise ; aucune fusion vers main sans demande explicite.
 
@@ -476,6 +477,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.14 — 13 novembre 2026
+- Enregistrement de Q257 : carte produit avec variantes à prix différents = prix applicable le plus bas, précédé de « À partir de ».
+- Précision du calcul côté serveur, de l'affichage des prix par variante sur la fiche et de la revalidation/du gel par Sales.
+- Devise, arrondis, variantes indisponibles, promotions et produits sans variantes restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 5.13 — 13 novembre 2026
 - Enregistrement de Q256 : prix de base par produit et surcharge de prix facultative par variante, avec héritage du prix de base.
