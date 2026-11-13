@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.30
+- **Version :** 2.31
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -132,6 +132,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - La révocation doit être exécutée côté serveur et être cohérente même si plusieurs appareils sont connectés.
   - L'opération et les révocations doivent être journalisées sans enregistrer de jetons, secrets ou données sensibles.
   - Les règles de notification de l'ancienne adresse et de gestion d'un échec partiel de révocation restent à détailler dans la conception technique.
+
+### Question 11 — Notification de sécurité à l'ancienne adresse e-mail (VALIDÉ)
+- **Question :** Après validation d'une nouvelle adresse e-mail, faut-il notifier l'ancienne adresse ?
+- **Réponse :** A — oui, envoyer une notification de sécurité à l'ancienne adresse pour signaler le changement, sans communiquer la nouvelle adresse.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity et Communication ; événement de changement d'adresse et notification de sécurité.
+- **Conséquences :**
+  - Une notification est envoyée à l'ancienne adresse après la validation effective de la nouvelle adresse.
+  - Le message signale qu'un changement d'adresse e-mail a été effectué sur le compte.
+  - La notification ne révèle pas la nouvelle adresse e-mail.
+  - La notification est informative et ne doit contenir aucun mot de passe, jeton, lien secret ou autre donnée d'authentification.
+  - Le contenu du message, le canal de secours en cas d'échec d'envoi et le mécanisme de signalement d'un changement non autorisé restent à préciser.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2445,6 +2457,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.31 — 13 novembre 2026
+- Enregistrement de la Question 11 : notification de sécurité envoyée à l'ancienne adresse après validation du changement, sans divulguer la nouvelle adresse.
 
 ### Version 2.30 — 13 novembre 2026
 - Enregistrement de la Question 10 : après validation du nouvel e-mail, révocation de toutes les sessions web et de tous les tokens API ; reconnexion obligatoire.
