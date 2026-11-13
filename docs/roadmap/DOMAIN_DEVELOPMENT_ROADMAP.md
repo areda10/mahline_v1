@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.27
+- **Version :** 5.28
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Publication des promotions V1 (Q271) :** publication immédiate sans approbation préalable dès que les validations serveur sont satisfaites ; une promotion planifiée reste inactive jusqu'à sa date de début et cesse d'être exposée à sa date de fin. Products valide et conserve les paramètres, Catalog n'expose que les promotions actives dans leur période, Sales revalide et fige le prix. Les actions sont journalisées ; les contrôles/suspensions de supervision restent possibles selon habilitations, sans écriture directe des paramètres commerciaux.
 - **Gestion des promotions V1 — autorisations (Q270) :** seul le `cooperative_admin` crée, modifie et supprime les promotions des produits de sa propre coopérative. `super_admin` affecté et `super_admin_root` disposent d'une supervision selon leurs droits, sans écriture directe des paramètres commerciaux au premier release. Contrôles serveur et isolation stricte obligatoires. Products possède les paramètres et l'historique ; Catalog expose ; Sales revalide et fige le prix appliqué.
 - **Affichage des promotions V1 (Q269) :** prix normal barré + prix promotionnel + badge de pourcentage pendant la seule période active. Pour les produits à variantes, le prix affiché et le taux doivent correspondre à la même variante disponible ; Catalog expose les données, Sales revalide et fige la variante/prix choisis.
 - **Arrondi des promotions V1 (Q268) :** arrondi commercial au centime de MAD le plus proche, demi-centime vers le haut ; calculs intermédiaires décimaux exacts. La règle doit être centralisée et testée pour garantir des résultats identiques dans Products, Catalog, Sales et Finance. Cet arrondi de calcul ne modifie jamais les règles de rejet des prix/taux saisis invalides.
@@ -491,6 +492,9 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.28 — 13 novembre 2026
+- Enregistrement de Q271 : publication immédiate sans validation préalable après contrôles serveur ; activation selon les dates, journalisation et supervision.
 
 ### Version 5.27 — 13 novembre 2026
 - Enregistrement de Q270 : gestion des promotions réservée au `cooperative_admin` dans sa coopérative ; supervision sans modification directe des paramètres commerciaux par les rôles supérieurs.
