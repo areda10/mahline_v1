@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.47
+- **Version :** 3.48
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 267 — Précision du taux promotionnel
+
+- **Question :** Quelle précision autoriser pour le pourcentage de réduction ?
+- **Réponse :** B — jusqu'à deux décimales.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Le taux de réduction peut comporter jusqu'à deux décimales (ex. 10 %, 10,5 % ou 10,50 %).
+  - Le taux doit être strictement supérieur à 0 et inférieur ou égal à 90 % (Q266).
+  - Toute valeur comportant plus de deux décimales ou dépassant 90 % doit être refusée côté serveur, sans arrondi ni troncature silencieux.
+  - Le taux est stocké et calculé avec une représentation décimale exacte, jamais en virgule flottante binaire.
+  - La règle de calcul et d'arrondi du prix final remisé reste à définir avant codage.
+- **Responsabilités :** Products valide et conserve le taux ; Catalog calcule le prix affiché ; Sales revalide et fige le montant réellement appliqué.
+- **À préciser avant codage :** règle d'arrondi monétaire du résultat et comportement si le prix calculé comporte une fraction inférieure au centime.
+
 ### Question 266 — Taux maximal de réduction
 
 - **Question :** Quel taux maximal de réduction une coopérative peut-elle définir pour une promotion ?
@@ -4492,6 +4506,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.48 — 13 novembre 2026
+- Enregistrement de Q267 : taux promotionnel avec deux décimales maximum, borné entre plus de 0 % et 90 % inclus.
+- Validation serveur sans arrondi/troncature et représentation décimale exacte ; règle d'arrondi du prix final toujours ouverte.
 
 ### Version 3.47 — 13 novembre 2026
 - Enregistrement de Q266 : taux de réduction strictement positif, plafonné à 90 %, avec rejet serveur des valeurs supérieures.
