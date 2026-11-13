@@ -1,8 +1,8 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.40
+- **Version :** 3.41
 - **Date d'ouverture :** 12 novembre 2026
-- **Branche :** `feature/Identity`
+- **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
 - **Périmètre :** premier release de MAHLINE (SaaS de gestion coopérative + marketplace publique)
 
@@ -3461,6 +3461,50 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 260 — Devise des prix Marketplace
+
+- **Question :** Quelle devise utiliser pour les prix de la marketplace au premier release ?
+- **Réponse :** B — MAD par défaut, avec possibilité d'ajouter d'autres devises ultérieurement.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Le dirham marocain (MAD) est la devise d'affichage et de référence du premier release.
+  - Le modèle de prix et les calculs ne doivent pas être conçus de manière à rendre une autre devise impossible à ajouter ultérieurement.
+  - L'ajout de devises supplémentaires est hors périmètre du premier release et nécessitera des règles explicites de conversion, d'arrondi, de tarification et de traitement financier avant activation.
+  - Les prix figés dans le panier et la commande doivent conserver la devise utilisée au moment de leur création ; Finance consomme les montants et la devise transmis par Sales sans conversion implicite.
+- **Responsabilités :** Products/Catalog exposent les prix en MAD au premier release ; Sales fige le montant et la devise dans le panier/commande ; Finance consomme ces données figées. L'extension multi-devises fera l'objet d'un cadrage dédié.
+- **Règle d'intégrité :** aucun calcul ni affichage ne doit mélanger des montants de devises différentes ; aucune conversion automatique ou taux de change implicite n'est autorisé au premier release.
+
+### Question 259 — Prix d'un produit sans variante
+
+- **Question :** Comment afficher le prix d'un produit qui ne possède aucune variante ?
+- **Réponse :** A — afficher directement son prix de base.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :** la carte et la fiche d'un produit sans variante affichent directement le prix de base, sans la mention « À partir de ». Sales revalide ce prix côté serveur et le fige dans le panier puis dans la commande.
+- **Responsabilités :** Products porte le prix de base ; Catalog l'expose ; Sales revalide et fige le prix applicable.
+- **Règle d'intégrité :** le prix utilisé pour l'achat est recalculé/relus côté serveur ; aucune valeur de prix fournie par le navigateur n'est fiable.
+
+### Question 258 — Variantes indisponibles dans le prix minimum affiché
+
+- **Question :** Les variantes indisponibles doivent-elles participer au prix minimum affiché sur la carte produit ?
+- **Réponse :** A — exclure les variantes en rupture ou indisponibles.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Seules les variantes commercialisables et actuellement disponibles participent au calcul du prix minimum affiché avec « À partir de ».
+  - Inventory fournit la disponibilité en tenant compte des réservations ; le stock physique interne n'est pas exposé au public.
+  - Si aucune variante n'est disponible, la carte indique l'indisponibilité sans afficher un prix d'appel laissant croire qu'un achat est possible.
+  - Sales revalide le prix et la disponibilité au panier/checkout ; une disponibilité affichée peut être réévaluée avant confirmation.
+- **Responsabilités :** Inventory est la source de vérité de la disponibilité ; Catalog présente le prix minimum applicable ; Sales effectue la validation transactionnelle avant l'achat.
+- **Règle d'intégrité :** ne jamais accepter une variante indisponible sur la seule base de l'état affiché côté client ; disponibilité et prix sont contrôlés côté serveur.
+
+### Question 257 — Prix affiché sur une carte avec plusieurs variantes
+
+- **Question :** Quel prix afficher sur la carte d'un produit dont les variantes ont des prix différents ?
+- **Réponse :** A — afficher le prix applicable le plus bas avec la mention « À partir de ».
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :** la carte affiche « À partir de » suivi du plus bas prix applicable parmi les variantes commercialisables et disponibles. La fiche produit présente les prix applicables des variantes sélectionnables. Sales revalide le prix de la variante choisie et le fige dans le panier/commande.
+- **Dépendances :** appliquer l'héritage du prix de base défini en Q256 et l'exclusion des variantes indisponibles définie en Q258.
+- **Règle d'intégrité :** calcul du minimum et validation du prix côté serveur ; ne jamais se fier au prix transmis par le navigateur.
+
 ### Question 256 — Gestion du prix du produit et de ses variantes
 
 - **Question :** Où doit être enregistré le prix d'un produit qui peut exister en plusieurs variantes ?
@@ -4360,6 +4404,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.41 — 13 novembre 2026
+- Enregistrement de Q260 : MAD comme devise du premier release, avec une architecture permettant une extension multi-devises ultérieure ; aucune conversion implicite.
+- Consolidation dans le registre de découverte des décisions Marketplace Q257 à Q259 déjà consignées dans la feuille de route.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 2.15 — 13 novembre 2026
 - Ajout de la matrice Media Q1 à Q90 : questions, réponses validées, règles d'accès, sécurité, traitements, associations, images, vidéos et PDF.
