@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.15
+- **Version :** 3.16
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.16 — 13 novembre 2026
+- Enregistrement de Finance Q235 : lorsque plusieurs créances MAHLINE existent pour une coopérative, récupérer la plus ancienne en premier (FIFO) et l'apurer avant de passer à la suivante.
+- En cas de reversement insuffisant, reporter le solde de la créance la plus ancienne sans modifier sa priorité ; les créances plus récentes restent en attente.
+- Alignement avec Q234 : les créances MAHLINE restent prioritaires sur les crédits ordinaires coopératifs, qui conservent leur propre FIFO.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.15 — 13 novembre 2026
 - Enregistrement de Finance Q234 : récupérer prioritairement les créances de MAHLINE sur la coopérative avant l'imputation des crédits ordinaires.
 - Après règlement des créances prioritaires, appliquer le solde du reversement aux crédits ordinaires selon FIFO ; reporter les soldes non réglés sans altérer leur ancienneté.
@@ -3259,6 +3265,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 235 — Priorité entre plusieurs créances MAHLINE
+
+- **Question :** Si plusieurs créances de MAHLINE existent simultanément pour une même coopérative, laquelle doit être récupérée en premier ?
+- **Réponse :** A — la plus ancienne créance en premier (FIFO).
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; ordre de recouvrement des créances de MAHLINE sur une coopérative et imputation des reversements.
+- **Conséquences :**
+  - Lorsque plusieurs créances MAHLINE sont ouvertes pour une même coopérative, Finance récupère la plus ancienne avant toute créance plus récente.
+  - La créance en tête de file doit être apurée avant de commencer le recouvrement de la suivante.
+  - Si un reversement ne suffit pas à solder la créance la plus ancienne, son solde est reporté et conserve sa priorité sur les reversements suivants ; les créances plus récentes restent en attente.
+  - Cette règle FIFO s'applique à l'intérieur de la catégorie des créances MAHLINE ; conformément à Q234, les créances restent prioritaires sur les crédits ordinaires coopératifs, lesquels ne sont imputés qu'après apurement des créances, selon leur propre FIFO.
+  - Chaque créance conserve son identité, son origine, son solde et son historique d'imputations ; aucun recouvrement ne peut être effectué deux fois.
+- **Impact :** définir un ordre de recouvrement déterministe, traçable et stable entre plusieurs créances d'une même coopérative.
+- **Points techniques à préciser :** horodatage de référence et départage déterministe des créances créées simultanément, éligibilité des reversements, plafonds, créance contestée/suspendue, coopérative inactive ou fermée, concurrence, rapprochement et idempotence.
 
 ### Question 234 — Priorité de récupération d'une créance sur les crédits ordinaires
 
