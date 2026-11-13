@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.24
+- **Version :** 3.25
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.25 — 13 novembre 2026
+- Enregistrement de Finance Q244 : téléchargement individuel uniquement des justificatifs dans le premier release ; aucun téléchargement groupé ZIP.
+- Maintien des contrôles d'accès, liens privés temporaires et journaux d'audit par justificatif.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.24 — 13 novembre 2026
 - Enregistrement de Finance Q243 : le `cooperative_admin` peut consulter et télécharger les justificatifs des créances de sa propre coopérative.
 - Maintien de l'isolation entre coopératives ; contrôle serveur et journalisation de chaque téléchargement, avec liens privés et temporaires.
@@ -3306,6 +3311,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 244 — Téléchargement individuel ou groupé des justificatifs
+
+- **Question :** Faut-il permettre le téléchargement d'un dossier complet regroupant tous les justificatifs d'une créance (par exemple au format ZIP) ?
+- **Réponse :** B — téléchargement individuel uniquement ; pas de téléchargement groupé ZIP dans le premier release.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; téléchargement des pièces justificatives des créances contestées ou annulées, selon les habilitations Q242-Q243.
+- **Conséquences :**
+  - Les utilisateurs autorisés téléchargent chaque justificatif individuellement.
+  - Aucun export groupé, archive ZIP ou téléchargement en lot de tous les justificatifs d'une créance n'est proposé dans le premier release.
+  - Les contrôles d'accès, liens privés temporaires et journaux d'audit définis en Q242-Q243 s'appliquent à chaque téléchargement individuel.
+  - Un besoin de téléchargement groupé pourra être réévalué après le premier release, sans élargir implicitement les permissions existantes.
+- **Impact :** réduire le risque d'exposition accidentelle de pièces et limiter la complexité des téléchargements pour la première version.
+- **Points techniques à préciser :** téléchargement individuel robuste, noms de fichiers non révélateurs, contrôle du type et de la taille, expiration des liens, journalisation et gestion des échecs/reprises.
 
 ### Question 243 — Téléchargement des justificatifs par le cooperative_admin
 
