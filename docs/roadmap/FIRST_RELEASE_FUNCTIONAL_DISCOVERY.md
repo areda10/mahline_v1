@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.29
+- **Version :** 2.30
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -119,6 +119,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Jusqu'à la vérification, l'ancienne adresse reste l'adresse principale et conserve son statut.
   - Une adresse non vérifiée ne peut pas être utilisée comme nouvelle adresse principale pour l'authentification et les communications du compte.
   - Les règles de révocation des sessions et tokens, de notification de l'ancienne adresse et de prévention des changements répétés restent à préciser dans le cadrage Identity.
+
+### Question 10 — Révocation des accès après changement d'adresse e-mail (VALIDÉ)
+- **Question :** Que doit-il se passer avec les sessions ouvertes et les tokens API lorsqu'un client valide une nouvelle adresse e-mail ?
+- **Réponse :** A — révoquer toutes les sessions et tous les tokens API ; le client doit se reconnecter.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity ; changement d'adresse e-mail, sessions web, tokens API et sécurité du compte.
+- **Conséquences :**
+  - Dès que la nouvelle adresse e-mail est vérifiée et devient l'adresse principale, toutes les sessions web actives du compte sont révoquées.
+  - Tous les tokens API actifs du compte sont également révoqués.
+  - Le client doit s'authentifier à nouveau avec ses nouveaux identifiants.
+  - La révocation doit être exécutée côté serveur et être cohérente même si plusieurs appareils sont connectés.
+  - L'opération et les révocations doivent être journalisées sans enregistrer de jetons, secrets ou données sensibles.
+  - Les règles de notification de l'ancienne adresse et de gestion d'un échec partiel de révocation restent à détailler dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2432,6 +2445,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.30 — 13 novembre 2026
+- Enregistrement de la Question 10 : après validation du nouvel e-mail, révocation de toutes les sessions web et de tous les tokens API ; reconnexion obligatoire.
 
 ### Version 2.29 — 13 novembre 2026
 - Enregistrement de la Question 9 : changement d'adresse e-mail possible depuis l'espace client ; la nouvelle adresse ne remplace l'ancienne qu'après vérification.
