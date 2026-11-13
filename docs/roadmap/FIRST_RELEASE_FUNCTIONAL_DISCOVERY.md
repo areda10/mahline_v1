@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.42
+- **Version :** 2.43
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -270,6 +270,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La date d'échéance, l'absence de réponse et la clôture automatique sont historisées dans le dossier.
 - Le client reçoit la notification de clôture prévue par la Question 18 ; l'e-mail reste minimal conformément à la Question 19 et les détails restent consultables après authentification.
 - La durée applicable, le calcul de l'échéance, les éventuelles exceptions et les modalités de réouverture d'un dossier clôturé seront précisés dans la conception technique.
+
+### Question 23 — Demande de réouverture d'un dossier de récupération clôturé automatiquement
+
+**Décision validée : B**
+
+- Le client peut soumettre depuis son espace une demande motivée de réouverture d'un dossier clôturé automatiquement.
+- La demande de réouverture n'entraîne pas la réactivation automatique du dossier ni le déblocage du compte.
+- Un agent du support autorisé examine la demande et décide de l'accepter ou de la refuser selon la procédure de vérification applicable.
+- La demande, son motif, les vérifications effectuées, l'identité de l'agent et la décision finale sont historisés.
+- Le client est informé de la décision par notification minimale ; les détails sont consultables après authentification conformément aux règles des Questions 18 et 19.
+- Les critères d'acceptation, les délais de traitement et les conséquences d'une réouverture acceptée seront précisés dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2583,6 +2594,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.43 — 13 novembre 2026
+- Enregistrement de la Question 23 : le client peut demander la réouverture motivée d'un dossier clôturé automatiquement ; décision réservée au support autorisé, sans réactivation ni déblocage automatiques.
 
 ### Version 2.42 — 13 novembre 2026
 - Enregistrement de la Question 22 : clôture automatique du dossier de récupération si le client ne répond pas à une demande de complément avant l'échéance communiquée ; délai exact et exceptions à préciser techniquement.
