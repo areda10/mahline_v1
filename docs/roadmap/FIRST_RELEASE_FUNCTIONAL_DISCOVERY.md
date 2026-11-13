@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.79
+- **Version :** 2.80
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -654,6 +654,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Chaque demande d'export doit être contrôlée côté serveur et journalisée avec l'identité du `super_admin_root`, la date/heure, le périmètre demandé, le format et le résultat. La consultation des journaux reste elle-même tracée.
 - **Périmètre concerné :** Identity (séparation des rôles et dossier), Audit (consultation, export et traçabilité), Media/Storage (événements de téléchargement).
 - **Points à préciser avant implémentation :** filtres et périodes autorisés, limites de volume, génération synchrone ou asynchrone, protection et durée de disponibilité du fichier exporté, ainsi que sa durée de conservation.
+
+### Question 60 — Période couverte par un export des journaux PDF
+
+**Décision validée : B**
+
+- Le `super_admin_root` peut sélectionner librement les dates de début et de fin de la période à exporter.
+- Chaque export PDF ou CSV est limité à une période maximale de 12 mois. Le contrôle de cette limite est effectué côté serveur ; l'interface seule ne constitue pas une protection.
+- Une période plus longue doit être traitée au moyen de plusieurs exports distincts, chacun respectant la limite de 12 mois.
+- Les bornes temporelles effectivement demandées doivent être enregistrées dans la trace de l'export, avec l'identité du demandeur, la date/heure, le format, le périmètre et le résultat.
+- Cette limite ne modifie ni la durée de conservation des journaux ni les droits de consultation et d'export réservés au `super_admin_root` (Q58 et Q59).
+- **Périmètre concerné :** Identity (autorisation), Audit (journaux et traçabilité des exports), Media/Storage (génération des fichiers).
+- **Points à préciser avant implémentation :** fuseau horaire de référence, inclusion des bornes de période, comportement pour une période vide ou invalide, et gestion des exports volumineux.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2967,6 +2979,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.80 — 13 novembre 2026
+- Ajout de la décision Identity Q60 : B — période sélectionnable pour l'export des journaux PDF, limitée à 12 mois maximum par export et contrôlée côté serveur.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.79 — 13 novembre 2026
 - Ajout de la décision Identity Q59 : B — export PDF ou CSV des journaux de téléchargements PDF réservé au `super_admin_root`, avec périmètre minimisé et journalisation de chaque export.
