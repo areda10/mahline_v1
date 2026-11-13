@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.05
+- **Version :** 3.06
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.06 — 13 novembre 2026
+- Enregistrement de Finance Q225 : pour des remboursements partiels successifs, recalculer la commission à annuler sur le montant net cumulé remboursé et comptabiliser uniquement la différence par rapport aux corrections déjà enregistrées.
+- Chaque correction reste une écriture distincte liée à la commission initiale et au remboursement déclencheur ; le cumul est plafonné à la commission initiale et les remboursements ne doivent pas être comptés deux fois.
+- Les règles techniques de précision, d'arrondi au centime, de concurrence et d'idempotence restent à définir.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.05 — 13 novembre 2026
 - Enregistrement de Finance Q224 : l'assiette de correction d'une commission après remboursement partiel est le montant net des produits effectivement remboursés, après remise et hors livraison.
 - Alignement avec Q218 et Q223 : taux de commission figé à la commande, écriture corrective distincte et historique initial conservé ; les règles techniques de centimes et de remboursements successifs restent à préciser.
@@ -3200,6 +3206,23 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 225 — Remboursements partiels successifs et cumul des corrections de commission
+
+- **Question :** Lorsqu'une même commande fait l'objet de plusieurs remboursements partiels successifs, comment calculer les corrections de commission ?
+- **Réponse :** B — recalculer la commission à annuler sur le montant net cumulé de tous les remboursements, puis comptabiliser uniquement la différence avec les corrections déjà enregistrées.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; corrections de commissions liées aux remboursements successifs, avec références et montants confirmés transmis par Sales.
+- **Conséquences :**
+  - Pour chaque remboursement confirmé, recalculer le montant total de commission qui doit être annulé à partir du montant net cumulé des produits remboursés sur la commande, après remises et hors frais de livraison.
+  - Déduire du montant cible les corrections de commission déjà comptabilisées pour cette commission d'origine ; seule la différence restante constitue la nouvelle correction.
+  - Enregistrer chaque correction dans une écriture distincte, liée à la commission initiale et au remboursement qui la déclenche ; conserver les écritures antérieures sans modification ni suppression.
+  - Plafonner le cumul des corrections à la commission initialement comptabilisée : aucune correction ne peut conduire à annuler davantage que cette commission.
+  - Garantir qu'un même remboursement confirmé ne soit pas pris en compte deux fois dans le cumul.
+  - Utiliser le taux figé pour la commande d'origine et maintenir l'exclusion des frais de livraison de l'assiette.
+  - Sales transmet à Finance les références et montants nets confirmés de chaque remboursement ; Finance tient le cumul de référence et comptabilise uniquement l'écart à corriger.
+- **Impact :** les remboursements successifs produisent une correction financière cumulative cohérente, sans double annulation ni dépassement de la commission initiale, tout en préservant une piste d'audit par remboursement.
+- **Point technique à préciser :** précision décimale et règle d'arrondi au centime lors du recalcul cumulatif, ordre transactionnel et idempotence du traitement concurrent de remboursements.
 
 ### Question 224 — Assiette de calcul de la commission à annuler lors d'un remboursement partiel
 
