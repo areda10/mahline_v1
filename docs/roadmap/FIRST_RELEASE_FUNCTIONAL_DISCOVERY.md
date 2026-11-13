@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.15
+- **Version :** 2.16
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2291,6 +2291,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 - **Limites de périmètre confirmées :** pas de dossiers personnalisés, pas de liens publics de partage, pas de corbeille/restauration ordinaire, pas de suppression automatique des doublons, et aucune suppression physique tant qu'une référence valide ou une obligation de conservation subsiste.
 
+### Complément à la matrice Media — question 91
+- **Q91 — Demande de fusion de deux documents PDF identiques : A.** Root et super_admin peuvent demander la fusion dans leur périmètre respectif.
+- **Conséquences / contraintes :** avant toute fusion, le système vérifie l'identité des fichiers (SHA-256), l'ensemble des références, les permissions et l'état antivirus. Les références valides sont transférées de manière contrôlée ; l'opération est journalisée. Aucune fusion ne doit contourner les règles d'accès ou de conservation.
+
+### Version 2.16 — 13 novembre 2026
+- Ajout de la décision Media Q91 : demande de fusion de doublons PDF réservée à root et super_admin dans leur périmètre.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
 
 ### Version 2.15 — 13 novembre 2026
