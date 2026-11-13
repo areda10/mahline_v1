@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.88
+- **Version :** 2.89
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -758,6 +758,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le domaine ne peut être déclaré complet que lorsque la revue de couverture est terminée et que toutes les fonctions V1 sont soit implémentées et vérifiées, soit explicitement bloquées avec justification. Les fonctions reportées hors V1 restent tracées séparément.
 - **Périmètre concerné :** tous les domaines MAHLINE V1 ; gouvernance fonctionnelle, architecture, développement, assurance qualité et traçabilité.
 - **Règle de décision :** B est le contrôle préalable obligatoire ; C est le mécanisme complémentaire de détection et de correction pendant la réalisation, jamais un substitut au cadrage.
+
+### Question 69 — Documents de référence et checklist pendant le codage d'un domaine
+
+**Décision validée : C**
+
+- Le registre général `FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md` conserve la vision transversale du premier release, les décisions question/réponse, les règles communes et la traçabilité globale.
+- Chaque domaine dispose d'une spécification fonctionnelle détaillée, versionnée et propre à son périmètre. Cette spécification constitue la checklist opérationnelle obligatoire pour le développement du domaine.
+- Les identifiants stables des fonctions sont cohérents entre le registre général, la spécification du domaine, la roadmap et, dès qu'ils sont définis, les fichiers de code, migrations, routes, permissions et tests.
+- Avant chaque tâche de codage, le développeur consulte la spécification du domaine et la fiche de la fonction concernée, puis vérifie les dépendances et décisions transversales dans le registre général.
+- Toute évolution d'une règle met à jour les documents concernés avant la poursuite de l'implémentation ; aucune divergence silencieuse entre registre général et spécification de domaine n'est admise.
+- **Périmètre concerné :** tous les domaines MAHLINE V1 ; documentation fonctionnelle, architecture, développement et assurance qualité.
+- **Conséquence :** le registre général assure la cohérence globale ; la spécification du domaine guide l'exécution et la vérification fonction par fonction.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3071,6 +3083,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.89 — 13 novembre 2026
+- Ajout de la décision de méthode Q69 : C — registre général pour la vision et la traçabilité, spécification versionnée par domaine comme checklist de codage, avec identifiants fonctionnels cohérents et liens vers code/tests.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.88 — 13 novembre 2026
 - Ajout de la décision de méthode Q68 : B + C — revue exhaustive obligatoire avant codage, complétée par la détection des lacunes pendant le développement et les tests, avec mise à jour contrôlée des spécifications.
