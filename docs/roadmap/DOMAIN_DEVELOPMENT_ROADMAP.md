@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.31
+- **Version :** 5.32
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Suppression/annulation des promotions (Q275) :** aucune suppression physique. La coopérative annule logiquement la promotion selon ses droits ; Products conserve versions, paramètres, auteurs, dates et événements. Catalog cesse de l'exposer à compter de l'effet de l'annulation ; Sales préserve tous les snapshots et commandes déjà enregistrés. Contrôles serveur, isolation coopérative, journalisation et absence de suppression en cascade obligatoires.
 - **Remplacement d'une version planifiée (Q274) :** si une version future n'est pas encore entrée en vigueur, une nouvelle modification remplace la version planifiée courante. La version remplacée est conservée dans l'historique avec son état, ses paramètres, son auteur et ses dates ; la version actuellement active reste applicable jusqu'à la nouvelle date d'effet. Products gère le cycle de vie et Catalog expose la seule version applicable ; Sales ne réécrit pas les commandes enregistrées. Contrôles serveur, chronologie cohérente, isolation coopérative et journalisation obligatoires.
 - **Entrée en vigueur des versions de promotion (Q273) :** le `cooperative_admin` choisit entre application immédiate après validation serveur ou planification à une date/heure future. Jusqu'à l'entrée en vigueur planifiée, la version précédente reste applicable ; Catalog expose la version correspondant à l'instant courant. Products conserve l'historique et les bornes d'effet ; Sales ne réécrit aucun panier/commande déjà enregistré. Validation chronologique, isolation coopérative et journalisation obligatoires.
 - **Versionnement des promotions actives (Q272) :** toute modification d'une promotion active crée une nouvelle version ; l'ancienne version et ses paramètres sont conservés dans l'historique, avec auteur et date. Products possède le versionnement ; Catalog expose la version applicable ; Sales conserve les prix figés des paniers/commandes et aucune commande déjà enregistrée n'est réécrite. La règle exacte d'entrée en vigueur d'une nouvelle version (immédiate ou planifiée) reste à décider avant implémentation.
@@ -495,6 +496,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.32 — 13 novembre 2026
+- Enregistrement de Q275 : annulation logique uniquement, sans suppression physique des promotions ni de leur historique.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.31 — 13 novembre 2026
 - Enregistrement de Q274 : remplacement de la version promotionnelle future non encore active, avec conservation de la version remplacée dans l'historique.
