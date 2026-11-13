@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.99
+- **Version :** 3.00
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,10 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.00 — 13 novembre 2026
+- Enregistrement de Finance Q219 : une remise globale de panier multi-coopératives est répartie proportionnellement aux montants de produits de chaque coopérative avant remise.
+- La ventilation figée par sous-commande alimente le calcul du montant net et de la commission de chaque coopérative ; les règles d'arrondi et de reliquat restent ouvertes.
+
 ### Version 2.99 — 13 novembre 2026
 - Enregistrement de Finance Q218 : la commission est calculée sur le montant net des produits après déduction des remises, hors frais de livraison.
 - Les montants avant remise, remises, assiette nette, taux et commission doivent être traçables par commande ; les règles de répartition des remises multi-coopératives restent ouvertes.
@@ -3172,6 +3176,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 219 — Répartition d'une remise globale entre coopératives
+
+- **Question :** Lorsqu'un panier multi-coopératives bénéficie d'une remise globale, comment répartir cette remise entre les coopératives ?
+- **Réponse :** A — répartir la remise proportionnellement au montant des produits de chaque coopérative avant remise.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance et Sales ; allocation des remises de panier et calcul des montants nets par sous-commande coopérative.
+- **Conséquences :**
+  - La part de remise attribuée à chaque coopérative est calculée au prorata du montant de ses produits avant remise par rapport au montant total des produits éligibles du panier.
+  - La somme des parts attribuées doit être égale à la remise globale effectivement accordée ; aucun montant de remise ne doit être créé, perdu ou comptabilisé deux fois.
+  - La part de remise affectée à chaque coopérative est déduite de son montant de produits avant calcul de l'assiette nette de commission, conformément à Q218.
+  - Sales doit transmettre à Finance la ventilation figée de la remise par sous-commande coopérative ; Finance reste propriétaire du calcul et de la traçabilité financière de la commission.
+  - La règle d'arrondi au centime, l'affectation du reliquat d'arrondi, les produits éventuellement exclus d'une promotion et le traitement des annulations ou remboursements partiels restent à préciser.
+- **Impact :** le premier release doit permettre de ventiler une remise globale multi-coopératives au prorata des montants produits avant remise, puis de calculer séparément le montant net et la commission de chaque coopérative.
 
 ### Question 218 — Assiette de commission après remise
 
