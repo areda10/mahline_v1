@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.57
+- **Version :** 3.58
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q277 — Modification d'une annulation planifiée (VALIDÉE)
+- **Question :** Une annulation planifiée peut-elle être modifiée avant son effet ?
+- **Réponse :** A — oui, librement, en remplaçant la date prévue et en conservant l'ancienne programmation dans l'historique.
+- **Décision :** le `cooperative_admin` peut modifier la date et l'heure d'une annulation planifiée tant qu'elle n'a pas pris effet. La nouvelle programmation remplace la programmation courante ; la promotion reste applicable jusqu'au nouvel instant d'effet. Chaque programmation antérieure est conservée avec auteur, horodatages, ancienne et nouvelle échéances et motif éventuel. Une demande déjà exécutée ne peut pas être modifiée rétroactivement.
+- **Contrôles :** validation serveur des dates futures et de la cohérence chronologique, isolation coopérative, gestion fiable des échéances et des courses entre modification et exécution, opérations atomiques/idempotentes et journalisation. Catalog suit uniquement l'échéance courante applicable ; Sales ne réécrit jamais les snapshots historiques.
+- **Responsabilités :** Products gère les programmations et leur historique ; Catalog applique l'état selon l'échéance courante ; Sales conserve les prix des paniers/commandes enregistrés.
+
 ### Décision Q276 — Prise d'effet de l'annulation d'une promotion active (VALIDÉE)
 - **Question :** Quand l'annulation d'une promotion déjà active prend-elle effet ?
 - **Réponse :** C — la coopérative choisit entre annulation immédiate et annulation planifiée.
@@ -4580,6 +4587,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.58 — 13 novembre 2026
+- Enregistrement de Q277 : modification libre d'une annulation planifiée avant son effet, avec archivage de chaque programmation remplacée.
 
 ### Version 3.57 — 13 novembre 2026
 - Enregistrement de Q276 : annulation immédiate ou planifiée d'une promotion active, avec conservation de la promotion jusqu'à l'instant d'effet programmé.
