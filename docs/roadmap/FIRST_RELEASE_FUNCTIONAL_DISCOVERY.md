@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.69
+- **Version :** 2.70
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -551,6 +551,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - L'échec définitif de l'email reste enregistré dans les journaux techniques et de suivi de notification, avec les informations nécessaires au diagnostic, sans données sensibles.
 - L'échec de l'email ne bloque pas l'accès au ZIP et ne modifie ni sa disponibilité de 24 heures ni les contrôles d'authentification, de propriété et d'URL temporaire.
 - Cette décision concerne uniquement l'information présentée au client ; les équipes habilitées peuvent disposer d'un suivi technique des échecs selon leurs droits.
+
+### Question 50 — Historique des générations ZIP du dossier de contestation
+
+**Décision validée : A**
+
+- Dans son espace authentifié, le client peut consulter l'historique des générations de ZIP liées à son dossier de contestation.
+- Pour chaque génération, l'historique présente les informations utiles au client : date de demande, date de génération si elle a abouti, statut compréhensible (en attente, prêt, échec ou expiré) et date/heure d'expiration lorsque le fichier a été généré.
+- L'historique ne révèle pas les détails techniques internes, les traces sensibles, les chemins de stockage ni les informations concernant d'autres utilisateurs.
+- Les anciennes entrées d'historique restent consultables selon les règles de conservation du dossier ; un ZIP expiré ou supprimé n'est plus téléchargeable.
+- La consultation de cet historique respecte les contrôles d'authentification et de propriété du dossier et est journalisée.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2864,6 +2874,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.70 — 13 novembre 2026
+- Enregistrement de la Question 50 : historique client des générations ZIP avec dates, statuts et expiration, sans divulgation des détails techniques internes.
 
 ### Version 2.69 — 13 novembre 2026
 - Enregistrement de la Question 49 : après échec définitif de l'email, maintien de la notification habituelle « ZIP prêt » dans l'espace client, sans message distinct d'échec ; l'erreur reste journalisée.
