@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.25
+- **Version :** 3.26
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.26 — 13 novembre 2026
+- Enregistrement de Finance Q245 : conserver toutes les versions successives des justificatifs avec date, auteur et historique ; seule la dernière est considérée comme actuelle.
+- Les versions antérieures restent consultables selon les habilitations, sans écrasement, avec traçabilité des ajouts et remplacements.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.25 — 13 novembre 2026
 - Enregistrement de Finance Q244 : téléchargement individuel uniquement des justificatifs dans le premier release ; aucun téléchargement groupé ZIP.
 - Maintien des contrôles d'accès, liens privés temporaires et journaux d'audit par justificatif.
@@ -3311,6 +3316,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 245 — Historique des versions des justificatifs
+
+- **Question :** Lorsqu'un justificatif est remplacé par une nouvelle version, que doit-il arriver à l'ancienne version ?
+- **Réponse :** A — conserver toutes les versions, avec date, auteur et historique ; seule la dernière version est présentée comme actuelle.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; pièces justificatives liées aux créances contestées ou annulées, décisions et écritures correctives.
+- **Conséquences :**
+  - Le remplacement d'un justificatif crée une nouvelle version sans écraser ni supprimer les versions précédentes.
+  - Chaque version conserve au minimum sa date d'ajout, son auteur et son lien avec la pièce ou la créance concernée.
+  - L'historique permet d'identifier la version actuellement applicable et de consulter les versions antérieures par les utilisateurs autorisés.
+  - Les droits de consultation et de téléchargement de Q242-Q243 s'appliquent à chaque version ; les téléchargements restent individuels conformément à Q244.
+  - Les événements d'ajout et de remplacement sont journalisés ; les anciennes versions restent protégées contre toute modification ou suppression non autorisée.
+- **Impact :** préserver les preuves et la traçabilité des décisions financières dans le temps, y compris lorsqu'une pièce est corrigée ou actualisée.
+- **Points techniques à préciser :** stockage immuable ou versionné, empreinte d'intégrité, métadonnées obligatoires, limites de versions et de taille, gestion d'une version erronée, conservation légale, contrôle d'accès historique et tests d'intégrité.
 
 ### Question 244 — Téléchargement individuel ou groupé des justificatifs
 
