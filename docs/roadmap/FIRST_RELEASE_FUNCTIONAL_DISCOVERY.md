@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.17
+- **Version :** 2.18
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2304,6 +2304,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 ### Version 2.17 — 13 novembre 2026
 - Ajout de la décision Media Q92 : confirmation explicite de fusion réservée à root et super_admin dans leur périmètre, avec garantie d'atomicité.
+- Aucune modification du code applicatif ; aucune fusion de branche.
+### Complément à la matrice Media — question 93
+- **Q93 — Annulation d'une demande de fusion PDF en attente : A.** Root et super_admin peuvent annuler une demande non exécutée dans leur périmètre respectif.
+- **Conséquences / contraintes :** l'annulation est permise uniquement tant que la fusion n'a pas été exécutée. Une fusion déjà exécutée ne peut pas être annulée directement ; toute récupération nécessite une restauration contrôlée, autorisée et journalisée. L'acteur, la date, le motif, les documents concernés et l'état de la demande sont tracés.
+
+### Version 2.18 — 13 novembre 2026
+- Ajout de la décision Media Q93 : annulation d'une demande de fusion en attente réservée à root et super_admin dans leur périmètre.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
 
