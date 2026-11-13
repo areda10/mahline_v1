@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.20
+- **Version :** 5.21
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Portée des promotions V1 (Q264) :** la promotion est portée par le produit et s'applique à toutes ses variantes ; aucune promotion propre à une variante en V1. Le mécanisme exact de calcul du prix promotionnel par variante reste ouvert et devra être validé avant implémentation.
 - **Promotions V1 (Q263) :** promotion simple par produit avec prix normal, prix promotionnel inférieur et période de validité début/fin. Products possède les paramètres, Catalog expose le prix applicable, Sales revalide et fige le prix de vente. Les coupons, campagnes complexes et cumuls sont exclus ; fuseau/bornes, chevauchements et variantes restent à préciser.
 - **Saisie des prix V1 (Q262) :** refuser côté serveur toute valeur comportant plus de deux décimales significatives ; ne jamais arrondir ni tronquer silencieusement. Cette validation couvre les prix de base et de variantes, quelle que soit l'interface/API utilisée.
 - **Précision monétaire V1 (Q261) :** les prix en MAD sont limités à deux décimales ; utiliser une représentation décimale exacte, jamais des flottants binaires pour les calculs monétaires. Les règles d'arrondi détaillées pour taxes, remises, frais et répartitions restent à cadrer.
@@ -484,6 +485,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.21 — 13 novembre 2026
+- Enregistrement de Q264 : promotion au niveau du produit, applicable à toutes les variantes ; pas de promotion distincte par variante au premier release.
+- Calcul exact du prix promotionnel des variantes conservé comme décision préalable au développement.
 
 ### Version 5.20 — 13 novembre 2026
 - Enregistrement de Q263 : promotions simples limitées à un prix promotionnel et une période de validité.
