@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.38
+- **Version :** 2.39
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -229,6 +229,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La traçabilité complète des consultations et actions reste conservée ; l'accès complet à cette traçabilité demeure réservé à `super_admin_root`, conformément à la Question 17.
 - Les agents du support autorisés conservent uniquement leur accès limité aux informations et dossiers nécessaires à leur mission.
 - Les événements d'ouverture et de clôture, leurs destinataires et le contenu exact des notifications seront précisés dans la conception technique et le cadrage Communication.
+
+### Question 19 — Contenu des notifications envoyées au client pour son dossier de récupération
+
+**Décision validée : C**
+
+- Les e-mails envoyés à l'ouverture et à la clôture du dossier contiennent uniquement les informations minimales nécessaires, la référence du dossier et un lien sécurisé vers l'espace client.
+- Les détails du motif, des vérifications d'identité, des étapes de traitement et du résultat ne sont pas exposés dans l'e-mail.
+- Ces informations détaillées sont consultables dans l'espace client après authentification, selon les droits d'accès applicables.
+- Le lien contenu dans l'e-mail ne doit pas donner un accès direct au dossier ni contourner l'authentification.
+- Le contenu exact des notifications, les règles de durée de validité et la destination du lien seront précisés dans la conception technique et le cadrage Communication.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2542,6 +2552,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.39 — 13 novembre 2026
+- Enregistrement de la Question 19 : notifications e-mail minimales avec référence et lien sécurisé ; les détails du dossier restent accessibles uniquement après authentification dans l'espace client.
 
 ### Version 2.38 — 13 novembre 2026
 - Enregistrement de la Question 18 : notification du client à l'ouverture et à la clôture du dossier de récupération ; pas de notification à chaque consultation ou action interne, avec conservation de la traçabilité complète.
