@@ -2525,20 +2525,6 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
-### Question 213 — Circuit d'encaissement et de reversement du paiement COD
-
-- **Question :** Lorsqu'un client paie en espèces à la livraison, comment les fonds doivent-ils circuler entre le transporteur, MAHLINE et la coopérative ?
-- **Réponse :** B — le transporteur encaisse le paiement puis reverse les fonds à MAHLINE ; MAHLINE calcule et répartit les montants dus aux coopératives.
-- **Statut :** VALIDÉ — premier release.
-- **Périmètre concerné :** Finance, avec contrats d'intégration vers Delivery, Sales et les coopératives.
-- **Conséquences :**
-  - Le transporteur est chargé de collecter le montant COD auprès du client et de reverser les fonds à MAHLINE.
-  - Finance enregistre et suit la réception des fonds, en les reliant aux commandes et aux expéditions concernées.
-  - Finance calcule la part revenant à chaque coopérative ainsi que les commissions dues à MAHLINE, puis suit les reversements aux coopératives.
-  - Les règles de rapprochement, les délais et preuves de reversement du transporteur, les statuts de paiement, les écarts, les paiements partiels et les modalités exactes de versement restent à préciser par des questions dédiées.
-  - Delivery fournit les informations d'encaissement et de livraison nécessaires ; Sales fournit les références et montants commerciaux figés. Aucun de ces domaines ne devient propriétaire de la comptabilisation financière.
-- **Impact :** le périmètre Finance V1 doit inclure le suivi des fonds COD reçus de la part des transporteurs, leur allocation et les reversements aux coopératives. Les détails de calcul des commissions et les cas d'exception restent ouverts.
-
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
