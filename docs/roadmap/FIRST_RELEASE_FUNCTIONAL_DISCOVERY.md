@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.48
+- **Version :** 3.49
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 268 — Arrondi du prix promotionnel
+
+- **Question :** Comment arrondir le résultat du calcul en pourcentage lorsqu'il comporte plus de deux décimales ?
+- **Réponse :** A — arrondir au centime le plus proche.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Le prix promotionnel calculé est arrondi au centime de MAD le plus proche, selon l'arrondi commercial (au demi-centime, arrondi vers le haut).
+  - Exemple : 99 DH avec une réduction de 12,75 % donne 86,3775 DH, arrondi à 86,38 DH.
+  - Les calculs intermédiaires utilisent une représentation décimale exacte ; aucun flottant binaire n'est autorisé pour les montants.
+  - Cet arrondi explicite concerne le résultat monétaire calculé de la promotion ; il ne permet jamais de corriger automatiquement un prix ou un taux saisi invalide (Q262, Q267).
+  - Le même résultat doit être obtenu dans Products, Catalog, Sales et Finance ; Sales conserve le prix effectivement appliqué dans le panier/commande.
+- **Responsabilités :** Products conserve le taux ; Catalog calcule/expose le prix promotionnel ; Sales revalide et fige le prix appliqué ; Finance consomme les montants figés.
+- **Règle technique :** centraliser la règle d'arrondi monétaire pour éviter des écarts entre domaines et interfaces ; tests obligatoires sur les cas de demi-centime et les limites de précision.
+
 ### Question 267 — Précision du taux promotionnel
 
 - **Question :** Quelle précision autoriser pour le pourcentage de réduction ?
@@ -4506,6 +4520,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.49 — 13 novembre 2026
+- Enregistrement de Q268 : arrondi commercial du prix promotionnel au centime le plus proche, égalité au demi-centime arrondie vers le haut.
+- Calcul intermédiaire décimal exact et règle cohérente à centraliser entre Products, Catalog, Sales et Finance ; aucune correction automatique des valeurs saisies invalides.
 
 ### Version 3.48 — 13 novembre 2026
 - Enregistrement de Q267 : taux promotionnel avec deux décimales maximum, borné entre plus de 0 % et 90 % inclus.
