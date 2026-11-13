@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.5
+- **Version :** 1.6
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -91,6 +91,9 @@ La procédure suivante s'applique à **chaque domaine** et à chaque fonctionnal
 - **Correspondance obligatoire des références :** le registre général `FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md` conserve la vue transversale et les décisions ; chaque spécification de domaine est la checklist détaillée de codage. Les identifiants stables des fonctions doivent être repris sans divergence dans la roadmap, les spécifications et les liens vers les fichiers, migrations, routes, permissions et tests.
 - Avant chaque tâche de développement, consulter la fiche de la fonction dans la spécification du domaine ainsi que les décisions et dépendances transversales du registre général. Toute évolution doit être répercutée dans les documents concernés avant la poursuite du code.
 - Aucun développement applicatif ni aucune fusion de branche n'est implicite dans une validation de cadrage.
+
+- **Contenu obligatoire des spécifications de domaine :** chaque fonction possède un identifiant stable, objectif, périmètre V1, acteurs, rôles/permissions, préconditions, règles métier, états/transitions, scénarios nominaux et alternatifs, cas limites, erreurs, dépendances, contrats et échanges inter-domaines, événements, données et contraintes, composants techniques concernés, critères d'acceptation et tests associés. Les éléments non applicables sont justifiés ; reports, exclusions et décisions en attente sont explicites.
+- **Traçabilité de bout en bout :** relier chaque identifiant fonctionnel à la décision du registre général, à sa spécification, aux modèles/migrations/services/contrôleurs/routes/permissions/jobs ou notifications concernés, aux tests et aux preuves de validation. Aucun intitulé isolé ne suffit à autoriser le codage.
 
 ## 2. Inventaire structurel au commit audité
 
@@ -386,6 +389,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.6 — 13 novembre 2026
+- Ajout du contenu minimum obligatoire des spécifications de domaine et de la traçabilité fonctionnelle jusqu'aux composants techniques, tests et preuves de validation, conformément à Q70.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 1.5 — 13 novembre 2026
 - Alignement sur la décision Q69 : registre général pour la traçabilité transversale et spécification détaillée par domaine comme checklist obligatoire de codage ; identifiants fonctionnels stables et liens cohérents vers code, migrations, routes, permissions et tests.
