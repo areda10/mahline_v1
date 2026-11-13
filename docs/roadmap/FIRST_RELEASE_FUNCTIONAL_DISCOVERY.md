@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.53
+- **Version :** 2.54
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -389,6 +389,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - L'identité du demandeur, du responsable examinateur, la décision, sa motivation et les dates sont historisées.
 - Les habilitations restent contrôlées : un agent non autorisé ne peut pas statuer sur une exception.
 - Les modalités de preuve de l'indisponibilité d'un autre décideur seront définies dans la conception technique.
+
+### Question 34 — Accès à l'historique des exceptions de délai
+
+**Décision validée : B**
+
+- `super_admin_root` dispose d'un accès complet à l'historique des demandes d'exception tardive, des décisions et de leurs justifications.
+- Les responsables du support disposant d'une habilitation dédiée peuvent consulter uniquement les dossiers et informations nécessaires à leurs missions.
+- Un responsable ne peut pas accéder globalement à l'ensemble des historiques du support du seul fait de son rôle opérationnel.
+- Les consultations et actions sensibles sur ces historiques sont journalisées.
+- Les agents non habilités ne disposent d'aucun accès à ces informations.
+- Les permissions précises, les filtres par dossier et les règles d'audit seront définis dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2702,6 +2713,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.54 — 13 novembre 2026
+- Enregistrement de la Question 34 : accès complet de `super_admin_root` et accès limité aux dossiers nécessaires pour les responsables du support expressément habilités, avec journalisation des consultations sensibles.
 
 ### Version 2.53 — 13 novembre 2026
 - Enregistrement de la Question 33 : le même responsable habilité peut examiner une demande d'exception tardive si aucun autre responsable habilité n'est disponible, avec justification et traçabilité.
