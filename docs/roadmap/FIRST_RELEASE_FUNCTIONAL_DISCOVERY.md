@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.86
+- **Version :** 2.87
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -735,6 +735,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Ce plafond ne modifie ni les droits d'accès aux journaux, ni les filtres disponibles, ni les limites de période et d'export définies précédemment.
 - **Périmètre concerné :** Audit (recherche des journaux), Identity (espace personnel et autorisation du `super_admin_root`).
 - **Points à préciser avant implémentation :** règles de nommage, unicité des noms, confirmation de suppression et traitement des favoris devenus invalides.
+
+### Question 67 — Traitement d'un filtre favori devenu invalide
+
+**Décision validée : B**
+
+- Lorsqu'un filtre favori contient un critère devenu invalide ou indisponible (par exemple un agent, un dossier ou un document supprimé ou auquel l'accès n'est plus autorisé), le système signale explicitement le critère concerné.
+- Le favori ne peut pas être réutilisé tant que le `super_admin_root` ne l'a pas corrigé ou supprimé. Aucun critère invalide n'est ignoré ou remplacé silencieusement.
+- À chaque exécution, les critères et les autorisations sont revalidés côté serveur ; un favori enregistré ne conserve aucun droit d'accès et ne permet jamais de contourner les permissions actuelles.
+- La correction ou suppression du favori est effectuée par son propriétaire ; ces opérations restent journalisées. Les journaux sources ne sont pas modifiés.
+- **Périmètre concerné :** Audit (filtres et recherche), Identity (propriétaire et autorisations du `super_admin_root`).
+- **Points à préciser avant implémentation :** distinction entre critère supprimé, renommé ou temporairement inaccessible ; message d'erreur ; possibilité de corriger le filtre depuis l'écran de recherche.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3048,6 +3059,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.87 — 13 novembre 2026
+- Ajout de la décision Identity Q67 : B — un favori contenant un critère invalide est signalé et bloqué jusqu'à correction ou suppression ; aucun critère n'est ignoré silencieusement.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.86 — 13 novembre 2026
 - Ajout de la décision Identity Q66 : B — plafond de 25 filtres favoris personnels pour le `super_admin_root`, refus côté serveur au-delà du plafond sans remplacement automatique.
