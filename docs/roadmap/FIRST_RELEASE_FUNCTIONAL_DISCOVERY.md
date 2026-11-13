@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.36
+- **Version :** 2.37
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -207,6 +207,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les documents d'identité, pièces justificatives, mots de passe, tokens, codes, liens secrets et autres données sensibles ne sont pas copiés dans les journaux d'audit.
   - Les données strictement nécessaires à la traçabilité sont protégées par des accès autorisés et une politique de conservation à définir.
   - Les règles de consultation, de rectification éventuelle, de conservation et de purge seront précisées lors de la conception détaillée, sans altérer l'intégrité de la piste d'audit.
+
+### Question 17 — Accès à l'historique des demandes de récupération (VALIDÉ)
+- **Question :** Qui peut consulter l'historique des demandes de récupération de compte ?
+- **Réponse :** B — `super_admin_root` et les agents du support autorisés, chacun selon ses permissions.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity, Audit et Communication ; consultation des incidents et traitement des demandes de récupération.
+- **Conséquences :**
+  - `super_admin_root` conserve l'accès complet à l'historique et aux événements de sécurité associés.
+  - Les agents du support explicitement autorisés peuvent consulter les seules informations nécessaires au traitement des demandes qui leur sont accessibles, selon des permissions dédiées et limitées.
+  - Les agents du support ne disposent pas, du seul fait de leur rôle, d'un accès global aux journaux d'audit de sécurité ni aux dossiers des autres clients.
+  - Les consultations et actions sensibles effectuées par le support sont elles-mêmes journalisées.
+  - Les habilitations précises, le périmètre des dossiers accessibles et les règles de masquage des informations sensibles seront détaillés dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2520,6 +2532,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.37 — 13 novembre 2026
+- Enregistrement de la Question 17 : accès complet à l'historique réservé à `super_admin_root` ; accès support limité aux agents explicitement autorisés et aux dossiers nécessaires à leur traitement.
 
 ### Version 2.36 — 13 novembre 2026
 - Enregistrement de la Question 16 : historique de sécurité détaillé des demandes de récupération, sans conserver les documents sensibles ni les secrets d'authentification.
