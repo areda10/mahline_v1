@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.18
+- **Version :** 3.19
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.19 — 13 novembre 2026
+- Enregistrement de Finance Q238 : suspendre uniquement la créance MAHLINE contestée et l'exclure temporairement du recouvrement, sans bloquer les autres créances non contestées.
+- Précision de périmètre : cette règle concerne les créances MAHLINE issues de montants déjà versés à tort (Q233), distinctes des crédits ordinaires contestés (Q230-Q232).
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.18 — 13 novembre 2026
 - Enregistrement de Finance Q237 : lorsque plusieurs créances ont exactement la même date et heure de création, les départager par leur identifiant ULID en ordre croissant.
 - La date de création initiale reste le premier critère FIFO (Q236) ; l'ULID de la créance constitue le critère secondaire stable et déterministe.
@@ -3276,6 +3281,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 238 — Contestation d'une créance MAHLINE
+
+- **Question :** Une créance MAHLINE peut-elle être suspendue lorsqu'une coopérative la conteste ?
+- **Réponse :** A — oui, suspendre uniquement la créance contestée ; les autres créances restent récupérables.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; recouvrement des créances MAHLINE sur les reversements dus aux coopératives.
+- **Conséquences :**
+  - Une contestation suspend uniquement la créance concernée ; elle ne bloque ni les autres créances non contestées de la même coopérative ni le fonctionnement normal des reversements.
+  - La créance suspendue est temporairement exclue du recouvrement et de l'imputation sur les reversements tant que la contestation n'est pas résolue.
+  - La suspension ne vaut ni annulation, ni abandon, ni suppression de la créance ; son montant restant dû, son origine, ses imputations antérieures et sa date FIFO initiale sont conservés.
+  - Les autres créances non contestées continuent d'être recouvrées selon la priorité FIFO définie par Q234 à Q237 ; une créance suspendue ne doit pas bloquer les créances suivantes qui sont éligibles au recouvrement.
+  - La règle concerne la créance MAHLINE reconnue au titre de montants déjà versés à tort à la coopérative (Q233), et non les crédits ordinaires de coopérative traités séparément par Q230 à Q232.
+- **Impact :** permettre le traitement contradictoire d'une créance sans immobiliser les autres sommes dues à MAHLINE ni effacer l'historique financier.
+- **Points techniques à préciser :** acteurs autorisés à ouvrir/clore une contestation, états et motifs, justificatifs et horodatage, décision et preuve de résolution, réactivation ou annulation après décision, conservation du rang FIFO, traitement des imputations partielles, audit, concurrence et idempotence.
 
 ### Question 237 — Départage des créances créées au même instant
 
