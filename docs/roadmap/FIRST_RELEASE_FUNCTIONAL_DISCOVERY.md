@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.26
+- **Version :** 2.27
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -83,6 +83,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le client peut demander un nouvel envoi lorsque le lien a expiré ou n'est plus disponible.
   - Un lien expiré ou invalide ne doit pas permettre de vérifier l'adresse.
   - Les règles de limitation des renvois, d'invalidation des anciens liens et de journalisation restent à préciser.
+
+### Question 7 — Gestion des liens de vérification successifs (VALIDÉ)
+- **Question :** Que se passe-t-il si le client demande plusieurs liens de vérification de son adresse e-mail ?
+- **Réponse :** A — l'émission d'un nouveau lien invalide immédiatement tous les liens précédemment émis ; un seul lien reste utilisable.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity ; gestion des jetons de vérification et renvoi des e-mails.
+- **Conséquences :**
+  - Un seul lien de vérification est actif par compte à un instant donné.
+  - La création d'un nouveau lien invalide immédiatement le précédent, même si sa période de validité de 60 minutes n'est pas écoulée.
+  - Seul le lien le plus récemment émis peut vérifier l'adresse e-mail.
+  - Un ancien lien ne peut jamais être réutilisé après l'émission d'un nouveau lien.
+  - Les limites de fréquence des demandes et les messages affichés au client restent à préciser.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2396,6 +2408,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.27 — 13 novembre 2026
+- Enregistrement de la Question 7 : chaque nouveau lien de vérification invalide immédiatement les liens précédents ; un seul lien actif par compte.
 
 ### Version 2.26 — 13 novembre 2026
 - Enregistrement de la Question 6 : vérification par lien sécurisé envoyé par e-mail, expiration après 60 minutes et possibilité de renvoi.
