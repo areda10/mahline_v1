@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.27
+- **Version :** 2.28
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -95,6 +95,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Seul le lien le plus récemment émis peut vérifier l'adresse e-mail.
   - Un ancien lien ne peut jamais être réutilisé après l'émission d'un nouveau lien.
   - Les limites de fréquence des demandes et les messages affichés au client restent à préciser.
+
+### Question 8 — Limitation des demandes de renvoi du lien (VALIDÉ)
+- **Question :** Quelle limite appliquer aux demandes de renvoi du lien de vérification d'e-mail ?
+- **Réponse :** B — maximum 5 demandes par heure, puis blocage temporaire pendant 1 heure.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity ; endpoint de renvoi, protection anti-abus et retour utilisateur.
+- **Conséquences :**
+  - Le client peut demander au maximum 5 renvois du lien de vérification pendant une fenêtre d'une heure.
+  - Lorsque la limite est atteinte, les nouvelles demandes sont temporairement bloquées pendant une heure.
+  - La limite s'applique côté serveur et ne peut pas être contournée en répétant les appels depuis l'interface.
+  - Les compteurs et blocages doivent être gérés sans journaliser de jetons ou de données secrètes.
+  - Le périmètre exact de comptage (compte, adresse IP et combinaison des deux) devra être précisé lors de la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2408,6 +2420,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.28 — 13 novembre 2026
+- Enregistrement de la Question 8 : maximum 5 demandes de renvoi par heure, puis blocage temporaire pendant une heure.
 
 ### Version 2.27 — 13 novembre 2026
 - Enregistrement de la Question 7 : chaque nouveau lien de vérification invalide immédiatement les liens précédents ; un seul lien actif par compte.
