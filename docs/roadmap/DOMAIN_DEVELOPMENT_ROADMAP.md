@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 3.1
+- **Version :** 3.2
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -307,8 +307,8 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Définir paiements, transactions, remboursements, commissions et reversements.
 - [ ] Définir les règles de calcul, arrondis, devise, numérotation et immutabilité comptable.
 - [ ] Appliquer la commission sur le montant net des produits après remises, hors livraison ; conserver le taux contractuel figé à la création de la commande.
-- [ ] Pour les remboursements, annuler la commission totale correspondante ou, en cas de remboursement partiel, la part calculée sur le montant net des produits remboursés après remise et hors livraison ; enregistrer une correction distincte liée à l'écriture initiale et au remboursement.
-- [ ] Préserver l'immutabilité et l'historique des commissions initiales et corrections ; définir les règles de centimes, remboursements successifs et plafonnement du cumul des corrections.
+- [ ] Pour chaque remboursement confirmé, recalculer la commission à annuler sur le montant net cumulé des produits remboursés après remise et hors livraison, puis comptabiliser uniquement la différence avec les corrections déjà enregistrées ; chaque correction reste distincte et liée à la commission initiale et au remboursement déclencheur.
+- [ ] Préserver l'immutabilité et l'historique des commissions initiales et corrections ; plafonner le cumul à la commission initiale, empêcher le double comptage d'un remboursement et définir précision/arrondi au centime, concurrence et idempotence.
 - [ ] Définir le traitement des commandes multi-coopératives.
 - [ ] Définir génération PDF et intégration Communication.
 - [ ] Séparer facturation marketplace et facturation des abonnements Mahline.
@@ -433,6 +433,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 3.2 — 13 novembre 2026
+- Enregistrement de Finance Q225 : les remboursements partiels successifs sont traités par recalcul cumulatif de la commission à annuler ; seule la différence avec les corrections déjà comptabilisées est enregistrée.
+- Alignement de la matrice Finance : correction distincte par remboursement, lien avec la commission initiale, plafond au montant de commission initial et prévention du double comptage.
+- Précision/arrondi au centime, concurrence et idempotence restent à définir techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.1 — 13 novembre 2026
 - Enregistrement de Finance Q224 : assiette de correction de commission après remboursement partiel = montant net des produits effectivement remboursés, après remise et hors livraison.
