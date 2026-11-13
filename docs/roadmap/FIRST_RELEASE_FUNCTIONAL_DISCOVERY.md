@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.52
+- **Version :** 3.53
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q272 — Versionnement des modifications d'une promotion active (VALIDÉE)
+- **Question :** Que se passe-t-il lorsqu'une coopérative modifie le taux ou les dates d'une promotion déjà active ?
+- **Réponse :** B — toute modification crée une nouvelle version ; l'ancienne version est conservée dans l'historique.
+- **Décision :** une modification du taux, des dates ou d'un autre paramètre commercial d'une promotion active ne remplace jamais silencieusement les données historiques. Products crée une nouvelle version traçable et conserve la version précédente, avec les informations d'auteur et de date de modification. L'historique doit permettre de reconstituer les paramètres de chaque version. Sales conserve les prix et paramètres effectivement figés dans les paniers/commandes selon ses règles de snapshot ; une modification ne réécrit pas les commandes déjà enregistrées.
+- **Point restant à préciser :** la règle exacte d'entrée en vigueur d'une nouvelle version (immédiate ou à une date/heure planifiée) sera cadrée séparément avant l'implémentation du versionnement.
+- **Frontières :** Products possède les versions et leur historique ; Catalog expose la version applicable ; Sales revalide et fige le prix effectivement appliqué. Les contrôles serveur, l'isolation coopérative et la journalisation restent obligatoires.
+
 ### Décision Q271 — Publication d'une promotion (VALIDÉE)
 - **Question :** Une promotion créée par une coopérative doit-elle être publiée immédiatement ou soumise à validation ?
 - **Réponse :** A — publication immédiate dès l'enregistrement si toutes les validations sont respectées.
@@ -4548,6 +4555,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.53 — 13 novembre 2026
+- Enregistrement de Q272 : toute modification d'une promotion active crée une nouvelle version et conserve l'ancienne dans l'historique ; la date/heure d'entrée en vigueur de la nouvelle version reste à préciser.
 
 ### Version 3.52 — 13 novembre 2026
 - Enregistrement de Q271 : publication sans approbation préalable, après validation serveur ; respect des dates de début/fin, journalisation et supervision.
