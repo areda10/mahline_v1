@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.16
+- **Version :** 5.17
 - **Date :** 12 novembre 2026
-- **Branche de référence :** `feature/Identity`
+- **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
 - **Nature :** référentiel fonctionnel cible et feuille de route, à confirmer par audits détaillés
 - **Statut :** PROPOSITION DE SUIVI — les statuts doivent être confirmés par audit fonctionnel et tests.
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Devise V1 (Q260) :** MAD est la devise du premier release. Le modèle de prix doit permettre une extension ultérieure à d'autres devises, mais aucune conversion automatique ni mélange de devises n'est autorisé ; Sales fige la devise avec le montant et Finance consomme ces données sans conversion implicite.
 - Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
 - Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
 - Pour un produit sans variante, la carte affiche directement le prix de base, sans la mention « À partir de » ; Catalog l'expose depuis Products et Sales le revalide puis le fige côté serveur.
@@ -480,6 +481,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.17 — 13 novembre 2026
+- Enregistrement de Q260 : MAD comme devise du premier release, avec extension multi-devises possible ultérieurement.
+- Les montants figés par Sales conservent leur devise ; aucune conversion implicite ni mélange de devises.
+- Alignement de la feuille de route avec le registre de découverte pour Q257 à Q259 et suppression d'une ligne d'affichage Q257 dupliquée.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 5.16 — 13 novembre 2026
 - Enregistrement de Q259 : un produit sans variantes affiche directement son prix de base, sans « À partir de ».
