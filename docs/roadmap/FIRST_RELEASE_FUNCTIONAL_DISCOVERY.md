@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.42
+- **Version :** 3.43
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 262 — Saisie d'un prix avec plus de deux décimales
+
+- **Question :** Comment traiter un prix saisi par une coopérative avec plus de deux décimales ?
+- **Réponse :** A — refuser la saisie et demander un prix avec deux décimales maximum.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Toute création ou modification de prix doit être refusée côté serveur si la valeur comporte plus de deux décimales significatives.
+  - Le formulaire doit signaler clairement l'erreur et demander à la coopérative de corriger le prix.
+  - Aucune conversion silencieuse par arrondi ou troncature n'est autorisée.
+  - La validation s'applique aux prix de base et aux prix spécifiques des variantes, ainsi qu'à toute interface/API permettant de modifier ces prix.
+- **Responsabilités :** Products applique la règle de validation à l'écriture ; Catalog n'expose que des prix conformes ; Sales consomme les prix valides et les fige dans le panier/commande.
+- **Règle d'intégrité :** validation obligatoire côté serveur, même si le formulaire effectue aussi une validation côté client ; les valeurs invalides ne doivent jamais être enregistrées ni utilisées pour une vente.
+
 ### Question 261 — Précision des prix en MAD
 
 - **Question :** Comment gérer les décimales des prix au premier release ?
@@ -4418,6 +4431,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.43 — 13 novembre 2026
+- Enregistrement de Q262 : refuser tout prix saisi avec plus de deux décimales ; aucune correction automatique par arrondi ou troncature.
+- Validation serveur pour les prix de base, prix de variantes et toutes les interfaces/API de modification.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 3.42 — 13 novembre 2026
 - Enregistrement de Q261 : prix en MAD limités à deux décimales, avec représentation décimale exacte et cohérence entre les domaines.
