@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.49
+- **Version :** 2.50
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -345,6 +345,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La décision rendue par `super_admin_root` au second niveau clôt la procédure de contestation de cette décision ; aucun recours successif supplémentaire n'est prévu dans ce mécanisme.
 - Chaque recours, ses motifs, les éléments examinés, les intervenants, les dates et la décision sont historisés ; le client est notifié conformément à la Question 28.
 - Les délais de recours, les conditions de recevabilité et les modalités de présentation du recours final seront précisés dans la conception technique.
+
+### Question 30 — Délai de dépôt d'une contestation après notification d'un refus
+
+**Décision validée : A**
+
+- Le client dispose de 7 jours calendaires à compter de la notification du refus pour déposer une contestation.
+- Le délai est calculé à partir de la notification effectivement envoyée au client, selon une règle de datation et de fuseau horaire à définir techniquement.
+- Le délai s'applique au premier niveau de contestation et, lorsque le premier recours est refusé, au second et dernier niveau auprès de `super_admin_root`, à compter de la notification de cette décision.
+- La date de notification, la date limite et la date de dépôt de chaque recours sont historisées.
+- Les modalités de calcul en cas d'échec de notification, d'indisponibilité du service ou de jour non ouvré seront précisées dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2658,6 +2668,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.50 — 13 novembre 2026
+- Enregistrement de la Question 30 : délai de 7 jours calendaires après notification du refus pour déposer chaque niveau de contestation.
 
 ### Version 2.49 — 13 novembre 2026
 - Enregistrement de la Question 29 : deux niveaux maximum de contestation ; premier examen par un responsable du support habilité, second et dernier recours auprès de `super_admin_root`.
