@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.57
+- **Version :** 2.58
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -431,6 +431,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le fondement, le périmètre, la date de début et la date de fin ou de réexamen sont documentés et audités.
 - À la fin de l'obligation ou du gel, les données sont supprimées ou anonymisées conformément à la règle de la Question 36.
 - Les modalités de mise en œuvre et de preuve de ces obligations seront précisées dans la conception technique et validées juridiquement.
+
+### Question 38 — Information du client sur la conservation de ses données de contestation
+
+**Décision validée : C**
+
+- La politique de confidentialité décrit les finalités, catégories de données, durées de conservation et règles de suppression ou d'anonymisation applicables aux dossiers de contestation.
+- Lors de la clôture du dossier, un rappel est présenté dans l'espace client authentifié.
+- Ce rappel indique la durée de conservation applicable, son point de départ, le traitement prévu à son expiration et les exceptions légales possibles.
+- Le rappel ne divulgue aucune note interne, donnée de sécurité ou information concernant d'autres personnes.
+- La présentation et la preuve de mise à disposition de cette information sont historisées de manière proportionnée.
+- Le contenu définitif de l'information et la politique de confidentialité seront validés juridiquement avant mise en production.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2744,6 +2755,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.58 — 13 novembre 2026
+- Enregistrement de la Question 38 : information sur les durées de conservation dans la politique de confidentialité et rappel dans l'espace client authentifié à la clôture du dossier.
 
 ### Version 2.57 — 13 novembre 2026
 - Enregistrement de la Question 37 : aucune prolongation discrétionnaire au-delà de 5 ans ; conservation prolongée uniquement en présence d'une obligation légale applicable, d'une décision judiciaire ou d'un gel légalement justifié, limité au strict nécessaire.
