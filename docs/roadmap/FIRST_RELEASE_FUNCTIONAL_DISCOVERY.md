@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.58
+- **Version :** 3.59
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q278 — Réactivation d'une promotion annulée (VALIDÉE)
+- **Question :** Une promotion annulée peut-elle être réactivée ?
+- **Réponse :** A — oui, en créant une nouvelle version, avec une nouvelle période et un historique distinct.
+- **Décision :** une promotion annulée ne reprend jamais vie en réactivant une ancienne version. Le `cooperative_admin` peut relancer l'opération commerciale en créant une nouvelle version après annulation, avec une nouvelle période de validité et de nouveaux paramètres explicitement validés. La version annulée demeure clôturée et inchangée dans l'historique ; la nouvelle version est reliée à la même promotion logique et porte sa propre identité/version, son auteur, ses dates et ses paramètres.
+- **Cohérence métier :** Catalog expose la nouvelle version uniquement pendant sa période applicable. Sales revalide et fige les prix applicables aux nouvelles opérations ; aucun panier/commande déjà enregistré n'est recalculé. Les anciennes commandes et snapshots restent liés à la version qui était applicable lors de leur enregistrement.
+- **Contrôles :** autorisation serveur du `cooperative_admin` sur sa coopérative, validation des dates et paramètres, absence de chevauchement incohérent des versions, journalisation et conservation de l'historique. Products possède les versions ; Catalog expose la version courante ; Sales conserve les snapshots commerciaux.
+
 ### Décision Q277 — Modification d'une annulation planifiée (VALIDÉE)
 - **Question :** Une annulation planifiée peut-elle être modifiée avant son effet ?
 - **Réponse :** A — oui, librement, en remplaçant la date prévue et en conservant l'ancienne programmation dans l'historique.
@@ -4587,6 +4594,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.59 — 13 novembre 2026
+- Enregistrement de Q278 : relance d'une promotion annulée uniquement par création d'une nouvelle version et d'une nouvelle période, sans réactivation ni altération de l'ancienne version.
 
 ### Version 3.58 — 13 novembre 2026
 - Enregistrement de Q277 : modification libre d'une annulation planifiée avant son effet, avec archivage de chaque programmation remplacée.
