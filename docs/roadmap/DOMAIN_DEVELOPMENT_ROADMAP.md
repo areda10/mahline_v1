@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.10
+- **Version :** 5.11
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -18,6 +18,8 @@ Le premier objectif produit est désormais défini comme un **SaaS de gestion po
 ## 2. Stratégie de livraison du premier release — parcours vertical prioritaire (Q252 VALIDÉE)
 
 **Complément workflow Q253 :** une coopérative peut proposer une réduction de quantité ou un produit de remplacement, mais Sales ne modifie la commande qu'après acceptation explicite du client. La proposition reste limitée à la sous-commande concernée ; Inventory revalide la disponibilité et réserve le stock après confirmation. Le refus, l'absence de réponse, le délai et le traitement partiel restent à spécifier.
+
+**Complément Q254 :** si le client refuse, seule la ligne concernée est annulée ; les autres lignes de la même sous-commande continuent. Sales recalcule les montants, Inventory libère uniquement le stock de la ligne annulée, Finance reçoit les montants définitifs et Communication informe le client. Les frais de livraison et le cas d'annulation de toutes les lignes restent à préciser.
 
 La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet et utilisable **client → coopérative → transporteur**. Il n'est pas requis de terminer la spécification exhaustive de toutes les fonctions avancées de chaque domaine avant de commencer ce parcours. Chaque tranche livrée doit toutefois être suffisamment spécifiée, auditée et testée sur ses règles essentielles, autorisations, états, erreurs, dépendances et contrats inter-domaines.
 
@@ -314,6 +316,8 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Définir panier, prix figés, taxes/frais, annulation et transitions d'état.
 - [ ] Gérer les propositions de modification de sous-commande par la coopérative : réduction de quantité ou remplacement de produit, avec acceptation explicite du client avant toute modification ; conserver la commande initiale tant que la proposition n'est pas acceptée (Q253).
 - [ ] Isoler les propositions et réponses par sous-commande et lignes concernées ; historiser les valeurs initiales/proposées, les différences de prix, l'auteur, la notification et la réponse ; définir le refus, l'absence de réponse, les délais et le traitement des autres lignes avant codage (Q253).
+- [ ] En cas de refus explicite du client, annuler uniquement la ligne concernée et poursuivre le traitement des autres lignes de la sous-commande ; conserver l'historique, recalculer les totaux et transmettre les montants définitifs à Finance (Q254).
+- [ ] Coordonner avec Inventory la non-réservation ou la libération idempotente du stock de la ligne annulée, sans affecter les autres lignes ; notifier le client de l'annulation partielle (Q254).
 - [ ] Définir Delivery et son intégration avec les transporteurs et Inventory.
 - [ ] Définir les contrats avec Identity, Localization, Catalog, Inventory, Finance et Audit.
 - [ ] Prévoir tests de concurrence, disponibilité, propriété et isolation.
@@ -459,6 +463,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.11 — 13 novembre 2026
+- Enregistrement de Q254 dans la feuille de route Sales/Inventory : refus client = annulation de la seule ligne concernée, poursuite des autres lignes.
+- Ajout des exigences de recalcul des totaux, libération ciblée et idempotente du stock, transmission des montants à Finance et notification client.
+- Les règles de frais de livraison et d'annulation de toutes les lignes restent ouvertes.
+- Aucun code applicatif modifié et aucune fusion.
 
 ### Version 5.10 — 13 novembre 2026
 - Enregistrement de Q253 dans le workflow Sales/Cooperatives : réduction de quantité ou remplacement uniquement sur proposition et acceptation explicite du client.
