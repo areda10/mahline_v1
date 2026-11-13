@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.54
+- **Version :** 3.55
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,12 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q274 — Nouvelle modification d'une version promotionnelle planifiée (VALIDÉE)
+- **Question :** Que faire si une version promotionnelle est déjà planifiée et que la coopérative souhaite encore la modifier avant son entrée en vigueur ?
+- **Réponse :** B — remplacer la version planifiée, tout en conservant sa trace dans l'historique.
+- **Décision :** tant qu'une version future n'est pas entrée en vigueur, une nouvelle modification remplace la version planifiée courante au lieu de créer une succession de versions futures actives. La version planifiée remplacée reste conservée dans l'historique comme version remplacée/annulée, avec ses paramètres, son auteur et ses dates de création/remplacement. La nouvelle version planifiée reprend une entrée d'effet future validée côté serveur. La version actuellement en vigueur reste applicable jusqu'à la date d'effet de la nouvelle version retenue.
+- **Frontières et contrôles :** Products possède les versions et leur historique ; Catalog expose uniquement la version applicable à l'instant considéré ; Sales revalide et fige le prix au panier/checkout et ne réécrit aucune commande déjà enregistrée. Vérifier les droits du cooperative_admin, l'isolation de sa coopérative, la cohérence chronologique et journaliser le remplacement.
+
 ### Décision Q273 — Entrée en vigueur d'une nouvelle version de promotion (VALIDÉE)
 - **Question :** Quand une nouvelle version d'une promotion active devient-elle applicable ?
 - **Réponse :** C — la coopérative choisit entre application immédiate et application planifiée.
@@ -4561,6 +4567,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.55 — 13 novembre 2026
+- Enregistrement de Q274 : une modification avant échéance remplace la version planifiée ; la version remplacée reste archivée et traçable.
 
 ### Version 3.54 — 13 novembre 2026
 - Enregistrement de Q273 : la coopérative choisit entre application immédiate et planifiée d'une nouvelle version de promotion ; l'ancienne version reste applicable jusqu'à l'entrée en vigueur planifiée.
