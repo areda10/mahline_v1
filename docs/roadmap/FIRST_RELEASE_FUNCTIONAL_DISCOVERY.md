@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.33
+- **Version :** 3.34
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2547,6 +2547,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.34 — 13 novembre 2026
+- Enregistrement de Q253 : la coopérative peut proposer une réduction de quantité ou un remplacement de produit, mais toute modification requiert l'acceptation explicite du client.
+- Définition des responsabilités Sales, Cooperatives, Catalog/Products, Inventory, Finance et Communication ; isolation des propositions au niveau de la sous-commande.
+- Les délais de réponse, refus/absence de réponse, traitement partiel et ajustements de frais/prix restent à préciser avant codage.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.33 — 13 novembre 2026
 - Enregistrement de Q252 : adoption officielle d'une stratégie V1 priorisant le parcours vertical client → coopérative → transporteur.
 - Définition d'un Finance V1 minimal et d'un phasage par dépendances ; les fonctions avancées restent au backlog sans bloquer le premier parcours exploitable.
@@ -3372,6 +3378,25 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 253 — Modification d'une commande par la coopérative en cas d'indisponibilité
+
+- **Question :** Lorsqu'une coopérative ne peut pas fournir la quantité demandée ou le produit commandé, quelles modifications peut-elle proposer et à quelles conditions la commande peut-elle être confirmée ?
+- **Réponse :** C — la coopérative peut proposer une réduction de quantité ou un remplacement de produit, mais le client doit accepter toute modification.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Sales, Cooperatives, Inventory, Catalog/Products, Communication ; workflow de traitement des sous-commandes.
+- **Décision :**
+  - La coopérative ne peut pas modifier unilatéralement la quantité ou remplacer un produit dans une commande déjà passée.
+  - Depuis le traitement de sa sous-commande, elle peut soumettre au client une proposition explicite de réduction de quantité et/ou de remplacement par un autre produit.
+  - Toute proposition doit identifier les lignes concernées, les quantités initiales et proposées, le produit initial et le produit de remplacement le cas échéant, ainsi que les éventuelles différences de prix et leurs conséquences sur le total et les frais.
+  - La modification ne devient effective qu'après acceptation explicite du client, enregistrée et historisée. Avant cette acceptation, la commande et ses montants initiaux restent inchangés.
+  - La coopérative ne peut confirmer définitivement que les lignes et quantités acceptées, sous réserve des contrôles de disponibilité et de réservation du stock par Inventory.
+  - Pour un panier multi-coopératives, la proposition et la réponse du client sont isolées au niveau de la sous-commande et des lignes concernées ; elles ne doivent pas modifier les sous-commandes des autres coopératives.
+  - Le client doit être informé de la proposition et de son résultat via l'espace client et les moyens de communication prévus.
+- **Frontières de responsabilité :** Sales conserve la commande, ses lignes, les propositions et la réponse du client ; Cooperatives initie la proposition dans son périmètre ; Catalog/Products fournit les références des produits proposés ; Inventory confirme la disponibilité et gère les réservations après confirmation ; Finance reçoit les montants commerciaux définitifs et figés transmis par Sales ; Communication délivre les notifications.
+- **Impact :** empêcher toute modification unilatérale de l'achat, préserver le consentement du client et garantir la cohérence des montants, du stock et des sous-commandes.
+- **Points à préciser avant codage complet :** délai de réponse du client, comportement en cas de refus ou d'absence de réponse, possibilité de confirmer les autres lignes de la même sous-commande, limites et critères d'équivalence d'un produit de remplacement, recalcul des frais de livraison et gestion des écarts de prix.
+- **Règle de sécurité et d'audit :** contrôler côté serveur l'identité du client, l'appartenance de la proposition à sa commande, l'habilitation de la coopérative sur la sous-commande, la disponibilité du produit de remplacement et l'état de la commande ; journaliser proposition, notification, acceptation/refus et toute transition, avec protection contre les doubles soumissions.
 
 ### Question 251 — Statut de la version validée pendant le remplacement
 
