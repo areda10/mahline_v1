@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.01
+- **Version :** 3.02
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.02 — 13 novembre 2026
+- Enregistrement de Finance Q221 : en cas d'égalité des restes fractionnaires, départager par identifiant stable de coopérative en ordre croissant.
+- Précision de Q220 : la règle du plus fort reste dispose désormais d'un critère déterministe de départage.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.01 — 13 novembre 2026
 - Enregistrement de Finance Q220 : les centimes résiduels d'une remise répartie sont affectés selon la méthode du plus fort reste, avec départage déterministe des égalités.
 - La somme des parts par sous-commande doit correspondre exactement à la remise globale ; aucun écart de centime n'est accepté.
@@ -3181,6 +3186,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 221 — Départage des restes fractionnaires égaux
+
+- **Question :** Lorsque plusieurs coopératives ont exactement le même reste fractionnaire lors de la répartition d'une remise au plus fort reste, quel critère utiliser pour les départager ?
+- **Réponse :** A — utiliser l'identifiant stable de la coopérative, par ordre croissant.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance et Sales ; déterminisme de la ventilation des remises globales multi-coopératives.
+- **Conséquences :**
+  - Appliquer le critère uniquement lorsque plusieurs coopératives ont un reste fractionnaire égal au rang de distribution du centime résiduel.
+  - Attribuer la priorité à l'identifiant stable de coopérative dont la valeur est la plus petite selon l'ordre de comparaison défini techniquement.
+  - Le critère doit être stable, reproductible et indépendant de l'ordre d'affichage, de traitement ou de création des sous-commandes.
+  - Conserver la garantie que la somme des remises attribuées est exactement égale à la remise globale.
+- **Impact :** le départage des égalités dans la méthode du plus fort reste est désormais fonctionnellement défini.
+
 ### Question 220 — Affectation des centimes résiduels d'une remise répartie
 - **Question :** Après la répartition proportionnelle d'une remise globale entre plusieurs coopératives, comment affecter les centimes résiduels dus aux arrondis ?
 - **Réponse :** C — appliquer une méthode déterministe au plus fort reste.
@@ -3189,11 +3207,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :**
   - Calculer d'abord les parts théoriques proportionnelles de la remise globale, puis leurs montants arrondis au centime inférieur.
   - Distribuer les centimes restant à affecter aux coopératives présentant les plus grands restes fractionnaires, dans l'ordre décroissant.
-  - En cas d'égalité des restes, appliquer un critère de départage stable et déterministe, documenté dans la conception technique, afin que le même panier produise toujours la même ventilation.
+  - En cas d'égalité des restes, départager les coopératives par leur identifiant stable, dans l'ordre croissant, conformément à Q221.
   - Garantir que la somme des remises attribuées aux sous-commandes est exactement égale à la remise globale accordée ; aucun centime ne doit être créé ou perdu.
   - Sales transmet à Finance la ventilation finale figée par sous-commande ; Finance conserve cette ventilation pour le calcul de l'assiette nette et des commissions.
 - **Impact :** le premier release dispose d'une règle reproductible de répartition au centime près pour les remises globales multi-coopératives.
-- **Point technique à préciser :** le critère déterministe de départage des restes égaux et les règles de calcul en unités monétaires entières seront fixés pendant la conception technique.
+- **Point technique à préciser :** les règles de comparaison des identifiants et le calcul en unités monétaires entières seront fixés pendant la conception technique.
 
 ### Question 219 — Répartition d'une remise globale entre coopératives
 
