@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.37
+- **Version :** 3.38
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2546,6 +2546,28 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Décision validée :** les sauvegardes doivent préserver de manière cohérente les fichiers Media (originaux et variantes nécessaires) ainsi que leurs références et métadonnées associées. Une suppression définitive validée ne doit pas être annulée par une restauration ordinaire.
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
+
+### Question 257 — Prix affiché sur la carte d'un produit avec plusieurs variantes (VALIDÉ)
+
+- **Question :** Si un produit possède plusieurs variantes avec des prix différents, quel prix afficher sur la carte du produit ?
+- **Réponse :** A — afficher le prix applicable le plus bas avec la mention « À partir de ».
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Products et Catalog ; carte produit marketplace, variantes et prix applicables.
+- **Conséquences :**
+  - La carte produit affiche le prix applicable le plus bas parmi les variantes commercialisables, précédé de la mention « À partir de ».
+  - Le prix applicable de chaque variante suit Q256 : prix spécifique de variante lorsqu'il est renseigné, sinon héritage du prix de base obligatoire du produit.
+  - Le prix affiché doit être calculé côté serveur à partir des données de prix faisant autorité ; aucune valeur transmise par le navigateur n'est considérée comme fiable.
+  - La fiche produit présente les prix des variantes sélectionnables afin que le client puisse connaître le prix exact avant l'ajout au panier.
+  - Sales revalide le prix de la variante sélectionnée et fige le prix applicable dans le panier/la commande conformément à Q256 ; une modification ultérieure du catalogue ne réécrit pas les commandes existantes.
+  - Si aucune variante commercialisable n'est disponible, la carte ne doit pas présenter un prix trompeur comme prix achetable ; l'état de disponibilité est affiché selon les règles de Catalog/Inventory.
+- **Impact :** donner immédiatement au client un repère de prix attractif et exact sans masquer l'existence de variantes plus coûteuses ; conserver un calcul cohérent entre carte, fiche, panier et commande.
+- **Points restant à préciser :** formatage monétaire/devise et arrondis ; inclusion/exclusion des variantes indisponibles du prix minimum ; gestion des promotions et prix barrés ; comportement si le produit n'a pas de variantes.
+
+### Version 3.38 — 13 novembre 2026
+- Enregistrement de Q257 : la carte produit affiche le prix applicable minimum parmi les variantes commercialisables, avec la mention « À partir de ».
+- Le calcul est côté serveur et cohérent avec Q256 ; la fiche expose les prix des variantes et Sales revalide puis fige le prix sélectionné.
+- Devise, arrondis, variantes indisponibles, promotions et produits sans variantes restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 3.37 — 13 novembre 2026
 - Enregistrement de Q256 : prix de base obligatoire au niveau produit ; prix spécifique facultatif par variante, avec héritage du prix de base si absent.
