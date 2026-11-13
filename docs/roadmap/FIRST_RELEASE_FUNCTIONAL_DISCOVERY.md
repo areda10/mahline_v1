@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.92
+- **Version :** 2.93
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -814,8 +814,40 @@ Chaque spécification de domaine MAHLINE V1 doit être suffisamment complète po
   - Les échanges entre domaines passent par des contrats explicites, DTO/value objects adaptés, interfaces ou événements ; aucun domaine ne doit appeler les détails internes d'un autre domaine.
   - Une fonction métier partagée conserve un propriétaire fonctionnel canonique et un identifiant stable ; les domaines consommateurs référencent cette fonction et documentent leurs propres responsabilités sans la dupliquer.
 - **Conséquence pour Finance :** Finance est un domaine métier autonome, distinct de Sales. Sales reste propriétaire du parcours commercial, du panier, du checkout et des commandes ; Finance est propriétaire des opérations monétaires et documents financiers marketplace. Subscriptions / SaaS Billing reste autonome pour la facturation des abonnements MAHLINE aux coopératives. Les contrats entre ces domaines doivent être spécifiés avant leur implémentation.
-- **Périmètre concerné :** tous les domaines ; Core, Shared, Sales, Finance, Subscriptions / SaaS Billing, Delivery, Inventory, Facturation, Identity, Communication, Media et Audit.
+- **Périmètre concerné :** tous les domaines MAHLINE V1 ; Core et Shared (technique), Sales, Finance, Subscriptions / SaaS Billing, Delivery, Inventory, Identity, Communication, Media, Audit et les autres domaines du référentiel. Facturation est une capacité rattachée au domaine propriétaire du flux, pas un domaine autonome.
 - **Règle :** ne pas créer un domaine Shared fourre-tout et ne pas dupliquer une fonction métier sous prétexte qu'elle est consommée par plusieurs domaines.
+
+## Référentiel fonctionnel V1 par domaine — synchronisé avec la roadmap
+
+Cette matrice constitue la vue fonctionnelle transversale du premier release. Elle doit rester strictement alignée avec la section 1.2 de `DOMAIN_DEVELOPMENT_ROADMAP.md`. Elle identifie les familles de fonctions et leur propriétaire ; elle ne remplace pas les spécifications détaillées de chaque domaine.
+
+| Domaine propriétaire | Fonctions principales à inventorier et spécifier pour V1 | Hors de sa responsabilité |
+|---|---|---|
+| Identity | comptes internes et clients, inscription, authentification, rôles/permissions, sessions, tokens, profils d'identité, vérification e-mail, récupération, sécurité et cycle de vie des comptes | paniers, commandes, adresses commerciales, paiements |
+| Cooperatives | création et cycle de vie des coopératives, profils, coordonnées, utilisateurs/affectations, paramètres, statut, documents institutionnels | produits, commandes, factures, stock |
+| Localization | pays, régions, villes, adresses structurées, validation et référentiels géographiques | propriété commerciale des adresses et calcul financier |
+| Countries | référentiel pays si son autonomie est confirmée ; sinon fonctions intégrées à Localization après ADR | adresses et règles de livraison métier |
+| Categories | taxonomie globale/locale, hiérarchie, rattachement, publication, suppression/détachement et règles de conservation | définition du produit et stock |
+| Products | définition métier du produit si cette responsabilité est confirmée distincte de Catalog : attributs, variantes, prix de vente, informations réglementaires et cycle de vie | publication du catalogue, stock, facturation |
+| Catalog | présentation et publication des produits, recherche/filtrage, visibilité publique, catalogues par coopérative et exposition marketplace | propriété des données produits si Products est confirmé propriétaire ; stock et commandes |
+| Media | upload, validation, métadonnées, stockage privé/public, association technique, accès, remplacement, suppression, antivirus/traitement si retenus et quotas techniques | règles métier déterminant qui peut utiliser un média |
+| Inventory | quantités, disponibilité, mouvements, réservations, ajustements, entrepôts, seuils et libération de stock | commande commerciale et expédition physique |
+| Sales | profil commercial client, panier, checkout, commande multi-coopératives, sous-commandes par coopérative, lignes, prix figés, confirmation/refus, annulation et historique commercial | factures, paiements, commissions, reversements, exécution transport |
+| Finance | facturation marketplace par coopérative/commande, documents financiers client et coopérative, paiements/COD et transactions, remboursements/avoirs, commissions, reversements, rapprochement et états financiers | panier, commande commerciale, abonnement SaaS |
+| Delivery | expéditions par coopérative, colis, tarifs de trajet, transporteurs, affectation, suivi, preuve de livraison, incidents, refus, retours et réexpéditions | panier, commande commerciale et comptabilisation des paiements |
+| Subscriptions / SaaS Billing | plans SaaS, souscriptions, renouvellements, changements de plan, périodes de grâce, impayés, factures et paiements dus à MAHLINE, entitlements, quotas et suspension/réactivation | factures marketplace et reversements aux coopératives |
+| Communication | modèles, e-mails, notifications, préférences techniques, files, retries, délivrabilité et historique d'envoi | règles métier déclenchant la communication |
+| Audit | événements d'audit métier, acteur, sujet, horodatage, avant/après, motif, consultation autorisée, intégrité et rétention | stockage des fichiers et logique métier source |
+| CMS | pages, sections, bannières, menus, FAQ, SEO, brouillons, publication, planification et contenus multilingues | médias, produits, coopératives et commandes |
+| Dashboard | indicateurs et tableaux de bord par rôle/périmètre, agrégations des domaines sources et contrôles d'accès | propriété des données opérationnelles ou financières |
+
+**Règles de lecture et de passage au codage :**
+- Cette matrice est un inventaire directeur, pas une déclaration que toutes les fonctions sont déjà spécifiées ou développées.
+- Les identifiants stables seront attribués dans chaque spécification de domaine après comparaison avec les décisions et les fonctions déjà documentées ; aucun identifiant ne doit être inventé ou réutilisé.
+- Chaque domaine doit disposer de sa spécification détaillée conforme aux règles validées en Q70, avec acteurs, permissions, règles, états, scénarios, erreurs, critères d'acceptation, contrats, données, événements, composants et tests.
+- Avant de coder, comparer cette matrice, les décisions du registre, la spécification du domaine et l'audit réel du dépôt. Si une fonction essentielle V1 reste ambiguë ou sans critère d'acceptation, poursuivre le cadrage ciblé ; si le périmètre essentiel est complet et cohérent, valider le domaine pour le codage.
+- Les fonctions techniques PDF, stockage et envoi sont consommées auprès de Media et Communication. La propriété de la facture reste à Finance pour la marketplace et à Subscriptions / SaaS Billing pour les abonnements MAHLINE.
+- `Facturation` désigne ici une capacité fonctionnelle, pas un domaine autonome : ne pas créer une seconde implémentation de factures qui ferait doublon avec Finance ou SaaS Billing.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3129,6 +3161,12 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.93 — 13 novembre 2026
+- Ajout du référentiel fonctionnel V1 par domaine, synchronisé avec la matrice de la roadmap, afin d'aligner les familles de fonctions et leurs propriétaires.
+- Clarification de l'autonomie de Finance et de la propriété des factures marketplace (Finance) versus abonnements MAHLINE (Subscriptions / SaaS Billing) ; Facturation n'est pas un domaine autonome dans cette architecture V1.
+- Application de Q72 : aucune règle métier dans Core/Shared ; fonctions techniques transversales uniquement et contrats explicites.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 2.92 — 13 novembre 2026
 - Validation de Q72 : les règles métier restent dans leur domaine propriétaire ; Core/Shared sont limités aux responsabilités techniques et transversales, avec contrats explicites.
