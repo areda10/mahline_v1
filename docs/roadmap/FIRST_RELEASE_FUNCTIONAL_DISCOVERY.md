@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.22
+- **Version :** 2.23
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -30,6 +30,23 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les politiques d'accès doivent empêcher un client d'accéder aux données d'un autre client ou aux espaces internes des coopératives.
 - **Périmètre concerné :** Identity, Sales et Localization ; rôles, permissions, inscription, authentification, profil client et parcours marketplace.
 - **Points restant à préciser :** champs du profil client, vérification de l'adresse e-mail, récupération du compte, consentements, suppression/anonymisation et éventuelle conversion d'un compte client en compte interne (aucune conversion automatique n'est autorisée par cette décision).
+
+## Décision d'architecture — Répartition des informations du profil client (VALIDÉE)
+
+- **Question :** Où gérer les informations du profil d'un client marketplace ?
+- **Réponse :** A — Identity gère l'identité et Sales gère le profil commercial.
+- **Décision :** séparer les données d'identité et de sécurité du compte des données métier nécessaires aux achats.
+- **Répartition :**
+  - **Identity :** identité du compte, nom, prénom, adresse e-mail, téléphone et éléments liés à l'authentification et à la sécurité.
+  - **Sales :** profil commercial du client, préférences et informations utiles au parcours d'achat, ainsi que le lien métier avec paniers et commandes.
+  - **Localization :** référentiel et gestion technique des adresses structurées ; Sales en définit l'usage commercial (notamment les adresses de livraison). L'adresse postale ne doit pas être dupliquée dans Identity comme donnée de sécurité.
+- **Conséquences :**
+  - Identity reste le propriétaire de l'identité et du cycle de vie du compte customer.
+  - Sales ne crée pas de mécanisme d'authentification ni de mot de passe parallèle.
+  - Les commandes et leur historique restent dans Sales ; Identity ne devient pas propriétaire des données commerciales.
+  - Les accès aux profils, adresses, paniers et commandes doivent être limités au client concerné et aux acteurs internes autorisés selon leur périmètre.
+- **Périmètre concerné :** Identity, Sales et Localization.
+- **Points restant à préciser :** champs exacts du profil commercial, nombre d'adresses autorisées, adresse par défaut, validation des coordonnées, consentements et politique de conservation/anonymisation.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2343,6 +2360,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.23 — 13 novembre 2026
+- Décision validée : séparation du profil client entre Identity (identité et sécurité), Sales (profil commercial, paniers et commandes) et Localization (adresses structurées utilisées par Sales).
 
 ### Version 2.22 — 13 novembre 2026\n- Décision d'architecture validée : le client marketplace reçoit le rôle distinct `customer` géré par Identity ; le rôle interne `user` n'est pas réutilisé et aucune authentification parallèle Customer n'est créée.\n\n### Version 2.21 — 13 novembre 2026
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
