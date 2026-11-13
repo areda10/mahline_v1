@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.1
+- **Version :** 1.2
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -55,7 +55,7 @@ Dossiers présents dans `app/Domains` :
 
 Media, Sales, Inventory, Finance, Communication et CMS ne possèdent pas de dossier applicatif ni de tests dédiés dans l'arborescence examinée.
 
-Les périmètres Abonnements/Billing SaaS, Export/Compliance et éventuellement Logistics doivent être spécifiés avant de décider s'ils constituent des domaines autonomes ou des sous-périmètres d'autres domaines.
+Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus comme domaines fonctionnels autonomes pour MAHLINE V1 (décision A, validée le 13 novembre 2026). Export / Compliance reste à spécifier avant de décider de son autonomie.
 
 ## 3. Liste de suivi par domaine
 
@@ -230,15 +230,38 @@ Les périmètres Abonnements/Billing SaaS, Export/Compliance et éventuellement 
 - [ ] Définir permissions éditoriales et audit.
 - [ ] Tester rendu public et gestion back-office.
 
+### 3.16 Delivery — À démarrer
+
+**Responsabilité :** expéditions physiques et exécution de la livraison des commandes marketplace.
+
+- [ ] Spécifier Shipment / Delivery, colis, transporteurs, affectation et statuts.
+- [ ] Définir les étapes de prise en charge, expédition, suivi, livraison et preuve de livraison.
+- [ ] Définir les incidents, échecs, refus du destinataire, retours et réexpéditions.
+- [ ] Définir les tarifs de livraison par trajet/ville et la répartition par coopérative.
+- [ ] Définir l'espace et les accès transporteur, sans exposer les données d'autres coopératives.
+- [ ] Intégrer Sales, Inventory, Finance, Localization et Communication par contrats explicites.
+- [ ] Prévoir tests de transitions, permissions, traçabilité, concurrence et idempotence.
+
+**Frontière :** Sales possède le panier et les commandes commerciales ; Delivery possède l'exécution et le suivi des expéditions. La livraison n'est pas un sous-module interne de Sales.
+
+### 3.17 Subscriptions / SaaS Billing — À démarrer
+
+**Responsabilité :** commercialisation, cycle de vie et facturation de l'abonnement SaaS payé à MAHLINE par les coopératives.
+
+- [ ] Spécifier les plans START, PRO et BUSINESS, leurs prix, périodicités et limites.
+- [ ] Gérer souscriptions, renouvellements, changements de plan, échéances et historique.
+- [ ] Définir les états d'abonnement, périodes de grâce, impayés, suspension et réactivation.
+- [ ] Appliquer les entitlements : modules, nombre d'utilisateurs, quotas Media et limites d'usage.
+- [ ] Définir factures SaaS, paiements d'abonnement et rapprochement.
+- [ ] Définir les pouvoirs root et les notifications de renouvellement/impayé.
+- [ ] Intégrer Cooperatives, Identity, Media, Finance (si nécessaire via contrats) et Communication.
+- [ ] Prévoir tests de calcul, dates, renouvellement, idempotence, limites et accès après suspension.
+
+**Frontière :** ce domaine gère uniquement la relation commerciale coopérative ↔ MAHLINE. Finance marketplace reste responsable des factures clients, paiements de commandes, commissions et reversements coopératives.
+
 ## 4. Périmètres complémentaires à spécifier
 
-Ces périmètres ne doivent pas devenir des domaines autonomes sans décision d'architecture :
-
-- **Abonnements / SaaS Billing :** plans START, PRO et BUSINESS, quotas, droits, renouvellement, suspension et paiement de l'abonnement Mahline.
-- **Export / Compliance :** exigences réglementaires, documents d'export et conformité par pays cible.
-- **Logistics :** à étudier si les règles de transporteurs, expéditions et suivi deviennent trop importantes pour Sales.
-
-Le périmètre Abonnements doit être distingué de Finance marketplace (factures clients, commissions et reversements).
+- **Export / Compliance :** exigences réglementaires, documents d'export et conformité par pays cible. Son autonomie comme domaine sera décidée après spécification.
 
 ## 5. Ordre de développement recommandé
 
@@ -257,8 +280,10 @@ Ordre de travail proposé, à confirmer après audit des dépendances réelles e
 11. Communication : événements, e-mails et notifications.
 12. CMS : contenu et publication.
 13. Dashboard : indicateurs issus des domaines stabilisés.
-14. Spécifier et développer Abonnements/SaaS Billing et Export/Compliance selon les décisions approuvées.
-15. Intégration globale, audit de sécurité, staging et préparation production.
+14. Delivery : expéditions, transporteurs, suivi, incidents et retours.
+15. Subscriptions / SaaS Billing : plans, renouvellements, entitlements, facturation et suspension.
+16. Spécifier Export / Compliance selon les marchés et exigences réglementaires retenus.
+17. Intégration globale, audit de sécurité, staging et préparation production.
 
 Les dépendances peuvent permettre du travail parallèle, mais aucun domaine ne doit contourner les règles de propriété et les contrats inter-domaines.
 
@@ -302,6 +327,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.2 — 13 novembre 2026
+- Décision architecturale A validée : Delivery et Subscriptions / SaaS Billing sont deux domaines fonctionnels autonomes pour MAHLINE V1.
+- Création de leurs périmètres de responsabilité, tâches de cadrage et frontières avec Sales et Finance.
+- Delivery possède l'exécution des expéditions ; Sales conserve le panier et les commandes commerciales.
+- Subscriptions / SaaS Billing possède les abonnements et factures dues à MAHLINE ; Finance conserve la facturation marketplace, les commissions et reversements.
 
 ### Version 1.1 — 12 novembre 2026
 - Définition du premier objectif produit : SaaS de gestion coopérative + marketplace publique.
