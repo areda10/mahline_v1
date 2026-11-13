@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.35
+- **Version :** 3.36
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2547,6 +2547,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.36 — 13 novembre 2026
+- Enregistrement de Q255 : sans réponse du client à l'échéance configurable, seule la ligne concernée est annulée automatiquement.
+- Ajout des notifications préalables, de l'expiration côté serveur, de l'idempotence et de la gestion des réponses concurrentes.
+- Le délai par défaut, le paramétrage, le canal de notification et les frais de livraison restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion.
+
 ### Version 3.35 — 13 novembre 2026
 - Enregistrement de Q254 : en cas de refus client d'une modification proposée, seule la ligne concernée est annulée ; les autres lignes de la sous-commande continuent.
 - Définition des responsabilités Sales, Inventory, Finance et Communication pour le recalcul des montants, la libération de stock et l'information du client.
@@ -3384,6 +3390,23 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 255 — Absence de réponse du client à une proposition de modification
+
+- **Question :** Si le client ne répond pas à une proposition de réduction de quantité ou de remplacement, quel traitement appliquer ?
+- **Réponse :** A — après un délai défini, seule la ligne concernée est annulée automatiquement.
+- **Statut :** VALIDÉ — premier release.
+- **Décision :**
+  - Chaque proposition comporte une échéance de réponse explicite, calculée selon un délai configurable.
+  - Le client reçoit une notification de la proposition et une notification préalable à l'expiration selon les règles de Communication.
+  - À l'expiration sans réponse, Sales clôt la proposition comme expirée et annule automatiquement uniquement la ligne concernée.
+  - Les autres lignes de la même sous-commande et les autres sous-commandes de la commande multi-coopératives continuent leur traitement normal.
+  - La ligne d'origine, la proposition, l'échéance, les notifications et l'événement d'expiration/annulation restent conservés dans l'historique.
+  - Inventory ne réserve pas de stock pour la ligne annulée ; toute réservation existante liée à cette ligne est libérée une seule fois. Les autres lignes ne sont pas affectées.
+  - Sales recalcule les montants et transmet à Finance les montants définitifs et leur ventilation ; Communication conserve la preuve des notifications.
+- **Frontières de responsabilité :** Sales pilote l'échéance, l'expiration, l'annulation de ligne et les totaux ; Communication envoie les notifications ; Inventory libère le stock ciblé ; Finance enregistre les montants transmis.
+- **Points à préciser avant codage :** durée par défaut, paramétrage éventuel par coopérative, moment et canal de la notification préalable, comportement si une réponse arrive au même instant que l'expiration, règles de frais de livraison et annulation de toutes les lignes.
+- **Règle de sécurité et d'intégrité :** expiration exécutée côté serveur, transition atomique et idempotente ; vérifier que la proposition est toujours en attente et que la ligne n'est pas déjà annulée/traitée ; arbitrer les réponses concurrentes par verrouillage/contrôle de version ; journaliser l'échéance et l'acteur système.
 
 ### Question 254 — Conséquence du refus client d'une modification proposée
 
