@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.33
+- **Version :** 2.34
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -169,6 +169,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Le signalement ne provoque pas de restauration automatique de l'ancienne adresse e-mail ; toute correction d'identité doit passer par la procédure de récupération et ses contrôles.
   - La durée du blocage, les étapes de vérification, les critères de déblocage et les notifications associées restent à définir dans la conception détaillée.
   - L'incident et les actions de sécurité sont journalisés sans enregistrer de mot de passe, token, lien secret ou autre donnée d'authentification.
+
+### Question 14 — Autorisation de déblocage après signalement de sécurité (VALIDÉ)
+- **Question :** Qui peut débloquer le compte après un signalement de changement d'e-mail non autorisé ?
+- **Réponse :** A — le compte est débloqué uniquement après vérification sécurisée de l'identité du client, selon une procédure automatisée ou assistée par le support.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity et Communication ; récupération de compte, vérification d'identité, gestion des incidents et déblocage.
+- **Conséquences :**
+  - Le déblocage dépend de la réussite des contrôles de récupération et de la vérification du propriétaire légitime ; il ne dépend pas uniquement de l'écoulement d'un délai.
+  - La récupération peut être automatisée lorsque les preuves et contrôles requis sont suffisants.
+  - Le support peut assister le client lorsque la procédure automatisée ne permet pas de conclure, selon un processus contrôlé et traçable.
+  - Aucun déblocage automatique fondé uniquement sur une durée fixe n'est autorisé.
+  - Les preuves acceptées, étapes de contrôle, habilitations du support, validation finale et modalités de déblocage restent à détailler dans la conception technique.
+  - Chaque action de récupération et de déblocage doit être journalisée sans stocker de secrets d'authentification.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2482,6 +2495,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.34 — 13 novembre 2026
+- Enregistrement de la Question 14 : déblocage uniquement après vérification sécurisée de l'identité, par procédure automatisée ou avec assistance contrôlée du support ; aucun déblocage fondé seulement sur un délai.
 
 ### Version 2.33 — 13 novembre 2026
 - Enregistrement de la Question 13 : signalement d'un changement d'e-mail non autorisé entraînant un blocage temporaire, la révocation des sessions et tokens, puis une récupération sécurisée ; durée et contrôles détaillés restent à définir.
