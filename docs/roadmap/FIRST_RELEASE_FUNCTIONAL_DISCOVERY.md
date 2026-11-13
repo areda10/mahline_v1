@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.56
+- **Version :** 2.57
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -420,6 +420,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Les données pseudonymisées ne sont pas considérées comme anonymisées et restent soumises aux règles de protection et de conservation applicables.
 - L'opération de suppression ou d'anonymisation est tracée sans conserver dans la trace des données personnelles qui devraient être supprimées.
 - Les modalités techniques, les contrôles de réidentification et les exceptions légales seront précisés lors de la conception technique et de la validation juridique.
+
+### Question 37 — Autorisation d'une prolongation de conservation au-delà de 5 ans
+
+**Décision validée : C**
+
+- Aucune prolongation de conservation ne peut être autorisée par simple décision discrétionnaire de `super_admin_root` ou d'un responsable du support.
+- Une conservation au-delà des 5 ans n'est possible que lorsqu'une obligation légale applicable ou une décision judiciaire l'impose, ou lorsqu'un gel légalement justifié est requis dans le cadre d'un litige.
+- La prolongation est limitée aux données strictement nécessaires, à la finalité concernée et à la durée imposée ou justifiée par cette obligation.
+- Le fondement, le périmètre, la date de début et la date de fin ou de réexamen sont documentés et audités.
+- À la fin de l'obligation ou du gel, les données sont supprimées ou anonymisées conformément à la règle de la Question 36.
+- Les modalités de mise en œuvre et de preuve de ces obligations seront précisées dans la conception technique et validées juridiquement.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2733,6 +2744,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.57 — 13 novembre 2026
+- Enregistrement de la Question 37 : aucune prolongation discrétionnaire au-delà de 5 ans ; conservation prolongée uniquement en présence d'une obligation légale applicable, d'une décision judiciaire ou d'un gel légalement justifié, limité au strict nécessaire.
 
 ### Version 2.56 — 13 novembre 2026
 - Enregistrement de la Question 36 : à l'expiration des 5 ans, suppression des données identifiantes et justificatifs, et conservation éventuelle de statistiques uniquement sous forme anonymisée irréversible, sous réserve des obligations légales.
