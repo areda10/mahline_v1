@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.50
+- **Version :** 2.51
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -355,6 +355,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le délai s'applique au premier niveau de contestation et, lorsque le premier recours est refusé, au second et dernier niveau auprès de `super_admin_root`, à compter de la notification de cette décision.
 - La date de notification, la date limite et la date de dépôt de chaque recours sont historisées.
 - Les modalités de calcul en cas d'échec de notification, d'indisponibilité du service ou de jour non ouvré seront précisées dans la conception technique.
+
+### Question 31 — Traitement d'une contestation déposée après le délai de 7 jours
+
+**Décision validée : B**
+
+- Une contestation déposée après le délai normal de 7 jours calendaires n'est pas automatiquement recevable.
+- Le client peut joindre une demande motivée expliquant les circonstances du retard et, lorsque cela est possible, les éléments qui la justifient.
+- Un responsable du support disposant d'une habilitation dédiée examine la demande et décide si le retard peut être exceptionnellement accepté.
+- La décision, sa motivation, les dates, les justificatifs éventuels et l'identité du décideur sont historisés dans le dossier.
+- En cas d'acceptation, la contestation suit le processus normal du niveau concerné ; cette acceptation ne réactive pas automatiquement le compte et ne débloque pas l'accès.
+- En cas de refus, le client est notifié selon les règles de notification déjà définies ; la décision et son motif sont consultables dans son espace authentifié.
+- Les critères précis d'acceptation, les éventuelles limites d'exception et la prévention des conflits d'intérêts seront détaillés dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2668,6 +2680,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.51 — 13 novembre 2026
+- Enregistrement de la Question 31 : une contestation tardive peut être exceptionnellement admise sur demande motivée, après décision d'un responsable du support habilité ; décision historisée et absence de déblocage automatique du compte.
 
 ### Version 2.50 — 13 novembre 2026
 - Enregistrement de la Question 30 : délai de 7 jours calendaires après notification du refus pour déposer chaque niveau de contestation.
