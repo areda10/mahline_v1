@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.48
+- **Version :** 2.49
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -334,6 +334,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Les motifs détaillés, les vérifications et les éléments internes de décision ne sont pas exposés dans l'e-mail ; ils sont consultables dans l'espace client après authentification, selon les règles de visibilité applicables.
 - L'envoi de la notification et la décision communiquée sont historisés.
 - Le contenu exact des notifications et les informations affichées dans l'espace client seront précisés dans la conception technique et le cadrage Communication.
+
+### Question 29 — Nombre de niveaux de contestation d'un refus de réouverture
+
+**Décision validée : B**
+
+- La procédure autorise au maximum deux niveaux de contestation pour une décision de refus de réouverture.
+- Le premier niveau est examiné par un responsable du support explicitement habilité, selon les règles de séparation des tâches.
+- Si le premier recours est refusé, le client peut former un second et dernier recours auprès de `super_admin_root`.
+- La décision rendue par `super_admin_root` au second niveau clôt la procédure de contestation de cette décision ; aucun recours successif supplémentaire n'est prévu dans ce mécanisme.
+- Chaque recours, ses motifs, les éléments examinés, les intervenants, les dates et la décision sont historisés ; le client est notifié conformément à la Question 28.
+- Les délais de recours, les conditions de recevabilité et les modalités de présentation du recours final seront précisés dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2647,6 +2658,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.49 — 13 novembre 2026
+- Enregistrement de la Question 29 : deux niveaux maximum de contestation ; premier examen par un responsable du support habilité, second et dernier recours auprès de `super_admin_root`.
 
 ### Version 2.48 — 13 novembre 2026
 - Enregistrement de la Question 28 : notification minimale automatique au client de toute décision sur sa contestation, acceptée ou refusée, avec accès sécurisé aux détails.
