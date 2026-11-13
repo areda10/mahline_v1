@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.71
+- **Version :** 2.72
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -570,6 +570,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - L'historique est conservé selon les règles de conservation applicables au dossier et reste soumis aux règles de protection des données et de suppression/anonymisation déjà définies.
 - Cette interdiction concerne la suppression individuelle ou globale depuis l'espace client ; elle n'empêche pas l'effacement ou l'anonymisation à l'échéance de conservation, ni l'exercice des droits légaux du client selon les procédures applicables.
 - Les événements nécessaires à l'audit et à la traçabilité ne peuvent pas être altérés par le client.
+
+### Question 52 — Accès du support à l'historique des générations ZIP
+
+**Décision validée : A**
+
+- Seuls les agents du support expressément autorisés à consulter le dossier de contestation peuvent consulter l'historique des générations ZIP associé.
+- L'accès est limité aux informations nécessaires à la prise en charge du dossier ; les détails techniques internes et les données sensibles ne sont pas exposés par défaut.
+- Chaque consultation est journalisée avec l'identité de l'agent, la date, le dossier concerné et le périmètre consulté.
+- Les droits d'accès suivent les règles d'autorisation du dossier de récupération et peuvent être retirés ; aucune permission générale n'est accordée à l'ensemble du support.
+- super_admin_root conserve l'accès complet selon les règles d'audit et de supervision déjà définies.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2883,6 +2893,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.72 — 13 novembre 2026
+- Enregistrement de la Question 52 : accès à l'historique ZIP limité aux agents du support expressément autorisés sur le dossier, avec journalisation des consultations.
 
 ### Version 2.71 — 13 novembre 2026
 - Enregistrement de la Question 51 : le client ne peut pas supprimer l'historique des générations ZIP ; conservation selon les règles du dossier et effacement/anonymisation à échéance.
