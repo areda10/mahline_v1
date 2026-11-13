@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.28
+- **Version :** 3.29
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,10 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.29 — 13 novembre 2026
+- Enregistrement de Finance Q248 : validation/refus par `super_admin_root` sur toutes les coopératives et `super_admin` affecté sur son périmètre ; le `cooperative_admin` ne valide pas ses propres dépôts.
+- Séparation dépôt/contrôle, vérification serveur et journalisation de la décision par version ; aucun code modifié et aucune fusion.
+
 ### Version 3.28 — 13 novembre 2026
 - Enregistrement de Finance Q247 : un justificatif déposé est immédiatement visible par les personnes autorisées, mais conserve le statut « à vérifier » jusqu'à validation.
 - Le dépôt n'est pas une acceptation financière ; le statut est suivi par version et les changements sont journalisés. L'autorité de validation reste à définir.
@@ -3326,6 +3330,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 248 — Autorité de validation des justificatifs
+
+- **Question :** Qui peut valider ou refuser un justificatif déposé par une coopérative ?
+- **Réponse :** D — `super_admin_root` et `super_admin` affecté ; le `cooperative_admin` ne peut pas valider ses propres justificatifs.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; validation ou refus des justificatifs transmis dans les dossiers financiers.
+- **Conséquences :**
+  - Le `super_admin_root` peut valider ou refuser les justificatifs de toutes les coopératives.
+  - Le `super_admin` peut valider ou refuser uniquement les justificatifs des coopératives qui lui sont affectées.
+  - Le `cooperative_admin` peut déposer et remplacer les justificatifs de sa propre coopérative conformément à Q246, mais ne peut pas valider ni refuser ses propres dépôts.
+  - Les rôles `user` et `customer` ne disposent pas de cette autorisation par défaut.
+  - La validation ou le refus est contrôlé côté serveur, limité au périmètre coopératif autorisé et journalisé avec l'acteur, la décision, la version du justificatif et l'horodatage.
+  - Le dépôt conserve son statut « à vérifier » jusqu'à une décision prise par un acteur habilité, conformément à Q247.
+- **Impact :** instaurer une séparation des responsabilités entre le dépôt d'une preuve par la coopérative et son contrôle par un responsable MAHLINE.
+- **Points techniques à préciser :** transitions de statut, motif obligatoire de refus, éventuelle possibilité de soumettre une nouvelle version après refus, notifications, gestion des validations concurrentes et idempotence.
 
 ### Question 247 — Statut initial d'un justificatif transmis
 
