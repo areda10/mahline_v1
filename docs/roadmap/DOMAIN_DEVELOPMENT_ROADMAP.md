@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.11
+- **Version :** 5.12
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -21,7 +21,18 @@ Le premier objectif produit est désormais défini comme un **SaaS de gestion po
 
 **Complément Q254 :** si le client refuse, seule la ligne concernée est annulée ; les autres lignes de la même sous-commande continuent. Sales recalcule les montants, Inventory libère uniquement le stock de la ligne annulée, Finance reçoit les montants définitifs et Communication informe le client. Les frais de livraison et le cas d'annulation de toutes les lignes restent à préciser.
 
+**Complément Q255 :** sans réponse à l'échéance configurable, la proposition expire et seule la ligne concernée est annulée automatiquement ; les autres lignes continuent. Notifications préalables, expiration serveur, idempotence et arbitrage des réponses concurrentes sont obligatoires.
+
 La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet et utilisable **client → coopérative → transporteur**. Il n'est pas requis de terminer la spécification exhaustive de toutes les fonctions avancées de chaque domaine avant de commencer ce parcours. Chaque tranche livrée doit toutefois être suffisamment spécifiée, auditée et testée sur ses règles essentielles, autorisations, états, erreurs, dépendances et contrats inter-domaines.
+
+### Démarrage du développement Marketplace V1 — périmètre initial validé par demande utilisateur
+- Objectif : rendre le catalogue consultable et achetable, avec photos, prix et quantités/disponibilités cohérents, et intégrer la gestion de ces données dans les espaces des rôles.
+- Coopérative / cooperative_admin : gérer ses produits autorisés, leurs photos, prix et données de stock selon les droits de son espace.
+- Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
+- Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
+- Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- Première étape obligatoire : audit du code existant et des routes, contrôleurs, services, modèles, migrations, policies/gates, vues, tests et liaisons inter-domaines avant toute modification.
+- Développement incrémental sur une branche de travail dédiée, tests ciblés puis suite requise ; aucune fusion vers main sans demande explicite.
 
 ### Phasage prioritaire
 
@@ -318,6 +329,7 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Isoler les propositions et réponses par sous-commande et lignes concernées ; historiser les valeurs initiales/proposées, les différences de prix, l'auteur, la notification et la réponse ; définir le refus, l'absence de réponse, les délais et le traitement des autres lignes avant codage (Q253).
 - [ ] En cas de refus explicite du client, annuler uniquement la ligne concernée et poursuivre le traitement des autres lignes de la sous-commande ; conserver l'historique, recalculer les totaux et transmettre les montants définitifs à Finance (Q254).
 - [ ] Coordonner avec Inventory la non-réservation ou la libération idempotente du stock de la ligne annulée, sans affecter les autres lignes ; notifier le client de l'annulation partielle (Q254).
+- [ ] Définir et implémenter l'échéance configurable des propositions de modification ; sans réponse à expiration, Sales annule uniquement la ligne concernée, notifie le client et déclenche une libération de stock ciblée et idempotente (Q255).
 - [ ] Définir Delivery et son intégration avec les transporteurs et Inventory.
 - [ ] Définir les contrats avec Identity, Localization, Catalog, Inventory, Finance et Audit.
 - [ ] Prévoir tests de concurrence, disponibilité, propriété et isolation.
@@ -463,6 +475,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.12 — 13 novembre 2026
+- Enregistrement de Q255 : expiration configurable d'une proposition sans réponse et annulation automatique de la seule ligne concernée.
+- Formalisation du périmètre de démarrage Marketplace V1 : photos via Media, prix via Catalog/Products, quantités disponibles via Inventory, vues par rôle et catalogue client.
+- Audit du code existant obligatoire avant toute modification ; aucune fusion vers main.
+- Aucun code applicatif modifié dans cette mise à jour documentaire.
 
 ### Version 5.11 — 13 novembre 2026
 - Enregistrement de Q254 dans la feuille de route Sales/Inventory : refus client = annulation de la seule ligne concernée, poursuite des autres lignes.
