@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.54
+- **Version :** 2.55
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -400,6 +400,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Les consultations et actions sensibles sur ces historiques sont journalisées.
 - Les agents non habilités ne disposent d'aucun accès à ces informations.
 - Les permissions précises, les filtres par dossier et les règles d'audit seront définis dans la conception technique.
+
+### Question 35 — Durée de conservation de l'historique des contestations et exceptions
+
+**Décision validée : B**
+
+- L'historique des contestations et des demandes d'exception tardive est conservé pendant 5 ans après la clôture définitive du dossier.
+- La durée s'applique aux décisions, motifs, dates, identités des intervenants, événements de notification et traces de consultation nécessaires à l'audit.
+- Les justificatifs contenant des données personnelles ou sensibles doivent être limités au strict nécessaire et soumis à des règles de conservation et de suppression adaptées ; leur conservation ne doit pas être prolongée automatiquement au seul motif que l'historique du dossier est conservé 5 ans.
+- À l'expiration de la durée, les données sont supprimées ou anonymisées selon les obligations légales applicables et les éventuelles obligations de conservation ou de gel liées à un litige.
+- Cette durée de 5 ans constitue la décision fonctionnelle MAHLINE et reste à valider au regard du droit marocain, notamment des exigences applicables en matière de protection des données personnelles et de conservation des pièces.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2713,6 +2723,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.55 — 13 novembre 2026
+- Enregistrement de la Question 35 : conservation de l'historique des contestations et exceptions pendant 5 ans après clôture définitive, sous réserve de validation juridique et avec traitement distinct des justificatifs personnels/sensibles.
 
 ### Version 2.54 — 13 novembre 2026
 - Enregistrement de la Question 34 : accès complet de `super_admin_root` et accès limité aux dossiers nécessaires pour les responsables du support expressément habilités, avec journalisation des consultations sensibles.
