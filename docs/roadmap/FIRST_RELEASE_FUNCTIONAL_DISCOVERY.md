@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.35
+- **Version :** 2.36
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -195,6 +195,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Aucune information personnelle simple ou facilement devinable ne suffit à elle seule pour récupérer le compte.
   - Les preuves acceptées, niveaux de contrôle, habilitations, validations, délais et notifications alternatives restent à définir dans la conception détaillée.
   - Toutes les étapes et décisions doivent être journalisées sans conserver de mots de passe, tokens, codes ou secrets d'authentification.
+
+### Question 16 — Historique des demandes de récupération de compte (VALIDÉ)
+- **Question :** Faut-il conserver une trace des demandes de récupération de compte ?
+- **Réponse :** A — conserver un historique de sécurité complet : date, motif, statut, étapes de vérification, intervenant support et décision finale, sans enregistrer les documents sensibles ni les secrets.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity, Audit et Communication ; incidents de sécurité, récupération de compte et traçabilité des interventions.
+- **Conséquences :**
+  - Chaque demande de récupération donne lieu à un historique retraçant sa date, son motif, son statut, les étapes de vérification réalisées, l'intervenant support et la décision finale.
+  - L'historique permet de suivre les demandes répétées et d'auditer les actions effectuées pendant la récupération.
+  - Les documents d'identité, pièces justificatives, mots de passe, tokens, codes, liens secrets et autres données sensibles ne sont pas copiés dans les journaux d'audit.
+  - Les données strictement nécessaires à la traçabilité sont protégées par des accès autorisés et une politique de conservation à définir.
+  - Les règles de consultation, de rectification éventuelle, de conservation et de purge seront précisées lors de la conception détaillée, sans altérer l'intégrité de la piste d'audit.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2508,6 +2520,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.36 — 13 novembre 2026
+- Enregistrement de la Question 16 : historique de sécurité détaillé des demandes de récupération, sans conserver les documents sensibles ni les secrets d'authentification.
 
 ### Version 2.35 — 13 novembre 2026
 - Enregistrement de la Question 15 : récupération renforcée avec vérification d'identité par le support même sans accès à l'ancienne et à la nouvelle adresse e-mail ; preuves et contrôles détaillés restent à définir.
