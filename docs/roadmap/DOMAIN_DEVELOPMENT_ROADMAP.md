@@ -310,7 +310,7 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Pour chaque remboursement confirmé, recalculer la commission à annuler sur le montant net cumulé des produits remboursés après remise et hors livraison, puis comptabiliser uniquement la différence avec les corrections déjà enregistrées ; chaque correction reste distincte et liée à la commission initiale et au remboursement déclencheur.
 - [ ] Déclencher l'enregistrement de la correction immédiatement après la confirmation définitive du remboursement transmise par Sales ; ne pas attendre le rapprochement périodique ni la réception effective des fonds par le client. Une demande non confirmée ne déclenche aucune correction.
 - [ ] Préserver l'immutabilité et l'historique des commissions initiales et corrections ; plafonner le cumul à la commission initiale, empêcher le double comptage d'un remboursement et définir précision/arrondi au centime, concurrence et idempotence.
-- [ ] Régulariser les corrections de commission sur les reversements coopératives : ajuster le montant si le reversement n'est pas exécuté ; après exécution, créer un crédit distinct au bénéfice de la coopérative, imputable sur son prochain reversement et suivi jusqu'à son imputation complète.
+- [ ] Régulariser les corrections de commission sur les reversements coopératives : ajuster le montant si le reversement n'est pas exécuté ; après exécution, créer un crédit distinct au bénéfice de la coopérative. Imputer automatiquement ce crédit sur les reversements successifs, dans la limite du montant de chacun, et reporter le solde jusqu'à épuisement (Q227-Q228) ; conserver les liens d'origine et l'historique de chaque imputation.
 - [ ] Définir le traitement des commandes multi-coopératives.
 - [ ] Définir génération PDF et intégration Communication.
 - [ ] Séparer facturation marketplace et facturation des abonnements Mahline.
@@ -435,6 +435,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 3.5 — 13 novembre 2026
+- Enregistrement de Finance Q228 : un crédit coopérative supérieur au prochain reversement est imputé automatiquement sur plusieurs reversements successifs ; le solde restant est reporté jusqu'à épuisement.
+- Alignement de la matrice Finance : imputation plafonnée au montant du reversement et au solde du crédit, historique de chaque application conservé, sans validation manuelle du report.
+- Priorité entre crédits multiples, reversements nuls/annulés, concurrence, rapprochement et idempotence restent à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.4 — 13 novembre 2026
 - Enregistrement de Finance Q227 : correction imputée au reversement si celui-ci n'est pas encore exécuté ; après exécution, création d'un crédit coopérative imputable sur le prochain reversement.
