@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.89
+- **Version :** 2.90
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -770,6 +770,26 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Toute évolution d'une règle met à jour les documents concernés avant la poursuite de l'implémentation ; aucune divergence silencieuse entre registre général et spécification de domaine n'est admise.
 - **Périmètre concerné :** tous les domaines MAHLINE V1 ; documentation fonctionnelle, architecture, développement et assurance qualité.
 - **Conséquence :** le registre général assure la cohérence globale ; la spécification du domaine guide l'exécution et la vérification fonction par fonction.
+
+### Question 70 — Contenu minimal obligatoire d'une spécification fonctionnelle par domaine
+
+**Décision validée : C**
+
+Chaque spécification de domaine MAHLINE V1 doit être suffisamment complète pour servir de référence fonctionnelle, architecturale et de checklist pendant le développement. Elle documente au minimum :
+
+- **Fonctionnalités :** identifiant stable, objectif, description, périmètre V1, priorité et statut.
+- **Acteurs et accès :** rôles concernés, responsabilités, permissions, politiques et règles de visibilité.
+- **Règles métier :** préconditions, validations, états, transitions, calculs, contraintes et résultats attendus.
+- **Scénarios :** parcours nominaux, variantes, cas limites, exceptions, refus, annulations et reprises.
+- **Erreurs :** erreurs fonctionnelles et techniques pertinentes, conditions de déclenchement et comportement attendu.
+- **Dépendances et relations inter-domaines :** domaines propriétaires, responsabilités, contrats, données échangées, déclencheurs et événements émis/reçus.
+- **Données :** entités, attributs utiles, relations, contraintes d'intégrité, cycle de vie et règles de conservation pertinentes.
+- **Architecture et composants concernés :** modèles, migrations, services, contrôleurs, routes, interfaces, permissions, jobs, notifications et fichiers à créer ou adapter, selon le besoin.
+- **Tests et acceptation :** critères d'acceptation vérifiables, scénarios de tests unitaires/Feature/HTTP/intégration pertinents et liens vers les tests associés.
+- **Traçabilité :** liens entre identifiant fonctionnel, décision du registre général, spécification, composants techniques, tests, anomalies et preuve de validation.
+- Les éléments non applicables à un domaine doivent être indiqués comme tels avec justification, plutôt que laissés ambigus. Les décisions en attente, reports et exclusions V1 doivent être explicitement identifiés.
+- **Périmètre concerné :** toutes les spécifications fonctionnelles des domaines du SaaS et du marketplace MAHLINE V1.
+- **Conséquence :** aucune fonctionnalité ne passe au codage sur la seule base d'un intitulé ; sa règle, ses accès, ses dépendances et ses critères de validation doivent être définis.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3083,6 +3103,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.90 — 13 novembre 2026
+- Ajout de la décision Q70 : contenu minimum obligatoire et complet des spécifications de domaine, de la définition fonctionnelle jusqu'aux relations inter-domaines, données, composants techniques, tests et traçabilité.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.89 — 13 novembre 2026
 - Ajout de la décision de méthode Q69 : C — registre général pour la vision et la traçabilité, spécification versionnée par domaine comme checklist de codage, avec identifiants fonctionnels cohérents et liens vers code/tests.
