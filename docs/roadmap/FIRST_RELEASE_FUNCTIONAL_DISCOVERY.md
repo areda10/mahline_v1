@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.03
+- **Version :** 3.04
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.04 — 13 novembre 2026
+- Enregistrement de Finance Q223 : une commission est corrigée à hauteur du montant des produits remboursés ; remboursement total = annulation totale correspondante, remboursement partiel = correction proportionnelle.
+- La correction est enregistrée séparément et liée à la commission initiale et au remboursement, sans effacer l'historique.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.03 — 13 novembre 2026
 - Enregistrement de Finance Q222 : seuls les produits éligibles à une promotion participent à l'assiette de prorata et à la répartition d'une remise globale ; les produits exclus sont écartés.
 - Alignement de la règle de ventilation : calcul sur les montants pré-remise des seuls produits éligibles, puis application du plus fort reste et du départage Q221.
@@ -3190,6 +3195,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 223 — Correction de la commission après remboursement
+
+- **Question :** Lorsqu'une commande est totalement ou partiellement remboursée, comment traiter la commission MAHLINE déjà calculée sur cette commande ?
+- **Réponse :** A — annuler la commission correspondant au montant remboursé ; pour un remboursement partiel, seule la part proportionnelle est annulée.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; remboursements, avoirs et corrections de commissions, avec données de remboursement issues du flux commercial Sales.
+- **Conséquences :**
+  - En cas de remboursement total, annuler la totalité de la commission associée au montant des produits remboursés.
+  - En cas de remboursement partiel, corriger la commission au prorata du montant net des produits remboursés, selon le taux de commission figé pour la commande.
+  - Enregistrer une écriture de correction/contrepassation liée à la commission d'origine et au remboursement correspondant.
+  - Conserver intégralement l'historique de la commission initiale et de chaque correction ; ne pas supprimer ni réécrire les écritures historiques.
+  - Les frais de livraison restent hors assiette de commission, conformément aux décisions précédentes.
+  - Sales transmet à Finance les références et montants de remboursement confirmés ; Finance reste propriétaire de la correction financière et de la commission.
+- **Impact :** les commissions dues à MAHLINE reflètent les remboursements effectifs, tout en préservant une piste d'audit complète et l'immutabilité des écritures initiales.
+- **Point technique à préciser :** méthode exacte de calcul au centime pour les remboursements partiels, gestion des remboursements successifs et plafonnement du cumul des corrections à la commission initialement comptabilisée.
 
 ### Question 222 — Éligibilité des produits à la répartition d'une remise globale
 
