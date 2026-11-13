@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.84
+- **Version :** 2.85
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -712,6 +712,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La consultation, l'application des filtres, la génération et le téléchargement des exports sont journalisés. Les journaux sources ne sont jamais modifiés par le filtrage ou l'export.
 - **Périmètre concerné :** Audit (recherche et traçabilité), Identity (autorisation réservée au `super_admin_root`), Media/Storage (production des exports).
 - **Points à préciser avant implémentation :** comportement des filtres combinés, recherche exacte ou partielle, pagination, limites de résultats et normalisation des adresses IP.
+
+### Question 65 — Enregistrement de filtres favoris pour les journaux de téléchargements PDF
+
+**Décision validée : B**
+
+- Le `super_admin_root` peut enregistrer ses propres configurations de filtres favoris afin de les réutiliser lors de consultations et d'exports ultérieurs.
+- Les favoris sont personnels au `super_admin_root` qui les a créés ; ils ne sont pas partagés avec les autres comptes ou responsables.
+- Un favori conserve uniquement les critères de recherche nécessaires (période relative ou paramètres de filtre), jamais une copie des journaux, des documents, des résultats exportés, des secrets ou des données sensibles.
+- À chaque réutilisation, les critères sont revalidés côté serveur et les autorisations actuelles sont appliquées. Un favori ne confère aucun droit supplémentaire et ne contourne ni la limite de 12 mois par export ni les règles de conservation et de téléchargement.
+- La création, la modification et la suppression des favoris sont journalisées conformément aux règles d'audit.
+- **Périmètre concerné :** Audit (recherche et traçabilité), Identity (espace personnel et contrôle réservé au `super_admin_root`).
+- **Points à préciser avant implémentation :** nombre maximal de favoris, nommage, modification, suppression, gestion des dates relatives et comportement si un critère n'est plus disponible.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3025,6 +3037,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.85 — 13 novembre 2026
+- Ajout de la décision Identity Q65 : B — filtres favoris personnels au `super_admin_root`, réutilisables après revalidation serveur et sans partage ni élévation de droits.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.84 — 13 novembre 2026
 - Ajout de la décision Identity Q64 : B — filtres avant export par agent, résultat, document, IP et dossier, en complément de la période ; application serveur et journalisation.
