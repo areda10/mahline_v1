@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.24
+- **Version :** 5.25
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Arrondi des promotions V1 (Q268) :** arrondi commercial au centime de MAD le plus proche, demi-centime vers le haut ; calculs intermédiaires décimaux exacts. La règle doit être centralisée et testée pour garantir des résultats identiques dans Products, Catalog, Sales et Finance. Cet arrondi de calcul ne modifie jamais les règles de rejet des prix/taux saisis invalides.
 - **Précision du taux promotionnel V1 (Q267) :** jusqu'à deux décimales ; taux strictement positif et plafonné à 90 %. Validation serveur, stockage/calcul décimal exacts, aucun arrondi/troncature du taux saisi. La règle d'arrondi du prix monétaire résultant reste à définir.
 - **Plafond des promotions V1 (Q266) :** le taux de réduction doit être strictement positif et inférieur ou égal à 90 % ; rejet obligatoire côté serveur au-delà de 90 %. La précision du taux et la règle d'arrondi monétaire restent à arbitrer avant implémentation.
 - **Calcul des promotions V1 (Q265) :** un taux unique défini au niveau du produit est appliqué au prix normal applicable de chaque variante (prix variante ou prix de base hérité). Le résultat est exposé par Catalog et revalidé/figé par Sales. La règle d'arrondi, la plage/précision du taux et les cumuls restent à décider avant codage.
@@ -488,6 +489,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.25 — 13 novembre 2026
+- Enregistrement de Q268 : arrondi commercial du résultat promotionnel au centime le plus proche, demi-centime vers le haut.
+- Exigence de calcul décimal exact, de centralisation et de tests transversaux ajoutée.
 
 ### Version 5.24 — 13 novembre 2026
 - Enregistrement de Q267 : précision du taux limitée à deux décimales ; validation serveur et représentation décimale exacte.
