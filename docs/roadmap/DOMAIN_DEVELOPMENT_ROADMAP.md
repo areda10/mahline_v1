@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.4
+- **Version :** 1.5
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -88,6 +88,8 @@ La procédure suivante s'applique à **chaque domaine** et à chaque fonctionnal
 - Le registre de découverte fonctionnelle conserve les décisions question/réponse.
 - Chaque domaine doit disposer d'un inventaire/specification fonctionnelle détaillée et versionnée avant son implémentation ; ce document devient la checklist obligatoire pendant le codage.
 - Toute réponse validée est enregistrée dans le document officiel approprié sur la branche de travail, puis relue depuis GitHub pour confirmer sa présence.
+- **Correspondance obligatoire des références :** le registre général `FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md` conserve la vue transversale et les décisions ; chaque spécification de domaine est la checklist détaillée de codage. Les identifiants stables des fonctions doivent être repris sans divergence dans la roadmap, les spécifications et les liens vers les fichiers, migrations, routes, permissions et tests.
+- Avant chaque tâche de développement, consulter la fiche de la fonction dans la spécification du domaine ainsi que les décisions et dépendances transversales du registre général. Toute évolution doit être répercutée dans les documents concernés avant la poursuite du code.
 - Aucun développement applicatif ni aucune fusion de branche n'est implicite dans une validation de cadrage.
 
 ## 2. Inventaire structurel au commit audité
@@ -384,6 +386,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.5 — 13 novembre 2026
+- Alignement sur la décision Q69 : registre général pour la traçabilité transversale et spécification détaillée par domaine comme checklist obligatoire de codage ; identifiants fonctionnels stables et liens cohérents vers code, migrations, routes, permissions et tests.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 1.4 — 13 novembre 2026
 - Renforcement de la procédure de cadrage : audit des relations inter-domaines, comparaison systématique avec les registres/specifications avant toute question afin d'éviter les doublons, matrice de couverture et critère explicite de passage au codage lorsque le périmètre V1 essentiel est complet.
