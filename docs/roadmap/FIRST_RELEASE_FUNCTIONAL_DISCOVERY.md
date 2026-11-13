@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.28
+- **Version :** 2.29
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -107,6 +107,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - La limite s'applique côté serveur et ne peut pas être contournée en répétant les appels depuis l'interface.
   - Les compteurs et blocages doivent être gérés sans journaliser de jetons ou de données secrètes.
   - Le périmètre exact de comptage (compte, adresse IP et combinaison des deux) devra être précisé lors de la conception technique.
+
+### Question 9 — Modification de l'adresse e-mail du client (VALIDÉ)
+- **Question :** Le client peut-il modifier l'adresse e-mail de son compte depuis son espace client ?
+- **Réponse :** A — oui ; la nouvelle adresse doit être vérifiée avant de remplacer l'ancienne. L'ancienne adresse reste celle du compte tant que la nouvelle n'est pas validée.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity ; modification de l'adresse e-mail, vérification et maintien de l'accès au compte.
+- **Conséquences :**
+  - Le client peut initier une demande de changement d'adresse e-mail depuis son espace client.
+  - La nouvelle adresse doit être vérifiée à l'aide du mécanisme de vérification sécurisé avant de devenir l'adresse principale du compte.
+  - Jusqu'à la vérification, l'ancienne adresse reste l'adresse principale et conserve son statut.
+  - Une adresse non vérifiée ne peut pas être utilisée comme nouvelle adresse principale pour l'authentification et les communications du compte.
+  - Les règles de révocation des sessions et tokens, de notification de l'ancienne adresse et de prévention des changements répétés restent à préciser dans le cadrage Identity.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2420,6 +2432,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.29 — 13 novembre 2026
+- Enregistrement de la Question 9 : changement d'adresse e-mail possible depuis l'espace client ; la nouvelle adresse ne remplace l'ancienne qu'après vérification.
 
 ### Version 2.28 — 13 novembre 2026
 - Enregistrement de la Question 8 : maximum 5 demandes de renvoi par heure, puis blocage temporaire pendant une heure.
