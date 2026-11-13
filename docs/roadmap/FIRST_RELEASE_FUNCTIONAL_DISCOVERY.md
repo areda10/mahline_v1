@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.44
+- **Version :** 3.45
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 264 — Portée des promotions sur les variantes
+
+- **Question :** Comment appliquer une promotion lorsqu'un produit possède plusieurs variantes ?
+- **Réponse :** A — une seule promotion au niveau du produit, appliquée à toutes ses variantes.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - La promotion est définie au niveau du produit, jamais individuellement sur une variante au premier release.
+  - Lorsqu'une promotion du produit est active, elle s'applique à toutes les variantes de ce produit.
+  - Les variantes conservent leurs prix applicables propres selon la règle Q256 : prix spécifique facultatif, sinon héritage du prix de base du produit.
+  - Le prix promotionnel doit être défini et validé selon les règles monétaires déjà retenues ; le calcul du prix remisé pour chaque variante devra respecter la précision maximale de deux décimales et ne pourra pas être corrigé silencieusement.
+  - Catalog expose le prix final applicable à chaque variante et Sales revalide puis fige le prix réellement sélectionné.
+- **Responsabilités :** Products possède la promotion du produit et les prix des variantes ; Catalog calcule/expose le prix applicable ; Sales valide et fige le prix de la variante choisie.
+- **Hors périmètre :** promotions différentes par variante au premier release.
+- **À préciser ultérieurement :** si le prix promotionnel du produit est un montant fixe identique pour toutes les variantes ou une remise calculée sur le prix applicable de chaque variante ; le mode de calcul doit être arrêté avant codage des promotions.
+
 ### Question 263 — Promotions simples au premier release
 
 - **Question :** Les coopératives doivent-elles pouvoir proposer des promotions sur leurs produits ?
@@ -4448,6 +4463,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.45 — 13 novembre 2026
+- Enregistrement de Q264 : promotion définie au niveau du produit et applicable à toutes ses variantes ; aucune promotion individuelle par variante en V1.
+- Le mode de calcul du prix promotionnel appliqué aux variantes reste à arbitrer avant codage.
 
 ### Version 3.44 — 13 novembre 2026
 - Enregistrement de Q263 : promotions simples avec prix normal, prix promotionnel et dates de début/fin.
