@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.09
+- **Version :** 3.10
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.10 — 13 novembre 2026
+- Enregistrement de Finance Q229 : lorsque plusieurs crédits coopérative sont en attente, les imputer selon FIFO, du crédit le plus ancien au plus récent.
+- Un crédit ancien est apuré avant de passer au suivant ; si le reversement est insuffisant, son solde est reporté et les crédits plus récents restent en attente.
+- Horodatage de référence, départage des créations simultanées, concurrence et idempotence restent à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.09 — 13 novembre 2026
 - Enregistrement de Finance Q228 : tout crédit coopérative supérieur au prochain reversement est imputé automatiquement en plusieurs fois ; le solde non utilisé est reporté aux reversements suivants jusqu'à épuisement.
 - Chaque imputation est plafonnée au solde du crédit et au montant du reversement, avec historique et liens de traçabilité conservés ; aucune validation manuelle n'est requise pour le report.
@@ -3224,6 +3230,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 229 — Ordre d'imputation de plusieurs crédits coopérative
+
+- **Question :** Si une coopérative possède plusieurs crédits en attente, dans quel ordre MAHLINE doit-elle les imputer sur ses reversements ?
+- **Réponse :** A — FIFO : imputer d'abord le crédit le plus ancien.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; ordre d'imputation des crédits coopératives reportés sur les reversements successifs.
+- **Conséquences :**
+  - Finance impute les crédits en attente selon leur ordre chronologique de création, du plus ancien au plus récent.
+  - Le crédit le plus ancien est imputé en priorité jusqu'à son épuisement avant de passer au crédit suivant.
+  - Si le reversement disponible ne permet pas d'épuiser le crédit le plus ancien, son solde est conservé et reporté ; les crédits plus récents restent en attente.
+  - La règle FIFO s'applique de manière identique à chaque reversement et ne dépend pas de l'ordre d'affichage ou de traitement technique des crédits.
+  - Chaque imputation reste une écriture traçable liée au crédit d'origine et au reversement concerné ; le cumul imputé ne peut dépasser ni le crédit disponible ni le montant du reversement.
+- **Impact :** les crédits coopératives sont apurés dans un ordre stable et prévisible, sans favoriser les crédits récents au détriment des plus anciens.
+- **Points techniques à préciser :** définition de l'horodatage de référence, départage déterministe des crédits créés au même instant, verrouillage/concurrence, traitement des crédits annulés ou contestés et idempotence.
 
 ### Question 228 — Imputation d'un crédit coopérative supérieur au prochain reversement
 
