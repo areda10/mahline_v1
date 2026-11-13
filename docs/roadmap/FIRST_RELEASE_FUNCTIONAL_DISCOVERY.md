@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.51
+- **Version :** 2.52
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -367,6 +367,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - En cas d'acceptation, la contestation suit le processus normal du niveau concerné ; cette acceptation ne réactive pas automatiquement le compte et ne débloque pas l'accès.
 - En cas de refus, le client est notifié selon les règles de notification déjà définies ; la décision et son motif sont consultables dans son espace authentifié.
 - Les critères précis d'acceptation, les éventuelles limites d'exception et la prévention des conflits d'intérêts seront détaillés dans la conception technique.
+
+### Question 32 — Nombre d'exceptions pour une contestation tardive
+
+**Décision validée : B**
+
+- Une seule exception de délai peut être accordée pour chaque niveau de contestation.
+- Le client peut donc bénéficier au maximum d'une exception au premier niveau et d'une exception au second niveau, si ce second recours est ouvert.
+- Plusieurs demandes tardives successives au même niveau ne peuvent pas donner lieu à plusieurs dérogations.
+- Toute demande d'exception, sa motivation, la décision, son motif, les dates et l'identité du responsable habilité sont historisés.
+- L'acceptation d'une exception permet uniquement l'examen de la contestation concernée ; elle ne réactive pas automatiquement le compte et ne débloque pas l'accès.
+- Les règles de décompte, notamment en cas de demande retirée ou déclarée irrecevable, seront précisées dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2680,6 +2691,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.52 — 13 novembre 2026
+- Enregistrement de la Question 32 : une seule exception de délai peut être accordée par niveau de contestation, avec historisation complète.
 
 ### Version 2.51 — 13 novembre 2026
 - Enregistrement de la Question 31 : une contestation tardive peut être exceptionnellement admise sur demande motivée, après décision d'un responsable du support habilité ; décision historisée et absence de déblocage automatique du compte.
