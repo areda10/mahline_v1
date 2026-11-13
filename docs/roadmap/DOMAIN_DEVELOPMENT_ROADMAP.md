@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.9
+- **Version :** 5.10
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -16,6 +16,8 @@ Ce document centralise la feuille de route de développement de tous les domaine
 Le premier objectif produit est désormais défini comme un **SaaS de gestion pour les coopératives + marketplace publique**. Le développement des domaines nécessaires au premier release sera cadré question par question. L'harmonisation approfondie des frontières et le renforcement global des événements transversaux sont prévus dans une phase ultérieure dédiée, après le développement fonctionnel du premier release. Les exigences essentielles de sécurité, d'autorisation, d'isolation des coopératives et d'intégrité restent obligatoires à chaque étape.
 
 ## 2. Stratégie de livraison du premier release — parcours vertical prioritaire (Q252 VALIDÉE)
+
+**Complément workflow Q253 :** une coopérative peut proposer une réduction de quantité ou un produit de remplacement, mais Sales ne modifie la commande qu'après acceptation explicite du client. La proposition reste limitée à la sous-commande concernée ; Inventory revalide la disponibilité et réserve le stock après confirmation. Le refus, l'absence de réponse, le délai et le traitement partiel restent à spécifier.
 
 La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet et utilisable **client → coopérative → transporteur**. Il n'est pas requis de terminer la spécification exhaustive de toutes les fonctions avancées de chaque domaine avant de commencer ce parcours. Chaque tranche livrée doit toutefois être suffisamment spécifiée, auditée et testée sur ses règles essentielles, autorisations, états, erreurs, dépendances et contrats inter-domaines.
 
@@ -310,6 +312,8 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Spécifier Customer, Cart, CartItem, Order, OrderItem et statuts.
 - [ ] Définir la commande multi-coopératives et son découpage coopératif avant gel du schéma.
 - [ ] Définir panier, prix figés, taxes/frais, annulation et transitions d'état.
+- [ ] Gérer les propositions de modification de sous-commande par la coopérative : réduction de quantité ou remplacement de produit, avec acceptation explicite du client avant toute modification ; conserver la commande initiale tant que la proposition n'est pas acceptée (Q253).
+- [ ] Isoler les propositions et réponses par sous-commande et lignes concernées ; historiser les valeurs initiales/proposées, les différences de prix, l'auteur, la notification et la réponse ; définir le refus, l'absence de réponse, les délais et le traitement des autres lignes avant codage (Q253).
 - [ ] Définir Delivery et son intégration avec les transporteurs et Inventory.
 - [ ] Définir les contrats avec Identity, Localization, Catalog, Inventory, Finance et Audit.
 - [ ] Prévoir tests de concurrence, disponibilité, propriété et isolation.
@@ -321,6 +325,7 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 
 - [ ] Spécifier inventaires, articles, mouvements, réservations, entrepôts et ajustements.
 - [ ] Définir les règles de stock disponible et réservé.
+- [ ] Lorsqu'une proposition de modification est acceptée par le client, vérifier à nouveau la disponibilité du produit/quantité retenu et ne réserver le stock qu'au moment de la confirmation coopérative selon les règles COD ; aucune réservation ne doit être fondée sur une modification non acceptée (Q253).
 - [ ] Définir verrouillage/concurrence et prévention du stock négatif.
 - [ ] Définir événements de réservation, confirmation, annulation et restitution.
 - [ ] Intégrer Catalog/Products et Sales par contrats/événements.
@@ -454,6 +459,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.10 — 13 novembre 2026
+- Enregistrement de Q253 dans le workflow Sales/Cooperatives : réduction de quantité ou remplacement uniquement sur proposition et acceptation explicite du client.
+- Alignement de Sales et Inventory sur la conservation de la commande initiale avant acceptation, l'isolation par sous-commande et le contrôle du stock après accord.
+- Les délais, refus/absence de réponse, traitement partiel et ajustements de prix/livraison restent ouverts.
+- Aucun code applicatif modifié et aucune fusion.
 
 ### Version 5.9 — 13 novembre 2026
 - Enregistrement de Q252 : priorité officielle au parcours vertical client → coopérative → transporteur, sans attendre la spécification exhaustive de toutes les fonctions avancées.
