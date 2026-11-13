@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.26
+- **Version :** 3.27
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.27 — 13 novembre 2026
+- Enregistrement de Finance Q246 : ajout et remplacement des justificatifs autorisés à `super_admin_root`, au `super_admin` affecté et au `cooperative_admin` de la coopérative concernée.
+- Chaque opération est contrôlée côté serveur et journalisée ; le remplacement crée une nouvelle version sans écraser l'historique Q245.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.26 — 13 novembre 2026
 - Enregistrement de Finance Q245 : conserver toutes les versions successives des justificatifs avec date, auteur et historique ; seule la dernière est considérée comme actuelle.
 - Les versions antérieures restent consultables selon les habilitations, sans écrasement, avec traçabilité des ajouts et remplacements.
@@ -3316,6 +3321,23 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 246 — Habilitations pour ajouter ou remplacer un justificatif
+
+- **Question :** Qui peut ajouter ou remplacer un justificatif associé à une créance MAHLINE ?
+- **Réponse :** C — `super_admin_root`, `super_admin` affecté et `cooperative_admin` de la coopérative concernée.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; ajout et remplacement des justificatifs liés aux créances MAHLINE contestées ou annulées et à leurs écritures correctives.
+- **Conséquences :**
+  - `super_admin_root` peut ajouter ou remplacer les justificatifs de toutes les coopératives.
+  - Le `super_admin` peut intervenir uniquement sur les coopératives qui lui sont affectées.
+  - Le `cooperative_admin` peut ajouter ou remplacer les justificatifs uniquement pour les créances de sa propre coopérative.
+  - Les rôles `user` et `customer` ne disposent pas de cette autorisation par défaut.
+  - Chaque ajout ou remplacement est soumis à un contrôle d'accès côté serveur et journalisé avec l'acteur, la coopérative, la créance, la pièce et l'horodatage.
+  - Tout remplacement crée une nouvelle version ; les versions précédentes sont conservées conformément à Q245 et ne peuvent pas être écrasées ou supprimées par cette opération.
+  - Les restrictions de téléchargement individuel, de consultation et d'isolation entre coopératives définies en Q242-Q245 restent applicables.
+- **Impact :** permettre à la coopérative de fournir ses preuves et aux responsables MAHLINE autorisés de compléter les dossiers, tout en assurant la traçabilité et la séparation des données.
+- **Points techniques à préciser :** permissions dédiées à l'ajout/remplacement, validation des formats et tailles, stockage privé, empreinte d'intégrité, détection des doublons, versionnement atomique, journalisation et tests anti-IDOR ainsi que tests de révocation d'affectation.
 
 ### Question 245 — Historique des versions des justificatifs
 
