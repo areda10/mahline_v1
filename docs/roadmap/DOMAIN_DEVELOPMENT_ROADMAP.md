@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.8
+- **Version :** 5.9
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -14,6 +14,33 @@ Ce document centralise la feuille de route de développement de tous les domaine
 **Registre des décisions fonctionnelles du premier release :** [`docs/roadmap/FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md`](FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md). Toutes les questions, réponses validées, conséquences et questions ouvertes concernant le SaaS de gestion + marketplace doivent être consignées dans ce fichier au fil du cadrage.
 
 Le premier objectif produit est désormais défini comme un **SaaS de gestion pour les coopératives + marketplace publique**. Le développement des domaines nécessaires au premier release sera cadré question par question. L'harmonisation approfondie des frontières et le renforcement global des événements transversaux sont prévus dans une phase ultérieure dédiée, après le développement fonctionnel du premier release. Les exigences essentielles de sécurité, d'autorisation, d'isolation des coopératives et d'intégrité restent obligatoires à chaque étape.
+
+## 2. Stratégie de livraison du premier release — parcours vertical prioritaire (Q252 VALIDÉE)
+
+La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet et utilisable **client → coopérative → transporteur**. Il n'est pas requis de terminer la spécification exhaustive de toutes les fonctions avancées de chaque domaine avant de commencer ce parcours. Chaque tranche livrée doit toutefois être suffisamment spécifiée, auditée et testée sur ses règles essentielles, autorisations, états, erreurs, dépendances et contrats inter-domaines.
+
+### Phasage prioritaire
+
+1. **Socle d'accès et acteurs — Identity, Cooperatives, Localization :** compte customer, authentification, espaces et habilitations, identité des coopératives et adresses nécessaires.
+2. **Offre marketplace — Catalog, Categories, Products :** gestion et publication des produits, consultation publique, disponibilité et données indispensables à l'achat.
+3. **Parcours commercial — Sales :** profil commercial, panier, checkout, commande multi-coopératives, sous-commandes par coopérative et consultation de l'historique.
+4. **Traitement des commandes — Cooperatives, Sales, Inventory :** réception des sous-commandes, examen par la coopérative, éventuelle proposition de modification de quantité, décision client lorsque requise, confirmation, réservation de stock et préparation.
+5. **Expédition — Delivery :** affectation/prise en charge par le transporteur, expédition par coopérative, statuts, preuves, suivi client et données de collecte COD nécessaires.
+6. **Finance minimale — Finance :** montants de commande et ventilations, frais de livraison, mode COD, montants à encaisser, commissions applicables et figées, enregistrements des encaissements/remises et références de reversement indispensables à la traçabilité du premier parcours.
+7. **Soutien opérationnel — Media, Communication :** stockage et accès sécurisé aux documents/preuves ainsi que les e-mails et notifications indispensables au parcours.
+
+### Périmètre Finance V1 minimal
+
+Finance n'a pas besoin d'avoir toutes ses fonctions avancées spécifiées et développées pour permettre le lancement du parcours prioritaire. Son socle V1 doit néanmoins garantir l'enregistrement exact et traçable des montants, commissions, frais, encaissements COD et références de reversement. Les rapprochements avancés, contestations complexes, crédits/recouvrements, automatisation complète des reversements et rapports approfondis restent au backlog progressif ; ils ne sont ni supprimés ni considérés comme validés.
+
+### Règles de pilotage
+
+- Les domaines restent propriétaires de leurs responsabilités : Sales (panier/commandes), Inventory (stock/réservations), Delivery (expéditions/transporteurs/événements de livraison et collecte), Finance (écritures/fonds/commissions/reversements marketplace), Subscriptions / SaaS Billing (abonnements dus à MAHLINE).
+- Les fonctions non indispensables au parcours sont conservées dans les inventaires et traitées après le socle opérationnel, selon leurs dépendances et risques.
+- Sécurité, autorisations côté serveur, isolation des données par coopérative, audit, intégrité, versionnement et idempotence ne sont jamais reportés.
+- Le changement de quantité proposé par une coopérative doit être cadré comme une règle dédiée, notamment pour déterminer si l'accord explicite du client est requis avant confirmation définitive ; Q252 ne tranche pas ce point.
+- Le passage d'une tranche au codage exige une spécification suffisante et des critères d'acceptation ; le domaine complet n'a pas besoin d'être exhaustivement finalisé si le périmètre de la tranche est maîtrisé.
+
 
 Un dossier ou une classe présente ne signifie pas qu'un domaine est terminé. Un domaine ne peut être marqué **VALIDÉ** qu'après :
 1. audit des fichiers réels, appels, dépendances, routes, migrations et permissions ;
@@ -373,25 +400,17 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 
 ## 5. Ordre de développement recommandé
 
-Ordre de travail proposé, à confirmer après audit des dépendances réelles et arbitrage des documents d'architecture :
+Ordre de travail prioritaire adopté par Q252 — parcours vertical client → coopérative → transporteur :
 
-1. Audit de cohérence des frontières, Shared et contrats transversaux.
-2. Localization + Countries : audit et consolidation.
-3. Media : spécification, socle, tests et validation.
-4. Audit : renforcer les événements transversaux et les garanties de confidentialité.
-5. Identity : USR-02, USR-03, USR-04 et backlog restant.
-6. Cooperatives : audit final et intégrations.
-7. Categories + Products + Catalog : validation de la chaîne catalogue.
-8. Sales : clients, panier, commandes multi-coopératives, livraison.
-9. Inventory : stock et réservations.
-10. Finance : facturation, paiements, commissions, reversements.
-11. Communication : événements, e-mails et notifications.
-12. CMS : contenu et publication.
-13. Dashboard : indicateurs issus des domaines stabilisés.
-14. Delivery : expéditions, transporteurs, suivi, incidents et retours.
-15. Subscriptions / SaaS Billing : plans, renouvellements, entitlements, facturation et suspension.
-16. Spécifier Export / Compliance selon les marchés et exigences réglementaires retenus.
-17. Intégration globale, audit de sécurité, staging et préparation production.
+1. Identity + Cooperatives + Localization : socle des acteurs, comptes, accès et adresses nécessaires.
+2. Catalog + Categories + Products : création, publication, consultation et disponibilité des produits.
+3. Sales : profil commercial, panier, checkout, commandes multi-coopératives et sous-commandes.
+4. Cooperatives + Sales + Inventory : réception et traitement des commandes, ajustement éventuel des quantités, confirmation et réservation de stock.
+5. Delivery : préparation des expéditions, transporteurs, prise en charge, suivi, preuves et collecte COD.
+6. Finance : socle minimal des montants, ventilations, frais, commissions, encaissements COD et références de reversement.
+7. Media + Communication : fichiers/preuves, documents et notifications nécessaires au parcours.
+8. Audit et intégration transversale : contrôles de sécurité, isolation, contrats, événements, tests d'intégration et préparation release.
+9. Après stabilisation du parcours : compléter progressivement les fonctions avancées de Finance, Identity, Inventory, Delivery, Media, Communication, CMS, Dashboard, Subscriptions / SaaS Billing et Export / Compliance selon dépendances et priorité produit.
 
 Les dépendances peuvent permettre du travail parallèle, mais aucun domaine ne doit contourner les règles de propriété et les contrats inter-domaines.
 
@@ -435,6 +454,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.9 — 13 novembre 2026
+- Enregistrement de Q252 : priorité officielle au parcours vertical client → coopérative → transporteur, sans attendre la spécification exhaustive de toutes les fonctions avancées.
+- Remplacement de l'ordre de travail antérieur par un phasage dépendant du parcours opérationnel ; définition du socle Finance V1 minimal.
+- Les fonctions avancées restent au backlog progressif ; les exigences de sécurité, d'isolation, d'audit et d'intégrité restent obligatoires.
+- Aucun code applicatif modifié et aucune fusion.
 
 ### Version 5.8 — 13 novembre 2026
 - Enregistrement de Finance Q251 : l'ancienne version validée reste officielle et utilisable pendant la vérification d'un remplacement.
