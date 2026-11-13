@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.13
+- **Version :** 3.14
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.14 — 13 novembre 2026
+- Enregistrement de Finance Q233 : les montants déjà versés à la coopérative au titre d'un crédit invalidé deviennent une créance distincte de MAHLINE.
+- Récupérer cette créance par déduction sur les prochains reversements, avec traçabilité et solde ; distinguer cette récupération de l'annulation du solde non imputé (Q232).
+- Les règles de priorité, plafonds et cas de reversements insuffisants restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.13 — 13 novembre 2026
 - Enregistrement de Finance Q232 : si une contestation est acceptée, annuler le solde restant du crédit invalide par une écriture corrective distincte.
 - Conserver le crédit initial, les imputations antérieures et tous les liens de traçabilité ; aucune suppression ou réécriture d'historique.
@@ -3248,6 +3254,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 233 — Créance sur les montants déjà versés après invalidation d'un crédit
+
+- **Question :** Lorsqu'un crédit contesté a déjà été partiellement ou totalement imputé sur des reversements exécutés, comment traiter les montants déjà versés à la coopérative si la contestation est acceptée ?
+- **Réponse :** A — créer une créance distincte sur la coopérative, récupérable par déduction sur ses prochains reversements.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; contestations de crédits, créances coopératives et reversements.
+- **Conséquences :**
+  - Les montants du crédit invalide déjà imputés et effectivement versés à la coopérative sont reconnus comme une créance distincte de MAHLINE sur cette coopérative.
+  - La créance est liée au crédit d'origine, à la décision de contestation et aux reversements sur lesquels les montants avaient été imputés.
+  - Finance récupère automatiquement cette créance par déduction sur les prochains reversements dus à la coopérative, selon les règles d'imputation à préciser.
+  - Le solde non encore imputé du crédit initial est annulé par l'écriture corrective distincte définie en Q232 ; les montants déjà versés ne sont pas effacés ni confondus avec cette annulation.
+  - La créance et chaque récupération doivent disposer d'un historique, d'un solde restant et d'une traçabilité comptable ; aucune double récupération n'est autorisée.
+- **Impact :** séparer l'annulation du solde de crédit non utilisé de la récupération des montants déjà versés, tout en conservant une piste d'audit complète.
+- **Points techniques à préciser :** priorité de cette créance par rapport aux crédits FIFO, taux/plafond de récupération par reversement, reversements insuffisants ou nuls, coopérative inactive/fermée, contestation ultérieure, arrondis, concurrence, rapprochement et idempotence.
 
 ### Question 232 — Crédit reconnu invalide après contestation acceptée
 
