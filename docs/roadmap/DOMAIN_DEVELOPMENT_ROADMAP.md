@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 3.4
+- **Version :** 3.7
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -310,7 +310,7 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Pour chaque remboursement confirmé, recalculer la commission à annuler sur le montant net cumulé des produits remboursés après remise et hors livraison, puis comptabiliser uniquement la différence avec les corrections déjà enregistrées ; chaque correction reste distincte et liée à la commission initiale et au remboursement déclencheur.
 - [ ] Déclencher l'enregistrement de la correction immédiatement après la confirmation définitive du remboursement transmise par Sales ; ne pas attendre le rapprochement périodique ni la réception effective des fonds par le client. Une demande non confirmée ne déclenche aucune correction.
 - [ ] Préserver l'immutabilité et l'historique des commissions initiales et corrections ; plafonner le cumul à la commission initiale, empêcher le double comptage d'un remboursement et définir précision/arrondi au centime, concurrence et idempotence.
-- [ ] Régulariser les corrections de commission sur les reversements coopératives : ajuster le montant si le reversement n'est pas exécuté ; après exécution, créer un crédit distinct au bénéfice de la coopérative. Imputer automatiquement les crédits sur les reversements successifs, dans la limite du montant de chacun, reporter les soldes jusqu'à épuisement et appliquer un ordre FIFO (crédit le plus ancien en premier) lorsque plusieurs crédits coexistent (Q227-Q229) ; conserver les liens d'origine et l'historique de chaque imputation.
+- [ ] Régulariser les corrections de commission sur les reversements coopératives : ajuster le montant si le reversement n'est pas exécuté ; après exécution, créer un crédit distinct au bénéfice de la coopérative. Imputer automatiquement les crédits sur les reversements successifs, dans la limite du montant de chacun, reporter les soldes jusqu'à épuisement et appliquer un ordre FIFO (crédit le plus ancien en premier) lorsque plusieurs crédits coexistent (Q227-Q229) ; suspendre uniquement un crédit contesté, sans bloquer l'imputation des autres crédits non contestés (Q230) ; conserver les liens d'origine et l'historique de chaque imputation.
 - [ ] Définir le traitement des commandes multi-coopératives.
 - [ ] Définir génération PDF et intégration Communication.
 - [ ] Séparer facturation marketplace et facturation des abonnements Mahline.
@@ -435,6 +435,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 3.7 — 13 novembre 2026
+- Enregistrement de Finance Q230 : suspendre uniquement le crédit faisant l'objet d'une contestation ; les autres crédits non contestés restent imputables selon FIFO.
+- La suspension ne supprime ni n'annule le crédit ; les modalités de résolution, la conservation du rang FIFO après réactivation et les habilitations restent à préciser.
+- Alignement de la matrice Finance avec l'isolation des contestations au niveau du crédit concerné.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.6 — 13 novembre 2026
 - Enregistrement de Finance Q229 : les crédits coopérative multiples sont imputés selon FIFO, du plus ancien au plus récent ; un crédit ancien est apuré avant de commencer l'imputation du suivant.
