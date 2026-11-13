@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.76
+- **Version :** 2.77
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -621,6 +621,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Cette décision ne modifie pas les restrictions de la question 55 : le support ne télécharge que les PDF communicables nécessaires au traitement du dossier, et ne peut pas télécharger l'archive ZIP.
 - **Périmètre concerné :** Identity (dossier et accès du support), Media/Storage (consultation et téléchargement des PDF), Audit (journalisation) et Communication (absence de notification événementielle au client).
 - **Points à préciser avant implémentation :** modalités de consultation éventuelle de ces traces par le client, durée de conservation des journaux et règles de supervision interne.
+
+### Question 57 — Consultation client de l'historique des téléchargements PDF
+
+**Décision validée : A**
+
+- Le client ne dispose pas d'une interface lui permettant de consulter l'historique des consultations ou téléchargements de PDF effectués par le support sur son dossier.
+- Cet historique est réservé à l'audit interne et aux responsables expressément autorisés, selon leurs permissions et le périmètre nécessaire à leurs fonctions ; aucun accès général au journal d'audit n'est accordé.
+- Les événements restent conservés et consultables par les personnes autorisées, avec contrôle d'accès et traçabilité des consultations du journal.
+- Cette décision ne modifie pas les règles précédentes : le support ne télécharge que les PDF communicables nécessaires au traitement (Q55), aucune notification individuelle n'est envoyée au client après chaque téléchargement (Q56), et l'archive ZIP reste inaccessible au support (Q54).
+- **Périmètre concerné :** Identity (dossier de récupération et droits du client), Audit (conservation et consultation des journaux), Media/Storage (événements de téléchargement).
+- **Points à préciser avant implémentation :** rôles internes autorisés à consulter ces journaux, granularité des permissions, durée de conservation et modalités de supervision des accès aux traces.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2934,6 +2945,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.77 — 13 novembre 2026
+- Ajout de la décision Identity Q57 : A — l'historique des consultations/téléchargements PDF par le support n'est pas accessible au client ; il reste réservé à l'audit interne et aux responsables expressément autorisés.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.76 — 13 novembre 2026
 - Ajout de la décision Identity Q56 : A — aucune notification individuelle au client après chaque consultation ou téléchargement PDF par le support ; les opérations restent intégralement journalisées en interne.
