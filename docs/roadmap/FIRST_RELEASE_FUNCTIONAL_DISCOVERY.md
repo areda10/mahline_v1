@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.56
+- **Version :** 3.57
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q276 — Prise d'effet de l'annulation d'une promotion active (VALIDÉE)
+- **Question :** Quand l'annulation d'une promotion déjà active prend-elle effet ?
+- **Réponse :** C — la coopérative choisit entre annulation immédiate et annulation planifiée.
+- **Décision :** le `cooperative_admin` peut annuler sa promotion immédiatement après validation serveur ou programmer une date/heure future. Tant que l'annulation planifiée n'a pas pris effet, la version promotionnelle actuellement applicable continue de s'appliquer et d'être exposée par Catalog. À l'instant d'effet, Catalog cesse de l'exposer ; aucune nouvelle application promotionnelle n'est autorisée ensuite.
+- **Historique et cohérence :** Products conserve la demande d'annulation, le mode choisi, l'auteur, les dates de création et d'effet, ainsi que les événements associés. Une annulation planifiée modifiée avant son effet doit conserver la trace de la programmation remplacée. Sales ne modifie jamais rétroactivement les prix figés dans les paniers/commandes déjà enregistrés. Contrôles serveur, isolation par coopérative, validation chronologique, traitement fiable à l'heure prévue et journalisation obligatoires.
+- **Responsabilités :** Products gère l'état, la programmation et l'historique ; Catalog détermine l'exposition selon l'instant courant ; Sales conserve les snapshots commerciaux existants.
+
 ### Décision Q275 — Suppression d'une promotion (VALIDÉE)
 - **Question :** Une promotion créée peut-elle être supprimée physiquement ?
 - **Réponse :** B — aucune suppression physique ; utiliser une annulation logique qui conserve l'historique.
@@ -4573,6 +4580,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.57 — 13 novembre 2026
+- Enregistrement de Q276 : annulation immédiate ou planifiée d'une promotion active, avec conservation de la promotion jusqu'à l'instant d'effet programmé.
 
 ### Version 3.56 — 13 novembre 2026
 - Enregistrement de Q275 : interdiction de supprimer physiquement une promotion ; annulation logique avec conservation de l'historique et des références commerciales.
