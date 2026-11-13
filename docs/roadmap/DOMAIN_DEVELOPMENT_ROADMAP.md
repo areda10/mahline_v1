@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.34
+- **Version :** 5.35
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Réactivation d'une promotion annulée (Q278) :** une promotion annulée ne peut pas être réactivée par remise en service d'une ancienne version. Une nouvelle version, avec nouvelle période et paramètres validés, peut relancer la promotion logique ; la version annulée reste clôturée et immuable. Catalog expose la nouvelle version pendant sa période applicable ; Sales conserve les snapshots des opérations déjà enregistrées. Prévoir identité/version distincte, contrôles de dates et de chevauchement, droits coopératifs et audit.
 - **Modification d'une annulation planifiée (Q277) :** le `cooperative_admin` peut remplacer la date/heure prévue avant exécution. Chaque ancienne programmation reste historisée avec auteur et échéances ; la promotion demeure applicable jusqu'à l'échéance courante. Prévoir validation serveur, isolation coopérative, traitement atomique/idempotent des échéances et arbitrage des courses modification/exécution. Les snapshots Sales restent immuables.
 - **Prise d'effet de l'annulation d'une promotion (Q276) :** annulation immédiate ou planifiée au choix du `cooperative_admin`. Une annulation planifiée ne désactive pas la promotion avant son instant d'effet ; Catalog continue d'exposer la version applicable jusque-là, puis cesse de l'exposer. Products conserve programmation, auteur, dates et événements ; Sales préserve les snapshots historiques. Prévoir validation chronologique, traitement fiable à l'échéance, isolation coopérative et journalisation.
 - **Suppression/annulation des promotions (Q275) :** aucune suppression physique. La coopérative annule logiquement la promotion selon ses droits ; Products conserve versions, paramètres, auteurs, dates et événements. Catalog cesse de l'exposer à compter de l'effet de l'annulation ; Sales préserve tous les snapshots et commandes déjà enregistrés. Contrôles serveur, isolation coopérative, journalisation et absence de suppression en cascade obligatoires.
@@ -498,6 +499,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.35 — 13 novembre 2026
+- Enregistrement de Q278 : reprise d'une promotion annulée via une nouvelle version, sans réactivation de l'ancienne version.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.34 — 13 novembre 2026
 - Enregistrement de Q277 : modification d'une annulation planifiée avant son effet, avec historique des échéances remplacées.
