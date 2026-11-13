@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.15
+- **Version :** 5.16
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -32,6 +32,8 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
 - Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
+- Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
+- Pour un produit sans variante, la carte affiche directement le prix de base, sans la mention « À partir de » ; Catalog l'expose depuis Products et Sales le revalide puis le fige côté serveur.
 - Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
 - Calcul du prix minimum : exclure les variantes en rupture ou indisponibles ; seules les variantes commercialisables et disponibles participent au prix « À partir de ». Inventory fournit l'information de disponibilité, et Sales la revalide au panier/checkout. Si aucune variante n'est disponible, afficher l'indisponibilité sans prix d'appel achetable.
 - Première étape obligatoire : audit du code existant et des routes, contrôleurs, services, modèles, migrations, policies/gates, vues, tests et liaisons inter-domaines avant toute modification.
@@ -478,6 +480,11 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.16 — 13 novembre 2026
+- Enregistrement de Q259 : un produit sans variantes affiche directement son prix de base, sans « À partir de ».
+- Alignement Catalog/Products/Sales : exposition du prix de base, revalidation serveur et gel dans le panier/la commande.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 5.15 — 13 novembre 2026
 - Enregistrement de Q258 : le prix minimum exclut les variantes en rupture ou indisponibles ; il reflète une variante réellement achetable.
