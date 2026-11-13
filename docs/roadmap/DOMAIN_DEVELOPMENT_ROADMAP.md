@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.7
+- **Version :** 1.8
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -96,6 +96,42 @@ La procédure suivante s'applique à **chaque domaine** et à chaque fonctionnal
 - **Traçabilité de bout en bout :** relier chaque identifiant fonctionnel à la décision du registre général, à sa spécification, aux modèles/migrations/services/contrôleurs/routes/permissions/jobs ou notifications concernés, aux tests et aux preuves de validation. Aucun intitulé isolé ne suffit à autoriser le codage.
 
 - **Nomenclature des identifiants fonctionnels :** utiliser une séquence stable par domaine avec préfixe propre (ex. `MED-001`, `SAL-001`). Autoriser des sous-identifiants hiérarchiques pour les sous-fonctions (ex. `SAL-001.01`) sans remplacer l'identifiant parent. Toute fonction inter-domaines conserve un propriétaire fonctionnel canonique ; les autres domaines référencent cet identifiant et documentent leurs propres responsabilités/contrats sans dupliquer la fonction. Un identifiant attribué n'est jamais réutilisé ; les remplacements et abandons gardent une trace.
+
+### 1.2 Référentiel fonctionnel et propriété des domaines MAHLINE V1
+
+Cette matrice aligne la roadmap avec le registre de découverte. Elle fixe le propriétaire fonctionnel de chaque famille de fonctions ; elle ne remplace pas les spécifications détaillées, qui devront attribuer les identifiants stables par domaine et préciser les critères d'acceptation.
+
+| Domaine propriétaire | Fonctions principales à inventorier et spécifier pour V1 | Hors de sa responsabilité |
+|---|---|---|
+| Identity | comptes internes et clients, inscription, authentification, rôles/permissions, sessions, tokens, profils d'identité, vérification e-mail, récupération, sécurité et cycle de vie des comptes | paniers, commandes, adresses commerciales, paiements |
+| Cooperatives | création et cycle de vie des coopératives, profils, coordonnées, utilisateurs/affectations, paramètres, statut, documents institutionnels | produits, commandes, factures, stock |
+| Localization | pays, régions, villes, adresses structurées, validation et référentiels géographiques | propriété commerciale des adresses et calcul financier |
+| Countries | référentiel pays si son autonomie est confirmée ; sinon fonctions intégrées à Localization après ADR | adresses et règles de livraison métier |
+| Categories | taxonomie globale/locale, hiérarchie, rattachement, publication, suppression/détachement et règles de conservation | définition du produit et stock |
+| Products | définition métier du produit si cette responsabilité est confirmée distincte de Catalog : attributs, variantes, prix de vente, informations réglementaires et cycle de vie | publication du catalogue, stock, facturation |
+| Catalog | présentation et publication des produits, recherche/filtrage, visibilité publique, catalogues par coopérative et exposition marketplace | propriété des données produits si Products est confirmé propriétaire ; stock et commandes |
+| Media | upload, validation, métadonnées, stockage privé/public, association technique, accès, remplacement, suppression, antivirus/traitement si retenus et quotas techniques | règles métier déterminant qui peut utiliser un média |
+| Inventory | quantités, disponibilité, mouvements, réservations, ajustements, entrepôts, seuils et libération de stock | commande commerciale et expédition physique |
+| Sales | profil commercial client, panier, checkout, commande multi-coopératives, sous-commandes par coopérative, lignes, prix figés, confirmation/refus, annulation et historique commercial | factures, paiements, commissions, reversements, exécution transport |
+| Finance | facturation marketplace par coopérative/commande, documents financiers client et coopérative, paiements/COD et transactions, remboursements/avoirs, commissions, reversements, rapprochement et états financiers | panier, commande commerciale, abonnement SaaS |
+| Delivery | expéditions par coopérative, colis, tarifs de trajet, transporteurs, affectation, suivi, preuve de livraison, incidents, refus, retours et réexpéditions | panier, commande commerciale et comptabilisation des paiements |
+| Subscriptions / SaaS Billing | plans SaaS, souscriptions, renouvellements, changements de plan, périodes de grâce, impayés, factures et paiements dus à MAHLINE, entitlements, quotas et suspension/réactivation | factures marketplace et reversements aux coopératives |
+| Communication | modèles, e-mails, notifications, préférences techniques, files, retries, délivrabilité et historique d'envoi | règles métier déclenchant la communication |
+| Audit | événements d'audit métier, acteur, sujet, horodatage, avant/après, motif, consultation autorisée, intégrité et rétention | stockage des fichiers et logique métier source |
+| CMS | pages, sections, bannières, menus, FAQ, SEO, brouillons, publication, planification et contenus multilingues | médias, produits, coopératives et commandes |
+| Dashboard | indicateurs et tableaux de bord par rôle/périmètre, agrégations des domaines sources et contrôles d'accès | propriété des données opérationnelles ou financières |
+
+**Décisions de frontière à appliquer :**
+
+1. **Sales ≠ Finance.** Sales est propriétaire du cycle commercial et des commandes. Finance est propriétaire des transactions monétaires, factures marketplace, remboursements, commissions et reversements. Sales transmet à Finance des références et données de commande figées par un contrat ; il ne crée ni ne modifie les documents comptables.
+2. **Finance ≠ Subscriptions / SaaS Billing.** Finance traite les flux marketplace. Subscriptions / SaaS Billing gère les créances et abonnements coopérative ↔ MAHLINE. Toute intégration financière éventuelle passe par un contrat explicite, sans transférer la propriété des abonnements à Finance.
+3. **Sales ≠ Delivery.** Sales crée et suit l'état commercial de la commande ; Delivery exécute les expéditions et retours physiques. Les deux domaines échangent via des contrats/événements.
+4. **Inventory ≠ Catalog/Products.** Catalog/Products décrivent ce qui est vendu ; Inventory détient les quantités et mouvements.
+5. **Facturation marketplace appartient à Finance.** La génération PDF et l'envoi sont des capacités techniques consommées via Media/Communication ; ces domaines ne deviennent pas propriétaires de la facture.
+6. **Core / Shared ne possèdent aucune règle métier de domaine.** Une fonction partagée conserve un propriétaire canonique et un identifiant ; les consommateurs référencent ce propriétaire sans duplication.
+7. **Products / Catalog / Categories et Countries / Localization** nécessitent une décision de frontière documentée avant déplacement ou duplication de code. La roadmap ne présume pas que leurs responsabilités actuelles sont déjà correctement séparées.
+
+**Spécifications de domaine attendues :** une spécification versionnée par domaine, avec identifiants stables (préfixes dédiés), fonctions V1, reports, acteurs, règles, états, permissions, scénarios, erreurs, critères d'acceptation, contrats inter-domaines, données, événements, composants et tests. Les identifiants sont attribués après comparaison des décisions et inventaires existants, jamais à partir d'une liste supposée exhaustive.
 
 ## 2. Inventaire structurel au commit audité
 
@@ -391,6 +427,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.8 — 13 novembre 2026
+- Ajout du référentiel de propriété fonctionnelle et des fonctions principales à inventorier pour chaque domaine V1.
+- Clarification des frontières Sales / Finance / Delivery / Subscriptions-SaaS Billing ; Finance est un domaine autonome distinct de Sales.
+- Ajout des règles de non-duplication et des frontières à arbitrer avant déplacement de code.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 1.7 — 13 novembre 2026
 - Formalisation de la nomenclature Q71 : identifiants stables par domaine, sous-identifiants hiérarchiques et références canoniques inter-domaines sans duplication.
