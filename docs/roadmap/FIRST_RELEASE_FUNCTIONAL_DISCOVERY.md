@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.16
+- **Version :** 2.17
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2297,6 +2297,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 ### Version 2.16 — 13 novembre 2026
 - Ajout de la décision Media Q91 : demande de fusion de doublons PDF réservée à root et super_admin dans leur périmètre.
+- Aucune modification du code applicatif ; aucune fusion de branche.
+### Complément à la matrice Media — question 92
+- **Q92 — Confirmation définitive de la fusion de deux PDF : A.** Root et super_admin peuvent confirmer explicitement la fusion dans leur périmètre respectif.
+- **Conséquences / contraintes :** la confirmation est distincte de la demande. L'opération doit être atomique : si une étape échoue, le document source et ses références restent intacts. Les contrôles de hash, références, permissions et antivirus sont réexécutés au moment de confirmer ; l'acteur, la date, les documents concernés, les références transférées et le résultat sont journalisés.
+
+### Version 2.17 — 13 novembre 2026
+- Ajout de la décision Media Q92 : confirmation explicite de fusion réservée à root et super_admin dans leur périmètre, avec garantie d'atomicité.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
 
