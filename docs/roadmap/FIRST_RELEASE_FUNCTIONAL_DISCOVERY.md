@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.50
+- **Version :** 3.51
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4533,7 +4533,18 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Version 2.22 — 13 novembre 2026\n- Décision d'architecture validée : le client marketplace reçoit le rôle distinct `customer` géré par Identity ; le rôle interne `user` n'est pas réutilisé et aucune authentification parallèle Customer n'est créée.\n\n### Version 2.21 — 13 novembre 2026
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
+
+### Décision Q270 — Autorisations de gestion des promotions (VALIDÉE)
+- **Question :** Quels rôles peuvent créer, modifier et supprimer les promotions des produits ?
+- **Réponse :** A — seul le `cooperative_admin` peut gérer les promotions de sa propre coopérative.
+- **Décision :** la gestion commerciale des promotions (création, modification, suppression) est réservée au `cooperative_admin`, strictement dans le périmètre de sa coopérative. Le `super_admin` affecté et le `super_admin_root` peuvent superviser selon leurs droits, mais ne modifient pas directement les promotions commerciales au premier release. Toute action est contrôlée côté serveur et respecte l'isolation des coopératives.
+- **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
+
 ## 6. Historique des mises à jour
+
+### Version 3.51 — 13 novembre 2026
+- Enregistrement de Q270 : gestion des promotions réservée au `cooperative_admin` de sa coopérative ; les rôles de supervision consultent sans modifier directement les paramètres commerciaux.
+- Confirmation des contrôles serveur et de l'isolation des coopératives.
 
 ### Version 3.50 — 13 novembre 2026
 - Enregistrement de Q269 : affichage du prix normal barré, du prix promotionnel et du pourcentage de réduction lorsque la promotion est active.
