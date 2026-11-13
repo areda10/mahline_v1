@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.17
+- **Version :** 5.18
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Précision monétaire V1 (Q261) :** les prix en MAD sont limités à deux décimales ; utiliser une représentation décimale exacte, jamais des flottants binaires pour les calculs monétaires. Les règles d'arrondi détaillées pour taxes, remises, frais et répartitions restent à cadrer.
 - **Devise V1 (Q260) :** MAD est la devise du premier release. Le modèle de prix doit permettre une extension ultérieure à d'autres devises, mais aucune conversion automatique ni mélange de devises n'est autorisé ; Sales fige la devise avec le montant et Finance consomme ces données sans conversion implicite.
 - Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
 - Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
@@ -481,6 +482,11 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.18 — 13 novembre 2026
+- Enregistrement de Q261 : précision maximale de deux décimales pour les prix en MAD.
+- Exigence de calcul monétaire en décimal exact ; règles d'arrondi détaillées à cadrer.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 5.17 — 13 novembre 2026
 - Enregistrement de Q260 : MAD comme devise du premier release, avec extension multi-devises possible ultérieurement.
