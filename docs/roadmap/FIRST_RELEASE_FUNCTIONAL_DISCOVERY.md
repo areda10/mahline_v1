@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.34
+- **Version :** 2.35
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -182,6 +182,19 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Aucun déblocage automatique fondé uniquement sur une durée fixe n'est autorisé.
   - Les preuves acceptées, étapes de contrôle, habilitations du support, validation finale et modalités de déblocage restent à détailler dans la conception technique.
   - Chaque action de récupération et de déblocage doit être journalisée sans stocker de secrets d'authentification.
+
+### Question 15 — Récupération du compte sans accès aux deux adresses e-mail (VALIDÉ)
+- **Question :** Quelle procédure prévoir si le client n'a accès ni à l'ancienne ni à la nouvelle adresse e-mail ?
+- **Réponse :** A — procédure de récupération renforcée avec vérification d'identité par le support, sans dépendre de l'accès à ces deux adresses.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity et Communication ; récupération de compte, vérification d'identité et assistance support.
+- **Conséquences :**
+  - L'absence d'accès aux deux adresses e-mail ne bloque pas définitivement toute récupération du compte.
+  - Une procédure renforcée permet au client de demander une récupération avec assistance du support, sans utiliser l'accès à l'ancienne ou à la nouvelle adresse comme preuve suffisante ou obligatoire.
+  - Le support doit vérifier l'identité et la légitimité de la demande au moyen de preuves et contrôles renforcés avant toute modification des coordonnées ou tout déblocage.
+  - Aucune information personnelle simple ou facilement devinable ne suffit à elle seule pour récupérer le compte.
+  - Les preuves acceptées, niveaux de contrôle, habilitations, validations, délais et notifications alternatives restent à définir dans la conception détaillée.
+  - Toutes les étapes et décisions doivent être journalisées sans conserver de mots de passe, tokens, codes ou secrets d'authentification.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2495,6 +2508,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.35 — 13 novembre 2026
+- Enregistrement de la Question 15 : récupération renforcée avec vérification d'identité par le support même sans accès à l'ancienne et à la nouvelle adresse e-mail ; preuves et contrôles détaillés restent à définir.
 
 ### Version 2.34 — 13 novembre 2026
 - Enregistrement de la Question 14 : déblocage uniquement après vérification sécurisée de l'identité, par procédure automatisée ou avec assistance contrôlée du support ; aucun déblocage fondé seulement sur un délai.
