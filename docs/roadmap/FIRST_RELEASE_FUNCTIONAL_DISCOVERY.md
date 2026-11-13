@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.74
+- **Version :** 2.75
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -598,6 +598,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le téléchargement du ZIP est réservé au client propriétaire, depuis son espace authentifié, sous réserve des contrôles de session, de propriété, de disponibilité et de validité du lien temporaire déjà définis.
 - Le rôle de consultation du support ne confère aucun droit de téléchargement ou de récupération des archives ; les interfaces et contrôles serveur doivent appliquer cette séparation.
 - Les accès du support à l'historique restent journalisés selon la décision de la question 52.
+
+### Question 55 — Accès aux PDF communicables par le support
+
+**Décision validée : B**
+
+- Un agent du support expressément autorisé à consulter un dossier de récupération peut télécharger uniquement les documents PDF communicables nécessaires au traitement de ce dossier.
+- Cet accès ne donne aucun droit général de téléchargement de toutes les pièces : les documents sensibles, les pièces non communicables et les éléments exclus du périmètre autorisé restent inaccessibles au support.
+- Chaque téléchargement doit faire l'objet d'un contrôle serveur des permissions, du périmètre du dossier et du caractère communicable du document ; l'autorisation de consulter le dossier ne suffit pas, à elle seule, à autoriser le téléchargement de toute pièce.
+- Chaque tentative et chaque téléchargement effectif doivent être journalisés avec l'identité de l'agent, le dossier concerné, le document ou sa référence, la date et le résultat, sans enregistrer le contenu du document ni de données secrètes.
+- Cette règle ne modifie pas la décision Q54 : le support ne peut toujours pas télécharger l'archive ZIP du dossier, dont le téléchargement reste réservé au client propriétaire depuis son espace authentifié.
+- **Périmètre concerné :** Identity (dossier de récupération et autorisations du support), Media/Storage (accès et téléchargement des PDF) et Audit (traçabilité).
+- **Points à préciser avant implémentation :** classification des pièces communicables, matrice des permissions, éventuelles restrictions par type de document et durée de conservation des journaux de téléchargement.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2911,6 +2923,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.75 — 13 novembre 2026
+- Ajout de la décision Identity Q55 : B — les agents du support expressément autorisés peuvent télécharger uniquement les PDF communicables nécessaires au traitement du dossier, sous contrôle d'accès et journalisation ; les pièces sensibles/non communicables et l'archive ZIP restent exclues.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.74 — 13 novembre 2026
 - Ajout de la décision Identity Q54 : A — les agents du support autorisés à consulter l'historique ZIP ne peuvent pas télécharger l'archive ; le téléchargement reste réservé au client propriétaire authentifié.
