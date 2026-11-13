@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.55
+- **Version :** 2.56
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -410,6 +410,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Les justificatifs contenant des données personnelles ou sensibles doivent être limités au strict nécessaire et soumis à des règles de conservation et de suppression adaptées ; leur conservation ne doit pas être prolongée automatiquement au seul motif que l'historique du dossier est conservé 5 ans.
 - À l'expiration de la durée, les données sont supprimées ou anonymisées selon les obligations légales applicables et les éventuelles obligations de conservation ou de gel liées à un litige.
 - Cette durée de 5 ans constitue la décision fonctionnelle MAHLINE et reste à valider au regard du droit marocain, notamment des exigences applicables en matière de protection des données personnelles et de conservation des pièces.
+
+### Question 36 — Traitement des données à l'expiration de la durée de conservation
+
+**Décision validée : B**
+
+- À l'expiration des 5 ans suivant la clôture définitive, les données identifiantes du dossier et les justificatifs personnels ou sensibles sont supprimés, sous réserve des obligations légales de conservation ou d'un gel justifié lié à un litige.
+- Les données strictement nécessaires à des statistiques peuvent être conservées uniquement après anonymisation irréversible, de manière à empêcher raisonnablement la réidentification du client, des agents et des autres personnes concernées.
+- Les données pseudonymisées ne sont pas considérées comme anonymisées et restent soumises aux règles de protection et de conservation applicables.
+- L'opération de suppression ou d'anonymisation est tracée sans conserver dans la trace des données personnelles qui devraient être supprimées.
+- Les modalités techniques, les contrôles de réidentification et les exceptions légales seront précisés lors de la conception technique et de la validation juridique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2723,6 +2733,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.56 — 13 novembre 2026
+- Enregistrement de la Question 36 : à l'expiration des 5 ans, suppression des données identifiantes et justificatifs, et conservation éventuelle de statistiques uniquement sous forme anonymisée irréversible, sous réserve des obligations légales.
 
 ### Version 2.55 — 13 novembre 2026
 - Enregistrement de la Question 35 : conservation de l'historique des contestations et exceptions pendant 5 ans après clôture définitive, sous réserve de validation juridique et avec traitement distinct des justificatifs personnels/sensibles.
