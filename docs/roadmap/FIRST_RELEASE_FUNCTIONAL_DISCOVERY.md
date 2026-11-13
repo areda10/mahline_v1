@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.83
+- **Version :** 2.84
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -701,6 +701,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - La génération, l'émission du lien, les tentatives et les téléchargements de l'export sont eux-mêmes journalisés.
 - **Périmètre concerné :** Audit (journalisation et export contrôlé), Identity (autorisation réservée au `super_admin_root`), Media/Storage (génération, stockage privé, téléchargement et purge).
 - **Points à préciser avant implémentation :** format et normalisation de l'adresse IP, définition des familles/types de navigateur et appareil, disponibilité de ces données selon le canal d'accès et règles de minimisation applicables.
+
+### Question 64 — Filtres disponibles avant l'export des journaux de téléchargements PDF
+
+**Décision validée : B**
+
+- Le `super_admin_root` peut filtrer les journaux avant export selon la période, l'agent, le résultat du téléchargement, le document, l'adresse IP et le dossier concerné.
+- Les filtres sont appliqués côté serveur et respectent le périmètre d'autorisation du `super_admin_root`. Les valeurs saisies sont validées et normalisées ; aucune donnée ne doit permettre de contourner les contrôles d'accès.
+- Les résultats affichés et exportés correspondent aux mêmes critères de filtrage. L'export reste limité à une période maximale de 12 mois et aux champs autorisés par la décision Q63.
+- La consultation, l'application des filtres, la génération et le téléchargement des exports sont journalisés. Les journaux sources ne sont jamais modifiés par le filtrage ou l'export.
+- **Périmètre concerné :** Audit (recherche et traçabilité), Identity (autorisation réservée au `super_admin_root`), Media/Storage (production des exports).
+- **Points à préciser avant implémentation :** comportement des filtres combinés, recherche exacte ou partielle, pagination, limites de résultats et normalisation des adresses IP.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3014,6 +3025,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.84 — 13 novembre 2026
+- Ajout de la décision Identity Q64 : B — filtres avant export par agent, résultat, document, IP et dossier, en complément de la période ; application serveur et journalisation.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.83 — 13 novembre 2026
 - Ajout de la décision Identity Q63 : B — export PDF/CSV incluant date/heure, agent, dossier, document, résultat, adresse IP et type de navigateur/appareil lorsque disponibles ; exclusion des détails techniques complets, secrets et contenus sensibles.
