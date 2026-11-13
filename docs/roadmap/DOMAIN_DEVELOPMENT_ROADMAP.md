@@ -1,10 +1,10 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.8
+- **Version :** 1.9
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
-- **Nature :** inventaire structurel initial, en lecture seule
+- **Nature :** référentiel fonctionnel cible et feuille de route, à confirmer par audits détaillés
 - **Statut :** PROPOSITION DE SUIVI — les statuts doivent être confirmés par audit fonctionnel et tests.
 
 ## 1. Objet et règles de suivi
@@ -130,6 +130,9 @@ Cette matrice aligne la roadmap avec le registre de découverte. Elle fixe le pr
 5. **Facturation marketplace appartient à Finance.** La génération PDF et l'envoi sont des capacités techniques consommées via Media/Communication ; ces domaines ne deviennent pas propriétaires de la facture.
 6. **Core / Shared ne possèdent aucune règle métier de domaine.** Une fonction partagée conserve un propriétaire canonique et un identifiant ; les consommateurs référencent ce propriétaire sans duplication.
 7. **Products / Catalog / Categories et Countries / Localization** nécessitent une décision de frontière documentée avant déplacement ou duplication de code. La roadmap ne présume pas que leurs responsabilités actuelles sont déjà correctement séparées.
+8. **Finance est un domaine autonome distinct de Sales, Delivery et Subscriptions / SaaS Billing.** Finance possède exclusivement les flux financiers de la marketplace ; il ne devient pas un sous-module de Sales ni un service partagé.
+9. **Facturation n'est pas un domaine métier autonome dans cette architecture V1.** La facture marketplace et les avoirs relèvent de Finance ; les factures d'abonnement dues à MAHLINE relèvent de Subscriptions / SaaS Billing. Media fournit le stockage/PDF et Communication l'envoi, sans posséder la règle de facturation.
+10. **Core / Shared restent techniques.** Ils ne possèdent ni factures, ni paiements, ni commandes, ni règles de tarification métier ; les contrats explicites relient les domaines propriétaires.
 
 **Spécifications de domaine attendues :** une spécification versionnée par domaine, avec identifiants stables (préfixes dédiés), fonctions V1, reports, acteurs, règles, états, permissions, scénarios, erreurs, critères d'acceptation, contrats inter-domaines, données, événements, composants et tests. Les identifiants sont attribués après comparaison des décisions et inventaires existants, jamais à partir d'une liste supposée exhaustive.
 
@@ -427,6 +430,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.9 — 13 novembre 2026
+- Alignement du référentiel fonctionnel V1 avec Q72 : règles métier détenues par leur domaine propriétaire ; Core/Shared strictement techniques et contrats explicites.
+- Confirmation de Finance comme domaine métier autonome distinct de Sales, Delivery et Subscriptions / SaaS Billing ; clarification de la propriété des factures marketplace versus factures d'abonnement.
+- Clarification : Facturation n'est pas un domaine autonome dans cette architecture V1 ; la propriété dépend du flux (Finance marketplace, SaaS Billing abonnement), tandis que Media/Communication assurent les capacités techniques PDF et envoi.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 1.8 — 13 novembre 2026
 - Ajout du référentiel de propriété fonctionnelle et des fonctions principales à inventorier pour chaque domaine V1.
