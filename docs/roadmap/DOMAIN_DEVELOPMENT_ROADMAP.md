@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.6
+- **Version :** 1.7
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -94,6 +94,8 @@ La procédure suivante s'applique à **chaque domaine** et à chaque fonctionnal
 
 - **Contenu obligatoire des spécifications de domaine :** chaque fonction possède un identifiant stable, objectif, périmètre V1, acteurs, rôles/permissions, préconditions, règles métier, états/transitions, scénarios nominaux et alternatifs, cas limites, erreurs, dépendances, contrats et échanges inter-domaines, événements, données et contraintes, composants techniques concernés, critères d'acceptation et tests associés. Les éléments non applicables sont justifiés ; reports, exclusions et décisions en attente sont explicites.
 - **Traçabilité de bout en bout :** relier chaque identifiant fonctionnel à la décision du registre général, à sa spécification, aux modèles/migrations/services/contrôleurs/routes/permissions/jobs ou notifications concernés, aux tests et aux preuves de validation. Aucun intitulé isolé ne suffit à autoriser le codage.
+
+- **Nomenclature des identifiants fonctionnels :** utiliser une séquence stable par domaine avec préfixe propre (ex. `MED-001`, `SAL-001`). Autoriser des sous-identifiants hiérarchiques pour les sous-fonctions (ex. `SAL-001.01`) sans remplacer l'identifiant parent. Toute fonction inter-domaines conserve un propriétaire fonctionnel canonique ; les autres domaines référencent cet identifiant et documentent leurs propres responsabilités/contrats sans dupliquer la fonction. Un identifiant attribué n'est jamais réutilisé ; les remplacements et abandons gardent une trace.
 
 ## 2. Inventaire structurel au commit audité
 
@@ -389,6 +391,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.7 — 13 novembre 2026
+- Formalisation de la nomenclature Q71 : identifiants stables par domaine, sous-identifiants hiérarchiques et références canoniques inter-domaines sans duplication.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 1.6 — 13 novembre 2026
 - Ajout du contenu minimum obligatoire des spécifications de domaine et de la traçabilité fonctionnelle jusqu'aux composants techniques, tests et preuves de validation, conformément à Q70.
