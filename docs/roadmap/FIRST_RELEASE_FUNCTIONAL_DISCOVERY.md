@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.14
+- **Version :** 2.15
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -497,8 +497,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision :** après confirmation explicite de l'utilisateur, MAHLINE supprime toutes les références au média dans les éléments qui l'utilisent, puis supprime le média et son fichier associé.
 - **Conséquences :**
   - Avant l'exécution, l'interface affiche un message de confirmation indiquant clairement que la suppression retirera le média de tous les éléments qui l'utilisent et supprimera le fichier.
-  - Aucune suppression ne doit être exécutée avant confirmation explicite.
-  - Le traitement doit identifier et supprimer proprement toutes les associations concernées, sans supprimer les éléments métier eux-mêmes (produits, catégories, coopératives, etc.).
+  - Aucune suppression ne doit être exécutée avant confirmation explicite.  - Le traitement doit identifier et supprimer proprement toutes les associations concernées, sans supprimer les éléments métier eux-mêmes (produits, catégories, coopératives, etc.).
   - L'opération doit être autorisée selon le périmètre de l'acteur et tracée ; les références ne doivent pas rester orphelines.
   - Les modalités techniques de suppression physique, notamment stockage distant, échec partiel et reprise, restent à définir lors de l'audit technique.
 - **Périmètre concerné :** domaines Media, Products, Categories, Cooperatives et Audit ; associations, suppression, confirmation utilisateur et intégrité référentielle.
@@ -997,8 +996,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Décision :** la suppression demandée par un utilisateur masque la notification uniquement dans son interface ; l’enregistrement reste conservé en base.
 - **Conséquences :**
   - L’action est individuelle à l’utilisateur : masquer une notification ne la masque pas pour les autres utilisateurs qui y ont accès.
-  - La notification reste conservée en base et aucune suppression physique n’est effectuée par cette action.
-  - Les traces d’audit restent conservées.
+  - La notification reste conservée en base et aucune suppression physique n’est effectuée par cette action.  - Les traces d’audit restent conservées.
 - **Statut :** VALIDÉ — suppression assimilée à un masquage individuel.
 - **Périmètre concerné :** domaine Media ; notifications et préférences d’affichage par utilisateur.
 - **Points restant à préciser :** durée de conservation technique et éventuelle fonction de réaffichage à préciser lors de l’audit technique/UX.
@@ -1497,8 +1495,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 
 - **Réponse :** D (validation de la recommandation).
 - **Décision validée :** l'utilisateur peut annuler individuellement un fichier pendant son téléversement ou annuler en une seule action tous les fichiers encore en cours.
-- **Portée :** l'annulation ne supprime ni ne renvoie les fichiers déjà téléversés avec succès. L'état de chaque fichier doit être clairement distingué (en attente, en cours, réussi, échoué ou annulé). Les éventuels fichiers partiels temporaires doivent être nettoyés de manière sûre côté serveur.
-- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
+- **Portée :** l'annulation ne supprime ni ne renvoie les fichiers déjà téléversés avec succès. L'état de chaque fichier doit être clairement distingué (en attente, en cours, réussi, échoué ou annulé). Les éventuels fichiers partiels temporaires doivent être nettoyés de manière sûre côté serveur.- **Statut :** règle fonctionnelle enregistrée ; implémentation non commencée.
 
 ### Question 185 — Reprise après interruption du téléversement
 
@@ -1997,8 +1994,7 @@ Les questions seront ajoutées au fur et à mesure, dans l'ordre du parcours mé
   - **Question 66 — incident après décision de maintenir la suspension :** D — le `super_admin_root` décide au cas par cas du traitement de l'incident, avec justification et journalisation.
   - **Conséquences / contraintes :** aucune clôture automatique ni obligation uniforme de maintenir l'incident ouvert n'est imposée. La décision doit distinguer le statut de l'incident de l'état de suspension des notifications : clôture ou maintien de l'incident ne réactive pas implicitement les notifications. Toute décision et tout changement d'état sont justifiés et journalisés.
   - **Question 67 — autorité de réactivation des notifications suspendues :** B — le `super_admin_root` ou le `super_admin` responsable de la coopérative peut réactiver les notifications.
-  - **Conséquences / contraintes :** le `super_admin` ne peut agir que pour une coopérative dont il est responsable ; le `super_admin_root` conserve une autorité globale. La réactivation doit être une action explicite, après vérification/correction de la cause de suspension, et être journalisée (acteur, date/heure, incident, destinataire, motif et état avant/après). Aucune réactivation automatique n'est autorisée. Les modalités précises de vérification préalable et les éventuelles restrictions selon le type d'incident restent à définir.
-  - **Question 68 — récidive immédiate après réactivation par le `super_admin` :** D — le `super_admin_root` décide au cas par cas de la conduite à tenir.
+  - **Conséquences / contraintes :** le `super_admin` ne peut agir que pour une coopérative dont il est responsable ; le `super_admin_root` conserve une autorité globale. La réactivation doit être une action explicite, après vérification/correction de la cause de suspension, et être journalisée (acteur, date/heure, incident, destinataire, motif et état avant/après). Aucune réactivation automatique n'est autorisée. Les modalités précises de vérification préalable et les éventuelles restrictions selon le type d'incident restent à définir.  - **Question 68 — récidive immédiate après réactivation par le `super_admin` :** D — le `super_admin_root` décide au cas par cas de la conduite à tenir.
   - **Conséquences / contraintes :** aucune règle automatique uniforme n'est imposée pour cette récidive. Le cas est signalé au `super_admin_root`, qui décide notamment du maintien ou de la nouvelle suspension des notifications, du traitement de l'incident existant ou de sa réouverture, et des éventuelles mesures correctives. La décision, son motif, son auteur, sa date/heure et les changements d'état doivent être journalisés. La récidive ne doit pas être traitée comme une réactivation réussie sans vérification.
   - **Question 69 — conservation de l'historique des incidents de notification :** A — conserver définitivement l'intégralité de l'historique.
   - **Conséquences / contraintes :** l'historique complet doit être conservé sans suppression liée à une échéance prédéfinie : tentatives d'envoi, erreurs et résultats, changements d'adresse ou de destinataire, e-mails de test, vérifications manuelles, décisions de suspension/réactivation/clôture et réouvertures. Les événements doivent rester consultables et traçables, avec accès strictement autorisé et protection contre l'altération. Les règles techniques d'archivage, de stockage et les obligations légales applicables restent à vérifier ; « définitivement » ne dispense pas de respecter les exigences légales de protection et de conservation des données.
@@ -2193,7 +2189,113 @@ Pour chaque domaine nécessaire au premier release :
 
 Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité, d'isolation multi-coopératives, d'autorisation, de cohérence transactionnelle ou de protection des données nécessaires au fonctionnement correct d'une fonctionnalité.
 
+## Matrice Media — questions 1 à 90 (réponses validées)
+
+- **Statut :** Q1 à Q90 validées ; les décisions ci-dessous constituent le cadrage fonctionnel du premier release.
+- **Règle commune :** toutes les actions restent soumises au périmètre coopératif, aux permissions du module, à l'état antivirus et à la journalisation prévue. Les décisions ne créent aucun contournement des Policies/Gates ni des règles métier.
+
+### 1. Périmètre, accès et gouvernance
+- **Q1 — Périmètre de la bibliothèque : A.** Root : toutes les coopératives ; super_admin : coopératives affectées ; cooperative_admin et user : leur propre coopérative, avec les permissions applicables.
+- **Q2 — Téléversement : B.** Root, super_admin et cooperative_admin peuvent téléverser ; user ne le peut pas. Chaque fichier est validé (format, taille, quota, antivirus).
+- **Q3 — Consultation et aperçu : décision validée.** Les quatre rôles consultent et prévisualisent les médias autorisés dans leur périmètre ; aucun aperçu/téléchargement pour un fichier en attente antivirus ou en quarantaine.
+- **Q4 — Téléchargement individuel de l'original : A.** Les quatre rôles, selon périmètre et permissions ; contrôle serveur à chaque requête, antivirus propre obligatoire.
+- **Q5 — Métadonnées descriptives : A.** Les trois administrateurs modifient nom/titre/description/catégorie/tags dans leur périmètre ; user est en lecture seule. Le remplacement physique est distinct.
+- **Q6 — Associations : A.** Les trois administrateurs créent/suppriment des associations dans leur périmètre ; user consulte seulement. Retirer une association ne supprime ni l'entité métier ni un média encore référencé.
+- **Q7 — Demande de suppression : C.** Root et super_admin seulement, dans leur périmètre ; contrôle des références avant toute suppression physique.
+- **Q8 — Quotas et capacité : A.** Root seul gère les quotas globaux, les plans et les capacités exceptionnelles ; les autres rôles consultent la consommation de leur périmètre.
+### 2. Sécurité, traitement et administration
+- **Q9 — Incidents de sécurité : A.** Root seul consulte l'historique antivirus, infections, quarantaines, rescans, libérations et suppressions de sécurité ; journal append-only et immuable.
+- **Q10 — Rescan et libération de quarantaine : A.** Root seul demande un nouveau scan ; après résultat propre, une approbation explicite root distincte est nécessaire pour libérer le fichier. Tout est journalisé.
+- **Q11 — Journaux d'activité Media : C.** Root et super_admin dans leur périmètre ; cooperative_admin et user n'y accèdent pas. Les incidents de sécurité restent root-only.
+- **Q12 — Relance de traitements échoués : A.** Root et super_admin dans leur périmètre peuvent relancer manuellement ; les autres rôles ne le peuvent pas. Les retries automatiques sont gérés par le système.
+- **Q13 — Métadonnées techniques : A.** Les trois administrateurs voient les détails techniques dans leur périmètre ; user ne voit que les informations simplifiées utiles.
+- **Q14 — Remplacement d'un fichier : B.** Les trois administrateurs dans leur périmètre. Remplacement atomique : validation complète du nouveau fichier avant substitution ; en cas d'échec, l'ancien reste utilisable et les associations sont préservées.
+- **Q15 — Téléversement par lot : A.** Les trois administrateurs peuvent envoyer jusqu'à 20 fichiers par lot ; user ne peut pas. Progression, état, reprise et annulation par fichier.
+- **Q16 — Annulation/reprise d'envoi : A.** L'auteur gère ses envois ; root supervise tous les envois, super_admin intervient dans ses coopératives affectées, cooperative_admin dans sa coopérative ; user sans droit d'envoi.
+- **Q17 — Médias supprimés/en attente de suppression : A.** Consultation réservée à root et super_admin dans leur périmètre ; pas de corbeille ni restauration ordinaire.
+- **Q18 — Nouvelle tentative de suppression physique échouée : A.** Root et super_admin dans leur périmètre, avec confirmation fraîche à chaque tentative.
+- **Q19 — Restauration exceptionnelle depuis sauvegarde : B.** Root et super_admin dans leur périmètre, avec justification, contrôles de périmètre, antivirus avant disponibilité et audit immuable. Une restauration ordinaire ne réintroduit pas un fichier définitivement supprimé.
+- **Q20 — Statistiques Media : A.** Root global/par coopérative ; super_admin sur ses coopératives ; cooperative_admin sur sa coopérative ; user voit seulement une consommation simplifiée.
+- **Q21 — Paramètres techniques globaux : A.** Root seul modifie formats, limites, dimensions, qualité WebP et règles de traitement ; modifications journalisées.
+- **Q22 — Permissions Media des utilisateurs : A.** Root seul attribue, modifie ou retire les permissions Media.
+- **Q23 — Fichier en attente antivirus : A.** Les quatre rôles voient le statut dans leur périmètre, mais aucun aperçu, téléchargement, association ou distribution avant validation.
+- **Q24 — Détails de quarantaine : B.** Root et super_admin dans leur périmètre ; cooperative_admin/user n'y accèdent pas. Voir les détails ne donne aucun droit de rescan ou de libération.
+- **Q25 — Erreurs de traitement : A.** Détails techniques visibles par root et super_admin dans leur périmètre ; les autres reçoivent un message simple d'indisponibilité.
+- **Q26 — Export de la liste Media : C.** Root seul ; aucun export pour les autres rôles. Exclure les fichiers en attente/quarantaine et les informations sensibles de sécurité.
+- **Q27 — Recherche Media : A.** Recherche limitée au périmètre et aux permissions du rôle ; les états antivirus et restrictions sont respectés.
+- **Q28 — Dossiers personnalisés : A.** Pas de dossiers personnalisés au premier release ; organisation automatique uniquement.
+- **Q29 — Règles de classification automatique : A.** Root seul les modifie ; changements journalisés.
+- **Q30 — Médias non associés : A.** Les quatre rôles peuvent consulter les médias non associés dans leur périmètre, sous réserve des permissions.
+- **Q31 — Liens de partage publics/externes : A.** Aucun lien public au premier release ; accès privé soumis aux contrôles MAHLINE.
+- **Q32 — Historique des modifications : A.** Root et super_admin dans leur périmètre seulement ; cooperative_admin/user n'accèdent pas à l'historique détaillé.
+- **Q33 — Médias archivés/inactifs : A.** Les quatre rôles peuvent les consulter dans leur périmètre ; cela n'accorde aucun droit supplémentaire de modification ou téléchargement.
+- **Q34 — Réactivation d'un média archivé/inactif : A.** Root et super_admin dans leur périmètre ; vérification des références, permissions et antivirus. La quarantaine ne peut pas être contournée.
+- **Q35 — Téléchargement groupé : C.** Root seul ; le téléchargement individuel reste régi par Q4.
+- **Q36 — Détails techniques des sauvegardes : A.** Root seul consulte emplacements, volumes, dates/états, restaurations et incidents. Les autres rôles voient seulement leur consommation selon Q8.
+- **Q37 — Identité des auteurs d'actions Media : A.** Détails visibles par root et super_admin dans leur périmètre ; pas de détails pour cooperative_admin/user.
+- **Q38 — Statistiques d'activité par utilisateur : A.** Root et super_admin dans leur périmètre seulement (envois, remplacements, téléchargements, associations).
+- **Q39 — Seuils d'alerte de stockage : A.** Root seul configure les seuils : alerte à 80 %, alerte renforcée à 95 %, blocage des nouveaux envois à 100 % ; capacité exceptionnelle également root-only.
+- **Q40 — Archivage/désactivation d'un média : A.** Root et super_admin dans leur périmètre ; consultation selon Q33 et réactivation selon Q34.
+### 3. Produits, associations, statistiques et optimisation des images
+- **Q41 — Modification de catégorie : A.** Les trois administrateurs dans leur périmètre ; user en lecture seule ; aucune modification implicite des associations.
+- **Q42 — Gestion des tags/mots-clés : A.** Les trois administrateurs dans leur périmètre ; user en lecture seule.
+- **Q43 — Titre et description : A.** Les trois administrateurs dans leur périmètre ; toute modification est journalisée.
+- **Q44 — Paramètres d'affichage : A.** Les trois administrateurs gèrent image principale et ordre/position de galerie ; user consulte seulement.
+- **Q45 — Changement d'image principale produit : A.** Les trois administrateurs choisissent parmi les médias déjà associés ; aucun fichier physique supprimé ; validation antivirus obligatoire.
+- **Q46 — Réorganisation de galerie : A.** Les trois administrateurs modifient l'ordre dans leur périmètre ; associations préservées.
+- **Q47 — Même média sur plusieurs produits : A.** Les trois administrateurs peuvent créer plusieurs références dans leur périmètre ; un seul fichier physique, associations indépendantes.
+- **Q48 — Retrait d'une image de galerie : A.** Les trois administrateurs retirent l'association ; le fichier reste dans la bibliothèque et ses autres références restent intactes.
+- **Q49 — Consultation intermodules : A.** Les quatre rôles consultent les médias utilisés dans plusieurs modules seulement si leurs droits dans le module concerné le permettent ; un accès dans un module ne donne pas accès aux autres.
+- **Q50 — Statistiques détaillées d'un média : A.** Root et super_admin dans leur périmètre voient références produits/modules, téléchargements et dernière utilisation.
+- **Q51 — Historique des téléchargements : A.** Root et super_admin dans leur périmètre voient utilisateur, date/heure, média et nombre de téléchargements.
+- **Q52 — Historique des remplacements : A.** Root et super_admin dans leur périmètre voient auteur, date, caractéristiques de l'ancien fichier et résultat du nouveau traitement.
+- **Q53 — Classement des médias les plus utilisés : A.** Root et super_admin dans leur périmètre ; calcul selon téléchargements, vues et associations produits.
+- **Q54 — Médias récemment ajoutés : A.** Les quatre rôles les voient dans leur périmètre avec date et statut ; attente antivirus sans aperçu/téléchargement, quarantaine inaccessible.
+- **Q55 — Médias récemment modifiés : A.** Les quatre rôles les voient dans leur périmètre ; l'historique détaillé reste réservé à root/super_admin.
+- **Q56 — Médias inutilisés/non associés : A.** Les quatre rôles les consultent dans leur périmètre ; aucun droit supplémentaire de modification ou suppression.
+- **Q57 — Détails d'échec technique : A.** Root et super_admin dans leur périmètre voient les détails ; les autres voient un message simple.
+- **Q58 — Médias volumineux/forte consommation : A.** Les trois administrateurs peuvent les identifier dans leur périmètre ; cela ne donne aucun droit de modifier les quotas.
+- **Q59 — Doublons SHA-256 : A.** Les trois administrateurs consultent les doublons dans leur périmètre ; aucune suppression automatique.
+- **Q60 — Demande de fusion de doublons : A.** Root et super_admin dans leur périmètre ; vérifier hashes, références, permissions et antivirus, transférer les références puis journaliser.
+- **Q61 — Confirmation de fusion : A.** Root et super_admin dans leur périmètre confirment explicitement ; opération atomique, source préservée en cas d'échec.
+- **Q62 — Annulation d'une fusion en attente : A.** Root et super_admin dans leur périmètre ; une fusion exécutée n'est pas annulable directement et exige une restauration contrôlée journalisée.
+- **Q63 — Historique des fusions : A.** Root et super_admin seulement, dans leur périmètre ; médias concernés, acteur, date, références transférées et résultat.
+- **Q64 — Consultation des versions optimisées : A.** Les quatre rôles consultent la variante adaptée dans leur périmètre après validation antivirus ; original conservé 24 h après validation des variantes, puis supprimé automatiquement.
+- **Q65 — Téléchargement de l'original pendant les 24 h : A.** Les quatre rôles selon Q4 ; la période de conservation ne crée aucun droit supplémentaire. Après expiration, seule la version optimisée demeure.
+- **Q66 — Échec d'optimisation d'image : A.** Conserver l'original et l'utiliser en fallback si possible ; trois tentatives automatiques, puis relance manuelle par root/super_admin ; message simple aux autres ; aucune suppression automatique.
+- **Q67 — Demande de réoptimisation : A.** Root et super_admin dans leur périmètre seulement ; action journalisée et soumise aux limites techniques.
+- **Q68 — Détails des variantes optimisées : A.** Les trois administrateurs voient miniature/normal/grand, dimensions, taille et format ; user voit seulement l'affichage adapté.
+- **Q69 — Suppression manuelle d'une variante obsolète : A.** Root et super_admin dans leur périmètre ; vérifier les dépendances, ne jamais supprimer l'original, permettre la régénération et journaliser.
+- **Q70 — Informations de compatibilité : A.** Les quatre rôles voient les informations adaptées à leur niveau ; les réglages techniques avancés restent gouvernés par Q13/Q21.
+### 4. Vidéos et documents PDF
+- **Q71 — Média dont le format original n'est pas compatible navigateur : A.** Les quatre rôles peuvent consulter une version compatible approuvée par antivirus ; sinon message simple, sans exposition du fichier brut.
+- **Q72 — Conversion en cours : A.** Les quatre rôles voient le statut dans leur périmètre ; aucun aperçu, téléchargement du résultat, association ou distribution avant validation antivirus et traitement.
+- **Q73 — Lecture vidéo convertie : A.** Les quatre rôles peuvent lire la vidéo convertie avec succès dans leur périmètre après validation antivirus.
+- **Q74 — Modification de miniature vidéo : A.** Les trois administrateurs dans leur périmètre ; user en lecture seule.
+- **Q75 — Choix de l'instant de capture pour miniature vidéo : A.** Les trois administrateurs sélectionnent l'instant dans leur périmètre ; génération automatique, prévisualisation et retour possible à la miniature automatique.
+- **Q76 — Suppression de miniature personnalisée : A.** Les trois administrateurs peuvent revenir à la miniature automatique dans leur périmètre ; vidéo originale, associations et autres variantes restent intactes.
+- **Q77 — Informations techniques détaillées d'une vidéo : A.** Les trois administrateurs consultent durée, résolution, formats, taille, état de conversion et codecs ; user voit des informations simples utiles à la lecture.
+- **Q78 — Téléchargement de l'original vidéo avant fin de conversion : A.** Après validation antivirus, les quatre rôles peuvent télécharger l'original selon Q4 même si la conversion est en cours ; aucun accès avant validation antivirus.
+- **Q79 — Relance manuelle d'une conversion vidéo échouée : A.** Root et super_admin dans leur périmètre, après les trois tentatives automatiques ; action journalisée.
+- **Q80 — Suppression physique avec associations conservées : A.** Interdite pour tous les rôles ; détacher les associations autorisées, vérifier qu'aucune référence valide ne subsiste, puis seulement supprimer original et variantes et journaliser.
+- **Q81 — Consultation de documents PDF : A.** Les quatre rôles dans leur périmètre, sous réserve des permissions du module métier ; l'accès Media ne contourne jamais les droits sur le document.
+- **Q82 — Remplacement d'un PDF associé : A.** Les trois administrateurs dans leur périmètre ; valider format/taille (5 Mo max), antivirus et nouveau fichier avant remplacement ; conserver associations et ancien fichier si échec.
+- **Q83 — Demande de suppression d'un PDF associé : A.** Root et super_admin dans leur périmètre ; vérifier références et obligations légales/métier de conservation avant toute suppression physique.
+- **Q84 — Téléchargement de PDF : A.** Les quatre rôles selon permissions métier et périmètre, après validation antivirus et hors quarantaine/blocage ; téléchargement journalisé.
+- **Q85 — Statistiques d'utilisation des PDF : A.** Root et super_admin dans leur périmètre ; consultations, téléchargements, documents les plus utilisés et dernière utilisation.
+- **Q86 — Métadonnées descriptives d'un PDF : A.** Les trois administrateurs modifient titre, description, catégorie, mots-clés et nom affiché dans leur périmètre ; le contenu physique reste inchangé et les modifications sont journalisées.
+- **Q87 — Association d'un PDF à plusieurs éléments métier : A.** Les trois administrateurs dans leur périmètre ; un seul fichier physique, associations indépendantes ; retirer une association ne supprime pas le fichier.
+- **Q88 — Ordre d'affichage des PDF d'un produit : A.** Les trois administrateurs dans leur périmètre ; seul l'ordre change, sans modification du fichier ou des associations ; action journalisée.
+- **Q89 — PDF récemment ajoutés/modifiés : A.** Les quatre rôles dans leur périmètre voient nom, date, statut et association ; historique détaillé réservé à root/super_admin.
+- **Q90 — Consultation des doublons PDF : A.** Les trois administrateurs dans leur périmètre ; détection SHA-256, aucune suppression automatique ; fusion/suppression suivent Q60–Q63 et les règles de références.
+
+- **Limites de périmètre confirmées :** pas de dossiers personnalisés, pas de liens publics de partage, pas de corbeille/restauration ordinaire, pas de suppression automatique des doublons, et aucune suppression physique tant qu'une référence valide ou une obligation de conservation subsiste.
+
 ## 6. Historique des mises à jour
+
+### Version 2.15 — 13 novembre 2026
+- Ajout de la matrice Media Q1 à Q90 : questions, réponses validées, règles d'accès, sécurité, traitements, associations, images, vidéos et PDF.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 - **Question 82 — Historique des modifications d'un export :** réponse D — le `super_admin_root` décide au cas par cas si l'historique des modifications doit être conservé. La décision et son motif doivent être traçables. Les modalités exactes de journalisation restent à définir.
 
