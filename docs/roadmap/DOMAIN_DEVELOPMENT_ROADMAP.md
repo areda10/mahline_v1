@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 3.3
+- **Version :** 3.4
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -310,6 +310,7 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 - [ ] Pour chaque remboursement confirmé, recalculer la commission à annuler sur le montant net cumulé des produits remboursés après remise et hors livraison, puis comptabiliser uniquement la différence avec les corrections déjà enregistrées ; chaque correction reste distincte et liée à la commission initiale et au remboursement déclencheur.
 - [ ] Déclencher l'enregistrement de la correction immédiatement après la confirmation définitive du remboursement transmise par Sales ; ne pas attendre le rapprochement périodique ni la réception effective des fonds par le client. Une demande non confirmée ne déclenche aucune correction.
 - [ ] Préserver l'immutabilité et l'historique des commissions initiales et corrections ; plafonner le cumul à la commission initiale, empêcher le double comptage d'un remboursement et définir précision/arrondi au centime, concurrence et idempotence.
+- [ ] Régulariser les corrections de commission sur les reversements coopératives : ajuster le montant si le reversement n'est pas exécuté ; après exécution, créer un crédit distinct au bénéfice de la coopérative, imputable sur son prochain reversement et suivi jusqu'à son imputation complète.
 - [ ] Définir le traitement des commandes multi-coopératives.
 - [ ] Définir génération PDF et intégration Communication.
 - [ ] Séparer facturation marketplace et facturation des abonnements Mahline.
@@ -434,6 +435,12 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 3.4 — 13 novembre 2026
+- Enregistrement de Finance Q227 : correction imputée au reversement si celui-ci n'est pas encore exécuté ; après exécution, création d'un crédit coopérative imputable sur le prochain reversement.
+- Alignement de la matrice Finance sur le suivi distinct du crédit, son rattachement aux écritures d'origine et la prévention des doubles régularisations.
+- Règles d'imputation partielle/totale, report de solde, concurrence, rapprochement et idempotence à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.3 — 13 novembre 2026
 - Enregistrement de Finance Q226 : correction de commission comptabilisée immédiatement après confirmation définitive du remboursement par Sales, sans attendre rapprochement périodique ni réception effective des fonds par le client.
