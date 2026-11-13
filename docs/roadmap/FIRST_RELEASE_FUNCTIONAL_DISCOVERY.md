@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.36
+- **Version :** 3.37
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2547,6 +2547,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.37 — 13 novembre 2026
+- Enregistrement de Q256 : prix de base obligatoire au niveau produit ; prix spécifique facultatif par variante, avec héritage du prix de base si absent.
+- Le prix applicable est affiché par Catalog et figé par Sales dans le panier/la commande ; le navigateur ne fait pas autorité sur le prix.
+- Devise, arrondis, promotions et présentation de variantes à prix différents restent à spécifier.
+- Aucun code applicatif modifié ; aucune fusion.
+
 ### Version 3.36 — 13 novembre 2026
 - Enregistrement de Q255 : sans réponse du client à l'échéance configurable, seule la ligne concernée est annulée automatiquement.
 - Ajout des notifications préalables, de l'expiration côté serveur, de l'idempotence et de la gestion des réponses concurrentes.
@@ -3390,6 +3396,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 256 — Gestion du prix du produit et de ses variantes
+
+- **Question :** Où doit être enregistré le prix d'un produit qui peut exister en plusieurs variantes ?
+- **Réponse :** C — le produit possède un prix de base et chaque variante peut définir un prix différent.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Chaque produit possède un prix de base obligatoire pour être publié et vendu.
+  - Chaque variante peut définir un prix de vente propre, facultatif.
+  - Lorsqu'une variante ne définit pas de prix spécifique, le prix de base du produit s'applique.
+  - Lorsqu'une variante définit un prix spécifique, celui-ci devient le prix applicable à cette variante.
+  - Le prix réellement applicable doit être clairement affiché sur la fiche produit et transmis à Sales au moment de l'ajout au panier/checkout.
+  - Sales doit figer le prix applicable et les informations de variante dans la ligne de commande ; une modification ultérieure du prix du catalogue ne modifie pas une commande déjà créée.
+  - La devise, la précision/arrondi, les éventuels prix promotionnels, la gestion des prix historiques et les règles d'affichage lorsque plusieurs variantes ont des prix différents restent à définir avant les fonctionnalités correspondantes.
+- **Responsabilités :** Products porte le prix de base et les données de variante ; Catalog expose le prix applicable à la marketplace ; Sales fige le prix au panier/commande selon les règles validées ; Finance consomme les montants figés sans recalculer les prix catalogue.
+- **Règle de sécurité et d'intégrité :** valider côté serveur les prix et la variante sélectionnée ; ne jamais faire confiance au prix envoyé par le navigateur ; conserver la cohérence entre prix affiché, panier et ligne de commande.
 
 ### Question 255 — Absence de réponse du client à une proposition de modification
 
