@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.55
+- **Version :** 3.56
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,12 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q275 — Suppression d'une promotion (VALIDÉE)
+- **Question :** Une promotion créée peut-elle être supprimée physiquement ?
+- **Réponse :** B — aucune suppression physique ; utiliser une annulation logique qui conserve l'historique.
+- **Décision :** une promotion ne peut pas être effacée physiquement du système, qu'elle soit planifiée, active ou terminée. La coopérative peut demander son annulation/désactivation selon ses droits ; l'opération clôt son applicabilité à partir de son instant d'effet, sans effacer les versions, paramètres, dates, auteurs, événements ni références déjà consommées. Les versions remplacées, annulées et terminées restent consultables dans l'historique d'audit. Les commandes et snapshots Sales restent inchangés.
+- **Frontières et contrôles :** Products possède l'état d'annulation et l'historique ; Catalog cesse d'exposer la promotion à compter de son annulation effective ; Sales conserve les prix et promotions figés dans les paniers/commandes déjà enregistrés. L'opération est autorisée côté serveur, isolée par coopérative et journalisée ; aucune suppression physique en cascade des références métier.
+
 ### Décision Q274 — Nouvelle modification d'une version promotionnelle planifiée (VALIDÉE)
 - **Question :** Que faire si une version promotionnelle est déjà planifiée et que la coopérative souhaite encore la modifier avant son entrée en vigueur ?
 - **Réponse :** B — remplacer la version planifiée, tout en conservant sa trace dans l'historique.
@@ -4567,6 +4573,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.56 — 13 novembre 2026
+- Enregistrement de Q275 : interdiction de supprimer physiquement une promotion ; annulation logique avec conservation de l'historique et des références commerciales.
 
 ### Version 3.55 — 13 novembre 2026
 - Enregistrement de Q274 : une modification avant échéance remplace la version planifiée ; la version remplacée reste archivée et traçable.
