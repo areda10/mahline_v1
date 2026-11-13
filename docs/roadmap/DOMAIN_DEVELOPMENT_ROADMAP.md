@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.25
+- **Version :** 5.26
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Affichage des promotions V1 (Q269) :** prix normal barré + prix promotionnel + badge de pourcentage pendant la seule période active. Pour les produits à variantes, le prix affiché et le taux doivent correspondre à la même variante disponible ; Catalog expose les données, Sales revalide et fige la variante/prix choisis.
 - **Arrondi des promotions V1 (Q268) :** arrondi commercial au centime de MAD le plus proche, demi-centime vers le haut ; calculs intermédiaires décimaux exacts. La règle doit être centralisée et testée pour garantir des résultats identiques dans Products, Catalog, Sales et Finance. Cet arrondi de calcul ne modifie jamais les règles de rejet des prix/taux saisis invalides.
 - **Précision du taux promotionnel V1 (Q267) :** jusqu'à deux décimales ; taux strictement positif et plafonné à 90 %. Validation serveur, stockage/calcul décimal exacts, aucun arrondi/troncature du taux saisi. Le prix promotionnel calculé suit l'arrondi commercial au centime le plus proche, demi-centime vers le haut (Q268).
 - **Plafond des promotions V1 (Q266) :** le taux de réduction doit être strictement positif et inférieur ou égal à 90 % ; rejet obligatoire côté serveur au-delà de 90 %. La précision du taux est limitée à deux décimales (Q267) et le prix promotionnel calculé suit l'arrondi commercial au centime le plus proche, demi-centime vers le haut (Q268).
@@ -489,6 +490,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.26 — 13 novembre 2026
+- Enregistrement de Q269 : présentation visible du prix normal barré, prix promotionnel et pourcentage de remise.
+- Ajout de la règle de cohérence d'affichage pour les produits à variantes.
 
 ### Version 5.25 — 13 novembre 2026
 - Enregistrement de Q268 : arrondi commercial du résultat promotionnel au centime le plus proche, demi-centime vers le haut.
