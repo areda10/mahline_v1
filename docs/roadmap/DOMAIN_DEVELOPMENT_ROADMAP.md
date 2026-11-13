@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.22
+- **Version :** 5.23
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Plafond des promotions V1 (Q266) :** le taux de réduction doit être strictement positif et inférieur ou égal à 90 % ; rejet obligatoire côté serveur au-delà de 90 %. La précision du taux et la règle d'arrondi monétaire restent à arbitrer avant implémentation.
 - **Calcul des promotions V1 (Q265) :** un taux unique défini au niveau du produit est appliqué au prix normal applicable de chaque variante (prix variante ou prix de base hérité). Le résultat est exposé par Catalog et revalidé/figé par Sales. La règle d'arrondi, la plage/précision du taux et les cumuls restent à décider avant codage.
 - **Portée des promotions V1 (Q264) :** la promotion est portée par le produit et s'applique à toutes ses variantes ; aucune promotion propre à une variante en V1. Le mécanisme exact de calcul du prix promotionnel par variante reste ouvert et devra être validé avant implémentation.
 - **Promotions V1 (Q263) :** promotion simple par produit avec prix normal, prix promotionnel inférieur et période de validité début/fin. Products possède les paramètres, Catalog expose le prix applicable, Sales revalide et fige le prix de vente. Les coupons, campagnes complexes et cumuls sont exclus ; fuseau/bornes, chevauchements et variantes restent à préciser.
@@ -486,6 +487,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.23 — 13 novembre 2026
+- Enregistrement de Q266 : plafond de réduction fixé à 90 % et validation serveur obligatoire.
+- Précision du taux et règles d'arrondi conservées comme points ouverts avant codage.
 
 ### Version 5.22 — 13 novembre 2026
 - Enregistrement de Q265 : réduction en pourcentage appliquée au prix applicable de chaque variante.
