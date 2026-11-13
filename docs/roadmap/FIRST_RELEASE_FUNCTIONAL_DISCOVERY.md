@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.38
+- **Version :** 3.39
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2562,6 +2562,28 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
   - Si aucune variante commercialisable n'est disponible, la carte ne doit pas présenter un prix trompeur comme prix achetable ; l'état de disponibilité est affiché selon les règles de Catalog/Inventory.
 - **Impact :** donner immédiatement au client un repère de prix attractif et exact sans masquer l'existence de variantes plus coûteuses ; conserver un calcul cohérent entre carte, fiche, panier et commande.
 - **Points restant à préciser :** formatage monétaire/devise et arrondis ; inclusion/exclusion des variantes indisponibles du prix minimum ; gestion des promotions et prix barrés ; comportement si le produit n'a pas de variantes.
+
+### Question 258 — Variantes prises en compte dans le prix minimum de la carte (VALIDÉ)
+
+- **Question :** Pour calculer le prix minimum affiché sur la carte, faut-il tenir compte des variantes temporairement indisponibles ?
+- **Réponse :** A — exclure les variantes en rupture de stock ; afficher le prix minimum parmi les variantes disponibles.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Catalog, Products et Inventory ; calcul du prix d'appel et disponibilité des variantes.
+- **Conséquences :**
+  - Le prix « À partir de » est calculé uniquement à partir des variantes commercialisables et actuellement disponibles.
+  - Une variante indisponible ou en rupture de stock ne participe pas au calcul du prix minimum affiché sur la carte.
+  - La disponibilité utilisée doit provenir d'Inventory, selon la quantité réellement disponible après prise en compte des réservations, et être vérifiée côté serveur.
+  - Catalog/Products ne doit pas exposer ni recalculer le stock physique ; il consomme l'information de disponibilité nécessaire à la présentation.
+  - La disponibilité peut évoluer entre l'affichage de la carte et l'ajout au panier ; Sales doit donc revalider la disponibilité et le prix au moment de l'opération.
+  - Si aucune variante n'est disponible, aucun prix « À partir de » achetable n'est affiché ; la carte indique l'indisponibilité selon les règles de présentation du catalogue.
+- **Impact :** éviter d'attirer le client avec un prix correspondant uniquement à une variante qu'il ne peut pas acheter, tout en maintenant la séparation Catalog/Products et Inventory.
+- **Points restant à préciser :** traitement des produits sans variantes ; seuil ou statut exact définissant une variante commercialisable ; comportement en cas de retard de synchronisation de disponibilité ; promotions et affichage du prix barré.
+
+### Version 3.39 — 13 novembre 2026
+- Enregistrement de Q258 : exclure du prix minimum les variantes en rupture/indisponibles ; afficher le minimum parmi les variantes réellement disponibles.
+- La disponibilité provient d'Inventory ; Sales revalide disponibilité et prix lors de l'ajout au panier.
+- Si aucune variante n'est disponible, la carte indique l'indisponibilité sans prix d'appel achetable.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 3.38 — 13 novembre 2026
 - Enregistrement de Q257 : la carte produit affiche le prix applicable minimum parmi les variantes commercialisables, avec la mention « À partir de ».
