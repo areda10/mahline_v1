@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.02
+- **Version :** 3.03
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.03 — 13 novembre 2026
+- Enregistrement de Finance Q222 : seuls les produits éligibles à une promotion participent à l'assiette de prorata et à la répartition d'une remise globale ; les produits exclus sont écartés.
+- Alignement de la règle de ventilation : calcul sur les montants pré-remise des seuls produits éligibles, puis application du plus fort reste et du départage Q221.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.02 — 13 novembre 2026
 - Enregistrement de Finance Q221 : en cas d'égalité des restes fractionnaires, départager par identifiant stable de coopérative en ordre croissant.
 - Précision de Q220 : la règle du plus fort reste dispose désormais d'un critère déterministe de départage.
@@ -3186,6 +3191,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 222 — Éligibilité des produits à la répartition d'une remise globale
+
+- **Question :** Les produits exclus d'une promotion doivent-ils participer à la répartition de la remise globale entre coopératives ?
+- **Réponse :** A — non ; seuls les produits éligibles à la promotion participent au calcul du prorata et à la répartition de la remise.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance et Sales ; éligibilité promotionnelle et ventilation des remises globales sur panier multi-coopératives.
+- **Conséquences :**
+  - Exclure de l'assiette de répartition tous les produits non éligibles à la promotion concernée.
+  - Calculer les parts proportionnelles des coopératives uniquement à partir des montants des produits éligibles avant remise.
+  - Appliquer ensuite la méthode du plus fort reste et le départage stable défini par Q220 et Q221, sur cette seule assiette éligible.
+  - Les produits exclus ne reçoivent aucune part de la remise globale et ne doivent pas réduire la part attribuable aux produits éligibles.
+  - Si aucun produit du panier n'est éligible, aucune remise promotionnelle globale n'est répartie.
+  - Sales doit transmettre à Finance l'éligibilité et la ventilation figées par ligne/sous-commande ; Finance conserve les montants éligibles, la remise attribuée et les bases de calcul.
+- **Impact :** la base de prorata des remises globales est limitée aux produits éligibles ; les produits exclus sont neutralisés dans la répartition.
+- **Point technique à préciser :** format du contrat Sales → Finance pour transmettre l'éligibilité par ligne et traitement des promotions combinées lors de la conception technique.
+
 ### Question 221 — Départage des restes fractionnaires égaux
 
 - **Question :** Lorsque plusieurs coopératives ont exactement le même reste fractionnaire lors de la répartition d'une remise au plus fort reste, quel critère utiliser pour les départager ?
@@ -3220,7 +3241,7 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Statut :** VALIDÉ — premier release.
 - **Périmètre concerné :** Finance et Sales ; allocation des remises de panier et calcul des montants nets par sous-commande coopérative.
 - **Conséquences :**
-  - La part de remise attribuée à chaque coopérative est calculée au prorata du montant de ses produits avant remise par rapport au montant total des produits éligibles du panier.
+  - La part de remise attribuée à chaque coopérative est calculée au prorata du montant de ses seuls produits éligibles avant remise par rapport au montant total des produits éligibles du panier ; les produits exclus sont ignorés.
   - La somme des parts attribuées doit être égale à la remise globale effectivement accordée ; aucun montant de remise ne doit être créé, perdu ou comptabilisé deux fois.
   - La part de remise affectée à chaque coopérative est déduite de son montant de produits avant calcul de l'assiette nette de commission, conformément à Q218.
   - Sales doit transmettre à Finance la ventilation figée de la remise par sous-commande coopérative ; Finance reste propriétaire du calcul et de la traçabilité financière de la commission.
