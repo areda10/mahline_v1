@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.68
+- **Version :** 2.69
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -542,6 +542,15 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Après le dernier échec, la notification reste accessible dans l'espace client et l'état d'échec de l'email est historisé.
 - Le nombre de tentatives ne conditionne jamais la disponibilité du ZIP et ne modifie pas sa durée de validité de 24 heures.
 - Les délais entre tentatives et la classification technique des erreurs seront définis lors de la conception technique.
+
+### Question 49 — Information du client après échec définitif de l'email
+
+**Décision validée : B**
+
+- Après l'épuisement des 3 tentatives d'envoi, le système conserve dans l'espace client la notification habituelle indiquant que le ZIP est prêt, sans afficher de message distinct signalant l'échec de l'email.
+- L'échec définitif de l'email reste enregistré dans les journaux techniques et de suivi de notification, avec les informations nécessaires au diagnostic, sans données sensibles.
+- L'échec de l'email ne bloque pas l'accès au ZIP et ne modifie ni sa disponibilité de 24 heures ni les contrôles d'authentification, de propriété et d'URL temporaire.
+- Cette décision concerne uniquement l'information présentée au client ; les équipes habilitées peuvent disposer d'un suivi technique des échecs selon leurs droits.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2855,6 +2864,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.69 — 13 novembre 2026
+- Enregistrement de la Question 49 : après échec définitif de l'email, maintien de la notification habituelle « ZIP prêt » dans l'espace client, sans message distinct d'échec ; l'erreur reste journalisée.
 
 ### Version 2.68 — 13 novembre 2026
 - Enregistrement de la Question 48 : maximum de 3 tentatives d'envoi de l'email au total, premier envoi compris, sans impact sur la disponibilité du ZIP.
