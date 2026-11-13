@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.14
+- **Version :** 3.15
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.15 — 13 novembre 2026
+- Enregistrement de Finance Q234 : récupérer prioritairement les créances de MAHLINE sur la coopérative avant l'imputation des crédits ordinaires.
+- Après règlement des créances prioritaires, appliquer le solde du reversement aux crédits ordinaires selon FIFO ; reporter les soldes non réglés sans altérer leur ancienneté.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.14 — 13 novembre 2026
 - Enregistrement de Finance Q233 : les montants déjà versés à la coopérative au titre d'un crédit invalidé deviennent une créance distincte de MAHLINE.
 - Récupérer cette créance par déduction sur les prochains reversements, avec traçabilité et solde ; distinguer cette récupération de l'annulation du solde non imputé (Q232).
@@ -3254,6 +3259,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 234 — Priorité de récupération d'une créance sur les crédits ordinaires
+
+- **Question :** Lorsqu'une coopérative possède à la fois des crédits ordinaires à recevoir et une créance envers MAHLINE issue d'un crédit invalidé, quelle priorité appliquer sur ses prochains reversements ?
+- **Réponse :** A — récupérer d'abord la créance de MAHLINE, puis imputer les crédits ordinaires selon FIFO.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; ordre d'imputation des reversements, créances coopératives et crédits ordinaires.
+- **Conséquences :**
+  - À chaque reversement éligible, Finance affecte d'abord le montant disponible au recouvrement des créances de MAHLINE envers la coopérative.
+  - Une fois les créances prioritaires réglées, le solde du reversement est affecté aux crédits ordinaires coopératives selon FIFO, conformément à Q229.
+  - Si le reversement ne suffit pas à solder la créance prioritaire, le reliquat de créance est reporté sur les reversements suivants ; les crédits ordinaires restent en attente et conservent leur ancienneté FIFO.
+  - Les créances et les crédits ordinaires restent des objets financiers distincts, avec soldes, historiques, liens d'origine et écritures d'imputation propres.
+  - Aucun montant ne peut être récupéré ou imputé deux fois ; chaque opération doit être atomique, traçable et idempotente.
+- **Impact :** établir une priorité déterministe de recouvrement pour MAHLINE sans perdre l'ordre FIFO des crédits ordinaires.
+- **Points techniques à préciser :** ordre entre plusieurs créances, définition des reversements éligibles, montant maximum récupérable par échéance, reversement nul/annulé, coopérative inactive ou fermée, contestation de la créance, concurrence, rapprochement et idempotence.
 
 ### Question 233 — Créance sur les montants déjà versés après invalidation d'un crédit
 
