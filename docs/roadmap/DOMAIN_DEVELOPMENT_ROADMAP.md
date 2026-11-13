@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 2.0
+- **Version :** 2.1
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -113,7 +113,7 @@ Cette matrice aligne la roadmap avec le registre de découverte. Elle fixe le pr
 | Media | upload, validation, métadonnées, stockage privé/public, association technique, accès, remplacement, suppression, antivirus/traitement si retenus et quotas techniques | règles métier déterminant qui peut utiliser un média |
 | Inventory | quantités, disponibilité, mouvements, réservations, ajustements, entrepôts, seuils et libération de stock | commande commerciale et expédition physique |
 | Sales | profil commercial client, panier, checkout, commande multi-coopératives, sous-commandes par coopérative, lignes, prix figés, confirmation/refus, annulation et historique commercial | factures, paiements, commissions, reversements, exécution transport |
-| Finance | facturation marketplace par coopérative/commande, documents financiers client et coopérative, encaissement COD par le transporteur puis reversement des fonds à MAHLINE, répartition entre coopératives, remboursements/avoirs, commissions, reversements, rapprochement et états financiers | panier, commande commerciale, abonnement SaaS |
+| Finance | facturation marketplace par coopérative/commande, documents financiers client et coopérative, encaissement COD par le transporteur puis reversement périodique des fonds à MAHLINE selon le calendrier contractuel, répartition entre coopératives, remboursements/avoirs, commissions, reversements, rapprochement et états financiers | panier, commande commerciale, abonnement SaaS |
 | Delivery | expéditions par coopérative, colis, tarifs de trajet, transporteurs, affectation, suivi, preuve de livraison, incidents, refus, retours et réexpéditions | panier, commande commerciale et comptabilisation des paiements |
 | Subscriptions / SaaS Billing | plans SaaS, souscriptions, renouvellements, changements de plan, périodes de grâce, impayés, factures et paiements dus à MAHLINE, entitlements, quotas et suspension/réactivation | factures marketplace et reversements aux coopératives |
 | Communication | modèles, e-mails, notifications, préférences techniques, files, retries, délivrabilité et historique d'envoi | règles métier déclenchant la communication |
@@ -430,6 +430,11 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 2.1 — 13 novembre 2026
+- Enregistrement de Finance Q214 : reversement périodique des encaissements COD par le transporteur à MAHLINE, selon le calendrier contractuel (par exemple hebdomadaire).
+- Le suivi Finance doit distinguer les montants encaissés, attendus, reversés et reçus, avec rattachement aux commandes et au transporteur.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 2.0 — 13 novembre 2026
 - Enregistrement de la décision Finance Q213 : le transporteur encaisse le COD puis reverse les fonds à MAHLINE, qui calcule et répartit les montants dus aux coopératives et suit les commissions/reversements.
