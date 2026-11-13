@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.08
+- **Version :** 3.09
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.09 — 13 novembre 2026
+- Enregistrement de Finance Q228 : tout crédit coopérative supérieur au prochain reversement est imputé automatiquement en plusieurs fois ; le solde non utilisé est reporté aux reversements suivants jusqu'à épuisement.
+- Chaque imputation est plafonnée au solde du crédit et au montant du reversement, avec historique et liens de traçabilité conservés ; aucune validation manuelle n'est requise pour le report.
+- Priorité entre crédits multiples, reversements nuls/annulés, concurrence, rapprochement et idempotence restent à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.08 — 13 novembre 2026
 - Enregistrement de Finance Q227 : avant exécution du reversement, intégrer la correction de commission au montant à verser ; après exécution, créer un crédit au bénéfice de la coopérative, imputable sur son prochain reversement.
 - Le crédit est une écriture distincte, liée au remboursement, à la correction de commission, à la commande et au reversement initial ; le suivi du solde doit empêcher toute double régularisation.
@@ -3218,6 +3224,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 228 — Imputation d'un crédit coopérative supérieur au prochain reversement
+
+- **Question :** Lorsqu'un crédit coopérative est supérieur au montant du prochain reversement, comment traiter le solde restant ?
+- **Réponse :** A — imputer automatiquement le crédit sur les reversements successifs jusqu'à son épuisement.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; gestion des crédits coopératives issus des corrections de commission après exécution d'un reversement.
+- **Conséquences :**
+  - À chaque reversement suivant, Finance impute automatiquement le montant disponible dans la limite du montant de ce reversement.
+  - Si le crédit est supérieur au reversement, le reversement est réduit à zéro et le solde créditeur restant est reporté automatiquement sur les reversements ultérieurs.
+  - Si le reversement est supérieur ou égal au crédit restant, le crédit est intégralement imputé et le reliquat du reversement est versé normalement à la coopérative.
+  - Chaque imputation conserve le lien avec le crédit d'origine, la correction de commission, le remboursement, la commande et le reversement concerné.
+  - Le solde du crédit doit être recalculé à partir des imputations enregistrées ; aucune imputation ne peut dépasser le solde disponible ni être comptabilisée deux fois.
+  - Le crédit reste visible et traçable jusqu'à son épuisement complet ; aucune demande de validation manuelle n'est nécessaire pour les reports successifs.
+- **Impact :** le crédit coopérative est apuré automatiquement sur plusieurs reversements si nécessaire, sans perte de solde ni modification des reversements déjà exécutés.
+- **Points techniques à préciser :** modèle comptable du crédit et de ses imputations, ordre de priorité si plusieurs crédits coexistent, traitement des reversements nuls/annulés, concurrence et verrouillage, rapprochement, arrondis et idempotence.
 
 ### Question 227 — Régularisation d'une commission corrigée après reversement à la coopérative
 
