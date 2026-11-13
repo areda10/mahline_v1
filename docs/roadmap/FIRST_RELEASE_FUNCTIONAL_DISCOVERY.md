@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.25
+- **Version :** 2.26
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -71,6 +71,18 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - La confirmation et la création d'une commande sont bloquées tant que l'adresse e-mail n'est pas vérifiée.
   - Le contrôle doit être appliqué côté serveur au moment du checkout, et pas uniquement dans l'interface.
   - Les règles d'expiration et de renvoi du lien de vérification restent à préciser.
+
+### Question 6 — Vérification de l'adresse e-mail du client (VALIDÉ)
+- **Question :** Par quel mécanisme le client vérifie-t-il son adresse e-mail lors de l'inscription ?
+- **Réponse :** A — lien sécurisé envoyé par e-mail ; le client clique sur ce lien pour vérifier son adresse. Le lien expire après 60 minutes et un nouvel envoi est possible.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Identity ; génération, envoi, validation, expiration et renvoi du lien de vérification.
+- **Conséquences :**
+  - Le mécanisme de vérification repose sur un lien individuel sécurisé envoyé à l'adresse e-mail déclarée.
+  - Le lien est à usage contrôlé et expire 60 minutes après son émission.
+  - Le client peut demander un nouvel envoi lorsque le lien a expiré ou n'est plus disponible.
+  - Un lien expiré ou invalide ne doit pas permettre de vérifier l'adresse.
+  - Les règles de limitation des renvois, d'invalidation des anciens liens et de journalisation restent à préciser.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2384,6 +2396,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.26 — 13 novembre 2026
+- Enregistrement de la Question 6 : vérification par lien sécurisé envoyé par e-mail, expiration après 60 minutes et possibilité de renvoi.
 
 ### Version 2.25 — 13 novembre 2026
 - Enregistrement de la Question 5 : navigation et ajout au panier autorisés avant vérification de l'e-mail ; confirmation de commande bloquée jusqu'à vérification.
