@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.11
+- **Version :** 3.12
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.12 — 13 novembre 2026
+- Enregistrement de Finance Q231 : lorsqu'une contestation est rejetée, le crédit valide est réactivé en conservant son rang FIFO d'origine.
+- La suspension n'altère pas l'ancienneté ; aucune réimputation rétroactive des reversements déjà exécutés n'est effectuée.
+- Les modalités de résolution, la preuve, le traitement des crédits partiellement imputés, la concurrence et l'idempotence restent à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.11 — 13 novembre 2026
 - Enregistrement de Finance Q230 : suspendre uniquement le crédit contesté ; les autres crédits non contestés continuent d'être imputés selon FIFO.
 - La suspension ne vaut ni annulation ni suppression ; le traitement de résolution, le rang FIFO après réactivation et les habilitations restent à préciser.
@@ -3236,6 +3242,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 231 — Réactivation d'un crédit après contestation rejetée
+
+- **Question :** Si une contestation est rejetée et que le crédit est reconnu comme valide, comment MAHLINE doit-elle le réactiver ?
+- **Réponse :** A — réactiver le crédit avec son rang FIFO d'origine, comme si la suspension n'avait pas modifié sa priorité.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; résolution des contestations et ordre FIFO d'imputation des crédits coopératives.
+- **Conséquences :**
+  - Lorsqu'une contestation est rejetée et que le crédit est confirmé valide, Finance réactive le crédit suspendu.
+  - Le crédit retrouve son rang FIFO d'origine, déterminé par sa date/heure de création et les règles de départage qui seront définies techniquement ; la période de suspension ne crée pas une nouvelle date d'ancienneté.
+  - Les autres crédits continuent d'être imputés pendant la suspension conformément à Q230 ; la réactivation ne provoque pas de réimputation rétroactive des reversements déjà exécutés.
+  - Le solde restant du crédit reprend sa place dans la file FIFO et pourra être imputé sur les prochains reversements, selon les règles générales de plafonnement et de traçabilité.
+  - La résolution de la contestation, la décision de rejet et la réactivation doivent être liées et historisées ; aucune écriture d'origine n'est effacée ou réécrite.
+- **Impact :** une contestation finalement rejetée ne pénalise pas le rang d'ancienneté du crédit valide.
+- **Points techniques à préciser :** preuve et autorité de résolution, horodatage de décision, traitement d'un crédit partiellement imputé avant suspension, verrouillage/concurrence, journalisation et idempotence.
 
 ### Question 230 — Contestation d'un crédit coopérative
 
