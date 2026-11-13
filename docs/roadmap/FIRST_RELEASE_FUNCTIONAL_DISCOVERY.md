@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.58
+- **Version :** 2.59
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -442,6 +442,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le rappel ne divulgue aucune note interne, donnée de sécurité ou information concernant d'autres personnes.
 - La présentation et la preuve de mise à disposition de cette information sont historisées de manière proportionnée.
 - Le contenu définitif de l'information et la politique de confidentialité seront validés juridiquement avant mise en production.
+
+### Question 39 — Téléchargement d'une copie du dossier de contestation par le client
+
+**Décision validée : A**
+
+- Le client peut télécharger depuis son espace authentifié une copie de son dossier de contestation.
+- L'export comprend les décisions, leurs motifs communicables, les dates, les notifications et l'historique des recours et événements communicables au client.
+- L'export exclut les notes internes du support, les informations de sécurité non communicables, les données personnelles de tiers et les justificatifs ou éléments confidentiels qui ne doivent pas être divulgués.
+- Le contenu exporté respecte les droits des tiers et les règles de protection des données ; les éléments exclus ne doivent pas être exposés indirectement dans les métadonnées ou pièces jointes.
+- La génération et le téléchargement sont réservés au client authentifié concerné, protégés contre l'accès non autorisé et journalisés.
+- Le format, la durée de disponibilité du fichier, les limites de téléchargement et les contrôles techniques seront définis dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2755,6 +2766,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.59 — 13 novembre 2026
+- Enregistrement de la Question 39 : téléchargement par le client authentifié d'une copie complète des éléments communicables de son dossier, à l'exclusion des notes internes, données de sécurité non communicables et données de tiers.
 
 ### Version 2.58 — 13 novembre 2026
 - Enregistrement de la Question 38 : information sur les durées de conservation dans la politique de confidentialité et rappel dans l'espace client authentifié à la clôture du dossier.
