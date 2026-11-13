@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.90
+- **Version :** 2.91
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -790,6 +790,18 @@ Chaque spécification de domaine MAHLINE V1 doit être suffisamment complète po
 - Les éléments non applicables à un domaine doivent être indiqués comme tels avec justification, plutôt que laissés ambigus. Les décisions en attente, reports et exclusions V1 doivent être explicitement identifiés.
 - **Périmètre concerné :** toutes les spécifications fonctionnelles des domaines du SaaS et du marketplace MAHLINE V1.
 - **Conséquence :** aucune fonctionnalité ne passe au codage sur la seule base d'un intitulé ; sa règle, ses accès, ses dépendances et ses critères de validation doivent être définis.
+
+### Question 71 — Organisation des identifiants fonctionnels entre domaines
+
+**Décision validée : C**
+
+- Chaque domaine possède un préfixe et une séquence d'identifiants stables qui lui sont propres (ex. `MED-001`, `SAL-001`, `FIN-001`).
+- Les sous-fonctions peuvent utiliser une hiérarchie explicite rattachée à la fonction parente (ex. `SAL-001.01`, `SAL-001.02`). La hiérarchie ne doit pas remplacer l'identifiant stable de la fonction principale.
+- Une fonction partagée ou une interaction entre domaines conserve un propriétaire fonctionnel clairement désigné. Les autres domaines la référencent par son identifiant canonique ; ils ne créent pas de copie ni de nouvel identifiant concurrent pour la même règle.
+- Lorsqu'un besoin implique plusieurs domaines, chaque domaine conserve ses propres fonctions et identifiants pour ses responsabilités ; les liens et contrats entre ces fonctions sont documentés explicitement.
+- Un identifiant publié ne doit jamais être réattribué à une autre fonction, même après suppression, report ou abandon. Les changements de périmètre et remplacements conservent une trace de l'ancien identifiant.
+- **Périmètre concerné :** tous les domaines et toutes les spécifications MAHLINE V1.
+- **Conséquence :** la nomenclature reste lisible par domaine, les sous-fonctions sont traçables et les responsabilités partagées sont reliées sans duplication.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3103,6 +3115,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.91 — 13 novembre 2026
+- Ajout de la décision Q71 : identifiants stables par domaine, sous-identifiants hiérarchiques et références canoniques entre domaines pour éviter les doublons et préserver la propriété fonctionnelle.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.90 — 13 novembre 2026
 - Ajout de la décision Q70 : contenu minimum obligatoire et complet des spécifications de domaine, de la définition fonctionnelle jusqu'aux relations inter-domaines, données, composants techniques, tests et traçabilité.
