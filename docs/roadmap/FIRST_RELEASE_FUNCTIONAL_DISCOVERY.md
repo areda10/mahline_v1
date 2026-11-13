@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.20
+- **Version :** 3.21
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.21 — 13 novembre 2026
+- Enregistrement de Finance Q240 : si la contestation est acceptée et la créance MAHLINE déclarée invalide, annuler uniquement le solde restant par une écriture corrective distincte.
+- Préserver la créance initiale et toutes les imputations exécutées ; les montants déjà versés restent une créance distincte à récupérer selon Q233, sans double annulation.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.20 — 13 novembre 2026
 - Enregistrement de Finance Q239 : après rejet formel de la contestation, réactiver automatiquement la créance MAHLINE valide en conservant son rang FIFO initial et sans réimputation rétroactive.
 - Le rang reste déterminé par la date de création immuable (Q236), puis l'ULID croissant en cas d'égalité (Q237).
@@ -3286,6 +3291,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 240 — Contestation acceptée et invalidation d'une créance MAHLINE
+
+- **Question :** Si la contestation est acceptée et que la créance MAHLINE est déclarée invalide, que faut-il faire ?
+- **Réponse :** A — annuler uniquement le solde restant dû par une écriture corrective distincte, conserver l'historique et ne pas effacer les imputations déjà exécutées.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; résolution défavorable à MAHLINE d'une contestation portant sur une créance reconnue au titre de montants déjà versés à tort à la coopérative (Q233, Q238-Q239).
+- **Conséquences :**
+  - Lorsque la contestation est formellement acceptée et que la créance est déclarée invalide, Finance annule uniquement le solde restant à recouvrer au moyen d'une écriture corrective distincte, liée à la créance d'origine et à la décision de contestation.
+  - La créance initiale, son origine, son montant historique, ses statuts antérieurs, ses imputations et toutes les écritures associées restent conservés ; aucune suppression ni réécriture rétroactive n'est autorisée.
+  - Les imputations déjà exécutées ne sont ni effacées ni recalculées. Les montants déjà versés à tort à la coopérative demeurent traités séparément comme une créance MAHLINE distincte à récupérer, conformément à Q233 ; ils ne doivent pas être annulés une seconde fois.
+  - L'annulation du solde restant ne doit pas modifier les autres créances de la coopérative ni les crédits ordinaires.
+- **Impact :** traiter une contestation acceptée sans conserver un solde devenu invalide, tout en garantissant l'intégrité comptable, la traçabilité et l'absence de double correction.
+- **Points techniques à préciser :** autorité habilitée à accepter la contestation, preuve et horodatage de décision, calcul exact du solde annulable, écriture corrective et liens de traçabilité, traitement des imputations partielles, prévention des doubles traitements, concurrence, audit et idempotence.
 
 ### Question 239 — Résolution favorable d'une contestation de créance MAHLINE
 
