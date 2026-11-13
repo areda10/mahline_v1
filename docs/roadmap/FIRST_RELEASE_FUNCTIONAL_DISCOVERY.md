@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.23
+- **Version :** 3.24
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.24 — 13 novembre 2026
+- Enregistrement de Finance Q243 : le `cooperative_admin` peut consulter et télécharger les justificatifs des créances de sa propre coopérative.
+- Maintien de l'isolation entre coopératives ; contrôle serveur et journalisation de chaque téléchargement, avec liens privés et temporaires.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.23 — 13 novembre 2026
 - Enregistrement de Finance Q242 : consultation des créances MAHLINE contestées ou annulées et de leurs justificatifs autorisée à `super_admin_root`, au `super_admin` affecté et au `cooperative_admin` de la coopérative concernée.
 - Restriction du périmètre par coopérative, refus d'accès aux rôles `user` et `customer` par défaut, contrôle serveur et journalisation des consultations/exports.
@@ -3301,6 +3306,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 243 — Téléchargement des justificatifs par le cooperative_admin
+
+- **Question :** Le `cooperative_admin` peut-il télécharger les justificatifs des créances de sa coopérative, ou seulement les consulter à l'écran ?
+- **Réponse :** A — il peut consulter et télécharger les justificatifs de sa coopérative.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; consultation et téléchargement des pièces justificatives des créances contestées ou annulées, dans le périmètre autorisé par Q242.
+- **Conséquences :**
+  - Le `cooperative_admin` peut consulter à l'écran et télécharger les justificatifs associés aux créances de sa propre coopérative.
+  - Cette autorisation ne donne aucun accès aux dossiers, données ou pièces d'une autre coopérative ; les restrictions de Q242 restent applicables.
+  - Chaque téléchargement doit être contrôlé côté serveur et journalisé avec l'acteur, la coopérative, la ressource et l'horodatage.
+  - Les liens de téléchargement doivent être privés et temporaires ; une URL connue, copiée ou devinée ne doit jamais permettre de contourner les autorisations.
+- **Impact :** permettre au responsable de la coopérative de récupérer les pièces nécessaires au suivi et à la justification de ses créances, avec une traçabilité complète.
+- **Points techniques à préciser :** durée de validité des liens temporaires, formats autorisés, limites de taille, téléchargement multiple, révocation d'accès après changement d'affectation, journalisation et tests anti-IDOR.
 
 ### Question 242 — Accès aux détails et justificatifs des créances contestées ou annulées
 
