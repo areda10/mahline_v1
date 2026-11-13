@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.12
+- **Version :** 3.13
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.13 — 13 novembre 2026
+- Enregistrement de Finance Q232 : si une contestation est acceptée, annuler le solde restant du crédit invalide par une écriture corrective distincte.
+- Conserver le crédit initial, les imputations antérieures et tous les liens de traçabilité ; aucune suppression ou réécriture d'historique.
+- Le traitement correctif des montants déjà imputés sur des reversements exécutés reste à cadrer.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.12 — 13 novembre 2026
 - Enregistrement de Finance Q231 : lorsqu'une contestation est rejetée, le crédit valide est réactivé en conservant son rang FIFO d'origine.
 - La suspension n'altère pas l'ancienneté ; aucune réimputation rétroactive des reversements déjà exécutés n'est effectuée.
@@ -3242,6 +3248,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 232 — Crédit reconnu invalide après contestation acceptée
+
+- **Question :** Si une contestation est acceptée et que le crédit est reconnu comme invalide, quelle action doit prendre MAHLINE ?
+- **Réponse :** A — annuler le solde restant du crédit par une écriture corrective distincte, en conservant tout l'historique.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; résolution des contestations et correction des crédits coopératives.
+- **Conséquences :**
+  - Lorsque la contestation est acceptée, Finance annule le solde encore disponible du crédit reconnu invalide au moyen d'une écriture corrective distincte.
+  - Le crédit initial et toutes ses imputations antérieures restent conservés et consultables ; aucune écriture n'est supprimée ou réécrite.
+  - L'écriture corrective est liée au crédit initial et à la décision de contestation, avec motif, auteur, date et montant annulé.
+  - Seul le solde restant non encore imputé peut être annulé par cette opération ; les montants déjà imputés sur des reversements exécutés nécessitent un traitement correctif distinct, qui reste à définir et ne doit pas être effacé rétroactivement.
+  - Le crédit annulé est exclu définitivement des prochaines imputations FIFO ; l'annulation doit empêcher toute réactivation ou double correction non autorisée.
+- **Impact :** l'invalidation d'un crédit est traitée par une écriture financière traçable, sans altérer l'historique comptable.
+- **Points techniques à préciser :** traitement des montants déjà imputés, acteurs et preuves de décision, statut final du crédit, autorisation d'annulation, arrondis, concurrence, audit et idempotence.
 
 ### Question 231 — Réactivation d'un crédit après contestation rejetée
 
