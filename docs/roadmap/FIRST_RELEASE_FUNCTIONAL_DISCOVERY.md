@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.96
+- **Version :** 2.97
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,9 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 2.97 — 13 novembre 2026
+- Enregistrement de Finance Q216 : le taux de commission est contractuel et seul `super_admin_root` peut le saisir ou le modifier ; l'historique et la justification contractuelle doivent être traçables.
+
 ### Version 0.84 — 12 novembre 2026
 - Question 83 — Publication d'un produit sur la marketplace : réponse A. Un produit devient visible et achetable automatiquement dès que la coopérative l'enregistre. Les conditions de complétude/validité des données, les contrôles avant publication, les modifications ultérieures et les règles de suspension/retrait restent à définir.
 - Méthode de cadrage confirmée : privilégier des questions fonctionnelles concrètes, directement exploitables pour développer les fonctionnalités du premier release et les domaines concernés ; traiter séparément les évolutions post-release.
@@ -3161,6 +3164,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 216 — Autorité de modification du taux de commission
+
+- **Question :** Qui peut saisir ou modifier le taux de commission contractuel d'une coopérative ?
+- **Réponse :** D — le taux est défini par contrat avec MAHLINE ; seul le rôle `super_admin_root` peut le saisir ou le modifier dans le système.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; gestion des conditions contractuelles de commission par coopérative.
+- **Conséquences :**
+  - Le taux applicable à une coopérative doit être fondé sur les conditions contractuelles convenues avec MAHLINE.
+  - Seul `super_admin_root` dispose du droit de créer ou modifier le taux dans MAHLINE.
+  - `super_admin`, `cooperative_admin` et `user` ne peuvent pas modifier ce paramètre ; la coopérative ne peut pas changer unilatéralement son taux depuis son espace.
+  - Toute modification doit conserver l'historique, l'auteur, la date d'effet et la référence/justification contractuelle afin de garantir la traçabilité.
+  - Les règles de notification à la coopérative, de prise d'effet sur les commandes déjà créées et de gestion d'un avenant restent à préciser.
+- **Impact :** Finance V1 doit protéger le paramétrage du taux par une autorisation réservée à `super_admin_root` et conserver les versions successives des conditions contractuelles.
 
 ### Question 215 — Base de calcul de la commission MAHLINE
 
