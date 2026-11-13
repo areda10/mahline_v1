@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.81
+- **Version :** 2.82
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -678,6 +678,17 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le fichier ne doit pas être exposé par une URL publique permanente ; son stockage et son accès doivent rester privés.
 - **Périmètre concerné :** Identity (autorisation réservée au `super_admin_root`), Audit (traçabilité des demandes et accès), Media/Storage (stockage privé, génération et téléchargement sécurisé).
 - **Points à préciser avant implémentation :** durée maximale de disponibilité du fichier exporté, suppression automatique, possibilité de réutiliser plusieurs fois le même lien avant expiration, et comportement en cas de révocation de session ou de permission.
+
+### Question 62 — Durée de conservation des fichiers d'export PDF/CSV
+
+**Décision validée : A**
+
+- Chaque fichier exporté contenant les journaux de téléchargements PDF est conservé pendant une durée maximale de 24 heures à compter de la fin de sa génération.
+- À l'expiration de ce délai, le fichier est supprimé automatiquement du stockage privé et ne peut plus être téléchargé. La suppression doit être exécutée côté serveur et son résultat tracé.
+- La suppression du fichier d'export ne supprime ni ne modifie les journaux d'audit sources, dont la durée de conservation relève de leur propre politique.
+- Toute tentative d'accès après expiration doit être refusée, même si un ancien lien temporaire a été conservé.
+- **Périmètre concerné :** Audit (séparation entre journaux sources et exports), Media/Storage (stockage privé, expiration et suppression), Identity (contrôle d'accès au téléchargement).
+- **Points à préciser avant implémentation :** précision du point de départ du délai, traitement des échecs de suppression, purge de sauvegardes/caches et traçabilité des purges.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2991,6 +3002,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.82 — 13 novembre 2026
+- Ajout de la décision Identity Q62 : A — conservation des exports PDF/CSV pendant 24 heures maximum après génération, puis suppression automatique sans altérer les journaux d'audit sources.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.81 — 13 novembre 2026
 - Ajout de la décision Identity Q61 : A — téléchargement des exports PDF/CSV via une URL temporaire valable 5 minutes, avec authentification et autorisation serveur obligatoires.
