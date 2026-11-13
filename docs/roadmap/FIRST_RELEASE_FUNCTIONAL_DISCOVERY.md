@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.10
+- **Version :** 3.11
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.11 — 13 novembre 2026
+- Enregistrement de Finance Q230 : suspendre uniquement le crédit contesté ; les autres crédits non contestés continuent d'être imputés selon FIFO.
+- La suspension ne vaut ni annulation ni suppression ; le traitement de résolution, le rang FIFO après réactivation et les habilitations restent à préciser.
+- Alignement de la matrice Finance sur l'isolation d'une contestation au niveau du crédit concerné.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.10 — 13 novembre 2026
 - Enregistrement de Finance Q229 : lorsque plusieurs crédits coopérative sont en attente, les imputer selon FIFO, du crédit le plus ancien au plus récent.
 - Un crédit ancien est apuré avant de passer au suivant ; si le reversement est insuffisant, son solde est reporté et les crédits plus récents restent en attente.
@@ -3230,6 +3236,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 230 — Contestation d'un crédit coopérative
+
+- **Question :** Si un crédit coopérative est créé puis fait l'objet d'une contestation, que doit faire MAHLINE ?
+- **Réponse :** A — suspendre uniquement le crédit contesté ; les autres crédits continuent selon FIFO.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; contestation, suspension et imputation des crédits coopératives sur les reversements.
+- **Conséquences :**
+  - Seul le crédit faisant l'objet d'une contestation est suspendu et exclu temporairement de toute imputation sur les reversements.
+  - Les autres crédits non contestés restent éligibles à l'imputation selon l'ordre FIFO défini en Q229 ; la contestation d'un crédit ne bloque pas les crédits légitimes de la coopérative.
+  - Le crédit contesté conserve son solde, son historique et ses liens avec les écritures d'origine ; sa suspension ne vaut ni annulation ni suppression.
+  - La décision de résolution de la contestation devra déterminer si le crédit est réactivé pour reprendre son rang FIFO d'origine ou s'il est annulé/corrigé par une écriture distincte ; cette règle de résolution reste à cadrer.
+- **Impact :** une contestation est isolée au niveau du crédit concerné sans interrompre l'imputation des autres crédits valides de la coopérative.
+- **Points techniques à préciser :** acteurs habilités à ouvrir/résoudre une contestation, états et motifs, preuve et délai de traitement, conservation du rang FIFO après réactivation, journalisation, concurrence et idempotence.
 
 ### Question 229 — Ordre d'imputation de plusieurs crédits coopérative
 
