@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.43
+- **Version :** 3.44
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,23 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 263 — Promotions simples au premier release
+
+- **Question :** Les coopératives doivent-elles pouvoir proposer des promotions sur leurs produits ?
+- **Réponse :** B — promotions simples avec prix normal, prix promotionnel et dates de début et de fin.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Une coopérative peut définir un prix normal et un prix promotionnel pour un produit.
+  - Chaque promotion comporte une date/heure de début et une date/heure de fin ; elle n'est applicable que pendant cette période.
+  - Le prix promotionnel doit être inférieur au prix normal.
+  - En dehors de la période active, le prix normal s'applique.
+  - Les règles monétaires Q260–Q262 restent applicables : MAD au premier release, deux décimales maximum, validation serveur et aucun arrondi/troncature silencieux.
+  - Catalog expose le prix effectivement applicable et peut présenter le prix normal barré avec le prix promotionnel lorsqu'une promotion est active.
+  - Sales revalide le prix applicable au moment pertinent du parcours d'achat et fige le prix et les informations de promotion dans le panier/commande selon les règles de gel déjà définies ; une modification ultérieure de la promotion ne réécrit pas une commande déjà confirmée.
+- **Responsabilités :** Products possède les paramètres de prix et de promotion ; Catalog détermine/expose le prix affichable ; Sales valide et fige le prix commercial de la vente ; Finance consomme les montants figés.
+- **Hors périmètre confirmé pour cette décision :** campagnes multi-produits, coupons, codes promo, cumul de promotions et promotions complexes.
+- **À préciser ultérieurement :** fuseau horaire et bornes exactes d'activation, gestion des promotions qui se chevauchent, visibilité du prix barré hors période, promotions par variante et droits de validation/publication.
+
 ### Question 262 — Saisie d'un prix avec plus de deux décimales
 
 - **Question :** Comment traiter un prix saisi par une coopérative avec plus de deux décimales ?
@@ -4431,6 +4448,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.44 — 13 novembre 2026
+- Enregistrement de Q263 : promotions simples avec prix normal, prix promotionnel et dates de début/fin.
+- Prix promotionnel inférieur au prix normal ; application uniquement pendant la période active ; Catalog expose le prix applicable et Sales le fige dans la vente.
+- Coupons, campagnes complexes et cumul de promotions exclus de cette décision ; détails temporels et chevauchements restent à préciser.
 
 ### Version 3.43 — 13 novembre 2026
 - Enregistrement de Q262 : refuser tout prix saisi avec plus de deux décimales ; aucune correction automatique par arrondi ou troncature.
