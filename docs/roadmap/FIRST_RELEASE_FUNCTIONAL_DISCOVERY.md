@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.91
+- **Version :** 2.92
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -802,6 +802,20 @@ Chaque spécification de domaine MAHLINE V1 doit être suffisamment complète po
 - Un identifiant publié ne doit jamais être réattribué à une autre fonction, même après suppression, report ou abandon. Les changements de périmètre et remplacements conservent une trace de l'ancien identifiant.
 - **Périmètre concerné :** tous les domaines et toutes les spécifications MAHLINE V1.
 - **Conséquence :** la nomenclature reste lisible par domaine, les sous-fonctions sont traçables et les responsabilités partagées sont reliées sans duplication.
+
+### Question 72 — Gestion des fonctionnalités communes entre domaines (VALIDÉ)
+- **Question :** Comment gérer les fonctionnalités communes à plusieurs domaines ?
+- **Réponse :** C — conserver chaque règle métier dans son domaine propriétaire et placer uniquement les composants techniques réellement transversaux dans Shared, avec des contrats explicites.
+- **Statut :** VALIDÉ — règle d'architecture applicable au premier release.
+- **Décision :**
+  - Chaque domaine reste propriétaire de ses entités, règles métier, cas d'utilisation, validations et décisions métier.
+  - Un besoin utilisé par plusieurs domaines ne justifie pas de déplacer sa règle métier dans Shared.
+  - Core accueille l'infrastructure technique générique ; Shared accueille seulement les composants transversaux réutilisables qui ne possèdent pas de règle métier propre à un domaine.
+  - Les échanges entre domaines passent par des contrats explicites, DTO/value objects adaptés, interfaces ou événements ; aucun domaine ne doit appeler les détails internes d'un autre domaine.
+  - Une fonction métier partagée conserve un propriétaire fonctionnel canonique et un identifiant stable ; les domaines consommateurs référencent cette fonction et documentent leurs propres responsabilités sans la dupliquer.
+- **Conséquence pour Finance :** Finance est un domaine métier autonome, distinct de Sales. Sales reste propriétaire du parcours commercial, du panier, du checkout et des commandes ; Finance est propriétaire des opérations monétaires et documents financiers marketplace. Subscriptions / SaaS Billing reste autonome pour la facturation des abonnements MAHLINE aux coopératives. Les contrats entre ces domaines doivent être spécifiés avant leur implémentation.
+- **Périmètre concerné :** tous les domaines ; Core, Shared, Sales, Finance, Subscriptions / SaaS Billing, Delivery, Inventory, Facturation, Identity, Communication, Media et Audit.
+- **Règle :** ne pas créer un domaine Shared fourre-tout et ne pas dupliquer une fonction métier sous prétexte qu'elle est consommée par plusieurs domaines.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -3115,6 +3129,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.92 — 13 novembre 2026
+- Validation de Q72 : les règles métier restent dans leur domaine propriétaire ; Core/Shared sont limités aux responsabilités techniques et transversales, avec contrats explicites.
+- Clarification demandée : Finance est autonome et distinct de Sales ; Subscriptions / SaaS Billing et Delivery conservent leurs périmètres autonomes.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 2.91 — 13 novembre 2026
 - Ajout de la décision Q71 : identifiants stables par domaine, sous-identifiants hiérarchiques et références canoniques entre domaines pour éviter les doublons et préserver la propriété fonctionnelle.
