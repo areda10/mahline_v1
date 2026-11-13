@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.41
+- **Version :** 3.42
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3461,6 +3461,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 261 — Précision des prix en MAD
+
+- **Question :** Comment gérer les décimales des prix au premier release ?
+- **Réponse :** A — deux décimales maximum.
+- **Statut :** VALIDÉ — Marketplace V1.
+- **Décision :**
+  - Les prix sont exprimés en MAD avec une précision maximale de deux décimales (ex. 129,50 DH).
+  - Les montants sont stockés et calculés avec une représentation décimale exacte adaptée aux montants monétaires ; les nombres flottants binaires ne doivent pas servir aux calculs financiers.
+  - Les règles d'arrondi doivent être cohérentes entre Products, Catalog, Sales et Finance ; aucun arrondi silencieux ne doit modifier un montant déjà figé dans une commande.
+  - L'affichage peut omettre les zéros décimaux non significatifs, mais la valeur monétaire reste limitée à deux décimales.
+- **Responsabilités :** Products/Catalog valident et exposent les prix ; Sales calcule et fige les montants ; Finance consomme les montants figés selon la même précision.
+- **Points restant à cadrer :** règle d'arrondi pour les calculs de taxes, remises, frais et répartitions ; règles fiscales détaillées hors de cette décision.
+- **Règle d'intégrité :** validation serveur des montants et de leur précision ; pas de calcul monétaire en float ni de conversion implicite.
+
 ### Question 260 — Devise des prix Marketplace
 
 - **Question :** Quelle devise utiliser pour les prix de la marketplace au premier release ?
@@ -4404,6 +4418,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - Ajout de la décision Media Q96 : limite de 50 PDF par téléchargement groupé, livrés dans une archive ZIP.
 - Aucune modification du code applicatif ; aucune fusion de branche.
 ## 6. Historique des mises à jour
+
+### Version 3.42 — 13 novembre 2026
+- Enregistrement de Q261 : prix en MAD limités à deux décimales, avec représentation décimale exacte et cohérence entre les domaines.
+- Les règles d'arrondi fiscales et les répartitions restent à cadrer avant leur implémentation.
+- Aucun code applicatif modifié ; aucune fusion.
 
 ### Version 3.41 — 13 novembre 2026
 - Enregistrement de Q260 : MAD comme devise du premier release, avec une architecture permettant une extension multi-devises ultérieure ; aucune conversion implicite.
