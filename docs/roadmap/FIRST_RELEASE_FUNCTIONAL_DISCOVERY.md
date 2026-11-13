@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.06
+- **Version :** 3.07
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.07 — 13 novembre 2026
+- Enregistrement de Finance Q226 : dès la confirmation définitive du remboursement par Sales, Finance enregistre immédiatement la correction de commission.
+- Le rapprochement périodique et la réception effective des fonds par le client ne retardent pas la correction ; une demande non confirmée ne la déclenche pas.
+- Alignement du déclenchement avec le recalcul cumulatif et les protections définis par Q223 à Q225 ; contrat d'événement, reprise et idempotence restent à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.06 — 13 novembre 2026
 - Enregistrement de Finance Q225 : pour des remboursements partiels successifs, recalculer la commission à annuler sur le montant net cumulé remboursé et comptabiliser uniquement la différence par rapport aux corrections déjà enregistrées.
 - Chaque correction reste une écriture distincte liée à la commission initiale et au remboursement déclencheur ; le cumul est plafonné à la commission initiale et les remboursements ne doivent pas être comptés deux fois.
@@ -3207,6 +3213,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 226 — Moment d'enregistrement de la correction de commission après confirmation du remboursement
+
+- **Question :** Lorsqu'un remboursement est confirmé par Sales, à quel moment Finance doit-elle enregistrer la correction de commission ?
+- **Réponse :** A — immédiatement après la confirmation définitive du remboursement par Sales.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; déclenchement de la correction de commission après confirmation du remboursement, en articulation avec Sales.
+- **Conséquences :**
+  - Dès que Sales transmet la confirmation définitive d'un remboursement, Finance déclenche sans délai le recalcul cumulatif de la commission à annuler conformément aux Questions 223 à 225.
+  - Finance comptabilise uniquement la différence entre le montant cumulatif cible de correction et les corrections déjà enregistrées, en conservant une écriture distincte liée à la commission d'origine et au remboursement déclencheur.
+  - L'enregistrement de la correction n'attend ni le rapprochement financier périodique, ni la réception effective des fonds par le client.
+  - La confirmation définitive émise par Sales constitue le déclencheur métier ; une demande de remboursement encore en attente ou non confirmée ne déclenche aucune correction.
+  - Le traitement reste soumis aux règles de plafonnement, de non-double-comptage, de traçabilité et d'idempotence définies dans les Questions 223 à 225.
+- **Impact :** les commissions sont corrigées au moment où le remboursement devient définitif dans Sales ; Finance n'accumule pas de corrections en attente du rapprochement périodique ou du retour des fonds.
+- **Points techniques à préciser :** contrat d'événement ou de transmission Sales → Finance, garantie de livraison/rejeu, traitement des échecs et idempotence du déclenchement immédiat ; les règles de précision/arrondi au centime et de concurrence restent également à définir.
+ 
 ### Question 225 — Remboursements partiels successifs et cumul des corrections de commission
 
 - **Question :** Lorsqu'une même commande fait l'objet de plusieurs remboursements partiels successifs, comment calculer les corrections de commission ?
