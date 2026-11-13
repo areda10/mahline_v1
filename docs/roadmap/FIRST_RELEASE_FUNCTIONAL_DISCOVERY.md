@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.07
+- **Version :** 3.08
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.08 — 13 novembre 2026
+- Enregistrement de Finance Q227 : avant exécution du reversement, intégrer la correction de commission au montant à verser ; après exécution, créer un crédit au bénéfice de la coopérative, imputable sur son prochain reversement.
+- Le crédit est une écriture distincte, liée au remboursement, à la correction de commission, à la commande et au reversement initial ; le suivi du solde doit empêcher toute double régularisation.
+- Imputation partielle/totale, report du solde, concurrence, rapprochement et idempotence restent à préciser techniquement.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.07 — 13 novembre 2026
 - Enregistrement de Finance Q226 : dès la confirmation définitive du remboursement par Sales, Finance enregistre immédiatement la correction de commission.
 - Le rapprochement périodique et la réception effective des fonds par le client ne retardent pas la correction ; une demande non confirmée ne la déclenche pas.
@@ -3213,6 +3219,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 227 — Régularisation d'une commission corrigée après reversement à la coopérative
+
+- **Question :** Lorsqu'une correction de commission est enregistrée après un remboursement, mais que la coopérative a déjà reçu son reversement, comment MAHLINE doit-elle régulariser le montant dû à la coopérative ?
+- **Réponse :** C — si le reversement n'a pas encore été effectué, ajuster le montant à verser ; s'il a déjà été effectué, créer un crédit au bénéfice de la coopérative, imputable sur son prochain reversement.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; régularisation des reversements coopératives après correction de commission, en articulation avec Sales et le traitement des remboursements.
+- **Conséquences :**
+  - Si le reversement concerné n'est pas encore exécuté, Finance intègre la correction de commission au calcul du montant net restant à verser à la coopérative.
+  - Si le reversement a déjà été exécuté, Finance enregistre un crédit distinct au bénéfice de la coopérative, sans modifier ni effacer le reversement initial.
+  - Le crédit est conservé dans le compte financier de la coopérative et imputé sur son prochain reversement ; il reste traçable jusqu'à son imputation complète.
+  - Chaque régularisation est liée à la correction de commission, au remboursement confirmé, à la commande et au reversement concerné.
+  - Le calcul du solde doit tenir compte des crédits déjà créés ou imputés afin d'éviter toute double régularisation.
+- **Impact :** les coopératives conservent un historique financier exact ; une correction postérieure au reversement devient un crédit reportable plutôt qu'une demande de remboursement immédiat à la coopérative.
+- **Points techniques à préciser :** représentation du crédit coopérative, imputation partielle ou totale sur les prochains reversements, gestion d'un solde créditeur supérieur au prochain reversement, ordre des opérations concurrentes, rapprochement et idempotence.
+ 
 ### Question 226 — Moment d'enregistrement de la correction de commission après confirmation du remboursement
 
 - **Question :** Lorsqu'un remboursement est confirmé par Sales, à quel moment Finance doit-elle enregistrer la correction de commission ?
