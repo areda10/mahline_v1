@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.3
+- **Version :** 1.4
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -65,6 +65,23 @@ La procédure suivante s'applique à **chaque domaine** et à chaque fonctionnal
    - Exécuter les tests requis et les contrôles qualité ; conserver les résultats réels.
    - Marquer une fonction comme terminée uniquement lorsque son implémentation, ses critères d'acceptation et ses tests requis sont vérifiés.
    - Faire une revue finale de couverture : chaque fonction V1 doit être soit implémentée et testée, soit explicitement bloquée avec raison ; aucune fonction ne doit disparaître du suivi.
+
+
+6. **Auditer les domaines et leurs liaisons**
+   - Pour le domaine étudié, inventorier les fonctions et composants réels, puis auditer ses relations avec chaque domaine dépendant ou consommateur : responsabilités, données échangées, déclencheurs, contrats, événements, permissions et gestion des erreurs.
+   - Vérifier les dépendances entrantes et sortantes afin d'identifier les fonctions manquantes, les responsabilités mal placées, les incohérences et les risques de duplication entre domaines.
+
+7. **Comparer l'inventaire avec les documents officiels avant toute nouvelle question**
+   - Relire le registre de découverte, la roadmap, les spécifications du domaine et les décisions déjà validées avant de poser une question.
+   - Rechercher les formulations et décisions équivalentes, y compris dans les domaines liés ; ne pas reposer une question déjà tranchée.
+   - Si une règle existante est partielle ou contradictoire, poser uniquement une question ciblée sur le point réellement non résolu et référencer la décision antérieure.
+   - Maintenir une matrice de couverture reliant chaque fonction et chaque règle aux documents, décisions, relations inter-domaines et preuves d'audit. Une fonction déjà documentée doit être vérifiée et complétée, pas recréée sous un nouvel identifiant sans justification.
+
+8. **Décider du passage au développement ou poursuivre le cadrage**
+   - Comparer l'inventaire fonctionnel exhaustif, l'audit technique réel, les relations inter-domaines et les spécifications versionnées.
+   - Si toutes les fonctions indispensables au premier release sont définies, cohérentes, attribuées à un domaine et assorties de critères d'acceptation et de dépendances connues, valider le périmètre V1 et passer au codage.
+   - Sinon, poursuivre les questions/réponses uniquement sur les lacunes identifiées, puis mettre à jour les documents et refaire la comparaison.
+   - Ne pas retarder le passage au codage pour des fonctions explicitement reportées hors V1 ; elles doivent être conservées dans la liste des évolutions futures.
 
 **Règles de documentation :**
 - Le registre global de roadmap indique l'état des domaines et l'ordre de travail.
@@ -367,6 +384,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.4 — 13 novembre 2026
+- Renforcement de la procédure de cadrage : audit des relations inter-domaines, comparaison systématique avec les registres/specifications avant toute question afin d'éviter les doublons, matrice de couverture et critère explicite de passage au codage lorsque le périmètre V1 essentiel est complet.
+- Aucune modification du code applicatif ; aucune fusion de branche.
 
 ### Version 1.3 — 13 novembre 2026
 - Formalisation de la procédure obligatoire : cadrage fonctionnel par domaine, architecture avant code, inventaire exhaustif avec identifiants, lecture obligatoire des spécifications avant chaque tâche de codage et traçabilité jusqu'aux tests.
