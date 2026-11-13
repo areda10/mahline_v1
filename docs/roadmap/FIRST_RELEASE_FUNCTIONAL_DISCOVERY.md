@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.41
+- **Version :** 2.42
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -260,6 +260,16 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - Le client ne peut pas modifier librement le dossier ni ajouter des éléments en dehors d'une demande de complément active.
 - Les règles de délai, de relance, d'expiration de la demande et de traitement en cas d'absence de réponse seront précisées dans la conception technique.
 - Les justificatifs éventuels sont soumis aux règles de sécurité, de confidentialité, de conservation et d'accès du domaine concerné.
+
+### Question 22 — Conséquence de l'absence de réponse du client à une demande de complément
+
+**Décision validée : A**
+
+- Si le client ne transmet pas les informations ou justificatifs demandés avant l'expiration du délai indiqué, le dossier de récupération est clôturé automatiquement.
+- La clôture automatique est déclenchée à l'échéance de la demande de complément, selon le délai communiqué au client.
+- La date d'échéance, l'absence de réponse et la clôture automatique sont historisées dans le dossier.
+- Le client reçoit la notification de clôture prévue par la Question 18 ; l'e-mail reste minimal conformément à la Question 19 et les détails restent consultables après authentification.
+- La durée applicable, le calcul de l'échéance, les éventuelles exceptions et les modalités de réouverture d'un dossier clôturé seront précisés dans la conception technique.
 
 ### Question 84 — Informations minimales avant mise en vente d'un produit (VALIDÉ)
 - **Question :** Puisqu'un produit devient automatiquement visible et achetable dès son enregistrement, quelles informations doivent obligatoirement être renseignées pour autoriser cet enregistrement ?
@@ -2573,6 +2583,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Version 2.42 — 13 novembre 2026
+- Enregistrement de la Question 22 : clôture automatique du dossier de récupération si le client ne répond pas à une demande de complément avant l'échéance communiquée ; délai exact et exceptions à préciser techniquement.
 
 ### Version 2.41 — 13 novembre 2026
 - Enregistrement de la Question 21 : complément du dossier par le client uniquement sur demande explicite du support, avec délai défini et historisation des éléments transmis.
