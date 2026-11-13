@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.34
+- **Version :** 3.35
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2547,6 +2547,12 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.35 — 13 novembre 2026
+- Enregistrement de Q254 : en cas de refus client d'une modification proposée, seule la ligne concernée est annulée ; les autres lignes de la sous-commande continuent.
+- Définition des responsabilités Sales, Inventory, Finance et Communication pour le recalcul des montants, la libération de stock et l'information du client.
+- Les règles de recalcul des frais, d'annulation de toutes les lignes et d'articulation multi-coopératives restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.34 — 13 novembre 2026
 - Enregistrement de Q253 : la coopérative peut proposer une réduction de quantité ou un remplacement de produit, mais toute modification requiert l'acceptation explicite du client.
 - Définition des responsabilités Sales, Cooperatives, Catalog/Products, Inventory, Finance et Communication ; isolation des propositions au niveau de la sous-commande.
@@ -3378,6 +3384,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 254 — Conséquence du refus client d'une modification proposée
+
+- **Question :** Si le client refuse une réduction de quantité ou un remplacement de produit proposé par la coopérative, quel traitement appliquer ?
+- **Réponse :** A — seule la ligne concernée est annulée ; les autres produits de la sous-commande continuent.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Sales, Cooperatives, Inventory, Finance et Communication ; traitement partiel d'une sous-commande multi-lignes.
+- **Décision :**
+  - Le refus explicite du client clôt la proposition de modification concernée et entraîne l'annulation de la ligne de commande correspondante uniquement.
+  - Les autres lignes de la même sous-commande restent actives et poursuivent leur traitement normal, sous réserve de leur disponibilité et de leur confirmation par la coopérative.
+  - La sous-commande n'est pas annulée dans son ensemble du seul fait du refus portant sur une ligne.
+  - Sales conserve la ligne initiale, la proposition, la réponse du client et l'événement d'annulation dans l'historique ; la ligne n'est ni supprimée ni écrasée.
+  - Inventory ne réserve pas de stock pour la ligne annulée ; toute réservation existante liée à cette ligne doit être libérée sans double mouvement. Les autres lignes conservent leur traitement de stock indépendant.
+  - Sales recalcule les totaux commerciaux de la sous-commande et les frais éventuels selon les règles de tarification applicables, puis transmet à Finance les montants définitifs et leur ventilation. Finance ne recalcule pas la commande commerciale de sa propre initiative.
+  - La coopérative peut confirmer et préparer les autres lignes éligibles. Le client est informé de l'annulation partielle et de la poursuite du reste de sa commande.
+- **Frontières de responsabilité :** Sales pilote l'état de la ligne, les totaux et l'historique ; Cooperatives traite les lignes restantes ; Inventory gère disponibilité et réservations ; Finance enregistre les conséquences financières transmises par Sales ; Communication notifie le client.
+- **Points à préciser avant codage :** règles exactes de recalcul des frais de livraison après retrait d'une ligne, gestion du cas où toutes les lignes de la sous-commande sont annulées, et articulation avec une commande multi-coopératives dont les autres sous-commandes continuent.
+- **Règle de sécurité et d'audit :** vérifier côté serveur que le répondant est le client propriétaire de la commande et que la proposition est encore en attente ; rendre le refus idempotent, journaliser la décision et empêcher toute annulation ou libération de stock en double.
 
 ### Question 253 — Modification d'une commande par la coopérative en cas d'indisponibilité
 
