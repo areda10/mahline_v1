@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 1.2
+- **Version :** 1.3
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -32,6 +32,46 @@ Aucune validation globale de suite de tests n'est déduite du simple nombre de f
 - **À valider** : code présent, validation complète non établie.
 - **Bloqué / décision requise** : dépend d'une décision architecturale ou métier.
 - **Validé** : réservé aux tests requis verts et à une preuve consignée.
+
+### 1.1 Procédure obligatoire de cadrage, architecture et développement V1
+
+La procédure suivante s'applique à **chaque domaine** et à chaque fonctionnalité du premier release. Elle constitue une règle de travail obligatoire afin qu'aucune fonction validée ne soit oubliée pendant le développement.
+
+1. **Cadrer les fonctions du domaine**
+   - Identifier les fonctions métier nécessaires au premier release, y compris les cas normaux, exceptions, erreurs, droits d'accès, états et règles de validation.
+   - Poser les questions de décision une par une, avec recommandation et validation explicite.
+   - Ne pas considérer une fonction comme décidée tant que sa règle n'est pas validée et consignée.
+
+2. **Concevoir l'architecture**
+   - Définir la responsabilité et les limites du domaine.
+   - Identifier ses entités, relations, statuts, règles métier, services, événements, interfaces, permissions, routes et dépendances avec les autres domaines.
+   - Définir les contrats inter-domaines et les flux de données avant le codage.
+   - Distinguer les fonctions V1 des fonctions reportées aux versions ultérieures.
+
+3. **Établir l'inventaire fonctionnel exhaustif du domaine**
+   - Attribuer un identifiant stable à chaque fonction (par exemple MED-001 ou SAL-001).
+   - Documenter pour chaque fonction : objectif, acteur, déclencheur, préconditions, règles, résultat attendu, erreurs/exception, autorisations, dépendances et critères d'acceptation.
+   - Maintenir une liste des fonctions V1, des fonctions existantes à auditer, des fonctions à compléter, des fonctions à développer et des fonctions explicitement reportées.
+   - Relier chaque fonction aux fichiers, migrations, routes, permissions et tests concernés dès que leur emplacement est défini.
+
+4. **Coder à partir du registre, jamais de mémoire**
+   - Avant de coder une fonctionnalité, relire le document officiel du domaine et la fiche de la fonction concernée.
+   - Vérifier les critères d'acceptation et les dépendances ; suivre la liste fonction par fonction.
+   - Mettre à jour le registre si une précision ou une décision change, avant de poursuivre le code concerné.
+   - Ne pas ajouter, supprimer ou modifier une règle métier implicitement : toute modification doit être validée et documentée.
+
+5. **Vérifier et clôturer avec traçabilité**
+   - Relier chaque fonction à ses tests unitaires, Feature, HTTP et intégration pertinents.
+   - Exécuter les tests requis et les contrôles qualité ; conserver les résultats réels.
+   - Marquer une fonction comme terminée uniquement lorsque son implémentation, ses critères d'acceptation et ses tests requis sont vérifiés.
+   - Faire une revue finale de couverture : chaque fonction V1 doit être soit implémentée et testée, soit explicitement bloquée avec raison ; aucune fonction ne doit disparaître du suivi.
+
+**Règles de documentation :**
+- Le registre global de roadmap indique l'état des domaines et l'ordre de travail.
+- Le registre de découverte fonctionnelle conserve les décisions question/réponse.
+- Chaque domaine doit disposer d'un inventaire/specification fonctionnelle détaillée et versionnée avant son implémentation ; ce document devient la checklist obligatoire pendant le codage.
+- Toute réponse validée est enregistrée dans le document officiel approprié sur la branche de travail, puis relue depuis GitHub pour confirmer sa présence.
+- Aucun développement applicatif ni aucune fusion de branche n'est implicite dans une validation de cadrage.
 
 ## 2. Inventaire structurel au commit audité
 
@@ -327,6 +367,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 1.3 — 13 novembre 2026
+- Formalisation de la procédure obligatoire : cadrage fonctionnel par domaine, architecture avant code, inventaire exhaustif avec identifiants, lecture obligatoire des spécifications avant chaque tâche de codage et traçabilité jusqu'aux tests.
+- Confirmation de la séparation entre roadmap globale, registre des décisions et spécifications fonctionnelles détaillées de chaque domaine.
 
 ### Version 1.2 — 13 novembre 2026
 - Décision architecturale A validée : Delivery et Subscriptions / SaaS Billing sont deux domaines fonctionnels autonomes pour MAHLINE V1.
