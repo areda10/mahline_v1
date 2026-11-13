@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.04
+- **Version :** 3.05
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,11 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 3.05 — 13 novembre 2026
+- Enregistrement de Finance Q224 : l'assiette de correction d'une commission après remboursement partiel est le montant net des produits effectivement remboursés, après remise et hors livraison.
+- Alignement avec Q218 et Q223 : taux de commission figé à la commande, écriture corrective distincte et historique initial conservé ; les règles techniques de centimes et de remboursements successifs restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
 ### Version 3.04 — 13 novembre 2026
 - Enregistrement de Finance Q223 : une commission est corrigée à hauteur du montant des produits remboursés ; remboursement total = annulation totale correspondante, remboursement partiel = correction proportionnelle.
 - La correction est enregistrée séparément et liée à la commission initiale et au remboursement, sans effacer l'historique.
@@ -3195,6 +3200,21 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 224 — Assiette de calcul de la commission à annuler lors d'un remboursement partiel
+
+- **Question :** Pour un remboursement partiel, quel montant doit servir à calculer la commission à annuler ?
+- **Réponse :** A — le montant net des produits effectivement remboursés, après remise et hors frais de livraison.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; correction des commissions après remboursement partiel, en articulation avec les montants et références de remboursement confirmés par Sales.
+- **Conséquences :**
+  - Calculer la commission à corriger sur le montant net réellement remboursé pour les produits, après prise en compte des remises effectivement appliquées.
+  - Exclure les frais de livraison de l'assiette, conformément aux règles de commission déjà validées.
+  - Utiliser le taux de commission figé pour la commande d'origine ; ne pas appliquer un taux contractuel ultérieur.
+  - Conserver une écriture de correction distincte, rattachée à la commission initiale et au remboursement concerné ; ne pas modifier ni supprimer l'écriture initiale.
+  - Sales transmet à Finance le détail des produits, montants nets remboursés, remises et référence du remboursement ; Finance calcule et comptabilise la correction.
+- **Impact :** les corrections de commission suivent la valeur nette réellement remboursée des produits et restent cohérentes avec l'assiette de commission initiale définie par Q218.
+- **Point technique à préciser :** calcul au centime, remboursements successifs et plafonnement du cumul des corrections à la commission initialement comptabilisée, sans double correction d'un même montant remboursé.
 
 ### Question 223 — Correction de la commission après remboursement
 
