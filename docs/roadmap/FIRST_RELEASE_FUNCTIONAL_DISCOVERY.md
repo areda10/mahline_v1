@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.97
+- **Version :** 2.98
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -2525,6 +2525,10 @@ Cette matrice constitue la vue fonctionnelle transversale du premier release. El
 - **Portée :** les mécanismes de sauvegarde et de restauration doivent maintenir l'intégrité entre fichiers physiques, variantes, références inter-modules, métadonnées, quotas et journaux nécessaires. Une restauration ordinaire ne doit pas réintroduire un fichier dont la suppression définitive a été validée après le point de sauvegarde ; toute restauration exceptionnelle doit suivre une procédure contrôlée et journalisée, sans contourner les règles de suppression et d'autorisation. Les stratégies exactes de sauvegarde, de restauration, de cohérence temporelle et de reprise seront définies pendant l'audit technique.
 - **Statut :** règle fonctionnelle validée et enregistrée ; implémentation non commencée.
 
+### Version 2.98 — 13 novembre 2026
+- Enregistrement de Finance Q217 : chaque nouveau taux possède une date d'effet définie par `super_admin_root` ; les commandes déjà créées conservent le taux figé lors de leur création.
+- Confirmation de l'absence d'effet rétroactif sur les commandes antérieures à la date d'effet.
+
 ### Version 2.97 — 13 novembre 2026
 - Enregistrement de Finance Q216 : le taux de commission est contractuel et seul `super_admin_root` peut le saisir ou le modifier ; l'historique et la justification contractuelle doivent être traçables.
 
@@ -3164,6 +3168,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+### Question 217 — Date d'effet d'un nouveau taux de commission
+
+- **Question :** Lorsqu'un taux de commission contractuel est modifié, à partir de quand le nouveau taux doit-il s'appliquer aux commandes ?
+- **Réponse :** B — le nouveau taux s'applique à partir d'une date d'effet définie par `super_admin_root` ; les commandes déjà créées conservent le taux applicable au moment de leur création.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance ; versionnement et application des conditions de commission.
+- **Conséquences :**
+  - Chaque modification du taux comporte une date d'effet explicite définie par `super_admin_root`.
+  - Une commande créée avant cette date conserve le taux et les paramètres de commission figés lors de sa création, même si son paiement, son encaissement COD ou son reversement intervient après la date d'effet.
+  - Les commandes créées à partir de la date d'effet utilisent le nouveau taux applicable à leur coopérative.
+  - Le système doit pouvoir retrouver le taux applicable à une commande à partir de ses données financières figées et de l'historique des versions contractuelles.
+  - La modification ne réécrit pas rétroactivement les commissions des commandes existantes.
+- **Impact :** Finance V1 doit gérer des versions de taux avec dates d'effet et figer les paramètres de commission sur chaque commande afin de garantir la stabilité des calculs et leur auditabilité.
 
 ### Question 216 — Autorité de modification du taux de commission
 
