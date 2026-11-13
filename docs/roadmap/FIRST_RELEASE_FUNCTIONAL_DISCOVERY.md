@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 2.94
+- **Version :** 2.95
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Identity`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -3162,6 +3162,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
 
+### Question 214 — Fréquence de reversement des encaissements COD à MAHLINE
+
+- **Question :** Après avoir encaissé les paiements COD, à quelle fréquence le transporteur doit-il reverser les fonds à MAHLINE ?
+- **Réponse :** C — les reversements sont périodiques, par exemple hebdomadaires, ou suivent le calendrier prévu au contrat avec le transporteur.
+- **Statut :** VALIDÉ — premier release.
+- **Périmètre concerné :** Finance et contrat d'intégration avec Delivery / transporteurs.
+- **Conséquences :**
+  - MAHLINE accepte un calendrier de reversement défini contractuellement pour chaque transporteur ; un rythme hebdomadaire est un exemple, pas une fréquence universelle imposée.
+  - Finance doit suivre les montants COD encaissés par le transporteur, les montants attendus selon le calendrier, les montants effectivement reversés et les montants reçus par MAHLINE.
+  - Chaque versement doit être rapprochable des encaissements et commandes concernés ; les écarts et retards doivent rester identifiables.
+  - Les délais exacts, les justificatifs, les seuils de retard, les pénalités éventuelles et la procédure de contestation restent à préciser dans les règles contractuelles et les questions Finance dédiées.
+- **Impact :** le modèle Finance V1 doit prendre en charge des échéances périodiques configurables par transporteur, sans supposer un reversement par commande ni imposer un calendrier unique.
+
 ### Question 213 — Circuit d'encaissement et de reversement du paiement COD
 
 - **Question :** Lorsqu'un client paie en espèces à la livraison, comment les fonds doivent-ils circuler entre le transporteur, MAHLINE et la coopérative ?
@@ -3175,6 +3188,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Les règles de rapprochement, les délais et preuves de reversement du transporteur, les statuts de paiement, les écarts, les paiements partiels et les modalités exactes de versement restent à préciser par des questions dédiées.
   - Delivery fournit les informations d'encaissement et de livraison nécessaires ; Sales fournit les références et montants commerciaux figés. Aucun de ces domaines ne devient propriétaire de la comptabilisation financière.
 - **Impact :** le périmètre Finance V1 doit inclure le suivi des fonds COD reçus de la part des transporteurs, leur allocation et les reversements aux coopératives. Les détails de calcul des commissions et les cas d'exception restent ouverts.
+
+### Version 2.95 — 13 novembre 2026
+- Enregistrement de Q214 : les reversements COD du transporteur à MAHLINE sont périodiques et suivent le calendrier contractuel propre au transporteur.
+- Ajout du suivi des montants encaissés, attendus, reversés et reçus ; les retards, écarts et justificatifs détaillés restent à cadrer.
 
 ### Version 2.94 — 13 novembre 2026
 - Enregistrement de Q213 : le transporteur encaisse le COD puis reverse les fonds à MAHLINE, qui répartit les montants dus aux coopératives et suit les commissions/reversements.
