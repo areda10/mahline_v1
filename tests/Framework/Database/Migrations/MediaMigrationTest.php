@@ -105,7 +105,7 @@ final class MediaMigrationTest extends TestCase
 
         self::assertNotNull($idColumn);
         self::assertSame('char', $idColumn['type_name']);
-        self::assertSame(26, $idColumn['length']);
+        self::assertSame('char(26)', $idColumn['type']);
     }
 
     public function test_media_table_has_mediable_lookup_index(): void
