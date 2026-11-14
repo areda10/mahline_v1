@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.62
+- **Version :** 3.63
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q282 — Seuil « Presque épuisé » configurable par produit (VALIDÉE)
+- **Question :** Comment définir le seuil de l'indicateur « Presque épuisé » ?
+- **Réponse :** B — seuil configurable par produit par le `cooperative_admin`.
+- **Décision :** chaque `cooperative_admin` peut définir et modifier, pour chaque produit de sa propre coopérative, un seuil bas entier positif ou nul exprimé en unités disponibles. Le statut « Presque épuisé » s'applique lorsque la quantité disponible nette est strictement positive et inférieure ou égale au seuil configuré ; « Indisponible » s'applique à zéro ou moins ; « Disponible » s'applique au-delà du seuil. Le seuil ne change jamais la quantité réelle, les réservations ou la possibilité de commander.
+- **Valeur par défaut et validation :** si aucun seuil n'est configuré, appliquer une valeur par défaut centrale à définir avant le codage. Le serveur valide le type, les bornes et la cohérence de la valeur ; pas de seuil négatif, décimal ou transmis comme vérité depuis le navigateur.
+- **Cohérence métier et sécurité :** Products possède le paramètre commercial par produit ; Inventory reste source de vérité de la quantité disponible ; Catalog calcule/expose uniquement l'indicateur public ; Sales revalide la disponibilité réelle au panier/checkout. Le paramétrage est réservé au `cooperative_admin` de la coopérative propriétaire, avec isolation stricte et journalisation ; les superviseurs ne modifient pas directement ce paramètre commercial dans V1.
+
 ### Décision Q281 — Indicateur public de disponibilité du stock (VALIDÉE)
 - **Question :** Quelle information de stock afficher sur la marketplace publique ?
 - **Réponse :** C — afficher un indicateur commercial « Disponible », « Presque épuisé » ou « Indisponible », sans quantité exacte.
@@ -4615,6 +4622,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.63 — 14 novembre 2026
+- Enregistrement de Q282 : seuil « Presque épuisé » configurable par produit par le cooperative_admin ; valeur par défaut centrale à décider avant codage.
 
 ### Version 3.62 — 14 novembre 2026
 - Enregistrement de Q281 : indicateur public « Disponible / Presque épuisé / Indisponible » sans révéler la quantité exacte ; seuil bas centralisé à définir avant codage.
