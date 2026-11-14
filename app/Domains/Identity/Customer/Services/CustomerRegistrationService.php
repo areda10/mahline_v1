@@ -13,12 +13,11 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
-use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
-use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use RuntimeException;
 use Throwable;
 
@@ -278,6 +277,10 @@ final class CustomerRegistrationService extends BaseService
 
     private function deliverVerification(User $user, string $token): void
     {
+        $expiresAt = CustomerEmailVerification::query()
+            ->where('token_hash', hash('sha256', $token))
+            ->value('expires_at');
+
         $verificationUrl = route('customer.verification.verify', [
             'token' => $token,
         ]);
@@ -306,7 +309,7 @@ final class CustomerRegistrationService extends BaseService
             subjectType: User::class,
             subjectId: (string) $user->getKey(),
             metadata: [
-                'expires_at' => now()->addHours(self::VERIFICATION_EXPIRATION_HOURS)->toISOString(),
+                'expires_at' => $expiresAt,
             ],
         ));
     }
