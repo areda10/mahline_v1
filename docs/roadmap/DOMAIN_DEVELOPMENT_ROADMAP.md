@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.82
+- **Version :** 5.83
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -601,6 +601,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Durée d'inactivité des sessions client (Q324) :** réutiliser la politique centralisée Identity pour la durée d'inactivité et la déconnexion automatique. Ne créer aucune durée spécifique marketplace. Chaque session multi-appareils de Q323 reste soumise à cette politique ; révocations individuelles/globales selon Q319 et Q316.
 
 **Déconnexion manuelle du client (Q325) :** l'action standard déconnecte uniquement l'appareil courant. Une action distincte « Déconnecter tous les appareils » révoque les autres sessions, tout en conservant la session courante conformément à Q319. Cette action n'inclut pas les tokens API ; les révocations de sécurité Q316 continuent de révoquer toutes les sessions et tous les tokens API. Contrôle de propriété côté serveur et journalisation sans secrets.
+
+**Confirmation avant révocation des autres sessions (Q326) :** l'action « Déconnecter tous les appareils » exige une confirmation explicite. Tant que le client annule ou ferme la confirmation, aucune session n'est modifiée. Après confirmation, appliquer la portée Q325 : révoquer les autres sessions et conserver la session courante. Pas de nouvelle demande de mot de passe définie par Q326.
+
+### Version 5.83 — 14 novembre 2026
+- Enregistrement de Q326 : confirmation explicite avant révocation des autres sessions.
+- Annulation sans effet et maintien de la portée Q325 après confirmation.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.82 — 14 novembre 2026
 - Enregistrement de Q325 : déconnexion locale et action distincte de révocation des autres appareils.
