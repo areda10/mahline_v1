@@ -41,10 +41,25 @@ final class PasswordResetController
             ->where('email', $request->validated('email'))
             ->first();
 
-        if ($user !== null && $user->status->value === 'active') {
+        $customerOnly = $request->routeIs('customer.password.email');
+
+        $isCustomerAccount = $user !== null
+            && $user->hasRole('customer')
+            && ! $user->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]);
+
+        if (
+            $user !== null
+            && $user->status->value === 'active'
+            && ($customerOnly ? $isCustomerAccount : ! $isCustomerAccount)
+        ) {
             $this->passwordResetService->createToken(
                 user: $user,
-                customerOnly: $request->routeIs('customer.password.email'),
+                customerOnly: $customerOnly,
             );
         }
 
@@ -70,6 +85,7 @@ final class PasswordResetController
             $this->passwordResetService->resetPassword(
                 token: $request->validated('token'),
                 newPassword: $request->validated('password'),
+                customerOnly: $request->routeIs('customer.password.update'),
             );
         } catch (InvalidPasswordResetTokenException $exception) {
             if ($this->wantsJson($request)) {
