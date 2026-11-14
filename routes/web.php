@@ -11,6 +11,7 @@ use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationControlle
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
@@ -181,6 +182,14 @@ Route::get('/user/dashboard', UserDashboardController::class)
 Route::get('/customer/dashboard', CustomerDashboardController::class)
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer'])
     ->name('customer.dashboard');
+
+Route::prefix('customer/profile')
+    ->name('customer.profile.')
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer'])
+    ->group(function (): void {
+        Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
+    });
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
     ->middleware('throttle:10,1')
