@@ -628,6 +628,8 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Nombre maximal d'appareils reconnus (Q336) :** limiter à cinq le nombre d'appareils reconnus simultanément par compte client. Le serveur doit faire respecter cette limite. La procédure lorsqu'un sixième appareil doit être reconnu (choix/remplacement ou révocation préalable) reste à définir ; aucun appareil existant ne doit être supprimé silencieusement. Cette limite ne plafonne pas les sessions actives et reste distincte du modèle multi-session.
 
+**Remplacement au-delà de cinq appareils reconnus (Q337) :** si le client veut reconnaître un sixième appareil, afficher ses cinq appareils reconnus et lui demander de choisir explicitement celui à remplacer. Aucune révocation automatique ou silencieuse. Après confirmation, retirer la confiance de l'appareil choisi et révoquer immédiatement ses sessions web associées conformément à Q335 ; préserver les autres appareils. Le serveur doit valider l'appartenance, la limite et la sélection, puis réaliser le remplacement de manière atomique. En cas d'annulation ou d'échec, conserver l'état antérieur et ne pas reconnaître le nouvel appareil.
+
 **Remplacement lors d'une sixième reconnaissance (Q337) :** présenter au client ses cinq appareils reconnus et lui demander de sélectionner celui à remplacer. Après confirmation explicite, révoquer la confiance et toutes les sessions actives associées à l'appareil choisi (Q335), puis enregistrer le nouvel appareil reconnu. Les quatre autres appareils restent intacts. Annulation = aucune modification. Le serveur doit appliquer l'opération de façon atomique et idempotente, sans dépassement durable de la limite ni révocation silencieuse.
 
 
