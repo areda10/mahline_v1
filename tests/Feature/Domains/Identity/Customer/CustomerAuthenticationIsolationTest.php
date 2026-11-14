@@ -139,6 +139,44 @@ final class CustomerAuthenticationIsolationTest extends TestCase
             ->assertForbidden();
     }
 
+
+    public function test_customer_with_forced_password_change_uses_customer_security_routes_and_layout(): void
+    {
+        $customer = $this->customer();
+        $customer->forceFill(['must_change_password' => true])->save();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('customer.password.force-change.edit'))
+            ->assertOk()
+            ->assertSee('layouts.customer')
+            ->assertSee(route('customer.password.force-change.update'), false)
+            ->assertDontSee(route('password.force-change.update'), false);
+    }
+
+    public function test_customer_with_forced_password_change_is_redirected_to_customer_route_from_home(): void
+    {
+        $customer = $this->customer();
+        $customer->forceFill(['must_change_password' => true])->save();
+
+        $this->actingAs($customer)
+            ->get('/')
+            ->assertRedirect(route('customer.password.force-change.edit'));
+    }
+
+    public function test_customer_with_forced_password_change_can_use_customer_logout(): void
+    {
+        $customer = $this->customer();
+        $customer->forceFill(['must_change_password' => true])->save();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('customer.logout'))
+            ->assertRedirect(route('customer.login'));
+
+        $this->assertGuest();
+    }
+
     private function customer(): User
     {
         $customer = User::factory()->create([
