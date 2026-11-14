@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.92
+- **Version :** 5.93
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -621,10 +621,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Sessions actives lors de la révocation d'un appareil reconnu (Q335) :** retirer immédiatement la preuve de confiance et révoquer toutes les sessions web actives réellement associées à l'appareil sélectionné. Les autres appareils restent connectés. Cette révocation ciblée n'inclut pas les API tokens ni les sessions d'autres appareils. L'association appareil/session doit être établie et vérifiée côté serveur, jamais déduite uniquement de l'IP ou du User-Agent. Auditer les opérations sans secret ; valider le mécanisme technique avant développement.
 
+**Nombre maximal d'appareils reconnus (Q336) :** limiter à cinq le nombre d'appareils reconnus simultanément par compte client. Le serveur doit faire respecter cette limite. La procédure lorsqu'un sixième appareil doit être reconnu (choix/remplacement ou révocation préalable) reste à définir ; aucun appareil existant ne doit être supprimé silencieusement. Cette limite ne plafonne pas les sessions actives et reste distincte du modèle multi-session.
 
-### Version 5.92 — 14 novembre 2026
-- Enregistrement de Q335 : révocation immédiate de la confiance et de toutes les sessions web actives associées à l'appareil choisi.
-- Autres appareils préservés ; API tokens hors portée ; association appareil/session à auditer. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.93 — 14 novembre 2026
+- Enregistrement de Q336 : limite de cinq appareils reconnus simultanément par compte client.
+- Parcours de dépassement de limite à définir sans révocation silencieuse ; sessions actives non plafonnées. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
