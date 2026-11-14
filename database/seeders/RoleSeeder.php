@@ -19,6 +19,7 @@ final class RoleSeeder extends Seeder
             'super_admin' => 'Super Admin',
             'cooperative_admin' => 'Cooperative Admin',
             'user' => 'User',
+            'customer' => 'Customer',
         ];
 
         foreach ($roles as $slug => $name) {
