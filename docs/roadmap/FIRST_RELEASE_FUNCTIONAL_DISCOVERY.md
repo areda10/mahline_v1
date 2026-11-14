@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.97
+- **Version :** 3.98
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4583,6 +4583,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** le client doit se reconnecter avec son nouveau mot de passe. La révocation doit être exécutée côté serveur comme partie intégrante du processus de réinitialisation, sans laisser de session ou token actif. L'événement est audité sans enregistrer le mot de passe, le lien ni le secret de réinitialisation.
 - **Statut :** VALIDÉ — premier release.
 
+### Décision Q317 — Limitation des tentatives de connexion client (VALIDÉE)
+- **Question :** Quelle limite appliquer aux tentatives de connexion échouées du client ?
+- **Réponse :** C — reprendre intégralement la politique anti-abus Identity MAHLINE.
+- **Décision :** le parcours de connexion client applique les trois limites cumulatives déjà définies : 5 tentatives par compte, 30 tentatives par adresse IP et 5 tentatives par combinaison adresse IP + adresse e-mail, sur une fenêtre de 15 minutes.
+- **Conséquences :** les limites sont appliquées côté serveur et de manière cohérente avec les autres espaces MAHLINE. Le parcours client ne crée pas de seuil plus permissif ni de mécanisme de contournement. Les compteurs et réponses doivent éviter l'énumération des comptes et ne doivent jamais journaliser de mot de passe ou de secret.
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4931,6 +4938,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.98 — 14 novembre 2026
+- Enregistrement de Q317 : application au login client des limites anti-abus Identity cumulatives : 5 tentatives/compte, 30/IP et 5/IP + e-mail sur 15 minutes.
+- Contrôles serveur cohérents avec les espaces internes, sans affaiblissement ni énumération de comptes ; aucun secret dans les journaux.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.97 — 14 novembre 2026
 - Enregistrement de Q316 : après réinitialisation réussie, révocation de toutes les sessions web et de tous les tokens API du client, sans exception pour la session courante.
