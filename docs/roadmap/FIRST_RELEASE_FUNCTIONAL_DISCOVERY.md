@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.83
+- **Version :** 3.84
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,18 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q303 — Calcul des frais de livraison multi-coopératives (VALIDÉE)
+- **Question :** Comment calculer les frais de livraison d'une commande contenant des produits de plusieurs coopératives ?
+- **Réponse :** A — calculer les frais séparément pour chaque expédition, puis additionner les montants.
+- **Décision :** chaque coopérative expédie depuis son propre lieu de départ vers l'adresse commune du client. Les frais sont calculés individuellement pour chaque expédition selon la grille et les règles tarifaires applicables, puis additionnés pour former le total des frais de livraison de la commande globale.
+- **Conséquences :**
+  - Chaque sous-commande/expédition conserve ses propres frais de livraison et les informations nécessaires à leur calcul.
+  - Le total de livraison affiché au client correspond à la somme des frais des expéditions composant la commande.
+  - Le refus ou l'annulation d'une sous-commande entraîne le recalcul du total à partir des seules expéditions restantes, selon les règles Sales/Delivery applicables ; la destination commune définie par Q300 et Q302 ne change pas.
+  - Le calcul doit rester configurable et évolutif ; aucune grille tarifaire réelle ni aucun tarif manquant ne doit être inventé ou codé en dur sans validation.
+- **Périmètre concerné :** Delivery (tarification et expéditions), Sales (total de commande et sous-commandes), Localization (villes de départ et destination).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q302 — Adresse des sous-commandes restantes après refus d'une coopérative (VALIDÉE)
 - **Question :** Si une coopérative refuse sa sous-commande dans une commande multi-coopératives, l'adresse des sous-commandes restantes peut-elle changer ?
 - **Réponse :** A — l'adresse de livraison reste identique pour toutes les sous-commandes restantes.
@@ -4782,6 +4794,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.84 — 14 novembre 2026
+- Enregistrement de Q303 : frais calculés par expédition/cooperative puis additionnés au total de la commande ; recalcul selon les expéditions restantes en cas de refus/annulation.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.83 — 14 novembre 2026
 - Enregistrement de Q301 : adresse de livraison immuable après confirmation ; annulation puis nouvelle commande uniquement si les règles d'annulation le permettent.
