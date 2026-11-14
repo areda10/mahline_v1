@@ -126,6 +126,12 @@ final class MediaServiceTest extends TestCase
         self::assertFalse($media->fresh()->is_primary);
         self::assertTrue($second->fresh()->is_primary);
         self::assertSame($second->getKey(), $product->fresh()->primaryImage->getKey());
+
+        app(MediaService::class)->delete($actor, $second);
+
+        self::assertSoftDeleted('media', ['id' => $second->getKey()]);
+        self::assertTrue($media->fresh()->is_primary);
+        self::assertSame($media->getKey(), $product->fresh()->primaryImage->getKey());
     }
 
     public function test_replacing_a_profile_image_soft_deletes_the_previous_file(): void
