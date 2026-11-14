@@ -6,6 +6,8 @@ namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
+use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
@@ -103,6 +105,7 @@ final class AuthenticationController
             userAgent: $request->userAgent(),
             browser: $this->detectBrowser($request),
             device: $this->detectDevice($request),
+            deviceTrustToken: $request->cookie(DeviceTrustCookie::NAME),
         );
 
         try {
@@ -112,7 +115,7 @@ final class AuthenticationController
                 request: $request,
                 customerOnly: $customerOnly,
             );
-        } catch (AuthenticationFailedException) {
+        } catch (AuthenticationFailedException|DeviceTrustException) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Authentication failed.',

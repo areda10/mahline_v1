@@ -15,6 +15,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -521,6 +522,7 @@ final class AuthenticationSessionControllerTest extends TestCase
 
     public function test_customer_can_revoke_an_own_device_and_its_web_sessions_only(): void
     {
+        Mail::fake();
         $customer = $this->actor('customer');
         $otherUser = User::factory()->create();
         $device = KnownDevice::query()->create([

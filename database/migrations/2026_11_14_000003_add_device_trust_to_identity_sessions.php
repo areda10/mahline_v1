@@ -58,6 +58,11 @@ return new class extends Migration
                 'last_seen_at',
                 'revoked_at',
             ]);
+
+            $table->unique(
+                ['user_id', 'device'],
+                'known_devices_user_id_device_unique',
+            );
         });
     }
 };
