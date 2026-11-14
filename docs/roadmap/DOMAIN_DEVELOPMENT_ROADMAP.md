@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.76
+- **Version :** 5.77
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -589,6 +589,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Vérification e-mail client (Q287) :** le lien de vérification est valable 24 heures à compter de son émission. Après expiration, le client peut demander un nouveau lien dans la limite de 5 demandes par heure, puis blocage temporaire d'une heure ; chaque nouveau lien invalide immédiatement tous les liens précédents. Un seul lien reste utilisable par compte. L'expiration, l'invalidation et la validation sont contrôlées côté serveur ; aucun jeton ou secret n'est journalisé. Cette durée de 24 heures remplace l'ancienne durée de 60 minutes des décisions Q6-Q7.
 
 **Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+**Notifications de sécurité du client (Q320) :** envoyer un e-mail pour chaque événement sensible du compte, notamment nouvelle connexion, changement de mot de passe, révocation d'un appareil/session et changement d'adresse e-mail. Inclure la date/heure et les informations utiles sur l'appareil lorsqu'elles sont disponibles. Ne jamais inclure mot de passe, token, identifiant de session, code, lien secret ou autre secret d'authentification. Déclencher les notifications à partir d'événements serveur fiables ; elles complètent les contrôles et l'audit sans s'y substituer.
+
+### Version 5.77 — 14 novembre 2026
+- Enregistrement de Q320 : notification e-mail pour chaque événement sensible du compte client (nouvelle connexion, changement de mot de passe, révocation d'appareil/session, changement d'e-mail).
+- Contenu contextuel limité à la date/heure et aux informations d'appareil disponibles ; exclusion stricte de tout secret d'authentification.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.76 — 14 novembre 2026
 - Enregistrement de Q319 : liste des appareils/sessions client avec date, navigateur, système et dernière activité lorsque disponibles ; révocation individuelle ou de toutes les autres sessions.
