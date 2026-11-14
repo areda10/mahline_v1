@@ -139,7 +139,6 @@ final class CustomerAuthenticationIsolationTest extends TestCase
             ->assertForbidden();
     }
 
-
     public function test_customer_with_forced_password_change_uses_customer_security_routes_and_layout(): void
     {
         $customer = $this->customer();

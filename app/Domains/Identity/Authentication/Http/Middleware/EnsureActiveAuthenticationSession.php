@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authentication\Http\Middleware;
 
-use App\Domains\Identity\Authentication\Services\SessionService;
-use App\Domains\Identity\Authentication\Services\DeviceTrustService;
 use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
+use App\Domains\Identity\Authentication\Services\DeviceTrustService;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use Closure;

@@ -6,12 +6,12 @@ namespace App\Domains\Identity\Users\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Authentication\Models\KnownDevice;
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;

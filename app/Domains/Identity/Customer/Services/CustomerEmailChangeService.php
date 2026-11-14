@@ -8,8 +8,8 @@ use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Customer\Models\CustomerEmailChangeRequest;
-use App\Domains\Identity\Customer\Notifications\CustomerEmailChangeNotification;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailChangedNotification;
+use App\Domains\Identity\Customer\Notifications\CustomerEmailChangeNotification;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -220,7 +220,7 @@ final class CustomerEmailChangeService extends BaseService
 
         try {
             Notification::route('mail', $result['old_email'])->notify(
-                new CustomerEmailChangedNotification(),
+                new CustomerEmailChangedNotification,
             );
         } catch (Throwable) {
             // The verified address change and access revocation remain committed.

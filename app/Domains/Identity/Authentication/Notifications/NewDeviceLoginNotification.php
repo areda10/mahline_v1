@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Notifications;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Users\Models\User;
 use DateTimeZone;
 use Illuminate\Bus\Queueable;
@@ -90,7 +91,7 @@ final class NewDeviceLoginNotification extends Notification
         $deviceStatus = $knownDevice?->status?->value;
         $trustedCount = $knownDevice === null
             ? 0
-            : \App\Domains\Identity\Authentication\Models\KnownDevice::query()
+            : KnownDevice::query()
                 ->where('user_id', $this->session->user_id)
                 ->where('status', 'trusted')
                 ->count();

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Customer;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
 use App\Domains\Identity\Customer\Services\CustomerRegistrationService;
 use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;

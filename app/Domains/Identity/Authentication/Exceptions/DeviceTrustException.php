@@ -6,6 +6,4 @@ namespace App\Domains\Identity\Authentication\Exceptions;
 
 use RuntimeException;
 
-final class DeviceTrustException extends RuntimeException
-{
-}
+final class DeviceTrustException extends RuntimeException {}

@@ -6,8 +6,8 @@ namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
 use App\Domains\Identity\Authentication\Models\KnownDevice;
-use App\Domains\Identity\Authentication\Services\DeviceTrustService;
 use App\Domains\Identity\Authentication\Notifications\DeviceTrustRevokedNotification;
+use App\Domains\Identity\Authentication\Services\DeviceTrustService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -9,11 +9,11 @@ use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Authentication\Notifications\DeviceTrustRevokedNotification;
-use Illuminate\Support\Facades\Notification;
 use App\Domains\Identity\Authentication\Services\DeviceTrustService;
 use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 final class DeviceTrustServiceTest extends TestCase
