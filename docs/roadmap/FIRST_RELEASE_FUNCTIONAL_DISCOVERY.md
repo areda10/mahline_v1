@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.14
+- **Version :** 4.15
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5062,11 +5062,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Le serveur vérifie la propriété du compte et l'identifiant exact de session avant l'action. L'événement est audité sans secret d'authentification.
 - **Statut :** VALIDÉ — premier release.
 
+
+
+### Décision Q333 — Notification après révocation d'un appareil suspect (VALIDÉE)
+- **Question :** Comment informer le client après la révocation manuelle d'un appareil non reconnu ?
+- **Réponse :** C — e-mail et notification dans l'espace client.
+- **Décision :** après confirmation et révocation effective de la session suspecte, MAHLINE envoie un e-mail de sécurité au client et affiche une notification dans son espace client.
+- **Conséquences :**
+  - Les deux notifications sont déclenchées uniquement après confirmation de la révocation côté serveur ; une annulation ou un échec de révocation ne doit pas annoncer une action réussie.
+  - Le message indique qu'une session/appareil a été révoqué, avec date/heure et informations d'appareil fiables disponibles.
+  - Ne jamais inclure de mot de passe, token, identifiant de session exploitable, lien secret ou autre secret d'authentification.
+  - L'événement et l'envoi des notifications sont traçables sans enregistrer de secret ; les autres sessions restent actives.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
 
-### Version 4.14 — 14 novembre 2026
-- Enregistrement de Q332 : confirmation simple obligatoire avant révocation manuelle d'un appareil signalé ; annulation sans effet.
-- Aucun mot de passe supplémentaire ; révocation limitée à la session sélectionnée et contrôlée côté serveur. Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 4.15 — 14 novembre 2026
+- Enregistrement de Q333 : après révocation effective d'un appareil suspect, notification simultanée par e-mail et dans l'espace client.
+- Notifications déclenchées après succès serveur, avec informations fiables et sans secret d'authentification. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
