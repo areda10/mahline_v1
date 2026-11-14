@@ -94,6 +94,27 @@ final class CustomerAuthenticationIsolationTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_customer_cannot_use_generic_internal_logout_or_password_routes(): void
+    {
+        $customer = $this->customer();
+
+        $this->actingAs($customer)
+            ->post(route('authentication.logout'))
+            ->assertForbidden();
+
+        $this->assertAuthenticatedAs($customer);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('security.password.edit'))
+            ->assertForbidden();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('password.force-change.edit'))
+            ->assertForbidden();
+    }
+
     public function test_internal_account_cannot_use_customer_security_password_routes(): void
     {
         $internalRole = Role::query()->firstOrCreate(
