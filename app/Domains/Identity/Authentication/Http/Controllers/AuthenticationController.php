@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 final class AuthenticationController
 {
@@ -40,15 +41,15 @@ final class AuthenticationController
             }
 
             if ($user?->hasRole('super_admin_root')) {
-                return redirect()->route('root.backoffice.dashboard');
+                return $this->attachDeviceTrustCookie(redirect()->route('root.backoffice.dashboard'), $request);
             }
 
             if ($user?->hasRole('user')) {
-                return redirect()->route('user.dashboard');
+                return $this->attachDeviceTrustCookie(redirect()->route('user.dashboard'), $request);
             }
 
             if ($user?->hasAnyRole(['super_admin', 'cooperative_admin'])) {
-                return redirect()->route('backoffice.dashboard');
+                return $this->attachDeviceTrustCookie(redirect()->route('backoffice.dashboard'), $request);
             }
 
             abort(403);
@@ -77,7 +78,7 @@ final class AuthenticationController
                 return redirect()->route('customer.password.force-change.edit');
             }
 
-            return redirect()->route('customer.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('customer.dashboard'), $request);
         }
 
         return view('auth.login');
@@ -146,7 +147,7 @@ final class AuthenticationController
         }
 
         if ($request->expectsJson()) {
-            return response()->json([
+            $response = response()->json([
                 'message' => 'Authentication successful.',
                 'user' => [
                     'id' => $user->getKey(),
@@ -161,6 +162,8 @@ final class AuthenticationController
                     'last_activity_at' => $authenticationSession->last_activity_at,
                 ],
             ], 200);
+
+            return $this->attachDeviceTrustCookie($response, $request);
         }
 
         /*
@@ -169,9 +172,12 @@ final class AuthenticationController
          * the Laravel session ID with the Identity authentication session.
          */
         if ($user->must_change_password) {
-            return redirect()->route($customerOnly
-                ? 'customer.security.password.edit'
-                : 'password.force-change.edit');
+            return $this->attachDeviceTrustCookie(
+                redirect()->route($customerOnly
+                    ? 'customer.security.password.edit'
+                    : 'password.force-change.edit'),
+                $request,
+            );
         }
 
         if ($user->hasRole('super_admin_root')) {
@@ -290,6 +296,33 @@ final class AuthenticationController
         return redirect()
             ->route('authentication.login')
             ->with('success', 'Toutes les sessions et clés API de votre compte ont été révoquées.');
+    }
+
+    private function attachDeviceTrustCookie(
+        Response $response,
+        Request $request,
+    ): Response {
+        $token = $request->attributes->get(DeviceTrustCookie::REQUEST_ATTRIBUTE);
+
+        if (! DeviceTrustCookie::isValid(is_string($token) ? $token : null)) {
+            return $response;
+        }
+
+        $secure = config('session.secure');
+
+        $response->headers->setCookie(cookie(
+            DeviceTrustCookie::NAME,
+            $token,
+            60 * 24 * 400,
+            '/',
+            config('session.domain'),
+            $secure === null ? $request->isSecure() : (bool) $secure,
+            true,
+            false,
+            'lax',
+        ));
+
+        return $response;
     }
 
     private function detectBrowser(Request $request): ?string
