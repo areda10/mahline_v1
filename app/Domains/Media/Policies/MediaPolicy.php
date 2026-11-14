@@ -47,8 +47,10 @@ final class MediaPolicy extends BasePolicy
 
         if ($owner instanceof User) {
             return $user->is($owner)
-                && $mediaCategory === MediaCategory::PROFILE_IMAGE
-                    || ($user->is($owner) && $mediaCategory === MediaCategory::DOCUMENT);
+                && in_array($mediaCategory, [
+                    MediaCategory::PROFILE_IMAGE,
+                    MediaCategory::DOCUMENT,
+                ], true);
         }
 
         return $this->canManageOwner($user, $owner);
