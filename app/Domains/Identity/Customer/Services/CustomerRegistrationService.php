@@ -9,6 +9,7 @@ use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Customer\Exceptions\CustomerVerificationDeliveryException;
 use App\Domains\Identity\Customer\Models\CustomerEmailVerification;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
@@ -56,7 +57,7 @@ final class CustomerRegistrationService extends BaseService
 
         try {
             $user = DB::transaction(function () use ($attributes, $email, $password, $token): User {
-                $role = \App\Domains\Identity\Authorization\Models\Role::query()
+                $role = Role::query()
                     ->where('slug', 'customer')
                     ->where('is_active', true)
                     ->first();
@@ -76,7 +77,6 @@ final class CustomerRegistrationService extends BaseService
                     'telephone' => trim((string) $attributes['telephone']),
                     'password' => $password,
                     'status' => UserStatus::Pending,
-                    'email_verified_at' => null,
                     'locale' => 'fr',
                     'timezone' => 'Africa/Casablanca',
                 ]);
