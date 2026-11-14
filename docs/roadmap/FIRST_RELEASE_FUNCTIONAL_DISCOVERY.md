@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.08
+- **Version :** 4.09
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5015,7 +5015,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** afficher uniquement les données réellement disponibles et fiables ; ne pas inventer une identification matérielle ou un modèle d'appareil si les informations techniques ne le permettent pas. L'adresse IP et la localisation approximative ne sont pas affichées dans V1. Ces informations servent à reconnaître les sessions et à exercer les actions de révocation Q319/Q325/Q326, sans exposer de données de connexion supplémentaires.
 - **Statut :** VALIDÉ — premier release.
 
+
+### Décision Q328 — Nouvelle connexion depuis un appareil non reconnu (VALIDÉE — modalités complémentaires à préciser)
+- **Question :** Quelle notification déclencher lors d'une connexion depuis un appareil non reconnu ?
+- **Réponse :** règle personnalisée précisée par l'utilisateur.
+- **Décision :** autoriser la nouvelle session à se connecter immédiatement, sans blocage préventif. En parallèle, envoyer au client un e-mail de sécurité lui permettant de confirmer que la connexion est bien la sienne. Si le client ne reconnaît pas cette connexion, l'e-mail doit proposer un lien/action sécurisé permettant de révoquer précisément la nouvelle session concernée et de bloquer son accès.
+- **Notification dans l'espace client :** si le client dispose déjà d'une session active sur Mahline, afficher également une notification de sécurité dans son espace. Si aucune session client n'est active, l'e-mail constitue le canal de notification disponible. L'e-mail de vérification de nouvel appareil est envoyé en parallèle selon cette règle, sans remplacer les notifications des événements sensibles prévues par Q320.
+- **Sécurité :** les actions de confirmation et de révocation doivent être liées à la session nouvellement créée, protégées par des preuves sécurisées, à usage unique et à durée limitée à définir. La révocation ne doit pas déconnecter les autres appareils du client. La session suspecte doit perdre son accès dès la révocation. Ne jamais exposer ni journaliser le lien secret, token ou autre secret d'authentification.
+- **À préciser avant développement :** durée de validité du lien, traitement d'une absence de réponse, éventuelle confirmation automatique de confiance de l'appareil et comportement exact après confirmation. Aucun délai n'est fixé par Q328 à ce stade.
+- **Statut :** principe validé — détails de cycle de vie à compléter avant implémentation.
+
 ## 6. Historique des mises à jour
+
+### Version 4.09 — 14 novembre 2026
+- Enregistrement de Q328 : connexion immédiate d'un nouvel appareil non reconnu, avec e-mail simultané de confirmation ou de révocation ciblée ; notification dans l'espace si une session client existe déjà.
+- Révocation limitée à la nouvelle session suspecte ; durée du lien, absence de réponse et confiance durable de l'appareil restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.08 — 14 novembre 2026
 - Enregistrement de Q327 : affichage de la date de connexion, dernière activité, navigateur, système d'exploitation et repérage de la session courante.
