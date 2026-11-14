@@ -43,7 +43,7 @@ final class CustomerRegistrationService extends BaseService
         $email = mb_strtolower(trim((string) $attributes['email']));
         $password = (string) $attributes['password'];
 
-        PasswordPolicy::validate($password);
+        PasswordPolicy::validate($password, new User([\n            'first_name' => (string) $attributes['first_name'],\n            'last_name' => (string) $attributes['last_name'],\n            'email' => $email,\n        ]));
 
         if (User::withTrashed()->where('email', $email)->exists()) {
             return false;
@@ -171,7 +171,7 @@ final class CustomerRegistrationService extends BaseService
 
             CustomerEmailVerification::query()
                 ->where('user_id', $user->getKey())
-                ->whereKeyNot($verification->getKey())
+                ->where('id', '<>', $verification->getKey())
                 ->whereNull('used_at')
                 ->whereNull('revoked_at')
                 ->update(['revoked_at' => now()]);
@@ -203,7 +203,7 @@ final class CustomerRegistrationService extends BaseService
         $blockKey = $key.':blocked';
 
         if (Cache::has($blockKey)) {
-            throw new ThrottleRequestsException('Too many verification requests.');
+            throw new TooManyRequestsHttpException(\n                self::RESEND_WINDOW_SECONDS,\n                'Too many verification requests.',\n            );
         }
 
         if (RateLimiter::tooManyAttempts($key, self::RESEND_MAX_ATTEMPTS)) {
