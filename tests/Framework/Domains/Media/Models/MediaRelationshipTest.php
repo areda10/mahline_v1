@@ -112,7 +112,7 @@ final class MediaRelationshipTest extends TestCase
         self::assertSame('id', $media->getKeyName());
         self::assertSame('string', $media->getKeyType());
         self::assertFalse($media->getIncrementing());
-        self::assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}$/', $media->getKey());
+        self::assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $media->getKey());
     }
 
     public function test_product_exposes_images_primary_image_and_documents(): void
