@@ -81,6 +81,59 @@ final class DeviceTrustServiceTest extends TestCase
         $service->resolveForAuthentication($user, $resolution->cookieToken, 'windows', 'chrome');
     }
 
+    public function test_pending_device_remains_usable_for_normal_web_sessions(): void
+    {
+        $user = User::factory()->create();
+        $service = app(DeviceTrustService::class);
+        $service->resolveForAuthentication($user, null, 'windows', 'chrome');
+        $pending = $service->resolveForAuthentication($user, null, 'iphone', 'safari');
+        $session = $this->createSession($user, $pending->device);
+
+        $resolution = $service->ensureSessionDevice(
+            $user,
+            $session,
+            $pending->cookieToken,
+            'iphone',
+            'safari',
+        );
+
+        $this->assertNull($resolution);
+        $this->assertSame(KnownDeviceStatus::Pending, $pending->device->fresh()->status);
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_revoking_a_device_does_not_revoke_api_tokens(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $issuedToken = $user->createToken('device-revocation-api-token');
+        $service = app(DeviceTrustService::class);
+        $device = $service->resolveForAuthentication($user, null, 'windows', 'chrome');
+
+        $service->revoke($user, $device->device);
+
+        $this->assertNull($issuedToken->accessToken->fresh()->revoked_at);
+    }
+
+    public function test_revoked_device_cannot_keep_an_existing_session_active(): void
+    {
+        $user = User::factory()->create();
+        $service = app(DeviceTrustService::class);
+        $resolution = $service->resolveForAuthentication($user, null, 'windows', 'chrome');
+        $session = $this->createSession($user, $resolution->device);
+
+        $service->revoke($user, $resolution->device);
+
+        $this->expectException(DeviceTrustException::class);
+        $service->ensureSessionDevice(
+            $user,
+            $session,
+            $resolution->cookieToken,
+            'windows',
+            'chrome',
+        );
+    }
+
     public function test_pending_device_is_promoted_after_twenty_four_hours_when_a_slot_is_available(): void
     {
         $user = User::factory()->create();
