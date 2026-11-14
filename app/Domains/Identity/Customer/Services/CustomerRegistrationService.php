@@ -17,8 +17,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
-use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Throwable;
 
 final class CustomerRegistrationService extends BaseService
