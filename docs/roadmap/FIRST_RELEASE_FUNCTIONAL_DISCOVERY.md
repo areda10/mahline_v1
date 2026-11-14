@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.80
+- **Version :** 3.81
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q300 — Adresse de livraison d'une commande multi-coopératives (VALIDÉE)
+- **Question :** Une commande unique contenant des produits de plusieurs coopératives peut-elle utiliser plusieurs adresses de livraison ?
+- **Réponse :** A — une seule adresse de livraison commune à toute la commande.
+- **Décision :** le client choisit une seule adresse de livraison pour la commande commerciale globale. Toutes les sous-commandes créées pour les coopératives concernées héritent de cette même destination ; elles ne disposent pas d'une adresse de livraison indépendante en V1.
+- **Conséquences :**
+  - Le checkout vérifie que l'adresse appartient au client et enregistre un snapshot unique au niveau de la commande globale.
+  - Chaque sous-commande et chaque expédition associée se réfèrent à la destination issue de ce snapshot, sans permettre à une coopérative de la remplacer unilatéralement.
+  - Les frais et opérations de livraison peuvent rester calculés par expédition/cooperative selon les règles Delivery, mais la destination client reste commune.
+  - Toute correction après création de commande relève d'un processus Sales/Delivery autorisé, contrôlé et tracé ; elle ne modifie pas rétroactivement le carnet d'adresses.
+  - La possibilité de destinations distinctes par coopérative est exclue du premier release et pourra être étudiée dans une évolution dédiée.
+- **Périmètre concerné :** Sales (commande globale et sous-commandes), Localization (adresse et snapshot), Delivery (expéditions et destination), Identity (propriété du compte client).
+- **Statut :** VALIDÉ — premier release.
+- **Exigences :** contrôle serveur de propriété, cohérence de destination entre sous-commandes, intégrité du snapshot, isolation des données, audit et tests multi-coopératives.
+
 ### Décision Q299 — Mode de traitement des commandes V1 (VALIDÉE)
 - **Question :** Pour MAHLINE V1, faut-il imposer une adresse de livraison à toutes les commandes, même si un futur produit ou service est proposé en retrait à la coopérative ?
 - **Réponse :** A — oui. Toutes les commandes V1 nécessitent une adresse de livraison.
@@ -4747,6 +4761,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.81 — 14 novembre 2026
+- Enregistrement de Q300 : une commande multi-coopératives possède une seule adresse de livraison commune ; les sous-commandes et expéditions associées utilisent cette destination issue du snapshot global.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.80 — 14 novembre 2026
 - Enregistrement de Q299 : toutes les commandes V1 exigent une adresse de livraison ; aucun retrait coopérative en V1.
