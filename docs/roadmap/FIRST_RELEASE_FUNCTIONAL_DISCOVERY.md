@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.06
+- **Version :** 4.07
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4999,7 +4999,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** respecter le modèle multi-sessions Q323 et la révocation individuelle Q319. La révocation globale doit invalider les sessions web actives des autres appareils et leur persistance éventuelle ; le comportement de la session courante lors de cette action suit la règle déjà validée en Q319 (elle est conservée). Les tokens API ne sont pas inclus dans cette action, sauf si une règle Identity existante les associe explicitement ; les révocations globales de sécurité Q316 continuent, elles, à révoquer toutes les sessions et tous les tokens API. Vérifier la propriété côté serveur et journaliser l'action sans secrets.
 - **Statut :** VALIDÉ — premier release.
 
+
+### Décision Q326 — Confirmation avant révocation des autres sessions (VALIDÉE)
+- **Question :** Faut-il demander une confirmation avant de déconnecter les autres appareils du client ?
+- **Réponse :** A — oui, afficher une confirmation explicite avant la révocation.
+- **Décision :** l'action « Déconnecter tous les appareils » présente une étape de confirmation claire avant son exécution. La révocation ne démarre qu'après confirmation explicite du client.
+- **Conséquences :** annuler ou fermer la confirmation ne modifie aucune session. Après confirmation, appliquer exactement la portée Q325 : révoquer les autres sessions et conserver la session courante. Ne pas demander le mot de passe à nouveau dans le périmètre de cette décision ; les contrôles serveur et la journalisation sans secrets restent obligatoires.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.07 — 14 novembre 2026
+- Enregistrement de Q326 : confirmation explicite obligatoire avant de révoquer les autres sessions client.
+- Annulation sans effet ; après confirmation, portée Q325 conservée (autres sessions révoquées, session courante conservée).
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.06 — 14 novembre 2026
 - Enregistrement de Q325 : déconnexion courante limitée à l'appareil actuel, avec option distincte de révocation de toutes les autres sessions.
