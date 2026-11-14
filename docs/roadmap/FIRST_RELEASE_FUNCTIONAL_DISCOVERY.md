@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.92
+- **Version :** 3.93
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4548,6 +4548,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** vérifier l'identité et sécuriser la demande ; révoquer les sessions web et jetons API ; empêcher toute nouvelle connexion et commande ; conserver uniquement les données nécessaires avec accès restreint et durée de conservation définie ; tracer la demande et son traitement sans conserver inutilement de données personnelles. Les règles de traitement des commandes en cours, du délai de grâce/annulation éventuel, des sauvegardes et de la réversibilité doivent être précisées avant codage. Aucune suppression physique aveugle des relations métier.
 - **Statut :** VALIDÉ — premier release, sous réserve de cadrage détaillé de la conservation.
 
+### Décision Q312 — Champs modifiables dans le profil client (VALIDÉE)
+- **Question :** Quels champs le client peut-il modifier lui-même dans son profil ?
+- **Réponse :** A — nom, prénom, téléphone, adresse e-mail et photo de profil ; les adresses de livraison sont gérées séparément.
+- **Décision :** depuis son espace personnel, le client peut modifier directement son nom, son prénom, son numéro de téléphone, son adresse e-mail et sa photo de profil. Le carnet d'adresses de livraison reste une section distincte, régie par les décisions Q288-Q298 et les règles de snapshot des commandes.
+- **Conséquences :** les champs d'identité sont enregistrés sous la responsabilité d'Identity ; la photo suit les exigences Media déjà définies (limite stricte de 2 Mo et contrôles de contenu/stockage). Un changement d'e-mail suit obligatoirement le processus déjà validé Q9-Q12 : l'ancienne adresse reste principale jusqu'à vérification de la nouvelle ; après validation effective, toutes les sessions web et tous les tokens API sont révoqués et une notification de sécurité est envoyée à l'ancienne adresse. Les contrôles d'accès, validations serveur, audit et tests d'isolation restent obligatoires.
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4896,6 +4903,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.93 — 14 novembre 2026
+- Enregistrement de Q312 : modification directe du nom, prénom, téléphone, e-mail et photo par le client ; carnet d'adresses séparé.
+- Alignement du changement d'e-mail sur Q9-Q12 : vérification de la nouvelle adresse avant remplacement, révocation de toutes les sessions et tokens API, notification de sécurité à l'ancienne adresse.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.92 — 14 novembre 2026
 - Enregistrement de Q311 : demande de suppression client, désactivation immédiate puis suppression/anonymisation encadrée par les obligations de conservation.
