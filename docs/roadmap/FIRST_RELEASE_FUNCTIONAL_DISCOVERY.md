@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.04
+- **Version :** 4.05
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4983,7 +4983,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** chaque session doit être identifiable et révocable individuellement depuis l'espace sécurité du client, conformément au modèle déjà validé en Q319. Le client peut également révoquer les autres sessions selon les capacités prévues par Q319. Les contrôles de propriété sont vérifiés côté serveur ; la révocation invalide réellement la session concernée et sa persistance éventuelle. Les révocations globales déclenchées par les événements de sécurité, notamment la réinitialisation du mot de passe Q316, continuent de s'appliquer à toutes les sessions et aux tokens API. Aucun plafond arbitraire de sessions n'est ajouté par Q323.
 - **Statut :** VALIDÉ — premier release.
 
+
+### Décision Q324 — Durée d'inactivité des sessions client (VALIDÉE)
+- **Question :** Quelle règle appliquer à la déconnexion automatique d'une session client inactive ?
+- **Réponse :** D — utiliser la politique de durée d'inactivité déjà définie par Identity.
+- **Décision :** le parcours client réutilise la politique centralisée d'Identity pour déterminer la durée d'inactivité et la déconnexion automatique. Il ne définit aucune durée propre à la marketplace.
+- **Conséquences :** les sessions simultanées multi-appareils autorisées par Q323 restent chacune soumises à cette politique centralisée. La durée maximale de session, le renouvellement éventuel et les mécanismes de persistance restent ceux d'Identity ; aucune valeur n'est inventée ici. La révocation individuelle et globale conserve les effets définis en Q319 et Q316.
+- **Statut :** VALIDÉ — premier release, politique héritée d'Identity.
+
 ## 6. Historique des mises à jour
+
+### Version 4.05 — 14 novembre 2026
+- Enregistrement de Q324 : durée d'inactivité et déconnexion automatique des sessions client héritées de la politique centralisée Identity.
+- Aucune durée propre à la marketplace ; sessions multi-appareils et révocations Q316/Q319 inchangées.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.04 — 14 novembre 2026
 - Enregistrement de Q323 : sessions web simultanées autorisées sur plusieurs appareils, sans déconnexion automatique des sessions existantes.
