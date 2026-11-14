@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.79
+- **Version :** 5.80
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -595,6 +595,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Tentatives de connexion échouées du client (Q321) :** ne pas envoyer d'e-mail pour les échecs d'authentification, y compris répétés, dans le périmètre V1. Les consigner dans les journaux de sécurité côté serveur pour analyse, sans stocker mot de passe, token, code, secret d'authentification ou contenu sensible. Les limites anti-abus et blocages Identity restent actifs indépendamment des notifications. Cette règle ne remplace pas les e-mails liés aux événements sensibles réussis prévus par Q320.
 
 **Blocage temporaire du compte client (Q322) :** appliquer après les échecs de connexion le blocage temporaire selon les seuils, durées et règles déjà détenus par Identity. Ne créer aucun seuil ni délai parallèle pour la marketplace. Maintenir les limites Q317, la journalisation sans secrets et l'absence d'e-mail pour les tentatives échouées Q321 ; les notifications Q320 restent réservées aux événements sensibles couverts.
+
+**Sessions client simultanées sur plusieurs appareils (Q323) :** autoriser plusieurs sessions web actives par compte client ; une nouvelle connexion ne déconnecte pas les appareils déjà connectés. Chaque session reste consultable et révocable individuellement depuis l'espace sécurité client, conformément à Q319, avec vérification stricte de propriété côté serveur. Les révocations globales prévues notamment par Q316 continuent d'invalider toutes les sessions et les tokens API. Aucun plafond arbitraire n'est ajouté.
+
+### Version 5.80 — 14 novembre 2026
+- Enregistrement de Q323 : sessions simultanées multi-appareils pour le client, sans révocation automatique lors d'une nouvelle connexion.
+- Gestion/révocation individuelle selon Q319 ; maintien des révocations globales de sécurité, notamment Q316.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.79 — 14 novembre 2026
 - Enregistrement de Q322 : blocage temporaire du compte client par réutilisation stricte des règles Identity existantes.
