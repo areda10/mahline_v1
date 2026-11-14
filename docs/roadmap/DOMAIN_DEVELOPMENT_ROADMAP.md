@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.38
+- **Version :** 5.39
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,6 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Seuil « Presque épuisé » (Q282) :** seuil entier configurable par produit par le `cooperative_admin` propriétaire ; indicateur « Presque épuisé » si la disponibilité nette est positive et inférieure ou égale au seuil, « Indisponible » à zéro ou moins, sinon « Disponible ». Le seuil n'affecte ni le stock ni la commandabilité. Une valeur par défaut centrale reste à décider avant codage. Products possède le paramètre, Inventory la quantité disponible, Catalog l'indicateur et Sales la revalidation ; validation serveur, isolation coopérative et audit obligatoires.
 - **Indicateur public de stock (Q281) :** ne jamais exposer la quantité exacte au client. Catalog affiche « Indisponible » si la quantité disponible nette est nulle ou négative, « Presque épuisé » sous un seuil bas centralisé à définir avant implémentation, sinon « Disponible ». Inventory demeure source de vérité ; Sales revalide et réserve côté serveur. Les informations internes plus détaillées restent protégées par les permissions et l'isolation coopérative.
 - **Retour de disponibilité après réapprovisionnement (Q280) :** Catalog rétablit automatiquement l'état disponible dès qu'Inventory confirme une quantité disponible strictement positive après prise en compte des réservations et engagements ; aucune validation manuelle n'est requise. Inventory demeure la source de vérité, Catalog n'expose pas le stock physique et Sales revalide/réserve côté serveur. Prévoir propagation fiable, idempotence, prévention des états obsolètes, isolation coopérative et audit ; aucun changement de prix ou de version promotionnelle.
 - **Promotion sans variante disponible (Q279) :** conserver la promotion visible pendant sa validité, mais afficher « Indisponible » et bloquer toute commande. Inventory reste source de vérité ; Catalog expose l'indisponibilité sans révéler le stock physique ; Sales revalide disponibilité et réservation côté serveur au panier/checkout. Le retour du stock ne modifie pas la promotion ni ses versions.
@@ -502,6 +503,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.39 — 14 novembre 2026
+- Enregistrement de Q282 : seuil « Presque épuisé » configurable par produit par le cooperative_admin, avec valeur par défaut centrale à définir.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.38 — 14 novembre 2026
 - Enregistrement de Q281 : indicateur public de disponibilité sans quantité exacte, avec seuil « Presque épuisé » à définir avant codage.
