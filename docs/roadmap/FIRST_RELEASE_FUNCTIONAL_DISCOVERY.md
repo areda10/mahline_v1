@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.94
+- **Version :** 3.95
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4562,6 +4562,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** aucun OTP SMS ni service d'envoi SMS n'est requis pour le parcours V1 d'inscription ou de modification du téléphone. Le numéro reste soumis à validation de format et aux contrôles serveur ; il ne doit pas être présenté comme vérifié. Cette décision ne modifie pas les coordonnées du destinataire propres à chaque adresse de livraison (Q289).
 - **Statut :** VALIDÉ — premier release.
 
+### Décision Q314 — Identifiant de connexion client (VALIDÉE)
+- **Question :** Quel identifiant le client utilise-t-il pour se connecter ?
+- **Réponse :** A — adresse e-mail uniquement.
+- **Décision :** l'authentification du compte client utilise exclusivement l'adresse e-mail. Le numéro de téléphone enregistré dans le profil ou dans une adresse de livraison ne constitue pas un identifiant de connexion.
+- **Conséquences :** le flux de connexion client doit rechercher le compte par e-mail et appliquer les contrôles Identity existants : compte actif, adresse e-mail vérifiée et protections anti-abus. Aucun parcours de connexion par téléphone/SMS n'est inclus dans le premier release. Toute évolution future nécessitera une décision dédiée et ne doit pas être activée implicitement.
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4910,6 +4917,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.95 — 14 novembre 2026
+- Enregistrement de Q314 : connexion du client par adresse e-mail uniquement ; le téléphone n'est pas un identifiant d'authentification en V1.
+- Maintien des contrôles Identity : compte actif, e-mail vérifié et protections anti-abus ; aucune connexion SMS/téléphone.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.94 — 14 novembre 2026
 - Enregistrement de Q313 : aucune vérification SMS du téléphone en V1 ; seule la vérification e-mail est obligatoire avant activation et commande.
