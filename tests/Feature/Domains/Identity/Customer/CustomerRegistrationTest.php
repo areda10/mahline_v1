@@ -6,10 +6,12 @@ namespace Tests\Feature\Domains\Identity\Customer;
 
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
+use App\Domains\Identity\Customer\Services\CustomerRegistrationService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Tests\TestCase;
 
 final class CustomerRegistrationTest extends TestCase
@@ -126,6 +128,51 @@ final class CustomerRegistrationTest extends TestCase
         );
 
         Notification::assertSentOnDemand(CustomerEmailVerificationNotification::class);
+    }
+
+    public function test_resending_verification_replaces_the_previous_link_and_blocks_after_five_requests(): void
+    {
+        Notification::fake();
+
+        $this->post(route('customer.register.store'), $this->validRegistration())
+            ->assertRedirect(route('customer.verification.notice'));
+
+        $customer = User::query()
+            ->where('email', 'client@example.com')
+            ->firstOrFail();
+
+        $initialHash = \\DB::table('customer_email_verifications')
+            ->where('user_id', $customer->getKey())
+            ->value('token_hash');
+
+        $service = app(CustomerRegistrationService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $service->resendVerification($customer->email);
+        }
+
+        $this->assertDatabaseHas('customer_email_verifications', [
+            'user_id' => $customer->getKey(),
+            'token_hash' => $initialHash,
+        ]);
+
+        $this->assertNotNull(
+            \\DB::table('customer_email_verifications')
+                ->where('token_hash', $initialHash)
+                ->value('revoked_at'),
+        );
+
+        $this->assertSame(
+            1,
+            \\DB::table('customer_email_verifications')
+                ->where('user_id', $customer->getKey())
+                ->whereNull('used_at')
+                ->whereNull('revoked_at')
+                ->count(),
+        );
+
+        $this->expectException(TooManyRequestsHttpException::class);
+        $service->resendVerification($customer->email);
     }
 
     private function validRegistration(): array
