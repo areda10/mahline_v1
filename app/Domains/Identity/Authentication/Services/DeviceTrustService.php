@@ -121,50 +121,74 @@ final class DeviceTrustService extends BaseService
         ?string $device,
         ?string $browser,
     ): ?DeviceTrustResolution {
-        if ($session->known_device_id !== null) {
-            $knownDevice = KnownDevice::query()
-                ->whereKey($session->known_device_id)
-                ->where('user_id', $user->getKey())
-                ->first();
+        return DB::transaction(function () use (
+            $user,
+            $session,
+            $presentedToken,
+            $device,
+            $browser,
+        ): ?DeviceTrustResolution {
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if (
-                $knownDevice === null
-                || $knownDevice->status === KnownDeviceStatus::NonTrusted
-            ) {
-                throw new DeviceTrustException(
-                    'The device associated with this session is no longer trusted.',
-                );
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->where('user_id', $lockedUser->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedSession->known_device_id !== null) {
+                $knownDevice = KnownDevice::query()
+                    ->whereKey($lockedSession->known_device_id)
+                    ->where('user_id', $lockedUser->getKey())
+                    ->lockForUpdate()
+                    ->first();
+
+                if (
+                    $knownDevice === null
+                    || $knownDevice->status === KnownDeviceStatus::NonTrusted
+                ) {
+                    throw new DeviceTrustException(
+                        'The device associated with this session is no longer trusted.',
+                    );
+                }
+
+                if (
+                    $knownDevice->status === KnownDeviceStatus::Pending
+                    && $knownDevice->pending_until?->isPast()
+                ) {
+                    $this->promoteIfCapacityAllows($lockedUser, $knownDevice);
+                }
+
+                if (
+                    $knownDevice->last_seen_at === null
+                    || $knownDevice->last_seen_at->lessThanOrEqualTo(now()->subMinutes(5))
+                ) {
+                    $knownDevice->forceFill(['last_seen_at' => now()])->save();
+                }
+
+                $session->setRawAttributes($lockedSession->getAttributes(), true);
+
+                return null;
             }
 
-            if (
-                $knownDevice->status === KnownDeviceStatus::Pending
-                && $knownDevice->pending_until?->isPast()
-            ) {
-                $this->promoteIfCapacityAllows($user, $knownDevice);
-            }
+            $resolution = $this->resolveForAuthentication(
+                user: $lockedUser,
+                presentedToken: $presentedToken,
+                device: $device,
+                browser: $browser,
+            );
 
-            if (
-                $knownDevice->last_seen_at === null
-                || $knownDevice->last_seen_at->lessThanOrEqualTo(now()->subMinutes(5))
-            ) {
-                $knownDevice->forceFill(['last_seen_at' => now()])->save();
-            }
+            $lockedSession->forceFill([
+                'known_device_id' => $resolution->device->getKey(),
+            ])->save();
 
-            return null;
-        }
+            $session->setRawAttributes($lockedSession->getAttributes(), true);
 
-        $resolution = $this->resolveForAuthentication(
-            user: $user,
-            presentedToken: $presentedToken,
-            device: $device,
-            browser: $browser,
-        );
-
-        $session->forceFill([
-            'known_device_id' => $resolution->device->getKey(),
-        ])->save();
-
-        return $resolution;
+            return $resolution;
+        }, attempts: 3);
     }
 
     /** @return Collection<int, KnownDevice> */
