@@ -45,7 +45,7 @@ final class CustomerRegistrationController
 
         return redirect()
             ->route('customer.verification.notice')
-            ->with('status', 'Si votre inscription peut être finalisée, un e-mail de vérification vous a été envoyé. Le lien est valable 24 heures.');
+            ->with('status', 'Si votre inscription peut être finalisée, vous recevrez un e-mail de vérification. Le lien est valable 24 heures.');
     }
 
     public function verify(Request $request): RedirectResponse
