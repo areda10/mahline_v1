@@ -23,7 +23,7 @@ SVG, certifications de coopératives et certifications de produits sont hors pé
 | Profil utilisateur/client | JPEG, PNG, WebP | 2 Mo |
 | Document | PDF uniquement | 15 Mo |
 
-L’extension PHP GD doit être activée, avec prise en charge du format image envoyé, pour générer les dérivés.
+L’extension PHP GD doit être activée, avec prise en charge du format image envoyé, pour générer les dérivés. Configure aussi `upload_max_filesize` à au moins `15M` et `post_max_size` au-dessus de `15M` dans le PHP utilisé par le serveur web et le CLI.
 
 ## Stockage
 
