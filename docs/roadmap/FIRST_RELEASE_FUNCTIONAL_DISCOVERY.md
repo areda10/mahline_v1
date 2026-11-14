@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.75
+- **Version :** 3.76
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q295 — Changement manuel de l'adresse par défaut (VALIDÉE)
+- **Question :** Quand un client choisit une autre adresse comme adresse par défaut, que doit faire MAHLINE ?
+- **Réponse :** A — remplacer immédiatement l'ancienne adresse par la nouvelle ; une seule adresse par défaut au maximum.
+- **Décision :** le choix explicite d'une nouvelle adresse par défaut retire immédiatement ce statut à l'ancienne et l'attribue à la nouvelle, dans une opération atomique côté serveur. Le carnet d'adresses d'un client peut avoir zéro ou une adresse par défaut, jamais plusieurs.
+- **Cohérence :** le changement ne modifie pas les snapshots de livraison des commandes existantes. La sélection d'une adresse au checkout et la désignation d'une adresse par défaut restent deux actions distinctes, sauf si une décision fonctionnelle ultérieure les lie explicitement.
+- **Sécurité :** le serveur vérifie que les deux adresses concernées appartiennent au client authentifié ; aucune modification inter-client n'est possible.
+
 ### Décision Q294 — Modification d'une adresse définie par défaut (VALIDÉE)
 - **Question :** Si le client modifie une adresse qui est déjà définie comme adresse par défaut, que doit faire MAHLINE ?
 - **Réponse :** A — conserver automatiquement cette adresse comme adresse par défaut après modification.
@@ -4711,6 +4718,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.76 — 14 novembre 2026
+- Enregistrement de Q295 : le choix manuel d'une nouvelle adresse par défaut remplace immédiatement l'ancienne, avec une seule adresse par défaut au maximum.
 
 ### Version 3.75 — 14 novembre 2026
 - Enregistrement de Q294 : la modification d'une adresse conserve son statut d'adresse par défaut ; aucun effet sur les snapshots des commandes existantes.
