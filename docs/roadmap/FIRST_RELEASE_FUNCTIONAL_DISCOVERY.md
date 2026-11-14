@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.05
+- **Version :** 4.06
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4991,7 +4991,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** les sessions simultanées multi-appareils autorisées par Q323 restent chacune soumises à cette politique centralisée. La durée maximale de session, le renouvellement éventuel et les mécanismes de persistance restent ceux d'Identity ; aucune valeur n'est inventée ici. La révocation individuelle et globale conserve les effets définis en Q319 et Q316.
 - **Statut :** VALIDÉ — premier release, politique héritée d'Identity.
 
+
+### Décision Q325 — Déconnexion manuelle du client (VALIDÉE)
+- **Question :** Comment le client doit-il pouvoir se déconnecter de ses sessions ?
+- **Réponse :** B — déconnexion de l'appareil actuel avec une option supplémentaire « Déconnecter tous les appareils ».
+- **Décision :** l'action standard « Se déconnecter » invalide uniquement la session de l'appareil courant. Une action distincte, explicite et protégée permet au client de révoquer toutes ses autres sessions/appareils.
+- **Conséquences :** respecter le modèle multi-sessions Q323 et la révocation individuelle Q319. La révocation globale doit invalider les sessions web actives des autres appareils et leur persistance éventuelle ; le comportement de la session courante lors de cette action suit la règle déjà validée en Q319 (elle est conservée). Les tokens API ne sont pas inclus dans cette action, sauf si une règle Identity existante les associe explicitement ; les révocations globales de sécurité Q316 continuent, elles, à révoquer toutes les sessions et tous les tokens API. Vérifier la propriété côté serveur et journaliser l'action sans secrets.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.06 — 14 novembre 2026
+- Enregistrement de Q325 : déconnexion courante limitée à l'appareil actuel, avec option distincte de révocation de toutes les autres sessions.
+- Conservation de la session courante pour l'action « Déconnecter tous les appareils », conformément à Q319 ; révocation globale de sécurité Q316 inchangée.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.05 — 14 novembre 2026
 - Enregistrement de Q324 : durée d'inactivité et déconnexion automatique des sessions client héritées de la politique centralisée Identity.
