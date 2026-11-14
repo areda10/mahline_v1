@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
@@ -29,11 +30,26 @@ final class AuthenticationWorkflow
         AuthenticationContext $context,
         string $sessionId,
         ?Request $request = null,
+        bool $customerOnly = false,
     ): AuthenticationSession {
         $request ??= request();
         $user = $this->authenticationService->authenticate(
             context: $context,
         );
+
+        // A customer URL must never create a session for an internal account.
+        // Keep the public authentication response identical for every mismatch.
+        if ($customerOnly && (
+            ! $user->hasRole('customer')
+            || $user->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ])
+        )) {
+            throw new AuthenticationFailedException();
+        }
 
         try {
             Auth::login($user);
