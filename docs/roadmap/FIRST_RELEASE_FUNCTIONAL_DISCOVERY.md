@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.65
+- **Version :** 3.66
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,23 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q285 — Application d'un nouveau seuil de stock (VALIDÉE)
+- **Question :** Quand un seuil personnalisé est-il appliqué après modification ?
+- **Réponse :** A — immédiatement après validation serveur.
+- **Décision :** toute création ou modification du seuil prend effet immédiatement après validation côté serveur. Pas de programmation différée pour ce paramètre en V1.
+- **Cohérence :** Products conserve le paramètre ; Catalog recalcule l'indicateur à partir de la disponibilité nette courante fournie par Inventory. Sales continue de revalider et réserver côté serveur. La modification n'altère ni le stock, ni les réservations, ni les commandes existantes. Autorisation cooperative_admin propriétaire, isolation et audit obligatoires.
+
+### Parcours opérationnel directeur — Client → Coopérative → Transporteur (VALIDÉ)
+1. **Client — Identity :** création de compte, connexion, profil et adresses.
+2. **Marketplace — Catalog / Products :** consultation des coopératives, découverte des produits, prix et disponibilités.
+3. **Panier et commande — Sales :** ajout de produits, modification des quantités, validation du panier et passage de commande ; panier multi-coopératives possible.
+4. **Réception — Espace coopérative :** chaque coopérative reçoit sa sous-commande et consulte ses lignes, quantités et informations client autorisées.
+5. **Confirmation — Sales + Inventory :** la coopérative accepte ou refuse les lignes, ajuste les quantités disponibles, puis confirme sa sous-commande ; le stock est réservé selon les règles métier validées.
+6. **Préparation et remise — Delivery :** la coopérative prépare le colis, le déclare prêt et le remet au transporteur.
+7. **Suivi — Delivery + Communication :** client et coopérative suivent les statuts d'expédition et reçoivent les notifications utiles.
+- **Méthode de développement :** implémenter progressivement les capacités nécessaires à chaque étape dans cet ordre de parcours, avec audit préalable des fichiers et dépendances, tests ciblés puis tests de régression ; ne pas chercher à achever un domaine entier avant de livrer le parcours transversal.
+- **Frontières :** Identity gère le compte client ; Catalog / Products les données commerciales exposées ; Sales le panier, la commande, les sous-commandes et leurs transitions ; Inventory le stock et les réservations ; Delivery la préparation, remise et expédition ; Communication les notifications. Chaque domaine reste propriétaire de ses données et expose des contrats explicites.
+
 ### Décision Q284 — Seuil personnalisé égal à zéro (VALIDÉE)
 - **Question :** Le seuil personnalisé d'un produit peut-il être égal à zéro ?
 - **Réponse :** A — oui ; zéro désactive l'indicateur « Presque épuisé » pour ce produit.
@@ -4629,6 +4646,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.66 — 14 novembre 2026
+- Enregistrement de Q285 : modification du seuil appliquée immédiatement après validation serveur.
+- Formalisation du parcours directeur Client → Coopérative → Transporteur en sept étapes et de la méthode de développement progressive transversale.
 
 ### Version 3.65 — 14 novembre 2026
 - Enregistrement de Q284 : un seuil personnalisé égal à zéro désactive « Presque épuisé » ; l'absence de valeur conserve le défaut de 5 unités.
