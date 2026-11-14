@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.00
+- **Version :** 4.01
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4951,7 +4951,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Décision :** aucune approbation préalable de `super_admin` ou `super_admin_root` n'est requise. Après validation serveur des paramètres (taux, dates, prix calculé, produit et variantes concernés, droits du `cooperative_admin` et périmètre coopératif), la promotion est automatiquement active/publicable lorsque sa période commence. Une promotion planifiée reste inactive jusqu'à sa date de début. Les actions sont journalisées ; les rôles de supervision conservent leurs droits de contrôle et peuvent appliquer les mécanismes de suspension autorisés, sans modifier les paramètres commerciaux à la place de la coopérative.
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
+
+### Décision Q320 — Notifications de sécurité du compte client (VALIDÉE)
+- **Question :** Quels événements sensibles du compte client doivent déclencher une notification ?
+- **Réponse :** A — envoyer un e-mail pour chaque événement sensible, avec la date et les informations utiles sur l'appareil lorsqu'elles sont disponibles.
+- **Décision :** envoyer une notification de sécurité par e-mail lors de chaque événement sensible couvert par le parcours client, notamment une nouvelle connexion, un changement de mot de passe, la révocation d'un appareil/session et un changement d'adresse e-mail.
+- **Conséquences :** les messages indiquent l'événement et ses éléments contextuels utiles (date/heure et informations d'appareil disponibles), sans exposer de mot de passe, token, identifiant de session, code, lien secret ou autre secret d'authentification. Les notifications sont déclenchées à partir d'événements serveur fiables, ne remplacent pas les contrôles de sécurité et doivent être auditées sans journaliser de contenu sensible. Le canal validé pour V1 est l'e-mail.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.01 — 14 novembre 2026
+- Enregistrement de Q320 : e-mail de sécurité pour chaque événement sensible du compte client, notamment nouvelle connexion, changement de mot de passe, révocation d'appareil/session et changement d'adresse e-mail.
+- Messages limités aux informations contextuelles utiles (date/heure et appareil disponible), sans mot de passe, token, session, code ni lien secret ; aucun code applicatif modifié, aucune fusion.
 
 ### Version 4.00 — 14 novembre 2026
 - Enregistrement de Q319 : écran sécurité listant les sessions/appareils actifs (date, navigateur, système, dernière activité lorsque disponibles), avec révocation individuelle ou déconnexion de toutes les autres sessions.
