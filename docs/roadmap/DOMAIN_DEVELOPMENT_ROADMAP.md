@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.90
+- **Version :** 5.91
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -617,10 +617,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Notification après révocation d'un appareil suspect (Q333) :** après confirmation et révocation effective de la session, informer le client par e-mail et par notification dans son espace. N'annoncer le succès qu'après confirmation serveur. Le message peut contenir la date/heure et les informations d'appareil fiables disponibles, mais aucun mot de passe, token, identifiant de session exploitable, lien secret ou autre secret d'authentification. Tracer l'événement et l'envoi sans secret.
 
+**Mémorisation d'un appareil reconnu (Q334) :** après reconnaissance explicite, conserver l'appareil comme reconnu sans durée calendaire fixe, jusqu'à révocation par le client depuis son espace sécurité. Le client peut consulter et révoquer individuellement cette confiance. Après révocation, toute connexion ultérieure repasse par le contrôle d'un nouvel appareil. La confiance doit être fondée sur une preuve sécurisée côté serveur, révocable et non réduite à l'IP ou au User-Agent ; elle est distincte de la session active. Le mécanisme technique précis doit être audité avant développement, sans exposer ni journaliser les secrets.
 
-### Version 5.90 — 14 novembre 2026
-- Enregistrement de Q333 : notification e-mail et in-app après révocation effective d'un appareil suspect.
-- Déclenchement après succès serveur, contenu limité aux informations fiables et sans secret. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.91 — 14 novembre 2026
+- Enregistrement de Q334 : appareil reconnu mémorisé jusqu'à révocation explicite par le client.
+- Confiance persistante révocable et distincte de la session ; mécanisme sécurisé à définir avant développement. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
