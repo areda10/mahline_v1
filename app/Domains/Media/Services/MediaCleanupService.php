@@ -28,7 +28,10 @@ final class MediaCleanupService
                         }
                     }
 
-                    $disk->delete($paths);
+                    if (! $disk->delete($paths)) {
+                        continue;
+                    }
+
                     $media->forceDelete();
                     $purged++;
                 }
