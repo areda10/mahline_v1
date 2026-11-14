@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.91
+- **Version :** 3.92
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,25 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q311 — Suppression du compte client à l'initiative du client (VALIDÉE)
+- **Question :** Quelle procédure pour « Supprimer mon compte » ?
+- **Réponse :** A — demande du client, désactivation immédiate, puis suppression ou anonymisation selon les obligations de conservation.
+- **Décision :** le client authentifié peut initier une demande de suppression de son compte. La demande déclenche immédiatement la désactivation de l'accès au compte. Le traitement définitif supprime ou anonymise les données personnelles qui peuvent l'être, tout en préservant les commandes, factures, preuves et traces qui doivent être conservées pour des raisons légales, comptables, de sécurité ou de preuve.
+- **Conséquences :** vérifier l'identité et sécuriser la demande ; révoquer les sessions web et jetons API ; empêcher toute nouvelle connexion et commande ; conserver uniquement les données nécessaires avec accès restreint et durée de conservation définie ; tracer la demande et son traitement sans conserver inutilement de données personnelles. Les règles de traitement des commandes en cours, du délai de grâce/annulation éventuel, des sauvegardes et de la réversibilité doivent être précisées avant codage. Aucune suppression physique aveugle des relations métier.
+- **Statut :** VALIDÉ — premier release, sous réserve de cadrage détaillé de la conservation.
+
+### Exigence espace client — espace personnel isolé
+- L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
+- Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
+- Le compte client ne reçoit aucun privilège interne par le seul fait de son inscription ou de son authentification. Le modèle d'identité et le rôle client doivent être explicitement établis sans réutilisation implicite du rôle interne `user`.
+
+### Exigence espace client — photo de profil
+- Le client peut ajouter et remplacer une photo de profil depuis son espace personnel.
+- Taille maximale stricte : **2 Mo** par fichier ; contrôle serveur obligatoire, même si le formulaire applique aussi une limite côté navigateur.
+- Vérifier le type réel du fichier, les extensions/MIME autorisés, les dimensions et les contenus ; générer un nom de stockage sûr, empêcher l'exécution, utiliser un stockage non public par défaut et contrôler l'accès à la photo.
+- Le stockage, le traitement et la suppression des fichiers relèvent du domaine Media ; Identity conserve uniquement la référence nécessaire. Auditer Media et les mécanismes de stockage existants avant de choisir l'implémentation.
+- Le remplacement et la suppression de la photo doivent éviter les références orphelines et respecter les règles de conservation applicables au compte.
+
 ### Décision Q310 — Rôles autorisés à intervenir sur une sous-commande en retard (VALIDÉE)
 - **Question :** Quels administrateurs peuvent relancer une coopérative ou décider à sa place après dépassement du délai ?
 - **Réponse :** B — `super_admin_root` et `super_admin` affecté à la coopérative concernée.
@@ -4877,6 +4896,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.92 — 14 novembre 2026
+- Enregistrement de Q311 : demande de suppression client, désactivation immédiate puis suppression/anonymisation encadrée par les obligations de conservation.
+- Ajout des exigences Espace client : espace personnel isolé de tous les rôles internes et photo de profil avec limite stricte de 2 Mo ; audit Media et contrôles de sécurité avant codage.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.91 — 14 novembre 2026
 - Enregistrement de Q310 : intervention sur une sous-commande en retard réservée à `super_admin_root` (toutes coopératives) et `super_admin` affecté (coopératives affectées) ; `cooperative_admin` exclu des décisions administratives de substitution.
