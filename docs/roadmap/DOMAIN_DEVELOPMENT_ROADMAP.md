@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.93
+- **Version :** 5.94
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -623,10 +623,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Nombre maximal d'appareils reconnus (Q336) :** limiter à cinq le nombre d'appareils reconnus simultanément par compte client. Le serveur doit faire respecter cette limite. La procédure lorsqu'un sixième appareil doit être reconnu (choix/remplacement ou révocation préalable) reste à définir ; aucun appareil existant ne doit être supprimé silencieusement. Cette limite ne plafonne pas les sessions actives et reste distincte du modèle multi-session.
 
+**Remplacement lors d'une sixième reconnaissance (Q337) :** présenter au client ses cinq appareils reconnus et lui demander de sélectionner celui à remplacer. Après confirmation explicite, révoquer la confiance et toutes les sessions actives associées à l'appareil choisi (Q335), puis enregistrer le nouvel appareil reconnu. Les quatre autres appareils restent intacts. Annulation = aucune modification. Le serveur doit appliquer l'opération de façon atomique et idempotente, sans dépassement durable de la limite ni révocation silencieuse.
 
-### Version 5.93 — 14 novembre 2026
-- Enregistrement de Q336 : limite de cinq appareils reconnus simultanément par compte client.
-- Parcours de dépassement de limite à définir sans révocation silencieuse ; sessions actives non plafonnées. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.94 — 14 novembre 2026
+- Enregistrement de Q337 : sélection et confirmation par le client de l'appareil à remplacer lors d'une sixième reconnaissance.
+- Révocation ciblée de sa confiance et de ses sessions ; annulation sans effet. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
