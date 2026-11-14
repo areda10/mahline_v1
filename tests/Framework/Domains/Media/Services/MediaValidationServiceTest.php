@@ -86,6 +86,25 @@ final class MediaValidationServiceTest extends TestCase
         self::assertSame(15 * 1024 * 1024, MediaCategory::DOCUMENT->maxBytes());
     }
 
+    public function test_all_image_categories_allow_only_jpeg_png_and_webp(): void
+    {
+        $expected = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        ];
+
+        foreach ([
+            MediaCategory::PRODUCT_IMAGE,
+            MediaCategory::COOPERATIVE_LOGO,
+            MediaCategory::COOPERATIVE_PHOTO,
+            MediaCategory::PROFILE_IMAGE,
+        ] as $category) {
+            self::assertSame($expected, $category->allowedMimeTypes());
+        }
+    }
+
     public function test_svg_is_not_an_allowed_image_format(): void
     {
         $file = UploadedFile::fake()->createWithContent(
