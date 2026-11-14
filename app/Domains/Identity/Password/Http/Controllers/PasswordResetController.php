@@ -44,6 +44,7 @@ final class PasswordResetController
         if ($user !== null && $user->status->value === 'active') {
             $this->passwordResetService->createToken(
                 user: $user,
+                customerOnly: $request->routeIs('customer.password.email'),
             );
         }
 
@@ -56,7 +57,9 @@ final class PasswordResetController
         }
 
         return redirect()
-            ->route('password.request')
+            ->route($request->routeIs('customer.password.email')
+                ? 'customer.password.request'
+                : 'password.request')
             ->with('status', $message);
     }
 
@@ -101,7 +104,9 @@ final class PasswordResetController
         }
 
         return redirect()
-            ->route('authentication.login')
+            ->route($request->routeIs('customer.password.update')
+                ? 'customer.login'
+                : 'authentication.login')
             ->with('status', 'Password has been reset successfully.');
     }
 
