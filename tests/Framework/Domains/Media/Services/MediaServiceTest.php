@@ -178,7 +178,7 @@ final class MediaServiceTest extends TestCase
         $first = $service->upload(
             $actor,
             $product,
-            UploadedFile::fake()->createWithContent('first.pdf', "%PDF-1.4\n%%EOF"),
+            UploadedFile::fake()->createWithContent('first.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF"),
             'document',
             'proof_one',
         );
@@ -186,7 +186,7 @@ final class MediaServiceTest extends TestCase
         $second = $service->upload(
             $actor,
             $product,
-            UploadedFile::fake()->createWithContent('second.pdf', "%PDF-1.4\n%%EOF"),
+            UploadedFile::fake()->createWithContent('second.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF"),
             'document',
             'proof_two',
         );
