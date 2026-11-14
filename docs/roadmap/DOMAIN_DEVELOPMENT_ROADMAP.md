@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.73
+- **Version :** 5.74
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -534,6 +534,8 @@ Le développement fonctionnel du premier release suit le parcours opérationnel 
 
 **Sessions après réinitialisation du mot de passe client (Q316) :** dès que la réinitialisation est réussie, toutes les sessions web et tous les tokens API du client sont révoqués, y compris la session courante. Le client doit se reconnecter avec son nouveau mot de passe. L'opération est auditée sans conserver le mot de passe, le lien ni le secret de réinitialisation.
 
+**Protection du login client (Q317) :** reprendre les limites anti-abus Identity déjà établies : maximum 5 tentatives par compte, 30 par adresse IP et 5 par combinaison IP + adresse e-mail sur 15 minutes. Les limites sont appliquées côté serveur, sans mécanisme client plus permissif ni divulgation permettant l'énumération des comptes ; aucun secret n'est journalisé.
+
 Espace client — première tranche de développement :** démarrer par le CRUD du compte/profil client, des coordonnées téléphone/e-mail et des adresses. Réutiliser les règles Q286-Q298 : inscription en attente puis activation après vérification e-mail, sécurité des liens, coordonnées du destinataire propres à chaque adresse, maximum cinq adresses actives, gestion explicite de l'adresse par défaut et snapshots de commande immuables. La suppression/désactivation du compte, les conséquences sur les sessions et les règles de conservation doivent être précisées avant codage ; ne pas supposer une suppression physique. Toute modification d'e-mail doit être alignée sur les règles Identity existantes. Les opérations sont limitées au compte client authentifié, contrôlées côté serveur, auditées et couvertes par des tests d'isolation/IDOR. Le développement commence par un audit détaillé des fichiers Identity/Localization, routes, modèles, migrations, vues, notifications et tests ; aucune migration déjà exécutée ne sera modifiée.
 
 **Intervention administrateur sur une sous-commande en retard (Q309) :** un administrateur autorisé peut relancer la coopérative avec un nouveau délai (durée définie centralement, maximum 24 heures), ou accepter/refuser la sous-commande à sa place. Une décision administrative est explicitement attribuée à son auteur et ne doit pas être imputée à la coopérative. Chaque intervention conserve l'acteur, l'horodatage, l'action, les états avant/après et le motif/commentaire lorsqu'il est fourni ; les parties concernées sont notifiées.
@@ -583,6 +585,11 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Vérification e-mail client (Q287) :** le lien de vérification est valable 24 heures à compter de son émission. Après expiration, le client peut demander un nouveau lien dans la limite de 5 demandes par heure, puis blocage temporaire d'une heure ; chaque nouveau lien invalide immédiatement tous les liens précédents. Un seul lien reste utilisable par compte. L'expiration, l'invalidation et la validation sont contrôlées côté serveur ; aucun jeton ou secret n'est journalisé. Cette durée de 24 heures remplace l'ancienne durée de 60 minutes des décisions Q6-Q7.
 
 **Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+### Version 5.74 — 14 novembre 2026
+- Enregistrement de Q317 : login client soumis aux limites cumulatives de 5 tentatives/compte, 30/IP et 5/IP + e-mail sur 15 minutes.
+- Réutilisation de la politique anti-abus Identity côté serveur, sans énumération de comptes ni journalisation de secrets.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.73 — 14 novembre 2026
 - Enregistrement de Q316 : révocation complète des sessions web et tokens API du client après réinitialisation du mot de passe, session courante incluse.
