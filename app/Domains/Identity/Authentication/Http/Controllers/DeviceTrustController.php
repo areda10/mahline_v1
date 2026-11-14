@@ -31,7 +31,7 @@ final class DeviceTrustController
         $deviceList->each(static function (KnownDevice $device): void {
             $device->setAttribute(
                 'last_ip_address',
-                $device->sessions()->orderByDesc('authenticated_at')->value('ip_address'),
+                $device->latestSession?->ip_address,
             );
         });
 

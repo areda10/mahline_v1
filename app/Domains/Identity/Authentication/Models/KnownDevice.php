@@ -9,6 +9,7 @@ use App\Domains\Identity\Authentication\Enums\KnownDeviceStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class KnownDevice extends BaseModel
 {
@@ -49,6 +50,12 @@ final class KnownDevice extends BaseModel
     public function sessions(): HasMany
     {
         return $this->hasMany(AuthenticationSession::class, 'known_device_id');
+    }
+
+    public function latestSession(): HasOne
+    {
+        return $this->hasOne(AuthenticationSession::class, 'known_device_id')
+            ->latestOfMany('authenticated_at');
     }
 
     public function isTrusted(): bool

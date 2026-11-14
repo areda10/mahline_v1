@@ -261,6 +261,7 @@ final class DeviceTrustServiceTest extends TestCase
         $this->assertTrue($user->knownDevices->contains('id', $device->getKey()));
         $this->assertTrue($user->authenticationSessions->contains('id', $session->getKey()));
         $this->assertTrue($device->sessions->contains('id', $session->getKey()));
+        $this->assertTrue($device->latestSession->is($session));
     }
 
     private function createTrustedDevice(User $user, string $token): KnownDevice

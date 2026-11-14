@@ -212,6 +212,7 @@ final class DeviceTrustService extends BaseService
     public function devicesFor(User $user): Collection
     {
         return KnownDevice::query()
+            ->with('latestSession')
             ->where('user_id', $user->getKey())
             ->whereNotNull('device_token_hash')
             ->orderByRaw("CASE status WHEN 'trusted' THEN 0 WHEN 'pending' THEN 1 ELSE 2 END")
@@ -453,10 +454,7 @@ final class DeviceTrustService extends BaseService
             return;
         }
 
-        $ipAddress = AuthenticationSession::query()
-            ->where('known_device_id', $device->getKey())
-            ->orderByDesc('authenticated_at')
-            ->value('ip_address');
+        $ipAddress = $device->latestSession()->first()?->ip_address;
 
         $notification = new DeviceTrustRevokedNotification(
             device: $device->device,
