@@ -30,6 +30,10 @@ final class MediaImageProcessor
             throw new RuntimeException('Impossible de lire le fichier image.');
         }
 
+        if ($extension === 'webp' && ! function_exists('imagewebp')) {
+            throw new RuntimeException('La prise en charge WebP de PHP GD est requise.');
+        }
+
         $source = @imagecreatefromstring($contents);
 
         if (! $source instanceof \GdImage) {
