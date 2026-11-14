@@ -12,7 +12,9 @@ use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 final class EnsureActiveAuthenticationSession
 {
@@ -97,16 +99,24 @@ final class EnsureActiveAuthenticationSession
             );
 
             if ($deviceResolution->isNewDevice) {
-                $this->deviceHook->afterDeviceRemembered(
-                    user: $user,
-                    session: $authenticationSession,
-                    isNewDevice: true,
-                );
-                $this->deviceHook->afterAuthenticationCommitted(
-                    user: $user,
-                    session: $authenticationSession,
-                    isNewDevice: true,
-                );
+                try {
+                    $this->deviceHook->afterDeviceRemembered(
+                        user: $user,
+                        session: $authenticationSession,
+                        isNewDevice: true,
+                    );
+                    $this->deviceHook->afterAuthenticationCommitted(
+                        user: $user,
+                        session: $authenticationSession,
+                        isNewDevice: true,
+                    );
+                } catch (Throwable $exception) {
+                    Log::warning('Unable to record legacy-session device bootstrap notification.', [
+                        'user_id' => (string) $user->getKey(),
+                        'authentication_session_id' => (string) $authenticationSession->getKey(),
+                        'exception' => $exception::class,
+                    ]);
+                }
             }
         }
 
