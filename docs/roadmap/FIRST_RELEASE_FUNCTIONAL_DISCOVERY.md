@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.93
+- **Version :** 3.94
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4555,6 +4555,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** les champs d'identité sont enregistrés sous la responsabilité d'Identity ; la photo suit les exigences Media déjà définies (limite stricte de 2 Mo et contrôles de contenu/stockage). Un changement d'e-mail suit obligatoirement le processus déjà validé Q9-Q12 : l'ancienne adresse reste principale jusqu'à vérification de la nouvelle ; après validation effective, toutes les sessions web et tous les tokens API sont révoqués et une notification de sécurité est envoyée à l'ancienne adresse. Les contrôles d'accès, validations serveur, audit et tests d'isolation restent obligatoires.
 - **Statut :** VALIDÉ — premier release.
 
+### Décision Q313 — Vérification du numéro de téléphone client (VALIDÉE)
+- **Question :** La vérification du numéro de téléphone est-elle obligatoire avant qu'un client puisse commander ?
+- **Réponse :** B — non ; le numéro est enregistré sans vérification dédiée. Seule l'adresse e-mail doit être vérifiée.
+- **Décision :** le client peut renseigner et modifier son numéro de téléphone sans devoir confirmer sa possession par SMS ou code à usage unique. La vérification de l'adresse e-mail demeure obligatoire selon Q286-Q287 et constitue le contrôle de vérification requis avant activation et commande.
+- **Conséquences :** aucun OTP SMS ni service d'envoi SMS n'est requis pour le parcours V1 d'inscription ou de modification du téléphone. Le numéro reste soumis à validation de format et aux contrôles serveur ; il ne doit pas être présenté comme vérifié. Cette décision ne modifie pas les coordonnées du destinataire propres à chaque adresse de livraison (Q289).
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4903,6 +4910,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.94 — 14 novembre 2026
+- Enregistrement de Q313 : aucune vérification SMS du téléphone en V1 ; seule la vérification e-mail est obligatoire avant activation et commande.
+- Le téléphone reste soumis à validation de format côté serveur et n'est pas marqué comme vérifié.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.93 — 14 novembre 2026
 - Enregistrement de Q312 : modification directe du nom, prénom, téléphone, e-mail et photo par le client ; carnet d'adresses séparé.
