@@ -139,6 +139,13 @@ return [
             'products.view',
         ],
 
+        /*
+         * Public marketplace customer. Customer access is controlled by
+         * dedicated customer routes and ownership policies, not back-office
+         * cooperative permissions.
+         */
+        'customer' => [],
+
     ],
 
 ];
