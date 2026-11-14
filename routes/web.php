@@ -166,14 +166,14 @@ Route::prefix('password')
 
 Route::prefix('password/change-required')
     ->name('password.force-change.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
         Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
     });
 
 Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit'])
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->name('security.password.edit');
 
 /*
