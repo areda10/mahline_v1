@@ -121,6 +121,11 @@ final class CustomerProfileTest extends TestCase
 
         $this->actingAs($customer)
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('customer.dashboard'))
+            ->assertForbidden();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->get(route('customer.profile.edit'))
             ->assertForbidden();
     }
