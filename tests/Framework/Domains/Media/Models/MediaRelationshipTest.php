@@ -115,6 +115,56 @@ final class MediaRelationshipTest extends TestCase
         self::assertMatchesRegularExpression('/^[0-9A-HJKMNP-TV-Z]{26}$/', $media->getKey());
     }
 
+    public function test_product_exposes_images_primary_image_and_documents(): void
+    {
+        $product = Product::factory()->create();
+        $primary = $product->media()->create([
+            ...$this->mediaAttributes(),
+            'category' => 'product_image',
+            'is_primary' => true,
+        ]);
+        $document = $product->media()->create([
+            ...$this->mediaAttributes(),
+            'category' => 'document',
+            'mime_type' => 'application/pdf',
+            'extension' => 'pdf',
+            'original_name' => 'proof.pdf',
+        ]);
+
+        self::assertSame($primary->getKey(), $product->primaryImage->getKey());
+        self::assertCount(1, $product->images);
+        self::assertSame($document->getKey(), $product->documents->first()->getKey());
+    }
+
+    public function test_cooperative_exposes_logo_photos_and_documents(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $logo = $cooperative->media()->create([
+            ...$this->mediaAttributes(),
+            'category' => 'cooperative_logo',
+            'is_primary' => true,
+        ]);
+        $photo = $cooperative->media()->create([
+            ...$this->mediaAttributes(),
+            'category' => 'cooperative_photo',
+        ]);
+
+        self::assertSame($logo->getKey(), $cooperative->logo->getKey());
+        self::assertSame($photo->getKey(), $cooperative->photos->first()->getKey());
+    }
+
+    public function test_user_exposes_profile_image_and_documents(): void
+    {
+        $user = User::factory()->create();
+        $profile = $user->media()->create([
+            ...$this->mediaAttributes(),
+            'category' => 'profile_image',
+            'is_primary' => true,
+        ]);
+
+        self::assertSame($profile->getKey(), $user->profileImage->getKey());
+    }
+
     /**
      * @return array<string, mixed>
      */
