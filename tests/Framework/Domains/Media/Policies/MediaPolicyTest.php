@@ -61,6 +61,31 @@ final class MediaPolicyTest extends TestCase
         ]));
     }
 
+    public function test_users_can_manage_only_their_own_profile_media(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->userWithPermission(
+            'user',
+            'products.view',
+            (string) $cooperative->getKey(),
+        );
+        $otherUser = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        self::assertTrue(Gate::forUser($actor)->allows('upload', [
+            new Media,
+            $actor,
+            'profile_image',
+        ]));
+
+        self::assertFalse(Gate::forUser($actor)->allows('upload', [
+            new Media,
+            $otherUser,
+            'profile_image',
+        ]));
+    }
+
     private function userWithPermission(
         string $roleSlug,
         string $permissionSlug,
