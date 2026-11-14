@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.22
+- **Version :** 4.23
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5133,6 +5133,12 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 
 ## 6. Historique des mises à jour
+
+### Version 4.23 — 14 novembre 2026
+- Première tranche du profil client : consultation et modification sécurisées du prénom, nom et téléphone dans l'espace client isolé.
+- Routes dédiées au rôle customer, validation serveur, mise à jour transactionnelle et audit des anciennes/nouvelles valeurs ; tests feature ajoutés mais non exécutés.
+- E-mail non modifiable depuis ce formulaire (parcours de changement sécurisé à développer) ; photo de profil reportée à l'intégration Media (limite validée : 2 Mo). Aucun merge.
+
 
 ### Version 4.22 — 14 novembre 2026
 - Enregistrement de Q337 : le client choisit explicitement lequel de ses cinq appareils reconnus remplacer pour en reconnaître un sixième.
