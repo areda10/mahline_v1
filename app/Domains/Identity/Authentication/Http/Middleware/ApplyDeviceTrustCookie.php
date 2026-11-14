@@ -25,7 +25,7 @@ final class ApplyDeviceTrustCookie
         $response->headers->setCookie(cookie(
             DeviceTrustCookie::NAME,
             $token,
-            60 * 24 * 365 * 5,
+            60 * 24 * 400,
             '/',
             config('session.domain'),
             $secure === null ? $request->isSecure() : (bool) $secure,
