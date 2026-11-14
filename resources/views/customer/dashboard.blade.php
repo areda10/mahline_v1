@@ -9,10 +9,13 @@
     </section>
 
     <section class="card">
-        <h2>Mon profil</h2>
+        <div class="section-heading">
+            <h2>Mon profil</h2>
+            <a href="{{ route('customer.profile.edit') }}">Modifier mon profil</a>
+        </div>
         <p><strong>Nom :</strong> {{ $user->display_name ?: trim($user->first_name.' '.$user->last_name) }}</p>
         <p><strong>E-mail :</strong> {{ $user->email }}</p>
         <p><strong>Téléphone :</strong> {{ $user->telephone }}</p>
-        <p class="muted">La gestion complète du profil, de la photo et du carnet d'adresses sera ajoutée dans les prochaines étapes.</p>
+        <p class="muted">Vous pouvez modifier vos informations personnelles depuis votre espace client.</p>
     </section>
 @endsection
