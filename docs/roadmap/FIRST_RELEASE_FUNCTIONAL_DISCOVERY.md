@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.26
+- **Version :** 4.27
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5157,7 +5157,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Ne jamais journaliser le lien, son jeton, ni aucun secret d'authentification.
 - **Statut :** VALIDÉ — premier release ; implémentation et tests à réaliser.
 
+### Décision Q340 — Renvoi du lien expiré de changement d'e-mail (VALIDÉE)
+- **Question :** Comment le client obtient-il un nouveau lien si le lien de changement d'e-mail expire après 30 minutes ?
+- **Réponse :** A — refaire une demande, saisir le mot de passe actuel et confirmer l'adresse souhaitée ; le nouveau lien invalide les précédents.
+- **Décision :** après expiration, le client doit initier une nouvelle demande de changement d'e-mail, fournir à nouveau son mot de passe actuel et confirmer la nouvelle adresse.
+- **Conséquences :**
+  - Le serveur vérifie à nouveau le mot de passe actuel avant tout envoi.
+  - L'adresse proposée est validée côté serveur ; l'ancienne adresse reste principale jusqu'à vérification de la nouvelle.
+  - L'émission du nouveau lien invalide immédiatement tout lien antérieur encore existant pour ce compte/demande.
+  - Le nouveau lien est à usage unique et valable 30 minutes (Q339).
+  - En cas de mot de passe absent/incorrect, aucun lien n'est envoyé ; aucun secret n'est journalisé.
+- **Statut :** VALIDÉ — premier release ; implémentation et tests à réaliser.
+
 ## 6. Historique des mises à jour
+
+### Version 4.27 — 14 novembre 2026
+- Q340 : après expiration, nouvelle demande avec nouvelle vérification du mot de passe et de l'adresse ; émission d'un lien de 30 minutes qui invalide immédiatement les précédents.
 
 ### Version 4.26 — 14 novembre 2026
 - Q339 : lien de vérification du changement d'e-mail valable 30 minutes ; expiration contrôlée côté serveur, usage unique et absence de journalisation des secrets.
