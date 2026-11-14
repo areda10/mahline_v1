@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.97
+- **Version :** 5.98
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -631,12 +631,11 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Remplacement au-delà de cinq appareils reconnus (Q337) :** si le client veut reconnaître un sixième appareil, afficher ses cinq appareils reconnus et lui demander de choisir explicitement celui à remplacer. Aucune révocation automatique ou silencieuse. Après confirmation, retirer la confiance de l'appareil choisi et révoquer immédiatement ses sessions web associées conformément à Q335 ; préserver les autres appareils. Le serveur doit valider l'appartenance, la limite et la sélection, puis réaliser le remplacement de manière atomique. En cas d'annulation ou d'échec, conserver l'état antérieur et ne pas reconnaître le nouvel appareil.
 
 
-### Version 5.97 — 14 novembre 2026
-- Q337 : le client choisit et confirme explicitement l'appareil à remplacer lorsqu'il reconnaît un sixième appareil ; révocation de la confiance et des sessions associées selon Q335, autres appareils préservés.
-- Première tranche Client — Identity : rôle customer dédié, inscription pending, vérification e-mail 24 h à usage unique, renvoi 5/heure puis blocage 1 h, routes et espace séparés.
-- Session client par défaut à durée navigateur et inactivité Identity de 60 min ; remember-me individuel non développé. Tests ajoutés mais non exécutés.
-- Confiance appareil Q328-Q337 et gestion sécurisée des sessions restent à développer avant mise en production. Aucune fusion.
-
+### Version 5.98 — 14 novembre 2026
+- Profil client — première tranche développée : lecture et modification du prénom, nom et téléphone depuis des routes dédiées et protégées par le rôle customer.
+- Mise à jour transactionnelle avec contrôle du compte actif/vérifié et événement d'audit ; tests feature ajoutés mais non exécutés dans cet environnement.
+- E-mail maintenu en lecture seule jusqu'au parcours de changement avec vérification sécurisée ; photo de profil en attente du domaine Media (2 Mo max). Carnet d'adresses à développer ensuite selon le parcours validé.
+- Aucun merge ; la suite complète des tests doit être exécutée avant clôture.
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
 - Notification in-app si une session existe ; action de révocation limitée à la nouvelle session ; paramètres du lien et absence de réponse à préciser.
