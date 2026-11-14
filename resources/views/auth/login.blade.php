@@ -199,7 +199,7 @@
                             </label>
 
                             <a class="text-link"
-                               href="{{ route('password.request') }}"
+                               href="{{ request()->routeIs('customer.login') ? route('customer.password.request') : route('password.request') }}"
                                data-i18n="forgotPassword">
                                 Mot de passe oublié ?
                             </a>
