@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.100
+- **Version :** 5.101
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -533,6 +533,8 @@ Tests feature ajoutés pour inscription, activation, expiration, unicité d'e-ma
 
 **Authentification du client avant changement d'e-mail (Q338) :** exiger et vérifier le mot de passe actuel avant d'envoyer tout lien à la nouvelle adresse. Un mot de passe absent ou incorrect bloque la demande et ne déclenche aucun e-mail. L'ancienne adresse reste principale jusqu'à vérification de la nouvelle ; après validation, révoquer toutes les sessions web et tous les tokens API et notifier l'ancienne adresse conformément à Q312/Q9-Q12. Réutiliser les protections anti-abus d'Identity ; auditer le parcours et les limites existantes avant implémentation.
 
+**Expiration du lien de changement d'e-mail (Q339) :** le lien envoyé à la nouvelle adresse après vérification du mot de passe actuel est valable 30 minutes, à usage unique et lié à la demande concernée. Le serveur contrôle l'expiration ; un lien expiré ne peut pas valider le changement. L'ancienne adresse reste principale jusqu'à validation. Ne jamais journaliser le jeton ou le lien secret ; appliquer ensuite les révocations et notifications Q9-Q12/Q312.
+
 **Vérification du téléphone client (Q313) :** aucune vérification SMS/OTP du numéro n'est exigée en V1, ni à l'inscription ni lors de sa modification. Seule la vérification de l'adresse e-mail est obligatoire avant activation et commande (Q286-Q287). Le téléphone reste validé côté serveur pour son format et n'est pas considéré comme vérifié ; aucun fournisseur SMS n'est requis pour ce parcours.
 
 **Connexion du client (Q314) :** l'adresse e-mail est l'unique identifiant de connexion en V1. Le numéro de téléphone du profil ou d'une adresse de livraison ne permet pas de s'authentifier. Le parcours applique les contrôles Identity existants (compte actif, e-mail vérifié et protections anti-abus) ; aucune authentification par SMS/téléphone n'est prévue sans décision ultérieure.
@@ -632,6 +634,9 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Remplacement au-delà de cinq appareils reconnus (Q337) :** si le client veut reconnaître un sixième appareil, afficher ses cinq appareils reconnus et lui demander de choisir explicitement celui à remplacer. Aucune révocation automatique ou silencieuse. Après confirmation, retirer la confiance de l'appareil choisi et révoquer immédiatement ses sessions web associées conformément à Q335 ; préserver les autres appareils. Le serveur doit valider l'appartenance, la limite et la sélection, puis réaliser le remplacement de manière atomique. En cas d'annulation ou d'échec, conserver l'état antérieur et ne pas reconnaître le nouvel appareil.
 
+
+### Version 5.101 — 14 novembre 2026
+- Q339 : lien de vérification du changement d'e-mail valable 30 minutes, à usage unique et contrôlé côté serveur ; aucun secret dans les journaux.
 
 ### Version 5.100 — 14 novembre 2026
 - Q338 : mot de passe actuel obligatoire avant l'envoi du lien de vérification de changement d'e-mail ; vérification serveur, aucun envoi si absent/incorrect, conservation de l'ancienne adresse jusqu'à validation et révocation de sécurité après validation.
