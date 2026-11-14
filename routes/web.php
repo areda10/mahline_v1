@@ -200,12 +200,8 @@ Route::get('/', function () {
         return redirect()->route('password.force-change.edit');
     }
 
-    if ($user->hasRole('super_admin_root'))
+    if ($user->hasRole('super_admin_root')) {
         return redirect()->route('root.backoffice.dashboard');
-    }
-
-    if ($user->hasRole('customer')) {
-        return redirect()->route('customer.dashboard');
     }
 
     if ($user->hasRole('user')) {
