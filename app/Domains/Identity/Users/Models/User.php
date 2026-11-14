@@ -10,6 +10,8 @@ use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -17,6 +19,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
@@ -95,6 +98,16 @@ final class User extends BaseModel implements AuthenticatableContract
             'user_id',
             'role_id',
         );
+    }
+
+    public function knownDevices(): HasMany
+    {
+        return $this->hasMany(KnownDevice::class, 'user_id');
+    }
+
+    public function authenticationSessions(): HasMany
+    {
+        return $this->hasMany(AuthenticationSession::class, 'user_id');
     }
 
     // reste inchangée pour cooperative_admin / user.

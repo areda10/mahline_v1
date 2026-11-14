@@ -32,6 +32,7 @@ final class AuthenticationSession extends BaseModel
      */
     protected $fillable = [
         'user_id',
+        'known_device_id',
         'session_id',
 
         'ip_address',
@@ -87,6 +88,11 @@ final class AuthenticationSession extends BaseModel
             User::class,
             'user_id'
         );
+    }
+
+    public function knownDevice(): BelongsTo
+    {
+        return $this->belongsTo(KnownDevice::class, 'known_device_id');
     }
 
     public function isActive(): bool

@@ -95,7 +95,7 @@ final class AuthenticationWorkflowTest extends TestCase
         $this->assertNotEmpty($session->session_id);
     }
 
-    public function test_new_device_detection_records_security_event_and_audit_only_once(): void
+    public function test_each_browser_without_device_proof_is_detected_as_a_new_device(): void
     {
         Notification::fake();
         $user = User::factory()->create([
@@ -133,17 +133,17 @@ final class AuthenticationWorkflowTest extends TestCase
             ->assertOk();
 
         $this->assertSame(
-            1,
+            2,
             SecurityEvent::query()
                 ->where('user_id', $user->getKey())
                 ->where('reason', 'new_device_detected')
                 ->count(),
         );
 
-        Notification::assertCount(1);
+        Notification::assertCount(2);
 
         $this->assertSame(
-            1,
+            2,
             AuditEvent::query()
                 ->where('event_key', 'identity.authentication.new_device_detected')
                 ->count(),

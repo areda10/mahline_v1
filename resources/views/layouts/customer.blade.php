@@ -31,6 +31,7 @@
         <a href="{{ route('customer.dashboard') }}">Mon espace</a>
         <a href="{{ route('customer.profile.edit') }}">Mon profil</a>
         <a href="{{ route('customer.security.password.edit') }}">Sécurité</a>
+        <a href="{{ route('customer.security.devices.index') }}">Mes appareils</a>
         <form method="POST" action="{{ route('customer.logout') }}">
             @csrf
             <button type="submit">Déconnexion</button>

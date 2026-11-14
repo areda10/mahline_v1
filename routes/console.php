@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('identity:tokens:prune-expired')
     ->daily()
     ->withoutOverlapping();
+
+Schedule::command('identity:devices:promote-pending')
+    ->everyMinute()
+    ->withoutOverlapping();

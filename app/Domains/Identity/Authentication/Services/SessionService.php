@@ -32,6 +32,7 @@ final class SessionService extends BaseService
         ?string $userAgent = null,
         ?string $browser = null,
         ?string $device = null,
+        ?string $knownDeviceId = null,
     ): AuthenticationSession {
         return DB::transaction(function () use (
             $user,
@@ -40,6 +41,7 @@ final class SessionService extends BaseService
             $userAgent,
             $browser,
             $device,
+            $knownDeviceId,
         ): AuthenticationSession {
             $lockedUser = User::query()
                 ->whereKey($user->getKey())
@@ -66,6 +68,7 @@ final class SessionService extends BaseService
 
             $session = AuthenticationSession::query()->create([
                 'user_id' => $user->getKey(),
+                'known_device_id' => $knownDeviceId,
                 'session_id' => $sessionId,
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent,

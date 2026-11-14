@@ -10,6 +10,7 @@ use App\Domains\Identity\Authentication\Http\Controllers\ApiTokenManagementContr
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
+use App\Domains\Identity\Authentication\Http\Controllers\DeviceTrustController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
@@ -114,6 +115,15 @@ Route::prefix('customer')
         Route::post('logout', [AuthenticationController::class, 'logout'])
             ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
             ->name('logout');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
 
         Route::prefix('security/password')
             ->name('security.password.')
@@ -267,6 +277,14 @@ Route::prefix('root/back-office')
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
 
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
+
         Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
             ->name('security.api-tokens.index');
         Route::post('security/api-tokens', [ApiTokenManagementController::class, 'store'])
@@ -406,6 +424,14 @@ Route::prefix('back-office')
             ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
 
         Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
             ->name('security.api-tokens.index');

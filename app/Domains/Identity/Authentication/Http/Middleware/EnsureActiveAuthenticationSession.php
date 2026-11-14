@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Http\Middleware;
 
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authentication\Services\DeviceTrustService;
+use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
+use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +18,8 @@ final class EnsureActiveAuthenticationSession
 {
     public function __construct(
         private readonly SessionService $sessions,
+        private readonly DeviceTrustService $devices,
+        private readonly AuthenticationWorkflowHook $deviceHook,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -49,7 +55,7 @@ final class EnsureActiveAuthenticationSession
 
             $request->session()->regenerateToken();
 
-            return redirect()->route('authentication.login');
+            return redirect()->route($user->hasRole('customer') ? 'customer.login' : 'authentication.login');
         }
 
         if ($this->sessions->expireIfInactive($user, $authenticationSession)) {
@@ -60,10 +66,48 @@ final class EnsureActiveAuthenticationSession
             $request->session()->regenerateToken();
 
             return redirect()
-                ->route('authentication.login')
+                ->route($user->hasRole('customer') ? 'customer.login' : 'authentication.login')
                 ->withErrors([
                     'email' => 'Votre session a expiré après une période d’inactivité.',
                 ]);
+        }
+
+        try {
+            $deviceResolution = $this->devices->ensureSessionDevice(
+                user: $user,
+                session: $authenticationSession,
+                presentedToken: $request->cookie(DeviceTrustCookie::NAME),
+                device: $authenticationSession->device,
+                browser: $authenticationSession->browser,
+            );
+        } catch (DeviceTrustException) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route(
+                $user->hasRole('customer') ? 'customer.login' : 'authentication.login',
+            );
+        }
+
+        if ($deviceResolution !== null) {
+            $request->attributes->set(
+                DeviceTrustCookie::REQUEST_ATTRIBUTE,
+                $deviceResolution->cookieToken,
+            );
+
+            if ($deviceResolution->isNewDevice) {
+                $this->deviceHook->afterDeviceRemembered(
+                    user: $user,
+                    session: $authenticationSession,
+                    isNewDevice: true,
+                );
+                $this->deviceHook->afterAuthenticationCommitted(
+                    user: $user,
+                    session: $authenticationSession,
+                    isNewDevice: true,
+                );
+            }
         }
 
         if (! $this->sessions->touch($authenticationSession)) {
@@ -73,11 +117,20 @@ final class EnsureActiveAuthenticationSession
 
             $request->session()->regenerateToken();
 
-            return redirect()->route('authentication.login');
+            return redirect()->route($user->hasRole('customer') ? 'customer.login' : 'authentication.login');
         }
 
-        if ($user->must_change_password && ! $request->routeIs('password.force-change.edit', 'password.force-change.update', 'security.password.edit')) {
-            return redirect()->route('password.force-change.edit');
+        if ($user->must_change_password && ! $request->routeIs(
+            'password.force-change.edit',
+            'password.force-change.update',
+            'security.password.edit',
+            'customer.password.force-change.edit',
+            'customer.password.force-change.update',
+            'customer.security.password.edit',
+            'customer.security.password.update',
+            'customer.logout',
+        )) {
+            return redirect()->route($user->hasRole('customer') ? 'customer.password.force-change.edit' : 'password.force-change.edit');
         }
 
         return $next($request);

@@ -66,5 +66,8 @@ final readonly class AuthenticationContext
          * - macOS
          */
         public ?string $device = null,
+
+        /** Independent browser device-trust proof; never persist or log it. */
+        public ?string $deviceTrustToken = null,
     ) {}
 }
