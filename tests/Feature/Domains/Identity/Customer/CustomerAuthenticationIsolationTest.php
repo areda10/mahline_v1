@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Identity\\Customer;
+namespace Tests\Feature\Domains\Identity\Customer;
 
-use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\Hash;
-use Tests\\TestCase;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 final class CustomerAuthenticationIsolationTest extends TestCase
 {
@@ -32,6 +32,20 @@ final class CustomerAuthenticationIsolationTest extends TestCase
             ->assertOk()
             ->assertSee(route('customer.login.store'), false)
             ->assertDontSee(route('authentication.login.store'), false);
+    }
+
+    public function test_customer_cannot_authenticate_through_internal_login(): void
+    {
+        $customer = $this->customer();
+        $customer->forceFill(['password' => Hash::make('MosaicRiver728!')])->save();
+
+        $this->post(route('authentication.login.store'), [
+            'email' => $customer->email,
+            'password' => 'MosaicRiver728!',
+        ])
+            ->assertSessionHasErrors('email');
+
+        $this->assertGuest();
     }
 
     public function test_internal_account_cannot_authenticate_through_customer_login(): void
