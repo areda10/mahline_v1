@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.88
+- **Version :** 5.89
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -613,10 +613,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Signalement tardif d'un appareil non reconnu (Q331) :** depuis son espace sécurité, le client peut sélectionner l'appareil/session concerné(e), choisir « Signaler comme non reconnu », puis confirmer explicitement la révocation. L'action est vérifiée côté serveur (propriété du compte et correspondance exacte de la session) et révoque uniquement la session sélectionnée ; les autres appareils restent actifs. Ce parcours reste disponible après expiration du lien Q329.
 
+**Confirmation avant révocation manuelle (Q332) :** le client doit confirmer explicitement une boîte de dialogue avant de révoquer la session sélectionnée depuis son espace sécurité. Annuler/fermer n'a aucun effet. Aucun mot de passe supplémentaire n'est demandé en V1. La révocation demeure ciblée, soumise au contrôle de propriété côté serveur, et auditée sans secret.
 
-### Version 5.88 — 14 novembre 2026
-- Enregistrement de Q331 : signalement d'un appareil non reconnu depuis l'espace sécurité, sélection de la session et confirmation de sa révocation ciblée.
-- Contrôle de propriété côté serveur ; autres sessions préservées ; action disponible après expiration du lien Q329. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.89 — 14 novembre 2026
+- Enregistrement de Q332 : confirmation simple obligatoire avant révocation manuelle de la session sélectionnée ; annulation sans effet.
+- Aucun mot de passe supplémentaire ; révocation ciblée et vérifiée côté serveur. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
