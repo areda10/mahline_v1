@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.12
+- **Version :** 4.13
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5045,15 +5045,15 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :**
   - Aucune révocation ni suspension automatique de la nouvelle session n'est déclenchée par l'absence de réponse.
   - Les autres sessions du client restent inchangées.
-  - Si le client ne reconnaît finalement pas la connexion, il doit disposer d'un moyen sécurisé de signaler l'incident et de révoquer cette session ; le parcours exact de signalement après expiration du lien reste à préciser avant développement.
+  - Si le client ne reconnaît finalement pas la connexion, il peut ouvrir son espace sécurité, sélectionner l'appareil/session concerné(e), choisir « Signaler comme non reconnu », puis confirmer explicitement la révocation de cette seule session. Cette action reste soumise à une vérification serveur stricte de propriété et de correspondance de la session.
   - Les événements de connexion, expiration du lien et éventuelle révocation ultérieure sont audités sans enregistrer le lien, token ou secret d'authentification.
-- **Statut :** VALIDÉ — premier release ; parcours de signalement après expiration à préciser.
+- **Statut :** VALIDÉ — premier release.
 
 ## 6. Historique des mises à jour
 
-### Version 4.12 — 14 novembre 2026
-- Correction/enregistrement de Q330 selon la réponse explicite du client : en l'absence de réponse dans l'heure, la nouvelle session reste active ; seul le lien expire.
-- Aucune révocation automatique ; parcours sécurisé de signalement et révocation après expiration à préciser.
+### Version 4.13 — 14 novembre 2026
+- Enregistrement de Q331 : après expiration du lien, le client peut signaler un appareil non reconnu depuis son espace sécurité, sélectionner la session et confirmer sa révocation ciblée.
+- Vérification serveur de propriété et révocation limitée à la session sélectionnée ; aucun impact sur les autres appareils.
 - Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
