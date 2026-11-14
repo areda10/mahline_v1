@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.81
+- **Version :** 5.82
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -599,6 +599,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Sessions client simultanées sur plusieurs appareils (Q323) :** autoriser plusieurs sessions web actives par compte client ; une nouvelle connexion ne déconnecte pas les appareils déjà connectés. Chaque session reste consultable et révocable individuellement depuis l'espace sécurité client, conformément à Q319, avec vérification stricte de propriété côté serveur. Les révocations globales prévues notamment par Q316 continuent d'invalider toutes les sessions et les tokens API. Aucun plafond arbitraire n'est ajouté.
 
 **Durée d'inactivité des sessions client (Q324) :** réutiliser la politique centralisée Identity pour la durée d'inactivité et la déconnexion automatique. Ne créer aucune durée spécifique marketplace. Chaque session multi-appareils de Q323 reste soumise à cette politique ; révocations individuelles/globales selon Q319 et Q316.
+
+**Déconnexion manuelle du client (Q325) :** l'action standard déconnecte uniquement l'appareil courant. Une action distincte « Déconnecter tous les appareils » révoque les autres sessions, tout en conservant la session courante conformément à Q319. Cette action n'inclut pas les tokens API ; les révocations de sécurité Q316 continuent de révoquer toutes les sessions et tous les tokens API. Contrôle de propriété côté serveur et journalisation sans secrets.
+
+### Version 5.82 — 14 novembre 2026
+- Enregistrement de Q325 : déconnexion locale et action distincte de révocation des autres appareils.
+- Session courante conservée lors de la révocation des autres sessions ; portée API séparée de la révocation de sécurité Q316.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.81 — 14 novembre 2026
 - Enregistrement de Q324 : durée d'inactivité et déconnexion automatique client alignées sur la politique Identity existante.
