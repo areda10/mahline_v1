@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.59
+- **Version :** 3.60
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q279 — Promotion lorsque toutes les variantes sont indisponibles (VALIDÉE)
+- **Question :** Que faire lorsqu'un produit en promotion n'a plus aucune variante disponible ?
+- **Réponse :** B — conserver la promotion visible, afficher clairement « Indisponible » et empêcher toute commande.
+- **Décision :** la promotion et ses informations commerciales restent visibles pendant leur période de validité, même si toutes les variantes sont temporairement indisponibles. La fiche et la carte indiquent explicitement l'indisponibilité ; aucun bouton ou parcours ne doit permettre de commander une variante indisponible. Ne pas afficher une disponibilité ou un prix d'appel laissant croire qu'une variante peut être achetée.
+- **Cohérence métier :** Inventory est la source de vérité de disponibilité ; Catalog expose l'état d'indisponibilité sans révéler le stock physique interne ; Sales revérifie côté serveur la disponibilité de la variante sélectionnée au panier et au checkout et refuse l'opération si elle est indisponible. Le retour du stock rétablit l'affichage de disponibilité selon les règles Inventory, sans modifier la promotion ni ses versions.
+- **Contrôles :** absence de confiance dans l'état transmis par le navigateur, contrôle de concurrence/réservation dans Sales/Inventory, isolation coopérative et journalisation des opérations pertinentes. Products reste propriétaire des promotions ; Catalog de leur présentation ; Inventory de la disponibilité ; Sales de l'acceptation de commande.
+
 ### Décision Q278 — Réactivation d'une promotion annulée (VALIDÉE)
 - **Question :** Une promotion annulée peut-elle être réactivée ?
 - **Réponse :** A — oui, en créant une nouvelle version, avec une nouvelle période et un historique distinct.
@@ -4594,6 +4601,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.60 — 13 novembre 2026
+- Enregistrement de Q279 : conserver la promotion visible lorsque toutes les variantes sont indisponibles, avec indication explicite et blocage des commandes.
 
 ### Version 3.59 — 13 novembre 2026
 - Enregistrement de Q278 : relance d'une promotion annulée uniquement par création d'une nouvelle version et d'une nouvelle période, sans réactivation ni altération de l'ancienne version.
