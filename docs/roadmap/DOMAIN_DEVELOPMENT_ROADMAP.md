@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.65
+- **Version :** 5.66
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -516,6 +516,8 @@ Le développement fonctionnel du premier release suit le parcours opérationnel 
 
 **Identité client (Q286) :** l'inscription crée un compte client en attente ; la vérification e-mail réussie active automatiquement ce compte sans validation administrative. Avant activation et vérification, pas d'accès authentifié à l'espace client ni de commande. La consultation publique du catalogue reste possible. Cette activation automatique est propre au parcours d'inscription client et ne modifie pas les règles d'activation/réactivation des comptes internes. Les liens de vérification sont sécurisés, expirants et invalidés après succès ; protection contre abus et énumération ; contrôle serveur et audit.
 
+**Intervention administrateur sur une sous-commande en retard (Q309) :** un administrateur autorisé peut relancer la coopérative avec un nouveau délai (durée définie centralement, maximum 24 heures), ou accepter/refuser la sous-commande à sa place. Une décision administrative est explicitement attribuée à son auteur et ne doit pas être imputée à la coopérative. Chaque intervention conserve l'acteur, l'horodatage, l'action, les états avant/après et le motif/commentaire lorsqu'il est fourni ; les parties concernées sont notifiées.
+
 **Sous-commande sans réponse à l'échéance (Q308) :** l'expiration du délai commun ne déclenche ni refus ni annulation automatique. La sous-commande reste en attente et est signalée comme en retard ; un administrateur est alerté pour intervention manuelle autorisée. Les autres sous-commandes continuent indépendamment. Toute intervention est horodatée et auditée. Une sous-commande en attente ne compte pas comme refusée pour la clôture globale de Q306.
 
 **Délai de réponse des coopératives (Q307) :** MAHLINE définit un délai commun à toutes les coopératives pour accepter ou refuser une sous-commande. La durée de référence est de 12 heures ; elle est configurable centralement sans pouvoir dépasser 24 heures. Le point de départ doit correspondre à la transmission effective de la sous-commande. Le traitement d'une échéance dépassée sans réponse (refus automatique, annulation, relance ou autre) reste à cadrer : ne pas déduire de comportement automatique de cette seule décision.
@@ -561,6 +563,10 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Vérification e-mail client (Q287) :** le lien de vérification est valable 24 heures à compter de son émission. Après expiration, le client peut demander un nouveau lien dans la limite de 5 demandes par heure, puis blocage temporaire d'une heure ; chaque nouveau lien invalide immédiatement tous les liens précédents. Un seul lien reste utilisable par compte. L'expiration, l'invalidation et la validation sont contrôlées côté serveur ; aucun jeton ou secret n'est journalisé. Cette durée de 24 heures remplace l'ancienne durée de 60 minutes des décisions Q6-Q7.
 
 **Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+### Version 5.66 — 14 novembre 2026
+- Enregistrement de Q309 : relance avec nouveau délai (maximum 24 h) ou décision administrative au nom de la coopérative ; audit et notifications obligatoires.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.65 — 14 novembre 2026
 - Enregistrement de Q308 : une sous-commande sans réponse reste en attente après échéance ; alerte administrateur et intervention manuelle, sans refus automatique.
