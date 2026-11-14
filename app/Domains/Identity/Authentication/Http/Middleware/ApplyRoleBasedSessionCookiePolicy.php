@@ -33,10 +33,13 @@ final class ApplyRoleBasedSessionCookiePolicy
          * StartSession adds the session cookie to the response.
          */
         $expireOnClose = $user !== null
-            && $user->hasAnyRole([
-                'super_admin_root',
-                'super_admin',
-            ]);
+            && (
+                $user->hasAnyRole([
+                    'super_admin_root',
+                    'super_admin',
+                ])
+                || $user->hasRole('customer')
+            );
 
         config([
             'session.expire_on_close' => $expireOnClose,
