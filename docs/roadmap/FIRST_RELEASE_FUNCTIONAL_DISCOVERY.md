@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.18
+- **Version :** 4.19
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5116,11 +5116,25 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - La limite concerne les appareils reconnus, pas le nombre de sessions actives ; les règles multi-session restent distinctes.
 - **Statut :** VALIDÉ — premier release ; parcours de dépassement de limite à préciser avant développement.
 
+
+
+### Décision Q337 — Reconnaissance d'un sixième appareil (VALIDÉE)
+- **Question :** Que faire lorsqu'un client veut reconnaître un sixième appareil alors que cinq appareils sont déjà reconnus ?
+- **Réponse :** B — afficher les cinq appareils et laisser le client choisir celui à remplacer ; confiance et sessions révoquées après confirmation.
+- **Décision :** présenter au client la liste des cinq appareils actuellement reconnus et lui permettre d'en sélectionner un à remplacer avant de reconnaître le nouvel appareil.
+- **Conséquences :**
+  - Le remplacement exige une sélection explicite et une confirmation claire du client.
+  - Après confirmation, révoquer la confiance de l'appareil choisi et toutes ses sessions actives associées conformément à Q335, puis enregistrer le nouvel appareil comme reconnu.
+  - Les quatre autres appareils reconnus et leurs sessions restent inchangés.
+  - En cas d'annulation, aucune confiance ni session existante n'est modifiée et le nouvel appareil n'est pas reconnu.
+  - Le serveur vérifie la limite et exécute le remplacement de façon atomique/idempotente ; aucune suppression silencieuse ni dépassement temporaire durable de la limite.
+- **Statut :** VALIDÉ — premier release ; interface et transaction serveur à concevoir lors de l'implémentation.
+
 ## 6. Historique des mises à jour
 
-### Version 4.18 — 14 novembre 2026
-- Enregistrement de Q336 : maximum de cinq appareils reconnus simultanément par compte client.
-- Le traitement d'une sixième reconnaissance reste à définir ; aucune révocation silencieuse d'un appareil existant. Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 4.19 — 14 novembre 2026
+- Enregistrement de Q337 : lors d'une sixième reconnaissance, le client choisit un appareil existant à remplacer et confirme explicitement.
+- Révocation de la confiance et des sessions associées à l'appareil remplacé ; annulation sans effet. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
