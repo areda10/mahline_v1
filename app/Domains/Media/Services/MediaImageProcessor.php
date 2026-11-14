@@ -18,7 +18,13 @@ final class MediaImageProcessor
             throw new RuntimeException('L’extension PHP GD est requise pour traiter les images Media.');
         }
 
-        $contents = file_get_contents($file->getRealPath());
+        $path = $file->getRealPath();
+
+        if (! is_string($path)) {
+            throw new RuntimeException('Le fichier image temporaire est inaccessible.');
+        }
+
+        $contents = file_get_contents($path);
 
         if (! is_string($contents)) {
             throw new RuntimeException('Impossible de lire le fichier image.');
