@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.16
+- **Version :** 4.17
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5089,11 +5089,25 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Les preuves de reconnaissance sont protégées, non exposées dans l'interface et jamais journalisées en clair ; les événements de reconnaissance/révocation sont audités sans secret.
 - **Statut :** VALIDÉ — premier release ; mécanisme technique exact de reconnaissance à auditer et définir avant développement.
 
+
+
+### Décision Q335 — Sessions actives lors de la révocation d'un appareil reconnu (VALIDÉE)
+- **Question :** Que faire des sessions actives lorsqu'un client révoque la reconnaissance d'un appareil ?
+- **Réponse :** B — révoquer immédiatement la confiance et toutes les sessions actives de cet appareil.
+- **Décision :** la révocation d'un appareil reconnu invalide immédiatement sa preuve de confiance et révoque toutes les sessions web actives qui lui sont effectivement associées.
+- **Conséquences :**
+  - Toutes les sessions actives liées à cet appareil perdent immédiatement leur accès authentifié ; la révocation de la confiance seule ne laisse pas une session de cet appareil utilisable.
+  - Les sessions des autres appareils du client restent actives.
+  - La révocation est ciblée sur l'appareil et ses sessions associées ; elle ne révoque pas les API tokens ni les sessions d'autres appareils, sauf règle de sécurité globale déjà définie séparément.
+  - Le lien fiable entre preuve d'appareil et sessions doit être vérifié côté serveur ; ne pas déduire cette association d'une simple IP ou d'un User-Agent.
+  - Auditer l'acteur, l'appareil concerné, les sessions révoquées, l'horodatage et le motif sans enregistrer de preuve secrète ni de token.
+- **Statut :** VALIDÉ — premier release ; association technique appareil/session à auditer avant développement.
+
 ## 6. Historique des mises à jour
 
-### Version 4.16 — 14 novembre 2026
-- Enregistrement de Q334 : un appareil reconnu reste mémorisé jusqu'à révocation explicite par le client depuis son espace sécurité.
-- Confiance persistante révocable, distincte de la session ; mécanisme technique à auditer et définir. Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 4.17 — 14 novembre 2026
+- Enregistrement de Q335 : révoquer immédiatement la confiance et toutes les sessions web actives associées à l'appareil sélectionné.
+- Les autres appareils restent actifs ; API tokens hors de cette révocation ciblée. Association appareil/session à auditer. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
