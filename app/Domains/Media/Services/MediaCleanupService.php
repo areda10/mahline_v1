@@ -16,7 +16,6 @@ final class MediaCleanupService
 
         Media::onlyTrashed()
             ->where('deleted_at', '<=', $cutoff)
-            ->orderBy('deleted_at')
             ->chunkById(100, function ($items) use (&$purged): void {
                 foreach ($items as $media) {
                     $disk = Storage::disk($media->disk);
