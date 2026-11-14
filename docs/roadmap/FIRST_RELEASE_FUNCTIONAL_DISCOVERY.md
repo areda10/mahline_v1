@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.99
+- **Version :** 4.00
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4597,6 +4597,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** l'option repose sur un mécanisme de persistance sécurisé côté serveur, distinct d'une simple conservation du mot de passe dans le navigateur. Chaque session reste individuellement révocable selon les règles multi-sessions MAHLINE. La révocation globale prévue par Q316 doit également invalider toute persistance associée. La durée de persistance, les modalités de renouvellement/rotation et le comportement précis à expiration restent à définir avant codage ; ne pas inventer de durée.
 - **Statut :** VALIDÉ — premier release, paramètres techniques à préciser avant implémentation.
 
+### Décision Q319 — Gestion des appareils et sessions client (VALIDÉE)
+- **Question :** Quelles possibilités le client doit-il avoir pour gérer ses appareils connectés ?
+- **Réponse :** A — consulter les appareils/sessions actifs et révoquer un appareil ou tous les autres appareils.
+- **Décision :** l'espace sécurité du client affiche les sessions/appareils actifs avec, lorsque disponibles, la date de connexion, le navigateur, le système d'exploitation et la dernière activité. Le client peut révoquer individuellement une session/appareil ou demander la déconnexion de toutes les autres sessions en conservant celle qu'il utilise pour effectuer l'action.
+- **Conséquences :** les contrôles sont limités aux sessions du client authentifié et vérifiés côté serveur ; aucun accès à la session d'un autre compte n'est possible. La révocation d'une session doit invalider sa persistance « Se souvenir de moi » associée. L'opération est auditée sans exposer d'identifiants de session ou de secrets. La révocation globale imposée par Q316 continue de révoquer toutes les sessions, y compris la session courante, ainsi que tous les tokens API.
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4945,6 +4952,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 4.00 — 14 novembre 2026
+- Enregistrement de Q319 : écran sécurité listant les sessions/appareils actifs (date, navigateur, système, dernière activité lorsque disponibles), avec révocation individuelle ou déconnexion de toutes les autres sessions.
+- Actions limitées aux sessions du client ; révocation de la persistance associée et audit sans secrets. Q316 conserve sa règle de révocation totale, session courante incluse.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.99 — 14 novembre 2026
 - Enregistrement de Q318 : option facultative « Se souvenir de moi », choisie explicitement par le client, avec persistance sécurisée et révocable par appareil.
