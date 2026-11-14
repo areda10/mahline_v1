@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.01
+- **Version :** 4.02
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4959,7 +4959,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** les messages indiquent l'événement et ses éléments contextuels utiles (date/heure et informations d'appareil disponibles), sans exposer de mot de passe, token, identifiant de session, code, lien secret ou autre secret d'authentification. Les notifications sont déclenchées à partir d'événements serveur fiables, ne remplacent pas les contrôles de sécurité et doivent être auditées sans journaliser de contenu sensible. Le canal validé pour V1 est l'e-mail.
 - **Statut :** VALIDÉ — premier release.
 
+
+### Décision Q321 — Notification des tentatives de connexion échouées (VALIDÉE)
+- **Question :** Le client doit-il être averti par e-mail lorsqu'une tentative de connexion échoue sur son compte ?
+- **Réponse :** C — aucune notification e-mail pour les tentatives échouées ; celles-ci sont enregistrées dans les journaux de sécurité.
+- **Décision :** les échecs d'authentification du compte client sont consignés côté serveur dans les journaux de sécurité, sans envoyer d'e-mail au client pour chaque échec ni pour les échecs répétés dans le périmètre V1.
+- **Conséquences :** la journalisation doit permettre l'analyse de sécurité et respecter les règles anti-abus Identity. Elle ne doit jamais enregistrer de mot de passe, token, code, secret d'authentification ou contenu sensible. Les contrôles de limitation et de blocage restent actifs indépendamment de l'envoi de notifications. Cette décision concerne les tentatives échouées et ne supprime pas les notifications des événements sensibles réussis prévues par Q320.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.02 — 14 novembre 2026
+- Enregistrement de Q321 : aucune notification e-mail pour les tentatives de connexion échouées, même répétées ; enregistrement dans les journaux de sécurité côté serveur.
+- Conservation des protections anti-abus et interdiction de journaliser mots de passe, tokens, codes ou secrets ; Q320 reste applicable aux événements sensibles réussis.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.01 — 14 novembre 2026
 - Enregistrement de Q320 : e-mail de sécurité pour chaque événement sensible du compte client, notamment nouvelle connexion, changement de mot de passe, révocation d'appareil/session et changement d'adresse e-mail.
