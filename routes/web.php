@@ -11,10 +11,10 @@ use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationControlle
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
+use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
