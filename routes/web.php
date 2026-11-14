@@ -8,6 +8,8 @@ use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
 use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
 use App\Domains\Identity\Authentication\Http\Controllers\ApiTokenManagementController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
@@ -61,6 +63,31 @@ Route::prefix('authentication')
             '/logout',
             [AuthenticationController::class, 'logout']
         )->name('logout');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Customer registration and email verification
+|--------------------------------------------------------------------------
+*/
+Route::prefix('customer')
+    ->name('customer.')
+    ->middleware(['web', 'guest'])
+    ->group(function (): void {
+        Route::get('register', [CustomerRegistrationController::class, 'create'])
+            ->name('register');
+        Route::post('register', [CustomerRegistrationController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('register.store');
+
+        Route::get('verification/notice', [CustomerRegistrationController::class, 'notice'])
+            ->name('verification.notice');
+        Route::get('verification/verify', [CustomerRegistrationController::class, 'verify'])
+            ->middleware('throttle:10,1')
+            ->name('verification.verify');
+        Route::post('verification/resend', [CustomerRegistrationController::class, 'resend'])
+            ->middleware('throttle:10,1')
+            ->name('verification.resend');
     });
 
 /*
@@ -130,6 +157,10 @@ Route::get('/', function () {
         return redirect()->route('root.backoffice.dashboard');
     }
 
+    if ($user->hasRole('customer')) {
+        return redirect()->route('customer.dashboard');
+    }
+
     if ($user->hasRole('user')) {
         return redirect()->route('user.dashboard');
     }
@@ -144,6 +175,10 @@ Route::get('/', function () {
 Route::get('/user/dashboard', UserDashboardController::class)
     ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
+
+Route::get('/customer/dashboard', CustomerDashboardController::class)
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer'])
+    ->name('customer.dashboard');
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
     ->middleware('throttle:10,1')
