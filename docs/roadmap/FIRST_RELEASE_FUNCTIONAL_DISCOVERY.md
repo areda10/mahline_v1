@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.61
+- **Version :** 3.62
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q281 — Indicateur public de disponibilité du stock (VALIDÉE)
+- **Question :** Quelle information de stock afficher sur la marketplace publique ?
+- **Réponse :** C — afficher un indicateur commercial « Disponible », « Presque épuisé » ou « Indisponible », sans quantité exacte.
+- **Décision :** la marketplace publique n'affiche jamais la quantité exacte du stock physique ni la quantité exacte disponible. Elle présente un état commercial calculé à partir des données fiables d'Inventory : « Indisponible » lorsque la quantité disponible nette est nulle ou négative ; « Presque épuisé » lorsque la disponibilité positive atteint le seuil bas défini ; « Disponible » au-delà de ce seuil. La définition du seuil bas doit être centralisée et configurable/validée avant implémentation, sans être inventée par l'interface.
+- **Cohérence métier :** Inventory reste propriétaire du stock physique, des réservations et de la quantité disponible ; Catalog expose uniquement l'indicateur commercial ; Sales revalide la disponibilité réelle et réserve côté serveur au panier/checkout. Les espaces internes autorisés peuvent disposer d'informations de stock plus détaillées selon leurs permissions, sans les exposer au client public.
+- **Contrôles :** calcul serveur, seuil cohérent et centralisé, actualisation fiable, absence de fuite de quantités internes, isolation par coopérative, audit des mouvements et validation serveur obligatoires.
+
 ### Décision Q280 — Retour automatique de disponibilité après réapprovisionnement (VALIDÉE)
 - **Question :** Lorsqu'une variante redevient disponible, comment rétablir son affichage dans la marketplace ?
 - **Réponse :** A — automatiquement dès qu'Inventory confirme une quantité disponible après prise en compte des réservations.
@@ -4608,6 +4615,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.62 — 14 novembre 2026
+- Enregistrement de Q281 : indicateur public « Disponible / Presque épuisé / Indisponible » sans révéler la quantité exacte ; seuil bas centralisé à définir avant codage.
 
 ### Version 3.61 — 14 novembre 2026
 - Enregistrement de Q280 : rétablissement automatique de la disponibilité dès qu'Inventory confirme une quantité disponible nette des réservations ; aucun contrôle manuel de publication.
