@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.02
+- **Version :** 4.03
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4967,7 +4967,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** la journalisation doit permettre l'analyse de sécurité et respecter les règles anti-abus Identity. Elle ne doit jamais enregistrer de mot de passe, token, code, secret d'authentification ou contenu sensible. Les contrôles de limitation et de blocage restent actifs indépendamment de l'envoi de notifications. Cette décision concerne les tentatives échouées et ne supprime pas les notifications des événements sensibles réussis prévues par Q320.
 - **Statut :** VALIDÉ — premier release.
 
+
+### Décision Q322 — Blocage temporaire après échecs de connexion (VALIDÉE)
+- **Question :** Faut-il appliquer un blocage temporaire du compte client après plusieurs tentatives de connexion échouées ?
+- **Réponse :** A — oui, appliquer le blocage temporaire selon les règles Identity existantes.
+- **Décision :** le compte client est soumis au mécanisme de blocage temporaire et aux seuils de sécurité déjà définis et gérés par Identity. Le parcours client ne crée ni seuil parallèle, ni durée supplémentaire, ni mécanisme de contournement.
+- **Conséquences :** les limitations cumulatives du login client définies en Q317 et les protections Identity restent appliquées côté serveur. Le blocage temporaire doit être cohérent avec l'état de sécurité du compte, expirer selon la politique Identity existante et être levé uniquement selon les règles prévues par cette politique. Les échecs restent journalisés sans mot de passe, token, code ou secret ; aucune notification e-mail n'est envoyée pour les échecs (Q321). Les notifications Q320 des événements sensibles réussis restent applicables. Aucune durée ou seuil nouveau n'est inventé par Q322.
+- **Statut :** VALIDÉ — premier release, paramètres hérités d'Identity.
+
 ## 6. Historique des mises à jour
+
+### Version 4.03 — 14 novembre 2026
+- Enregistrement de Q322 : blocage temporaire du compte client après les échecs selon les seuils, durées et règles Identity existants.
+- Aucun seuil ni délai parallèle créé ; limites Q317, journalisation sans secrets et absence d'e-mail pour les échecs Q321 conservées.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.02 — 14 novembre 2026
 - Enregistrement de Q321 : aucune notification e-mail pour les tentatives de connexion échouées, même répétées ; enregistrement dans les journaux de sécurité côté serveur.
