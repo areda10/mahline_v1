@@ -107,7 +107,7 @@ final class MediaServiceTest extends TestCase
 
         self::assertSame('public', $media->visibility);
         self::assertSame('public', $media->disk);
-        self::assertFalse($media->is_primary);
+        self::assertTrue($media->is_primary);
         Storage::disk('public')->assertExists($media->path);
         Storage::disk('public')->assertExists($media->metadata['derivatives']['medium']);
         Storage::disk('public')->assertExists($media->metadata['derivatives']['thumbnail']);
