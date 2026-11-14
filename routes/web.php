@@ -77,6 +77,11 @@ Route::prefix('customer')
     ->middleware('web')
     ->group(function (): void {
         Route::middleware('guest')->group(function (): void {
+            Route::get('login', [AuthenticationController::class, 'showLogin'])
+                ->name('login');
+            Route::post('login', [AuthenticationController::class, 'loginCustomer'])
+                ->middleware('throttle:5,1')
+                ->name('login.store');
             Route::get('register', [CustomerRegistrationController::class, 'create'])
                 ->name('register');
             Route::post('register', [CustomerRegistrationController::class, 'store'])
@@ -92,6 +97,26 @@ Route::prefix('customer')
         Route::post('verification/resend', [CustomerRegistrationController::class, 'resend'])
             ->middleware('throttle:10,1')
             ->name('verification.resend');
+
+        Route::post('logout', [AuthenticationController::class, 'logout'])
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->name('logout');
+
+        Route::prefix('security/password')
+            ->name('security.password.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+                Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+            });
+
+        Route::prefix('password/change-required')
+            ->name('password.force-change.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+                Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+            });
     });
 
 /*
