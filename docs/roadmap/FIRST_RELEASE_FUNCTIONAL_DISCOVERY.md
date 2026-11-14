@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.81
+- **Version :** 3.83
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,27 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q302 — Adresse des sous-commandes restantes après refus d'une coopérative (VALIDÉE)
+- **Question :** Si une coopérative refuse sa sous-commande dans une commande multi-coopératives, l'adresse des sous-commandes restantes peut-elle changer ?
+- **Réponse :** A — l'adresse de livraison reste identique pour toutes les sous-commandes restantes.
+- **Décision :** le refus d'une sous-commande par une coopérative n'altère pas la destination de la commande globale. Les autres sous-commandes poursuivent leur traitement avec la même adresse de livraison commune et le même snapshot de destination.
+- **Conséquences :** aucune nouvelle adresse n'est demandée ou sélectionnée automatiquement à la suite du refus ; les frais et expéditions peuvent être recalculés selon les règles Delivery, sans changement de destination. Toute demande ultérieure de changement reste soumise à l'interdiction Q301 après confirmation.
+- **Périmètre concerné :** Sales (commande et sous-commandes), Delivery (expéditions), Localization (snapshot de destination).
+- **Statut :** VALIDÉ — premier release.
+
+### Décision Q301 — Changement d'adresse après confirmation de commande (VALIDÉE)
+- **Question :** Le client peut-il modifier l'adresse après confirmation de sa commande, avant remise au transporteur ?
+- **Réponse :** B — aucun changement d'adresse après confirmation ; le client doit annuler et repasser commande si les règles d'annulation l'autorisent.
+- **Décision :** dès la confirmation de la commande, son adresse de livraison et son snapshot deviennent immuables dans le parcours client. Le client ne dispose d'aucune action de modification de destination, même si le colis n'a pas encore été remis au transporteur.
+- **Conséquences :**
+  - Si l'annulation est encore autorisée par le statut et les règles métier applicables, le client peut annuler selon le processus prévu puis créer une nouvelle commande avec la bonne adresse.
+  - Si l'annulation n'est plus autorisée, l'adresse ne peut pas être changée par le client ; aucune correction implicite ou unilatérale n'est permise.
+  - Les sous-commandes et expéditions associées conservent la destination figée ; les commandes déjà créées ne sont jamais réécrites par une modification du carnet d'adresses.
+  - Cette règle précise et restreint la possibilité générale de correction postérieure mentionnée à Q300 : aucun changement de destination après confirmation à la demande du client en V1.
+- **Périmètre concerné :** Sales (état de confirmation et annulation), Localization (snapshot), Delivery (destination d'expédition), Identity (client propriétaire).
+- **Statut :** VALIDÉ — premier release.
+- **Exigences :** contrôle serveur de l'état de commande, immutabilité du snapshot, cohérence multi-coopératives, audit et tests des transitions/annulations.
+
 ### Décision Q300 — Adresse de livraison d'une commande multi-coopératives (VALIDÉE)
 - **Question :** Une commande unique contenant des produits de plusieurs coopératives peut-elle utiliser plusieurs adresses de livraison ?
 - **Réponse :** A — une seule adresse de livraison commune à toute la commande.
@@ -4761,6 +4782,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.83 — 14 novembre 2026
+- Enregistrement de Q301 : adresse de livraison immuable après confirmation ; annulation puis nouvelle commande uniquement si les règles d'annulation le permettent.
+- Enregistrement de Q302 : le refus d'une sous-commande ne modifie pas l'adresse commune des sous-commandes restantes.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.81 — 14 novembre 2026
 - Enregistrement de Q300 : une commande multi-coopératives possède une seule adresse de livraison commune ; les sous-commandes et expéditions associées utilisent cette destination issue du snapshot global.
