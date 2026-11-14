@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.17
+- **Version :** 4.18
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5103,11 +5103,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Auditer l'acteur, l'appareil concerné, les sessions révoquées, l'horodatage et le motif sans enregistrer de preuve secrète ni de token.
 - **Statut :** VALIDÉ — premier release ; association technique appareil/session à auditer avant développement.
 
+
+
+### Décision Q336 — Nombre maximal d'appareils reconnus (VALIDÉE)
+- **Question :** Quel nombre maximal d'appareils un client peut-il mémoriser comme reconnus ?
+- **Réponse :** B — maximum 5 appareils reconnus.
+- **Décision :** chaque compte client peut avoir au maximum cinq appareils bénéficiant simultanément d'une reconnaissance persistante.
+- **Conséquences :**
+  - Le serveur applique cette limite lors de toute nouvelle reconnaissance ; le contrôle ne doit pas reposer uniquement sur l'interface.
+  - Les appareils déjà reconnus restent soumis à la révocation individuelle décidée par le client (Q334-Q335).
+  - Le comportement lorsqu'un client tente de reconnaître un sixième appareil — notamment le choix de l'appareil à remplacer ou la demande de révocation préalable — reste à définir avant développement ; aucun appareil existant ne doit être supprimé silencieusement.
+  - La limite concerne les appareils reconnus, pas le nombre de sessions actives ; les règles multi-session restent distinctes.
+- **Statut :** VALIDÉ — premier release ; parcours de dépassement de limite à préciser avant développement.
+
 ## 6. Historique des mises à jour
 
-### Version 4.17 — 14 novembre 2026
-- Enregistrement de Q335 : révoquer immédiatement la confiance et toutes les sessions web actives associées à l'appareil sélectionné.
-- Les autres appareils restent actifs ; API tokens hors de cette révocation ciblée. Association appareil/session à auditer. Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 4.18 — 14 novembre 2026
+- Enregistrement de Q336 : maximum de cinq appareils reconnus simultanément par compte client.
+- Le traitement d'une sixième reconnaissance reste à définir ; aucune révocation silencieuse d'un appareil existant. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
