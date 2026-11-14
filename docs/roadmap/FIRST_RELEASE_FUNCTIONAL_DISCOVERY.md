@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.87
+- **Version :** 3.88
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q307 — Délai de réponse des coopératives à une sous-commande (VALIDÉE)
+- **Question :** Quel délai est accordé à chaque coopérative pour accepter ou refuser sa sous-commande ?
+- **Réponse :** A — délai commun configurable par MAHLINE, avec une durée cible de 12 heures et un plafond absolu de 24 heures.
+- **Décision :** le délai de réponse est défini centralement par MAHLINE et s'applique de manière identique à toutes les coopératives. La durée de référence est de 12 heures ; le paramètre peut être ajusté, sans jamais dépasser 24 heures.
+- **Conséquences :**
+  - Le délai commence à la mise à disposition/notif​ication de la sous-commande à la coopérative ; le point technique exact de départ devra être aligné avec l'événement de transmission Sales/Communication.
+  - La coopérative doit accepter ou refuser la sous-commande dans le délai applicable.
+  - La durée configurée est globale et non personnalisable par coopérative.
+  - La règle à appliquer à l'expiration sans réponse (refus automatique, annulation, relance ou autre traitement) reste à décider séparément ; aucune conséquence automatique n'est présumée par Q307.
+  - Les heures de début/fin, la durée applicable et les relances éventuelles devront être traçables.
+- **Périmètre concerné :** Sales (état et échéance de réponse), Communication (transmission et rappels), Coopératives (traitement de la sous-commande).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q306 — Refus de toutes les sous-commandes d'une commande globale (VALIDÉE)
 - **Question :** Que devient la commande globale si toutes les coopératives refusent leurs sous-commandes ?
 - **Réponse :** A — la commande globale passe au statut « Refusée », les frais de livraison deviennent nuls et le client est informé.
@@ -4831,6 +4844,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.88 — 14 novembre 2026
+- Enregistrement de Q307 : délai centralisé de réponse des coopératives, référence de 12 heures et plafond absolu de 24 heures ; conséquence de l'expiration à cadrer séparément.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.87 — 14 novembre 2026
 - Enregistrement de Q306 : clôture automatique de la commande globale au statut « Refusée » si toutes les sous-commandes sont refusées ; frais de livraison nuls et notification client.
