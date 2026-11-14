@@ -55,7 +55,7 @@ final class PasswordResetController
         if (
             $user !== null
             && $user->status->value === 'active'
-            && ($customerOnly ? $isCustomerAccount : ! $isCustomerAccount)
+            && ($customerOnly ? $isCustomerAccount : ! $user->hasRole('customer'))
         ) {
             $this->passwordResetService->createToken(
                 user: $user,
