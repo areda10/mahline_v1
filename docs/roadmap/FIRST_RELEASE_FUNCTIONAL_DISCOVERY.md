@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.78
+- **Version :** 3.79
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,14 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q298 — Suppression de la dernière adresse de livraison (VALIDÉE)
+- **Question :** Un client supprime sa dernière adresse de livraison enregistrée. Quelle règle appliquer ?
+- **Réponse :** A — autoriser la suppression ; il pourra créer une nouvelle adresse lors de sa prochaine commande, mais ne pourra pas finaliser le checkout sans adresse valide.
+- **Décision :** aucune adresse minimale n'est imposée dans le carnet. Le client peut supprimer sa dernière adresse et se retrouver avec un carnet vide, sans adresse par défaut.
+- **Conséquences au checkout :** le client doit créer et sélectionner une adresse de livraison valide avant de pouvoir confirmer une commande. Le serveur bloque la finalisation si aucune adresse valide appartenant au client n'est sélectionnée. Le catalogue et la navigation publique restent accessibles.
+- **Cohérence :** les snapshots des commandes déjà créées restent inchangés. La suppression de la dernière adresse ne crée ni ne modifie automatiquement une adresse par défaut.
+- **Sécurité :** validation de propriété et de validité côté serveur ; aucune commande ne peut être confirmée avec une adresse absente ou appartenant à un autre client.
+
 ### Décision Q297 — Suppression d'une adresse utilisée par une commande en cours (VALIDÉE)
 - **Question :** Un client souhaite supprimer une adresse déjà enregistrée dans une commande en cours de préparation ou de livraison. Quelle règle appliquer ?
 - **Réponse :** A — autoriser la suppression du carnet ; la commande conserve son snapshot complet et reste inchangée.
@@ -4732,6 +4740,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.79 — 14 novembre 2026
+- Enregistrement de Q298 : le carnet peut être vide ; une adresse valide appartenant au client est obligatoire pour confirmer une commande.
 
 ### Version 3.78 — 14 novembre 2026
 - Enregistrement de Q297 : suppression autorisée d'une adresse même utilisée par une commande en cours ; le snapshot de commande demeure autonome et inchangé.
