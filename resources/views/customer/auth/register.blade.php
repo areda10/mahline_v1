@@ -59,7 +59,7 @@
         <button type="submit">Créer mon compte</button>
     </form>
 
-    <p>Vous avez déjà un compte ? <a href="{{ route('authentication.login') }}">Se connecter</a></p>
+    <p>Vous avez déjà un compte ? <a href="{{ route('customer.login') }}">Se connecter</a></p>
 </main>
 </body>
 </html>
