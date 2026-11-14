@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.70
+- **Version :** 3.71
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q290 — Modification d'une adresse utilisée dans une commande (VALIDÉE)
+- **Question :** Si le client modifie une adresse de son carnet après avoir passé une commande, que doit-il se passer ?
+- **Réponse :** A — la modification concerne uniquement les prochaines commandes ; les anciennes conservent l'adresse et les coordonnées initiales.
+- **Décision :** toute modification du carnet d'adresses du client s'applique uniquement aux commandes créées après cette modification. Les commandes déjà passées conservent leur snapshot de livraison tel qu'il a été enregistré au checkout, qu'elles soient encore en préparation, non expédiées ou déjà expédiées.
+- **Conséquences :** le client peut modifier une adresse enregistrée même si elle a été utilisée dans une commande en cours ; cette modification ne change ni l'adresse, ni le destinataire, ni le téléphone enregistrés dans la commande existante. Toute correction de livraison liée à une commande en cours doit suivre un processus métier distinct, autorisé et tracé dans Sales/Delivery, et ne doit pas modifier rétroactivement le carnet ou le snapshot historique.
+- **Sécurité et intégrité :** le serveur vérifie toujours la propriété de l'adresse lors de sa modification. Le snapshot de chaque commande reste immuable par rapport aux changements ultérieurs du carnet d'adresses. Les modifications sont auditées ; aucune mise à jour en cascade vers les commandes n'est autorisée.
+
 ### Décision Q289 — Coordonnées propres au destinataire de chaque adresse (VALIDÉE)
 - **Question :** Chaque adresse de livraison doit-elle contenir ses propres coordonnées de réception ?
 - **Réponse :** B — oui, chaque adresse possède un nom de destinataire et un numéro de téléphone propres, indépendants du profil client.
@@ -4676,6 +4683,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.71 — 14 novembre 2026
+- Enregistrement de Q290 : la modification d'une adresse enregistrée ne concerne que les commandes futures ; les commandes déjà créées conservent leur snapshot de livraison immuable, même avant expédition.
+- Le client peut modifier son carnet sans altérer une commande en cours ; toute correction de livraison en cours relève d'un processus distinct, autorisé et tracé.
 
 ### Version 3.70 — 14 novembre 2026
 - Enregistrement de Q289 : chaque adresse de livraison possède son propre nom de destinataire et numéro de téléphone, indépendants du profil client.
