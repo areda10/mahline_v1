@@ -42,7 +42,7 @@
         <button type="submit">Renvoyer le lien</button>
     </form>
 
-    <p><a href="{{ route('authentication.login') }}">Retour à la connexion</a></p>
+    <p><a href="{{ route('customer.login') }}">Retour à la connexion</a></p>
 </main>
 </body>
 </html>
