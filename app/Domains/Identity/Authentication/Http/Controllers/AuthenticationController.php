@@ -205,6 +205,11 @@ final class AuthenticationController
                 : 'authentication.login');
         }
 
+        abort_if(
+            $user->hasRole('customer') && ! $request->routeIs('customer.logout'),
+            403,
+        );
+
         /*
          * Revoke only the current Identity authentication session when it
          * exists. A missing/stale Identity record must never keep the
