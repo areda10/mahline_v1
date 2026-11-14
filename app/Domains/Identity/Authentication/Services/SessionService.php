@@ -92,6 +92,7 @@ final class SessionService extends BaseService
             $user->hasRole('super_admin_root') => 15,
             $user->hasRole('super_admin') => 30,
             $user->hasRole('cooperative_admin') => 30,
+            $user->hasRole('customer') => 60,
             $user->hasRole('user') => 60,
             default => 60,
         };
