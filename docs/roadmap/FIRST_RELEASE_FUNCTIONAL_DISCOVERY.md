@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.11
+- **Version :** 4.12
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5040,20 +5040,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 ### Décision Q330 — Absence de réponse à l'alerte de nouvel appareil (VALIDÉE)
 - **Question :** Que faire si le client ne confirme ni ne signale la nouvelle connexion dans l'heure ?
-- **Réponse :** B — révoquer automatiquement la nouvelle session et bloquer son accès.
-- **Décision :** si aucune confirmation légitime ni révocation manuelle n'est reçue dans le délai d'une heure défini par Q329, MAHLINE révoque automatiquement la session du nouvel appareil non reconnu et lui bloque l'accès.
+- **Réponse :** A — la nouvelle session reste active ; seul le lien expire.
+- **Décision :** si le client ne répond pas dans l'heure définie par Q329, la session du nouvel appareil reste active. Seul le lien de confirmation/révocation devient inutilisable.
 - **Conséquences :**
-  - La révocation automatique vise exclusivement la session créée lors de cette nouvelle connexion ; les autres sessions du client restent actives.
-  - La session révoquée ne peut plus accéder à l'espace client ni poursuivre des opérations authentifiées. Une nouvelle tentative de connexion depuis cet appareil sera traitée comme une nouvelle connexion et devra repasser par le contrôle de nouvel appareil.
-  - L'expiration du lien Q329 déclenche cette révocation ciblée si aucune réponse n'a été reçue avant l'échéance. Le traitement d'une confirmation tardive et les modalités de nouvelle tentative restent à préciser avant développement.
-  - L'événement de révocation automatique doit être audité avec l'identifiant de session concerné, les horodatages et le motif, sans enregistrer le lien, token ou secret d'authentification.
-- **Statut :** VALIDÉ — premier release.
+  - Aucune révocation ni suspension automatique de la nouvelle session n'est déclenchée par l'absence de réponse.
+  - Les autres sessions du client restent inchangées.
+  - Si le client ne reconnaît finalement pas la connexion, il doit disposer d'un moyen sécurisé de signaler l'incident et de révoquer cette session ; le parcours exact de signalement après expiration du lien reste à préciser avant développement.
+  - Les événements de connexion, expiration du lien et éventuelle révocation ultérieure sont audités sans enregistrer le lien, token ou secret d'authentification.
+- **Statut :** VALIDÉ — premier release ; parcours de signalement après expiration à préciser.
 
 ## 6. Historique des mises à jour
 
-### Version 4.11 — 14 novembre 2026
-- Enregistrement de Q330 : en l'absence de réponse dans l'heure Q329, révocation automatique et blocage de la seule nouvelle session non reconnue.
-- Les autres appareils restent connectés ; révocation auditée sans secret. Confirmation tardive et nouvelle tentative à préciser.
+### Version 4.12 — 14 novembre 2026
+- Correction/enregistrement de Q330 selon la réponse explicite du client : en l'absence de réponse dans l'heure, la nouvelle session reste active ; seul le lien expire.
+- Aucune révocation automatique ; parcours sécurisé de signalement et révocation après expiration à préciser.
 - Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
