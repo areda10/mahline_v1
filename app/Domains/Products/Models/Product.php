@@ -87,7 +87,9 @@ final class Product extends BaseModel
 
     public function images(): MorphMany
     {
-        return $this->media()->where('category', 'product_image');
+        return $this->media()->where('category', 'product_image')
+            ->orderBy('sort_order')
+            ->orderBy('created_at');
     }
 
     public function primaryImage(): MorphOne
@@ -99,7 +101,9 @@ final class Product extends BaseModel
 
     public function documents(): MorphMany
     {
-        return $this->media()->where('category', 'document');
+        return $this->media()->where('category', 'document')
+            ->orderBy('sort_order')
+            ->orderBy('created_at');
     }
 
     public function scopeForCooperative(
