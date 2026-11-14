@@ -17,15 +17,15 @@ final class MediaCleanupServiceTest extends TestCase
 
     public function test_it_purges_media_files_only_after_the_retention_period(): void
     {
-        Storage::fake('local');
+        Storage::fake('public');
         config(['media.retention_days' => 30]);
 
-        Storage::disk('local')->put('media/expired/original.pdf', '%PDF-1.4');
-        Storage::disk('local')->put('media/expired/thumbnail.jpg', 'thumbnail');
-        Storage::disk('local')->put('media/recent/original.pdf', '%PDF-1.4');
+        Storage::disk('public')->put('media/expired/original.jpg', 'original');
+        Storage::disk('public')->put('media/expired/thumbnail.jpg', 'thumbnail');
+        Storage::disk('public')->put('media/recent/original.jpg', 'original');
 
         $expired = Media::query()->create($this->attributes(
-            'media/expired/original.pdf',
+            'media/expired/original.jpg',
             [
                 'derivatives' => ['thumbnail' => 'media/expired/thumbnail.jpg'],
             ],
@@ -33,7 +33,7 @@ final class MediaCleanupServiceTest extends TestCase
         ));
 
         $recent = Media::query()->create($this->attributes(
-            'media/recent/original.pdf',
+            'media/recent/original.jpg',
             [],
             now()->subDays(5),
         ));
@@ -43,9 +43,9 @@ final class MediaCleanupServiceTest extends TestCase
         self::assertSame(1, $purged);
         self::assertFalse(Media::withTrashed()->whereKey($expired->getKey())->exists());
         self::assertTrue(Media::withTrashed()->whereKey($recent->getKey())->exists());
-        Storage::disk('local')->assertMissing('media/expired/original.pdf');
-        Storage::disk('local')->assertMissing('media/expired/thumbnail.jpg');
-        Storage::disk('local')->assertExists('media/recent/original.pdf');
+        Storage::disk('public')->assertMissing('media/expired/original.jpg');
+        Storage::disk('public')->assertMissing('media/expired/thumbnail.jpg');
+        Storage::disk('public')->assertExists('media/recent/original.jpg');
     }
 
     /**
@@ -57,15 +57,15 @@ final class MediaCleanupServiceTest extends TestCase
         return [
             'mediable_type' => 'App\\Domains\\Products\\Models\\Product',
             'mediable_id' => (string) Str::ulid(),
-            'collection' => 'documents',
-            'category' => 'document',
-            'disk' => 'local',
+            'collection' => 'product-gallery',
+            'category' => 'product_image',
+            'disk' => 'public',
             'path' => $path,
-            'original_name' => 'document.pdf',
-            'mime_type' => 'application/pdf',
-            'extension' => 'pdf',
+            'original_name' => 'product.jpg',
+            'mime_type' => 'image/jpeg',
+            'extension' => 'jpg',
             'size' => 100,
-            'visibility' => 'private',
+            'visibility' => 'public',
             'is_primary' => false,
             'sort_order' => 0,
             'metadata' => $metadata,
