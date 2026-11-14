@@ -31,7 +31,7 @@ final class DeviceTrustRevokedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         /** @var User $notifiable */
-        $locale = $this->locale($notifiable->locale);
+        $locale = $this->notificationLocale($notifiable->locale);
         $date = $this->revokedAt->copy()
             ->setTimezone($this->timezone($notifiable->timezone))
             ->locale($locale)
@@ -96,7 +96,7 @@ final class DeviceTrustRevokedNotification extends Notification
         ];
     }
 
-    private function locale(?string $locale): string
+    private function notificationLocale(?string $locale): string
     {
         $locale = strtolower(substr((string) $locale, 0, 2));
 
