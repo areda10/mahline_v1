@@ -78,7 +78,7 @@ final class NewDeviceLoginNotification extends Notification
                 'browser' => 'Navigateur',
                 'device' => 'Appareil',
                 'location' => 'Localisation approximative : indisponible',
-                'ignore' => 'Si vous êtes à l’origine de cette connexion, aucune action n’est nécessaire. Sinon, ouvrez Sécurité > Appareils dans MAHLINE et révoquez cet appareil.'
+                'ignore' => 'Si vous êtes à l’origine de cette connexion, aucune action n’est nécessaire. Sinon, ouvrez Sécurité > Appareils dans MAHLINE et révoquez cet appareil.',
                 'pending' => 'Cet appareil peut utiliser votre compte dès maintenant. Il deviendra de confiance après 24 heures si vous ne le révoquez pas.',
                 'pending_limit' => 'Cet appareil peut utiliser votre compte dès maintenant. Si les cinq places sont toujours occupées après 24 heures, il restera en attente jusqu’au remplacement d’un appareil dans Sécurité > Appareils.',
                 'trusted' => 'Cet appareil est maintenant reconnu comme appareil de confiance.',
