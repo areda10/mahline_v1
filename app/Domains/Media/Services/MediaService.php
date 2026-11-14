@@ -100,7 +100,14 @@ final class MediaService
 
                 $isPrimary = $mediaCategory->isSingle();
 
-                if ($isPrimary) {
+                if ($mediaCategory === MediaCategory::PRODUCT_IMAGE) {
+                    $isPrimary = ! $lockedOwner->media()
+                        ->where('category', $mediaCategory->value)
+                        ->where('is_primary', true)
+                        ->exists();
+                }
+
+                if ($mediaCategory->isSingle()) {
                     $lockedOwner->media()
                         ->where('category', $mediaCategory->value)
                         ->where('is_primary', true)
