@@ -86,11 +86,23 @@ final class MediaController
         $variant = $request->query('variant', 'original');
         abort_unless(in_array($variant, ['original', 'medium', 'thumbnail'], true), 404);
 
-        $path = $variant === 'original'
-            ? $media->path
-            : ($media->metadata['derivatives'][$variant] ?? null);
+        $path = $media->path;
 
-        abort_unless(is_string($path) && Storage::disk($media->disk)->exists($path), 404);
+        if ($variant !== 'original') {
+            $derivative = $media->metadata['derivatives'][$variant] ?? null;
+            $prefix = rtrim(dirname($media->path), '/').'/' ;
+
+            abort_unless(
+                is_string($derivative)
+                && str_starts_with($derivative, $prefix)
+                && ! str_contains($derivative, '..'),
+                404,
+            );
+
+            $path = $derivative;
+        }
+
+        abort_unless(Storage::disk($media->disk)->exists($path), 404);
 
         $stream = Storage::disk($media->disk)->readStream($path);
         abort_unless(is_resource($stream), 404);
