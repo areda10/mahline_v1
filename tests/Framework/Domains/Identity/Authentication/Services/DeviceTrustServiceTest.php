@@ -34,6 +34,7 @@ final class DeviceTrustServiceTest extends TestCase
         $this->assertSame(KnownDeviceStatus::Trusted, $resolution->device->status);
         $this->assertSame(DeviceTrustCookie::hash($resolution->cookieToken), $resolution->device->device_token_hash);
         $this->assertNotSame($resolution->cookieToken, $resolution->device->device_token_hash);
+        $this->assertArrayNotHasKey('device_token_hash', $resolution->device->toArray());
         $this->assertSame('windows', $resolution->device->device);
     }
 
