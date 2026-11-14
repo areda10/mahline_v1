@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.73
+- **Version :** 3.74
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q293 — Première adresse automatiquement définie par défaut (VALIDÉE)
+- **Question :** Lorsqu'un client crée sa toute première adresse de livraison, doit-elle devenir automatiquement son adresse par défaut ?
+- **Réponse :** A — oui, la première adresse devient automatiquement l'adresse par défaut. Les suivantes ne le deviennent pas automatiquement.
+- **Décision :** à la création de la toute première adresse de livraison active d'un client, le serveur la marque automatiquement comme adresse par défaut. La création d'adresses ultérieures ne change jamais automatiquement le choix existant.
+- **Cohérence :** si le client a supprimé son adresse par défaut et qu'il possède encore d'autres adresses, la création d'une nouvelle adresse ne la rend pas automatiquement par défaut. Il devra choisir explicitement une adresse au prochain checkout ou définir lui-même une nouvelle adresse par défaut.
+- **Sécurité :** cette règle est appliquée côté serveur, dans le périmètre du client authentifié ; un client ne peut ni définir ni modifier l'adresse par défaut d'un autre client.
+
 ### Décision Q292 — Suppression de l'adresse de livraison par défaut (VALIDÉE)
 - **Question :** Si le client supprime l'adresse actuellement définie comme adresse par défaut, que doit faire MAHLINE ?
 - **Réponse :** B — ne définir aucune adresse par défaut ; le client devra en choisir une lors de sa prochaine commande.
@@ -4697,6 +4704,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.74 — 14 novembre 2026
+- Enregistrement de Q293 : la première adresse de livraison active devient automatiquement l'adresse par défaut ; les créations suivantes ne changent pas le choix existant.
 
 ### Version 3.73 — 14 novembre 2026
 - Enregistrement de Q292 : après suppression de l'adresse par défaut, aucune autre adresse n'est choisie automatiquement ; le client sélectionne explicitement une adresse au prochain checkout.
