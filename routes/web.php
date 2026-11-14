@@ -11,6 +11,7 @@ use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationControlle
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
@@ -180,12 +181,12 @@ Route::get('/user/dashboard', UserDashboardController::class)
     ->name('user.dashboard');
 
 Route::get('/customer/dashboard', CustomerDashboardController::class)
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer'])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
     ->name('customer.dashboard');
 
 Route::prefix('customer/profile')
     ->name('customer.profile.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer'])
+    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
     ->group(function (): void {
         Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
         Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
