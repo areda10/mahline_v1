@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Cooperative extends BaseModel
@@ -110,5 +111,22 @@ final class Cooperative extends BaseModel
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function logo(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'mediable')
+            ->where('category', 'cooperative_logo')
+            ->where('is_primary', true);
+    }
+
+    public function photos(): MorphMany
+    {
+        return $this->media()->where('category', 'cooperative_photo');
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->media()->where('category', 'document');
     }
 }
