@@ -5130,6 +5130,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Le serveur vérifie la limite et exécute le remplacement de façon atomique/idempotente ; aucune suppression silencieuse ni dépassement temporaire durable de la limite.
 - **Statut :** VALIDÉ — premier release ; interface et transaction serveur à concevoir lors de l'implémentation.
 
+
+
+### Décision Q337 — Reconnaissance d'un sixième appareil (VALIDÉE)
+- **Question :** Que faire lorsqu'un client veut reconnaître un sixième appareil alors que cinq appareils sont déjà reconnus ?
+- **Réponse :** B — afficher les appareils reconnus et laisser le client choisir celui à remplacer.
+- **Décision :** lorsqu'un client demande à reconnaître un nouvel appareil et que son compte possède déjà cinq appareils reconnus, MAHLINE affiche la liste des cinq appareils et exige que le client sélectionne explicitement celui dont la reconnaissance doit être remplacée.
+- **Conséquences :**
+  - Aucun appareil existant n'est remplacé ou révoqué automatiquement ni silencieusement.
+  - La reconnaissance du nouvel appareil ne devient effective qu'après le choix explicite et la confirmation de remplacement par le client.
+  - L'appareil sélectionné perd sa confiance et ses sessions web actives associées sont immédiatement révoquées conformément à Q335 ; les autres appareils restent inchangés.
+  - Le serveur vérifie l'appartenance des appareils au compte, la limite de cinq et la sélection explicite ; le traitement doit être atomique pour éviter de dépasser la limite en cas de demandes concurrentes.
+  - L'opération est auditée sans journaliser les preuves secrètes ; la procédure d'échec ou d'annulation conserve les appareils existants et ne valide pas le nouvel appareil.
+- **Statut :** VALIDÉ — premier release ; détails de confirmation et d'atomicité à vérifier pendant l'audit technique avant développement.
+
 ## 6. Historique des mises à jour
 
 ### Version 4.21 — 14 novembre 2026
