@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.63
+- **Version :** 3.64
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4623,8 +4623,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 ## 6. Historique des mises à jour
 
+### Version 3.64 — 14 novembre 2026
+- Enregistrement de Q283 : seuil par défaut de 5 unités, remplaçable par un seuil configuré pour chaque produit.
+
 ### Version 3.63 — 14 novembre 2026
-- Enregistrement de Q282 : seuil « Presque épuisé » configurable par produit par le cooperative_admin ; valeur par défaut centrale à décider avant codage.
+- Enregistrement de Q282 : seuil « Presque épuisé » configurable par produit par le cooperative_admin ; valeur par défaut de 5 unités, modifiable par produit par le cooperative_admin.
 
 ### Version 3.62 — 14 novembre 2026
 - Enregistrement de Q281 : indicateur public « Disponible / Presque épuisé / Indisponible » sans révéler la quantité exacte ; seuil bas centralisé à définir avant codage.
