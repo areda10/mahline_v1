@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.60
+- **Version :** 3.61
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q280 — Retour automatique de disponibilité après réapprovisionnement (VALIDÉE)
+- **Question :** Lorsqu'une variante redevient disponible, comment rétablir son affichage dans la marketplace ?
+- **Réponse :** A — automatiquement dès qu'Inventory confirme une quantité disponible après prise en compte des réservations.
+- **Décision :** la disponibilité commerciale est rétablie automatiquement dès qu'Inventory confirme côté serveur que la quantité disponible de la variante est strictement positive, après déduction des réservations et autres engagements applicables. Aucun contrôle ou clic manuel du `cooperative_admin`, du `super_admin` ou du `super_admin_root` n'est requis pour republier la disponibilité.
+- **Cohérence métier :** Inventory reste l'unique source de vérité du stock physique, des réservations et de la quantité disponible ; Catalog reflète l'état commercial calculé sans exposer le stock physique interne ; Sales revalide la disponibilité côté serveur au panier et au checkout et réserve le stock selon ses contrats avec Inventory. Le retour de disponibilité ne modifie ni le prix, ni la promotion, ni ses versions.
+- **Contrôles :** mise à jour fiable et cohérente après mouvements de stock/libération de réservation, traitement idempotent des événements, prévention des états obsolètes, isolation par coopérative, audit des opérations de stock et validation serveur obligatoires.
+
 ### Décision Q279 — Promotion lorsque toutes les variantes sont indisponibles (VALIDÉE)
 - **Question :** Que faire lorsqu'un produit en promotion n'a plus aucune variante disponible ?
 - **Réponse :** B — conserver la promotion visible, afficher clairement « Indisponible » et empêcher toute commande.
@@ -4601,6 +4608,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.61 — 14 novembre 2026
+- Enregistrement de Q280 : rétablissement automatique de la disponibilité dès qu'Inventory confirme une quantité disponible nette des réservations ; aucun contrôle manuel de publication.
 
 ### Version 3.60 — 13 novembre 2026
 - Enregistrement de Q279 : conserver la promotion visible lorsque toutes les variantes sont indisponibles, avec indication explicite et blocage des commandes.
