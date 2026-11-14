@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.80
+- **Version :** 5.81
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -597,6 +597,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Blocage temporaire du compte client (Q322) :** appliquer après les échecs de connexion le blocage temporaire selon les seuils, durées et règles déjà détenus par Identity. Ne créer aucun seuil ni délai parallèle pour la marketplace. Maintenir les limites Q317, la journalisation sans secrets et l'absence d'e-mail pour les tentatives échouées Q321 ; les notifications Q320 restent réservées aux événements sensibles couverts.
 
 **Sessions client simultanées sur plusieurs appareils (Q323) :** autoriser plusieurs sessions web actives par compte client ; une nouvelle connexion ne déconnecte pas les appareils déjà connectés. Chaque session reste consultable et révocable individuellement depuis l'espace sécurité client, conformément à Q319, avec vérification stricte de propriété côté serveur. Les révocations globales prévues notamment par Q316 continuent d'invalider toutes les sessions et les tokens API. Aucun plafond arbitraire n'est ajouté.
+
+**Durée d'inactivité des sessions client (Q324) :** réutiliser la politique centralisée Identity pour la durée d'inactivité et la déconnexion automatique. Ne créer aucune durée spécifique marketplace. Chaque session multi-appareils de Q323 reste soumise à cette politique ; révocations individuelles/globales selon Q319 et Q316.
+
+### Version 5.81 — 14 novembre 2026
+- Enregistrement de Q324 : durée d'inactivité et déconnexion automatique client alignées sur la politique Identity existante.
+- Aucune règle ou durée concurrente dans Marketplace ; maintien des règles Q316/Q319/Q323.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.80 — 14 novembre 2026
 - Enregistrement de Q323 : sessions simultanées multi-appareils pour le client, sans révocation automatique lors d'une nouvelle connexion.
