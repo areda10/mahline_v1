@@ -70,7 +70,7 @@ final class CustomerRegistrationTest extends TestCase
         ]);
 
         $this->get(route('customer.verification.verify', ['token' => $token]))
-            ->assertRedirect(route('authentication.login'));
+            ->assertRedirect(route('customer.login'));
 
         $customer->refresh();
 
