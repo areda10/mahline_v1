@@ -7,6 +7,10 @@
         <h1>Mon profil</h1>
         <p class="muted">Gérez vos informations personnelles dans votre espace client.</p>
 
+        @if (session('success'))
+            <div class="alert alert-success" role="status">{{ session('success') }}</div>
+        @endif
+
         @if ($errors->any())
             <div class="alert alert-error" role="alert">
                 <strong>Veuillez vérifier les informations saisies.</strong>
