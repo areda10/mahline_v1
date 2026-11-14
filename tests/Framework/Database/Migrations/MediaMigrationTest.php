@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Database\\Migrations;
+namespace Tests\Framework\Database\Migrations;
 
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\Schema;
-use Tests\\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use Tests\TestCase;
 
 final class MediaMigrationTest extends TestCase
 {
