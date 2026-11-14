@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.07
+- **Version :** 4.08
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5007,7 +5007,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** annuler ou fermer la confirmation ne modifie aucune session. Après confirmation, appliquer exactement la portée Q325 : révoquer les autres sessions et conserver la session courante. Ne pas demander le mot de passe à nouveau dans le périmètre de cette décision ; les contrôles serveur et la journalisation sans secrets restent obligatoires.
 - **Statut :** VALIDÉ — premier release.
 
+
+### Décision Q327 — Informations affichées pour les sessions client (VALIDÉE)
+- **Question :** Quelles informations afficher pour chaque session active dans l'espace sécurité du client ?
+- **Réponse :** B — date de connexion, dernière activité, navigateur, système d'exploitation et indication de l'appareil actuellement utilisé.
+- **Décision :** chaque session active présente les informations techniques utiles disponibles : date de connexion, dernière activité, navigateur et système d'exploitation. La session correspondant à l'appareil utilisé pour consulter l'espace est clairement identifiée.
+- **Conséquences :** afficher uniquement les données réellement disponibles et fiables ; ne pas inventer une identification matérielle ou un modèle d'appareil si les informations techniques ne le permettent pas. L'adresse IP et la localisation approximative ne sont pas affichées dans V1. Ces informations servent à reconnaître les sessions et à exercer les actions de révocation Q319/Q325/Q326, sans exposer de données de connexion supplémentaires.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.08 — 14 novembre 2026
+- Enregistrement de Q327 : affichage de la date de connexion, dernière activité, navigateur, système d'exploitation et repérage de la session courante.
+- Adresse IP et localisation approximative exclues de l'interface client V1 ; aucune caractéristique d'appareil non disponible n'est inventée.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.07 — 14 novembre 2026
 - Enregistrement de Q326 : confirmation explicite obligatoire avant de révoquer les autres sessions client.
