@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.41
+- **Version :** 5.42
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -503,6 +503,23 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+## Parcours directeur de développement — Client → Coopérative → Transporteur
+Le développement fonctionnel du premier release suit le parcours opérationnel transversal défini dans le registre de découverte :
+1. Client / Identity : création de compte, connexion, profil, adresses.
+2. Marketplace / Catalog + Products : consultation des coopératives et découverte des produits, prix et disponibilités.
+3. Panier / commande / Sales : panier multi-coopératives, quantités, validation et passage de commande.
+4. Réception / espace coopérative : consultation de la sous-commande, des lignes, quantités et informations client autorisées.
+5. Confirmation / Sales + Inventory : acceptation, refus ou ajustement des lignes, confirmation de sous-commande et réservation de stock selon les règles métier.
+6. Préparation / remise / Delivery : préparation du colis, déclaration prêt et remise au transporteur.
+7. Suivi / Delivery + Communication : statuts d'expédition et notifications au client et à la coopérative.
+
+**Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+### Version 5.42 — 14 novembre 2026
+- Enregistrement de Q285 : changement du seuil appliqué immédiatement après validation serveur.
+- Ajout du parcours directeur Client → Coopérative → Transporteur en sept étapes et de la règle de développement transversal progressif.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.41 — 14 novembre 2026
 - Enregistrement de Q284 : seuil personnalisé à zéro = désactivation de « Presque épuisé », distincte d'une absence de configuration (défaut 5 unités).
