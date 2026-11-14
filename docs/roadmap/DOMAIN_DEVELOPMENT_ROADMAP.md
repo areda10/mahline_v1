@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.94
+- **Version :** 5.95
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -516,6 +516,9 @@ Le développement fonctionnel du premier release suit le parcours opérationnel 
 
 **Identité client (Q286) :** l'inscription crée un compte client en attente ; la vérification e-mail réussie active automatiquement ce compte sans validation administrative. Avant activation et vérification, pas d'accès authentifié à l'espace client ni de commande. La consultation publique du catalogue reste possible. Cette activation automatique est propre au parcours d'inscription client et ne modifie pas les règles d'activation/réactivation des comptes internes. Les liens de vérification sont sécurisés, expirants et invalidés après succès ; protection contre abus et énumération ; contrôle serveur et audit.
 
+**Implémentation progressive Client — tranche 1 (en cours) :** le socle d'inscription est développé dans `Identity/Customer` en conservant le modèle d'authentification `User` existant, mais avec un rôle `customer` dédié et des routes, contrôleurs, vues et tableau de bord séparés du rôle interne `user`. L'inscription crée un compte `pending` ; le mot de passe suit `PasswordPolicy` ; la vérification utilise un jeton aléatoire à usage unique, stocké sous forme de hash et expirant après 24 heures. Le renvoi invalide le lien précédent, autorise cinq demandes par heure puis applique un blocage d'une heure. Tests feature ajoutés pour inscription, activation, expiration, unicité d'e-mail et limitation du renvoi ; ils restent à exécuter localement. Prochaines tranches : CRUD du profil client, intégration Media pour la photo (2 Mo max), puis carnet d'adresses client dans le périmètre Sales/Localization selon les décisions validées.
+
+
 **Intervention administrateur — habilitations (Q310) :** seuls `super_admin_root` (toutes les coopératives) et `super_admin` affecté (coopératives de son périmètre) peuvent relancer ou décider à la place d'une coopérative après échéance. Le `cooperative_admin` ne peut pas prendre une décision administrative de substitution. Contrôle d'affectation côté serveur et audit obligatoires.
 
 ****Compte client — suppression à l'initiative du client (Q311) :** le client peut demander la suppression ; l'accès au compte est désactivé immédiatement, les sessions et jetons sont révoqués, puis les données personnelles sont supprimées ou anonymisées dans la mesure permise. Les commandes, factures, preuves et journaux légalement ou opérationnellement nécessaires sont conservés avec accès restreint et durée définie. Avant codage, cadrer les commandes en cours, les délais, les sauvegardes, la réversibilité et la conservation ; ne pas supprimer aveuglément les relations métier.
@@ -626,9 +629,9 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Remplacement lors d'une sixième reconnaissance (Q337) :** présenter au client ses cinq appareils reconnus et lui demander de sélectionner celui à remplacer. Après confirmation explicite, révoquer la confiance et toutes les sessions actives associées à l'appareil choisi (Q335), puis enregistrer le nouvel appareil reconnu. Les quatre autres appareils restent intacts. Annulation = aucune modification. Le serveur doit appliquer l'opération de façon atomique et idempotente, sans dépassement durable de la limite ni révocation silencieuse.
 
 
-### Version 5.94 — 14 novembre 2026
-- Enregistrement de Q337 : sélection et confirmation par le client de l'appareil à remplacer lors d'une sixième reconnaissance.
-- Révocation ciblée de sa confiance et de ses sessions ; annulation sans effet. Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 5.95 — 14 novembre 2026
+- Démarrage du codage progressif Client — tranche 1 Identity : rôle customer distinct, inscription pending, vérification e-mail 24 h à usage unique et renvoi avec limite 5/heure puis blocage 1 h.
+- Routes, contrôleurs, vues, tableau de bord et tests ciblés ajoutés ; tests non exécutés dans cet environnement. Profil, Media/photo et carnet d'adresses restent les prochaines tranches. Aucune fusion.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
