@@ -102,6 +102,8 @@ final class MediaService
                         ->where('is_primary', true)
                         ->get()
                         ->each(function (Media $previous) use ($actor): void {
+                            $previous->deleted_by = (string) $actor->getKey();
+                            $previous->save();
                             $previous->delete();
                             $this->record($actor, $previous, 'media.replaced', 'replaced');
                         });
