@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.69
+- **Version :** 3.70
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -68,7 +68,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les commandes et leur historique restent dans Sales ; Identity ne devient pas propriétaire des données commerciales.
   - Les accès aux profils, adresses, paniers et commandes doivent être limités au client concerné et aux acteurs internes autorisés selon leur périmètre.
 - **Périmètre concerné :** Identity, Sales et Localization.
-- **Points restant à préciser :** nombre maximal d'adresses autorisées, champs obligatoires et validation des coordonnées, consentements et politique de conservation/anonymisation. Le principe de plusieurs adresses et d'une adresse par défaut est validé par Q288.
+- **Points restant à préciser :** nombre maximal d'adresses autorisées, validation du téléphone et du nom du destinataire, consentements et politique de conservation/anonymisation. Le principe de plusieurs adresses et d'une adresse par défaut est validé par Q288 ; les coordonnées propres au destinataire par adresse sont validées par Q289.
 
 ### Question 4 — Inscription d'un client marketplace (VALIDÉ)
 - **Question :** Comment un client marketplace doit-il créer son compte lors du premier release ?
@@ -4541,6 +4541,14 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q289 — Coordonnées propres au destinataire de chaque adresse (VALIDÉE)
+- **Question :** Chaque adresse de livraison doit-elle contenir ses propres coordonnées de réception ?
+- **Réponse :** B — oui, chaque adresse possède un nom de destinataire et un numéro de téléphone propres, indépendants du profil client.
+- **Décision :** chaque entrée du carnet d'adresses de livraison conserve le nom du destinataire et son numéro de téléphone. Ces coordonnées sont propres à l'adresse et peuvent être différentes du nom et du téléphone du compte client. Le client peut ainsi faire livrer une commande à un proche ou à une autre personne.
+- **Cohérence métier :** Sales associe chaque adresse et ses coordonnées au client propriétaire ; Localization conserve les données structurées de localisation. Lors du checkout, le système copie dans le snapshot de livraison de la commande l'adresse complète, le nom du destinataire et son numéro de téléphone tels qu'ils étaient sélectionnés au moment de la commande. Les modifications ultérieures du carnet d'adresses ou du profil client ne réécrivent jamais ce snapshot.
+- **Sécurité :** le serveur vérifie que l'adresse sélectionnée appartient au client authentifié. Les coordonnées du destinataire ne donnent aucun droit d'accès au compte client ; elles servent uniquement à l'exécution de la livraison et ne doivent pas être exposées à d'autres clients.
+- **À préciser avant implémentation :** format/validation du téléphone, indicatif pays, caractères et longueur du nom du destinataire, ainsi que les règles de conservation et d'accès aux snapshots de livraison.
+
 ### Décision Q288 — Adresses de livraison enregistrées par le client (VALIDÉE)
 - **Question :** Combien d'adresses de livraison un client peut-il enregistrer dans son espace personnel ?
 - **Réponse :** B — plusieurs adresses, avec une adresse par défaut sélectionnée.
@@ -4668,6 +4676,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.70 — 14 novembre 2026
+- Enregistrement de Q289 : chaque adresse de livraison possède son propre nom de destinataire et numéro de téléphone, indépendants du profil client.
+- Ajout de ces coordonnées au snapshot de livraison de la commande ; validation détaillée des champs et règles de conservation à préciser.
 
 ### Version 3.69 — 14 novembre 2026
 - Enregistrement de Q288 : carnet de plusieurs adresses de livraison par client, avec adresse par défaut et possibilité d'en choisir une autre au checkout.
