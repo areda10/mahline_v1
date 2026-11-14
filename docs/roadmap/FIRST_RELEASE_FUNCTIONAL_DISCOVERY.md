@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.88
+- **Version :** 3.89
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q308 — Sous-commande sans réponse à l'expiration du délai (VALIDÉE)
+- **Question :** Que faire si une coopérative ne répond pas dans le délai commun de 12 à 24 heures ?
+- **Réponse :** B — la sous-commande reste en attente et un administrateur est alerté pour intervention.
+- **Décision :** l'expiration du délai de réponse ne provoque ni refus automatique ni annulation automatique. La sous-commande conserve son statut d'attente jusqu'à une intervention manuelle autorisée d'un administrateur.
+- **Conséquences :**
+  - Le dépassement de l'échéance est enregistré et visible ; la sous-commande est signalée comme en retard/sans réponse sans être considérée comme refusée.
+  - Un administrateur reçoit une alerte afin d'intervenir et de faire traiter la situation.
+  - Les autres sous-commandes de la commande globale poursuivent leur propre cycle et ne sont pas bloquées par cette attente.
+  - Toute décision prise par l'administrateur doit respecter les permissions, être horodatée et auditée ; l'identité de l'intervenant et le motif éventuel sont conservés.
+  - La clôture globale « Refusée » prévue par Q306 ne s'applique que lorsque toutes les sous-commandes ont effectivement été refusées ; une sous-commande simplement en retard reste en attente.
+- **Périmètre concerné :** Sales (échéance et statut d'attente), Communication (alerte administrateur), administration (intervention autorisée), Coopératives (réponse attendue).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q307 — Délai de réponse des coopératives à une sous-commande (VALIDÉE)
 - **Question :** Quel délai est accordé à chaque coopérative pour accepter ou refuser sa sous-commande ?
 - **Réponse :** A — délai commun configurable par MAHLINE, avec une durée cible de 12 heures et un plafond absolu de 24 heures.
@@ -4844,6 +4857,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.89 — 14 novembre 2026
+- Enregistrement de Q308 : à l'expiration sans réponse, la sous-commande reste en attente ; un administrateur est alerté pour intervention manuelle, sans refus/annulation automatique.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.88 — 14 novembre 2026
 - Enregistrement de Q307 : délai centralisé de réponse des coopératives, référence de 12 heures et plafond absolu de 24 heures ; conséquence de l'expiration à cadrer séparément.
