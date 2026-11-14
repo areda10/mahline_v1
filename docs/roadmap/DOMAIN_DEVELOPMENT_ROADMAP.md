@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.91
+- **Version :** 5.92
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -619,10 +619,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Mémorisation d'un appareil reconnu (Q334) :** après reconnaissance explicite, conserver l'appareil comme reconnu sans durée calendaire fixe, jusqu'à révocation par le client depuis son espace sécurité. Le client peut consulter et révoquer individuellement cette confiance. Après révocation, toute connexion ultérieure repasse par le contrôle d'un nouvel appareil. La confiance doit être fondée sur une preuve sécurisée côté serveur, révocable et non réduite à l'IP ou au User-Agent ; elle est distincte de la session active. Le mécanisme technique précis doit être audité avant développement, sans exposer ni journaliser les secrets.
 
+**Sessions actives lors de la révocation d'un appareil reconnu (Q335) :** retirer immédiatement la preuve de confiance et révoquer toutes les sessions web actives réellement associées à l'appareil sélectionné. Les autres appareils restent connectés. Cette révocation ciblée n'inclut pas les API tokens ni les sessions d'autres appareils. L'association appareil/session doit être établie et vérifiée côté serveur, jamais déduite uniquement de l'IP ou du User-Agent. Auditer les opérations sans secret ; valider le mécanisme technique avant développement.
 
-### Version 5.91 — 14 novembre 2026
-- Enregistrement de Q334 : appareil reconnu mémorisé jusqu'à révocation explicite par le client.
-- Confiance persistante révocable et distincte de la session ; mécanisme sécurisé à définir avant développement. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.92 — 14 novembre 2026
+- Enregistrement de Q335 : révocation immédiate de la confiance et de toutes les sessions web actives associées à l'appareil choisi.
+- Autres appareils préservés ; API tokens hors portée ; association appareil/session à auditer. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
