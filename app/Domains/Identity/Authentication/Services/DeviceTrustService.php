@@ -18,6 +18,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Throwable;
 
 final class DeviceTrustService extends BaseService
@@ -436,17 +437,22 @@ final class DeviceTrustService extends BaseService
             return;
         }
 
-        try {
-            $user->notify(new DeviceTrustRevokedNotification(
-                device: $device->device,
-                browser: $device->browser,
-                revokedAt: $device->revoked_at ?? now(),
-            ));
-        } catch (Throwable $exception) {
-            Log::warning('Unable to send device-revocation notification.', [
-                'user_id' => (string) $user->getKey(),
-                'exception' => $exception::class,
-            ]);
+        $notification = new DeviceTrustRevokedNotification(
+            device: $device->device,
+            browser: $device->browser,
+            revokedAt: $device->revoked_at ?? now(),
+        );
+
+        foreach (['database', 'mail'] as $channel) {
+            try {
+                Notification::sendNow($user, $notification, [$channel]);
+            } catch (Throwable $exception) {
+                Log::warning('Unable to send device-revocation notification.', [
+                    'user_id' => (string) $user->getKey(),
+                    'channel' => $channel,
+                    'exception' => $exception::class,
+                ]);
+            }
         }
     }
 
