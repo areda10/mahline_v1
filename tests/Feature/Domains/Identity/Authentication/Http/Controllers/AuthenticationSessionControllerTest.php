@@ -520,6 +520,27 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->assertViewIs('identity.security.devices.index');
     }
 
+    public function test_customer_cannot_revoke_another_accounts_device(): void
+    {
+        $customer = $this->actor('customer');
+        $otherCustomer = $this->actor('customer');
+        $otherDevice = KnownDevice::query()->create([
+            'user_id' => $otherCustomer->getKey(),
+            'device' => 'private-other-customer-device',
+            'device_token_hash' => hash('sha256', str_repeat('x', 64)),
+            'status' => KnownDeviceStatus::Trusted,
+            'trusted_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+
+        $this->actingAs($customer)
+            ->delete(route('customer.security.devices.destroy', $otherDevice))
+            ->assertNotFound();
+
+        $this->assertSame(KnownDeviceStatus::Trusted, $otherDevice->fresh()->status);
+        $this->assertNull($otherDevice->fresh()->revoked_at);
+    }
+
     public function test_customer_can_revoke_an_own_device_and_its_web_sessions_only(): void
     {
         Mail::fake();
