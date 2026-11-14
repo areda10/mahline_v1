@@ -1,9 +1,9 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.104
+- **Version :** 5.105
 - **Date :** 14 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
-- **Commit audité pour l'inventaire Client :** `c8004a77998046abc0f355bf8d37ec3debb76092`
+- **Commit audité :** `6ff7271a6525bbbe797a6c8f5c6af18210481f84`
 - **Nature :** référentiel fonctionnel cible et feuille de route, à confirmer par audits détaillés
 - **Statut :** PROPOSITION DE SUIVI — les statuts doivent être confirmés par audit fonctionnel et tests.
 
@@ -241,6 +241,8 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 **Travaux à suivre :**
 - [ ] USR-02 : adresse personnelle, photo de profil et préférences de notification.
 - [ ] USR-03 : consultation et modification du profil personnel.
+- [x] Client — isolation du changement de mot de passe forcé : routes customer dédiées, redirection depuis `/`, layout client et déconnexion client ; tests Feature dédiés validés avec la suite complète.
+- [x] Client — changement d'adresse e-mail : implémenté et validé (voir version 5.104).
 - [ ] USR-04 : résoudre la divergence entre la décision 91 (absence d'accès de cooperative_admin aux données personnelles d'autres utilisateurs) et les autorisations/tests actuellement présents.
 - [ ] Reprendre les fonctionnalités explicitement reportées dans le backlog Identity.
 - [ ] Auditer les liens Identity ↔ Media, Localization, Communication, Audit et Cooperatives.
@@ -648,6 +650,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Remplacement au-delà de cinq appareils reconnus (Q337) :** si le client veut reconnaître un sixième appareil, afficher ses cinq appareils reconnus et lui demander de choisir explicitement celui à remplacer. Aucune révocation automatique ou silencieuse. Après confirmation, retirer la confiance de l'appareil choisi et révoquer immédiatement ses sessions web associées conformément à Q335 ; préserver les autres appareils. Le serveur doit valider l'appartenance, la limite et la sélection, puis réaliser le remplacement de manière atomique. En cas d'annulation ou d'échec, conserver l'état antérieur et ne pas reconnaître le nouvel appareil.
 
+
+### Version 5.105 — 14 novembre 2026
+- Correction de l'isolation du changement de mot de passe forcé pour les comptes customer : redirection de `/` vers la route client dédiée, allowlist des routes de sécurité client dans le middleware, layout/formulaire/déconnexion adaptés au rôle client.
+- Ajout de trois tests `CustomerAuthenticationIsolationTest` couvrant l'accès au formulaire, la redirection d'accueil et la déconnexion client.
+- Validation confirmée par l'utilisateur : test ciblé, `php vendor/bin/pint --test` et suite complète `php artisan test` — VERTS. Aucun décompte communiqué.
+- Mise à jour du suivi Identity : cette tranche Client est validée ; Identity et les autres travaux Client restent ouverts. Aucun merge ; branche conservée sur `feature/Marketplace`, commit applicatif `6ff7271a6525bbbe797a6c8f5c6af18210481f84`.
 
 ### Version 5.104 — 14 novembre 2026
 - Changement d'adresse e-mail client Q338-Q340 implémenté dans `Identity/Customer` sur `feature/Marketplace` : mot de passe actuel exigé avant toute notification ; nouvelle adresse contrôlée comme unique ; ancienne adresse conservée jusqu'à validation du lien ; lien à usage unique valable 30 minutes ; nouvelle demande révoquant les demandes précédentes.
