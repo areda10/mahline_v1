@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.13
+- **Version :** 4.14
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5049,12 +5049,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - Les événements de connexion, expiration du lien et éventuelle révocation ultérieure sont audités sans enregistrer le lien, token ou secret d'authentification.
 - **Statut :** VALIDÉ — premier release.
 
+
+
+### Décision Q332 — Confirmation avant révocation manuelle d'un appareil (VALIDÉE)
+- **Question :** Quel niveau de confirmation exiger lorsque le client signale un appareil non reconnu depuis son espace sécurité ?
+- **Réponse :** A — confirmation simple.
+- **Décision :** après sélection de l'appareil/session et clic sur « Signaler comme non reconnu », afficher une confirmation explicite de type « Voulez-vous vraiment révoquer cet appareil ? ». La révocation n'est exécutée qu'après confirmation.
+- **Conséquences :**
+  - L'annulation ou la fermeture de la confirmation ne modifie aucune session.
+  - Aucun nouveau mot de passe n'est demandé pour cette action en V1.
+  - La révocation reste limitée à la session sélectionnée ; les autres sessions du client restent actives.
+  - Le serveur vérifie la propriété du compte et l'identifiant exact de session avant l'action. L'événement est audité sans secret d'authentification.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
 
-### Version 4.13 — 14 novembre 2026
-- Enregistrement de Q331 : après expiration du lien, le client peut signaler un appareil non reconnu depuis son espace sécurité, sélectionner la session et confirmer sa révocation ciblée.
-- Vérification serveur de propriété et révocation limitée à la session sélectionnée ; aucun impact sur les autres appareils.
-- Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 4.14 — 14 novembre 2026
+- Enregistrement de Q332 : confirmation simple obligatoire avant révocation manuelle d'un appareil signalé ; annulation sans effet.
+- Aucun mot de passe supplémentaire ; révocation limitée à la session sélectionnée et contrôlée côté serveur. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
