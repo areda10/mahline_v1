@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.95
+- **Version :** 3.96
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4569,6 +4569,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** le flux de connexion client doit rechercher le compte par e-mail et appliquer les contrôles Identity existants : compte actif, adresse e-mail vérifiée et protections anti-abus. Aucun parcours de connexion par téléphone/SMS n'est inclus dans le premier release. Toute évolution future nécessitera une décision dédiée et ne doit pas être activée implicitement.
 - **Statut :** VALIDÉ — premier release.
 
+### Décision Q315 — Récupération du mot de passe client (VALIDÉE)
+- **Question :** Comment le client récupère-t-il l'accès à son compte en cas d'oubli du mot de passe ?
+- **Réponse :** A — lien sécurisé envoyé par e-mail, valable 30 minutes et utilisable une seule fois.
+- **Décision :** le client demande une réinitialisation depuis le parcours « mot de passe oublié » et reçoit un lien de réinitialisation à son adresse e-mail. Le lien expire après 30 minutes et ne peut être utilisé qu'une seule fois.
+- **Conséquences :** le serveur doit vérifier l'expiration et l'usage unique avant toute modification du mot de passe. Le nouveau mot de passe passe par les règles de complexité Identity en vigueur. Aucun code OTP par e-mail ou SMS n'est requis pour ce parcours. Les secrets de réinitialisation et mots de passe ne doivent jamais apparaître dans les journaux.
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4917,6 +4924,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.96 — 14 novembre 2026
+- Enregistrement de Q315 : réinitialisation du mot de passe client par lien sécurisé envoyé par e-mail, valable 30 minutes et à usage unique.
+- Vérification serveur de l'expiration et de l'usage unique ; application des règles de complexité Identity ; aucun OTP et aucun secret dans les journaux.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.95 — 14 novembre 2026
 - Enregistrement de Q314 : connexion du client par adresse e-mail uniquement ; le téléphone n'est pas un identifiant d'authentification en V1.
