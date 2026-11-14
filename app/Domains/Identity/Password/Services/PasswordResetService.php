@@ -27,7 +27,7 @@ final class PasswordResetService extends BaseService
         private readonly PasswordHistoryService $passwordHistory,
     ) {}
 
-    public function createToken(User $user): string
+    public function createToken(User $user, bool $customerOnly = false): string
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
@@ -58,7 +58,8 @@ final class PasswordResetService extends BaseService
             '/',
         );
 
-        $resetUrl = $resetBaseUrl.'/password/reset?'.http_build_query([
+        $resetPath = $customerOnly ? '/customer/password/reset' : '/password/reset';
+        $resetUrl = $resetBaseUrl.$resetPath.'?'.http_build_query([
             'token' => $token,
             'email' => $user->email,
         ]);
