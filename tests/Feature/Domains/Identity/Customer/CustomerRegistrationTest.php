@@ -83,7 +83,7 @@ final class CustomerRegistrationTest extends TestCase
 
         $this->post(route('authentication.login.store'), [
             'email' => $customer->email,
-            'password' => 'SecureClient123!',
+            'password' => 'MosaicRiver728!',
         ])->assertRedirect(route('customer.dashboard'));
 
         $this->assertAuthenticatedAs($customer);
@@ -183,8 +183,8 @@ final class CustomerRegistrationTest extends TestCase
             'last_name' => 'Client',
             'email' => 'client@example.com',
             'telephone' => '+212 612345678',
-            'password' => 'SecureClient123!',
-            'password_confirmation' => 'SecureClient123!',
+            'password' => 'MosaicRiver728!',
+            'password_confirmation' => 'MosaicRiver728!',
         ];
     }
 
