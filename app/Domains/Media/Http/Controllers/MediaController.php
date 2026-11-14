@@ -11,8 +11,8 @@ use App\Domains\Media\Models\Media;
 use App\Domains\Media\Services\MediaService;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -71,9 +71,16 @@ final class MediaController
             Gate::authorize('view', $media);
         }
 
-        abort_unless(Storage::disk($media->disk)->exists($media->path), 404);
+        $variant = $request->query('variant', 'original');
+        abort_unless(in_array($variant, ['original', 'medium', 'thumbnail'], true), 404);
 
-        $stream = Storage::disk($media->disk)->readStream($media->path);
+        $path = $variant === 'original'
+            ? $media->path
+            : ($media->metadata['derivatives'][$variant] ?? null);
+
+        abort_unless(is_string($path) && Storage::disk($media->disk)->exists($path), 404);
+
+        $stream = Storage::disk($media->disk)->readStream($path);
         abort_unless(is_resource($stream), 404);
 
         $isDocument = $media->mime_type === 'application/pdf';
@@ -97,14 +104,14 @@ final class MediaController
         ]);
     }
 
-    public function primary(Request $request, Media $media): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function primary(Request $request, Media $media): JsonResponse
     {
         $media = $this->media->setPrimary($request->user(), $media);
 
         return response()->json(['data' => ['id' => $media->getKey(), 'is_primary' => true]]);
     }
 
-    public function reorder(Request $request, Media $media): \Illuminate\Http\JsonResponse
+    public function reorder(Request $request, Media $media): JsonResponse
     {
         $data = $request->validate([
             'sort_order' => ['required', 'integer', 'min:0', 'max:100000'],
@@ -115,7 +122,7 @@ final class MediaController
         return response()->json(['data' => ['id' => $media->getKey(), 'sort_order' => $media->sort_order]]);
     }
 
-    public function destroy(Request $request, Media $media): \Illuminate\Http\JsonResponse
+    public function destroy(Request $request, Media $media): JsonResponse
     {
         $this->media->delete($request->user(), $media);
 
