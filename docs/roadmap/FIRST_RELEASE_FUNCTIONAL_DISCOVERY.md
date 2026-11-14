@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.20
+- **Version :** 4.21
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5132,9 +5132,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 ## 6. Historique des mises à jour
 
-### Version 4.20 — 14 novembre 2026
-- Démarrage du codage progressif de l'espace Client — première tranche Identity : rôle `customer` distinct, inscription en attente, vérification e-mail à usage unique valable 24 h, renvoi limité à 5 demandes/heure puis blocage d'une heure, routes et tableau de bord séparés.
-- Migration, modèle, service, notification, contrôleurs, vues et tests ciblés ajoutés sur `feature/Marketplace`. Tests non exécutés dans cet environnement ; validation locale requise. Aucune fusion.
+### Version 4.21 — 14 novembre 2026
+- Première tranche Client — Identity ajoutée : rôle `customer` distinct, inscription pending, vérification e-mail à usage unique 24 h, renvoi limité à 5 demandes/heure puis blocage d'une heure, routes et espace client séparés.
+- Session client par défaut limitée à la durée du navigateur et expiration d'inactivité alignée sur Identity (60 min). Le « Se souvenir de moi » individuel reste à implémenter.
+- Tests feature ajoutés mais non exécutés dans cet environnement. Le mécanisme de confiance des appareils clients (Q328-Q337) reste à auditer/implémenter ; aucun merge.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
