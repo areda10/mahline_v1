@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.68
+- **Version :** 3.69
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -68,7 +68,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
   - Les commandes et leur historique restent dans Sales ; Identity ne devient pas propriétaire des données commerciales.
   - Les accès aux profils, adresses, paniers et commandes doivent être limités au client concerné et aux acteurs internes autorisés selon leur périmètre.
 - **Périmètre concerné :** Identity, Sales et Localization.
-- **Points restant à préciser :** champs exacts du profil commercial, nombre d'adresses autorisées, adresse par défaut, validation des coordonnées, consentements et politique de conservation/anonymisation.
+- **Points restant à préciser :** nombre maximal d'adresses autorisées, champs obligatoires et validation des coordonnées, consentements et politique de conservation/anonymisation. Le principe de plusieurs adresses et d'une adresse par défaut est validé par Q288.
 
 ### Question 4 — Inscription d'un client marketplace (VALIDÉ)
 - **Question :** Comment un client marketplace doit-il créer son compte lors du premier release ?
@@ -4541,6 +4541,14 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q288 — Adresses de livraison enregistrées par le client (VALIDÉE)
+- **Question :** Combien d'adresses de livraison un client peut-il enregistrer dans son espace personnel ?
+- **Réponse :** B — plusieurs adresses, avec une adresse par défaut sélectionnée.
+- **Décision :** un client peut enregistrer plusieurs adresses de livraison dans son espace personnel. Il désigne une adresse par défaut, proposée automatiquement lors d'une prochaine commande. Il peut choisir une autre adresse enregistrée au moment du checkout.
+- **Responsabilités et cohérence :** Localization reste propriétaire des données structurées d'adresse ; Sales gère leur association au profil commercial du client, le choix de l'adresse par défaut et l'adresse retenue pour chaque commande. L'adresse choisie doit être figée dans les données de commande afin qu'une modification ultérieure du carnet d'adresses ne réécrive pas une commande passée. Identity ne duplique pas les adresses postales dans les données de sécurité du compte.
+- **Sécurité et validation :** un client ne peut consulter, modifier, supprimer, définir par défaut ou sélectionner que ses propres adresses. Le serveur vérifie la propriété de l'adresse au checkout et empêche toute référence à l'adresse d'un autre client. La suppression ou modification d'une adresse déjà utilisée dans une commande ne doit pas altérer le snapshot de cette commande.
+- **À préciser avant implémentation :** le nombre maximal d'adresses enregistrées, les champs obligatoires et les règles de validation des coordonnées. Aucune limite numérique n'est fixée par Q288.
+
 ### Décision Q287 — Durée de validité du lien de vérification e-mail client (VALIDÉE)
 - **Question :** Combien de temps le lien envoyé au client doit-il rester valide ?
 - **Réponse :** B — 24 heures.
@@ -4660,6 +4668,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.69 — 14 novembre 2026
+- Enregistrement de Q288 : carnet de plusieurs adresses de livraison par client, avec adresse par défaut et possibilité d'en choisir une autre au checkout.
+- Précision des responsabilités Localization/Sales, de l'isolation par client et du snapshot de l'adresse dans chaque commande ; le plafond d'adresses reste à cadrer.
 
 ### Version 3.68 — 14 novembre 2026
 - Enregistrement de Q287 : lien de vérification e-mail client valable 24 heures ; expiration serveur, renouvellement sous limites anti-abus et invalidation immédiate des liens précédents.
