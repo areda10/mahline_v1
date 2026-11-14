@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.77
+- **Version :** 3.78
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q297 — Suppression d'une adresse utilisée par une commande en cours (VALIDÉE)
+- **Question :** Un client souhaite supprimer une adresse déjà enregistrée dans une commande en cours de préparation ou de livraison. Quelle règle appliquer ?
+- **Réponse :** A — autoriser la suppression du carnet ; la commande conserve son snapshot complet et reste inchangée.
+- **Décision :** le client peut supprimer une adresse de son carnet même si elle a été utilisée pour une commande en cours. La suppression affecte uniquement le carnet d'adresses ; elle ne modifie, n'annule et ne bloque pas la commande.
+- **Conséquences :** chaque commande conserve son snapshot de livraison autonome, comprenant les coordonnées et informations de destinataire enregistrées au moment de la commande. Le snapshot reste accessible aux acteurs autorisés du parcours de commande et de livraison selon leurs permissions, même après suppression de l'adresse source.
+- **Sécurité et cohérence :** suppression contrôlée côté serveur dans le périmètre du client propriétaire ; les commandes historiques et en cours ne dépendent pas de la présence de l'adresse dans le carnet.
+
 ### Décision Q296 — Adresse choisie au checkout et adresse par défaut (VALIDÉE)
 - **Question :** Si le client choisit une adresse différente au moment de passer commande, doit-elle automatiquement remplacer son adresse par défaut enregistrée ?
 - **Réponse :** A — non. Le choix au checkout vaut uniquement pour cette commande.
@@ -4725,6 +4732,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.78 — 14 novembre 2026
+- Enregistrement de Q297 : suppression autorisée d'une adresse même utilisée par une commande en cours ; le snapshot de commande demeure autonome et inchangé.
 
 ### Version 3.77 — 14 novembre 2026
 - Enregistrement de Q296 : l'adresse choisie au checkout ne change pas l'adresse par défaut enregistrée ; elle ne vaut que pour la commande concernée.
