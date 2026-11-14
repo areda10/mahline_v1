@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.03
+- **Version :** 4.04
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4975,7 +4975,20 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** les limitations cumulatives du login client définies en Q317 et les protections Identity restent appliquées côté serveur. Le blocage temporaire doit être cohérent avec l'état de sécurité du compte, expirer selon la politique Identity existante et être levé uniquement selon les règles prévues par cette politique. Les échecs restent journalisés sans mot de passe, token, code ou secret ; aucune notification e-mail n'est envoyée pour les échecs (Q321). Les notifications Q320 des événements sensibles réussis restent applicables. Aucune durée ou seuil nouveau n'est inventé par Q322.
 - **Statut :** VALIDÉ — premier release, paramètres hérités d'Identity.
 
+
+### Décision Q323 — Sessions client simultanées sur plusieurs appareils (VALIDÉE)
+- **Question :** Le client peut-il rester connecté simultanément sur plusieurs appareils ?
+- **Réponse :** A — oui, plusieurs sessions simultanées, chacune gérable et révocable individuellement.
+- **Décision :** autoriser plusieurs sessions web actives pour un même compte client, notamment depuis un ordinateur, un téléphone ou une tablette. Une nouvelle connexion ne révoque pas les sessions déjà ouvertes.
+- **Conséquences :** chaque session doit être identifiable et révocable individuellement depuis l'espace sécurité du client, conformément au modèle déjà validé en Q319. Le client peut également révoquer les autres sessions selon les capacités prévues par Q319. Les contrôles de propriété sont vérifiés côté serveur ; la révocation invalide réellement la session concernée et sa persistance éventuelle. Les révocations globales déclenchées par les événements de sécurité, notamment la réinitialisation du mot de passe Q316, continuent de s'appliquer à toutes les sessions et aux tokens API. Aucun plafond arbitraire de sessions n'est ajouté par Q323.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.04 — 14 novembre 2026
+- Enregistrement de Q323 : sessions web simultanées autorisées sur plusieurs appareils, sans déconnexion automatique des sessions existantes.
+- Gestion et révocation individuelle des sessions dans l'espace sécurité client, en cohérence avec Q319 et les révocations globales Q316.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.03 — 14 novembre 2026
 - Enregistrement de Q322 : blocage temporaire du compte client après les échecs selon les seuils, durées et règles Identity existants.
