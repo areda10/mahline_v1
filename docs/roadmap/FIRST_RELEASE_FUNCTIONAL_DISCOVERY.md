@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.10
+- **Version :** 4.11
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5037,7 +5037,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - La notification dans l'espace client, si une autre session est déjà active, reste applicable. La révocation initiée par le client ne vise que la nouvelle session suspecte et ne déconnecte pas ses autres appareils.
 - **Statut :** VALIDÉ — premier release ; traitement de l'absence de réponse à préciser.
 
+
+### Décision Q330 — Absence de réponse à l'alerte de nouvel appareil (VALIDÉE)
+- **Question :** Que faire si le client ne confirme ni ne signale la nouvelle connexion dans l'heure ?
+- **Réponse :** B — révoquer automatiquement la nouvelle session et bloquer son accès.
+- **Décision :** si aucune confirmation légitime ni révocation manuelle n'est reçue dans le délai d'une heure défini par Q329, MAHLINE révoque automatiquement la session du nouvel appareil non reconnu et lui bloque l'accès.
+- **Conséquences :**
+  - La révocation automatique vise exclusivement la session créée lors de cette nouvelle connexion ; les autres sessions du client restent actives.
+  - La session révoquée ne peut plus accéder à l'espace client ni poursuivre des opérations authentifiées. Une nouvelle tentative de connexion depuis cet appareil sera traitée comme une nouvelle connexion et devra repasser par le contrôle de nouvel appareil.
+  - L'expiration du lien Q329 déclenche cette révocation ciblée si aucune réponse n'a été reçue avant l'échéance. Le traitement d'une confirmation tardive et les modalités de nouvelle tentative restent à préciser avant développement.
+  - L'événement de révocation automatique doit être audité avec l'identifiant de session concerné, les horodatages et le motif, sans enregistrer le lien, token ou secret d'authentification.
+- **Statut :** VALIDÉ — premier release.
+
 ## 6. Historique des mises à jour
+
+### Version 4.11 — 14 novembre 2026
+- Enregistrement de Q330 : en l'absence de réponse dans l'heure Q329, révocation automatique et blocage de la seule nouvelle session non reconnue.
+- Les autres appareils restent connectés ; révocation auditée sans secret. Confirmation tardive et nouvelle tentative à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
