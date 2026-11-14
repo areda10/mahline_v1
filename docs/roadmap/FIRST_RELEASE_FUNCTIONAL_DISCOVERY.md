@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.09
+- **Version :** 4.10
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5025,7 +5025,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **À préciser avant développement :** durée de validité du lien, traitement d'une absence de réponse, éventuelle confirmation automatique de confiance de l'appareil et comportement exact après confirmation. Aucun délai n'est fixé par Q328 à ce stade.
 - **Statut :** principe validé — détails de cycle de vie à compléter avant implémentation.
 
+
+### Décision Q329 — Délai de confirmation d'un nouvel appareil (VALIDÉE)
+- **Question :** Combien de temps le client dispose-t-il pour confirmer ou signaler une connexion depuis un appareil non reconnu ?
+- **Réponse :** C — 1 heure.
+- **Décision :** le lien sécurisé envoyé par e-mail pour confirmer la légitimité de la nouvelle connexion ou révoquer la session suspecte est valable pendant une heure à compter de son émission.
+- **Conséquences :**
+  - Le client dispose d'une heure pour confirmer qu'il est à l'origine de la connexion ou signaler qu'il ne la reconnaît pas et révoquer la nouvelle session concernée.
+  - Le lien est individuel, à usage unique, lié à la session nouvellement créée et protégé contre la divulgation ou la réutilisation ; seule sa preuve sécurisée est conservée côté serveur, jamais le secret en clair dans les journaux.
+  - À l'expiration, le lien ne permet plus aucune action. Le comportement de la session en l'absence de réponse, ainsi que le traitement d'une demande de nouveau lien, restent à définir séparément avant développement ; aucune révocation ou validation automatique n'est supposée par Q329.
+  - La notification dans l'espace client, si une autre session est déjà active, reste applicable. La révocation initiée par le client ne vise que la nouvelle session suspecte et ne déconnecte pas ses autres appareils.
+- **Statut :** VALIDÉ — premier release ; traitement de l'absence de réponse à préciser.
+
 ## 6. Historique des mises à jour
+
+### Version 4.10 — 14 novembre 2026
+- Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
+- À expiration, le lien devient inutilisable ; le comportement de la session sans réponse reste à définir, sans révocation/validation automatique supposée.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.09 — 14 novembre 2026
 - Enregistrement de Q328 : connexion immédiate d'un nouvel appareil non reconnu, avec e-mail simultané de confirmation ou de révocation ciblée ; notification dans l'espace si une session client existe déjà.
