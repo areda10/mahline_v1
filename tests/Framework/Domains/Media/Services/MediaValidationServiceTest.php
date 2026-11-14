@@ -14,9 +14,7 @@ final class MediaValidationServiceTest extends TestCase
 {
     public function test_product_image_accepts_a_valid_jpeg(): void
     {
-        if (! function_exists('imagecreatetruecolor')) {
-            self::markTestSkipped('GD is required to generate the fake image.');
-        }
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
 
         $file = UploadedFile::fake()->image('product.jpg', 100, 100);
         $result = app(MediaValidationService::class)->validate($file, MediaCategory::PRODUCT_IMAGE);
