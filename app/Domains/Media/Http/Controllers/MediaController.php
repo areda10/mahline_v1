@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Http\Controllers;
 
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
@@ -68,6 +69,16 @@ final class MediaController
     public function show(Request $request, Media $media): StreamedResponse
     {
         abort_unless($media->visibility === 'public', 404);
+
+        $owner = $media->mediable;
+        $isPublished = match (true) {
+            $owner instanceof Product => $owner->is_active
+                && $owner->cooperative?->status === CooperativeStatus::ACTIVE,
+            $owner instanceof Cooperative => $owner->status === CooperativeStatus::ACTIVE,
+            default => false,
+        };
+
+        abort_unless($isPublished, 404);
 
         return $this->stream($request, $media);
     }
