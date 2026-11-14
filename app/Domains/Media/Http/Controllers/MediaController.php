@@ -90,14 +90,9 @@ final class MediaController
 
         if ($variant !== 'original') {
             $derivative = $media->metadata['derivatives'][$variant] ?? null;
-            $prefix = rtrim(dirname($media->path), '/').'/' ;
+            $expected = dirname($media->path).'/'.$variant.'.'.$media->extension;
 
-            abort_unless(
-                is_string($derivative)
-                && str_starts_with($derivative, $prefix)
-                && ! str_contains($derivative, '..'),
-                404,
-            );
+            abort_unless(is_string($derivative) && $derivative === $expected, 404);
 
             $path = $derivative;
         }
