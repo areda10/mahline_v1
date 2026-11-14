@@ -53,8 +53,19 @@ final class AuthenticationController
         return view('auth.login');
     }
 
-    public function login(
+    public function login(AuthenticationRequest $request): JsonResponse|RedirectResponse
+    {
+        return $this->authenticate($request, customerOnly: false);
+    }
+
+    public function loginCustomer(AuthenticationRequest $request): JsonResponse|RedirectResponse
+    {
+        return $this->authenticate($request, customerOnly: true);
+    }
+
+    private function authenticate(
         AuthenticationRequest $request,
+        bool $customerOnly,
     ): JsonResponse|RedirectResponse {
         $context = new AuthenticationContext(
             email: (string) $request->input('email'),
@@ -71,6 +82,7 @@ final class AuthenticationController
                 context: $context,
                 sessionId: $context->sessionId,
                 request: $request,
+                customerOnly: $customerOnly,
             );
         } catch (AuthenticationFailedException) {
             if ($request->expectsJson()) {
@@ -126,7 +138,9 @@ final class AuthenticationController
          * the Laravel session ID with the Identity authentication session.
          */
         if ($user->must_change_password) {
-            return redirect()->route('password.force-change.edit');
+            return redirect()->route($customerOnly
+                ? 'customer.security.password.edit'
+                : 'password.force-change.edit');
         }
 
         if ($user->hasRole('super_admin_root')) {
