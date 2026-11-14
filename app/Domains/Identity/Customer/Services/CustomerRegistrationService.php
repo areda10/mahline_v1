@@ -6,10 +6,10 @@ namespace App\Domains\Identity\Customer\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Customer\Exceptions\CustomerVerificationDeliveryException;
 use App\Domains\Identity\Customer\Models\CustomerEmailVerification;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
