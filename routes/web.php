@@ -77,7 +77,7 @@ Route::prefix('customer')
     ->middleware('web')
     ->group(function (): void {
         Route::middleware('guest')->group(function (): void {
-            Route::get('login', [AuthenticationController::class, 'showLogin'])
+            Route::get('login', [AuthenticationController::class, 'showCustomerLogin'])
                 ->name('login');
             Route::post('login', [AuthenticationController::class, 'loginCustomer'])
                 ->middleware('throttle:5,1')
@@ -87,6 +87,17 @@ Route::prefix('customer')
             Route::post('register', [CustomerRegistrationController::class, 'store'])
                 ->middleware('throttle:5,1')
                 ->name('register.store');
+
+            Route::get('password/forgot', [PasswordResetController::class, 'showForgotForm'])
+                ->name('password.request');
+            Route::post('password/forgot', [PasswordResetController::class, 'forgot'])
+                ->middleware('throttle:5,1')
+                ->name('password.email');
+            Route::get('password/reset', [PasswordResetController::class, 'showResetForm'])
+                ->name('password.reset');
+            Route::post('password/reset', [PasswordResetController::class, 'reset'])
+                ->middleware('throttle:10,1')
+                ->name('password.update');
         });
 
         Route::get('verification/notice', [CustomerRegistrationController::class, 'notice'])
