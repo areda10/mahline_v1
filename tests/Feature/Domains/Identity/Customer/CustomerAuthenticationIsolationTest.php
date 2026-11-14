@@ -149,7 +149,7 @@ final class CustomerAuthenticationIsolationTest extends TestCase
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->get(route('customer.password.force-change.edit'))
             ->assertOk()
-            ->assertSee('layouts.customer')
+            ->assertSee('Mon espace')
             ->assertSee(route('customer.password.force-change.update'), false)
             ->assertDontSee(route('password.force-change.update'), false);
     }
