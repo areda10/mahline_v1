@@ -8,6 +8,7 @@ use App\Domains\Media\Models\Media;
 use App\Domains\Media\Services\MediaCleanupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class MediaCleanupServiceTest extends TestCase
@@ -55,7 +56,7 @@ final class MediaCleanupServiceTest extends TestCase
     {
         return [
             'mediable_type' => 'App\\Domains\\Products\\Models\\Product',
-            'mediable_id' => '01JTESTPRODUCT00000000000000',
+            'mediable_id' => (string) Str::ulid(),
             'collection' => 'documents',
             'category' => 'document',
             'disk' => 'local',
