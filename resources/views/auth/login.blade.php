@@ -295,7 +295,9 @@
                 </div>
             </div>
 
-            <footer class="form-footer">
+            <p class="customer-register-link" style="text-align:center;margin-top:18px">Vous êtes client ? <a href="{{ route('customer.register') }}">Créer un compte client</a></p>
+
+                <footer class="form-footer">
                 <span data-i18n="footerText">
                     Une plateforme dédiée aux coopératives.
                 </span>
