@@ -40,7 +40,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('authentication')
     ->name('authentication.')
-    ->middleware('web')
     ->group(function (): void {
         /*
          * Display authentication endpoint.
@@ -74,7 +73,6 @@ Route::prefix('authentication')
 */
 Route::prefix('customer')
     ->name('customer.')
-    ->middleware('web')
     ->group(function (): void {
         Route::middleware('guest')->group(function (): void {
             Route::get('login', [AuthenticationController::class, 'showCustomerLogin'])
@@ -137,7 +135,6 @@ Route::prefix('customer')
 */
 Route::prefix('password')
     ->name('password.')
-    ->middleware('web')
     ->group(function (): void {
         // Display the forgot-password form.
         Route::get(
@@ -166,14 +163,14 @@ Route::prefix('password')
 
 Route::prefix('password/change-required')
     ->name('password.force-change.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
         Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
     });
 
 Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit'])
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->name('security.password.edit');
 
 /*
@@ -213,16 +210,16 @@ Route::get('/', function () {
 });
 
 Route::get('/user/dashboard', UserDashboardController::class)
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
 
 Route::get('/customer/dashboard', CustomerDashboardController::class)
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
     ->name('customer.dashboard');
 
 Route::prefix('customer/profile')
     ->name('customer.profile.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
     ->group(function (): void {
         Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
         Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
@@ -238,7 +235,7 @@ Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept
 
 Route::prefix('root/back-office')
     ->name('root.backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
@@ -390,7 +387,7 @@ Route::prefix('root/back-office')
 */
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
             ->name('security.sessions.index');
@@ -413,7 +410,7 @@ Route::prefix('back-office')
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
     ->group(function (): void {
 
         Route::get('dashboard', BackOfficeDashboardController::class)
