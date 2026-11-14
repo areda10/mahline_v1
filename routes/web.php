@@ -107,6 +107,10 @@ Route::prefix('customer')
             ->middleware('throttle:10,1')
             ->name('verification.resend');
 
+        Route::get('email/change/verify', [CustomerProfileController::class, 'verifyEmailChange'])
+            ->middleware('throttle:10,1')
+            ->name('email.change.verify');
+
         Route::post('logout', [AuthenticationController::class, 'logout'])
             ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
             ->name('logout');
@@ -223,6 +227,9 @@ Route::prefix('customer/profile')
     ->group(function (): void {
         Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
         Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
+        Route::post('email', [CustomerProfileController::class, 'requestEmailChange'])
+            ->middleware('throttle:5,1')
+            ->name('email.change');
     });
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
