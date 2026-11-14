@@ -60,9 +60,9 @@ final class CustomerRegistrationTest extends TestCase
         );
 
         $token = $this->sentVerificationToken();
-        $this->assertDatabaseMissing('customer_email_verifications', [
+        $this->assertDatabaseHas('customer_email_verifications', [
             'user_id' => $customer->getKey(),
-            'token_hash' => $token,
+            'token_hash' => hash('sha256', $token),
         ]);
 
         $this->get(route('customer.verification.verify', ['token' => $token]))
