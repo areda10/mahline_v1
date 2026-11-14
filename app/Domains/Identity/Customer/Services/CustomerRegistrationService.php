@@ -6,6 +6,7 @@ namespace App\Domains\Identity\Customer\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Identity\Customer\Exceptions\CustomerVerificationDeliveryException;
 use App\Domains\Identity\Customer\Models\CustomerEmailVerification;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
 use App\Domains\Identity\Enums\UserStatus;
@@ -293,7 +294,7 @@ final class CustomerRegistrationService extends BaseService
                 ->whereNull('revoked_at')
                 ->update(['revoked_at' => now()]);
 
-            throw new RuntimeException(
+            throw new CustomerVerificationDeliveryException(
                 'The customer verification email could not be delivered.',
                 previous: $exception,
             );
