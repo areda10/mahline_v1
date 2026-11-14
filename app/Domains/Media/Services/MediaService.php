@@ -165,7 +165,7 @@ final class MediaService
             $owner->media()
                 ->where('category', MediaCategory::PRODUCT_IMAGE->value)
                 ->where('is_primary', true)
-                ->whereKeyNot($media->getKey())
+                ->where($media->getKeyName(), '!=', $media->getKey())
                 ->update([
                     'is_primary' => false,
                     'updated_by' => (string) $actor->getKey(),
