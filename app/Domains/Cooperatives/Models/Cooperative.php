@@ -122,11 +122,15 @@ final class Cooperative extends BaseModel
 
     public function photos(): MorphMany
     {
-        return $this->media()->where('category', 'cooperative_photo');
+        return $this->media()->where('category', 'cooperative_photo')
+            ->orderBy('sort_order')
+            ->orderBy('created_at');
     }
 
     public function documents(): MorphMany
     {
-        return $this->media()->where('category', 'document');
+        return $this->media()->where('category', 'document')
+            ->orderBy('sort_order')
+            ->orderBy('created_at');
     }
 }
