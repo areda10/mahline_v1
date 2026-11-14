@@ -13,6 +13,11 @@ final class CustomerEmailChangeNotification extends Notification
         private readonly string $verificationUrl,
     ) {}
 
+    public function verificationUrl(): string
+    {
+        return $this->verificationUrl;
+    }
+
     public function via(object $notifiable): array
     {
         return ['mail'];
