@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Product extends BaseModel
@@ -82,6 +83,23 @@ final class Product extends BaseModel
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function images(): MorphMany
+    {
+        return $this->media()->where('category', 'product_image');
+    }
+
+    public function primaryImage(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'mediable')
+            ->where('category', 'product_image')
+            ->where('is_primary', true);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->media()->where('category', 'document');
     }
 
     public function scopeForCooperative(
