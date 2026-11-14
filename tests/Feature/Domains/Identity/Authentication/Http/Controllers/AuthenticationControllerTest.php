@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -71,6 +72,9 @@ final class AuthenticationControllerTest extends TestCase
 
         $loginResponse->assertRedirect(route('user.dashboard'));
         $this->assertAuthenticatedAs($user);
+        $deviceCookie = $loginResponse->getCookie(DeviceTrustCookie::NAME);
+        $this->assertNotNull($deviceCookie);
+        $this->withCookie(DeviceTrustCookie::NAME, $deviceCookie->getValue());
 
         $authenticationSession = AuthenticationSession::query()
             ->where('user_id', $user->getKey())
@@ -206,6 +210,10 @@ final class AuthenticationControllerTest extends TestCase
             config('session.cookie'),
             $sessionCookie->getValue(),
         );
+
+        $deviceCookie = $response->getCookie(DeviceTrustCookie::NAME);
+        $this->assertNotNull($deviceCookie);
+        $this->withCookie(DeviceTrustCookie::NAME, $deviceCookie->getValue());
 
         $dashboardResponse = $this->get(
             route('root.backoffice.dashboard'),

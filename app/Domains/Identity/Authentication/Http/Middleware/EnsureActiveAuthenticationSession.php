@@ -83,6 +83,8 @@ final class EnsureActiveAuthenticationSession
                 browser: $authenticationSession->browser,
             );
         } catch (DeviceTrustException) {
+            $this->sessions->revoke($authenticationSession, 'device_proof_rejected');
+
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
