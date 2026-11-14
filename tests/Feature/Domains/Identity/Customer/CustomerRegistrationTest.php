@@ -9,6 +9,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
 use App\Domains\Identity\Customer\Services\CustomerRegistrationService;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -123,10 +124,16 @@ final class CustomerRegistrationTest extends TestCase
         // Vérifier que le cookie expire à la fermeture du navigateur.
         $this->assertSame(0, $sessionCookie->getExpiresTime());
 
-        // Rejouer le cookie sur la requête suivante.
+        // Rejouer les deux preuves indépendantes sur la requête suivante.
+        $deviceCookie = $loginResponse->getCookie(DeviceTrustCookie::NAME);
+        $this->assertNotNull($deviceCookie);
+
         $this->withCookie(
             config('session.cookie'),
             $sessionCookie->getValue(),
+        )->withCookie(
+            DeviceTrustCookie::NAME,
+            $deviceCookie->getValue(),
         )->get(route('customer.dashboard'))->assertOk();
     }
 
