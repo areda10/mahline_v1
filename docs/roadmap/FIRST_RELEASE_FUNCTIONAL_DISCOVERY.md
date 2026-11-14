@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.86
+- **Version :** 3.87
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q306 — Refus de toutes les sous-commandes d'une commande globale (VALIDÉE)
+- **Question :** Que devient la commande globale si toutes les coopératives refusent leurs sous-commandes ?
+- **Réponse :** A — la commande globale passe au statut « Refusée », les frais de livraison deviennent nuls et le client est informé.
+- **Décision :** lorsque toutes les sous-commandes coopératives d'une commande globale sont définitivement refusées, Sales clôt automatiquement la commande globale avec le statut « Refusée ». Aucune expédition n'étant maintenue, le total des frais de livraison est égal à zéro.
+- **Conséquences :**
+  - La clôture intervient lorsque le serveur a enregistré le refus de toutes les sous-commandes ; elle ne dépend pas d'une intervention manuelle d'un administrateur.
+  - Les frais de livraison de toutes les expéditions refusées sont retirés ; le montant de livraison restant dû est nul.
+  - Communication informe le client de la clôture et du refus de l'ensemble des sous-commandes.
+  - Sales conserve les décisions de chaque coopérative, les dates, les statuts et les montants recalculés ; les événements sont audités et le traitement doit être idempotent.
+  - Cette règle ne définit pas à elle seule le remboursement ou la libération d'un paiement en ligne ; le premier release conserve le mode de paiement déjà cadré.
+- **Périmètre concerné :** Sales (agrégation des refus et clôture globale), Delivery (absence d'expéditions et frais nuls), Communication (notification client), Finance (montants dus).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q305 — Frais d'une sous-commande entièrement refusée avant expédition (VALIDÉE)
 - **Question :** Que deviennent les frais de livraison attribués à une coopérative qui refuse entièrement sa sous-commande avant toute expédition ?
 - **Réponse :** A — retirer les frais de cette expédition du total ; le client ne paie que les expéditions restantes.
@@ -4818,6 +4831,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.87 — 14 novembre 2026
+- Enregistrement de Q306 : clôture automatique de la commande globale au statut « Refusée » si toutes les sous-commandes sont refusées ; frais de livraison nuls et notification client.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.86 — 14 novembre 2026
 - Enregistrement de Q305 : frais retirés pour une sous-commande entièrement refusée avant expédition ; total recalculé sur les expéditions restantes.
