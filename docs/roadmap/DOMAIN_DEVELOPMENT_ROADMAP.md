@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.87
+- **Version :** 5.88
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -611,10 +611,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Absence de réponse à l'alerte de nouvel appareil (Q330) :** si le client ne confirme ni ne signale la connexion pendant l'heure de validité du lien Q329, la nouvelle session reste active ; seul le lien expire. Aucune révocation automatique n'est effectuée. Les autres sessions restent inchangées. Un parcours sécurisé permettant au client de signaler ultérieurement une connexion non reconnue et de révoquer la session concernée reste à définir avant développement. Audit des événements sans secrets.
 
+**Signalement tardif d'un appareil non reconnu (Q331) :** depuis son espace sécurité, le client peut sélectionner l'appareil/session concerné(e), choisir « Signaler comme non reconnu », puis confirmer explicitement la révocation. L'action est vérifiée côté serveur (propriété du compte et correspondance exacte de la session) et révoque uniquement la session sélectionnée ; les autres appareils restent actifs. Ce parcours reste disponible après expiration du lien Q329.
 
-### Version 5.87 — 14 novembre 2026
-- Enregistrement de Q330 : en l'absence de réponse dans l'heure Q329, la nouvelle session reste active ; seul le lien expire.
-- Aucune révocation automatique ; parcours de signalement/révocation après expiration à préciser. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.88 — 14 novembre 2026
+- Enregistrement de Q331 : signalement d'un appareil non reconnu depuis l'espace sécurité, sélection de la session et confirmation de sa révocation ciblée.
+- Contrôle de propriété côté serveur ; autres sessions préservées ; action disponible après expiration du lien Q329. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
