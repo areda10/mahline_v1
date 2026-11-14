@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.25
+- **Version :** 4.26
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5145,7 +5145,22 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 
 
+### Décision Q339 — Durée du lien de vérification du changement d'e-mail (VALIDÉE)
+- **Question :** Combien de temps le lien envoyé à la nouvelle adresse après authentification du client doit-il rester valable ?
+- **Réponse :** A — 30 minutes.
+- **Décision :** le lien de vérification d'une nouvelle adresse e-mail client expire 30 minutes après son émission.
+- **Conséquences :**
+  - Le serveur vérifie systématiquement l'expiration ; un lien expiré ne peut pas valider le changement d'adresse.
+  - Le lien reste à usage unique et lié à la demande de changement concernée ; toute nouvelle demande/lien doit invalider les précédents conformément aux contrôles de sécurité Identity.
+  - L'ancienne adresse reste principale tant que la nouvelle adresse n'a pas été vérifiée avec un lien valide.
+  - Après validation, appliquer la révocation des sessions web et tokens API ainsi que la notification de sécurité à l'ancienne adresse selon Q9-Q12/Q312.
+  - Ne jamais journaliser le lien, son jeton, ni aucun secret d'authentification.
+- **Statut :** VALIDÉ — premier release ; implémentation et tests à réaliser.
+
 ## 6. Historique des mises à jour
+
+### Version 4.26 — 14 novembre 2026
+- Q339 : lien de vérification du changement d'e-mail valable 30 minutes ; expiration contrôlée côté serveur, usage unique et absence de journalisation des secrets.
 
 ### Version 4.25 — 14 novembre 2026
 - Q338 : mot de passe actuel obligatoire et vérifié côté serveur avant tout envoi du lien de validation d'une nouvelle adresse e-mail client ; aucune demande ni notification en cas de mot de passe absent/incorrect.
