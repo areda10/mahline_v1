@@ -27,8 +27,16 @@ final class DeviceTrustController
             ? $sessions->findActiveById($user, $authenticationSessionId)
             : null;
 
+        $deviceList = $devices->devicesFor($user);
+        $deviceList->each(static function (KnownDevice $device): void {
+            $device->setAttribute(
+                'last_ip_address',
+                $device->sessions()->orderByDesc('authenticated_at')->value('ip_address'),
+            );
+        });
+
         return view('identity.security.devices.index', [
-            'devices' => $devices->devicesFor($user),
+            'devices' => $deviceList,
             'trustedCount' => $devices->trustedCount($user),
             'currentDeviceId' => $session?->known_device_id,
             'securityNotifications' => $user->notifications()

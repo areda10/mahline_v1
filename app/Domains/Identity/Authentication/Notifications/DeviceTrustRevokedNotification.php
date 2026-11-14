@@ -18,6 +18,7 @@ final class DeviceTrustRevokedNotification extends Notification
     public function __construct(
         private readonly string $device,
         private readonly ?string $browser,
+        private readonly ?string $ipAddress,
         private readonly Carbon $revokedAt,
     ) {}
 
@@ -44,6 +45,7 @@ final class DeviceTrustRevokedNotification extends Notification
                 'device' => 'Device',
                 'browser' => 'Browser',
                 'date' => 'Revocation date and time',
+                'ip' => 'IP address',
                 'footer' => 'All active web sessions belonging to this device were revoked. Its device proof can no longer be used to sign in to this account. Your other devices and API tokens were not changed.',
                 'unknown' => 'Not available',
             ],
@@ -54,6 +56,7 @@ final class DeviceTrustRevokedNotification extends Notification
                 'device' => 'الجهاز',
                 'browser' => 'المتصفح',
                 'date' => 'تاريخ ووقت الإلغاء',
+                'ip' => 'عنوان IP',
                 'footer' => 'تم إلغاء جميع جلسات الويب النشطة المرتبطة بهذا الجهاز. لم يتم تغيير أجهزتك الأخرى أو مفاتيح API.',
                 'unknown' => 'غير متاح',
             ],
@@ -64,6 +67,7 @@ final class DeviceTrustRevokedNotification extends Notification
                 'device' => 'Appareil',
                 'browser' => 'Navigateur',
                 'date' => 'Date et heure de révocation',
+                'ip' => 'Adresse IP',
                 'footer' => 'Toutes les sessions Web actives de cet appareil ont été révoquées. Son justificatif ne peut plus être utilisé pour se connecter à ce compte. Vos autres appareils et vos clés API n’ont pas été modifiés.',
                 'unknown' => 'Non disponible',
             ],
@@ -75,6 +79,7 @@ final class DeviceTrustRevokedNotification extends Notification
             ->line($messages['intro'])
             ->line($messages['device'].': '.$this->device)
             ->line($messages['browser'].': '.($this->browser ?: $messages['unknown']))
+            ->line($messages['ip'].': '.($this->ipAddress ?: $messages['unknown']))
             ->line($messages['date'].': '.$date)
             ->line($messages['footer']);
     }
@@ -86,6 +91,7 @@ final class DeviceTrustRevokedNotification extends Notification
             'event' => 'device_trust_revoked',
             'device' => $this->device,
             'browser' => $this->browser,
+            'ip_address' => $this->ipAddress,
             'revoked_at' => $this->revokedAt->toIso8601String(),
         ];
     }

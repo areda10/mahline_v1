@@ -558,6 +558,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             'user_id' => $customer->getKey(),
             'known_device_id' => $device->getKey(),
             'session_id' => 'customer-selected-device-session',
+            'ip_address' => '203.0.113.10',
             'authenticated_at' => now(),
             'last_activity_at' => now(),
         ]);
@@ -579,6 +580,7 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertDatabaseHas('notifications', [
             'notifiable_type' => User::class,
             'notifiable_id' => $customer->getKey(),
+            'data->ip_address' => '203.0.113.10',
         ]);
     }
 

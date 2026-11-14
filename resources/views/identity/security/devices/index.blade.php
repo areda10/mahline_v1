@@ -51,6 +51,7 @@
                     <tr>
                         <th>Appareil</th>
                         <th>Navigateur</th>
+                        <th>Dernière IP</th>
                         <th>Dernière activité</th>
                         <th>Statut</th>
                         <th>Action</th>
@@ -68,6 +69,7 @@
                                 @if($isCurrent) <strong>(cet appareil)</strong> @endif
                             </td>
                             <td>{{ $device->browser ?: '—' }}</td>
+                            <td>{{ $device->last_ip_address ?: '—' }}</td>
                             <td>{{ $device->last_seen_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td>
                                 @if($status === 'trusted')

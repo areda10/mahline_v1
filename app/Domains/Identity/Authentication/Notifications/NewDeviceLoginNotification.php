@@ -44,6 +44,7 @@ final class NewDeviceLoginNotification extends Notification
                 'greeting' => 'Hello,',
                 'intro' => 'A sign-in to your MAHLINE account was detected from a new device.',
                 'date' => 'Date and time',
+                'ip' => 'IP address',
                 'browser' => 'Browser',
                 'device' => 'Device',
                 'location' => 'Approximate location: unavailable',
@@ -57,6 +58,7 @@ final class NewDeviceLoginNotification extends Notification
                 'greeting' => 'مرحباً،',
                 'intro' => 'تم رصد تسجيل دخول إلى حسابك في MAHLINE من جهاز جديد.',
                 'date' => 'التاريخ والوقت',
+                'ip' => 'عنوان IP',
                 'browser' => 'المتصفح',
                 'device' => 'الجهاز',
                 'location' => 'الموقع التقريبي: غير متاح',
@@ -70,6 +72,7 @@ final class NewDeviceLoginNotification extends Notification
                 'greeting' => 'Bonjour,',
                 'intro' => 'Une connexion à votre compte MAHLINE depuis un nouvel appareil a été détectée.',
                 'date' => 'Date et heure',
+                'ip' => 'Adresse IP',
                 'browser' => 'Navigateur',
                 'device' => 'Appareil',
                 'location' => 'Localisation approximative : indisponible',
@@ -95,6 +98,7 @@ final class NewDeviceLoginNotification extends Notification
 
         return $mail
             ->line($messages['date'].': '.$authenticatedAt)
+            ->line($messages['ip'].': '.($this->session->ip_address ?: $messages['unknown']))
             ->line($messages['browser'].': '.($this->session->browser ?: $messages['unknown']))
             ->line($messages['device'].': '.($this->session->device ?: $messages['unknown']))
             ->line($messages['location'])

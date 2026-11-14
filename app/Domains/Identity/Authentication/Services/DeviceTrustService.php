@@ -453,9 +453,15 @@ final class DeviceTrustService extends BaseService
             return;
         }
 
+        $ipAddress = AuthenticationSession::query()
+            ->where('known_device_id', $device->getKey())
+            ->orderByDesc('authenticated_at')
+            ->value('ip_address');
+
         $notification = new DeviceTrustRevokedNotification(
             device: $device->device,
             browser: $device->browser,
+            ipAddress: is_string($ipAddress) ? $ipAddress : null,
             revokedAt: $device->revoked_at ?? now(),
         );
 
