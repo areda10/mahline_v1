@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.71
+- **Version :** 3.72
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q291 — Nombre maximal d'adresses de livraison par client (VALIDÉE)
+- **Question :** Combien d'adresses de livraison un client peut-il enregistrer dans son compte ?
+- **Réponse :** A — 5 adresses maximum.
+- **Décision :** chaque compte client peut conserver au maximum cinq adresses de livraison enregistrées simultanément dans son carnet.
+- **Règles de gestion :** le serveur contrôle cette limite lors de toute création d'adresse ; une sixième adresse est refusée tant qu'une adresse existante n'a pas été supprimée. La modification d'une adresse existante ne consomme pas une nouvelle place. La limite s'applique au carnet du client, indépendamment des snapshots conservés dans les commandes historiques.
+- **Cohérence et sécurité :** la suppression d'une adresse du carnet ne supprime ni ne modifie les snapshots des commandes déjà créées. Le contrôle de limite et la propriété du carnet sont vérifiés côté serveur, y compris en cas de requêtes concurrentes.
+
 ### Décision Q290 — Modification d'une adresse utilisée dans une commande (VALIDÉE)
 - **Question :** Si le client modifie une adresse de son carnet après avoir passé une commande, que doit-il se passer ?
 - **Réponse :** A — la modification concerne uniquement les prochaines commandes ; les anciennes conservent l'adresse et les coordonnées initiales.
@@ -4683,6 +4690,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.72 — 14 novembre 2026
+- Enregistrement de Q291 : cinq adresses de livraison enregistrées au maximum par compte client ; contrôle serveur, sans limite sur les snapshots historiques.
 
 ### Version 3.71 — 14 novembre 2026
 - Enregistrement de Q290 : la modification d'une adresse enregistrée ne concerne que les commandes futures ; les commandes déjà créées conservent leur snapshot de livraison immuable, même avant expédition.
