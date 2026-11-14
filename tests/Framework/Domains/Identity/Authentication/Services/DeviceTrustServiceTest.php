@@ -117,6 +117,7 @@ final class DeviceTrustServiceTest extends TestCase
 
     public function test_revoked_device_cannot_keep_an_existing_session_active(): void
     {
+        Notification::fake();
         $user = User::factory()->create();
         $service = app(DeviceTrustService::class);
         $resolution = $service->resolveForAuthentication($user, null, 'windows', 'chrome');
@@ -131,6 +132,36 @@ final class DeviceTrustServiceTest extends TestCase
             $resolution->cookieToken,
             'windows',
             'chrome',
+        );
+    }
+
+    public function test_legacy_active_session_is_bound_to_a_device_on_its_next_request(): void
+    {
+        $user = User::factory()->create();
+        $service = app(DeviceTrustService::class);
+        $session = AuthenticationSession::query()->create([
+            'user_id' => $user->getKey(),
+            'session_id' => bin2hex(random_bytes(20)),
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+            'device' => 'windows',
+            'browser' => 'chrome',
+        ]);
+
+        $resolution = $service->ensureSessionDevice(
+            $user,
+            $session,
+            null,
+            'windows',
+            'chrome',
+        );
+
+        $this->assertNotNull($resolution);
+        $this->assertSame(KnownDeviceStatus::Trusted, $resolution->device->status);
+        $this->assertSame($resolution->device->getKey(), $session->fresh()->known_device_id);
+        $this->assertSame(
+            DeviceTrustCookie::hash($resolution->cookieToken),
+            $resolution->device->device_token_hash,
         );
     }
 
