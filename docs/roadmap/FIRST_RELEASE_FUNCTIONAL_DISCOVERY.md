@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.15
+- **Version :** 4.16
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5075,11 +5075,25 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
   - L'événement et l'envoi des notifications sont traçables sans enregistrer de secret ; les autres sessions restent actives.
 - **Statut :** VALIDÉ — premier release.
 
+
+
+### Décision Q334 — Mémorisation d'un appareil reconnu (VALIDÉE)
+- **Question :** Pendant combien de temps MAHLINE doit-il mémoriser qu'un appareil a été reconnu par le client ?
+- **Réponse :** C — jusqu'à révocation par le client.
+- **Décision :** après reconnaissance/confirmation explicite d'un nouvel appareil, MAHLINE conserve son statut d'appareil reconnu sans échéance calendaire fixe, jusqu'à ce que le client le révoque depuis son espace sécurité.
+- **Conséquences :**
+  - Le client peut consulter les appareils reconnus et révoquer individuellement cette confiance depuis son espace sécurité.
+  - Après révocation, l'appareil ne bénéficie plus de la reconnaissance persistante ; une connexion ultérieure repasse par le contrôle d'un nouvel appareil non reconnu.
+  - La reconnaissance doit reposer sur un mécanisme serveur sécurisé et révocable, pas uniquement sur une adresse IP, un navigateur déclaré ou un User-Agent facilement falsifiable.
+  - La révocation de la confiance d'un appareil doit être distinguée de la révocation de sa session active : le parcours doit permettre de retirer la confiance et de révoquer la session associée, sans affecter les autres appareils.
+  - Les preuves de reconnaissance sont protégées, non exposées dans l'interface et jamais journalisées en clair ; les événements de reconnaissance/révocation sont audités sans secret.
+- **Statut :** VALIDÉ — premier release ; mécanisme technique exact de reconnaissance à auditer et définir avant développement.
+
 ## 6. Historique des mises à jour
 
-### Version 4.15 — 14 novembre 2026
-- Enregistrement de Q333 : après révocation effective d'un appareil suspect, notification simultanée par e-mail et dans l'espace client.
-- Notifications déclenchées après succès serveur, avec informations fiables et sans secret d'authentification. Aucun code applicatif modifié ; aucune fusion de branche.
+### Version 4.16 — 14 novembre 2026
+- Enregistrement de Q334 : un appareil reconnu reste mémorisé jusqu'à révocation explicite par le client depuis son espace sécurité.
+- Confiance persistante révocable, distincte de la session ; mécanisme technique à auditer et définir. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 4.10 — 14 novembre 2026
 - Enregistrement de Q329 : délai d'une heure pour confirmer ou signaler une connexion depuis un nouvel appareil non reconnu ; lien sécurisé à usage unique et lié à la nouvelle session.
