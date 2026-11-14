@@ -85,6 +85,71 @@ final class MediaServiceTest extends TestCase
         Storage::disk('local')->assertExists($media->path);
     }
 
+    public function test_it_stores_public_product_images_with_derivatives_and_supports_primary_selection(): void
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            self::markTestSkipped('PHP GD is required to process Media images.');
+        }
+
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $file = UploadedFile::fake()->image('product.jpg', 1600, 900);
+
+        $media = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            $file,
+            'product_image',
+        );
+
+        self::assertSame('public', $media->visibility);
+        self::assertSame('public', $media->disk);
+        self::assertFalse($media->is_primary);
+        Storage::disk('public')->assertExists($media->path);
+        Storage::disk('public')->assertExists($media->metadata['derivatives']['medium']);
+        Storage::disk('public')->assertExists($media->metadata['derivatives']['thumbnail']);
+
+        app(MediaService::class)->setPrimary($actor, $media);
+
+        self::assertTrue($media->fresh()->is_primary);
+        self::assertSame($media->getKey(), $product->fresh()->primaryImage->getKey());
+    }
+
+    public function test_replacing_a_profile_image_soft_deletes_the_previous_file(): void
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            self::markTestSkipped('PHP GD is required to process Media images.');
+        }
+
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $actor = $this->rootUser();
+        $service = app(MediaService::class);
+
+        $first = $service->upload(
+            $actor,
+            $actor,
+            UploadedFile::fake()->image('profile-one.jpg', 300, 300),
+            'profile_image',
+        );
+
+        $second = $service->upload(
+            $actor,
+            $actor,
+            UploadedFile::fake()->image('profile-two.jpg', 300, 300),
+            'profile_image',
+        );
+
+        self::assertSoftDeleted('media', ['id' => $first->getKey()]);
+        self::assertSame($second->getKey(), $actor->fresh()->profileImage->getKey());
+        Storage::disk('local')->assertExists($first->path);
+        Storage::disk('local')->assertExists($second->path);
+    }
+
     private function rootUser(): User
     {
         $user = User::factory()->create();
