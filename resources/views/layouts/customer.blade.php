@@ -29,6 +29,7 @@
     <a class="brand" href="{{ route('customer.dashboard') }}">MAHLINE</a>
     <nav aria-label="Espace client">
         <a href="{{ route('customer.dashboard') }}">Mon espace</a>
+        <a href="{{ route('customer.profile.edit') }}">Mon profil</a>
         <a href="{{ route('security.password.edit') }}">Sécurité</a>
         <form method="POST" action="{{ route('authentication.logout') }}">
             @csrf
