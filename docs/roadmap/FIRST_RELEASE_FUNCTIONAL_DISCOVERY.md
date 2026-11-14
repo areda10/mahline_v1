@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.89
+- **Version :** 3.90
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,19 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q309 — Actions administrateur sur une sous-commande en retard (VALIDÉE)
+- **Question :** Quelles actions l'administrateur peut-il effectuer lorsqu'une sous-commande reste sans réponse après l'échéance ?
+- **Réponse :** C — relancer la coopérative avec un nouveau délai ou décider à sa place.
+- **Décision :** après expiration du délai initial, un administrateur autorisé peut soit relancer la coopérative en lui accordant un nouveau délai, soit prendre la décision d'accepter ou de refuser la sous-commande à sa place.
+- **Conséquences :**
+  - La relance et le nouveau délai sont enregistrés ; la durée du nouveau délai est définie par l'administration centrale et ne peut pas dépasser 24 heures.
+  - La décision administrative d'acceptation ou de refus est explicitement identifiée comme prise par un administrateur au nom de la coopérative ; elle ne doit jamais être présentée comme une action effectuée par celle-ci.
+  - Toute intervention exige les permissions appropriées et conserve l'identité de l'administrateur, l'horodatage, l'action, l'ancien et le nouvel état, ainsi que le motif/commentaire lorsqu'il est fourni.
+  - La coopérative concernée et les acteurs concernés sont informés de l'intervention selon les règles de Communication.
+  - Les autres sous-commandes poursuivent leur cycle indépendamment ; les règles de clôture globale Q306 restent applicables uniquement lorsque toutes les sous-commandes sont effectivement refusées.
+- **Périmètre concerné :** Sales (états et décisions), administration (autorisations et interventions), Communication (relances et notifications), Coopératives (réponse et suivi).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q308 — Sous-commande sans réponse à l'expiration du délai (VALIDÉE)
 - **Question :** Que faire si une coopérative ne répond pas dans le délai commun de 12 à 24 heures ?
 - **Réponse :** B — la sous-commande reste en attente et un administrateur est alerté pour intervention.
@@ -4857,6 +4870,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.90 — 14 novembre 2026
+- Enregistrement de Q309 : l'administrateur peut relancer avec un nouveau délai (maximum 24 h) ou accepter/refuser au nom de la coopérative ; intervention identifiée, autorisée et auditée.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.89 — 14 novembre 2026
 - Enregistrement de Q308 : à l'expiration sans réponse, la sous-commande reste en attente ; un administrateur est alerté pour intervention manuelle, sans refus/annulation automatique.
