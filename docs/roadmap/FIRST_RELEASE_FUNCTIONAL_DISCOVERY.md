@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.98
+- **Version :** 3.99
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4590,6 +4590,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** les limites sont appliquées côté serveur et de manière cohérente avec les autres espaces MAHLINE. Le parcours client ne crée pas de seuil plus permissif ni de mécanisme de contournement. Les compteurs et réponses doivent éviter l'énumération des comptes et ne doivent jamais journaliser de mot de passe ou de secret.
 - **Statut :** VALIDÉ — premier release.
 
+### Décision Q318 — Option « Se souvenir de moi » pour le client (VALIDÉE)
+- **Question :** Le client peut-il choisir de rester connecté sur son appareil ?
+- **Réponse :** A — oui, option « Se souvenir de moi », avec session persistante sécurisée et révocable.
+- **Décision :** le formulaire de connexion client propose une option explicite et facultative « Se souvenir de moi ». Elle n'est jamais activée implicitement : le client choisit de l'utiliser pour l'appareil concerné.
+- **Conséquences :** l'option repose sur un mécanisme de persistance sécurisé côté serveur, distinct d'une simple conservation du mot de passe dans le navigateur. Chaque session reste individuellement révocable selon les règles multi-sessions MAHLINE. La révocation globale prévue par Q316 doit également invalider toute persistance associée. La durée de persistance, les modalités de renouvellement/rotation et le comportement précis à expiration restent à définir avant codage ; ne pas inventer de durée.
+- **Statut :** VALIDÉ — premier release, paramètres techniques à préciser avant implémentation.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4938,6 +4945,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.99 — 14 novembre 2026
+- Enregistrement de Q318 : option facultative « Se souvenir de moi », choisie explicitement par le client, avec persistance sécurisée et révocable par appareil.
+- La révocation globale après réinitialisation doit invalider cette persistance ; durée et rotation à préciser avant codage.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.98 — 14 novembre 2026
 - Enregistrement de Q317 : application au login client des limites anti-abus Identity cumulatives : 5 tentatives/compte, 30/IP et 5/IP + e-mail sur 15 minutes.
