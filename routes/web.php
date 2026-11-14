@@ -12,6 +12,7 @@ use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutCo
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Controllers\DeviceTrustController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
@@ -570,3 +571,33 @@ Route::prefix('back-office')
 //         ),
 //     ]);
 // });
+
+
+/*
+|--------------------------------------------------------------------------
+| Media
+|--------------------------------------------------------------------------
+*/
+
+// Public product and cooperative images may be streamed without exposing
+// their physical storage location. Private media requires an authenticated
+// owner/administrator and is authorized by MediaPolicy.
+Route::get('/media/{media}', [MediaController::class, 'show'])
+    ->whereUlid('media')
+    ->name('media.show');
+
+Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
+    ->prefix('media')
+    ->name('media.')
+    ->group(function (): void {
+        Route::post('/', [MediaController::class, 'store'])->name('store');
+        Route::put('{media}/primary', [MediaController::class, 'primary'])
+            ->whereUlid('media')
+            ->name('primary');
+        Route::patch('{media}/order', [MediaController::class, 'reorder'])
+            ->whereUlid('media')
+            ->name('reorder');
+        Route::delete('{media}', [MediaController::class, 'destroy'])
+            ->whereUlid('media')
+            ->name('destroy');
+    });
