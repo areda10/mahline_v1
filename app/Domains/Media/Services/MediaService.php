@@ -70,7 +70,12 @@ final class MediaService
             : [];
 
         try {
-            $this->putOrFail($disk, $path, file_get_contents($file->getRealPath()));
+            $sourcePath = $file->getRealPath();
+            $originalContents = is_string($sourcePath)
+                ? file_get_contents($sourcePath)
+                : false;
+
+            $this->putOrFail($disk, $path, $originalContents);
             $storedPaths[] = $path;
 
             $derivativePaths = [];
