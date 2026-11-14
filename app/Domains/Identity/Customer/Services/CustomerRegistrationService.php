@@ -12,12 +12,11 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
-use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -43,7 +42,11 @@ final class CustomerRegistrationService extends BaseService
         $email = mb_strtolower(trim((string) $attributes['email']));
         $password = (string) $attributes['password'];
 
-        PasswordPolicy::validate($password, new User([\n            'first_name' => (string) $attributes['first_name'],\n            'last_name' => (string) $attributes['last_name'],\n            'email' => $email,\n        ]));
+        PasswordPolicy::validate($password, new User([
+            'first_name' => (string) $attributes['first_name'],
+            'last_name' => (string) $attributes['last_name'],
+            'email' => $email,
+        ]));
 
         if (User::withTrashed()->where('email', $email)->exists()) {
             return false;
@@ -203,14 +206,20 @@ final class CustomerRegistrationService extends BaseService
         $blockKey = $key.':blocked';
 
         if (Cache::has($blockKey)) {
-            throw new TooManyRequestsHttpException(\n                self::RESEND_WINDOW_SECONDS,\n                'Too many verification requests.',\n            );
+            throw new TooManyRequestsHttpException(
+                self::RESEND_WINDOW_SECONDS,
+                'Too many verification requests.',
+            );
         }
 
         if (RateLimiter::tooManyAttempts($key, self::RESEND_MAX_ATTEMPTS)) {
             Cache::put($blockKey, true, now()->addSeconds(self::RESEND_WINDOW_SECONDS));
             RateLimiter::clear($key);
 
-            throw new ThrottleRequestsException('Too many verification requests.');
+            throw new TooManyRequestsHttpException(
+                self::RESEND_WINDOW_SECONDS,
+                'Too many verification requests.',
+            );
         }
 
         RateLimiter::hit($key, self::RESEND_WINDOW_SECONDS);
