@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.77
+- **Version :** 5.78
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -591,6 +591,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
 
 **Notifications de sécurité du client (Q320) :** envoyer un e-mail pour chaque événement sensible du compte, notamment nouvelle connexion, changement de mot de passe, révocation d'un appareil/session et changement d'adresse e-mail. Inclure la date/heure et les informations utiles sur l'appareil lorsqu'elles sont disponibles. Ne jamais inclure mot de passe, token, identifiant de session, code, lien secret ou autre secret d'authentification. Déclencher les notifications à partir d'événements serveur fiables ; elles complètent les contrôles et l'audit sans s'y substituer.
+
+**Tentatives de connexion échouées du client (Q321) :** ne pas envoyer d'e-mail pour les échecs d'authentification, y compris répétés, dans le périmètre V1. Les consigner dans les journaux de sécurité côté serveur pour analyse, sans stocker mot de passe, token, code, secret d'authentification ou contenu sensible. Les limites anti-abus et blocages Identity restent actifs indépendamment des notifications. Cette règle ne remplace pas les e-mails liés aux événements sensibles réussis prévus par Q320.
+
+### Version 5.78 — 14 novembre 2026
+- Enregistrement de Q321 : les tentatives de connexion échouées ne déclenchent pas d'e-mail ; elles sont consignées dans les journaux de sécurité.
+- Maintien des contrôles anti-abus et exclusion de tout secret des journaux ; distinction explicite avec les notifications Q320.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.77 — 14 novembre 2026
 - Enregistrement de Q320 : notification e-mail pour chaque événement sensible du compte client (nouvelle connexion, changement de mot de passe, révocation d'appareil/session, changement d'e-mail).
