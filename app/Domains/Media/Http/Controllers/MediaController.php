@@ -68,7 +68,11 @@ final class MediaController
 
     public function show(Request $request, Media $media): StreamedResponse
     {
-        abort_unless($media->visibility === 'public', 404);
+        abort_unless(
+            $media->visibility === 'public'
+            && in_array($media->category, ['product_image', 'cooperative_logo', 'cooperative_photo'], true),
+            404,
+        );
 
         $owner = $media->mediable;
         $isPublished = match (true) {
