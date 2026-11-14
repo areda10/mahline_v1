@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.56
+- **Version :** 5.57
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -516,6 +516,8 @@ Le développement fonctionnel du premier release suit le parcours opérationnel 
 
 **Identité client (Q286) :** l'inscription crée un compte client en attente ; la vérification e-mail réussie active automatiquement ce compte sans validation administrative. Avant activation et vérification, pas d'accès authentifié à l'espace client ni de commande. La consultation publique du catalogue reste possible. Cette activation automatique est propre au parcours d'inscription client et ne modifie pas les règles d'activation/réactivation des comptes internes. Les liens de vérification sont sécurisés, expirants et invalidés après succès ; protection contre abus et énumération ; contrôle serveur et audit.
 
+**Adresse unique d'une commande multi-coopératives (Q300) :** une commande globale utilise une seule adresse de livraison commune à toutes ses sous-commandes et expéditions. Sales enregistre le snapshot de destination au niveau de la commande ; les sous-commandes coopératives et Delivery s'y réfèrent sans destination indépendante en V1. La propriété de l'adresse est vérifiée côté serveur ; toute correction postérieure relève d'un processus Sales/Delivery autorisé, contrôlé et audité. Les frais et opérations de transport peuvent être répartis par expédition sans changer la destination commune. Plusieurs destinations pour une même commande globale sont exclues du premier release.
+
 **Mode de commande V1 (Q299) :** toutes les commandes V1 sont exclusivement en livraison à une adresse valide appartenant au client. Le checkout exige cette adresse et enregistre son snapshot ; aucun retrait à la coopérative n'est disponible en V1. Un éventuel retrait sera traité dans une évolution dédiée.
 
 **Suppression de la dernière adresse (Q298) :** le client peut avoir un carnet vide, sans adresse par défaut. La suppression de la dernière adresse est autorisée. En revanche, le serveur interdit la confirmation d'une commande tant qu'une adresse de livraison valide appartenant au client n'a pas été créée et sélectionnée. Les snapshots des commandes existantes restent intacts.
@@ -543,6 +545,10 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Vérification e-mail client (Q287) :** le lien de vérification est valable 24 heures à compter de son émission. Après expiration, le client peut demander un nouveau lien dans la limite de 5 demandes par heure, puis blocage temporaire d'une heure ; chaque nouveau lien invalide immédiatement tous les liens précédents. Un seul lien reste utilisable par compte. L'expiration, l'invalidation et la validation sont contrôlées côté serveur ; aucun jeton ou secret n'est journalisé. Cette durée de 24 heures remplace l'ancienne durée de 60 minutes des décisions Q6-Q7.
 
 **Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+### Version 5.57 — 14 novembre 2026
+- Enregistrement de Q300 : destination unique commune à la commande multi-coopératives et à toutes ses sous-commandes/expéditions.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.56 — 14 novembre 2026
 - Enregistrement de Q299 : livraison obligatoire pour toutes les commandes V1 ; retrait coopérative exclu de cette version.
