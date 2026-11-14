@@ -7,6 +7,7 @@ namespace App\Domains\Identity\Customer\Http\Controllers;
 use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 final class CustomerProfileController
@@ -15,7 +16,7 @@ final class CustomerProfileController
         private readonly CustomerProfileService $profiles,
     ) {}
 
-    public function edit(UpdateCustomerProfileRequest $request): View
+    public function edit(Request $request): View
     {
         return view('customer.profile.edit', [
             'user' => $request->user(),
@@ -24,8 +25,12 @@ final class CustomerProfileController
 
     public function update(UpdateCustomerProfileRequest $request): RedirectResponse
     {
+        $customer = $request->user();
+
+        abort_unless($customer instanceof \\App\\Domains\\Identity\\Users\\Models\\User, 403);
+
         $this->profiles->update(
-            $request->user(),
+            $customer,
             $request->validated(),
         );
 
