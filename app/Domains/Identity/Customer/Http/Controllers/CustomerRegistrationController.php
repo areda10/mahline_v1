@@ -61,7 +61,7 @@ final class CustomerRegistrationController
         }
 
         return redirect()
-            ->route('authentication.login')
+            ->route('customer.login')
             ->with('status', 'Votre adresse e-mail est vérifiée et votre compte client est activé. Vous pouvez vous connecter.');
     }
 
