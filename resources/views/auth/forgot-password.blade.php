@@ -22,7 +22,7 @@
 
     <p>Indiquez votre adresse e-mail pour recevoir un lien de réinitialisation.</p>
 
-    <form method="POST" action="{{ route('password.email') }}">
+    <form method="POST" action="{{ request()->routeIs('customer.password.request') ? route('customer.password.email') : route('password.email') }}">
         @csrf
 
         <div>
@@ -42,7 +42,7 @@
     </form>
 
     <p>
-        <a href="{{ route('authentication.login') }}">Retour à la connexion</a>
+        <a href="{{ request()->routeIs('customer.password.request') ? route('customer.login') : route('authentication.login') }}">Retour à la connexion</a>
     </p>
 </body>
 </html>
