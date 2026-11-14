@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.83
+- **Version :** 5.84
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -603,6 +603,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Déconnexion manuelle du client (Q325) :** l'action standard déconnecte uniquement l'appareil courant. Une action distincte « Déconnecter tous les appareils » révoque les autres sessions, tout en conservant la session courante conformément à Q319. Cette action n'inclut pas les tokens API ; les révocations de sécurité Q316 continuent de révoquer toutes les sessions et tous les tokens API. Contrôle de propriété côté serveur et journalisation sans secrets.
 
 **Confirmation avant révocation des autres sessions (Q326) :** l'action « Déconnecter tous les appareils » exige une confirmation explicite. Tant que le client annule ou ferme la confirmation, aucune session n'est modifiée. Après confirmation, appliquer la portée Q325 : révoquer les autres sessions et conserver la session courante. Pas de nouvelle demande de mot de passe définie par Q326.
+
+**Informations des sessions client (Q327) :** afficher pour chaque session la date de connexion, la dernière activité, le navigateur et le système d'exploitation, ainsi qu'un repère clair pour la session courante. N'afficher que les données disponibles et fiables ; l'adresse IP et la localisation approximative sont exclues de l'interface V1. Ces informations soutiennent la gestion/révocation Q319/Q325/Q326.
+
+### Version 5.84 — 14 novembre 2026
+- Enregistrement de Q327 : informations essentielles de session et identification de la session courante.
+- Exclusion IP/localisation de l'interface client V1 ; données d'appareil limitées aux éléments fiables disponibles.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.83 — 14 novembre 2026
 - Enregistrement de Q326 : confirmation explicite avant révocation des autres sessions.
