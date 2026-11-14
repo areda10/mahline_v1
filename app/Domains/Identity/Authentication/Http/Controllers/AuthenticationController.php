@@ -53,6 +53,32 @@ final class AuthenticationController
         return view('auth.login');
     }
 
+    public function showCustomerLogin(): View|RedirectResponse
+    {
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            abort_unless(
+                $user?->hasRole('customer')
+                && ! $user?->hasAnyRole([
+                    'super_admin_root',
+                    'super_admin',
+                    'cooperative_admin',
+                    'user',
+                ]),
+                403,
+            );
+
+            if ($user?->must_change_password) {
+                return redirect()->route('customer.password.force-change.edit');
+            }
+
+            return redirect()->route('customer.dashboard');
+        }
+
+        return view('auth.login');
+    }
+
     public function login(AuthenticationRequest $request): JsonResponse|RedirectResponse
     {
         return $this->authenticate($request, customerOnly: false);
@@ -174,7 +200,9 @@ final class AuthenticationController
                 ], 401);
             }
 
-            return redirect()->route('authentication.login');
+            return redirect()->route($request->routeIs('customer.logout')
+                ? 'customer.login'
+                : 'authentication.login');
         }
 
         /*
@@ -212,7 +240,9 @@ final class AuthenticationController
             ], 200);
         }
 
-        return redirect()->route('authentication.login');
+        return redirect()->route($user->hasRole('customer')
+            ? 'customer.login'
+            : 'authentication.login');
     }
 
     /**
