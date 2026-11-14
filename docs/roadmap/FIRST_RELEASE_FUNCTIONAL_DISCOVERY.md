@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.21
+- **Version :** 4.22
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5132,19 +5132,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 
 
-### Décision Q337 — Reconnaissance d'un sixième appareil (VALIDÉE)
-- **Question :** Que faire lorsqu'un client veut reconnaître un sixième appareil alors que cinq appareils sont déjà reconnus ?
-- **Réponse :** B — afficher les appareils reconnus et laisser le client choisir celui à remplacer.
-- **Décision :** lorsqu'un client demande à reconnaître un nouvel appareil et que son compte possède déjà cinq appareils reconnus, MAHLINE affiche la liste des cinq appareils et exige que le client sélectionne explicitement celui dont la reconnaissance doit être remplacée.
-- **Conséquences :**
-  - Aucun appareil existant n'est remplacé ou révoqué automatiquement ni silencieusement.
-  - La reconnaissance du nouvel appareil ne devient effective qu'après le choix explicite et la confirmation de remplacement par le client.
-  - L'appareil sélectionné perd sa confiance et ses sessions web actives associées sont immédiatement révoquées conformément à Q335 ; les autres appareils restent inchangés.
-  - Le serveur vérifie l'appartenance des appareils au compte, la limite de cinq et la sélection explicite ; le traitement doit être atomique pour éviter de dépasser la limite en cas de demandes concurrentes.
-  - L'opération est auditée sans journaliser les preuves secrètes ; la procédure d'échec ou d'annulation conserve les appareils existants et ne valide pas le nouvel appareil.
-- **Statut :** VALIDÉ — premier release ; détails de confirmation et d'atomicité à vérifier pendant l'audit technique avant développement.
-
 ## 6. Historique des mises à jour
+
+### Version 4.22 — 14 novembre 2026
+- Enregistrement de Q337 : le client choisit explicitement lequel de ses cinq appareils reconnus remplacer pour en reconnaître un sixième.
+- Après confirmation, l'appareil choisi et ses sessions web associées sont révoqués selon Q335 ; les autres appareils restent inchangés. Annulation sans effet. Aucun code modifié dans cette mise à jour documentaire ; aucune fusion.
 
 ### Version 4.21 — 14 novembre 2026
 - Première tranche Client — Identity ajoutée : rôle `customer` distinct, inscription pending, vérification e-mail à usage unique 24 h, renvoi limité à 5 demandes/heure puis blocage d'une heure, routes et espace client séparés.
