@@ -149,6 +149,8 @@ final class User extends BaseModel implements AuthenticatableContract
 
     public function documents(): MorphMany
     {
-        return $this->media()->where('category', 'document');
+        return $this->media()->where('category', 'document')
+            ->orderBy('sort_order')
+            ->orderBy('created_at');
     }
 }
