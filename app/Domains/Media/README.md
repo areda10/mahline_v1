@@ -29,10 +29,10 @@ L’extension PHP GD doit être activée, avec prise en charge du format image e
 
 Les disques sont configurables dans `config/media.php` :
 
-- `MEDIA_PUBLIC_DISK` : disque logique des images produit et coopérative (défaut `public`).
+- `MEDIA_PUBLIC_DISK` : disque logique des images produit et coopérative (défaut `local`, non exposé directement par le serveur web).
 - `MEDIA_PRIVATE_DISK` : disque des profils et documents privés (défaut `local`).
 
-En production, les deux variables peuvent pointer vers un disque distant S3. Les contrôleurs ne retournent jamais d’URL directe du stockage : même les images publiques sont transmises par l’application. Les documents privés sont transmis uniquement par une route protégée par authentification et session active.
+En production, les deux variables peuvent pointer vers un disque S3 configuré en privé. Ne configure jamais un bucket ou un disque web-accessible pour ces médias : la visibilité `public` est logique et les images sont transmises par l’application après vérification de l’état du propriétaire. Les contrôleurs ne retournent jamais d’URL directe du stockage. Les documents privés sont transmis uniquement par une route protégée par authentification et session active.
 
 ## API web
 
