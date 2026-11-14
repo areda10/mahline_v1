@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Customer\Http\Controllers;
 
+use App\Domains\Identity\Customer\Exceptions\CustomerVerificationDeliveryException;
 use App\Domains\Identity\Customer\Http\Requests\CustomerRegistrationRequest;
 use App\Domains\Identity\Customer\Http\Requests\CustomerResendVerificationRequest;
 use App\Domains\Identity\Customer\Services\CustomerRegistrationService;
@@ -11,7 +12,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 final class CustomerRegistrationController
@@ -38,7 +38,7 @@ final class CustomerRegistrationController
             return back()
                 ->withErrors(['password' => $exception->getMessage()])
                 ->withInput($request->safe()->except(['password', 'password_confirmation']));
-        } catch (RuntimeException) {
+        } catch (CustomerVerificationDeliveryException) {
             // Keep the public response generic. The pending account can request
             // a fresh verification link without exposing mail infrastructure.
         }
@@ -75,7 +75,7 @@ final class CustomerRegistrationController
             return back()->withErrors([
                 'email' => 'Trop de demandes. Veuillez attendre une heure avant de réessayer.',
             ]);
-        } catch (RuntimeException) {
+        } catch (CustomerVerificationDeliveryException) {
             // Do not reveal whether an address belongs to a customer account.
         }
 
