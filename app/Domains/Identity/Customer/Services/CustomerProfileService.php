@@ -35,6 +35,12 @@ final class CustomerProfileService extends BaseService
 
             if (
                 ! $lockedCustomer->hasRole('customer')
+                || $lockedCustomer->hasAnyRole([
+                    'super_admin_root',
+                    'super_admin',
+                    'cooperative_admin',
+                    'user',
+                ])
                 || $lockedCustomer->status !== UserStatus::Active
                 || $lockedCustomer->email_verified_at === null
             ) {
