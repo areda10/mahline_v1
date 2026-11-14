@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.89
+- **Version :** 5.90
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -615,10 +615,12 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Confirmation avant révocation manuelle (Q332) :** le client doit confirmer explicitement une boîte de dialogue avant de révoquer la session sélectionnée depuis son espace sécurité. Annuler/fermer n'a aucun effet. Aucun mot de passe supplémentaire n'est demandé en V1. La révocation demeure ciblée, soumise au contrôle de propriété côté serveur, et auditée sans secret.
 
+**Notification après révocation d'un appareil suspect (Q333) :** après confirmation et révocation effective de la session, informer le client par e-mail et par notification dans son espace. N'annoncer le succès qu'après confirmation serveur. Le message peut contenir la date/heure et les informations d'appareil fiables disponibles, mais aucun mot de passe, token, identifiant de session exploitable, lien secret ou autre secret d'authentification. Tracer l'événement et l'envoi sans secret.
 
-### Version 5.89 — 14 novembre 2026
-- Enregistrement de Q332 : confirmation simple obligatoire avant révocation manuelle de la session sélectionnée ; annulation sans effet.
-- Aucun mot de passe supplémentaire ; révocation ciblée et vérifiée côté serveur. Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.90 — 14 novembre 2026
+- Enregistrement de Q333 : notification e-mail et in-app après révocation effective d'un appareil suspect.
+- Déclenchement après succès serveur, contenu limité aux informations fiables et sans secret. Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
