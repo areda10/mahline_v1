@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.98
+- **Version :** 5.99
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -630,6 +630,10 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 
 **Remplacement au-delà de cinq appareils reconnus (Q337) :** si le client veut reconnaître un sixième appareil, afficher ses cinq appareils reconnus et lui demander de choisir explicitement celui à remplacer. Aucune révocation automatique ou silencieuse. Après confirmation, retirer la confiance de l'appareil choisi et révoquer immédiatement ses sessions web associées conformément à Q335 ; préserver les autres appareils. Le serveur doit valider l'appartenance, la limite et la sélection, puis réaliser le remplacement de manière atomique. En cas d'annulation ou d'échec, conserver l'état antérieur et ne pas reconnaître le nouvel appareil.
 
+
+### Version 5.99 — 14 novembre 2026
+- Renforcement de l'espace client isolé : middleware `EnsureCustomerAccount` vérifie le rôle customer exclusif sur le dashboard et les routes de profil.
+- Test feature ajouté pour refuser l'accès au dashboard et au profil lorsqu'un compte porte simultanément un rôle interne. Tests non exécutés dans cet environnement.
 
 ### Version 5.98 — 14 novembre 2026
 - Profil client — première tranche développée : lecture et modification du prénom, nom et téléphone depuis des routes dédiées et protégées par le rôle customer.
