@@ -590,6 +590,9 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
     ->prefix('media')
     ->name('media.')
     ->group(function (): void {
+        Route::get('{media}/private', [MediaController::class, 'showPrivate'])
+            ->whereUlid('media')
+            ->name('private');
         Route::post('/', [MediaController::class, 'store'])->name('store');
         Route::put('{media}/primary', [MediaController::class, 'primary'])
             ->whereUlid('media')
