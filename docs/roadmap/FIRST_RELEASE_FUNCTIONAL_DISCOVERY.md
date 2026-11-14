@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.66
+- **Version :** 3.67
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q286 — Activation du compte client après vérification e-mail (VALIDÉE)
+- **Question :** Quel parcours d'activation après inscription client ?
+- **Réponse :** A — compte en attente, vérification e-mail, puis activation automatique.
+- **Décision :** l'inscription crée un compte client avec le statut `pending`. Un lien de vérification sécurisé est envoyé à l'adresse déclarée. Après validation réussie du lien, le serveur marque l'adresse comme vérifiée et active automatiquement le compte client, sans intervention manuelle d'un administrateur.
+- **Accès :** tant que l'adresse n'est pas vérifiée et que le compte n'est pas actif, aucune connexion à l'espace client ni action de commande n'est autorisée. La consultation publique de la marketplace reste possible sans compte, selon les règles d'accès du catalogue. Une fois actif et vérifié, le client peut se connecter et accéder à son espace.
+- **Sécurité et cohérence :** jeton de vérification sécurisé, expirant et à usage unique ou invalidé après succès ; aucune donnée sensible dans les journaux ; protection contre abus/réémission et énumération de comptes ; activation strictement limitée au parcours d'inscription client, sans élargir les pouvoirs de réactivation des comptes internes. Les transitions sont contrôlées côté serveur et auditées.
+
 ### Décision Q285 — Application d'un nouveau seuil de stock (VALIDÉE)
 - **Question :** Quand un seuil personnalisé est-il appliqué après modification ?
 - **Réponse :** A — immédiatement après validation serveur.
@@ -4548,7 +4555,7 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Cohérence :** Products conserve le paramètre ; Catalog recalcule l'indicateur à partir de la disponibilité nette courante fournie par Inventory. Sales continue de revalider et réserver côté serveur. La modification n'altère ni le stock, ni les réservations, ni les commandes existantes. Autorisation cooperative_admin propriétaire, isolation et audit obligatoires.
 
 ### Parcours opérationnel directeur — Client → Coopérative → Transporteur (VALIDÉ)
-1. **Client — Identity :** création de compte, connexion, profil et adresses.
+1. **Client — Identity :** inscription avec compte en attente, vérification de l'e-mail puis activation automatique ; connexion, profil et adresses après activation.
 2. **Marketplace — Catalog / Products :** consultation des coopératives, découverte des produits, prix et disponibilités.
 3. **Panier et commande — Sales :** ajout de produits, modification des quantités, validation du panier et passage de commande ; panier multi-coopératives possible.
 4. **Réception — Espace coopérative :** chaque coopérative reçoit sa sous-commande et consulte ses lignes, quantités et informations client autorisées.
@@ -4646,6 +4653,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.67 — 14 novembre 2026
+- Enregistrement de Q286 : activation automatique du compte client après vérification réussie de l'e-mail ; inscription initiale en attente.
 
 ### Version 3.66 — 14 novembre 2026
 - Enregistrement de Q285 : modification du seuil appliquée immédiatement après validation serveur.
