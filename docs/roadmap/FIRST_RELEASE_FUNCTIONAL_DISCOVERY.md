@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.90
+- **Version :** 3.91
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q310 — Rôles autorisés à intervenir sur une sous-commande en retard (VALIDÉE)
+- **Question :** Quels administrateurs peuvent relancer une coopérative ou décider à sa place après dépassement du délai ?
+- **Réponse :** B — `super_admin_root` et `super_admin` affecté à la coopérative concernée.
+- **Décision :** `super_admin_root` peut intervenir sur toutes les coopératives. Un `super_admin` ne peut intervenir que sur les coopératives qui lui sont affectées. Le `cooperative_admin` n'est pas autorisé à agir à la place de l'administration ; il conserve la responsabilité de répondre pour sa propre coopérative.
+- **Conséquences :** les actions de relance, d'octroi d'un nouveau délai et de décision administrative définies par Q309 sont soumises à cette matrice d'autorisation. Le contrôle d'affectation est effectué côté serveur à chaque action ; aucune élévation de privilège ni contournement de l'isolation coopérative n'est admis. L'acteur réel, l'horodatage, l'action et les états avant/après restent audités.
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q309 — Actions administrateur sur une sous-commande en retard (VALIDÉE)
 - **Question :** Quelles actions l'administrateur peut-il effectuer lorsqu'une sous-commande reste sans réponse après l'échéance ?
 - **Réponse :** C — relancer la coopérative avec un nouveau délai ou décider à sa place.
@@ -4870,6 +4877,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.91 — 14 novembre 2026
+- Enregistrement de Q310 : intervention sur une sous-commande en retard réservée à `super_admin_root` (toutes coopératives) et `super_admin` affecté (coopératives affectées) ; `cooperative_admin` exclu des décisions administratives de substitution.
+- Début du cadrage de l'espace client : CRUD du compte/profil client, coordonnées (téléphone et e-mail) et adresses, en réutilisant les décisions Q286-Q298 ; les règles de suppression/désactivation du compte restent à définir.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.90 — 14 novembre 2026
 - Enregistrement de Q309 : l'administrateur peut relancer avec un nouveau délai (maximum 24 h) ou accepter/refuser au nom de la coopérative ; intervention identifiée, autorisée et auditée.
