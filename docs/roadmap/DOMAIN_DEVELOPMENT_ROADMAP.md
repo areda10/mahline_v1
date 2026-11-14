@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.49
+- **Version :** 5.50
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -516,6 +516,8 @@ Le développement fonctionnel du premier release suit le parcours opérationnel 
 
 **Identité client (Q286) :** l'inscription crée un compte client en attente ; la vérification e-mail réussie active automatiquement ce compte sans validation administrative. Avant activation et vérification, pas d'accès authentifié à l'espace client ni de commande. La consultation publique du catalogue reste possible. Cette activation automatique est propre au parcours d'inscription client et ne modifie pas les règles d'activation/réactivation des comptes internes. Les liens de vérification sont sécurisés, expirants et invalidés après succès ; protection contre abus et énumération ; contrôle serveur et audit.
 
+**Première adresse par défaut (Q293) :** à la création de la toute première adresse active du client, celle-ci devient automatiquement l'adresse par défaut. Les adresses ultérieures ne remplacent jamais automatiquement le choix. Si le client n'a plus d'adresse par défaut mais conserve d'autres adresses, la création d'une nouvelle adresse ne rétablit pas automatiquement une valeur par défaut ; le client doit choisir explicitement.
+
 **Suppression de l'adresse par défaut (Q292) :** la suppression de l'adresse par défaut ne déclenche aucune sélection automatique. Le client peut conserver d'autres adresses sans adresse par défaut ; au prochain checkout, il doit en sélectionner explicitement une ou en créer une. Zéro adresse par défaut est autorisé, une seule au maximum par client ; les snapshots historiques restent intacts.
 
 **Limite du carnet d'adresses (Q291) :** chaque client peut enregistrer au maximum cinq adresses de livraison simultanément. Le serveur refuse toute sixième création tant qu'une adresse existante n'a pas été supprimée ; modifier une adresse existante ne consomme pas de place supplémentaire. Cette limite concerne le carnet actif uniquement et n'affecte pas les snapshots de livraison des commandes historiques.
@@ -529,6 +531,10 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Vérification e-mail client (Q287) :** le lien de vérification est valable 24 heures à compter de son émission. Après expiration, le client peut demander un nouveau lien dans la limite de 5 demandes par heure, puis blocage temporaire d'une heure ; chaque nouveau lien invalide immédiatement tous les liens précédents. Un seul lien reste utilisable par compte. L'expiration, l'invalidation et la validation sont contrôlées côté serveur ; aucun jeton ou secret n'est journalisé. Cette durée de 24 heures remplace l'ancienne durée de 60 minutes des décisions Q6-Q7.
 
 **Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+### Version 5.50 — 14 novembre 2026
+- Enregistrement de Q293 : première adresse active automatiquement définie par défaut ; aucune modification automatique lors des créations suivantes.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.49 — 14 novembre 2026
 - Enregistrement de Q292 : suppression de l'adresse par défaut sans remplacement automatique ; sélection explicite requise au prochain checkout si aucune valeur par défaut n'existe.
