@@ -112,10 +112,20 @@ final class MediaServiceTest extends TestCase
         Storage::disk('public')->assertExists($media->metadata['derivatives']['medium']);
         Storage::disk('public')->assertExists($media->metadata['derivatives']['thumbnail']);
 
-        app(MediaService::class)->setPrimary($actor, $media);
+        $second = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->image('product-second.jpg', 800, 600),
+            'product_image',
+        );
 
-        self::assertTrue($media->fresh()->is_primary);
-        self::assertSame($media->getKey(), $product->fresh()->primaryImage->getKey());
+        self::assertFalse($second->is_primary);
+
+        app(MediaService::class)->setPrimary($actor, $second);
+
+        self::assertFalse($media->fresh()->is_primary);
+        self::assertTrue($second->fresh()->is_primary);
+        self::assertSame($second->getKey(), $product->fresh()->primaryImage->getKey());
     }
 
     public function test_replacing_a_profile_image_soft_deletes_the_previous_file(): void
