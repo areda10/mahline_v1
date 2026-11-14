@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.72
+- **Version :** 3.73
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q292 — Suppression de l'adresse de livraison par défaut (VALIDÉE)
+- **Question :** Si le client supprime l'adresse actuellement définie comme adresse par défaut, que doit faire MAHLINE ?
+- **Réponse :** B — ne définir aucune adresse par défaut ; le client devra en choisir une lors de sa prochaine commande.
+- **Décision :** lorsqu'un client supprime son adresse de livraison par défaut, aucune autre adresse n'est désignée automatiquement. Le carnet peut donc temporairement ne contenir aucune adresse par défaut, même s'il reste d'autres adresses enregistrées.
+- **Conséquences :** au prochain checkout, si aucune adresse par défaut n'existe, le client doit sélectionner explicitement l'une de ses adresses enregistrées ou en créer une nouvelle avant de poursuivre. Le système ne choisit jamais arbitrairement une adresse.
+- **Cohérence et sécurité :** la suppression ne modifie aucun snapshot de livraison des commandes existantes. Le statut d'adresse par défaut est géré côté serveur et une seule adresse au maximum peut être marquée par défaut pour un client ; zéro est autorisé.
+
 ### Décision Q291 — Nombre maximal d'adresses de livraison par client (VALIDÉE)
 - **Question :** Combien d'adresses de livraison un client peut-il enregistrer dans son compte ?
 - **Réponse :** A — 5 adresses maximum.
@@ -4690,6 +4697,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.73 — 14 novembre 2026
+- Enregistrement de Q292 : après suppression de l'adresse par défaut, aucune autre adresse n'est choisie automatiquement ; le client sélectionne explicitement une adresse au prochain checkout.
 
 ### Version 3.72 — 14 novembre 2026
 - Enregistrement de Q291 : cinq adresses de livraison enregistrées au maximum par compte client ; contrôle serveur, sans limite sur les snapshots historiques.
