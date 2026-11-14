@@ -110,6 +110,21 @@ final class CustomerProfileTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_customer_profile_is_denied_when_the_account_also_has_an_internal_role(): void
+    {
+        $customer = $this->customer();
+        $internalRole = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $customer->roles()->attach($internalRole->getKey());
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('customer.profile.edit'))
+            ->assertForbidden();
+    }
+
     private function customer(): User
     {
         $customer = User::factory()->create([
