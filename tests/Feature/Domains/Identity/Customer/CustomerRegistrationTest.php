@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Identity\Customer;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailVerificationNotification;
 use App\Domains\Identity\Customer\Services\CustomerRegistrationService;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,6 +89,7 @@ final class CustomerRegistrationTest extends TestCase
 
         $loginResponse->assertRedirect(route('customer.dashboard'));
         $this->assertAuthenticatedAs($customer);
+        $this->get(route('customer.dashboard'))->assertOk();
 
         $sessionCookie = $loginResponse->getCookie(config('session.cookie'));
         $this->assertNotNull($sessionCookie);
@@ -179,6 +181,41 @@ final class CustomerRegistrationTest extends TestCase
 
         $this->expectException(TooManyRequestsHttpException::class);
         $service->resendVerification($customer->email);
+    }
+
+    public function test_internal_user_cannot_access_customer_dashboard(): void
+    {
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+        $user->roles()->attach($role->getKey());
+
+        $this->actingAs($user)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('customer.dashboard'))
+            ->assertForbidden();
+    }
+
+    public function test_customer_cannot_access_internal_user_dashboard(): void
+    {
+        $customer = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+        $customer->roles()->attach(
+            Role::query()->where('slug', 'customer')->value('id'),
+        );
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('user.dashboard'))
+            ->assertForbidden();
     }
 
     private function validRegistration(): array
