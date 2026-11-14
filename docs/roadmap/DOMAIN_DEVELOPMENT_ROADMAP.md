@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.84
+- **Version :** 5.85
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -605,6 +605,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Confirmation avant révocation des autres sessions (Q326) :** l'action « Déconnecter tous les appareils » exige une confirmation explicite. Tant que le client annule ou ferme la confirmation, aucune session n'est modifiée. Après confirmation, appliquer la portée Q325 : révoquer les autres sessions et conserver la session courante. Pas de nouvelle demande de mot de passe définie par Q326.
 
 **Informations des sessions client (Q327) :** afficher pour chaque session la date de connexion, la dernière activité, le navigateur et le système d'exploitation, ainsi qu'un repère clair pour la session courante. N'afficher que les données disponibles et fiables ; l'adresse IP et la localisation approximative sont exclues de l'interface V1. Ces informations soutiennent la gestion/révocation Q319/Q325/Q326.
+
+**Nouvel appareil non reconnu — alerte et contrôle client (Q328) :** autoriser immédiatement la connexion du nouvel appareil, puis envoyer simultanément un e-mail permettant au client de confirmer qu'il est à l'origine de la connexion ou, s'il ne la reconnaît pas, de révoquer cette nouvelle session et d'en bloquer l'accès. Si une session client est déjà active sur Mahline, afficher également une notification dans l'espace client ; sinon l'e-mail est le canal de notification disponible. La révocation vise uniquement la session suspecte, sans déconnecter les autres appareils. Liens/actions sécurisés à usage unique et à durée limitée ; durée, absence de réponse et confiance durable de l'appareil restent à définir avant développement. Ne jamais journaliser les secrets du lien.
+
+### Version 5.85 — 14 novembre 2026
+- Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
+- Notification in-app si une session existe ; action de révocation limitée à la nouvelle session ; paramètres du lien et absence de réponse à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.84 — 14 novembre 2026
 - Enregistrement de Q327 : informations essentielles de session et identification de la session courante.
