@@ -82,7 +82,7 @@ final class CustomerRegistrationTest extends TestCase
                 ->value('used_at'),
         );
 
-        $loginResponse = $this->post(route('authentication.login.store'), [
+        $loginResponse = $this->post(route('customer.login.store'), [
             'email' => $customer->email,
             'password' => 'MosaicRiver728!',
         ]);
