@@ -81,12 +81,17 @@ final class CustomerRegistrationTest extends TestCase
                 ->value('used_at'),
         );
 
-        $this->post(route('authentication.login.store'), [
+        $loginResponse = $this->post(route('authentication.login.store'), [
             'email' => $customer->email,
             'password' => 'MosaicRiver728!',
-        ])->assertRedirect(route('customer.dashboard'));
+        ]);
 
+        $loginResponse->assertRedirect(route('customer.dashboard'));
         $this->assertAuthenticatedAs($customer);
+
+        $sessionCookie = $loginResponse->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertSame(0, $sessionCookie->getExpiresTime());
     }
 
     public function test_expired_verification_link_does_not_activate_customer(): void
