@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.24
+- **Version :** 4.25
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5131,8 +5131,24 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Statut :** VALIDÉ — premier release ; interface et transaction serveur à concevoir lors de l'implémentation.
 
 
+### Décision Q338 — Authentification avant changement d'e-mail client (VALIDÉE)
+- **Question :** Faut-il exiger le mot de passe actuel avant d'envoyer le lien de vérification à la nouvelle adresse e-mail ?
+- **Réponse :** A — oui, le mot de passe actuel est obligatoire.
+- **Décision :** avant d'initier une demande de changement d'adresse e-mail, le client doit fournir son mot de passe actuel ; le serveur le vérifie avant tout envoi de lien à la nouvelle adresse.
+- **Conséquences :**
+  - Un mot de passe absent ou incorrect bloque la demande et ne déclenche aucun e-mail de vérification.
+  - Ne jamais journaliser le mot de passe ni l'inclure dans une notification ou une réponse.
+  - Conserver l'ancienne adresse comme adresse principale tant que la nouvelle n'est pas vérifiée, conformément à Q9-Q12 et Q312.
+  - Après validation effective de la nouvelle adresse, appliquer la révocation de toutes les sessions web et de tous les tokens API ainsi que la notification de sécurité à l'ancienne adresse, conformément à Q312.
+  - Les contrôles de fréquence/anti-abus doivent réutiliser Identity ; leurs paramètres et le parcours complet restent à auditer avant implémentation.
+- **Statut :** VALIDÉ — premier release ; implémentation et tests à réaliser.
+
+
 
 ## 6. Historique des mises à jour
+
+### Version 4.25 — 14 novembre 2026
+- Q338 : mot de passe actuel obligatoire et vérifié côté serveur avant tout envoi du lien de validation d'une nouvelle adresse e-mail client ; aucune demande ni notification en cas de mot de passe absent/incorrect.
 
 ### Version 4.24 — 14 novembre 2026
 - Renforcement de l'isolation client : middleware dédié refuse l'accès à l'espace customer aux comptes portant aussi un rôle interne.
