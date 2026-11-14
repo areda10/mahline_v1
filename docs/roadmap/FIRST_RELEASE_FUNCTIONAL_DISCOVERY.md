@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.85
+- **Version :** 3.86
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,18 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q305 — Frais d'une sous-commande entièrement refusée avant expédition (VALIDÉE)
+- **Question :** Que deviennent les frais de livraison attribués à une coopérative qui refuse entièrement sa sous-commande avant toute expédition ?
+- **Réponse :** A — retirer les frais de cette expédition du total ; le client ne paie que les expéditions restantes.
+- **Décision :** lorsqu'une sous-commande est entièrement refusée avant expédition et qu'aucun colis n'est remis au transporteur, l'expédition correspondante n'a pas lieu et ses frais sont retirés du total de livraison de la commande globale. Le montant dû est recalculé sur les seules expéditions effectivement maintenues.
+- **Conséquences :**
+  - Les frais de chaque expédition restent individualisés conformément à Q303.
+  - Le refus total d'une sous-commande supprime les frais de l'expédition annulée du total client ; les frais des autres expéditions restent dus.
+  - Si une sous-commande est partiellement refusée mais poursuit avec les lignes restantes, son expédition unique demeure (Q304) ; le traitement tarifaire de cette expédition suit les règles Delivery applicables et ne doit pas être assimilé automatiquement à un refus total.
+  - Cette règle concerne le refus complet avant expédition ; les frais après préparation, remise au transporteur ou échec de livraison nécessitent des règles distinctes.
+- **Périmètre concerné :** Sales (refus et recalcul du total), Delivery (annulation de l'expédition et frais), Finance (montants dus).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q304 — Nombre de colis et d'expéditions par sous-commande coopérative (VALIDÉE)
 - **Question :** Une coopérative peut-elle répartir une sous-commande confirmée entre plusieurs colis/expéditions en V1 ?
 - **Réponse :** A — une seule expédition et un seul colis par sous-commande coopérative en V1.
@@ -4806,6 +4818,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.86 — 14 novembre 2026
+- Enregistrement de Q305 : frais retirés pour une sous-commande entièrement refusée avant expédition ; total recalculé sur les expéditions restantes.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.85 — 14 novembre 2026
 - Enregistrement de Q304 : une seule expédition et un seul colis par sous-commande coopérative en V1.
