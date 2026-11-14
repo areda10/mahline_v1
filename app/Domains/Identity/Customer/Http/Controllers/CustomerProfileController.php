@@ -19,8 +19,22 @@ final class CustomerProfileController
 
     public function edit(Request $request): View
     {
+        $customer = $request->user();
+
+        abort_unless(
+            $customer instanceof User
+            && $customer->hasRole('customer')
+            && ! $customer->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]),
+            403,
+        );
+
         return view('customer.profile.edit', [
-            'user' => $request->user(),
+            'user' => $customer,
         ]);
     }
 
