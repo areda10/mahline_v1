@@ -83,6 +83,51 @@
     </section>
 
     <section class="card">
+        <h2>Changer mon adresse e-mail</h2>
+        <p class="muted">
+            Votre adresse actuelle reste active jusqu’à la confirmation de la nouvelle adresse.
+            Le lien de confirmation expire après 30 minutes. Après validation, toutes vos sessions
+            et tous vos jetons API seront révoqués.
+        </p>
+
+        <form method="POST" action="{{ route('customer.profile.email.change') }}">
+            @csrf
+
+            <div class="form-field">
+                <label for="new_email">Nouvelle adresse e-mail</label>
+                <input
+                    id="new_email"
+                    name="new_email"
+                    type="email"
+                    value="{{ old('new_email') }}"
+                    maxlength="255"
+                    autocomplete="email"
+                    required
+                >
+                @error('new_email')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div class="form-field">
+                <label for="current_password">Mot de passe actuel</label>
+                <input
+                    id="current_password"
+                    name="current_password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                >
+                @error('current_password')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <button type="submit">Envoyer le lien de confirmation</button>
+        </form>
+    </section>
+
+    <section class="card">
         <h2>Photo de profil</h2>
         <p class="muted">
             L'ajout et le remplacement de la photo seront activés avec le domaine Media.
