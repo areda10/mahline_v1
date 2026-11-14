@@ -132,6 +132,11 @@ final class CustomerAuthenticationIsolationTest extends TestCase
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->get(route('customer.security.password.edit'))
             ->assertForbidden();
+
+        $this->actingAs($internalUser)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('customer.logout'))
+            ->assertForbidden();
     }
 
     private function customer(): User
