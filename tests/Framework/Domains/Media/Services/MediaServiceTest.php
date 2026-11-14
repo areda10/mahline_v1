@@ -135,9 +135,7 @@ final class MediaServiceTest extends TestCase
 
     public function test_replacing_a_profile_image_soft_deletes_the_previous_file(): void
     {
-        if (! function_exists('imagecreatetruecolor')) {
-            self::markTestSkipped('PHP GD is required to process Media images.');
-        }
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
 
         Storage::fake('local');
         Storage::fake('public');
