@@ -39,7 +39,7 @@ final class AuthenticationWorkflow
 
         // A customer URL must never create a session for an internal account.
         // Keep the public authentication response identical for every mismatch.
-        if ($customerOnly && (
+        if ((! $customerOnly && $user->hasRole('customer')) || ($customerOnly && (
             ! $user->hasRole('customer')
             || $user->hasAnyRole([
                 'super_admin_root',
@@ -47,7 +47,7 @@ final class AuthenticationWorkflow
                 'cooperative_admin',
                 'user',
             ])
-        )) {
+        ))) {
             throw new AuthenticationFailedException();
         }
 
