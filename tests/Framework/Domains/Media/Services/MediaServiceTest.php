@@ -167,6 +167,38 @@ final class MediaServiceTest extends TestCase
         Storage::disk('local')->assertExists($second->path);
     }
 
+    public function test_it_can_reorder_media_within_an_entity_collection(): void
+    {
+        Storage::fake('local');
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $service = app(MediaService::class);
+
+        $first = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent('first.pdf', "%PDF-1.4\n%%EOF"),
+            'document',
+            'proof_one',
+        );
+
+        $second = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent('second.pdf', "%PDF-1.4\n%%EOF"),
+            'document',
+            'proof_two',
+        );
+
+        self::assertSame(1, $first->sort_order);
+        self::assertSame(2, $second->sort_order);
+
+        $service->reorder($actor, $second, 0);
+
+        self::assertSame(0, $second->fresh()->sort_order);
+    }
+
     private function rootUser(): User
     {
         $user = User::factory()->create();
