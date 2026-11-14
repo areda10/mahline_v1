@@ -23,6 +23,11 @@ final class EnsureForcedPasswordChangeCompleted
             'password.force-change.update',
             'security.password.edit',
             'authentication.logout',
+            'customer.password.force-change.edit',
+            'customer.password.force-change.update',
+            'customer.security.password.edit',
+            'customer.security.password.update',
+            'customer.logout',
         )) {
             return $next($request);
         }
@@ -33,6 +38,8 @@ final class EnsureForcedPasswordChangeCompleted
             ], 403);
         }
 
-        return redirect()->route('password.force-change.edit');
+        return redirect()->route($user->hasRole('customer')
+            ? 'customer.password.force-change.edit'
+            : 'password.force-change.edit');
     }
 }
