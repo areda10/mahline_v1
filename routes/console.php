@@ -15,3 +15,7 @@ Schedule::command('identity:tokens:prune-expired')
 Schedule::command('identity:devices:promote-pending')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('media:purge-expired')
+    ->daily()
+    ->withoutOverlapping();
