@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.79
+- **Version :** 3.80
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q299 — Mode de traitement des commandes V1 (VALIDÉE)
+- **Question :** Pour MAHLINE V1, faut-il imposer une adresse de livraison à toutes les commandes, même si un futur produit ou service est proposé en retrait à la coopérative ?
+- **Réponse :** A — oui. Toutes les commandes V1 nécessitent une adresse de livraison.
+- **Décision :** le parcours de commande V1 est exclusivement fondé sur la livraison à une adresse. Aucun mode de retrait à la coopérative n'est proposé ni accepté dans cette version.
+- **Conséquences :** toute commande doit être associée à une adresse de livraison valide appartenant au client, sélectionnée au checkout et figée dans le snapshot de livraison de la commande. Le serveur bloque la confirmation si cette adresse est absente, invalide ou non détenue par le client.
+- **Évolution future :** le retrait à la coopérative pourra être étudié dans une évolution dédiée, avec ses propres règles opérationnelles et son propre parcours ; il ne doit pas être anticipé comme mode actif en V1.
+
 ### Décision Q298 — Suppression de la dernière adresse de livraison (VALIDÉE)
 - **Question :** Un client supprime sa dernière adresse de livraison enregistrée. Quelle règle appliquer ?
 - **Réponse :** A — autoriser la suppression ; il pourra créer une nouvelle adresse lors de sa prochaine commande, mais ne pourra pas finaliser le checkout sans adresse valide.
@@ -4740,6 +4747,9 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.80 — 14 novembre 2026
+- Enregistrement de Q299 : toutes les commandes V1 exigent une adresse de livraison ; aucun retrait coopérative en V1.
 
 ### Version 3.79 — 14 novembre 2026
 - Enregistrement de Q298 : le carnet peut être vide ; une adresse valide appartenant au client est obligatoire pour confirmer une commande.
