@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Domains\Media\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
 use App\Domains\Media\Services\MediaService;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -24,7 +23,7 @@ final class MediaController
         private readonly MediaService $media,
     ) {}
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
             'owner_type' => ['required', 'string', Rule::in(['product', 'cooperative', 'user'])],
