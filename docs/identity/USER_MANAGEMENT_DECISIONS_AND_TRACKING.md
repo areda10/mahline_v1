@@ -2459,3 +2459,44 @@ Il s'agit d'une divergence entre code/tests et décision validée, à corriger d
 - tests Feature couvrant tous les rôles, accès direct à l'ID d'un autre utilisateur, tentative de mass assignment (email/password/status/role/cooperative_id), validation, adresse étrangère, upload/remplacement/suppression photo, préférences critiques non désactivables, audit et absence de révocation des sessions/tokens pour les changements ordinaires.
 
 **Ordre conseillé :** figer les choix techniques adresse/photo/préférences ; implémenter USR-02 ; implémenter USR-03 ; exécuter les tests ciblés et Pint ; puis traiter séparément la divergence USR-04. Le présent audit ne modifie ni code, ni migrations, ni tests.
+
+## 20.72 — Device Trust : implémentation et validation
+
+**Branche d'implémentation :** `feature/Marketplace`  
+**Commit de référence au moment de la validation :** `a646148ff1deb96f5e5dcd9a859ae4f72e3f4cc6`  
+**État :** implémentation et suites de validation confirmées VERTES par l'utilisateur.
+
+### Décisions appliquées
+- Première preuve navigateur d'un compte : appareil `trusted` automatiquement.
+- Nouvel appareil : `pending`, accès MAHLINE autorisé ; promotion automatique après 24 h si un emplacement de confiance est disponible.
+- Maximum de cinq appareils trusted ; au-delà, remplacement explicite et atomique d'un appareil trusted, avec révocation de ses sessions Web.
+- Révocation d'un appareil : état `non_trusted`, révocation de toutes ses sessions Web et refus de reconnexion avec la preuve navigateur révoquée.
+- Sessions Web multiples et simultanées sans limite ; la révocation d'un appareil ne révoque pas les tokens API.
+- Preuve indépendante de la session Laravel : cookie HttpOnly chiffré contenant un secret aléatoire, seul son hash SHA-256 est stocké en base.
+- Règles communes aux rôles root, super_admin, cooperative_admin, user et customer ; chaque compte gère ses propres appareils.
+- Notification de sécurité après révocation, sans secret, token ou URL exploitable.
+
+### Fichiers structurants
+- Service : `app/Domains/Identity/Authentication/Services/DeviceTrustService.php`
+- Middleware de vérification : `app/Domains/Identity/Authentication/Http/Middleware/EnsureActiveAuthenticationSession.php`
+- Cookie : `app/Domains/Identity/Authentication/Support/DeviceTrustCookie.php`
+- Contrôleur : `app/Domains/Identity/Authentication/Http/Controllers/DeviceTrustController.php`
+- Modèles : `KnownDevice.php`, `AuthenticationSession.php`, `User.php`
+- Migration : `2026_11_14_000003_add_device_trust_to_identity_sessions.php`
+- Commande planifiée : `identity:devices:promote-pending` (scheduler requis chaque minute en production)
+- Tests : `DeviceTrustServiceTest.php`, tests AuthenticationSessionController, AuthenticationController, EnsureActiveAuthenticationSession, CustomerRegistration, AuthenticationWorkflow et AuthenticationWorkflowTransaction.
+
+### Validation locale confirmée par l'utilisateur
+- `DeviceTrustServiceTest.php` — VERT.
+- `AuthenticationSessionControllerTest.php` — VERT.
+- `AuthenticationControllerTest.php` — VERT après correction du cookie de preuve sur la réponse de connexion.
+- `EnsureActiveAuthenticationSessionTest.php` — VERT.
+- `CustomerRegistrationTest.php` — VERT.
+- `AuthenticationWorkflowTest.php` — VERT après correction de la traduction de notification.
+- `AuthenticationWorkflowTransactionTest.php` — VERT.
+- `php vendor/bin/pint --test` — VERT.
+- `php artisan test` (suite complète) — VERT, confirmation utilisateur du 14 novembre 2026.
+
+**Limites opérationnelles :** la promotion des appareils pending inactifs dépend du scheduler Laravel exécuté chaque minute. Si l'utilisateur efface le cookie de preuve ou réinitialise son profil navigateur, le navigateur sera considéré comme un nouvel appareil ; l'identification physique persistante nécessiterait une preuve liée au matériel, telle que WebAuthn/passkey.
+
+**Statut de clôture :** Device Trust est validé par les tests ciblés, Pint et la suite complète selon les résultats communiqués par l'utilisateur. Aucun merge n'a été effectué.
