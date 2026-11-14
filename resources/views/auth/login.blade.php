@@ -144,7 +144,7 @@
                 <form
                     class="auth-form"
                     method="POST"
-                    action="{{ route('authentication.login.store') }}"
+                    action="{{ request()->routeIs('customer.login') ? route('customer.login.store') : route('authentication.login.store') }}"
                     accept-charset="UTF-8"
                 >
                     @csrf
