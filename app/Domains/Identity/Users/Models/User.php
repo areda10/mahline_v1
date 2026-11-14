@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
@@ -137,5 +138,17 @@ final class User extends BaseModel implements AuthenticatableContract
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function profileImage(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'mediable')
+            ->where('category', 'profile_image')
+            ->where('is_primary', true);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->media()->where('category', 'document');
     }
 }
