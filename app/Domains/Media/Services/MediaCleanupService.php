@@ -22,8 +22,14 @@ final class MediaCleanupService
                     $disk = Storage::disk($media->disk);
                     $paths = [$media->path];
 
+                    $prefix = rtrim(dirname($media->path), '/').'/' ;
+
                     foreach (($media->metadata['derivatives'] ?? []) as $path) {
-                        if (is_string($path)) {
+                        if (
+                            is_string($path)
+                            && str_starts_with($path, $prefix)
+                            && ! str_contains($path, '..')
+                        ) {
                             $paths[] = $path;
                         }
                     }
