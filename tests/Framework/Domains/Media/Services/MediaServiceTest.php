@@ -87,9 +87,7 @@ final class MediaServiceTest extends TestCase
 
     public function test_it_stores_public_product_images_with_derivatives_and_supports_primary_selection(): void
     {
-        if (! function_exists('imagecreatetruecolor')) {
-            self::markTestSkipped('PHP GD is required to process Media images.');
-        }
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
 
         Storage::fake('local');
         Storage::fake('public');
