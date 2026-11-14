@@ -6,6 +6,4 @@ namespace App\Domains\Identity\Customer\Exceptions;
 
 use RuntimeException;
 
-final class CustomerVerificationDeliveryException extends RuntimeException
-{
-}
+final class CustomerVerificationDeliveryException extends RuntimeException {}

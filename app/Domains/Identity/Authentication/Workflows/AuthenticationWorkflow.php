@@ -48,7 +48,7 @@ final class AuthenticationWorkflow
                 'user',
             ])
         ))) {
-            throw new AuthenticationFailedException();
+            throw new AuthenticationFailedException;
         }
 
         try {

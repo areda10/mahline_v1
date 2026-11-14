@@ -14,6 +14,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -103,7 +104,7 @@ final class CustomerRegistrationService extends BaseService
 
                 return $user;
             });
-        } catch (\Illuminate\Database\QueryException $exception) {
+        } catch (QueryException $exception) {
             if (User::withTrashed()->where('email', $email)->exists()) {
                 return false;
             }

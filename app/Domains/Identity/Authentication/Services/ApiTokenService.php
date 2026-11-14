@@ -26,6 +26,7 @@ final class ApiTokenService extends BaseService
         'cooperative_admin' => 5,
         'user' => 3,
     ];
+
     public function __construct(
         private readonly AuditService $audit,
     ) {}
@@ -318,7 +319,6 @@ final class ApiTokenService extends BaseService
             return true;
         });
     }
-
 
     /**
      * Permanently remove API tokens only after their 90-day post-expiry

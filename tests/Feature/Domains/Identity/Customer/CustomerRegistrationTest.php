@@ -11,6 +11,7 @@ use App\Domains\Identity\Customer\Services\CustomerRegistrationService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -34,7 +35,10 @@ final class CustomerRegistrationTest extends TestCase
     {
         Notification::fake();
 
-        $response = $this->post(route('customer.register.store'), $this->validRegistration());
+        $response = $this->post(
+            route('customer.register.store'),
+            $this->validRegistration(),
+        );
 
         $response->assertRedirect(route('customer.verification.notice'));
         $this->assertGuest();
@@ -43,57 +47,87 @@ final class CustomerRegistrationTest extends TestCase
             ->where('email', 'client@example.com')
             ->firstOrFail();
 
+        // Vérifier la création du compte client.
         $this->assertSame(UserStatus::Pending, $customer->status);
         $this->assertNull($customer->email_verified_at);
-        $this->assertTrue($customer->roles()->where('slug', 'customer')->exists());
-        $this->assertFalse($customer->roles()->whereIn('slug', [
-            'super_admin_root',
-            'super_admin',
-            'cooperative_admin',
-            'user',
-        ])->exists());
 
-        $verification = \DB::table('customer_email_verifications')
+        $this->assertTrue(
+            $customer->roles()->where('slug', 'customer')->exists(),
+        );
+
+        $this->assertFalse(
+            $customer->roles()->whereIn('slug', [
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ])->exists(),
+        );
+
+        // Vérifier la création du lien de vérification.
+        $verification = DB::table('customer_email_verifications')
             ->where('user_id', $customer->getKey())
             ->first();
 
         $this->assertNotNull($verification);
+
         $this->assertSame(
             now()->addHours(24)->format('Y-m-d H:i'),
-            \Illuminate\Support\Carbon::parse($verification->expires_at)->format('Y-m-d H:i'),
+            Carbon::parse($verification->expires_at)
+                ->format('Y-m-d H:i'),
         );
 
         $token = $this->sentVerificationToken();
+
         $this->assertDatabaseHas('customer_email_verifications', [
             'user_id' => $customer->getKey(),
             'token_hash' => hash('sha256', $token),
         ]);
 
-        $this->get(route('customer.verification.verify', ['token' => $token]))
-            ->assertRedirect(route('customer.login'));
+        // Vérifier l'adresse email.
+        $this->get(
+            route('customer.verification.verify', ['token' => $token]),
+        )->assertRedirect(route('customer.login'));
 
         $customer->refresh();
 
         $this->assertSame(UserStatus::Active, $customer->status);
         $this->assertNotNull($customer->email_verified_at);
+
         $this->assertNotNull(
-            \DB::table('customer_email_verifications')
+            DB::table('customer_email_verifications')
                 ->where('user_id', $customer->getKey())
                 ->value('used_at'),
         );
 
+        // Connecter le client.
         $loginResponse = $this->post(route('customer.login.store'), [
             'email' => $customer->email,
             'password' => 'MosaicRiver728!',
         ]);
 
         $loginResponse->assertRedirect(route('customer.dashboard'));
-        $this->assertAuthenticatedAs($customer);
-        $this->get(route('customer.dashboard'))->assertOk();
 
-        $sessionCookie = $loginResponse->getCookie(config('session.cookie'));
-        $this->assertNotNull($sessionCookie);
+        $this->assertAuthenticatedAs($customer);
+
+        // Récupérer le cookie de session.
+        $sessionCookie = $loginResponse->getCookie(
+            config('session.cookie'),
+        );
+
+        $this->assertNotNull(
+            $sessionCookie,
+            'Le cookie de session doit être présent après la connexion.',
+        );
+
+        // Vérifier que le cookie expire à la fermeture du navigateur.
         $this->assertSame(0, $sessionCookie->getExpiresTime());
+
+        // Rejouer le cookie sur la requête suivante.
+        $this->withCookie(
+            config('session.cookie'),
+            $sessionCookie->getValue(),
+        )->get(route('customer.dashboard'))->assertOk();
     }
 
     public function test_expired_verification_link_does_not_activate_customer(): void
@@ -237,7 +271,7 @@ final class CustomerRegistrationTest extends TestCase
         Notification::assertSentOnDemand(
             CustomerEmailVerificationNotification::class,
             function (CustomerEmailVerificationNotification $notification) use (&$token): bool {
-                $mail = $notification->toMail(new \stdClass());
+                $mail = $notification->toMail(new \stdClass);
                 $query = parse_url((string) $mail->actionUrl, PHP_URL_QUERY);
                 parse_str(is_string($query) ? $query : '', $parameters);
                 $token = $parameters['token'] ?? null;

@@ -23,7 +23,7 @@ final class CustomerProfileService extends BaseService
      *
      * Email changes and profile media are handled by their dedicated flows.
      *
-     * @param array{first_name: string, last_name: string, telephone: string} $attributes
+     * @param  array{first_name: string, last_name: string, telephone: string}  $attributes
      */
     public function update(User $customer, array $attributes): User
     {
