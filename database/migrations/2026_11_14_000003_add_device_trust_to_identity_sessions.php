@@ -11,8 +11,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('known_devices', function (Blueprint $table): void {
-            $table->dropUnique('known_devices_user_id_device_unique');
-
             $table->string('browser', 100)->nullable()->after('device');
             $table->char('device_token_hash', 64)->nullable()->unique();
             $table->string('status', 20)->default('non_trusted')->index();
@@ -21,6 +19,12 @@ return new class extends Migration
             $table->timestamp('last_seen_at')->nullable();
             $table->timestamp('revoked_at')->nullable();
             $table->index(['user_id', 'status'], 'known_devices_user_status_index');
+        });
+
+        // Keep a user_id-leading index in place before removing the legacy
+        // (user_id, device) unique index used by the users foreign key.
+        Schema::table('known_devices', function (Blueprint $table): void {
+            $table->dropUnique('known_devices_user_id_device_unique');
         });
 
         Schema::table('authentication_sessions', function (Blueprint $table): void {
@@ -44,6 +48,16 @@ return new class extends Migration
             $table->dropColumn('known_device_id');
         });
 
+        // Restore the legacy FK-supporting unique index before removing
+        // the replacement user_id-leading index. Rollback intentionally fails
+        // if multiple browser records now share the same descriptive label.
+        Schema::table('known_devices', function (Blueprint $table): void {
+            $table->unique(
+                ['user_id', 'device'],
+                'known_devices_user_id_device_unique',
+            );
+        });
+
         Schema::table('known_devices', function (Blueprint $table): void {
             $table->dropUnique(['device_token_hash']);
             $table->dropIndex('known_devices_status_index');
@@ -58,11 +72,6 @@ return new class extends Migration
                 'last_seen_at',
                 'revoked_at',
             ]);
-
-            $table->unique(
-                ['user_id', 'device'],
-                'known_devices_user_id_device_unique',
-            );
         });
     }
 };
