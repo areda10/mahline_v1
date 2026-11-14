@@ -16,7 +16,7 @@
         </ul>
     @endif
 
-    <form method="POST" action="{{ route('password.update') }}">
+    <form method="POST" action="{{ request()->routeIs('customer.password.reset') ? route('customer.password.update') : route('password.update') }}">
         @csrf
 
         <input
