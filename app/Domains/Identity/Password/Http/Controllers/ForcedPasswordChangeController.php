@@ -26,6 +26,15 @@ final class ForcedPasswordChangeController
             return redirect()->route('authentication.login');
         }
 
+        if ($user->hasRole('customer')) {
+            abort_if($user->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]), 403);
+        }
+
         return view('identity.password.change');
     }
 
@@ -136,6 +145,17 @@ final class ForcedPasswordChangeController
 
     private function dashboardRedirect(User $user): RedirectResponse
     {
+        if ($user->hasRole('customer')) {
+            abort_if($user->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]), 403);
+
+            return redirect()->route('customer.dashboard');
+        }
+
         if ($user->hasRole('super_admin_root')) {
             return redirect()->route('root.backoffice.dashboard');
         }
