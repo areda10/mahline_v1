@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.84
+- **Version :** 3.85
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4541,6 +4541,18 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q304 — Nombre de colis et d'expéditions par sous-commande coopérative (VALIDÉE)
+- **Question :** Une coopérative peut-elle répartir une sous-commande confirmée entre plusieurs colis/expéditions en V1 ?
+- **Réponse :** A — une seule expédition et un seul colis par sous-commande coopérative en V1.
+- **Décision :** chaque sous-commande coopérative confirmée correspond à un colis unique et à une seule expédition Delivery. Le colis dispose de son propre suivi transporteur ; aucune division d'une même sous-commande en plusieurs colis ou expéditions n'est proposée dans le premier release.
+- **Conséquences :**
+  - Une commande globale multi-coopératives peut produire plusieurs expéditions, à raison d'une expédition/colis par sous-commande coopérative confirmée.
+  - Les frais de livraison restent calculés par expédition, puis additionnés au niveau de la commande globale conformément à Q303.
+  - Le suivi et les statuts Delivery sont rattachés à l'expédition unique de chaque sous-commande.
+  - La gestion multi-colis pour une même sous-commande est réservée à une évolution ultérieure ; le modèle doit rester extensible sans l'activer en V1.
+- **Périmètre concerné :** Sales (sous-commandes), Delivery (colis, expéditions et suivi), Communication (notifications de suivi).
+- **Statut :** VALIDÉ — premier release.
+
 ### Décision Q303 — Calcul des frais de livraison multi-coopératives (VALIDÉE)
 - **Question :** Comment calculer les frais de livraison d'une commande contenant des produits de plusieurs coopératives ?
 - **Réponse :** A — calculer les frais séparément pour chaque expédition, puis additionner les montants.
@@ -4794,6 +4806,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.85 — 14 novembre 2026
+- Enregistrement de Q304 : une seule expédition et un seul colis par sous-commande coopérative en V1.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.84 — 14 novembre 2026
 - Enregistrement de Q303 : frais calculés par expédition/cooperative puis additionnés au total de la commande ; recalcul selon les expéditions restantes en cas de refus/annulation.
