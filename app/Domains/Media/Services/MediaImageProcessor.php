@@ -36,7 +36,7 @@ final class MediaImageProcessor
 
         $source = @imagecreatefromstring($contents);
 
-        if (! $source instanceof \GdImage) {
+        if (! ($source instanceof \GdImage)) {
             throw new RuntimeException('Le fichier image ne peut pas être décodé.');
         }
 
@@ -59,7 +59,7 @@ final class MediaImageProcessor
         $targetHeight = max(1, (int) round($height * $ratio));
         $target = imagecreatetruecolor($targetWidth, $targetHeight);
 
-        if (! $target instanceof \GdImage) {
+        if (! ($target instanceof \GdImage)) {
             throw new RuntimeException('Impossible de créer une image dérivée.');
         }
 
