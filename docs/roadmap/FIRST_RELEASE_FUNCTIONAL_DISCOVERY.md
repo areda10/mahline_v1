@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.96
+- **Version :** 3.97
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -4576,6 +4576,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Conséquences :** le serveur doit vérifier l'expiration et l'usage unique avant toute modification du mot de passe. Le nouveau mot de passe passe par les règles de complexité Identity en vigueur. Aucun code OTP par e-mail ou SMS n'est requis pour ce parcours. Les secrets de réinitialisation et mots de passe ne doivent jamais apparaître dans les journaux.
 - **Statut :** VALIDÉ — premier release.
 
+### Décision Q316 — Révocation après réinitialisation du mot de passe client (VALIDÉE)
+- **Question :** Que deviennent les sessions web et tokens API après une réinitialisation réussie du mot de passe ?
+- **Réponse :** A — toutes les sessions web et tous les tokens API actifs sont révoqués.
+- **Décision :** après confirmation effective de la réinitialisation du mot de passe, toutes les sessions web du client et tous ses tokens API sont invalidés, y compris la session ayant éventuellement servi à finaliser l'opération.
+- **Conséquences :** le client doit se reconnecter avec son nouveau mot de passe. La révocation doit être exécutée côté serveur comme partie intégrante du processus de réinitialisation, sans laisser de session ou token actif. L'événement est audité sans enregistrer le mot de passe, le lien ni le secret de réinitialisation.
+- **Statut :** VALIDÉ — premier release.
+
 ### Exigence espace client — espace personnel isolé
 - L'espace client constitue un espace fonctionnel distinct des espaces `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes.
 - Routes, contrôleurs, vues, navigation, permissions et données doivent appliquer cette séparation ; masquer les liens dans l'interface ne suffit pas. Chaque accès et chaque identifiant de ressource sont contrôlés côté serveur afin d'empêcher les accès inter-comptes et IDOR.
@@ -4924,6 +4931,11 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.97 — 14 novembre 2026
+- Enregistrement de Q316 : après réinitialisation réussie, révocation de toutes les sessions web et de tous les tokens API du client, sans exception pour la session courante.
+- Reconnexion obligatoire avec le nouveau mot de passe ; révocation auditée sans journaliser de secret.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 3.96 — 14 novembre 2026
 - Enregistrement de Q315 : réinitialisation du mot de passe client par lien sécurisé envoyé par e-mail, valable 30 minutes et à usage unique.
