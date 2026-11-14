@@ -41,15 +41,15 @@ final class AuthenticationController
             }
 
             if ($user?->hasRole('super_admin_root')) {
-                return $this->attachDeviceTrustCookie(redirect()->route('root.backoffice.dashboard'), $request);
+                return redirect()->route('root.backoffice.dashboard');
             }
 
             if ($user?->hasRole('user')) {
-                return $this->attachDeviceTrustCookie(redirect()->route('user.dashboard'), $request);
+                return redirect()->route('user.dashboard');
             }
 
             if ($user?->hasAnyRole(['super_admin', 'cooperative_admin'])) {
-                return $this->attachDeviceTrustCookie(redirect()->route('backoffice.dashboard'), $request);
+                return redirect()->route('backoffice.dashboard');
             }
 
             abort(403);
@@ -78,7 +78,7 @@ final class AuthenticationController
                 return redirect()->route('customer.password.force-change.edit');
             }
 
-            return $this->attachDeviceTrustCookie(redirect()->route('customer.dashboard'), $request);
+            return redirect()->route('customer.dashboard');
         }
 
         return view('auth.login');
@@ -181,19 +181,19 @@ final class AuthenticationController
         }
 
         if ($user->hasRole('super_admin_root')) {
-            return redirect()->route('root.backoffice.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('root.backoffice.dashboard'), $request);
         }
 
         if ($user->hasRole('customer')) {
-            return redirect()->route('customer.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('customer.dashboard'), $request);
         }
 
         if ($user->hasRole('user')) {
-            return redirect()->route('user.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('user.dashboard'), $request);
         }
 
         if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
-            return redirect()->route('backoffice.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('backoffice.dashboard'), $request);
         }
 
         abort(403);
