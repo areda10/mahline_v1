@@ -59,18 +59,30 @@ final class MediaController
                 'visibility' => $media->visibility,
                 'is_primary' => $media->is_primary,
                 'sort_order' => $media->sort_order,
-                'show_url' => route('media.show', $media),
+                'show_url' => $media->visibility === 'public'
+                    ? route('media.show', $media)
+                    : route('media.private', $media),
             ],
         ], 201);
     }
 
     public function show(Request $request, Media $media): StreamedResponse
     {
-        if ($media->visibility !== 'public') {
-            abort_unless($request->user() !== null, 404);
-            Gate::authorize('view', $media);
-        }
+        abort_unless($media->visibility === 'public', 404);
 
+        return $this->stream($request, $media);
+    }
+
+    public function showPrivate(Request $request, Media $media): StreamedResponse
+    {
+        abort_unless($media->visibility === 'private', 404);
+        Gate::authorize('view', $media);
+
+        return $this->stream($request, $media);
+    }
+
+    private function stream(Request $request, Media $media): StreamedResponse
+    {
         $variant = $request->query('variant', 'original');
         abort_unless(in_array($variant, ['original', 'medium', 'thumbnail'], true), 404);
 
