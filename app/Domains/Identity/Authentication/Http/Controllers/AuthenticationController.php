@@ -35,6 +35,10 @@ final class AuthenticationController
                 return redirect()->route('root.backoffice.dashboard');
             }
 
+            if ($user?->hasRole('customer')) {
+                return redirect()->route('customer.dashboard');
+            }
+
             if ($user?->hasRole('user')) {
                 return redirect()->route('user.dashboard');
             }
@@ -127,6 +131,10 @@ final class AuthenticationController
 
         if ($user->hasRole('super_admin_root')) {
             return redirect()->route('root.backoffice.dashboard');
+        }
+
+        if ($user->hasRole('customer')) {
+            return redirect()->route('customer.dashboard');
         }
 
         if ($user->hasRole('user')) {
