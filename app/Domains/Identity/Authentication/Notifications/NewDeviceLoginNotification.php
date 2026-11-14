@@ -48,8 +48,9 @@ final class NewDeviceLoginNotification extends Notification
                 'browser' => 'Browser',
                 'device' => 'Device',
                 'location' => 'Approximate location: unavailable',
-                'ignore' => 'If this was you, no action is needed. If you do not recognize this activity, secure your account and contact your MAHLINE administrator.',
+                'ignore' => 'If this was you, no action is needed. If you do not recognize this activity, open Security > Devices in MAHLINE and revoke this device.',
                 'pending' => 'This device can access your account now, but it will become trusted after 24 hours unless you revoke it.',
+                'pending_limit' => 'This device can access your account now. All five trusted-device slots are occupied, so after 24 hours it will remain pending until you replace a trusted device in Security > Devices.',
                 'trusted' => 'This device is now trusted for future sign-ins.',
                 'unknown' => 'Not available',
             ],
@@ -64,6 +65,7 @@ final class NewDeviceLoginNotification extends Notification
                 'location' => 'الموقع التقريبي: غير متاح',
                 'ignore' => 'إذا كنت أنت من قام بهذا الدخول فلا يلزم اتخاذ أي إجراء. إذا لم تتعرف على هذا النشاط، يرجى تأمين حسابك والتواصل مع مسؤول MAHLINE.',
                 'pending' => 'يمكن لهذا الجهاز استخدام حسابك الآن، وسيصبح موثوقاً بعد 24 ساعة ما لم تقم بإلغائه.',
+                'pending_limit' => 'يمكن لهذا الجهاز استخدام حسابك الآن. جميع أماكن الأجهزة الموثوقة الخمسة مشغولة، وسيبقى قيد الانتظار بعد 24 ساعة حتى تستبدل جهازاً موثوقاً من قسم الأمان > الأجهزة.',
                 'trusted' => 'هذا الجهاز موثوق الآن لتسجيلات الدخول المستقبلية.',
                 'unknown' => 'غير متاح',
             ],
@@ -76,14 +78,22 @@ final class NewDeviceLoginNotification extends Notification
                 'browser' => 'Navigateur',
                 'device' => 'Appareil',
                 'location' => 'Localisation approximative : indisponible',
-                'ignore' => 'Si vous êtes à l’origine de cette connexion, aucune action n’est nécessaire. Si vous ne reconnaissez pas cette activité, sécurisez votre compte et contactez votre administrateur MAHLINE.',
+                'ignore' => 'Si vous êtes à l’origine de cette connexion, aucune action n’est nécessaire. Sinon, ouvrez Sécurité > Appareils dans MAHLINE et révoquez cet appareil.'
                 'pending' => 'Cet appareil peut utiliser votre compte dès maintenant. Il deviendra de confiance après 24 heures si vous ne le révoquez pas.',
+                'pending_limit' => 'Cet appareil peut utiliser votre compte dès maintenant. Les cinq places de confiance sont occupées : après 24 heures, il restera en attente jusqu’au remplacement d’un appareil dans Sécurité > Appareils.',
                 'trusted' => 'Cet appareil est maintenant reconnu comme appareil de confiance.',
                 'unknown' => 'Non disponible',
             ],
         };
 
-        $deviceStatus = $this->session->knownDevice?->status?->value;
+        $knownDevice = $this->session->knownDevice;
+        $deviceStatus = $knownDevice?->status?->value;
+        $trustedCount = $knownDevice === null
+            ? 0
+            : \App\Domains\Identity\Authentication\Models\KnownDevice::query()
+                ->where('user_id', $this->session->user_id)
+                ->where('status', 'trusted')
+                ->count();
 
         $mail = (new MailMessage)
             ->subject($messages['subject'])
@@ -91,7 +101,7 @@ final class NewDeviceLoginNotification extends Notification
             ->line($messages['intro']);
 
         if ($deviceStatus === 'pending') {
-            $mail->line($messages['pending']);
+            $mail->line($trustedCount >= 5 ? $messages['pending_limit'] : $messages['pending']);
         } elseif ($deviceStatus === 'trusted') {
             $mail->line($messages['trusted']);
         }
