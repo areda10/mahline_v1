@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.23
+- **Version :** 4.24
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -5133,6 +5133,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 
 
 ## 6. Historique des mises à jour
+
+### Version 4.24 — 14 novembre 2026
+- Renforcement de l'isolation client : middleware dédié refuse l'accès à l'espace customer aux comptes portant aussi un rôle interne.
+- Test feature ajouté pour l'exclusion des comptes multi-rôles ; exécution des tests toujours à effectuer.
 
 ### Version 4.23 — 14 novembre 2026
 - Première tranche du profil client : consultation et modification sécurisées du prénom, nom et téléphone dans l'espace client isolé.
