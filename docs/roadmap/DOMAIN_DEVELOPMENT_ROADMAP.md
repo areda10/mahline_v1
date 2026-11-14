@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.85
+- **Version :** 5.86
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -607,6 +607,13 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 **Informations des sessions client (Q327) :** afficher pour chaque session la date de connexion, la dernière activité, le navigateur et le système d'exploitation, ainsi qu'un repère clair pour la session courante. N'afficher que les données disponibles et fiables ; l'adresse IP et la localisation approximative sont exclues de l'interface V1. Ces informations soutiennent la gestion/révocation Q319/Q325/Q326.
 
 **Nouvel appareil non reconnu — alerte et contrôle client (Q328) :** autoriser immédiatement la connexion du nouvel appareil, puis envoyer simultanément un e-mail permettant au client de confirmer qu'il est à l'origine de la connexion ou, s'il ne la reconnaît pas, de révoquer cette nouvelle session et d'en bloquer l'accès. Si une session client est déjà active sur Mahline, afficher également une notification dans l'espace client ; sinon l'e-mail est le canal de notification disponible. La révocation vise uniquement la session suspecte, sans déconnecter les autres appareils. Liens/actions sécurisés à usage unique et à durée limitée ; durée, absence de réponse et confiance durable de l'appareil restent à définir avant développement. Ne jamais journaliser les secrets du lien.
+**Délai de confirmation d'un nouvel appareil non reconnu (Q329) :** le lien sécurisé envoyé au client pour confirmer la connexion ou révoquer la nouvelle session suspecte est valable une heure à compter de son émission. Il est individuel, à usage unique et lié à cette session. À expiration, il devient inutilisable. Le comportement de la session en l'absence de réponse et les modalités de renvoi restent à définir ; aucune validation ni révocation automatique n'est déduite de ce délai. La révocation déclenchée par le client reste limitée à la nouvelle session, sans affecter les autres appareils.
+
+
+### Version 5.86 — 14 novembre 2026
+- Enregistrement de Q329 : lien de confirmation ou de révocation d'un nouvel appareil non reconnu valable une heure, individuel, à usage unique et lié à la nouvelle session.
+- À expiration, lien inutilisable ; aucune action automatique sur la session sans réponse n'est supposée, ce comportement reste à cadrer.
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.85 — 14 novembre 2026
 - Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
