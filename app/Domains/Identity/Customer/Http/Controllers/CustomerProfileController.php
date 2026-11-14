@@ -6,6 +6,7 @@ namespace App\Domains\Identity\Customer\Http\Controllers;
 
 use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -27,7 +28,7 @@ final class CustomerProfileController
     {
         $customer = $request->user();
 
-        abort_unless($customer instanceof \\App\\Domains\\Identity\\Users\\Models\\User, 403);
+        abort_unless($customer instanceof User, 403);
 
         $this->profiles->update(
             $customer,
