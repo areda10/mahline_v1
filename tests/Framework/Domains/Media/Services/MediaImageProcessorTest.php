@@ -12,9 +12,7 @@ final class MediaImageProcessorTest extends TestCase
 {
     public function test_it_generates_medium_and_thumbnail_derivatives(): void
     {
-        if (! function_exists('imagecreatetruecolor')) {
-            self::markTestSkipped('PHP GD is required to process Media images.');
-        }
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
 
         $file = UploadedFile::fake()->image('source.jpg', 1600, 800);
         $derivatives = app(MediaImageProcessor::class)->derivatives($file, 'jpg');
