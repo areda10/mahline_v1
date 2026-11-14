@@ -147,10 +147,26 @@ final class DeviceTrustService extends BaseService
                     ->lockForUpdate()
                     ->first();
 
+                if ($knownDevice === null) {
+                    throw new DeviceTrustException(
+                        'The device associated with this session is no longer trusted.',
+                    );
+                }
+
                 if (
-                    $knownDevice === null
-                    || $knownDevice->status === KnownDeviceStatus::NonTrusted
+                    ! DeviceTrustCookie::isValid($presentedToken)
+                    || $knownDevice->device_token_hash === null
+                    || ! hash_equals(
+                        $knownDevice->device_token_hash,
+                        DeviceTrustCookie::hash((string) $presentedToken),
+                    )
                 ) {
+                    throw new DeviceTrustException(
+                        'The browser device proof does not match this authentication session.',
+                    );
+                }
+
+                if ($knownDevice->status === KnownDeviceStatus::NonTrusted) {
                     throw new DeviceTrustException(
                         'The device associated with this session is no longer trusted.',
                     );

@@ -81,6 +81,35 @@ final class DeviceTrustServiceTest extends TestCase
         $service->resolveForAuthentication($user, $resolution->cookieToken, 'windows', 'chrome');
     }
 
+    public function test_active_web_session_requires_its_device_proof_cookie(): void
+    {
+        $user = User::factory()->create();
+        $service = app(DeviceTrustService::class);
+        $device = $service->resolveForAuthentication($user, null, 'windows', 'chrome');
+        $session = $this->createSession($user, $device->device);
+
+        $this->expectException(DeviceTrustException::class);
+        $service->ensureSessionDevice($user, $session, null, 'windows', 'chrome');
+    }
+
+    public function test_active_web_session_rejects_another_devices_proof_cookie(): void
+    {
+        $user = User::factory()->create();
+        $service = app(DeviceTrustService::class);
+        $firstDevice = $service->resolveForAuthentication($user, null, 'windows', 'chrome');
+        $secondDevice = $service->resolveForAuthentication($user, null, 'iphone', 'safari');
+        $session = $this->createSession($user, $firstDevice->device);
+
+        $this->expectException(DeviceTrustException::class);
+        $service->ensureSessionDevice(
+            $user,
+            $session,
+            $secondDevice->cookieToken,
+            'iphone',
+            'safari',
+        );
+    }
+
     public function test_pending_device_remains_usable_for_normal_web_sessions(): void
     {
         $user = User::factory()->create();
