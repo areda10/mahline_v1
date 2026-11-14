@@ -21,11 +21,9 @@ final class MediaCleanupService
                     $disk = Storage::disk($media->disk);
                     $paths = [$media->path];
 
-                    foreach (['medium', 'thumbnail'] as $variant) {
-                        $expected = dirname($media->path).'/'.$variant.'.'.$media->extension;
-
-                        if (($media->metadata['derivatives'][$variant] ?? null) === $expected) {
-                            $paths[] = $expected;
+                    if ($media->category !== 'document') {
+                        foreach (['medium', 'thumbnail'] as $variant) {
+                            $paths[] = dirname($media->path).'/'.$variant.'.'.$media->extension;
                         }
                     }
 
