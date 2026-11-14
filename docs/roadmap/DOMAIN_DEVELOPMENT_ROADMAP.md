@@ -1,6 +1,6 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.40
+- **Version :** 5.41
 - **Date :** 12 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
@@ -31,7 +31,7 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
-- **Seuil « Presque épuisé » (Q282) :** seuil entier configurable par produit par le `cooperative_admin` propriétaire ; indicateur « Presque épuisé » si la disponibilité nette est positive et inférieure ou égale au seuil, « Indisponible » à zéro ou moins, sinon « Disponible ». Le seuil n'affecte ni le stock ni la commandabilité. Une valeur par défaut de **5 unités** s'applique en l'absence de configuration propre au produit ; le cooperative_admin peut définir un seuil spécifique par produit. Products possède le paramètre, Inventory la quantité disponible, Catalog l'indicateur et Sales la revalidation ; validation serveur, isolation coopérative et audit obligatoires.
+- **Seuil « Presque épuisé » (Q282) :** seuil entier configurable par produit par le `cooperative_admin` propriétaire ; indicateur « Presque épuisé » si la disponibilité nette est positive et inférieure ou égale au seuil, « Indisponible » à zéro ou moins, sinon « Disponible ». Le seuil n'affecte ni le stock ni la commandabilité. Une valeur par défaut de **5 unités** s'applique si le seuil est absent/null. Un seuil explicitement configuré à **0** désactive « Presque épuisé » pour le produit : statut « Disponible » tant que la disponibilité nette est positive, puis « Indisponible » à zéro ou moins. Les valeurs négatives et décimales sont refusées ; Products distingue null de 0. Products possède le paramètre, Inventory la quantité disponible, Catalog l'indicateur et Sales la revalidation ; validation serveur, isolation coopérative et audit obligatoires.
 - **Indicateur public de stock (Q281) :** ne jamais exposer la quantité exacte au client. Catalog affiche « Indisponible » si la quantité disponible nette est nulle ou négative, « Presque épuisé » sous un seuil bas centralisé à définir avant implémentation, sinon « Disponible ». Inventory demeure source de vérité ; Sales revalide et réserve côté serveur. Les informations internes plus détaillées restent protégées par les permissions et l'isolation coopérative.
 - **Retour de disponibilité après réapprovisionnement (Q280) :** Catalog rétablit automatiquement l'état disponible dès qu'Inventory confirme une quantité disponible strictement positive après prise en compte des réservations et engagements ; aucune validation manuelle n'est requise. Inventory demeure la source de vérité, Catalog n'expose pas le stock physique et Sales revalide/réserve côté serveur. Prévoir propagation fiable, idempotence, prévention des états obsolètes, isolation coopérative et audit ; aucun changement de prix ou de version promotionnelle.
 - **Promotion sans variante disponible (Q279) :** conserver la promotion visible pendant sa validité, mais afficher « Indisponible » et bloquer toute commande. Inventory reste source de vérité ; Catalog expose l'indisponibilité sans révéler le stock physique ; Sales revalide disponibilité et réservation côté serveur au panier/checkout. Le retour du stock ne modifie pas la promotion ni ses versions.
@@ -503,6 +503,10 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+### Version 5.41 — 14 novembre 2026
+- Enregistrement de Q284 : seuil personnalisé à zéro = désactivation de « Presque épuisé », distincte d'une absence de configuration (défaut 5 unités).
+- Aucun code applicatif modifié ; aucune fusion de branche.
 
 ### Version 5.40 — 14 novembre 2026
 - Enregistrement de Q283 : seuil « Presque épuisé » fixé par défaut à 5 unités, configurable individuellement par produit.
