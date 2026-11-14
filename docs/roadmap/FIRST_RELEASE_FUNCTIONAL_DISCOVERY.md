@@ -1,6 +1,6 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 3.67
+- **Version :** 3.68
 - **Date d'ouverture :** 12 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
@@ -96,12 +96,12 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 
 ### Question 6 — Vérification de l'adresse e-mail du client (VALIDÉ)
 - **Question :** Par quel mécanisme le client vérifie-t-il son adresse e-mail lors de l'inscription ?
-- **Réponse :** A — lien sécurisé envoyé par e-mail ; le client clique sur ce lien pour vérifier son adresse. Le lien expire après 60 minutes et un nouvel envoi est possible.
+- **Réponse :** A — lien sécurisé envoyé par e-mail ; le client clique sur ce lien pour vérifier son adresse. Le lien expire après 24 heures et un nouvel envoi est possible.
 - **Statut :** VALIDÉ — premier release.
 - **Périmètre concerné :** Identity ; génération, envoi, validation, expiration et renvoi du lien de vérification.
 - **Conséquences :**
   - Le mécanisme de vérification repose sur un lien individuel sécurisé envoyé à l'adresse e-mail déclarée.
-  - Le lien est à usage contrôlé et expire 60 minutes après son émission.
+  - Le lien est à usage contrôlé et expire 24 heures après son émission.
   - Le client peut demander un nouvel envoi lorsque le lien a expiré ou n'est plus disponible.
   - Un lien expiré ou invalide ne doit pas permettre de vérifier l'adresse.
   - Les règles de limitation des renvois, d'invalidation des anciens liens et de journalisation restent à préciser.
@@ -113,7 +113,7 @@ La cohérence approfondie des frontières entre domaines et le renforcement glob
 - **Périmètre concerné :** Identity ; gestion des jetons de vérification et renvoi des e-mails.
 - **Conséquences :**
   - Un seul lien de vérification est actif par compte à un instant donné.
-  - La création d'un nouveau lien invalide immédiatement le précédent, même si sa période de validité de 60 minutes n'est pas écoulée.
+  - La création d'un nouveau lien invalide immédiatement le précédent, même si sa période de validité de 24 heures n'est pas écoulée.
   - Seul le lien le plus récemment émis peut vérifier l'adresse e-mail.
   - Un ancien lien ne peut jamais être réutilisé après l'émission d'un nouveau lien.
   - Les limites de fréquence des demandes et les messages affichés au client restent à préciser.
@@ -4541,6 +4541,13 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products possède les paramètres et l'historique des promotions ; Catalog expose uniquement les informations publiables ; Sales revalide et fige le prix appliqué. Les droits de supervision ne confèrent pas un droit d'écriture commerciale.
 
 
+### Décision Q287 — Durée de validité du lien de vérification e-mail client (VALIDÉE)
+- **Question :** Combien de temps le lien envoyé au client doit-il rester valide ?
+- **Réponse :** B — 24 heures.
+- **Décision :** chaque lien de vérification e-mail émis pour l'inscription d'un client marketplace est valable pendant 24 heures à compter de son émission. À l'expiration, il ne peut plus vérifier l'adresse ni activer le compte.
+- **Renouvellement :** le client peut demander un nouveau lien selon les limites anti-abus déjà définies. L'émission d'un nouveau lien invalide immédiatement tous les liens précédemment émis (Q7) ; un seul lien reste utilisable par compte. La limite de renvoi reste de 5 demandes par heure, suivies d'un blocage temporaire d'une heure (Q8).
+- **Sécurité et cohérence :** expiration et validation contrôlées côté serveur, jetons sécurisés et à usage unique, invalidation après succès, réponses qui ne révèlent pas l'existence d'un compte, aucune journalisation de jeton ou de secret. La durée de 24 heures remplace explicitement l'ancienne durée de 60 minutes indiquée dans Q6 et Q7. L'activation automatique après vérification demeure limitée au parcours d'inscription client (Q286) et ne modifie pas les règles des comptes internes.
+
 ### Décision Q286 — Activation du compte client après vérification e-mail (VALIDÉE)
 - **Question :** Quel parcours d'activation après inscription client ?
 - **Réponse :** A — compte en attente, vérification e-mail, puis activation automatique.
@@ -4653,6 +4660,10 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 - **Frontières :** Products valide et conserve la promotion ; Catalog ne l'expose comme active que pendant sa période de validité ; Sales revalide le prix au panier/checkout et le fige dans la commande.
 
 ## 6. Historique des mises à jour
+
+### Version 3.68 — 14 novembre 2026
+- Enregistrement de Q287 : lien de vérification e-mail client valable 24 heures ; expiration serveur, renouvellement sous limites anti-abus et invalidation immédiate des liens précédents.
+- Harmonisation des décisions Q6 et Q7 : la durée antérieure de 60 minutes est remplacée par 24 heures ; les limites de renvoi Q8 restent inchangées.
 
 ### Version 3.67 — 14 novembre 2026
 - Enregistrement de Q286 : activation automatique du compte client après vérification réussie de l'e-mail ; inscription initiale en attente.
