@@ -9,6 +9,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
+use App\Domains\Media\Models\Media;
 use Database\Factories\CooperativeFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class Cooperative extends BaseModel
@@ -103,5 +105,10 @@ final class Cooperative extends BaseModel
         )
             ->using(SuperAdminCooperative::class)
             ->withTimestamps();
+    }
+
+    public function media(): MorphMany
+    {
+        return $this->morphMany(Media::class, 'mediable');
     }
 }
