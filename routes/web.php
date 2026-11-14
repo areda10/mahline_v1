@@ -190,11 +190,17 @@ Route::get('/', function () {
 
     $user = auth()->user();
 
+    if ($user->hasRole('customer')) {
+        return redirect()->route($user->must_change_password
+            ? 'customer.password.force-change.edit'
+            : 'customer.dashboard');
+    }
+
     if ($user->must_change_password) {
         return redirect()->route('password.force-change.edit');
     }
 
-    if ($user->hasRole('super_admin_root')) {
+    if ($user->hasRole('super_admin_root'))
         return redirect()->route('root.backoffice.dashboard');
     }
 
