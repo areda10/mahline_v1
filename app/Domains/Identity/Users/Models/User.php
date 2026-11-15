@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -100,6 +101,14 @@ final class User extends BaseModel implements AuthenticatableContract
             'user_role',
             'user_id',
             'role_id',
+        );
+    }
+
+    public function address(): HasOne
+    {
+        return $this->hasOne(
+            \\App\\Domains\\Localization\\Models\\Address::class,
+            'user_id',
         );
     }
 
