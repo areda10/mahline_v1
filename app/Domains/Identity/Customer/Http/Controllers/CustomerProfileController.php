@@ -9,6 +9,8 @@ use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerEmailChangeService;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Enums\MoroccanRegion;
+use App\Domains\Localization\Services\AddressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,6 +20,7 @@ final class CustomerProfileController
     public function __construct(
         private readonly CustomerProfileService $profiles,
         private readonly CustomerEmailChangeService $emailChanges,
+        private readonly AddressService $addresses,
     ) {}
 
     public function edit(Request $request): View
@@ -36,8 +39,12 @@ final class CustomerProfileController
             403,
         );
 
+        $customer->load('address.country');
+
         return view('customer.profile.edit', [
             'user' => $customer,
+            'address' => $customer->address,
+            'regions' => MoroccanRegion::values(),
         ]);
     }
 
@@ -47,10 +54,19 @@ final class CustomerProfileController
 
         abort_unless($customer instanceof User, 403);
 
-        $this->profiles->update(
-            $customer,
-            $request->validated(),
-        );
+        $validated = $request->validated();
+        $addressAttributes = array_intersect_key($validated, array_flip([
+            'number', 'street', 'floor', 'city', 'region', 'postal_code',
+        ]));
+        $profileAttributes = array_diff_key($validated, $addressAttributes);
+
+        $this->profiles->update($customer, $profileAttributes);
+
+        if ($customer->address()->exists()) {
+            $this->addresses->updateForUser($customer, $customer, $addressAttributes);
+        } else {
+            $this->addresses->createForUser($customer, $customer, $addressAttributes);
+        }
 
         return redirect()
             ->route('customer.profile.edit')
