@@ -49,7 +49,7 @@ final class PersonalAddressController
         }
 
         return redirect()
-            ->route('profile.address.edit')
+            ->route($user->hasRole('super_admin_root') ? 'root.backoffice.profile.address.edit' : 'profile.address.edit')
             ->with('success', 'Votre adresse personnelle a été mise à jour.');
     }
 }
