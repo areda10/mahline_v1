@@ -15,6 +15,7 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
+use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
 use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
@@ -260,6 +261,9 @@ Route::prefix('root/back-office')
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
 
+        Route::get('profile/address', [PersonalAddressController::class, 'edit'])->name('profile.address.edit');
+        Route::put('profile/address', [PersonalAddressController::class, 'update'])->name('profile.address.update');
+
         Route::get('security/authentication-lockouts', [AuthenticationLockoutController::class, 'index'])
             ->name('security.authentication-lockouts.index');
         Route::post('security/authentication-lockouts/unlock', [AuthenticationLockoutController::class, 'unlock'])
@@ -417,6 +421,9 @@ Route::prefix('back-office')
     ->name('backoffice.')
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
     ->group(function (): void {
+        Route::get('profile/address', [PersonalAddressController::class, 'edit'])->name('profile.address.edit');
+        Route::put('profile/address', [PersonalAddressController::class, 'update'])->name('profile.address.update');
+
         Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
             ->name('security.sessions.index');
         Route::post('security/sessions/extend', [AuthenticationSessionController::class, 'extend'])
