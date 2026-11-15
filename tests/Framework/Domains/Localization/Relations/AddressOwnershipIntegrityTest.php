@@ -32,12 +32,10 @@ final class AddressOwnershipIntegrityTest extends TestCase
     public function test_cooperative_defines_an_address_relationship_owned_by_cooperative(): void
     {
         $cooperative = Cooperative::factory()->create();
-        $address = Address::factory()->create([
-            'user_id' => null,
-            'cooperative_id' => $cooperative->getKey(),
-        ]);
+        $address = $cooperative->address;
 
-        self::assertSame($address->getKey(), $cooperative->address->getKey());
+        self::assertInstanceOf(Address::class, $address);
+        self::assertNull($address->user_id);
         self::assertSame($cooperative->getKey(), $address->cooperative->getKey());
     }
 
