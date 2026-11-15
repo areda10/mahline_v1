@@ -9,11 +9,13 @@ use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -237,7 +239,7 @@ final class AddressService extends BaseService
             'floor' => ['sometimes', 'nullable', 'string', 'max:50'],
             'postal_code' => ['sometimes', 'nullable', 'string', 'max:20'],
             'city' => ['required', 'string', 'max:120'],
-            'region' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'region' => ['sometimes', 'nullable', 'string', 'max:120', Rule::in(MoroccanRegion::values())],
             'latitude' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
         ])->validate();
