@@ -13,6 +13,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Media\Models\Media;
+use App\Domains\Localization\Models\Address;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -107,7 +108,7 @@ final class User extends BaseModel implements AuthenticatableContract
     public function address(): HasOne
     {
         return $this->hasOne(
-            \\App\\Domains\\Localization\\Models\\Address::class,
+            Address::class,
             'user_id',
         );
     }
