@@ -47,7 +47,7 @@ final class CooperativeServiceTest extends TestCase
     {
         $actor = $this->superAdminActor();
 
-        $cooperative = $this->service->create($actor, $this->attributes());
+        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseHas('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
@@ -65,7 +65,7 @@ final class CooperativeServiceTest extends TestCase
     {
         $actor = $this->rootActor();
 
-        $cooperative = $this->service->create($actor, $this->attributes());
+        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseMissing('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
@@ -77,7 +77,7 @@ final class CooperativeServiceTest extends TestCase
     {
         $actor = $this->superAdminActor();
 
-        $first = $this->service->create($actor, $this->attributes());
+        $first = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
         $second = $this->service->create($actor, [
             ...$this->attributes(),
             'name' => 'Deuxième coopérative',
@@ -118,7 +118,7 @@ final class CooperativeServiceTest extends TestCase
         );
 
         try {
-            $this->service->create($actor, $this->attributes());
+            $this->service->create($actor, $this->attributes(), $this->addressAttributes());
             $this->fail('The failed assignment must abort cooperative creation.');
         } catch (\RuntimeException $exception) {
             $this->assertSame('Simulated assignment insert failure.', $exception->getMessage());
@@ -135,7 +135,7 @@ final class CooperativeServiceTest extends TestCase
     public function test_create_excludes_confidential_fields_from_audit(): void
     {
         $actor = $this->rootActor();
-        $cooperative = $this->service->create($actor, $this->attributes());
+        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
 
         $event = AuditEvent::query()
             ->where('event_key', 'cooperatives.created')
@@ -312,7 +312,7 @@ final class CooperativeServiceTest extends TestCase
         );
 
         try {
-            $this->service->create($actor, $this->attributes());
+            $this->service->create($actor, $this->attributes(), $this->addressAttributes());
             $this->fail('The audit insert failure should abort cooperative creation.');
         } catch (\RuntimeException $exception) {
             $this->assertSame(
