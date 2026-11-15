@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @extends Factory<Cooperative>
@@ -29,6 +30,18 @@ final class CooperativeFactory extends Factory
             'ice' => fake()->unique()->numerify('###############'),
             'status' => CooperativeStatus::PENDING,
         ];
+    }
+
+    public function configure(): static
+    {
+        return $this->afterCreating(function (Cooperative $cooperative): void {
+            DB::table('addresses')
+                ->where('id', $cooperative->address_id)
+                ->update([
+                    'user_id' => null,
+                    'cooperative_id' => $cooperative->getKey(),
+                ]);
+        });
     }
 
     public function active(): static
