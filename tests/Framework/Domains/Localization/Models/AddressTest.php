@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Localization\\Models;
+namespace Tests\Framework\Domains\Localization\Models;
 
-use App\\Domains\\Localization\\Models\\Address;
-use Illuminate\\Database\\Eloquent\\SoftDeletes;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Localization\Models\Address;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class AddressTest extends TestCase
 {
