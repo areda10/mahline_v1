@@ -18,15 +18,15 @@ final class CooperativeService
 {
     /** @var list<string> */
     private const WRITABLE_FIELDS = [
-        'name', 'rib', 'tax_id', 'phone', 'email', 'rc', 'ice',
+        'name', 'rib', 'tax_id', 'address_id', 'phone', 'email', 'rc', 'ice',
     ];
 
     /** @var list<string> */
-    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email'];
+    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email', 'address_id'];
 
     /** @var list<string> */
     private const AUDITABLE_FIELDS = [
-        'name', 'phone', 'email', 'rc', 'status',
+        'name', 'address_id', 'phone', 'email', 'rc', 'status',
     ];
 
     public function __construct(
@@ -38,7 +38,7 @@ final class CooperativeService
     public function create(User $actor, array $attributes, array $addressAttributes): Cooperative
     {
         Gate::forUser($actor)->authorize('create', Cooperative::class);
-        $attributes = $this->filterWritableAttributes($attributes);
+        $attributes = $this->filterCreateAttributes($attributes);
 
         return DB::transaction(function () use ($actor, $attributes, $addressAttributes): Cooperative {
             $cooperative = new Cooperative;
@@ -247,6 +247,18 @@ final class CooperativeService
                 $target->value,
             ));
         }
+    }
+
+    /** @param array<string, mixed> $attributes
+     * @return array<string, mixed>
+     */
+    private function filterCreateAttributes(array $attributes): array
+    {
+        if (array_key_exists('address_id', $attributes)) {
+            throw new \\InvalidArgumentException('A cooperative address must be created through AddressService.');
+        }
+
+        return $this->filterWritableAttributes($attributes);
     }
 
     /** @param array<string, mixed> $attributes
