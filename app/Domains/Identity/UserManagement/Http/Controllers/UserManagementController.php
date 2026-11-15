@@ -129,6 +129,7 @@ final class UserManagementController
         $user->load([
             'roles' => static fn ($query) => $query->orderBy('name'),
             'cooperative',
+            'address.country',
         ]);
 
         $canViewAssignments = Gate::allows('viewAssignments', $user);
