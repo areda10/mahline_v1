@@ -67,7 +67,7 @@ final class ProductVariantService
 
             $product = $variant->product;
 
-            if ($product === null || ! $product->is_active) {
+            if ($product === null || $product->trashed() || ! $product->is_active) {
                 throw ValidationException::withMessages([
                     'product' => [
                         'Le produit associé n’est pas disponible.',
