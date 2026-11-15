@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Media\\Policies;
+namespace Tests\Framework\Domains\Media\Policies;
 
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authorization\\Models\\Permission;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Media\\Models\\Media;
-use App\\Domains\\Products\\Models\\Product;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\Gate;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Models\Media;
+use App\Domains\Products\Models\Product;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
+use Tests\TestCase;
 
 final class MediaPolicyTest extends TestCase
 {
