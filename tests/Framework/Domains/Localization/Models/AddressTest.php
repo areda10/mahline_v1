@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Framework\Domains\Localization\Models;
+namespace Tests\\Framework\\Domains\\Localization\\Models;
 
-use App\Domains\Localization\Models\Address;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use App\\Domains\\Localization\\Models\\Address;
+use Illuminate\\Database\\Eloquent\\SoftDeletes;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
 
 final class AddressTest extends TestCase
 {
@@ -15,121 +15,68 @@ final class AddressTest extends TestCase
 
     public function test_address_uses_the_expected_table(): void
     {
-        $address = new Address;
-
-        self::assertSame(
-            'addresses',
-            $address->getTable(),
-        );
+        self::assertSame('addresses', (new Address)->getTable());
     }
 
     public function test_address_uses_soft_deletes(): void
     {
-        $traits = class_uses_recursive(Address::class);
-
-        self::assertArrayHasKey(
-            SoftDeletes::class,
-            $traits,
-        );
+        self::assertArrayHasKey(SoftDeletes::class, class_uses_recursive(Address::class));
     }
 
     public function test_address_has_expected_fillable_attributes(): void
     {
-        $address = new Address;
-
-        self::assertSame(
-            [
-                'address_line_1',
-                'address_line_2',
-                'postal_code',
-                'city',
-                'state',
-                'country_id',
-                'latitude',
-                'longitude',
-            ],
-            $address->getFillable(),
-        );
+        self::assertSame([
+            'number',
+            'street',
+            'floor',
+            'address_line_1',
+            'address_line_2',
+            'postal_code',
+            'city',
+            'region',
+            'state',
+            'country_id',
+            'user_id',
+            'cooperative_id',
+            'latitude',
+            'longitude',
+        ], (new Address)->getFillable());
     }
 
     public function test_address_casts_coordinates_as_decimal(): void
     {
-        $address = new Address;
+        $casts = (new Address)->getCasts();
 
-        $casts = $address->getCasts();
-
-        self::assertSame(
-            'decimal:7',
-            $casts['latitude'],
-        );
-
-        self::assertSame(
-            'decimal:7',
-            $casts['longitude'],
-        );
+        self::assertSame('decimal:7', $casts['latitude']);
+        self::assertSame('decimal:7', $casts['longitude']);
     }
 
     public function test_address_casts_deleted_at_as_datetime(): void
     {
-        $address = new Address;
-
-        self::assertSame(
-            'datetime',
-            $address->getCasts()['deleted_at'],
-        );
+        self::assertSame('datetime', (new Address)->getCasts()['deleted_at']);
     }
 
     public function test_address_can_be_instantiated(): void
     {
-        $address = new Address;
-
-        self::assertInstanceOf(
-            Address::class,
-            $address,
-        );
+        self::assertInstanceOf(Address::class, new Address);
     }
 
     public function test_address_uses_ulid_primary_key_configuration(): void
     {
         $address = new Address;
 
-        self::assertSame(
-            'string',
-            $address->getKeyType(),
-        );
-
-        self::assertFalse(
-            $address->getIncrementing(),
-        );
+        self::assertSame('string', $address->getKeyType());
+        self::assertFalse($address->getIncrementing());
     }
 
-    public function test_address_has_no_context_specific_foreign_keys(): void
+    public function test_address_exposes_only_user_and_cooperative_ownership_keys(): void
     {
-        $address = new Address;
+        $fillable = (new Address)->getFillable();
 
-        self::assertNotContains(
-            'cooperative_id',
-            $address->getFillable(),
-        );
-
-        self::assertNotContains(
-            'user_id',
-            $address->getFillable(),
-        );
-
-        self::assertNotContains(
-            'client_id',
-            $address->getFillable(),
-        );
-
-        self::assertNotContains(
-            'order_id',
-            $address->getFillable(),
-        );
-
-        self::assertNotContains(
-            'relay_point_id',
-            $address->getFillable(),
-        );
+        self::assertContains('user_id', $fillable);
+        self::assertContains('cooperative_id', $fillable);
+        self::assertNotContains('client_id', $fillable);
+        self::assertNotContains('order_id', $fillable);
+        self::assertNotContains('relay_point_id', $fillable);
     }
 }
