@@ -11,8 +11,6 @@ use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use App\Shared\DTOs\AuditEntryDTO;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
