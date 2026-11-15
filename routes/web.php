@@ -263,6 +263,7 @@ Route::prefix('root/back-office')
 
         Route::get('profile/address', [PersonalAddressController::class, 'edit'])->name('profile.address.edit');
         Route::put('profile/address', [PersonalAddressController::class, 'update'])->name('profile.address.update');
+        Route::put('users/{user}/address', [PersonalAddressController::class, 'updateUser'])->name('users.address.update');
 
         Route::get('security/authentication-lockouts', [AuthenticationLockoutController::class, 'index'])
             ->name('security.authentication-lockouts.index');
@@ -423,6 +424,7 @@ Route::prefix('back-office')
     ->group(function (): void {
         Route::get('profile/address', [PersonalAddressController::class, 'edit'])->name('profile.address.edit');
         Route::put('profile/address', [PersonalAddressController::class, 'update'])->name('profile.address.update');
+        Route::put('users/{user}/address', [PersonalAddressController::class, 'updateUser'])->name('users.address.update');
 
         Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
             ->name('security.sessions.index');
