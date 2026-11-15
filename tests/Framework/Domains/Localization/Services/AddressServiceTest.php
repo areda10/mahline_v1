@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Localization\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
@@ -21,6 +22,7 @@ final class AddressServiceTest extends TestCase
     public function test_service_creates_and_updates_a_users_personal_address_with_audit(): void
     {
         $user = $this->userWithRole('user');
+        Country::factory()->create();
         $service = app(AddressService::class);
 
         $address = $service->createForUser($user, $user, [
