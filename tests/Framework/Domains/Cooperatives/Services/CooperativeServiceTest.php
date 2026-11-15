@@ -50,6 +50,20 @@ final class CooperativeServiceTest extends TestCase
         $this->assertAuditEvent('cooperatives.created', 'created', $actor, $cooperative);
     }
 
+    public function test_create_rejects_a_pre_existing_address_id(): void
+    {
+        $actor = $this->rootActor();
+
+        $this->expectException(\\InvalidArgumentException::class);
+        $this->expectExceptionMessage('A cooperative address must be created through AddressService.');
+
+        $this->service->create(
+            $actor,
+            [...$this->attributes(), 'address_id' => '01H00000000000000000000000'],
+            $this->addressAttributes(),
+        );
+    }
+
     public function test_super_admin_creator_is_automatically_assigned_to_created_cooperative(): void
     {
         $actor = $this->superAdminActor();
