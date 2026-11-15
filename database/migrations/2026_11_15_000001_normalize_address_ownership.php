@@ -114,6 +114,16 @@ return new class extends Migration
 
     public function down(): void
     {
+        $hasPersonalAddress = DB::table('addresses')
+            ->whereNotNull('user_id')
+            ->exists();
+
+        if ($hasPersonalAddress) {
+            throw new RuntimeException(
+                'Address ownership rollback aborted: personal user addresses cannot be discarded.',
+            );
+        }
+
         DB::table('cooperatives')
             ->join('addresses', 'addresses.cooperative_id', '=', 'cooperatives.id')
             ->update([
