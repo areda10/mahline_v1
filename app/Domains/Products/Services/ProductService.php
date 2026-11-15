@@ -214,6 +214,26 @@ final class ProductService
         return $this->repository->delete($product);
     }
 
+    /**
+     * Restaure logiquement un produit sans modifier ses variantes.
+     */
+    public function restore(Product $product): bool
+    {
+        return DB::transaction(function () use ($product): bool {
+            $trashedProduct = Product::withTrashed()
+                ->whereKey($product->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $trashedProduct->trashed()) {
+                return false;
+            }
+
+            // La restauration du parent ne touche jamais aux variantes.
+            return (bool) $trashedProduct->restore();
+        });
+    }
+
     private function assertCategoriesAvailable(
         array $categoryIds,
         string $cooperativeId,
