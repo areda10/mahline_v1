@@ -163,6 +163,24 @@ final class AddressesTest extends TestCase
     {
         $this->expectException(QueryException::class);
 
+        $userId = (string) Str::ulid();
+
+        DB::table('users')->insert([
+            'id' => $userId,
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'display_name' => 'Test User',
+            'email' => 'address-owner-'.Str::lower(Str::random(8)).'@example.test',
+            'telephone' => '+212600000000',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'locale' => 'fr',
+            'timezone' => 'UTC',
+            'email_verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         DB::table('addresses')->insert([
             'id' => (string) Str::ulid(),
             'address_line_1' => '10 Rue Test',
@@ -204,6 +222,9 @@ final class AddressesTest extends TestCase
             'city' => 'Casablanca',
             'state' => null,
             'country_id' => $countryId,
+            'user_id' => $userId,
+            'cooperative_id' => null,
+            'street' => '10 Rue Test',
             'latitude' => null,
             'longitude' => null,
             'created_at' => now(),
