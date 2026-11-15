@@ -52,8 +52,9 @@ final class AddressService extends BaseService
                 throw new InvalidArgumentException('This user already has a personal address.');
             }
 
+            $validated = $this->validatedAttributes($attributes);
             $address = $lockedOwner->address()->make(
-                $this->validatedAttributes($attributes),
+                $this->withLegacyAddressFields($validated),
             );
             $address->forceFill([
                 'country_id' => $this->moroccoCountry()->getKey(),
@@ -117,8 +118,9 @@ final class AddressService extends BaseService
                 throw new InvalidArgumentException('This cooperative already has an address.');
             }
 
+            $validated = $this->validatedAttributes($attributes);
             $address = $lockedCooperative->address()->make(
-                $this->validatedAttributes($attributes),
+                $this->withLegacyAddressFields($validated),
             );
             $address->forceFill([
                 'country_id' => $this->moroccoCountry()->getKey(),
@@ -170,7 +172,13 @@ final class AddressService extends BaseService
     private function updateAddress(User $actor, Address $address, array $attributes): Address
     {
         $before = $this->snapshot($address);
-        $address->fill($this->validatedAttributes($attributes));
+        $validated = $this->validatedAttributes($attributes);
+        $address->fill($this->withLegacyAddressFields(array_merge([
+            'number' => $address->number,
+            'street' => $address->street,
+            'floor' => $address->floor,
+            'region' => $address->region,
+        ], $validated)));
 
         if (! $address->isDirty()) {
             return $address;
@@ -192,6 +200,22 @@ final class AddressService extends BaseService
         );
 
         return $address;
+    }
+
+    /** @param array<string, mixed> $attributes
+     * @return array<string, mixed>
+     */
+    private function withLegacyAddressFields(array $attributes): array
+    {
+        $number = trim((string) ($attributes['number'] ?? ''));
+        $street = trim((string) ($attributes['street'] ?? ''));
+
+        return array_merge($attributes, [
+            // Keep legacy columns synchronized until dependent domains are migrated.
+            'address_line_1' => trim($number.' '.$street),
+            'address_line_2' => $attributes['floor'] ?? null,
+            'state' => $attributes['region'] ?? null,
+        ]);
     }
 
     /** @param array<string, mixed> $attributes
