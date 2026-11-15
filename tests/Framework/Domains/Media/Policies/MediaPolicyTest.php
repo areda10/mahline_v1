@@ -108,9 +108,13 @@ final class MediaPolicyTest extends TestCase
         $inactive = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
             'status' => UserStatus::Inactive,
         ]);
+        $suspended = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
+            'status' => UserStatus::Suspended,
+        ]);
 
         self::assertFalse(Gate::forUser($unverified)->allows('view', $media));
         self::assertFalse(Gate::forUser($inactive)->allows('view', $media));
+        self::assertFalse(Gate::forUser($suspended)->allows('view', $media));
     }
 
     private function privateProductDocument(Cooperative $cooperative): Media
