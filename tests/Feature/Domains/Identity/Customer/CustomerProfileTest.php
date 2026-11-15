@@ -8,6 +8,7 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Countries\Models\Country;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,6 +23,19 @@ final class CustomerProfileTest extends TestCase
         Role::query()->firstOrCreate(
             ['slug' => 'customer'],
             ['name' => 'Customer', 'is_active' => true],
+        );
+
+        Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Maroc',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
         );
     }
 
