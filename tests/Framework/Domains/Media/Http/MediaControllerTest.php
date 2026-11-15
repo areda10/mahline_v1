@@ -98,7 +98,7 @@ final class MediaControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
-        $response->assertHeader('Cache-Control', 'private, no-store');
+        $response->assertHeader('Cache-Control', 'no-store, private');
         self::assertStringContainsString('attachment', $response->headers->get('Content-Disposition', ''));
         self::assertSame('private-pdf-content', $response->streamedContent());
     }
