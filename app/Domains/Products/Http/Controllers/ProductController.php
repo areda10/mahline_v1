@@ -211,6 +211,29 @@ final class ProductController
             ->with('success', 'Le produit a été supprimé.');
     }
 
+    public function restore(
+        string $cooperative,
+        string $product,
+    ): RedirectResponse {
+        $cooperativeModel = $this->resolveCooperative($cooperative);
+        $cooperativeId = (string) $cooperativeModel->getKey();
+
+        $productModel = $this->productRepository
+            ->findTrashedForCooperativeOrFail($product, $cooperativeId);
+
+        Gate::authorize('restore', $productModel);
+
+        $this->productService->restore($productModel);
+
+        return redirect()
+            ->route('backoffice.products.show', [
+                'cooperative' => $cooperativeId,
+                'product' => $productModel->getKey(),
+            ])
+            ->with('success', 'Le produit a été restauré.');
+
+    }
+
     private function resolveCooperative(string $id): Cooperative
     {
         $cooperative = Cooperative::query()->findOrFail($id);
