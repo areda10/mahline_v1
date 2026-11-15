@@ -22,7 +22,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('profile.address.update') }}">
+    <form method="POST" action="{{ route($user->hasRole('super_admin_root') ? 'root.backoffice.profile.address.update' : 'profile.address.update') }}">
         @csrf
         @method('PUT')
 
