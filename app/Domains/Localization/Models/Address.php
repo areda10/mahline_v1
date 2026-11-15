@@ -7,6 +7,7 @@ namespace App\Domains\Localization\Models;
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
+use App\Domains\Identity\Users\Models\User;
 use Database\Factories\AddressFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,12 +23,18 @@ final class Address extends BaseModel
     protected $table = 'addresses';
 
     protected $fillable = [
+        'number',
+        'street',
+        'floor',
         'address_line_1',
         'address_line_2',
         'postal_code',
         'city',
+        'region',
         'state',
         'country_id',
+        'user_id',
+        'cooperative_id',
         'latitude',
         'longitude',
     ];
@@ -54,11 +61,13 @@ final class Address extends BaseModel
         );
     }
 
-    public function cooperative(): HasOne
+    public function user(): BelongsTo
     {
-        return $this->hasOne(
-            Cooperative::class,
-            'address_id',
-        );
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function cooperative(): BelongsTo
+    {
+        return $this->belongsTo(Cooperative::class, 'cooperative_id');
     }
 }
