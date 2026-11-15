@@ -52,7 +52,7 @@ final class AddressOwnershipIntegrityTest extends TestCase
             'city' => 'Casablanca',
             'region' => 'Casablanca-Settat',
             'postal_code' => '20000',
-            'country_id' => Address::factory()->create()->country_id,
+            'country_id' => Country::factory()->create()->getKey(),
         ];
 
         $firstAddress = Address::factory()->create($addressAttributes + [
