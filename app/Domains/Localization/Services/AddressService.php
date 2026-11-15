@@ -52,11 +52,13 @@ final class AddressService extends BaseService
                 throw new InvalidArgumentException('This user already has a personal address.');
             }
 
-            $address = $lockedOwner->address()->create([
-                ...$this->validatedAttributes($attributes),
+            $address = $lockedOwner->address()->make(
+                $this->validatedAttributes($attributes),
+            );
+            $address->forceFill([
                 'country_id' => $this->moroccoCountry()->getKey(),
                 'created_by' => (string) $actor->getKey(),
-            ]);
+            ])->save();
 
             $this->recordAddressAudit(
                 actor: $actor,
@@ -115,11 +117,13 @@ final class AddressService extends BaseService
                 throw new InvalidArgumentException('This cooperative already has an address.');
             }
 
-            $address = $lockedCooperative->address()->create([
-                ...$this->validatedAttributes($attributes),
+            $address = $lockedCooperative->address()->make(
+                $this->validatedAttributes($attributes),
+            );
+            $address->forceFill([
                 'country_id' => $this->moroccoCountry()->getKey(),
                 'created_by' => (string) $actor->getKey(),
-            ]);
+            ])->save();
 
             $this->recordAddressAudit(
                 actor: $actor,
