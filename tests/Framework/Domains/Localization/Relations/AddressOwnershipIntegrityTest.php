@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Localization\Relations;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\QueryException;
@@ -142,7 +143,7 @@ final class AddressOwnershipIntegrityTest extends TestCase
             'city' => 'Casablanca',
             'region' => null,
             'state' => null,
-            'country_id' => Address::factory()->create()->country_id,
+            'country_id' => Country::factory()->create()->getKey(),
             'latitude' => null,
             'longitude' => null,
             'user_id' => $owner['user_id'],
