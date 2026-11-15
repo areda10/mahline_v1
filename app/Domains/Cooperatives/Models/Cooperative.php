@@ -88,11 +88,11 @@ final class Cooperative extends BaseModel
         );
     }
 
-    public function address(): BelongsTo
+    public function address(): HasOne
     {
-        return $this->belongsTo(
+        return $this->hasOne(
             Address::class,
-            'address_id',
+            'cooperative_id',
         );
     }
 
