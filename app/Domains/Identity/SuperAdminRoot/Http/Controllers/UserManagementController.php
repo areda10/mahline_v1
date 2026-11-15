@@ -15,6 +15,7 @@ use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Enums\MoroccanRegion;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -241,6 +242,7 @@ final class UserManagementController
             'canViewAssignments' => $canViewAssignments,
             'sessions' => $sessions,
             'apiTokens' => $apiTokens,
+            'regions' => MoroccanRegion::values(),
         ]);
     }
 
