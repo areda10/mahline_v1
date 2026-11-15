@@ -52,4 +52,27 @@ final class PersonalAddressController
             ->route($user->hasRole('super_admin_root') ? 'root.backoffice.profile.address.edit' : 'backoffice.profile.address.edit')
             ->with('success', 'Votre adresse personnelle a été mise à jour.');
     }
+
+    public function updateUser(Request $request, User $user, AddressService $addresses): RedirectResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 403);
+
+        $data = $request->validate([
+            'number' => ['nullable', 'string', 'max:50'],
+            'street' => ['required', 'string', 'max:255'],
+            'floor' => ['nullable', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:120'],
+            'region' => ['required', 'string', 'in:'.implode(',', MoroccanRegion::values())],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        if ($user->address()->exists()) {
+            $addresses->updateForUser($actor, $user, $data);
+        } else {
+            $addresses->createForUser($actor, $user, $data);
+        }
+
+        return back()->with('success', 'L’adresse personnelle de cet utilisateur a été mise à jour.');
+    }
 }
