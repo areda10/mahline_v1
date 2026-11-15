@@ -34,6 +34,7 @@ final class AddressServiceTest extends TestCase
         self::assertSame($user->getKey(), $address->user_id);
         self::assertNull($address->cooperative_id);
         self::assertSame('MA', $address->country->code);
+        self::assertSame($user->getKey(), $address->created_by);
 
         $updated = $service->updateForUser($user, $user, [
             'number' => '14',
@@ -48,6 +49,7 @@ final class AddressServiceTest extends TestCase
         self::assertSame('Rabat', $updated->city);
         self::assertSame($user->getKey(), $updated->user_id);
         self::assertNull($updated->cooperative_id);
+        self::assertSame($user->getKey(), $updated->updated_by);
 
         self::assertSame(
             2,
