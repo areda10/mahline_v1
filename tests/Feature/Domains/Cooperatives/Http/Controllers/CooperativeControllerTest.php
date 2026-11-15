@@ -433,10 +433,11 @@ final class CooperativeControllerTest extends TestCase
         $this->actingAs($actor)
             ->post(route('root.backoffice.cooperatives.store'), [
                 ...$this->validCooperativeAttributes('Adresse incomplète'),
-                'address_line_1' => '1 Rue Test',
                 'city' => 'Casablanca',
+                'postal_code' => '20000',
+                'region' => 'Casablanca-Settat',
             ])
-            ->assertSessionHasErrors(['country_id', 'postal_code', 'state']);
+            ->assertSessionHasErrors(['street']);
 
         $this->assertDatabaseMissing('cooperatives', ['name' => 'Adresse incomplète']);
     }
@@ -501,11 +502,11 @@ final class CooperativeControllerTest extends TestCase
         );
 
         return [
-            'address_line_1' => '10 Avenue Hassan II',
+            'number' => '10',
+            'street' => 'Avenue Hassan II',
             'city' => 'Casablanca',
-            'country_id' => $country->getKey(),
             'postal_code' => '20000',
-            'state' => 'Casablanca-Settat',
+            'region' => 'Casablanca-Settat',
         ];
     }
 
