@@ -6,6 +6,7 @@ namespace Tests\Framework\Domains\Identity\Authentication\Models;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -132,16 +133,24 @@ final class PersonalAccessTokenTest extends TestCase
 
         $accessToken = $user->createToken('test-api-token');
 
-        $accessToken->accessToken->delete();
+        app(ApiTokenService::class)
+            ->revokeToken(
+                owner: $user,
+                token: $accessToken->accessToken,
+                actor: $user,
+                reason: 'test_revocation',
+            );
 
         $session->refresh();
 
         $this->assertNull($session->revoked_at);
         $this->assertNull($session->revocation_reason);
 
+        $this->assertNotNull($accessToken->accessToken->fresh()->revoked_at);
+
         $this->assertDatabaseCount(
             'personal_access_tokens',
-            0,
+            1,
         );
 
         $this->assertDatabaseHas(
@@ -151,5 +160,27 @@ final class PersonalAccessTokenTest extends TestCase
                 'revoked_at' => null,
             ],
         );
+    }
+
+    public function test_every_token_creation_path_enforces_ninety_days_even_when_expiry_is_supplied(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+        ]);
+
+        $created = $user->createToken(
+            'fixed-expiry-token',
+            [],
+            now()->addDays(365),
+        );
+
+        $this->assertEquals(
+            now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
+            $created->accessToken->fresh()->expires_at,
+        );
+
+        $this->travelBack();
     }
 }

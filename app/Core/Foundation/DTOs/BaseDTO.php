@@ -11,6 +11,4 @@ namespace App\Core\Foundation\DTOs;
  * Un DTO transporte des données entre les couches
  * sans contenir de logique métier.
  */
-abstract class BaseDTO
-{
-}
+abstract class BaseDTO {}

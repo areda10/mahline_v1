@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Services;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
 use Tests\TestCase;
 
 final class AuthenticationServiceTest extends TestCase
@@ -75,7 +74,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(ModelNotFoundException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -94,7 +93,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (ModelNotFoundException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -123,7 +122,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
         $this->expectExceptionMessage('Email address is not verified.');
 
         try {
@@ -133,6 +132,41 @@ final class AuthenticationServiceTest extends TestCase
                 'user_id' => $user->getKey(),
                 'event' => 'failed',
                 'reason' => 'email_not_verified',
+            ]);
+        }
+    }
+
+    public function test_emergency_locked_account_cannot_authenticate_even_when_active_and_email_verified(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'emergency-locked@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+            'emergency_locked_at' => now(),
+            'emergency_lock_reason' => 'Confirmed account compromise.',
+        ]);
+
+        $this->expectException(AuthenticationFailedException::class);
+        $this->expectExceptionMessage('User account is not active.');
+
+        try {
+            $this->authenticationService->authenticate(
+                new AuthenticationContext(
+                    email: $user->email,
+                    password: 'ValidPassword123!',
+                    sessionId: 'emergency-locked-login-attempt',
+                    ipAddress: '192.0.2.45',
+                    userAgent: 'Mozilla/5.0',
+                    browser: 'Firefox',
+                    device: 'Desktop',
+                ),
+            );
+        } finally {
+            $this->assertDatabaseHas('login_histories', [
+                'user_id' => $user->getKey(),
+                'event' => 'failed',
+                'reason' => 'account_not_active',
             ]);
         }
     }
@@ -155,7 +189,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
         $this->expectExceptionMessage('User account is not active.');
 
         $this->authenticationService->authenticate($context);
@@ -181,7 +215,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -211,7 +245,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
         $this->expectExceptionMessage('Invalid credentials.');
 
         $this->authenticationService->authenticate($context);
@@ -237,7 +271,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -287,7 +321,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(ModelNotFoundException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -310,7 +344,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(ModelNotFoundException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -341,7 +375,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -374,7 +408,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -419,7 +453,7 @@ final class AuthenticationServiceTest extends TestCase
                     device: 'Desktop',
                 )
             );
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -441,7 +475,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $securityService = app(AuthenticationSecurityService::class);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $securityService->recordFailedAttemptByIp('127.0.0.13');
         }
 
@@ -455,7 +489,7 @@ final class AuthenticationServiceTest extends TestCase
             device: 'Desktop',
         );
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(AuthenticationFailedException::class);
 
         $this->authenticationService->authenticate($context);
     }
@@ -470,7 +504,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $securityService = app(AuthenticationSecurityService::class);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $securityService->recordFailedAttemptByIp('127.0.0.14');
         }
 
@@ -486,7 +520,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -507,7 +541,7 @@ final class AuthenticationServiceTest extends TestCase
 
         $securityService = app(AuthenticationSecurityService::class);
 
-        for ($i = 0; $i < 5; $i++) {
+        for ($i = 0; $i < 30; $i++) {
             $securityService->recordFailedAttemptByIp('127.0.0.15');
         }
 
@@ -528,7 +562,7 @@ final class AuthenticationServiceTest extends TestCase
                     device: 'Desktop',
                 )
             );
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -552,10 +586,10 @@ final class AuthenticationServiceTest extends TestCase
             $securityService->recordFailedAttempt(
                 'priority-normalized@example.com'
             );
+        }
 
-            $securityService->recordFailedAttemptByIp(
-                '127.0.0.16'
-            );
+        for ($i = 0; $i < 30; $i++) {
+            $securityService->recordFailedAttemptByIp('127.0.0.16');
         }
 
         $context = new AuthenticationContext(
@@ -570,7 +604,7 @@ final class AuthenticationServiceTest extends TestCase
 
         try {
             $this->authenticationService->authenticate($context);
-        } catch (RuntimeException) {
+        } catch (AuthenticationFailedException) {
             // Expected.
         }
 
@@ -621,4 +655,402 @@ final class AuthenticationServiceTest extends TestCase
         );
     }
 
+    public function test_successful_login_rehashes_an_outdated_password_hash(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'legacy-hash@example.com',
+            'password' => 'LegacyPassword2026!',
+            'status' => UserStatus::Active,
+        ]);
+
+        $legacyHash = password_hash(
+            'LegacyPassword2026!',
+            PASSWORD_BCRYPT,
+            ['cost' => 4],
+        );
+
+        $this->assertIsString($legacyHash);
+        $this->assertTrue(Hash::check('LegacyPassword2026!', $legacyHash));
+        $this->assertTrue(Hash::needsRehash($legacyHash));
+
+        $user->forceFill(['password' => $legacyHash])->save();
+        $user->refresh();
+
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: $user->email,
+                password: 'LegacyPassword2026!',
+                sessionId: 'session-legacy-hash-001',
+                ipAddress: '127.0.0.20',
+                userAgent: 'Mozilla/5.0',
+                browser: 'Firefox',
+                device: 'Desktop',
+            )
+        );
+
+        $user->refresh();
+
+        $this->assertNotSame($legacyHash, $user->password);
+        $this->assertTrue(Hash::check('LegacyPassword2026!', (string) $user->password));
+        $this->assertFalse(Hash::needsRehash((string) $user->password));
+        $this->assertDatabaseMissing('user_password_histories', [
+            'user_id' => $user->getKey(),
+        ]);
+    }
+
+    public function test_successful_login_does_not_rehash_when_rehash_on_login_is_disabled(): void
+    {
+        config(['hashing.rehash_on_login' => false]);
+
+        $user = User::factory()->create([
+            'email' => 'rehash-disabled@example.com',
+            'password' => 'LegacyPassword2026!',
+            'status' => UserStatus::Active,
+        ]);
+
+        $legacyHash = password_hash(
+            'LegacyPassword2026!',
+            PASSWORD_BCRYPT,
+            ['cost' => 4],
+        );
+
+        $this->assertIsString($legacyHash);
+
+        $user->forceFill(['password' => $legacyHash])->save();
+        $user->refresh();
+
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: $user->email,
+                password: 'LegacyPassword2026!',
+                sessionId: 'session-rehash-disabled-001',
+                ipAddress: '127.0.0.21',
+                userAgent: 'Mozilla/5.0',
+                browser: 'Firefox',
+                device: 'Desktop',
+            )
+        );
+
+        $this->assertSame($legacyHash, $user->fresh()->password);
+    }
+
+    public function test_failed_attempts_are_counted_for_unknown_inactive_and_unverified_emails(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        $cases = [
+            'unknown-counter@example.com',
+            $inactive->email,
+            $unverified->email,
+        ];
+
+        foreach ($cases as $email) {
+            for ($attempt = 0; $attempt < 5; $attempt++) {
+                try {
+                    $this->authenticationService->authenticate(
+                        new AuthenticationContext(
+                            email: $email,
+                            password: 'ValidPassword123!',
+                            sessionId: 'failed-counter-'.$attempt.'-'.$email,
+                            ipAddress: null,
+                            userAgent: 'Mozilla/5.0',
+                            browser: 'Firefox',
+                            device: 'Desktop',
+                        )
+                    );
+                } catch (\Throwable) {
+                    // Expected: every rejected attempt is still counted.
+                }
+            }
+
+            $this->assertSame(
+                0,
+                $securityService->remainingAttempts($email),
+                'The email counter must reach the lockout threshold for '.$email,
+            );
+
+            $this->assertTrue(
+                $securityService->isLocked($email),
+                'The email must be locked after five failed attempts: '.$email,
+            );
+        }
+    }
+
+    public function test_locked_unknown_email_does_not_increment_failed_attempts(): void
+    {
+        $email = 'already-locked-unknown@example.com';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($email);
+        }
+
+        try {
+            $this->authenticationService->authenticate(
+                new AuthenticationContext(
+                    email: $email,
+                    password: 'ValidPassword123!',
+                    sessionId: 'locked-unknown-email',
+                    ipAddress: null,
+                    userAgent: 'Mozilla/5.0',
+                    browser: 'Firefox',
+                    device: 'Desktop',
+                )
+            );
+        } catch (\Throwable) {
+            // Expected: an already locked email is rejected without increment.
+        }
+
+        $this->assertSame(0, $securityService->remainingAttempts($email));
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $email,
+            'event' => 'failed',
+            'reason' => 'account_locked',
+        ]);
+    }
+
+    public function test_all_processed_failure_types_increment_ip_and_ip_email_counters(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-ip-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-ip-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $invalidPassword = User::factory()->create([
+            'email' => 'wrong-password-ip-counter@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $ipAddress = '198.51.100.41';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        $attempts = [
+            ['unknown-ip-counter@example.com', 'ValidPassword123!'],
+            [$inactive->email, 'ValidPassword123!'],
+            [$unverified->email, 'ValidPassword123!'],
+            [$invalidPassword->email, 'WrongPassword123!'],
+        ];
+
+        foreach ($attempts as $index => [$email, $password]) {
+            try {
+                $this->authenticationService->authenticate(
+                    new AuthenticationContext(
+                        email: $email,
+                        password: $password,
+                        sessionId: 'all-failure-types-'.$index,
+                        ipAddress: $ipAddress,
+                        userAgent: 'Mozilla/5.0',
+                        browser: 'Firefox',
+                        device: 'Desktop',
+                    )
+                );
+            } catch (\Throwable) {
+                // Every case is an expected authentication failure.
+            }
+
+            $this->assertSame(
+                4,
+                $securityService->remainingIpEmailAttempts($ipAddress, $email),
+            );
+        }
+
+        $this->assertSame(26, $securityService->remainingIpAttempts($ipAddress));
+    }
+
+    public function test_ip_email_counter_is_cleared_on_success_without_clearing_shared_ip_counter(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'pair-clear@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $ipAddress = '198.51.100.42';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        $securityService->recordFailedAuthentication($user->email, $ipAddress);
+        $securityService->recordFailedAuthentication($user->email, $ipAddress);
+
+        $this->assertSame(3, $securityService->remainingAttempts($user->email));
+        $this->assertSame(3, $securityService->remainingIpEmailAttempts($ipAddress, $user->email));
+        $this->assertSame(28, $securityService->remainingIpAttempts($ipAddress));
+
+        $this->authenticationService->authenticate(
+            new AuthenticationContext(
+                email: $user->email,
+                password: 'ValidPassword123!',
+                sessionId: 'pair-clear-success',
+                ipAddress: $ipAddress,
+                userAgent: 'Mozilla/5.0',
+                browser: 'Firefox',
+                device: 'Desktop',
+            )
+        );
+
+        $this->assertSame(5, $securityService->remainingAttempts($user->email));
+        $this->assertSame(5, $securityService->remainingIpEmailAttempts($ipAddress, $user->email));
+        $this->assertSame(28, $securityService->remainingIpAttempts($ipAddress));
+    }
+
+    public function test_ip_lockout_threshold_is_thirty_failures(): void
+    {
+        $securityService = app(AuthenticationSecurityService::class);
+        $ipAddress = '198.51.100.43';
+
+        for ($attempt = 1; $attempt <= 29; $attempt++) {
+            $securityService->recordFailedAttemptByIp($ipAddress);
+
+            $this->assertFalse($securityService->isIpLocked($ipAddress));
+        }
+
+        $this->assertSame(1, $securityService->remainingIpAttempts($ipAddress));
+
+        $securityService->recordFailedAttemptByIp($ipAddress);
+
+        $this->assertTrue($securityService->isIpLocked($ipAddress));
+        $this->assertSame(0, $securityService->remainingIpAttempts($ipAddress));
+    }
+
+    public function test_ip_email_lockout_threshold_is_five_failures(): void
+    {
+        $securityService = app(AuthenticationSecurityService::class);
+        $ipAddress = '198.51.100.44';
+        $email = 'pair-lock@example.com';
+
+        for ($attempt = 1; $attempt <= 4; $attempt++) {
+            $securityService->recordFailedAttemptByIpAndEmail($ipAddress, $email);
+
+            $this->assertFalse(
+                $securityService->isIpEmailLocked($ipAddress, $email),
+            );
+        }
+
+        $this->assertSame(
+            1,
+            $securityService->remainingIpEmailAttempts($ipAddress, $email),
+        );
+
+        $securityService->recordFailedAttemptByIpAndEmail($ipAddress, $email);
+
+        $this->assertTrue(
+            $securityService->isIpEmailLocked($ipAddress, $email),
+        );
+        $this->assertSame(
+            0,
+            $securityService->remainingIpEmailAttempts($ipAddress, $email),
+        );
+    }
+
+    public function test_all_three_lockouts_expire_after_fifteen_minutes(): void
+    {
+        $securityService = app(AuthenticationSecurityService::class);
+        $ipAddress = '198.51.100.45';
+        $email = 'lockout-expiration@example.com';
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($email);
+            $securityService->recordFailedAttemptByIpAndEmail($ipAddress, $email);
+        }
+
+        for ($attempt = 0; $attempt < 30; $attempt++) {
+            $securityService->recordFailedAttemptByIp($ipAddress);
+        }
+
+        $this->assertTrue($securityService->isLocked($email));
+        $this->assertTrue($securityService->isIpLocked($ipAddress));
+        $this->assertTrue($securityService->isIpEmailLocked($ipAddress, $email));
+
+        $this->travel(16)->minutes();
+
+        $this->assertFalse($securityService->isLocked($email));
+        $this->assertFalse($securityService->isIpLocked($ipAddress));
+        $this->assertFalse($securityService->isIpEmailLocked($ipAddress, $email));
+        $this->assertSame(5, $securityService->remainingAttempts($email));
+        $this->assertSame(30, $securityService->remainingIpAttempts($ipAddress));
+        $this->assertSame(5, $securityService->remainingIpEmailAttempts($ipAddress, $email));
+    }
+
+    public function test_locked_ip_email_pair_is_rejected_without_incrementing_its_counter_again(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'locked-pair@example.com',
+            'password' => Hash::make('ValidPassword123!'),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $ipAddress = '198.51.100.46';
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttemptByIpAndEmail(
+                $ipAddress,
+                $user->email,
+            );
+        }
+
+        try {
+            $this->authenticationService->authenticate(
+                new AuthenticationContext(
+                    email: $user->email,
+                    password: 'ValidPassword123!',
+                    sessionId: 'locked-pair-no-increment',
+                    ipAddress: $ipAddress,
+                    userAgent: 'Mozilla/5.0',
+                    browser: 'Firefox',
+                    device: 'Desktop',
+                )
+            );
+        } catch (AuthenticationFailedException) {
+            // Expected: the IP + email pair is already locked.
+        }
+
+        $this->assertSame(
+            0,
+            $securityService->remainingIpEmailAttempts($ipAddress, $user->email),
+        );
+
+        $this->assertSame(
+            5,
+            $securityService->remainingAttempts($user->email),
+        );
+
+        $this->assertSame(
+            30,
+            $securityService->remainingIpAttempts($ipAddress),
+        );
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $user->email,
+            'event' => 'failed',
+            'reason' => 'ip_email_locked',
+        ]);
+    }
 }

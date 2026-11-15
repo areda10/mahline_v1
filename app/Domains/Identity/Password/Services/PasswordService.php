@@ -20,8 +20,7 @@ final class PasswordService extends BaseService
         private readonly SessionService $sessionService,
         private readonly AuditService $audit,
         private readonly PasswordHistoryService $passwordHistory,
-    ) {
-    }
+    ) {}
 
     public function verifyCurrentPassword(User $user, string $password): bool
     {
@@ -63,7 +62,11 @@ final class PasswordService extends BaseService
                 user: $lockedUser,
                 reason: 'password_changed',
             );
-            $lockedUser->tokens()->delete();
+            $this->sessionService->revokeApiTokensForUser(
+                user: $lockedUser,
+                actor: $lockedUser,
+                reason: 'password_changed',
+            );
 
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.password.changed',

@@ -5,20 +5,22 @@ declare(strict_types=1);
 namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
-use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 final class UserManagementController
 {
@@ -209,7 +211,7 @@ final class UserManagementController
             );
     }
 
-    public function show(Request $request, User $user): View
+    public function show(Request $request, User $user, SessionService $sessionService, ApiTokenService $apiTokenService): View
     {
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
@@ -225,11 +227,8 @@ final class UserManagementController
             $user->load('cooperatives');
         }
 
-        $sessions = AuthenticationSession::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('revoked_at')
-            ->orderByDesc('last_activity_at')
-            ->get();
+        $sessions = $sessionService->activeSessionsFor($user);
+        $apiTokens = $apiTokenService->tokensForUser($user);
 
         $currentSessionId = $request->session()->getId();
         $sessions->each(static function (AuthenticationSession $session) use ($currentSessionId): void {
@@ -240,6 +239,7 @@ final class UserManagementController
             'user' => $user,
             'canViewAssignments' => $canViewAssignments,
             'sessions' => $sessions,
+            'apiTokens' => $apiTokens,
         ]);
     }
 
@@ -496,6 +496,7 @@ final class UserManagementController
             ],
         ]);
     }
+
     private function authorizeRoot(Request $request): void
     {
         abort_unless($request->user()?->hasRole('super_admin_root'), 403);

@@ -12,6 +12,15 @@ final class NullAuthenticationWorkflowHook implements AuthenticationWorkflowHook
     public function afterDeviceRemembered(
         User $user,
         AuthenticationSession $session,
+        bool $isNewDevice,
+    ): void {
+        // Intentionally empty.
+    }
+
+    public function afterAuthenticationCommitted(
+        User $user,
+        AuthenticationSession $session,
+        bool $isNewDevice,
     ): void {
         // Intentionally empty.
     }

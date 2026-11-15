@@ -21,7 +21,7 @@ final class CatalogRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new CatalogRepository();
+        $this->repository = new CatalogRepository;
     }
 
     public function test_it_paginates_only_catalogs_for_the_requested_cooperative(): void

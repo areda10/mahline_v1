@@ -16,8 +16,7 @@ final class ProductService
 {
     public function __construct(
         private readonly ProductRepository $repository,
-    ) {
-    }
+    ) {}
 
     public function create(
         string $cooperativeId,
@@ -175,7 +174,7 @@ final class ProductService
             if ($catalogIds !== null) {
                 $product->catalogs()->sync($catalogIds);
             }
-            
+
             if (
                 ! $product->categories()
                     ->where('categories.is_active', true)

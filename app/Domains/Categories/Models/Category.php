@@ -7,6 +7,7 @@ namespace App\Domains\Categories\Models;
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
+use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -100,9 +101,9 @@ final class Category extends BaseModel
         return $this->cooperative_id !== null
             && (string) $this->cooperative_id === $cooperativeId;
     }
-    
-    protected static function newFactory(): \Database\Factories\CategoryFactory
+
+    protected static function newFactory(): CategoryFactory
     {
-        return \Database\Factories\CategoryFactory::new();
+        return CategoryFactory::new();
     }
 }

@@ -10,6 +10,7 @@ use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class SessionService extends BaseService
@@ -17,8 +18,8 @@ final class SessionService extends BaseService
     public function __construct(
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuditService $audit,
-    ) {
-    }
+        private readonly ApiTokenService $apiTokens,
+    ) {}
 
     /**
      * Create a new session without revoking any existing session.
@@ -31,6 +32,7 @@ final class SessionService extends BaseService
         ?string $userAgent = null,
         ?string $browser = null,
         ?string $device = null,
+        ?string $knownDeviceId = null,
     ): AuthenticationSession {
         return DB::transaction(function () use (
             $user,
@@ -39,6 +41,7 @@ final class SessionService extends BaseService
             $userAgent,
             $browser,
             $device,
+            $knownDeviceId,
         ): AuthenticationSession {
             $lockedUser = User::query()
                 ->whereKey($user->getKey())
@@ -65,6 +68,7 @@ final class SessionService extends BaseService
 
             $session = AuthenticationSession::query()->create([
                 'user_id' => $user->getKey(),
+                'known_device_id' => $knownDeviceId,
                 'session_id' => $sessionId,
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent,
@@ -78,6 +82,90 @@ final class SessionService extends BaseService
 
             return $session->fresh();
         });
+    }
+
+    /**
+     * Return the maximum server-side inactivity period for the user's role.
+     *
+     * When a user has multiple roles, the shortest applicable timeout wins.
+     */
+    public function inactivityTimeoutMinutes(User $user): int
+    {
+        return match (true) {
+            $user->hasRole('super_admin_root') => 15,
+            $user->hasRole('super_admin') => 30,
+            $user->hasRole('cooperative_admin') => 30,
+            $user->hasRole('customer') => 60,
+            $user->hasRole('user') => 60,
+            default => 60,
+        };
+    }
+
+    /**
+     * Atomically expire a session when its role-based inactivity limit is reached.
+     * The row lock prevents a concurrent activity update from racing revocation.
+     */
+    public function expireIfInactive(
+        User $user,
+        AuthenticationSession $session,
+    ): bool {
+        return DB::transaction(function () use ($user, $session): bool {
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->where('user_id', $user->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSession === null || ! $this->isActive($lockedSession)) {
+                return false;
+            }
+
+            if (! $this->hasExceededInactivityLimit($user, $lockedSession)) {
+                return false;
+            }
+
+            return $this->revoke($lockedSession, 'inactivity_timeout');
+        });
+    }
+
+    /**
+     * Determine whether the authentication session exceeded its role-based
+     * server-side inactivity limit. This does not depend on cookie lifetime.
+     */
+    public function hasExceededInactivityLimit(
+        User $user,
+        AuthenticationSession $session,
+    ): bool {
+        $lastActivity = $session->last_activity_at ?? $session->authenticated_at;
+
+        return $lastActivity->lessThanOrEqualTo(
+            now()->subMinutes($this->inactivityTimeoutMinutes($user)),
+        );
+    }
+
+    /**
+     * Return sessions that are active now under the same role-based inactivity
+     * policy enforced by EnsureActiveAuthenticationSession. Listing sessions
+     * never revokes or mutates them.
+     *
+     * @return Collection<int, AuthenticationSession>
+     */
+    public function activeSessionsFor(User $user): Collection
+    {
+        $cutoff = now()->subMinutes($this->inactivityTimeoutMinutes($user));
+
+        return AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->where(function ($query) use ($cutoff): void {
+                $query->where('last_activity_at', '>', $cutoff)
+                    ->orWhere(function ($fallback) use ($cutoff): void {
+                        $fallback->whereNull('last_activity_at')
+                            ->where('authenticated_at', '>', $cutoff);
+                    });
+            })
+            ->orderByDesc('last_activity_at')
+            ->get();
     }
 
     public function isActive(AuthenticationSession $session): bool
@@ -120,6 +208,116 @@ final class SessionService extends BaseService
         if ($sessions->isEmpty()) {
             return false;
         }
+
+        $revoked = false;
+
+        foreach ($sessions as $session) {
+            if ($this->revoke($session, $reason)) {
+                $revoked = true;
+            }
+        }
+
+        return $revoked;
+    }
+
+    /**
+     * Revoke every active web session and API token owned by one user.
+     *
+     * Each web session is revoked through revoke(), preserving its login
+     * history and audit trail. API tokens are individually marked revoked
+     * and receive an immutable audit event; token secrets are never logged.
+     *
+     * @return array{sessions: int, tokens: int}
+     */
+    public function revokeAllAccessForUser(User $user): array
+    {
+        return DB::transaction(function () use ($user): array {
+            /*
+             * SessionService::create() locks the same user row. This serializes
+             * global revocation against a concurrent web login so a new
+             * session cannot slip into the active-session set mid-operation.
+             */
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $activeSessionCount = AuthenticationSession::query()
+                ->where('user_id', $lockedUser->getKey())
+                ->whereNull('revoked_at')
+                ->count();
+
+            $this->revokeForUser($lockedUser, 'global_logout');
+
+            $actor = auth()->user();
+            $actor = $actor instanceof User ? $actor : $lockedUser;
+
+            $revokedTokenCount = $this->revokeApiTokensForUser(
+                user: $lockedUser,
+                actor: $actor,
+                reason: 'global_logout',
+            );
+
+            $actor = auth()->user();
+            $actor = $actor instanceof User ? $actor : null;
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'identity.authentication.global_logout',
+                action: 'global_logout',
+                actorType: $actor ? User::class : null,
+                actorId: $actor ? (string) $actor->getKey() : null,
+                cooperativeId: $lockedUser->cooperative_id
+                    ? (string) $lockedUser->cooperative_id
+                    : null,
+                subjectType: User::class,
+                subjectId: (string) $lockedUser->getKey(),
+                oldValues: null,
+                newValues: [
+                    'active_sessions_revoked' => $activeSessionCount,
+                    'api_tokens_revoked' => $revokedTokenCount,
+                ],
+                metadata: [
+                    'user_id' => (string) $lockedUser->getKey(),
+                ],
+            ));
+
+            return [
+                'sessions' => $activeSessionCount,
+                'tokens' => $revokedTokenCount,
+            ];
+        });
+    }
+
+    /**
+     * Revoke every active Sanctum token for a user without deleting its
+     * historical record. Each token receives an immutable audit event.
+     */
+    public function revokeApiTokensForUser(
+        User $user,
+        User $actor,
+        string $reason,
+    ): int {
+        return $this->apiTokens->revokeForUser(
+            user: $user,
+            actor: $actor,
+            reason: $reason,
+        );
+    }
+
+    /**
+     * Revoke every active session except the one currently completing
+     * a mandatory password change.
+     */
+    public function revokeOtherSessions(
+        User $user,
+        string $currentAuthenticationSessionId,
+        string $reason = 'logout',
+    ): bool {
+        $sessions = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereKeyNot($currentAuthenticationSessionId)
+            ->whereNull('revoked_at')
+            ->get();
 
         $revoked = false;
 
@@ -214,15 +412,56 @@ final class SessionService extends BaseService
         });
     }
 
+    /**
+     * Extend the current session only while it is still within its inactivity
+     * window. An expired or revoked session can never be revived.
+     */
+    public function extendIfActive(
+        User $user,
+        AuthenticationSession $session,
+    ): bool {
+        return DB::transaction(function () use ($user, $session): bool {
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->where('user_id', $user->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedSession === null || ! $this->isActive($lockedSession)) {
+                return false;
+            }
+
+            if ($this->hasExceededInactivityLimit($user, $lockedSession)) {
+                $this->revoke($lockedSession, 'inactivity_timeout');
+
+                return false;
+            }
+
+            $lockedSession->last_activity_at = now();
+            $lockedSession->save();
+            $session->setRawAttributes($lockedSession->getAttributes(), true);
+
+            return true;
+        });
+    }
+
     public function touch(AuthenticationSession $session): bool
     {
-        if (! $this->isActive($session)) {
-            return false;
-        }
+        return DB::transaction(function () use ($session): bool {
+            $lockedSession = AuthenticationSession::query()
+                ->whereKey($session->getKey())
+                ->lockForUpdate()
+                ->first();
 
-        $session->last_activity_at = now();
-        $session->save();
+            if ($lockedSession === null || ! $this->isActive($lockedSession)) {
+                return false;
+            }
 
-        return true;
+            $lockedSession->last_activity_at = now();
+            $lockedSession->save();
+            $session->setRawAttributes($lockedSession->getAttributes(), true);
+
+            return true;
+        });
     }
 }

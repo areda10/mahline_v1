@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -15,6 +16,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -92,33 +94,33 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void 
-    { 
-        $superAdmin = $this->createUserWithRole('super_admin'); 
-        $country = Country::factory()->create(); 
-        $assignedCooperative = $this->createCooperative($country); 
-        $unassignedCooperative = $this->createCooperative($country); 
-        
-        $superAdmin->cooperatives()->attach( 
-            $assignedCooperative->id, 
-        ); 
-        
-        $this->expectException(\DomainException::class); 
-        
-        $this->service->createUser( 
-            $superAdmin, 
-            [ 
-                'first_name' => 'Blocked', 
-                'last_name' => 'User', 
-                'display_name' => 'Blocked User', 
-                'email' => 'blocked@example.com', 
-                'telephone' => '+212600000003', 
-                'password' => 'Password123', 
-                'status' => UserStatus::Active, 
-                'cooperative_id' => $unassignedCooperative->id, 
-            ], 
-            'user', 
-        ); 
+    public function test_super_admin_cannot_create_user_in_unassigned_cooperative(): void
+    {
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $country = Country::factory()->create();
+        $assignedCooperative = $this->createCooperative($country);
+        $unassignedCooperative = $this->createCooperative($country);
+
+        $superAdmin->cooperatives()->attach(
+            $assignedCooperative->id,
+        );
+
+        $this->expectException(\DomainException::class);
+
+        $this->service->createUser(
+            $superAdmin,
+            [
+                'first_name' => 'Blocked',
+                'last_name' => 'User',
+                'display_name' => 'Blocked User',
+                'email' => 'blocked@example.com',
+                'telephone' => '+212600000003',
+                'password' => 'Password123',
+                'status' => UserStatus::Active,
+                'cooperative_id' => $unassignedCooperative->id,
+            ],
+            'user',
+        );
     }
 
     public function test_cooperative_admin_cannot_create_user_in_own_cooperative(): void
@@ -208,6 +210,65 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_email_role_and_cooperative_scope_changes_revoke_api_tokens(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperativeA = $this->createCooperative();
+        $cooperativeB = $this->createCooperative();
+        $target = $this->createUserWithRole('user', (string) $cooperativeA->getKey());
+
+        $beforeTransfer = $target->createToken('before-transfer');
+        $this->service->updateUserAccount(
+            $root,
+            $target,
+            [
+                'first_name' => $target->first_name,
+                'last_name' => $target->last_name,
+                'email' => 'identity-transfer@example.com',
+                'telephone' => $target->telephone,
+                'cooperative_id' => $cooperativeB->getKey(),
+            ],
+            'user',
+        );
+        self::assertNotNull($beforeTransfer->accessToken->fresh()->revoked_at);
+
+        $beforeRoleChange = $target->fresh()->createToken('before-role-change');
+        $this->service->updateUserAccount(
+            $root,
+            $target->fresh(),
+            [
+                'first_name' => $target->first_name,
+                'last_name' => $target->last_name,
+                'email' => 'identity-transfer@example.com',
+                'telephone' => $target->telephone,
+                'cooperative_id' => $cooperativeB->getKey(),
+            ],
+            'cooperative_admin',
+        );
+        self::assertNotNull($beforeRoleChange->accessToken->fresh()->revoked_at);
+    }
+
+    public function test_cooperative_assignment_changes_revoke_existing_api_tokens(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+
+        $beforeAssignment = $superAdmin->createToken('before-assignment');
+        $this->service->assignSuperAdminToCooperative($root, $superAdmin, $cooperative);
+
+        self::assertNotNull($beforeAssignment->accessToken->fresh()->revoked_at);
+
+        $afterAssignment = $superAdmin->createToken('after-assignment');
+        $this->service->removeSuperAdminFromCooperative($root, $superAdmin, $cooperative);
+
+        self::assertNotNull($afterAssignment->accessToken->fresh()->revoked_at);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.api_token_revoked',
+            'subject_id' => $afterAssignment->accessToken->getKey(),
+        ]);
+    }
+
     public function test_super_admin_root_can_assign_super_admin_to_cooperative(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
@@ -271,35 +332,95 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    private function createUserWithRole( 
-        string $roleSlug, 
-        ?string $cooperativeId = null, 
-    ): User { 
-        $user = User::factory()->create([ 
-            'cooperative_id' => $cooperativeId, 
-        ]); 
-        
+    public function test_root_temporary_activation_archives_the_existing_password(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $target = User::factory()->create([
+            'status' => UserStatus::Pending,
+            'password' => 'ExistingPassword2026!',
+            'email_verified_at' => null,
+        ]);
+
+        $activated = $this->service->activateAndVerifyUser($root, $target);
+
+        $this->assertSame(UserStatus::Active, $activated->status);
+        $this->assertTrue($activated->must_change_password);
+        $this->assertTrue(Hash::check('MahlineMahline', (string) $activated->password));
+
+        $history = DB::table('user_password_histories')
+            ->where('user_id', $target->getKey())
+            ->first();
+
+        $this->assertNotNull($history);
+        $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $history->password_hash));
+    }
+
+    public function test_password_history_survives_soft_delete_and_cascades_on_force_delete(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $target = User::factory()->create();
+
+        DB::table('user_password_histories')->insert([
+            'id' => (string) Str::ulid(),
+            'user_id' => $target->getKey(),
+            'password_hash' => Hash::make('PreviousPassword2026!'),
+            'created_at' => now(),
+        ]);
+
+        $this->service->deleteUser($root, $target);
+
+        $this->assertDatabaseHas('user_password_histories', [
+            'user_id' => $target->getKey(),
+        ]);
+
+        $deletedUser = User::withTrashed()->findOrFail($target->getKey());
+        $deletedUser->forceDelete();
+
+        $this->assertDatabaseMissing('user_password_histories', [
+            'user_id' => $target->getKey(),
+        ]);
+    }
+
+    private function createUserWithRole(
+        string $roleSlug,
+        ?string $cooperativeId = null,
+    ): User {
+        $user = User::factory()->create([
+            'cooperative_id' => $cooperativeId,
+        ]);
+
         $role = Role::query()->firstOrCreate(
-            [ 
-                'slug' => $roleSlug, 
-            ], 
-            [ 
-                'name' => $roleSlug, 
-                'is_active' => true, 
-            ], 
-        ); 
-        
-        $user->roles()->syncWithoutDetaching([ 
-            $role->id, 
-        ]); 
-        
-        return $user; 
+            [
+                'slug' => $roleSlug,
+            ],
+            [
+                'name' => $roleSlug,
+                'is_active' => true,
+            ],
+        );
+
+        $user->roles()->syncWithoutDetaching([
+            $role->id,
+        ]);
+
+        return $user;
     }
 
     private function createCooperative(
         ?Country $country = null,
     ): Cooperative {
-        $country ??= Country::factory()->create();
+        $country ??= Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Morocco',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
 
         $address = Address::factory()->create([
             'country_id' => $country->id,
@@ -566,7 +687,7 @@ final class UserManagementServiceTest extends TestCase
             'subject_id' => $user->id,
         ]);
 
-        $event = \App\Domains\Audit\Models\AuditEvent::query()
+        $event = AuditEvent::query()
             ->where('event_key', 'identity.user.created')
             ->where('subject_id', $user->id)
             ->firstOrFail();
@@ -676,7 +797,7 @@ final class UserManagementServiceTest extends TestCase
         $cooperative = $this->createCooperative();
 
         try {
-            \Illuminate\Support\Facades\DB::transaction(
+            DB::transaction(
                 function () use ($root, $cooperative): void {
                     $this->service->createUser(
                         $root,

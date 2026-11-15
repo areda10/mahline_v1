@@ -7,6 +7,7 @@ namespace App\Domains\Categories\Services;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Repositories\CategoryRepository;
 use App\Domains\Products\Models\Product;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -15,8 +16,7 @@ final class CategoryService
 {
     public function __construct(
         private readonly CategoryRepository $repository,
-    ) {
-    }
+    ) {}
 
     public function create(array $attributes): Category
     {
@@ -358,7 +358,7 @@ final class CategoryService
      *
      * L'ordre de collecte est parent puis descendants.
      */
-    private function collectDescendants(Category $category): \Illuminate\Support\Collection
+    private function collectDescendants(Category $category): Collection
     {
         $result = collect();
         $visited = [];
@@ -405,7 +405,7 @@ final class CategoryService
      */
     private function collectGlobalDescendants(
         Category $category,
-        \Illuminate\Support\Collection &$result,
+        Collection &$result,
         array &$visited,
     ): void {
         $id = (string) $category->getKey();
@@ -498,5 +498,4 @@ final class CategoryService
             }
         }
     }
-
 }

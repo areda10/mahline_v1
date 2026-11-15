@@ -6,6 +6,4 @@ namespace App\Domains\Identity\Password\Exceptions;
 
 use RuntimeException;
 
-final class InvalidPasswordResetTokenException extends RuntimeException
-{
-}
+final class InvalidPasswordResetTokenException extends RuntimeException {}

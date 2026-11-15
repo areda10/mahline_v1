@@ -10,6 +10,4 @@ namespace App\Core\Foundation\Policies;
  * Une Policy est responsable uniquement des règles
  * d'autorisation d'accès aux ressources.
  */
-abstract class BasePolicy
-{
-}
+abstract class BasePolicy {}

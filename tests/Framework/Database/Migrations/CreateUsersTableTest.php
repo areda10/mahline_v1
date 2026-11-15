@@ -99,7 +99,7 @@ final class CreateUsersTableTest extends TestCase
             $column['nullable']
         );
     }
-    
+
     public function test_required_user_columns_are_not_nullable(): void
     {
         $requiredColumns = [

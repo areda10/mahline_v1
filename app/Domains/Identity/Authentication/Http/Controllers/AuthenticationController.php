@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
+use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
 use App\Domains\Identity\Authentication\Http\Requests\AuthenticationRequest;
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflow;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 final class AuthenticationController
@@ -21,14 +23,18 @@ final class AuthenticationController
     public function __construct(
         private readonly AuthenticationWorkflow $authenticationWorkflow,
         private readonly SessionService $sessionService,
-    ) {
-    }
+    ) {}
 
-
-    public function showLogin(): \Illuminate\Contracts\View\View|\Illuminate\Http\RedirectResponse
+    public function showLogin(): View|RedirectResponse
     {
         if (Auth::check()) {
             $user = Auth::user();
+
+            if ($user?->hasRole('customer')) {
+                return redirect()->route($user->must_change_password
+                    ? 'customer.password.force-change.edit'
+                    : 'customer.dashboard');
+            }
 
             if ($user?->must_change_password) {
                 return redirect()->route('password.force-change.edit');
@@ -52,8 +58,45 @@ final class AuthenticationController
         return view('auth.login');
     }
 
-    public function login(
+    public function showCustomerLogin(): View|RedirectResponse
+    {
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            abort_unless(
+                $user?->hasRole('customer')
+                && ! $user?->hasAnyRole([
+                    'super_admin_root',
+                    'super_admin',
+                    'cooperative_admin',
+                    'user',
+                ]),
+                403,
+            );
+
+            if ($user?->must_change_password) {
+                return redirect()->route('customer.password.force-change.edit');
+            }
+
+            return redirect()->route('customer.dashboard');
+        }
+
+        return view('auth.login');
+    }
+
+    public function login(AuthenticationRequest $request): JsonResponse|RedirectResponse
+    {
+        return $this->authenticate($request, customerOnly: false);
+    }
+
+    public function loginCustomer(AuthenticationRequest $request): JsonResponse|RedirectResponse
+    {
+        return $this->authenticate($request, customerOnly: true);
+    }
+
+    private function authenticate(
         AuthenticationRequest $request,
+        bool $customerOnly,
     ): JsonResponse|RedirectResponse {
         $context = new AuthenticationContext(
             email: (string) $request->input('email'),
@@ -63,6 +106,7 @@ final class AuthenticationController
             userAgent: $request->userAgent(),
             browser: $this->detectBrowser($request),
             device: $this->detectDevice($request),
+            deviceTrustToken: $request->cookie(DeviceTrustCookie::NAME),
         );
 
         try {
@@ -70,29 +114,18 @@ final class AuthenticationController
                 context: $context,
                 sessionId: $context->sessionId,
                 request: $request,
+                customerOnly: $customerOnly,
             );
-        } catch (ModelNotFoundException) {
+        } catch (AuthenticationFailedException|DeviceTrustException) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Authentication failed.',
-                ], 404);
-            }
-
-            return back()
-                ->withErrors([
-                    'email' => 'Authentication failed.',
-                ])
-                ->withInput($request->only('email'));
-        } catch (RuntimeException $exception) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => $exception->getMessage(),
                 ], 401);
             }
 
             return back()
                 ->withErrors([
-                    'email' => $exception->getMessage(),
+                    'email' => 'Authentication failed.',
                 ])
                 ->withInput($request->only('email'));
         }
@@ -114,7 +147,7 @@ final class AuthenticationController
         }
 
         if ($request->expectsJson()) {
-            return response()->json([
+            $response = response()->json([
                 'message' => 'Authentication successful.',
                 'user' => [
                     'id' => $user->getKey(),
@@ -129,6 +162,8 @@ final class AuthenticationController
                     'last_activity_at' => $authenticationSession->last_activity_at,
                 ],
             ], 200);
+
+            return $this->attachDeviceTrustCookie($response, $request);
         }
 
         /*
@@ -137,19 +172,28 @@ final class AuthenticationController
          * the Laravel session ID with the Identity authentication session.
          */
         if ($user->must_change_password) {
-            return redirect()->route('password.force-change.edit');
+            return $this->attachDeviceTrustCookie(
+                redirect()->route($customerOnly
+                    ? 'customer.security.password.edit'
+                    : 'password.force-change.edit'),
+                $request,
+            );
         }
 
         if ($user->hasRole('super_admin_root')) {
-            return redirect()->route('root.backoffice.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('root.backoffice.dashboard'), $request);
+        }
+
+        if ($user->hasRole('customer')) {
+            return $this->attachDeviceTrustCookie(redirect()->route('customer.dashboard'), $request);
         }
 
         if ($user->hasRole('user')) {
-            return redirect()->route('user.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('user.dashboard'), $request);
         }
 
         if ($user->hasAnyRole(['super_admin', 'cooperative_admin'])) {
-            return redirect()->route('backoffice.dashboard');
+            return $this->attachDeviceTrustCookie(redirect()->route('backoffice.dashboard'), $request);
         }
 
         abort(403);
@@ -167,8 +211,15 @@ final class AuthenticationController
                 ], 401);
             }
 
-            return redirect()->route('authentication.login');
+            return redirect()->route($request->routeIs('customer.logout')
+                ? 'customer.login'
+                : 'authentication.login');
         }
+
+        abort_if(
+            $user->hasRole('customer') && ! $request->routeIs('customer.logout'),
+            403,
+        );
 
         /*
          * Revoke only the current Identity authentication session when it
@@ -205,7 +256,73 @@ final class AuthenticationController
             ], 200);
         }
 
-        return redirect()->route('authentication.login');
+        return redirect()->route($user->hasRole('customer')
+            ? 'customer.login'
+            : 'authentication.login');
+    }
+
+    /**
+     * Revoke every web session and API token belonging to the authenticated user.
+     */
+    public function logoutEverywhere(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($user === null) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Unauthenticated.',
+                ], 401);
+            }
+
+            return redirect()->route('authentication.login');
+        }
+
+        $revoked = $this->sessionService->revokeAllAccessForUser($user);
+
+        Auth::logout();
+
+        $request->session()->forget('authentication_session_id');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Déconnexion globale effectuée.',
+                'revoked' => $revoked,
+            ], 200);
+        }
+
+        return redirect()
+            ->route('authentication.login')
+            ->with('success', 'Toutes les sessions et clés API de votre compte ont été révoquées.');
+    }
+
+    private function attachDeviceTrustCookie(
+        Response $response,
+        Request $request,
+    ): Response {
+        $token = $request->attributes->get(DeviceTrustCookie::REQUEST_ATTRIBUTE);
+
+        if (! DeviceTrustCookie::isValid(is_string($token) ? $token : null)) {
+            return $response;
+        }
+
+        $secure = config('session.secure');
+
+        $response->headers->setCookie(cookie(
+            DeviceTrustCookie::NAME,
+            $token,
+            60 * 24 * 400,
+            '/',
+            config('session.domain'),
+            $secure === null ? $request->isSecure() : (bool) $secure,
+            true,
+            false,
+            'lax',
+        ));
+
+        return $response;
     }
 
     private function detectBrowser(Request $request): ?string

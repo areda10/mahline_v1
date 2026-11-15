@@ -144,7 +144,7 @@
                 <form
                     class="auth-form"
                     method="POST"
-                    action="{{ route('authentication.login.store') }}"
+                    action="{{ request()->routeIs('customer.login') ? route('customer.login.store') : route('authentication.login.store') }}"
                     accept-charset="UTF-8"
                 >
                     @csrf
@@ -199,7 +199,7 @@
                             </label>
 
                             <a class="text-link"
-                               href="{{ route('password.request') }}"
+                               href="{{ request()->routeIs('customer.login') ? route('customer.password.request') : route('password.request') }}"
                                data-i18n="forgotPassword">
                                 Mot de passe oublié ?
                             </a>
@@ -295,7 +295,9 @@
                 </div>
             </div>
 
-            <footer class="form-footer">
+            <p class="customer-register-link" style="text-align:center;margin-top:18px">Vous êtes client ? <a href="{{ route('customer.register') }}">Créer un compte client</a></p>
+
+                <footer class="form-footer">
                 <span data-i18n="footerText">
                     Une plateforme dédiée aux coopératives.
                 </span>

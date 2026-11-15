@@ -61,5 +61,4 @@ final class Address extends BaseModel
             'address_id',
         );
     }
-
 }

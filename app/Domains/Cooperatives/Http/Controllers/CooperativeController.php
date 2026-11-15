@@ -16,8 +16,7 @@ final class CooperativeController
 {
     public function __construct(
         private readonly CooperativeService $cooperativeService,
-    ) {
-    }
+    ) {}
 
     public function index(): View
     {
@@ -37,7 +36,7 @@ final class CooperativeController
         Gate::authorize('create', Cooperative::class);
 
         return view('backoffice.cooperatives.create', [
-            'cooperative' => new Cooperative(),
+            'cooperative' => new Cooperative,
             'addresses' => $this->availableAddresses(),
         ]);
     }
@@ -67,6 +66,7 @@ final class CooperativeController
     public function show(string $cooperative): View
     {
         $model = $this->resolveCooperative($cooperative);
+
         return view('backoffice.cooperatives.show', ['cooperative' => $model->load('address.country')]);
     }
 
@@ -175,6 +175,7 @@ final class CooperativeController
     {
         $model = Cooperative::query()->findOrFail($id);
         Gate::authorize('view', $model);
+
         return $model;
     }
 }

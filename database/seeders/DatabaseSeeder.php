@@ -19,11 +19,11 @@ final class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             RolePermissionSeeder::class,
             CountrySeeder::class,
-            
-            CategorySeeder::class,    
+
+            CategorySeeder::class,
             ProductSeeder::class,
             ProductVariantSeeder::class,
-            
+
         ]);
 
         // User::factory()->create([

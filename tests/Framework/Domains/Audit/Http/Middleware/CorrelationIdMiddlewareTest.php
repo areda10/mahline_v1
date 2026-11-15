@@ -13,7 +13,7 @@ final class CorrelationIdMiddlewareTest extends TestCase
 {
     public function test_generates_correlation_id_for_request(): void
     {
-        $middleware = new CorrelationIdMiddleware();
+        $middleware = new CorrelationIdMiddleware;
 
         $request = Request::create('/test', 'GET');
 
@@ -39,7 +39,7 @@ final class CorrelationIdMiddlewareTest extends TestCase
 
     public function test_generates_a_new_id_for_each_request(): void
     {
-        $middleware = new CorrelationIdMiddleware();
+        $middleware = new CorrelationIdMiddleware;
 
         $firstRequest = Request::create('/test', 'GET');
         $secondRequest = Request::create('/test', 'GET');
@@ -57,7 +57,7 @@ final class CorrelationIdMiddlewareTest extends TestCase
 
     public function test_does_not_trust_client_correlation_id(): void
     {
-        $middleware = new CorrelationIdMiddleware();
+        $middleware = new CorrelationIdMiddleware;
 
         $request = Request::create('/test', 'GET');
 

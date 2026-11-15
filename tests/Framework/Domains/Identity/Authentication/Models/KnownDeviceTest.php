@@ -17,8 +17,8 @@ final class KnownDeviceTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -43,6 +43,13 @@ final class KnownDeviceTest extends TestCase
                     'id',
                     'user_id',
                     'device',
+                    'browser',
+                    'device_token_hash',
+                    'status',
+                    'pending_until',
+                    'trusted_at',
+                    'last_seen_at',
+                    'revoked_at',
                     'created_at',
                     'updated_at',
                 ],
@@ -50,14 +57,19 @@ final class KnownDeviceTest extends TestCase
         );
     }
 
-    public function test_user_and_device_combination_is_unique(): void
+    public function test_device_proof_hash_is_unique_and_device_labels_may_repeat(): void
     {
         self::assertTrue(
             \Schema::hasIndex(
                 'known_devices',
-                'known_devices_user_id_device_unique',
+                'known_devices_device_token_hash_unique',
             ),
         );
+
+        self::assertFalse(\Schema::hasIndex(
+            'known_devices',
+            'known_devices_user_id_device_unique',
+        ));
     }
 
     public function test_it_persists_a_known_device_for_a_user(): void
@@ -89,7 +101,8 @@ final class KnownDeviceTest extends TestCase
             $knownDevice->user->is($user),
         );
     }
-    //function added from other files 
+
+    // function added from other files
     public function test_successful_authentication_remembers_a_new_device(): void
     {
         $user = User::factory()->create([
@@ -113,7 +126,7 @@ final class KnownDeviceTest extends TestCase
         ]);
     }
 
-    public function test_successful_authentication_does_not_duplicate_a_known_device(): void
+    public function test_legacy_device_category_does_not_identify_a_browser(): void
     {
         $user = User::factory()->create([
             'email' => 'known-device@example.com',
@@ -136,10 +149,18 @@ final class KnownDeviceTest extends TestCase
         $response->assertOk();
 
         $this->assertSame(
-            1,
+            2,
             KnownDevice::query()
                 ->where('user_id', $user->getKey())
                 ->where('device', 'windows')
+                ->count(),
+        );
+
+        $this->assertSame(
+            1,
+            KnownDevice::query()
+                ->where('user_id', $user->getKey())
+                ->whereNotNull('device_token_hash')
                 ->count(),
         );
     }
@@ -154,13 +175,13 @@ final class KnownDeviceTest extends TestCase
 
         $computerUserAgent =
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-            . 'AppleWebKit/537.36 '
-            . 'Chrome/140.0.0.0 Safari/537.36';
+            .'AppleWebKit/537.36 '
+            .'Chrome/140.0.0.0 Safari/537.36';
 
         $phoneUserAgent =
             'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) '
-            . 'AppleWebKit/605.1.15 '
-            . 'Version/18.0 Mobile/15E148 Safari/604.1';
+            .'AppleWebKit/605.1.15 '
+            .'Version/18.0 Mobile/15E148 Safari/604.1';
 
         $computerResponse = $this
             ->withHeader('User-Agent', $computerUserAgent)

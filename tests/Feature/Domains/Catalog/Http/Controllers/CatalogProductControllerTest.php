@@ -14,8 +14,8 @@ use Tests\TestCase;
 
 final class CatalogProductControllerTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesAuthorizedCooperativeAdmin;
+    use RefreshDatabase;
 
     private Cooperative $cooperative;
 
@@ -33,7 +33,6 @@ final class CatalogProductControllerTest extends TestCase
 
         $this->actingAs($user);
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
-
 
         $this->catalog = Catalog::factory()->create([
             'cooperative_id' => $this->cooperative->getKey(),

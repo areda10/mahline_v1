@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\UserManagement\Http\Controllers;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -137,6 +139,7 @@ final class UserInvitationControllerTest extends TestCase
         ]);
 
         $invitation = $this->createInvitation($user, $token);
+        $legacyApiToken = $user->createToken('legacy-before-verification');
 
         $password = 'MahlineSecure2026!';
 
@@ -157,6 +160,7 @@ final class UserInvitationControllerTest extends TestCase
 
         $this->assertNotNull($invitation->used_at);
         $this->assertNull($invitation->revoked_at);
+        $this->assertNotNull($legacyApiToken->accessToken->fresh()->revoked_at);
 
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.user.invitation_accepted',
@@ -390,8 +394,44 @@ final class UserInvitationControllerTest extends TestCase
         $this->assertNotNull($invitation->fresh()->used_at);
     }
 
+    public function test_audit_failure_rolls_back_invitation_acceptance_password_and_history(): void
+    {
+        $token = bin2hex(random_bytes(32));
+        $user = User::factory()->create([
+            'status' => UserStatus::Pending,
+            'email_verified_at' => null,
+            'password' => 'InitialSecure2026!',
+        ]);
+        $invitation = $this->createInvitation($user, $token);
+
+        AuditEvent::creating(static fn () => abort(500));
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->post(route('user-invitations.accept'), [
+                'token' => $token,
+                'password' => 'MahlineSecure2026!',
+                'password_confirmation' => 'MahlineSecure2026!',
+            ]);
+            $this->fail('Expected audit failure.');
+        } catch (\Throwable $exception) {
+            Event::forget('eloquent.creating: '.AuditEvent::class);
+            $this->assertSame(500, $exception->getStatusCode());
+        }
+
+        $user->refresh();
+        $invitation->refresh();
+
+        $this->assertSame(UserStatus::Pending, $user->status);
+        $this->assertNull($user->email_verified_at);
+        $this->assertTrue(Hash::check('InitialSecure2026!', (string) $user->password));
+        $this->assertFalse(Hash::check('MahlineSecure2026!', (string) $user->password));
+        $this->assertNull($invitation->used_at);
+        $this->assertDatabaseCount('user_password_histories', 0);
+    }
+
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function createInvitation(
         User $user,

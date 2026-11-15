@@ -18,7 +18,6 @@ final class AuditActorMacros
                 'auditActorColumns',
                 function (): void {
                     /** @var Blueprint $this */
-
                     $this->char('created_by', 26)->nullable();
                     $this->char('updated_by', 26)->nullable();
                     $this->char('deleted_by', 26)->nullable();

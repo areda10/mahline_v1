@@ -3,11 +3,16 @@
 declare(strict_types=1);
 
 use App\Domains\Audit\Http\Middleware\CorrelationIdMiddleware;
+use App\Domains\Identity\Authentication\Http\Middleware\ApplyDeviceTrustCookie;
+use App\Domains\Identity\Authentication\Http\Middleware\ApplyRoleBasedSessionCookiePolicy;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
 use App\Domains\Identity\Authorization\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'abilities' => CheckAbilities::class,
+            'ability' => CheckForAnyAbility::class,
         ]);
 
         /*
@@ -38,6 +45,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             CorrelationIdMiddleware::class,
+            EnsureForcedPasswordChangeCompleted::class,
+            ApplyRoleBasedSessionCookiePolicy::class,
+            ApplyDeviceTrustCookie::class,
         ]);
 
         $middleware->api(append: [
@@ -47,17 +57,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
 
         /*
-         * Authentication endpoints return JSON responses.
-         *
-         * Laravel must therefore render validation exceptions
-         * as JSON for the authentication routes as well as
-         * the traditional API routes.
+         * API routes always return JSON. Authentication web routes
+         * negotiate JSON only when requested by the client, allowing
+         * browser form submissions to use redirects and session errors.
          */
 
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request): bool =>
-                $request->is('api/*')
-                || $request->is('authentication/*'),
+            fn (Request $request): bool => $request->is('api/*')
+                || ($request->is('authentication/*') && $request->expectsJson()),
         );
 
     })

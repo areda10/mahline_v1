@@ -19,8 +19,8 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -69,10 +69,19 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
             public function afterDeviceRemembered(
                 User $user,
                 AuthenticationSession $session,
+                bool $isNewDevice,
             ): void {
                 throw new RuntimeException(
                     'Controlled authentication workflow failure.',
                 );
+            }
+
+            public function afterAuthenticationCommitted(
+                User $user,
+                AuthenticationSession $session,
+                bool $isNewDevice,
+            ): void {
+                // The controlled failure is raised inside the transaction hook.
             }
         };
 
@@ -88,11 +97,7 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
                 'password' => 'ValidPassword123',
             ]);
 
-        $response->assertStatus(401);
-
-        $response->assertJson([
-            'message' => 'Controlled authentication workflow failure.',
-        ]);
+        $response->assertStatus(500);
 
         $this->assertDatabaseMissing('authentication_sessions', [
             'user_id' => $user->getKey(),
@@ -122,10 +127,19 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
             public function afterDeviceRemembered(
                 User $user,
                 AuthenticationSession $session,
+                bool $isNewDevice,
             ): void {
                 throw new RuntimeException(
                     'Controlled authentication workflow failure.',
                 );
+            }
+
+            public function afterAuthenticationCommitted(
+                User $user,
+                AuthenticationSession $session,
+                bool $isNewDevice,
+            ): void {
+                // The controlled failure is raised inside the transaction hook.
             }
         };
 
@@ -141,7 +155,7 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
                 'password' => 'ValidPassword123',
             ]);
 
-        $response->assertUnauthorized();
+        $response->assertStatus(500);
 
         $this->assertDatabaseMissing('authentication_sessions', [
             'user_id' => $user->getKey(),
@@ -149,5 +163,4 @@ final class AuthenticationWorkflowTransactionTest extends TestCase
 
         $this->assertGuest();
     }
-
 }

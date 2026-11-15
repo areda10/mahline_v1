@@ -12,7 +12,7 @@ final class ResetPasswordRequestTest extends TestCase
 {
     public function test_token_is_required(): void
     {
-        $request = new ResetPasswordRequest();
+        $request = new ResetPasswordRequest;
 
         $validator = Validator::make(
             [],
@@ -28,7 +28,7 @@ final class ResetPasswordRequestTest extends TestCase
 
     public function test_token_must_be_a_string(): void
     {
-        $request = new ResetPasswordRequest();
+        $request = new ResetPasswordRequest;
 
         $validator = Validator::make(
             [
@@ -42,7 +42,7 @@ final class ResetPasswordRequestTest extends TestCase
 
     public function test_password_is_required(): void
     {
-        $request = new ResetPasswordRequest();
+        $request = new ResetPasswordRequest;
 
         $validator = Validator::make(
             [
@@ -60,7 +60,7 @@ final class ResetPasswordRequestTest extends TestCase
 
     public function test_password_confirmation_is_required(): void
     {
-        $request = new ResetPasswordRequest();
+        $request = new ResetPasswordRequest;
 
         $validator = Validator::make(
             [
@@ -79,7 +79,7 @@ final class ResetPasswordRequestTest extends TestCase
 
     public function test_password_confirmation_must_match(): void
     {
-        $request = new ResetPasswordRequest();
+        $request = new ResetPasswordRequest;
 
         $validator = Validator::make(
             [
@@ -95,7 +95,7 @@ final class ResetPasswordRequestTest extends TestCase
 
     public function test_valid_password_reset_request_is_accepted(): void
     {
-        $request = new ResetPasswordRequest();
+        $request = new ResetPasswordRequest;
 
         $validator = Validator::make(
             [

@@ -29,30 +29,30 @@ final class UserRoleTest extends TestCase
         );
     }
 
-    public function test_user_role_has_user_foreign_key(): void { 
-        $foreignKeys = Schema::getForeignKeys('user_role'); 
-        
-        $foreignKey = collect($foreignKeys)->first( 
-            static fn (array $foreignKey): bool => 
-            $foreignKey['columns'] === ['user_id'] 
-            && $foreignKey['foreign_table'] === 'users' 
-            && $foreignKey['foreign_columns'] === ['id'], 
-        ); 
-        
-        $this->assertNotNull($foreignKey); 
+    public function test_user_role_has_user_foreign_key(): void
+    {
+        $foreignKeys = Schema::getForeignKeys('user_role');
+
+        $foreignKey = collect($foreignKeys)->first(
+            static fn (array $foreignKey): bool => $foreignKey['columns'] === ['user_id']
+            && $foreignKey['foreign_table'] === 'users'
+            && $foreignKey['foreign_columns'] === ['id'],
+        );
+
+        $this->assertNotNull($foreignKey);
     }
 
-    public function test_user_role_has_role_foreign_key(): void { 
-        $foreignKeys = Schema::getForeignKeys('user_role'); 
-        
-        $foreignKey = collect($foreignKeys)->first( 
-            static fn (array $foreignKey): bool => 
-            $foreignKey['columns'] === ['role_id'] 
-            && $foreignKey['foreign_table'] === 'roles' 
-            && $foreignKey['foreign_columns'] === ['id'], 
-        ); 
-        
-        $this->assertNotNull($foreignKey); 
+    public function test_user_role_has_role_foreign_key(): void
+    {
+        $foreignKeys = Schema::getForeignKeys('user_role');
+
+        $foreignKey = collect($foreignKeys)->first(
+            static fn (array $foreignKey): bool => $foreignKey['columns'] === ['role_id']
+            && $foreignKey['foreign_table'] === 'roles'
+            && $foreignKey['foreign_columns'] === ['id'],
+        );
+
+        $this->assertNotNull($foreignKey);
     }
 
     public function test_user_role_has_unique_constraint(): void
@@ -60,8 +60,7 @@ final class UserRoleTest extends TestCase
         $indexes = Schema::getIndexes('user_role');
 
         $uniqueIndex = collect($indexes)->first(
-            static fn ($index): bool =>
-                $index['unique'] === true
+            static fn ($index): bool => $index['unique'] === true
                 && $index['columns'] === [
                     'user_id',
                     'role_id',

@@ -61,3 +61,31 @@ Cette première phase fournit le contrat d'écriture commun. Elle ne branche pas
 - Ajouter les tests d'intégration MySQL et les tests de politique selon la configuration réelle du projet.
 - Décider si l'IP et le user-agent sont nécessaires pour chaque type d'événement, compte tenu de la confidentialité.
 - Ajouter des intégrations explicites dans chaque domaine après validation de son service métier.
+
+
+## Intégration Identity — verrouillage d'urgence root-only
+
+L'implémentation Identity du verrouillage d'urgence utilise le contrat commun AuditService::record(AuditEntryDTO $entry) et les événements suivants :
+
+- identity.authentication.emergency_lock.applied : opération administrative de verrouillage du User ;
+- identity.authentication.session_revoked : révocation unitaire de chaque session avec le motif emergency_lock ;
+- identity.authentication.token_revoked : révocation unitaire de chaque token API avec le motif emergency_lock ;
+- identity.authentication.emergency_lock.released : levée administrative du verrouillage.
+
+Le contrôleur exécute l'état d'urgence, les révocations et les événements dans la même transaction. Les événements Identity spécialisés (Login History, session et sécurité) restent complémentaires et ne sont pas remplacés par l'Audit. Aucun secret de session, mot de passe ou token en clair ne doit être enregistré.
+
+Fichiers d'intégration : app/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutController.php et app/Domains/Identity/Authentication/Services/SessionService.php.
+
+
+## Intégration Identity — détection d'un nouvel appareil
+
+Lorsqu'un utilisateur s'authentifie depuis un appareil jamais enregistré pour son compte, le hook applicatif `RecordNewDeviceAuthenticationWorkflowHook` écrit l'événement append-only `identity.authentication.new_device_detected`, dont le sujet est la nouvelle `AuthenticationSession`. L'événement spécialisé `unusual_activity_detected` / `new_device_detected` est également persisté dans `security_events`. Les deux journaux sont complémentaires ; Login History conserve séparément le succès de connexion normal. Un appareil déjà connu ne génère aucun doublon.
+
+Fichiers d'intégration : `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php`, `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` et `app/Providers/AppServiceProvider.php`.
+
+
+## Intégration — alerte de nouvel appareil (SESS-10)
+
+La détection de première apparition déclenche d'abord les écritures SecurityEvent et Audit dans la transaction d'authentification. Après commit, une notification e-mail est tentée. L'envoi n'écrit pas un deuxième événement Audit de détection : `identity.authentication.new_device_detected` reste la trace canonique de l'événement, avec la session comme sujet.
+
+Une panne de transport e-mail est interceptée et journalisée sans secret, sans IP brute et sans annuler la connexion. L'état de notification n'est pas encore conservé dans une table d'historique dédiée ; cette traçabilité appartient au futur service transversal de notifications (NOT-01 à NOT-06). Aucun fournisseur GeoIP n'est actuellement configuré ; la localisation est donc annoncée indisponible plutôt que supposée.

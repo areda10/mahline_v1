@@ -14,8 +14,7 @@ final class PasswordResetLinkNotification extends Notification
 
     public function __construct(
         private readonly string $resetUrl,
-    ) {
-    }
+    ) {}
 
     /**
      * Envoi direct : aucun worker de queue n'est requis.
@@ -31,7 +30,7 @@ final class PasswordResetLinkNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Réinitialisation de votre mot de passe MAHLINE')
             ->greeting('Bonjour,')
             ->line(

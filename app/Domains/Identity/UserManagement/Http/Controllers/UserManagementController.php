@@ -6,12 +6,12 @@ namespace App\Domains\Identity\UserManagement\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
-use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
+use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -86,7 +86,7 @@ final class UserManagementController
             );
     }
 
-public function resendInvitation(
+    public function resendInvitation(
         User $user,
         UserInvitationService $invitationService,
     ): RedirectResponse {

@@ -18,8 +18,7 @@ final class CooperativeCategoryController
     public function __construct(
         private readonly CategoryRepository $categoryRepository,
         private readonly CategoryService $categoryService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request, string $cooperative): View
     {
@@ -54,7 +53,7 @@ final class CooperativeCategoryController
 
         return view('super-admin-root.cooperatives.categories.create', [
             'cooperative' => $cooperativeModel,
-            'category' => new Category(),
+            'category' => new Category,
             'categories' => $categories,
         ]);
     }

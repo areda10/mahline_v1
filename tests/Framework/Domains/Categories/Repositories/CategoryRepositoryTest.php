@@ -6,8 +6,8 @@ namespace Tests\Framework\Domains\Categories\Repositories;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Repositories\CategoryRepository;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 final class CategoryRepositoryTest extends TestCase
@@ -93,8 +93,7 @@ final class CategoryRepositoryTest extends TestCase
         $this->assertSame(2, $page->total());
         $this->assertTrue(
             $page->getCollection()->every(
-                fn (Category $category): bool =>
-                    $category->relationLoaded('parent'),
+                fn (Category $category): bool => $category->relationLoaded('parent'),
             ),
         );
     }

@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordService;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
 use RuntimeException;
@@ -26,6 +34,20 @@ final class PasswordServiceTest extends TestCase
         $this->passwordService = app(
             PasswordService::class
         );
+    }
+
+    public function test_password_history_refuses_to_archive_an_empty_current_hash(): void
+    {
+        $user = new User([
+            'password' => null,
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'A current password hash is required before it can be archived.',
+        );
+
+        app(PasswordHistoryService::class)->archiveCurrentPassword($user);
     }
 
     public function test_current_password_is_verified(): void
@@ -294,14 +316,13 @@ final class PasswordServiceTest extends TestCase
                 newPassword: 'MahlinePassword13!',
             );
             $this->fail('Expected invalid current password exception.');
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $this->assertDatabaseMissing('audit_events', [
                 'event_key' => 'identity.password.changed',
                 'subject_id' => $user->getKey(),
             ]);
         }
     }
-    
 
     public function test_password_change_audits_revoked_sessions_and_password_change(): void
     {
@@ -342,7 +363,7 @@ final class PasswordServiceTest extends TestCase
             newPassword: 'MahlinePassword13!',
         );
 
-        $event = \App\Domains\Audit\Models\AuditEvent::query()
+        $event = AuditEvent::query()
             ->where('event_key', 'identity.password.changed')
             ->firstOrFail();
 
@@ -356,4 +377,190 @@ final class PasswordServiceTest extends TestCase
         $this->assertStringNotContainsString('MahlinePassword13!', $serialized);
     }
 
+    public function test_audit_failure_rolls_back_password_change_and_history(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $user->createToken('rollback-test');
+
+        AuditEvent::creating(static fn () => abort(500));
+
+        $service = new PasswordService(
+            app(SessionService::class),
+            app(AuditService::class),
+            app(PasswordHistoryService::class),
+        );
+
+        try {
+            $service->changePassword($user, 'MahlinePassword12', 'MahlinePassword13!');
+            $this->fail('Expected audit failure.');
+        } catch (\Throwable $exception) {
+            Event::forget('eloquent.creating: '.AuditEvent::class);
+            $this->assertSame(500, $exception->getStatusCode());
+        }
+
+        $user->refresh();
+        $this->assertTrue(Hash::check('MahlinePassword12', (string) $user->password));
+        $this->assertFalse(Hash::check('MahlinePassword13!', (string) $user->password));
+        $this->assertDatabaseCount('user_password_histories', 0);
+        $this->assertSame(1, $user->tokens()->count());
+    }
+
+    public function test_password_change_acquires_a_user_row_lock_before_checking_and_archiving_history(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $lockedUserQueries = [];
+
+        DB::listen(static function (QueryExecuted $query) use (&$lockedUserQueries): void {
+            $sql = strtolower($query->sql);
+
+            if (str_contains($sql, 'users') && str_contains($sql, 'for update')) {
+                $lockedUserQueries[] = $sql;
+            }
+        });
+
+        $this->passwordService->changePassword(
+            user: $user,
+            currentPassword: 'MahlinePassword12',
+            newPassword: 'MahlinePassword13!',
+        );
+
+        $this->assertNotEmpty(
+            $lockedUserQueries,
+            'The password change must issue a SELECT ... FOR UPDATE against the users table.',
+        );
+        $this->assertDatabaseCount('user_password_histories', 1);
+    }
+
+    public function test_user_row_lock_blocks_a_second_database_connection_from_acquiring_the_same_lock(): void
+    {
+        $user = User::factory()->create(['password' => 'MahlinePassword12']);
+        $primaryConnectionName = DB::getDefaultConnection();
+        $secondaryConnectionName = 'identity_concurrency_test';
+        $secondaryConfig = config('database.connections.'.$primaryConnectionName);
+
+        config(['database.connections.'.$secondaryConnectionName => $secondaryConfig]);
+        DB::purge($secondaryConnectionName);
+
+        $primaryConnection = DB::connection($primaryConnectionName);
+        $primaryConnection->beginTransaction();
+
+        try {
+            $primaryConnection->table('users')
+                ->where('id', $user->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            try {
+                DB::connection($secondaryConnectionName)
+                    ->table('users')
+                    ->where('id', $user->getKey())
+                    ->lock('for update nowait')
+                    ->first();
+
+                $this->fail('A second connection must not acquire a row lock already held by the first connection.');
+            } catch (QueryException $exception) {
+                $driverErrorCode = (int) ($exception->errorInfo[1] ?? 0);
+
+                $this->assertContains(
+                    $driverErrorCode,
+                    [1205, 3572],
+                    'The second connection must fail because the row is locked, not because of a SQL syntax error.',
+                );
+            }
+        } finally {
+            DB::purge($secondaryConnectionName);
+            $primaryConnection->rollBack();
+        }
+    }
+
+    public function test_password_change_rejects_each_of_the_five_previous_passwords(): void
+    {
+        $passwords = [
+            'MahlinePassword00!',
+            'MahlinePassword01!',
+            'MahlinePassword02!',
+            'MahlinePassword03!',
+            'MahlinePassword04!',
+            'MahlinePassword05!',
+        ];
+        $user = User::factory()->create(['password' => $passwords[0]]);
+
+        for ($index = 1; $index < count($passwords); $index++) {
+            $this->passwordService->changePassword(
+                user: $user,
+                currentPassword: $passwords[$index - 1],
+                newPassword: $passwords[$index],
+            );
+        }
+
+        foreach (array_slice($passwords, 0, 5) as $previousPassword) {
+            try {
+                $this->passwordService->changePassword(
+                    user: $user,
+                    currentPassword: $passwords[5],
+                    newPassword: $previousPassword,
+                );
+                $this->fail('A password from the five-password history must be rejected.');
+            } catch (InvalidArgumentException $exception) {
+                $this->assertSame(
+                    'The new password must not match the current password or any of the five previous passwords.',
+                    $exception->getMessage(),
+                );
+            }
+        }
+
+        $this->assertTrue(Hash::check($passwords[5], (string) $user->fresh()->password));
+    }
+
+    public function test_password_history_retains_only_the_five_most_recent_password_hashes(): void
+    {
+        $passwords = [
+            'MahlinePassword00!',
+            'MahlinePassword01!',
+            'MahlinePassword02!',
+            'MahlinePassword03!',
+            'MahlinePassword04!',
+            'MahlinePassword05!',
+            'MahlinePassword06!',
+        ];
+        $user = User::factory()->create(['password' => $passwords[0]]);
+
+        for ($index = 1; $index < count($passwords); $index++) {
+            $this->passwordService->changePassword(
+                user: $user,
+                currentPassword: $passwords[$index - 1],
+                newPassword: $passwords[$index],
+            );
+        }
+
+        $history = DB::table('user_password_histories')
+            ->where('user_id', $user->getKey())
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get(['password_hash']);
+
+        $this->assertCount(5, $history);
+
+        foreach (array_slice($passwords, 1, 5) as $expectedPreviousPassword) {
+            $this->assertTrue(
+                $history->contains(
+                    static fn (object $entry): bool => Hash::check(
+                        $expectedPreviousPassword,
+                        (string) $entry->password_hash,
+                    ),
+                ),
+                'The five most recently replaced passwords must remain in history.',
+            );
+        }
+
+        $this->assertFalse(
+            $history->contains(
+                static fn (object $entry): bool => Hash::check(
+                    $passwords[0],
+                    (string) $entry->password_hash,
+                ),
+            ),
+            'The oldest password must be removed when the sixth replacement is archived.',
+        );
+    }
 }

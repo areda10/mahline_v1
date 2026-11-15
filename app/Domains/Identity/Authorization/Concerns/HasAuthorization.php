@@ -77,8 +77,7 @@ trait HasAuthorization
     private function normalizeSlugs(array $items): array
     {
         return array_map(
-            static fn (string|Role|Permission $item): string =>
-                $item instanceof Role || $item instanceof Permission
+            static fn (string|Role|Permission $item): string => $item instanceof Role || $item instanceof Permission
                     ? $item->slug
                     : $item,
             $items,
@@ -88,6 +87,7 @@ trait HasAuthorization
     public function isAuthorized(): bool
     {
         return $this->status === UserStatus::Active
-            && $this->email_verified_at !== null;
+            && $this->email_verified_at !== null
+            && $this->emergency_locked_at === null;
     }
 }

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Services\AuditService;
-use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -30,14 +31,15 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function __construct(
         private readonly AuditService $audit,
         private readonly SessionService $sessions,
-    ) {
-    }
+        private readonly ApiTokenService $apiTokens,
+        private readonly PasswordHistoryService $passwordHistory,
+    ) {}
 
     /**
      * Update a normal user account and its single operational role.
      * Root accounts are managed outside the ordinary user CRUD.
      *
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function updateUserAccount(
         User $actor,
@@ -187,7 +189,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 ),
                 // Secret aléatoire provisoire, jamais communiqué à l'administrateur.
                 'password' => bin2hex(random_bytes(32)),
-                //'status' => UserStatus::Pending,
+                // 'status' => UserStatus::Pending,
                 'status' => UserStatus::Pending,
                 'email_verified_at' => null,
                 'must_change_password' => false,
@@ -210,7 +212,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 newValues: [
                     'role' => $roleSlug,
                     'cooperative_id' => $user->cooperative_id,
-                    //'status' => UserStatus::Pending->value,
+                    // 'status' => UserStatus::Pending->value,
                     'status' => $initialStatus->value,
                 ],
             ));
@@ -262,6 +264,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             // L'événement d'audit appartient à la même transaction.
+            $this->apiTokens->revokeForUser(
+                user: $lockedSuperAdmin,
+                actor: $actor,
+                reason: 'super_admin_cooperative_assignment_changed',
+                eventKey: 'identity.authentication.api_token_revoked',
+                action: 'api_token_revoked',
+            );
+
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_assigned',
                 action: 'assigned',
@@ -320,6 +330,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             // L'événement d'audit appartient à la même transaction.
+            $this->apiTokens->revokeForUser(
+                user: $lockedSuperAdmin,
+                actor: $actor,
+                reason: 'super_admin_cooperative_assignment_changed',
+                eventKey: 'identity.authentication.api_token_revoked',
+                action: 'api_token_revoked',
+            );
+
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'identity.super_admin.cooperative_unassigned',
                 action: 'unassigned',
@@ -396,6 +414,12 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $oldStatus = $lockedTarget->status;
             $oldVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
+
+            // Preserve the existing credential before replacing it with the
+            // temporary root-activation password. The forced change must not
+            // allow the user to immediately reuse the pre-activation password.
+            $this->passwordHistory->archiveCurrentPassword($lockedTarget);
+
             $lockedTarget->status = UserStatus::Active;
             $lockedTarget->email_verified_at = now();
             $lockedTarget->password = 'MahlineMahline';
@@ -483,6 +507,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             action: 'restored_pending_invitation',
             allowedRootSourceStatuses: [UserStatus::Archived],
             allowedSuperAdminSourceStatuses: [],
+            revokeReason: 'user_restored',
             rootOnly: true,
             resetEmailVerification: true,
         );
@@ -575,6 +600,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 ],
             );
 
+            $this->revokePendingInvitations($lockedTarget);
+            $this->revokeAccessCredentials(
+                actor: $actor,
+                target: $lockedTarget,
+                reason: 'user_restored',
+            );
+
             return $lockedTarget->fresh();
         });
     }
@@ -583,8 +615,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
      * Apply one validated status transition. The status and its audit event
      * are persisted before any Web session or API token is revoked.
      *
-     * @param list<UserStatus> $allowedRootSourceStatuses
-     * @param list<UserStatus> $allowedSuperAdminSourceStatuses
+     * @param  list<UserStatus>  $allowedRootSourceStatuses
+     * @param  list<UserStatus>  $allowedSuperAdminSourceStatuses
      */
     private function changeUserStatus(
         User $actor,
@@ -722,38 +754,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         // SessionService writes one LoginHistory and one Audit event per session.
         $this->sessions->revokeForUser($target, $reason);
 
-        // The revoked_at column is part of the MAHLINE token lifecycle migration.
-        $tokens = PersonalAccessToken::query()
-            ->where('tokenable_type', $target->getMorphClass())
-            ->where('tokenable_id', $target->getKey())
-            ->whereNull('revoked_at')
-            ->lockForUpdate()
-            ->get();
-
-        foreach ($tokens as $token) {
-            $revokedAt = now();
-            $token->revoked_at = $revokedAt;
-            $token->save();
-
-            $this->audit->record(new AuditEntryDTO(
-                eventKey: 'identity.authentication.api_token_revoked',
-                action: 'api_token_revoked',
-                actorType: User::class,
-                actorId: (string) $actor->getKey(),
-                cooperativeId: $target->cooperative_id
-                    ? (string) $target->cooperative_id
-                    : null,
-                subjectType: PersonalAccessToken::class,
-                subjectId: (string) $token->getKey(),
-                oldValues: ['revoked_at' => null],
-                newValues: ['revoked_at' => $revokedAt->toISOString()],
-                metadata: [
-                    'user_id' => (string) $target->getKey(),
-                    'token_name' => $token->name,
-                    'reason' => $reason,
-                ],
-            ));
-        }
+        $this->apiTokens->revokeForUser(
+            user: $target,
+            actor: $actor,
+            reason: $reason,
+            eventKey: 'identity.authentication.api_token_revoked',
+            action: 'api_token_revoked',
+        );
     }
 
     private function recordLifecycleAudit(

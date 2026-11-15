@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authorization;
 
 use App\Domains\Identity\Authorization\Models\Role;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,9 +18,9 @@ final class RolePermissionMatrixSeederTest extends TestCase
     public function test_role_permission_matrix_is_seeded(): void
     {
         $this->seed([
-            \Database\Seeders\RoleSeeder::class,
-            \Database\Seeders\PermissionSeeder::class,
-            \Database\Seeders\RolePermissionSeeder::class,
+            RoleSeeder::class,
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
         ]);
 
         $root = Role::query()
@@ -50,9 +53,9 @@ final class RolePermissionMatrixSeederTest extends TestCase
     public function test_role_permission_matrix_is_idempotent(): void
     {
         $this->seed([
-            \Database\Seeders\RoleSeeder::class,
-            \Database\Seeders\PermissionSeeder::class,
-            \Database\Seeders\RolePermissionSeeder::class,
+            RoleSeeder::class,
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
         ]);
 
         $role = Role::query()
@@ -65,7 +68,7 @@ final class RolePermissionMatrixSeederTest extends TestCase
             ->all();
 
         $this->seed(
-            \Database\Seeders\RolePermissionSeeder::class,
+            RolePermissionSeeder::class,
         );
 
         $role->refresh();
@@ -84,9 +87,9 @@ final class RolePermissionMatrixSeederTest extends TestCase
     public function test_every_role_can_view_only_the_cooperatives_allowed_by_its_policy(): void
     {
         $this->seed([
-            \Database\Seeders\RoleSeeder::class,
-            \Database\Seeders\PermissionSeeder::class,
-            \Database\Seeders\RolePermissionSeeder::class,
+            RoleSeeder::class,
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
         ]);
 
         foreach ([
@@ -114,9 +117,9 @@ final class RolePermissionMatrixSeederTest extends TestCase
     public function test_every_permission_in_the_matrix_exists_and_is_active(): void
     {
         $this->seed([
-            \Database\Seeders\RoleSeeder::class,
-            \Database\Seeders\PermissionSeeder::class,
-            \Database\Seeders\RolePermissionSeeder::class,
+            RoleSeeder::class,
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
         ]);
 
         $matrix = config('authorization.role_permissions');
@@ -144,5 +147,4 @@ final class RolePermissionMatrixSeederTest extends TestCase
             }
         }
     }
-
 }

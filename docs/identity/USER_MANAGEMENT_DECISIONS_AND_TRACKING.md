@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 2.6
-- **Dernière mise à jour :** 9 novembre 2026
+- **Version :** 3.7
+- **Dernière mise à jour :** 10 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
 - **Statut :** décisions fonctionnelles validées ; implémentation à auditer
@@ -150,11 +150,14 @@ Motifs obligatoires (codes stables, traductions FR/EN/AR) :
 - Les invitations sont à usage unique ; une nouvelle invitation invalide la précédente.
 
 ### Activation manuelle par root
-- Seul `super_admin_root` peut activer manuellement un compte.
-- Mot de passe initial : `MahlineMahline`.
-- Le mot de passe est stocké uniquement sous forme de hash et n'est jamais envoyé par e-mail.
-- Le changement de mot de passe est obligatoire à la première connexion, avant l'accès au dashboard.
-- Le mot de passe initial ne peut pas être réutilisé après son premier changement.
+- Seul `super_admin_root` peut activer manuellement un compte ; ce parcours ne s'applique pas à l'invitation classique ni aux autres workflows d'activation.
+- Mot de passe initial temporaire actuel : `MahlineMahline` ; son remplacement par un mot de passe aléatoire est reporté à une évolution ultérieure.
+- Le mot de passe est stocké uniquement sous forme de hash. Il est communiqué manuellement par `super_admin_root` (par exemple lors d'un appel téléphonique) ; aucun appel vocal automatisé ni envoi automatique par e-mail n'est prévu dans ce parcours.
+- Le changement de mot de passe est obligatoire à la première connexion, avant tout accès métier, y compris le dashboard.
+- Tant que `must_change_password` est actif, l'utilisateur ne peut accéder qu'aux routes strictement nécessaires au changement obligatoire et à la déconnexion ; les accès web métier et les routes API authentifiées protégées sont refusés.
+- Le nouveau mot de passe doit respecter la politique et l'historique validés ; le mot de passe initial ne peut pas être réutilisé.
+- Après un changement obligatoire réussi, la session web courante est conservée, les autres sessions web actives sont révoquées et les tokens API existants sont supprimés.
+- Le changement volontaire de mot de passe et l'acceptation d'une invitation conservent leurs workflows propres ; cette règle de conservation de session est limitée au changement obligatoire issu de l'activation manuelle.
 
 ## 8. Réinitialisation et changement de mot de passe
 
@@ -1140,3 +1143,1360 @@ Commits de correction :
 - Test de limitation des invitations : `4a7d2028ec03b26224efe70c5afc90c02b07abb7`.
 
 La validation est limitée à ces trois suites ciblées. Elle ne vaut pas validation de toute la suite Identity. La suite complète et les contrôles de style/analyse statique restent à exécuter.
+
+## Validation globale du 9 novembre 2026
+
+- Exécution complète confirmée par l'utilisateur : `php artisan test`.
+- Résultat : **1 189 tests réussis, 3 147 assertions réussies**.
+- Contrôle de style confirmé par l'utilisateur : `php vendor/bin/pint --test`.
+- Résultat Pint : **351 fichiers passés**, aucune correction de formatage restante signalée.
+- Les corrections de fixtures/autorisation des tests Catalog, Categories et Products sont couvertes par cette exécution globale.
+- Cette validation atteste le résultat de tests et de style dans l'environnement local de l'utilisateur ; elle ne remplace pas l'audit final du diff ni les vérifications CI éventuelles.
+
+
+## 20.26 — Activation manuelle root et changement obligatoire du mot de passe
+
+Le parcours a été implémenté sur `feature/Identity` selon le périmètre validé : activation manuelle par `super_admin_root` uniquement. Le mot de passe temporaire reste `MahlineMahline` pour le moment et est communiqué manuellement ; aucun envoi automatique par e-mail ni appel vocal automatisé n'est ajouté.
+
+Le garde-fou bloque les accès métier web pendant que `must_change_password` est actif et protège également les routes API authentifiées actuellement déclarées. Seules les routes de changement obligatoire et de déconnexion restent accessibles. Le parcours d'invitation et le changement volontaire ne sont pas modifiés.
+
+Après le changement obligatoire réussi :
+- la session web qui réalise l'opération est conservée ;
+- les autres sessions Identity actives sont révoquées ;
+- les tokens API existants sont supprimés ;
+- l'utilisateur peut accéder à son espace selon son rôle et ses permissions.
+
+Fichiers/éléments concernés :
+- `EnsureForcedPasswordChangeCompleted` : garde-fou d'accès pendant le changement obligatoire ;
+- `bootstrap/app.php` : application du garde-fou au groupe web ;
+- `routes/api.php` : protection des routes API authentifiées présentes ;
+- `SessionService::revokeOtherSessions()` : révocation des autres sessions sans fermer la session courante ;
+- `ForcedPasswordChangeController` : conservation de la session courante uniquement pour le changement forcé ; comportement volontaire conservé ;
+- `ForcedPasswordChangeControllerTest` : tests de blocage des routes métier/API et de conservation de la session courante, révocation des autres sessions et suppression des tokens API.
+
+Commits de la séquence :
+- `0761f879299ee978816ee293b6bbd4b089a5e952` — middleware de garde-fou ;
+- `ed02919e484cfd77d909f1cdaa30fde7296a25d2` — révocation des autres sessions ;
+- `c86ff3ace34bfe07aefc8b2eb4698acab1705b80` — application au groupe web ;
+- `825235b6847911f398ab7d9ac62562f193d37c39` — protection des routes API existantes ;
+- `73454a9086a2aee4127172167a92b9314acf9d10` — tests de blocage web/API ;
+- `5cfb7e61305ff1ce4f27fddbb5410165b9037cd3` — correction du contrôleur ;
+- `8b2286f1ba6945186aea459d81f39ad9175aa985` — tests de régression de session.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+```bash
+php artisan test --filter=ForcedPasswordChangeControllerTest
+php vendor/bin/pint --test
+php artisan test
+```
+Les trois commandes sont confirmées vertes. Aucun nombre de tests/assertions n'est indiqué ici, car le résultat communiqué pour cette exécution complète ne précisait pas de décompte.
+
+**État :** implémentation et validation locale confirmées. L'audit final du diff et les vérifications CI éventuelles restent distincts de ces résultats.
+
+
+## Validation du verrouillage concurrent — ForcedPasswordChangeController
+
+Le contrôle de concurrence de la modification du mot de passe a été corrigé et validé localement par l'utilisateur le 9 novembre 2026.
+
+- Les validations contextuelles `PasswordPolicy::validate()` et `PasswordPolicy::validateChange()` sont désormais exécutées à l'intérieur de la transaction.
+- Elles sont exécutées après `lockForUpdate()` et les contrôles d'état du compte.
+- Elles utilisent l'instance fraîchement verrouillée `$lockedUser`, et non l'instance utilisateur chargée avant la transaction.
+- Les exceptions `InvalidArgumentException` sont toujours converties en erreurs de validation affichées à l'utilisateur.
+- L'historique, la révocation des sessions, la suppression des tokens API, la journalisation et la distinction entre changement forcé et volontaire sont conservés.
+
+**Validation locale confirmée par l'utilisateur :**
+- `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT.
+- `php vendor/bin/pint --test` — VERT.
+
+**État :** correction appliquée dans le fichier local et tests ciblés/style confirmés verts par l'utilisateur. Le SHA du commit applicatif n'est pas enregistré dans ce suivi.
+
+
+## 20.27 — Tests de rejet des informations personnelles dans les mots de passe
+
+Des tests complémentaires ont été ajoutés à `tests/Framework/Domains/Identity/Password/Rules/PasswordPolicyTest.php` afin de couvrir le contrôle des informations personnelles déjà implémenté dans `PasswordPolicy`.
+
+Couverture ajoutée :
+- rejet du prénom ;
+- rejet du nom complet ;
+- rejet de la partie locale de l'adresse e-mail ;
+- rejet d'un fragment reconnaissable de l'adresse e-mail ;
+- détection insensible à la casse et aux séparateurs ;
+- acceptation d'un mot de passe ne contenant pas d'information personnelle reconnaissable.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordPolicyTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+Commit des tests : `8814862caca5dae7c7e9e226e6dc766ed9cb74db`.
+
+Aucune modification de la politique applicative n'a été faite dans cette étape. Les tests Unicode détaillés, les limites et les messages de validation restent à compléter dans le backlog.
+
+**Décision de suivi :** le contrôle des mots de passe courants ou compromis (ID01-03) est reporté à une étape ultérieure à la demande de l'utilisateur. Il reste explicitement ouvert dans le backlog et ne doit pas être considéré comme implémenté ou validé.
+
+
+## 20.28 — Couverture Unicode et messages de la politique de mot de passe
+
+Le 9 novembre 2026, les tests de `tests/Framework/Domains/Identity/Password/Rules/PasswordPolicyTest.php` ont été complétés pour couvrir les comportements Unicode et les messages exacts des erreurs de `PasswordPolicy`.
+
+Couverture ajoutée :
+- acceptation des majuscules et minuscules accentuées ;
+- acceptation des chiffres arabes Unicode ;
+- acceptation d'un caractère spécial Unicode ;
+- vérification que les lettres Unicode et les espaces ne satisfont pas l'exigence de caractère spécial ;
+- vérification du calcul de longueur en caractères Unicode ;
+- vérification exacte des messages pour longueur minimale/maximale, majuscule, minuscule, chiffre, caractère spécial, information personnelle et nouveau mot de passe identique à l'ancien.
+
+Aucun code applicatif n'a été modifié.
+
+**Commit des tests :** `45290bceefc84158f1158ecf7b626537e9682c43`.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordPolicyTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+**État :** ID01-17 est validé pour cette couverture. Le contrôle des mots de passe courants/compromis ID01-03 reste reporté à la demande de l'utilisateur.
+
+
+## 20.29 — Atomicité de l'historique des mots de passe et rollback des parcours
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les quatre suites de tests ciblées couvrant une panne de persistance du journal d'audit pendant une opération de changement de mot de passe :
+
+```bash
+php artisan test tests/Framework/Domains/Identity/Password/Services/PasswordServiceTest.php tests/Framework/Domains/Identity/Password/Services/PasswordResetServiceTest.php tests/Feature/Domains/Identity/Password/Http/Controllers/ForcedPasswordChangeControllerTest.php tests/Feature/Domains/Identity/UserManagement/Http/Controllers/UserInvitationControllerTest.php
+php vendor/bin/pint --test
+```
+
+Les tests provoquent une exception lors de la création de l'événement d'audit, puis vérifient que la transaction annule les modifications déjà effectuées :
+- changement volontaire : ancien mot de passe conservé, aucun historique ajouté et token API non révoqué ;
+- reset : ancien mot de passe conservé, token de reset toujours inutilisé, aucun historique ajouté et token API non révoqué ;
+- changement forcé : mot de passe temporaire conservé, obligation de changement maintenue, aucun historique ajouté et token API non révoqué ;
+- acceptation d'invitation : compte toujours pending, e-mail non vérifié, ancien mot de passe conservé, invitation non consommée et aucun historique ajouté.
+
+Aucun code applicatif n'a été modifié dans cette étape. Le service `PasswordHistoryService` documente que l'archivage doit être exécuté dans la même transaction que le remplacement du mot de passe ; les quatre tests de régression vérifient désormais le rollback en cas d'échec d'audit.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :** les quatre suites ciblées et `php vendor/bin/pint --test` sont VERTS.
+
+**État :** ID02-02 et la couverture rollback d'ID02-06 sont validés pour les quatre parcours testés. Les contrôles de concurrence, de réutilisation des cinq anciens mots de passe, de rotation, de compatibilité et de suppression restent à auditer.
+
+## 20.30 — Vérification du verrouillage concurrent de l'utilisateur
+
+Le test `PasswordServiceTest` a été complété sur `feature/Identity` pour vérifier deux propriétés :
+- le service de changement de mot de passe émet une requête `SELECT ... FOR UPDATE` ciblant la ligne de l'utilisateur ;
+- une transaction ouverte sur une première connexion MySQL empêche une deuxième connexion d'obtenir le verrou exclusif de cette même ligne avec `NOWAIT`.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordServiceTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+Cette couverture confirme l'émission du verrou par le service et le comportement de verrouillage InnoDB entre deux connexions. Elle ne prétend pas simuler deux requêtes applicatives complètes qui changent simultanément le même mot de passe ; ce scénario bout-en-bout reste une couverture complémentaire possible.
+
+**Commit du test :** `ed0261c97ade2bdebc9320e9c3e7f395265a753c` (dernier commit du fichier de test).
+
+**État :** ID02-03 validé pour le verrouillage du service et la contention MySQL. Les tests de réutilisation des cinq anciens mots de passe, rotation, application à tous les parcours, compatibilité et suppression restent à auditer.
+
+## 20.31 — Refus de réutilisation et rotation de l'historique des mots de passe
+
+Deux tests complémentaires ont été ajoutés dans `tests/Framework/Domains/Identity/Password/Services/PasswordServiceTest.php` :
+
+- `test_password_change_rejects_each_of_the_five_previous_passwords` : après cinq changements successifs, chacun des cinq anciens mots de passe est refusé ; le mot de passe courant reste inchangé après les tentatives de réutilisation.
+- `test_password_history_retains_only_the_five_most_recent_password_hashes` : après six changements, l'historique conserve exactement les cinq hashes les plus récents et élimine le plus ancien.
+
+Aucun code applicatif n'a été modifié dans cette étape : le service d'historique existant est couvert par ces tests supplémentaires.
+
+**Commit des tests :** `f4595f26502e0e74d4853fb0dbe09a5d70f6d11d`.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=PasswordServiceTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+**État :** ID02-04 et ID02-05 validés. La vérification de l'application commune de l'historique aux différents parcours, des comptes historiques et de la suppression physique reste à réaliser.
+
+
+## 20.32 — Historique du mot de passe lors de l'activation manuelle root
+
+L'audit a détecté que `UserManagementService::activateAndVerifyUser()` remplaçait le hash courant par `MahlineMahline` sans l'archiver. Cette opération échappait donc à la règle commune des changements de mot de passe.
+
+Correction sur `feature/Identity` : injection du `PasswordHistoryService` dans `UserManagementService` et archivage du hash courant dans la transaction, avant l'affectation du mot de passe temporaire. Le comportement fonctionnel validé reste inchangé : activation par `super_admin_root`, statut actif, e-mail vérifié, `must_change_password=true`, mot de passe temporaire `MahlineMahline`, révocation des invitations et des anciens moyens d'accès, audit métier.
+
+Test ajouté : `test_root_temporary_activation_archives_the_existing_password`, qui vérifie l'état activé, l'obligation de changement, le mot de passe temporaire et la présence/vérification de l'ancien hash dans `user_password_histories`.
+
+Commits :
+- `6b70f2065d6f1ba15f57640787bda0e8324ee30e` — correction du service ;
+- `9f5d774293fcb86ac0a05cd52da53cca8fe48d25` — test de régression.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :** `php artisan test --filter=UserManagementServiceTest` et `php vendor/bin/pint --test` — VERTS.
+
+**État :** ID02-07 validé pour les cinq parcours de remplacement recensés. Les comptes sans hash courant, la compatibilité des comptes historiques et la suppression physique restent à examiner.
+
+
+## 20.33 — Cas limites et cycle de vie de l'historique des mots de passe
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les commandes locales :
+
+```bash
+php artisan test --filter=PasswordServiceTest
+php artisan test --filter=UserManagementServiceTest
+php vendor/bin/pint --test
+```
+
+Deux protections/tests ont été ajoutés sur `feature/Identity` :
+
+- **Hash courant absent :** `PasswordHistoryService::archiveCurrentPassword()` refuse désormais d'archiver un hash nul ou vide et lève une `InvalidArgumentException` explicite. Test : `test_password_history_refuses_to_archive_an_empty_current_hash`.
+- **Cycle de vie du compte :** `test_password_history_survives_soft_delete_and_cascades_on_force_delete` confirme que la suppression logique conserve l'historique et que la suppression physique exceptionnelle le supprime par cascade de la clé étrangère.
+
+Commit du test de cycle de vie : `b231483c25ab1fba5dfa5020fd3e8f7fbb840017`.
+
+**Limite de validation :** ces tests ne valident pas encore la compatibilité des anciens formats de hash ni le traitement des comptes historiques dont le hash aurait été créé par une ancienne version de l'application. Cet audit reste ouvert.
+
+
+## 20.34 — Rehash des mots de passe obsolètes à la connexion
+
+L'audit du parcours personnalisé `AuthenticationService` a montré que le projet utilise `Hash::check()` puis laisse le workflow effectuer la connexion. Dans ce parcours, le rehash automatique du fournisseur Laravel n'est pas déclenché.
+
+Correction sur `feature/Identity` : après vérification réussie du mot de passe, `AuthenticationService` contrôle `hashing.rehash_on_login` et `Hash::needsRehash()`. Si les paramètres du hash sont obsolètes, il enregistre un nouveau hash du même mot de passe. Cette opération ne constitue pas un changement de mot de passe : elle n'ajoute donc aucune ligne à `user_password_histories`.
+
+Tests ajoutés dans `AuthenticationServiceTest` :
+- `test_successful_login_rehashes_an_outdated_password_hash` : un hash bcrypt de coût inférieur est recalculé avec la configuration courante ; le mot de passe reste vérifiable et aucun historique de changement n'est créé.
+- `test_successful_login_does_not_rehash_when_rehash_on_login_is_disabled` : l'option désactivée préserve le hash existant.
+
+Commits :
+- `d8585f716ec2eb97be8705407ce5dfd5c8634af9` — rehash après connexion réussie ;
+- `7d01d96f7950d0ea7748c09393cb14186bcaf68e` — tests de régression.
+
+**Validation locale confirmée par l'utilisateur le 9 novembre 2026 :**
+- `php artisan test --filter=AuthenticationServiceTest` — VERT ;
+- `php vendor/bin/pint --test` — VERT.
+
+**Décision explicite de l'utilisateur :** l'audit de compatibilité entre algorithmes bcrypt et Argon (et la migration inter-algorithmes des anciens hashes) est reporté à une étape ultérieure. Il reste inscrit au backlog sous ID02-12 et ne doit pas être entrepris dans l'audit courant.
+
+
+## 20.35 — Harmonisation des réponses publiques d'authentification
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les commandes locales :
+
+```bash
+php artisan test --filter=AuthenticationControllerTest
+php artisan test --filter=AuthenticationServiceTest
+php vendor/bin/pint --test
+```
+
+Le contrôleur de connexion renvoie désormais une réponse publique identique pour les échecs de connexion traités : statut HTTP `401` et message `Authentication failed.` pour les réponses JSON ; le formulaire web utilise le même message. Un compte inexistant ne se distingue plus par un `404`. Les raisons détaillées restent enregistrées dans `login_histories`. Les erreurs de validation des champs restent des réponses `422`.
+
+Les tests HTTP couvrent les comptes inexistants, les mots de passe incorrects, les comptes inactifs, les e-mails non vérifiés et les comptes verrouillés, et vérifient l'uniformité de la réponse publique.
+
+Commits : `ccb0a3d5fc24cf80b62d6c41a2562b8699e6d19e`, `d98ea4f41965c9e726fb73807c0bc1f5c3e7a1e3`, `97836aebf459b7fe182a3f0822407bdef5601aa3`, `ed274a592c8d364f6d91769c815160668e825341`.
+
+**État :** AUTH-01 validé par tests ciblés et Pint. L'audit se poursuit sur AUTH-02, comptabilisation cohérente des tentatives échouées.
+
+
+## 20.36 — Comptabilisation cohérente des échecs de connexion (AUTH-02)
+
+L'audit du 9 novembre 2026 a révélé que le compteur de tentatives par adresse e-mail n'était incrémenté que pour un mot de passe incorrect sur un compte actif et vérifié. Les adresses inconnues, les comptes inactifs et les comptes dont l'e-mail n'est pas vérifié étaient journalisés sans consommer le compteur.
+
+Correction sur `feature/Identity` :
+- contrôle du verrouillage par e-mail avant les contrôles d'existence et d'état du compte ;
+- incrément du compteur normalisé pour les adresses inconnues, les comptes inactifs et les comptes non vérifiés ;
+- maintien de la règle selon laquelle une adresse déjà verrouillée n'incrémente pas davantage son compteur ;
+- conservation des raisons internes détaillées dans `login_histories` et de la réponse publique générique validée par AUTH-01.
+
+Tests ajoutés dans `AuthenticationServiceTest` :
+- `test_failed_attempts_are_counted_for_unknown_inactive_and_unverified_emails` ;
+- `test_locked_unknown_email_does_not_increment_failed_attempts`.
+
+Commits :
+- `9aaff962e0809e5582b3adef6a8baa78a4e182a2` — service ;
+- `3627b143beea199c5cae380634c23c288369e5d9` — premiers tests ;
+- `3d7f555f01130ffd7699fbc510585bf993871fa6` — simplification des captures d'exceptions dans les tests.
+
+**État :** VALIDÉ le 9 novembre 2026 après confirmation utilisateur : `AuthenticationServiceTest`, `AuthenticationControllerTest` et `php vendor/bin/pint --test` verts.
+
+**Correction après retour de test :** le contrôle du blocage IP a été déplacé avant le contrôle du blocage du compte. La décision existante est conservée : si les deux limites sont atteintes, `login_histories.reason` doit être `ip_locked`. Commit : `bfa963f7c0e47204fa4ede19230a609589bc826a`. Tests ciblés et Pint confirmés verts par l'utilisateur le 9 novembre 2026.
+
+
+## 20.37 — Audit de la limitation des tentatives par compte et par IP (AUTH-03)
+
+Audit et implémentation sur `feature/Identity`, le 9 novembre 2026. Les seuils ci-dessous ont été explicitement validés par l'utilisateur.
+
+### Règles retenues et implémentées
+
+| Niveau | Seuil | Fenêtre |
+|---|---:|---:|
+| Compte / e-mail normalisé | 5 échecs | 15 minutes |
+| Adresse IP | 30 échecs | 15 minutes |
+| Couple IP + e-mail normalisé | 5 échecs | 15 minutes |
+
+### Modifications
+
+- `AuthenticationSecurityService` centralise les trois compteurs via le cache Laravel et applique une durée de 900 secondes.
+- Les clés de cache utilisent des empreintes HMAC-SHA-256 basées sur `app.key` : les adresses e-mail et IP brutes ne figurent pas dans les noms de clés.
+- `AuthenticationService` vérifie les blocages dans cet ordre : IP, compte, couple IP + e-mail. La priorité historique `ip_locked` sur `account_locked` est conservée.
+- Chaque échec d'authentification traité incrémente le compte, l'IP et le couple lorsqu'une IP est disponible : adresse inconnue, compte inactif, e-mail non vérifié et mot de passe incorrect.
+- Une tentative déjà bloquée n'incrémente pas de nouveau le compteur correspondant.
+- Après une connexion réussie, seuls le compteur du compte et celui du couple IP + e-mail sont effacés. Le compteur IP partagé reste intact.
+- Le middleware de route `throttle:5,1` a été retiré de `authentication.login.store`. Ce middleware comptait aussi les connexions réussies et risquait de bloquer les réseaux partagés avant les contrôles métier. La limitation par domaine compte désormais uniquement les échecs traités.
+- En production multi-serveurs, toutes les instances doivent partager le même backend de cache et la même valeur `APP_KEY`, condition nécessaire à la cohérence des compteurs.
+
+### Tests ajoutés ou adaptés
+
+Dans `AuthenticationServiceTest` :
+- `test_all_processed_failure_types_increment_ip_and_ip_email_counters` ;
+- `test_ip_email_counter_is_cleared_on_success_without_clearing_shared_ip_counter` ;
+- `test_ip_lockout_threshold_is_thirty_failures` ;
+- `test_ip_email_lockout_threshold_is_five_failures` ;
+- `test_all_three_lockouts_expire_after_fifteen_minutes` ;
+- adaptation des tests de blocage IP et de priorité IP sur le nouveau seuil de 30.
+
+Dans `AuthenticationControllerTest` :
+- `test_more_than_five_login_requests_from_one_ip_are_not_blocked_before_domain_failure_limits_apply` confirme que la route ne bloque plus arbitrairement au sixième appel depuis une IP partagée.
+
+### Commits applicatifs et tests
+
+- `c2343856f2bdc69192cee5d10b8d1d8a71eb3856` — trois compteurs, seuils et clés HMAC ;
+- `d40d8f70afe01294844ac47849c0029aff8ace15` — intégration des trois contrôles dans le service ;
+- `6cded32fe0e839bc5252621d2c2278ed6a1a2028` — comptabilisation de tous les types d'échec ;
+- `385a821838f3380fdd1cd93808b18abd773325e8` — suppression du throttle de requêtes sur la route login ;
+- `a4ff8c53df7c5a7c41a7f4cdc7535fa2b4345fec` — tests de seuils, compteurs et remise à zéro ;
+- `dc60621c3455e3667c8c4762b3e6d766a1c394af` — test HTTP de réseau partagé ;
+- `71542986bf582f8d4564feceae6149fc5a66907e` — correction syntaxique du test ;
+- `a515185afb9a86b1f63850be5cc315327c821416` — test d'expiration des trois verrouillages.
+- `15e472431450c6ab08e65c2573354249746c1e03` — test du rejet d'un couple IP + e-mail déjà verrouillé sans incrément supplémentaire.
+
+Le standard `docs/domains/identity/ID-I-002-AUTHENTICATION_STANDARD.md` est passé en version 1.1 pour formaliser les trois niveaux.
+
+### Corrections après la première exécution locale
+
+Les échecs signalés par l'utilisateur ont été analysés et corrigés dans les tests, sans changement des règles de sécurité :
+
+- Les tests historiques de `AuthenticationSecurityServiceTest` utilisaient encore le seuil IP de 5. Ils vérifient maintenant 30 tentatives par IP et les compteurs restants correspondants (30, 29, 27, etc.).
+- Le test de remise à zéro IP a été renommé `test_ip_counter_can_be_cleared_explicitly` afin de ne pas suggérer qu'une connexion réussie efface le compteur IP partagé.
+- `AuthenticationWorkflowTransactionTest` vérifie désormais la réponse publique générique exacte `Authentication failed.` après une erreur interne du workflow ; le détail de l'exception n'est pas exposé au client.
+
+Commits correctifs :
+- `2087b31c50901411cdaf20b25331a5cdcd644bf9` — alignement des tests IP historiques sur le seuil 30 ;
+- `cfe87ae5376cd9d5b35b76a5802353ca3466457b` — vérification du message public générique dans le test transactionnel ;
+- `1b4e2a498042a25122cf858c530054bf4a8afae2` — clarification du nom du test de remise à zéro explicite.
+
+**État : VALIDÉ LE 9 NOVEMBRE 2026.** L'utilisateur confirme VERT après correction pour les suites `AuthenticationSecurityServiceTest`, `AuthenticationWorkflowTransactionTest`, `AuthenticationServiceTest`, `AuthenticationControllerTest` et `php vendor/bin/pint --test`. Les seuils approuvés restent inchangés.
+
+
+## 20.38 — Déverrouillage administratif des trois compteurs (AUTH-06)
+
+**Décision validée le 9 novembre 2026 :** seul `super_admin_root` peut lever manuellement les trois blocages d'authentification.
+
+### Règle et portée
+
+- Une opération doit fournir l'e-mail normalisé du compte, l'adresse IP concernée et un motif administratif obligatoire.
+- L'opération efface explicitement le compteur du compte, le compteur partagé de l'IP et le compteur du couple IP + e-mail.
+- Le compteur IP partagé est donc remis à zéro pour tous les comptes utilisant cette IP ; cette portée est affichée dans le message de confirmation et conservée dans l'audit.
+- L'opération peut viser un e-mail qui ne correspond plus à un utilisateur existant : le compteur de compte et les compteurs IP restent effaçables. L'audit conserve alors l'identité de l'acteur et les empreintes des cibles, sans stocker l'e-mail ni l'IP fournis.
+- Les tentatives d'accès sont protégées par le groupe de routes root-only et un contrôle explicite du rôle dans le contrôleur.
+- L'événement append-only `identity.authentication.lockouts.unlocked` contient l'acteur, le sujet utilisateur lorsqu'il existe, le motif, les trois portées effacées et les empreintes HMAC des cibles.
+
+### Implémentation — tests ciblés validés localement
+
+- `AuthenticationSecurityService::unlockAllScopes()` centralise l'effacement des trois compteurs.
+- `AuthenticationLockoutController::index()` et `unlock()` fournissent la page de gestion et l'action de déverrouillage ; les deux méthodes vérifient explicitement le rôle root.
+- Routes : `GET root/back-office/security/authentication-lockouts` (`root.backoffice.security.authentication-lockouts.index`) et `POST root/back-office/security/authentication-lockouts/unlock` (`root.backoffice.security.authentication-lockouts.unlock`).
+- Vue `resources/views/identity/security/lockouts/index.blade.php` avec avertissement explicite sur la portée partagée de l'IP, e-mail, IP et motif obligatoire ; lien ajouté à la navigation Root.
+- Test HTTP `AuthenticationLockoutControllerTest` couvre l'ouverture root-only de la page, l'interdiction aux autres rôles, la remise à zéro des trois compteurs, la préservation du compteur compte/couple d'un autre e-mail, la confidentialité des empreintes d'audit et la validation des champs.
+
+Commits principaux : `a77a802835b39bfa3a22684119a1147610f71838` (service), `481fdd6e9b9d95ab45b7cae3b97919a1f5ddb959` / `05d1adcd74512e2d6809c24f325a005da70d6312` / `d36bacd01eb2a45a3f8e5c1ed2af39d55aa78dee` (contrôleur), `0be2e6ca9be03a0407b26f3968e70869f704cb21` / `f6f3e448dbb2fcbd8878265c2d32a273a26a196c` / `78b73f7292bcbfa34177a63878a26d9c2edf8b89` (routes), `b33eba9bca1610e0284a7f8ba5e527264f8b51bc` (vue), `df96ca4e211101a97db9207b8c629d3105cba5b6` (navigation), `0c2218a575ab20d243eb9f241b6ff92176ff7991` / `b5793dca418a9340ad4cb64772b2e5a97ed66ae9` / `dc1a88125b802dc607b561a98fc5733f959bc8ca` / `093dbdaad9731fb402e72265f7e84d86825c73f8` (tests).
+
+**État : TESTS CIBLÉS VERTS — 9 NOVEMBRE 2026.** L'utilisateur a confirmé le résultat vert après l'exécution des tests AUTH-06. La validation Pint de ce lot n'a pas été confirmée séparément.
+
+
+## 20.39 — Contrat des réponses HTTP Web/API (AUTH-07)
+
+### Validation AUTH-06
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERT** les tests ciblés du déverrouillage administratif AUTH-06. Le code et les tests sont donc validés localement. La commande Pint de ce lot n'a pas été confirmée séparément.
+
+### Audit initial AUTH-07
+
+L'audit des routes et contrôleurs sur `feature/Identity` a établi le périmètre actuel :
+
+- Web : `GET/POST /authentication/login`, `POST /authentication/logout`.
+- API : `GET /api/test-auth`, `GET /api/audit/events`, `POST /api/password/forgot`, `POST /api/password/reset`.
+- Les ressources API protégées utilisent `auth:sanctum` ; les routes API sont rendues en JSON par le traitement global des exceptions.
+- Le changement obligatoire du mot de passe bloque les ressources API par une réponse JSON `403`.
+- Aucun endpoint stateless dédié de connexion/déconnexion API n'est ajouté dans AUTH-07 ; le cycle de vie des tokens demeure dans le lot API-01 à API-09.
+
+### Incohérence corrigée
+
+`bootstrap/app.php` forçait auparavant le rendu JSON pour toute exception sur `authentication/*`, y compris les soumissions HTML du formulaire de connexion. Cela contredisait les réponses HTML prévues par `AuthenticationController` (redirection et erreurs de formulaire).
+
+Correction : les routes `api/*` restent toujours JSON ; les routes `authentication/*` ne sont rendues JSON que lorsque la requête annonce qu'elle attend du JSON (`expectsJson()`). Les navigateurs retrouvent donc les redirections et erreurs de session, tandis que les clients JSON conservent les réponses JSON et le statut `422` pour les erreurs de validation.
+
+### Tests ajoutés
+
+Dans `AuthenticationControllerTest` :
+- validation HTML de connexion : redirection vers le formulaire et erreurs de session ;
+- échec HTML : message générique `Authentication failed.` dans les erreurs du formulaire ;
+- déconnexion JSON : `200`, message `Logout successful.`, révocation de la session courante.
+
+Nouveau fichier `tests/Feature/Domains/Identity/Authentication/Http/ApiAuthenticationResponseTest.php` :
+- API sans token : `401` JSON ;
+- token Sanctum valide : `200` ;
+- changement obligatoire non terminé : `403` JSON ;
+- validation des demandes API de reset : `422` JSON ;
+- demande de reset pour une adresse inconnue : réponse générique `200`, sans révéler l'existence du compte.
+
+Commits :
+- `ee47d7ae9d485d2dd91642a45b0fc21248b9e1d3` — négociation JSON/HTML dans le gestionnaire d'exceptions ;
+- `db64ebbd816a0fa2959a32bf21df919bb15711f3` — tests de réponses du contrôleur Web ;
+- `3f3402761802189e5102c991558aea11f6b77cb3` — premiers tests de réponses API ;
+- `36c533746517eff4eddf64c78fadd3511e690e0a` — correction des namespaces du nouveau fichier de tests.
+
+### Points encore ouverts avant clôture d'AUTH-07
+
+1. Confirmer si `GET /api/test-auth` est un endpoint de diagnostic temporaire à retirer avant production ou une route de test intentionnellement conservée.
+2. Examiner le fait que `AuthenticationController::login()` transforme toute `RuntimeException` remontée du workflow en `401`. Le message reste générique conformément à la décision de non-divulgation ; il faut toutefois distinguer une authentification refusée d'une panne technique inattendue afin de ne pas masquer un incident serveur. Aucun changement n'est fait ici, car un test transactionnel antérieur attend explicitement une réponse publique générique après un échec du workflow.
+
+**État : AUTH-07 EN COURS — code et tests ajoutés, validation locale en attente.**
+
+
+## 20.40 — Durcissement final des réponses de connexion AUTH-07
+
+Après la confirmation VERT des premiers tests AUTH-07, les deux points ouverts de l'audit ont été traités sur `feature/Identity`.
+
+### 1. Retrait de la route de diagnostic API
+
+- La route `GET /api/test-auth` a été retirée de `routes/api.php` : elle ne doit pas être exposée dans l'API de production.
+- Les tests de contrat Sanctum continuent de vérifier les statuts `401`, `200` et `403), mais enregistrent désormais leur route de diagnostic directement dans le contexte de test.
+- Les vraies routes API conservées sont les demandes de reset et la consultation autorisée des événements d'audit.
+
+### 2. Exceptions de refus d'authentification dédiées
+
+- L'exception existante `AuthenticationFailedException` est désormais utilisée pour les refus métier attendus dans `AuthenticationService` : IP verrouillée, compte verrouillé, compte inactif, e-mail non vérifié et identifiants incorrects.
+- `AuthenticationController::login()` capture uniquement `AuthenticationFailedException` pour produire le message public générique `Authentication failed.`. Les comptes inconnus utilisent désormais aussi cette exception métier dédiée ; les exceptions techniques ou Eloquent inattendues ne sont pas interceptées.
+- Une `RuntimeException` inattendue (panne technique, erreur d'infrastructure ou autre incident) n'est plus convertie artificiellement en `401` ; elle remonte au gestionnaire d'exceptions et peut être signalée comme incident serveur.
+- Les tests de service ont été alignés sur le type d'exception métier explicite. Un test workflow injecte une panne technique inattendue et vérifie qu'elle donne `500` (et non `401`), sans créer de session. Les tests de non-divulgation des réponses publiques restent en place.
+
+### Fichiers modifiés
+
+- `routes/api.php`
+- `app/Domains/Identity/Authentication/Services/AuthenticationService.php`
+- `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationController.php`
+- `tests/Feature/Domains/Identity/Authentication/Http/ApiAuthenticationResponseTest.php`
+- `tests/Framework/Domains/Identity/Authentication/Services/AuthenticationServiceTest.php`
+- `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php`
+
+Commits :
+- `d5ecc18acb0bf77e4d05643d9c4ed3882e96bd82` — exception métier dédiée dans le service ;
+- `18db2a0140d9c6c7846b8a89c518fce549072837` — capture ciblée dans le contrôleur ;
+- `759803306490ea30f6cc111105a65856168b9d86` — retrait de la route diagnostic de production ;
+- `18d06053c3316f77a2306781662045c6fc1f09ba` — route de test déplacée dans le test API ;
+- `28c3f958d2af3a1af44126894ce6d5ceab27e5d8` — tests service alignés sur l'exception métier.
+
+**État : CODE MODIFIÉ — tests ciblés et Pint de cette dernière série à exécuter. AUTH-07 ne sera clôturé qu'après confirmation VERT.**
+
+
+## 20.41 — Validation du contrat HTTP Web/API (AUTH-07)
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERT** les tests ciblés de la dernière série AUTH-07 ainsi que Pint. AUTH-07 est donc clôturé.
+
+La validation porte sur :
+- négociation correcte HTML/JSON du gestionnaire d'exceptions ;
+- réponses publiques génériques et uniformes pour les refus d'authentification ;
+- distinction entre refus métier (AuthenticationFailedException, réponse 401) et erreur technique inattendue (remontée au gestionnaire d'exceptions, réponse 500) ;
+- retrait de la route de diagnostic /api/test-auth de l'API de production ;
+- tests de contrat API exécutés avec une route de test enregistrée uniquement dans le contexte de test.
+
+Les commits applicatifs et tests de la série AUTH-07 sont consignés en sections 20.39 et 20.40.
+
+**État : AUTH-07 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
+
+## 20.42 — Début de l'audit des sessions (SESS-01)
+
+Après clôture d'AUTH-07, l'audit Identity reprend sur la gestion de l'expiration des sessions par rôle. Le premier contrôle porte sur les délais d'inactivité serveur : 15 minutes pour super_admin_root, 30 minutes pour super_admin, 30 minutes pour cooperative_admin et 60 minutes pour user. Aucun changement applicatif n'est déclaré avant inspection des middlewares, de la configuration de session, des routes et des tests existants.
+
+L'inspection de feature/Identity a confirmé :
+- config/session.php fixe actuellement SESSION_LIFETIME à 120 minutes pour tous les rôles ;
+- EnsureActiveAuthenticationSession vérifiait l'existence et la révocation de la session, puis actualisait last_activity_at, sans contrôler l'inactivité ;
+- authentication_sessions dispose déjà de authenticated_at et last_activity_at ;
+- SessionService centralise la révocation avec LoginHistory et Audit append-only ;
+- les routes métier authentifiées utilisent déjà EnsureActiveAuthenticationSession.
+
+### Implémentation initiale sur feature/Identity
+
+- SessionService applique les délais décidés : super_admin_root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min ; si un utilisateur cumule plusieurs rôles, le délai le plus strict prévaut.
+- La limite est calculée à partir de last_activity_at, avec authenticated_at comme repli si last_activity_at est nul.
+- EnsureActiveAuthenticationSession appelle l'expiration avant de toucher la session ; une session expirée est révoquée avec le motif inactivity_timeout, puis la session Laravel est invalidée et l'utilisateur est redirigé vers la connexion.
+- L'expiration est effectuée sous verrou de ligne afin d'éviter qu'une activité concurrente et une révocation d'expiration se contredisent ; touch() utilise également un verrou.
+- Les tests de politique, de révocation/audit sont ajoutés dans SessionInactivityPolicyTest ; le test HTTP EnsureActiveAuthenticationSessionTest couvre l'expiration, le refus d'une session révoquée pendant le rafraîchissement d'activité et la poursuite d'une session valide.
+- Après vérification du formulaire auth.login, le message d'expiration utilise withErrors() afin d'être effectivement présenté dans l'interface. Si le rafraîchissement d'activité échoue car la session a été révoquée concurremment, le middleware invalide également la session Laravel et refuse la requête.
+
+**Point de vigilance :** config/session.php conserve son délai de stockage Laravel global de 120 minutes. Ce délai sert au cycle de vie du stockage/cookie et n'est pas la politique d'inactivité métier ; le contrôle SESS-01 est appliqué côté serveur par le middleware. Le comportement des cookies persistants/non persistants reste séparé dans SESS-04.
+
+**État : CODE ET TESTS AJOUTÉS — tests locaux, Pint et test HTTP du middleware à valider.**
+
+
+## 20.43 — Validation de l'expiration des sessions par rôle (SESS-01)
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les commandes suivantes sur la branche locale synchronisée avec `feature/Identity` :
+
+- `php artisan test --filter=SessionInactivityPolicyTest`
+- `php artisan test --filter=EnsureActiveAuthenticationSessionTest`
+- `php artisan test --filter=SessionServiceTest`
+- `php vendor/bin/pint --test`
+
+SESS-01 est donc clôturé.
+
+### Politique validée
+
+- `super_admin_root` : 15 minutes d'inactivité.
+- `super_admin` : 30 minutes.
+- `cooperative_admin` : 30 minutes.
+- `user` : 60 minutes.
+- Utilisateur cumulant plusieurs rôles : le délai le plus court prévaut.
+
+L'expiration est appliquée côté serveur, indépendamment de la durée globale de stockage/cookie Laravel (`SESSION_LIFETIME=120`). La révocation porte uniquement sur la session concernée, avec le motif `inactivity_timeout`, et passe par la journalisation LoginHistory et Audit. Le middleware invalide ensuite la session Laravel expirée.
+
+La gestion des cookies persistants/non persistants reste séparée dans SESS-04.
+
+**État : SESS-01 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
+
+## 20.44 — Audit initial SESS-02 : avertissement et prolongation
+
+SESS-02 vise à avertir l'utilisateur deux minutes avant le seuil d'inactivité applicable à ses rôles, puis à lui permettre de prolonger la session tant qu'elle n'a pas expiré.
+
+Constats vérifiés sur `feature/Identity` :
+
+- `SessionService::inactivityTimeoutMinutes()` centralise les délais par rôle et applique déjà le délai le plus court.
+- `EnsureActiveAuthenticationSession` expire la session avant tout rafraîchissement d'activité ; une session expirée ne peut donc pas être ressuscitée par une requête tardive.
+- `SessionService::touch()` actualise `last_activity_at` pour une session active ; toute requête métier authentifiée qui traverse le middleware prolonge donc déjà l'activité côté serveur.
+- Les routes métier Web authentifiées sont protégées par `EnsureActiveAuthenticationSession`.
+- Les routes de gestion des sessions personnelles existent déjà sous `back-office/security/sessions`, mais elles ne constituent pas un mécanisme d'avertissement global.
+- `resources/js/app.js` est actuellement centré sur l'interface de connexion (traductions FR/AR/EN et visibilité du mot de passe) ; aucune logique d'avertissement d'inactivité n'y est présente.
+- La configuration Laravel conserve `SESSION_LIFETIME=120`, ce qui ne doit pas être confondu avec les délais métier de 15/30/60 minutes.
+
+### Contraintes de conception à respecter
+
+1. Le délai d'avertissement doit être calculé à partir du dernier `last_activity_at` serveur et du délai effectif renvoyé par la politique de rôles ; ne pas dupliquer en JavaScript les rôles ni leurs délais.
+2. L'avertissement apparaît à T−2 minutes. Il ne doit pas utiliser un polling périodique qui toucherait le middleware et repousserait artificiellement l'expiration.
+3. L'action « Prolonger ma session » doit appeler une route authentifiée et protégée par le même contrôle d'expiration. Elle ne peut actualiser l'activité que si la session est encore active et avant son échéance.
+4. Une requête d'extension après expiration doit échouer et suivre le parcours d'expiration existant ; elle ne doit jamais réactiver une session révoquée.
+5. Les autres sessions du même utilisateur ne doivent pas être prolongées, révoquées ni modifiées.
+6. L'interface doit être intégrée au layout réellement partagé par les espaces authentifiés, avec traductions FR/AR/EN et gestion accessible du focus/annonce.
+
+### Implémentation sur feature/Identity
+
+- Nouveau partial `resources/views/identity/security/session-warning.blade.php`, inclus dans `layouts.admin` et `layouts.root`.
+- Le partial récupère la session d'authentification courante côté serveur et transmet au navigateur uniquement le délai applicable et l'horodatage de dernière activité ; aucun identifiant de session Laravel n'est exposé dans le HTML.
+- Le compte à rebours déclenche le dialogue à T−120 secondes. Le dialogue utilise `role=alertdialog`, annonce le temps restant, gère le focus clavier et propose la déconnexion ou la prolongation.
+- Les libellés sont prévus en français, anglais et arabe selon la langue du document.
+- Deux routes POST distinctes sont ajoutées pour les espaces root et standard ; elles restent sous `auth`, le middleware `EnsureActiveAuthenticationSession` et les contraintes de rôle existantes.
+- `AuthenticationSessionController::extend()` ne cible que la session courante du compte authentifié et vérifie la correspondance avec l'identifiant de session Laravel.
+- `SessionService::extendIfActive()` verrouille la ligne, vérifie à nouveau l'échéance et actualise uniquement cette session. Une session arrivée à expiration est révoquée avec `inactivity_timeout` et ne peut pas être ressuscitée.
+- Tests HTTP ajoutés pour la prolongation d'un utilisateur, le refus après expiration, la route dédiée root et le rendu des deux layouts avec leurs délais/URLs respectifs. Commits de la série : `f7ba6c6` (service), `02eda32` (contrôleur), `66c664e` (routes), `36176db` (partial), `6ba4cdb`/`8176c61` (layouts), `73dde6f`/`413ecb8`/`cd94c36` (tests), corrections du partial `486e595`/`7d2e3d8`/`e9b6631`.
+
+### Fichiers modifiés
+
+- `app/Domains/Identity/Authentication/Services/SessionService.php`
+- `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionController.php`
+- `routes/web.php`
+- `resources/views/identity/security/session-warning.blade.php` (nouveau)
+- `resources/views/layouts/admin.blade.php`
+- `resources/views/layouts/root.blade.php`
+- `tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php`
+
+**Point de comportement :** conformément à SESS-01, l'inactivité est mesurée par les requêtes authentifiées enregistrées côté serveur (`last_activity_at`). Une interaction purement locale dans le navigateur qui n'entraîne aucune requête ne repousse donc pas l'échéance.
+
+**État : CODE ET TESTS AJOUTÉS — tests ciblés et Pint à confirmer localement.**
+
+
+| 9 novembre 2026 | 20.45 | SESS-02 implémenté sur `feature/Identity` : dialogue T−2 min, prolongation atomique de la seule session courante, protections anti-résurrection, routes standard/root et tests HTTP. En attente de validation locale. |
+
+
+## 20.46 — Correction des tests HTTP SESS-02 : liaison avec le cookie de session
+
+À la première exécution locale, les tests SESS-02 ont révélé que les enregistrements `AuthenticationSession` étaient créés avec `session()->getId()` hors requête, sans garantir que le navigateur simulé envoyait ce même identifiant au middleware Laravel `StartSession`. Le contrôleur a correctement rejeté les requêtes dont le cookie de session ne correspondait pas à `AuthenticationSession.session_id`; le composant Blade ne trouvait donc pas non plus la session courante.
+
+Correction appliquée uniquement au montage des tests :
+
+- Les tests génèrent un identifiant de session Laravel explicite.
+- Le helper `withCurrentAuthenticationSession()` envoie le cookie de session chiffré correspondant et l'identifiant de l'enregistrement métier dans les données de session.
+- Les tests couvrent le succès utilisateur/root, l'affichage du dialogue dans les deux layouts, le refus d'une session d'un autre appareil et l'expiration réelle avec révocation `inactivity_timeout`.
+
+Aucune vérification de sécurité du contrôleur n'a été supprimée ou affaiblie. L'implémentation doit maintenant être retestée localement.
+
+**État SESS-02 : EN ATTENTE DE NOUVELLE VALIDATION LOCALE après correction du setup HTTP.**
+
+
+## 20.47 — Correction du contexte de session des tests SESS-02
+
+La seconde exécution locale a confirmé que les tests utilisaient encore un identifiant de session Laravel différent de celui du cookie simulé et de l'enregistrement métier. Les symptômes étaient cohérents : le contrôleur ne retrouvait pas la session courante (401), le partial Blade ne trouvait pas de session à afficher et le test d'expiration atteignait la réponse générique « session ne peut plus être prolongée » au lieu de la branche d'expiration.
+
+Correction sur `feature/Identity` :
+
+- Le helper HTTP `withCurrentAuthenticationSession()` aligne désormais explicitement l'identifiant du store Laravel avec `AuthenticationSession.session_id` via `setId()` avant de préparer la requête.
+- Les données de session sont ensuite injectées, puis le cookie chiffré correspondant est ajouté à la requête.
+- Aucun contrôle de sécurité du contrôleur, du middleware ou du service n'a été affaibli ; la correction porte uniquement sur le contexte de session simulé par les tests.
+
+Commit : `6131155f95d1b210c35667beef339ee9b49a2601`.
+
+**État SESS-02 : EN ATTENTE — relancer les tests ciblés et Pint après cette correction.**
+
+
+## 20.48 — Validation finale de SESS-02
+
+Le 9 novembre 2026, l'utilisateur a confirmé **VERTS** les tests ciblés SESS-02 après correction du helper HTTP du fichier AuthenticationSessionControllerTest.php.
+
+### Cause racine des échecs de fixture
+
+Le helper transmettait un identifiant de cookie déjà chiffré à withCookie(), alors que Laravel chiffre automatiquement les valeurs fournies à cette méthode. Le cookie était donc chiffré deux fois. Par ailleurs, Laravel n'inclut pas les cookies dans les requêtes JSON tant que withCredentials() n'est pas activé. Le middleware StartSession ne restaurait donc pas la session Laravel attendue, ce qui expliquait à la fois les réponses 401, l'absence du partial dans les layouts et l'impossibilité pour le test d'expiration d'atteindre la branche métier d'expiration.
+
+### Correction et garanties conservées
+
+- Le helper passe désormais l'identifiant brut à withCookie(config('session.cookie'), $sessionStore->getId()) ; Laravel effectue lui-même le chiffrement attendu.
+- Le helper active withCredentials() afin que les requêtes JSON transmettent le cookie.
+- Le contrôle strict de correspondance entre l'identifiant Laravel courant et AuthenticationSession.session_id (hash_equals) est conservé.
+- Aucun contrôle d'autorisation, de révocation ou d'expiration n'a été supprimé ou assoupli.
+
+Commit final du helper : b77f7bde74582c2079976ca0b2cbf2794d571c81.
+
+**État : SESS-02 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.**
+
+
+## 20.49 — Audit SESS-03 : isolation de l'expiration par session
+
+### Constat de l'audit du code
+
+- EnsureActiveAuthenticationSession lit l'identifiant de l'AuthenticationSession présent dans la session Laravel courante, puis contrôle et actualise uniquement cet enregistrement.
+- SessionService::expireIfInactive() filtre sur la clé de l'enregistrement et sur le user_id propriétaire ; il révoque cet enregistrement avec le motif inactivity_timeout.
+- La révocation globale est une méthode séparée, SessionService::revokeForUser(), et n'est pas appelée par le middleware d'expiration normale.
+- La session Laravel courante est ensuite invalidée. Aucune suppression ni révocation des autres sessions de l'utilisateur n'est déclenchée par ce parcours.
+- Les tests préexistants vérifiaient la révocation de la session expirée, mais ne prouvaient pas explicitement qu'une deuxième session du même utilisateur restait utilisable.
+
+### Test de non-régression ajouté
+
+Dans tests/Feature/Domains/Identity/Authentication/Http/Middleware/EnsureActiveAuthenticationSessionTest.php, le nouveau test test_expiring_one_session_keeps_the_users_other_session_active() :
+
+- crée deux sessions actives pour le même utilisateur avec le rôle user ;
+- fait expirer la première et vérifie sa révocation avec inactivity_timeout ainsi que l'invalidation du contexte Laravel courant ;
+- rejoue une requête protégée avec la deuxième session et vérifie qu'elle reçoit 200, reste non révoquée et voit son activité actualisée.
+
+Le code métier n'a pas nécessité de modification : le comportement d'isolation était déjà correctement implémenté. Le travail SESS-03 porte ici sur la preuve de non-régression. Le montage de la deuxième session de test a été corrigé pour utiliser un identifiant Laravel réellement généré, partagé exactement avec l'enregistrement AuthenticationSession.
+
+Commit final du test : ae09c0e1c0ef159305f875ca742375d554e5173c.
+
+**État : SESS-03 VALIDÉ — EnsureActiveAuthenticationSessionTest, SessionServiceTest et php vendor/bin/pint --test confirmés VERTS par l'utilisateur le 10 novembre 2026.**
+
+
+
+## 20.50 — Validation finale de SESS-03
+
+Le 10 novembre 2026, l'utilisateur a confirmé VERTS les tests ciblés SESS-03 et Pint après la correction du test de non-régression.
+
+- php artisan test --filter=EnsureActiveAuthenticationSessionTest — VERT.
+- php artisan test --filter=SessionServiceTest — VERT.
+- php vendor/bin/pint --test — VERT.
+
+Le scénario validé prouve qu'après expiration et révocation d'une session, une autre session active du même utilisateur conserve son accès HTTP (200), n'est pas révoquée et voit son activité actualisée. La cause du dernier échec était le montage du contexte de test : la deuxième session utilise maintenant un identifiant généré par Laravel, identique à celui persisté dans AuthenticationSession.
+
+Aucun changement du comportement métier de production n'a été requis.
+
+**État : SESS-03 VALIDÉ. Prochaine tâche d'audit : SESS-04 — comportement des cookies persistants/non persistants selon le rôle.**
+
+## 20.51 — Audit et implémentation initiale de SESS-04 : cookies selon le rôle
+
+### Constat de l'audit
+
+- config/session.php exposait uniquement SESSION_EXPIRE_ON_CLOSE, avec false par défaut : aucun comportement par rôle n'était appliqué.
+- AuthenticationWorkflow régénérait correctement l'identifiant Laravel puis créait l'enregistrement AuthenticationSession, mais ne déterminait pas la persistance du cookie.
+- La politique serveur SESS-01 reste indépendante de SESSION_LIFETIME=120 ; le cookie persistant ne doit jamais permettre de contourner l'expiration ou la révocation métier.
+
+### Implémentation sur feature/Identity
+
+- Nouveau middleware ApplyRoleBasedSessionCookiePolicy, enregistré à la fin du groupe web dans bootstrap/app.php.
+- Le middleware laisse la requête et le contrôleur terminer leur traitement, puis définit session.expire_on_close avant que le middleware StartSession externe ajoute le cookie à la réponse.
+- super_admin_root et super_admin reçoivent un cookie de session navigateur (expiration 0).
+- cooperative_admin et user reçoivent un cookie persistant (date d'expiration future selon SESSION_LIFETIME).
+- L'utilisateur authentifié avant la requête est conservé pour les réponses de déconnexion, car Auth::logout() vide le guard avant le retour de la réponse.
+- La politique est recalculée à chaque réponse web pour éviter de conserver la valeur d'un rôle précédent dans un processus PHP persistant.
+- Aucun délai SESS-01, aucune règle de sessions multiples et aucune révocation n'ont été modifiés.
+
+### Couverture de test ajoutée
+
+AuthenticationControllerTest vérifie désormais la date d'expiration du cookie après connexion pour chacun des quatre rôles : root et super_admin sans date persistante ; cooperative_admin et user avec une date future.
+
+Fichiers modifiés :
+- app/Domains/Identity/Authentication/Http/Middleware/ApplyRoleBasedSessionCookiePolicy.php (nouveau) ;
+- bootstrap/app.php ;
+- tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationControllerTest.php.
+
+**État : SESS-04 VALIDÉ — le 10 novembre 2026, l'utilisateur a confirmé VERTS AuthenticationControllerTest, EnsureActiveAuthenticationSessionTest et php vendor/bin/pint --test.**
+
+## 20.52 — Audit et implémentation initiale de SESS-05 : déconnexion globale personnelle
+
+### Constat de l'audit
+
+- AuthenticationController::logout() ne révoquait que l'AuthenticationSession liée au navigateur courant, puis invalidait la session Laravel locale.
+- SessionService::revokeForUser() permettait déjà de révoquer toutes les sessions web d'un utilisateur, mais aucune action utilisateur ne l'appelait.
+- User utilise Sanctum HasApiTokens ; le modèle PersonalAccessToken possède revoked_at et findToken() refuse déjà les jetons révoqués. Les jetons sont donc révocables sans suppression physique.
+- La page Mes appareils connectés ne proposait que la révocation individuelle.
+
+### Implémentation sur feature/Identity
+
+- Nouvelle méthode SessionService::revokeAllAccessForUser() : verrouille la ligne utilisateur pour sérialiser l'opération avec la création de sessions, révoque chaque session active avec le motif global_logout, puis marque chaque jeton Sanctum actif comme révoqué.
+- Chaque session continue de passer par revoke(), qui conserve LoginHistory et l'audit existants.
+- Chaque jeton reçoit son propre événement d'audit `identity.authentication.token_revoked`, sans jamais enregistrer le secret du jeton.
+- Un événement récapitulatif `identity.authentication.global_logout` journalise le nombre de sessions et de jetons révoqués.
+- AuthenticationController::logoutEverywhere() révoque les accès de l'utilisateur authentifié, déconnecte le guard et invalide le cookie/session du navigateur courant.
+- Routes POST dédiées dans les espaces de sécurité root et back-office standard ; bouton protégé CSRF et confirmation explicite sur la page des appareils connectés.
+- La déconnexion standard actuelle reste inchangée : elle ne révoque que la session courante.
+
+### Couverture de test ajoutée
+
+Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` crée deux sessions et deux jetons pour l'utilisateur, ainsi qu'une session et un jeton appartenant à un autre utilisateur. Il vérifie la révocation des quatre accès propres, l'invalidation des jetons par PersonalAccessToken::findToken(), la préservation des accès étrangers et les événements d'audit individuels des jetons.
+
+Fichiers modifiés :
+- app/Domains/Identity/Authentication/Services/SessionService.php ;
+- app/Domains/Identity/Authentication/Http/Controllers/AuthenticationController.php ;
+- routes/web.php ;
+- resources/views/identity/security/sessions/index.blade.php ;
+- tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php.
+
+**État : SESS-05 — implémentation et test ajoutés ; validation locale ciblée et Pint en attente.**
+
+
+## 20.53 — Validation finale de SESS-05 : déconnexion globale personnelle
+
+Le 10 novembre 2026, l'utilisateur a confirmé **VERTS** les tests ciblés de SESS-05 ainsi que Pint.
+
+- `php artisan test --filter=AuthenticationSessionControllerTest` — VERT.
+- `php artisan test --filter=AuthenticationControllerTest` — VERT.
+- `php artisan test --filter=PersonalAccessTokenTest` — VERT.
+- `php vendor/bin/pint --test` — VERT.
+
+Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` prouve que la déconnexion globale révoque les sessions web et les jetons Sanctum de l'utilisateur courant, invalide les jetons révoqués lors de leur recherche, préserve la session et le jeton d'un autre utilisateur et conserve les événements d'audit des révocations de jetons. La déconnexion standard reste limitée à la session courante.
+
+**État : SESS-05 VALIDÉ. Prochaine tâche : audit SESS-06 — garantir qu'une nouvelle connexion ne révoque pas les sessions web actives antérieures du même utilisateur.**
+
+
+## 20.54 — Audit SESS-06 : coexistence de plusieurs sessions actives
+
+### Constat de l'audit du code sur `feature/Identity`
+
+- `SessionService::create()` verrouille la ligne de l'utilisateur, revérifie son statut actif et son e-mail vérifié, puis insère une nouvelle ligne `AuthenticationSession` avec un nouvel identifiant Laravel.
+- Cette méthode ne recherche pas les anciennes sessions pour les révoquer et n'appelle pas `revokeForUser()` ; la création d'une nouvelle connexion ne ferme donc pas les appareils déjà authentifiés.
+- `AuthenticationWorkflow` régénère l'identifiant de session Laravel puis appelle `SessionService::create()` pour chaque authentification réussie. Il associe ensuite le nouvel enregistrement à la session courante et écrit l'historique de connexion.
+- Le verrouillage de la ligne utilisateur dans `create()` sérialise les créations concurrentes pour le même compte ; le verrou utilisé par la déconnexion globale SESS-05 porte sur la même ligne.
+
+### Couverture existante repérée
+
+Dans `tests/Framework/Domains/Identity/Authentication/Services/SessionServiceTest.php` :
+- `test_previous_session_is_retained_without_revocation()` vérifie que deux créations successives laissent les deux sessions actives et ne produisent pas d'historique de révocation de la première.
+- `test_new_login_does_not_create_session_revocation_history()` confirme explicitement l'absence d'événement de révocation lors d'une nouvelle connexion.
+
+Dans `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` :
+- `test_new_login_keeps_previous_session_active()` réalise deux connexions HTTP réussies pour le même utilisateur et vérifie deux sessions actives.
+- `test_phone_login_keeps_previous_computer_session_active()` vérifie qu'une connexion depuis un iPhone conserve la session Windows active, avec deux identifiants de session distincts.
+
+### Conclusion d'audit
+
+Le comportement métier SESS-06 est déjà implémenté et dispose de tests de service et d'intégration HTTP couvrant les connexions successives et multi-appareils. Aucun changement du code de production n'est requis à ce stade. Il reste à exécuter localement les deux suites ciblées et Pint avant de clôturer SESS-06.
+
+**État : CODE CONFORME ET TESTS EXISTANTS — validation locale en attente.**
+
+
+## 20.55 — Validation finale de SESS-06 : coexistence de plusieurs sessions actives
+
+Le 10 novembre 2026, l'utilisateur a confirmé VERTS :
+- `php artisan test --filter=SessionServiceTest` ;
+- `php artisan test --filter=AuthenticationWorkflowTest` ;
+- `php vendor/bin/pint --test`.
+
+Les tests couvrent la conservation d'une session antérieure lors d'une nouvelle authentification, l'absence d'historique de révocation intempestive et la coexistence d'une session ordinateur avec une session téléphone.
+
+**État : SESS-06 VALIDÉ. Prochaine tâche : SESS-07 — révocations individuelles, globales et déclenchées par les changements sensibles du compte.**
+
+
+## 20.56 — SESS-07 : décision et implémentation du verrouillage d’urgence
+
+### Décision validée par l'utilisateur — 10 novembre 2026
+
+Lorsqu'un `super_admin_root` déclenche un verrouillage d'urgence sur un compte :
+- toutes les sessions web actives du compte sont immédiatement révoquées ;
+- tous les tokens API actifs sont immédiatement révoqués et conservés en base avec `revoked_at` ;
+- toute nouvelle authentification est refusée tant que le verrouillage d'urgence est actif ;
+- seul un `super_admin_root` peut lever ce verrouillage ;
+- la levée ne restaure aucune ancienne session ni aucun ancien token : l'utilisateur doit se reconnecter et recréer ses accès API.
+
+Le verrouillage d'urgence est distinct du statut métier `suspended` et des compteurs temporaires anti-brute-force. Il utilise deux colonnes dédiées `emergency_locked_at` et `emergency_lock_reason`, ajoutées par une nouvelle migration (les migrations déjà exécutées ne sont pas modifiées).
+
+### Implémentation sur `feature/Identity`
+
+- Migration `2026_11_10_000001_add_emergency_lock_fields_to_users_table.php`.
+- `User::isAuthorized()` refuse un compte verrouillé ; `AuthenticationService` refuse également sa connexion même si son statut est `active` et son e-mail vérifié.
+- `AuthenticationLockoutController` expose deux actions root-only : verrouillage d'urgence et levée du verrouillage. Le root ne peut pas verrouiller son propre compte.
+- Le verrouillage est transactionnel, verrouille la ligne cible, révoque chaque session via `SessionService::revokeForUser()` et chaque token via `revokeApiTokensForUser()`, puis écrit un événement d'audit avec le motif et le contexte de requête.
+- La levée efface uniquement le compteur de tentatives du compte (jamais le compteur IP partagé), journalise le motif et ne restaure aucun accès révoqué.
+- La page de gestion des blocages expose les formulaires avec confirmation explicite.
+- Le changement obligatoire de mot de passe utilise désormais la révocation auditée des tokens plutôt que leur suppression physique ; le test HTTP est ajusté pour exiger la conservation du token révoqué.
+
+### Tests ajoutés ou ajustés
+
+- `AuthenticationLockoutControllerTest::test_root_emergency_lock_revokes_all_sessions_and_api_tokens_and_blocks_login_until_root_releases_it()`.
+- `AuthenticationLockoutControllerTest::test_non_root_user_cannot_apply_or_release_an_emergency_lock()`.
+- `AuthenticationServiceTest::test_emergency_locked_account_cannot_authenticate_even_when_active_and_email_verified()`.
+- `ForcedPasswordChangeControllerTest::test_forced_password_change_preserves_current_session_and_revokes_other_sessions_and_api_tokens()`.
+
+**État : implémentation sur `feature/Identity` ; validation locale ciblée et Pint en attente.**
+
+
+## 20.57 — Validation SESS-07 et cartographie fonctionnelle/audit du verrouillage d'urgence
+
+Le 10 novembre 2026, l'utilisateur a confirmé VERTS les tests ciblés de SESS-07 et Pint. SESS-07 est clôturé.
+
+### Règle fonctionnelle validée
+
+Le super_admin_root peut verrouiller immédiatement un compte cible (jamais son propre compte) en fournissant un motif. Le système enregistre l'état persistant, révoque toutes les sessions Web actives et tous les tokens API actifs, puis refuse toute nouvelle authentification et autorisation jusqu'à la levée explicite par un super_admin_root. La levée ne restaure aucun accès révoqué ; elle efface uniquement le compteur d'échecs du compte et préserve le compteur IP partagé.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation Audit et comportement |
+|---|---|---|
+| database/migrations/2026_11_10_000001_add_emergency_lock_fields_to_users_table.php | Persiste emergency_locked_at et emergency_lock_reason | Pas d'événement Audit au niveau migration ; le changement runtime est audité par le contrôleur. |
+| app/Domains/Identity/Users/Models/User.php | Cast emergency_locked_at en datetime ; forceFill réservé au workflow administratif | Le modèle ne journalise pas lui-même ; aucune mutation directe hors service/contrôleur autorisé. |
+| app/Domains/Identity/Authorization/Concerns/HasAuthorization.php | isAuthorized() refuse tout compte verrouillé ; les vérifications de rôles/permissions s'appuient sur ce garde | Lecture/contrôle uniquement, pas d'événement Audit. |
+| app/Domains/Identity/Authentication/Services/AuthenticationService.php | Refuse la connexion si emergency_locked_at est renseigné | Écrit l'échec spécialisé dans Login History (account_not_active) ; l'audit administratif du verrouillage est émis au moment de l'action root. |
+| app/Domains/Identity/Authentication/Services/SessionService.php | revokeForUser(..., emergency_lock) révoque chaque session ; revoke() conserve LoginHistory et l'événement Audit par session. revokeApiTokensForUser() marque chaque token révoqué sans suppression physique | identity.authentication.session_revoked par session ; identity.authentication.token_revoked par token, reason=emergency_lock. |
+| app/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutController.php | emergencyLock() applique l'état, appelle les révocations et refuse l'auto-verrouillage du root ; releaseEmergencyLock() lève l'état et efface seulement le compteur du compte | identity.authentication.emergency_lock.applied et identity.authentication.emergency_lock.released, avec acteur root, sujet User, motif et contexte IP/User-Agent. |
+| routes/web.php | Expose GET page et POST apply/release sous root.backoffice | Accès protégé par auth, EnsureActiveAuthenticationSession et role:super_admin_root ; pas d'audit propre à la déclaration de route. |
+| resources/views/identity/security/lockouts/index.blade.php | Formulaires d'application et de levée avec motif obligatoire et confirmation | Interface uniquement ; les événements sont produits par le contrôleur/service, jamais par la vue. |
+| tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutControllerTest.php | Vérifie root-only, révocations, refus de connexion pendant le lock, levée et non-réactivation des anciens accès | Vérifie les événements d'audit de synthèse et la conservation des révocations individuelles. |
+| tests/Framework/Domains/Identity/Authentication/Services/AuthenticationSecurityServiceTest.php | Vérifie les compteurs temporaires de tentatives | Les compteurs temporaires restent séparés du verrouillage d'urgence persistant. |
+| tests/Framework/Domains/Identity/Authorization/Concerns/HasAuthorizationTest.php | Vérifie le refus d'autorisation pour le User verrouillé | Teste le garde d'accès ; aucune écriture Audit attendue pour une vérification en lecture. |
+
+### Événements Audit contractuels
+
+- identity.authentication.emergency_lock.applied — acteur User (super_admin_root), sujet User cible, ancien état emergency_locked_at=null, nouvel état horodaté, motif et contexte de requête.
+- identity.authentication.session_revoked — un événement par session, revocation_reason=emergency_lock, complément de Login History.
+- identity.authentication.token_revoked — un événement par token, reason=emergency_lock, sans secret de token.
+- identity.authentication.emergency_lock.released — acteur root, sujet User, ancien horodatage et nouvel état null, motif de levée.
+
+### Fichiers de spécification actualisés
+
+- docs/domains/identity/ID-I-001-ARCHITECTURE.md — règle d'architecture et flux root-only.
+- docs/domains/identity/ID-I-002-AUTHENTICATION_STANDARD.md — refus d'authentification.
+- docs/domains/identity/ID-I-003-SESSION_STANDARD.md — révocation des sessions et conservation des sessions multiples après levée.
+- docs/domains/identity/ID-I-006-USER_STATUS_SPECIFICATION.md — séparation du verrouillage d'urgence et du statut métier.
+- docs/domains/identity/ID-I-008-API_TOKEN_SPECIFICATION.md et ID-I-009-TOKEN_STANDARD.md — révocation persistante et irréversible des tokens.
+- docs/framework/database/DB-008-AUDIT_STANDARD.md et docs/domains/audit/AUDIT_DOMAIN.md — événements, granularité et minimisation des secrets.
+
+État : SESS-07 VALIDÉ — tests ciblés et Pint confirmés VERTS par l'utilisateur. Prochaine étape : poursuivre l'audit Identity avec SESS-08 selon le backlog, sans modifier les décisions gelées.
+
+
+### Complément SESS-07 — précision sur les assertions Audit
+
+La cartographie fichier par fichier a été complétée par les standards User Model, Authorization et Login History. La suite HTTP d'urgence confirme les événements de synthèse applied/released, l'état persistant, la révocation des sessions et du token, le refus d'accès pendant le verrouillage et la non-réactivation après levée. Les événements Audit unitaires de session et de token sont produits par les méthodes génériques SessionService::revoke() et SessionService::revokeApiTokensForUser() ; ils sont distingués des événements de synthèse du contrôleur. Les tests génériques des services de session et de tokens couvrent ces chemins de révocation.
+
+La vue et la déclaration des routes ne créent pas d'événement Audit : elles délèguent aux fonctions métier protégées. La migration ne crée pas non plus d'événement runtime.
+
+Fichiers de spécification supplémentaires actualisés : ID-I-007-ROLE_PERMISSION_STANDARD.md, users/ID-001.3-USER_MODEL_SPECIFICATION.md et ID-I-005-LOGIN_HISTORY_STANDARD.md.
+
+
+## 20.58 — Audit SESS-08 : non-réactivation des accès après restauration
+
+### Règle de sécurité
+
+La restauration d'un compte archivé ou supprimé ne restaure jamais ses anciens accès. Le compte restauré revient à l'état `pending`, sans vérification d'e-mail et sans réactivation d'un ancien mot de passe temporaire. L'utilisateur doit suivre un nouveau parcours d'activation et se reconnecter ; les tokens API doivent être recréés.
+
+La restauration constitue désormais elle-même une frontière de sécurité : elle révoque défensivement tout enregistrement encore actif, même si l'archivage/la suppression avait déjà été exécuté ou si des données historiques/anciennes restent marquées actives.
+
+### Constat et correction sur `feature/Identity`
+
+- `restoreArchivedUser()` déléguait à `changeUserStatus()` sans `revokeReason`. L'archivage initial révoquait bien les accès, mais la restauration ne revalidait pas cette propriété.
+- `restoreDeletedUser()` restaurait le soft delete et remettait le statut à `pending`, mais ne révoquait pas explicitement les éventuels accès encore actifs au moment de la restauration.
+- Les deux chemins appellent maintenant `revokePendingInvitations()` et `revokeAccessCredentials()` avec le motif `user_restored`.
+- Les sessions sont révoquées individuellement via `SessionService::revokeForUser()`, avec Login History et Audit par session.
+- Les tokens API actifs sont conservés et reçoivent `revoked_at`, avec un événement Audit individuel ; aucun secret de token n'est journalisé.
+- Les invitations encore actives sont révoquées ; aucune invitation ancienne n'est réactivée ou renvoyée automatiquement.
+- Toutes ces opérations restent dans la transaction de restauration : un échec d'audit/révocation annule la transition.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation Audit |
+|---|---|---|
+| `app/Domains/Identity/UserManagement/Services/UserManagementService.php` | `restoreArchivedUser()` transmet `user_restored` à `changeUserStatus()`. `restoreDeletedUser()` restaure uniquement l'enregistrement User puis révoque les accès résiduels. | `identity.user.status_changed` pour la restauration d'un compte archivé ; `identity.user.restored` pour un compte soft-deleted ; révocations détaillées ci-dessous. |
+| `app/Domains/Identity/UserManagement/Services/UserManagementService.php::revokeAccessCredentials()` | Révoque toutes les sessions actives et tous les tokens API actifs du User restauré. | SessionService produit `identity.authentication.session_revoked` par session et Login History ; chaque token produit `identity.authentication.api_token_revoked` avec `reason=user_restored`, sans secret. |
+| `app/Domains/Identity/UserManagement/Services/UserManagementService.php::revokePendingInvitations()` | Révoque les invitations encore actives de l'utilisateur restauré. | Pas d'événement Audit individuel dédié actuellement ; la transition de restauration est auditée sur le User. |
+| `app/Domains/Identity/Authentication/Services/SessionService.php::revokeForUser()/revoke()` | Révocation idempotente de chaque session Web encore active. | Un événement Audit et une entrée Login History par session ; motif `user_restored`. |
+| `app/Domains/Identity/Authentication/Models/AuthenticationSession.php` | Conserve les enregistrements historiques et leur `revoked_at` / `revocation_reason`. | Pas d'audit au niveau du modèle ; l'écriture est effectuée par SessionService. |
+| `app/Domains/Identity/Authentication/Models/PersonalAccessToken.php` | Conserve le token révoqué ; les mécanismes d'authentification refusent un token avec `revoked_at`. | Pas d'audit au niveau du modèle ; l'événement est écrit par UserManagementService. |
+| `app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php` | Expose les actions root-only de restauration et délègue au service métier. | Ne produit pas d'audit direct ; l'audit transactionnel appartient au service. |
+| `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php` | Expose les routes de restauration dans l'espace Root dédié. | Ne produit pas d'audit direct ; délégation au service. |
+| `routes/web.php` | Protège les routes restore/archive/delete par authentification, session active, rôle root et permissions correspondantes. | Déclaration uniquement, aucun événement runtime. |
+| `tests/Feature/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementControllerTest.php` | Vérifie la restauration d'un compte archivé et d'un compte soft-deleted, y compris lorsque des sessions, tokens et invitations sont artificiellement remis à l'état actif juste avant la restauration. | Vérifie que les sessions reprennent le motif `user_restored`, que les tokens/invitations restent révoqués et qu'aucune ancienne invitation n'est réactivée. |
+
+### État de validation
+
+- Code mis à jour sur `feature/Identity`.
+- Tests HTTP renforcés pour couvrir la restauration comme barrière de sécurité indépendante de l'action d'archivage/suppression.
+- Tests locaux ciblés et `php vendor/bin/pint --test` à exécuter par l'utilisateur ; SESS-08 reste **À TESTER** jusqu'à confirmation VERT.
+
+
+## 20.59 — Audit SESS-09 : détection effective des nouveaux appareils
+
+### Constat
+
+Le domaine disposait déjà de `UnusualActivityDetectionService::isNewDevice()` et de la table `known_devices`, mais `AuthenticationWorkflow::execute()` mémorisait l'appareil sans tester le résultat de détection. En outre, `AppServiceProvider` liait `AuthenticationWorkflowHook` à `NullAuthenticationWorkflowHook`. Aucune alerte de sécurité ni trace Audit dédiée n'était donc créée pour un nouvel appareil.
+
+### Implémentation sur `feature/Identity`
+
+- Le workflow calcule `isNewDevice` avant l'appel à `rememberDevice()`, dans la transaction qui crée la session.
+- Le résultat est transmis au hook `afterDeviceRemembered()`.
+- `AppServiceProvider` utilise maintenant `RecordNewDeviceAuthenticationWorkflowHook`, et non le hook nul.
+- Si l'appareil est nouveau pour cet utilisateur, le hook enregistre un `SecurityEventType::UnusualActivityDetected` avec le motif `new_device_detected`, puis un événement Audit `identity.authentication.new_device_detected`.
+- Les métadonnées associent l'événement à la session concernée et contiennent le type de détection ; aucun secret d'authentification n'est enregistré.
+- Un appareil déjà connu n'émet pas de nouvel événement.
+- L'opération reste dans la transaction du workflow : un échec du hook annule la création de session, l'ajout de l'appareil et l'historique de connexion.
+- La règle `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` reste inchangée : une nouvelle connexion ne révoque aucune session existante.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation sécurité / Audit |
+|---|---|---|
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php` | Appelle `isNewDevice()` avant `rememberDevice()`, puis transmet le booléen au hook dans la transaction de connexion. | Point d'orchestration ; aucune écriture Audit directe. |
+| `app/Domains/Identity/Authentication/Services/UnusualActivityDetectionService.php` | Compare l'appareil normalisé à `known_devices` par utilisateur ; mémorise ensuite le nouvel appareil. | Détection isolée par User ; pas d'écriture Audit dans ce service. |
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowHook.php` | Contrat du hook, reçoit `isNewDevice`. | Contrat uniquement. |
+| `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` | Ignore les appareils connus ; pour un nouvel appareil, écrit l'événement de sécurité et l'événement Audit. | `unusual_activity_detected` / `new_device_detected` dans SecurityEvent ; `identity.authentication.new_device_detected` dans Audit, sujet AuthenticationSession. |
+| `app/Domains/Identity/Authentication/Workflows/NullAuthenticationWorkflowHook.php` | Implémentation neutre conservée pour compatibilité/tests, mais n'est plus le binding applicatif. | Aucun événement. |
+| `app/Providers/AppServiceProvider.php` | Lie `AuthenticationWorkflowHook` à `RecordNewDeviceAuthenticationWorkflowHook`. | Active le chemin runtime effectif. |
+| `app/Domains/Identity/Authentication/Services/SecurityEventService.php` | Persiste l'événement spécialisé avec IP, User-Agent, navigateur, appareil et session en metadata. | Table `security_events`. |
+| `app/Domains/Audit/Services/AuditService.php` / `app/Domains/Audit/Models/AuditEvent.php` | Persiste l'événement append-only via `AuditEntryDTO`. | Événement `identity.authentication.new_device_detected`. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` | Vérifie l'événement SecurityEvent et Audit à la première connexion, puis l'absence de doublon lors d'une connexion depuis le même appareil. | Assertions sur `security_events` et `audit_events`. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTransactionTest.php` | Vérifie l'atomicité session/appareil et le rollback en cas d'échec du hook. | Aucun état partiel ni session authentifiée après échec. |
+
+### État de validation
+
+- Code et tests ajoutés sur `feature/Identity`.
+- Tests ciblés et `php vendor/bin/pint --test` à exécuter localement.
+- SESS-09 reste **À TESTER** jusqu'à confirmation VERT.
+
+
+## 20.60 — Validation SESS-09 et audit initial SESS-10
+
+### Validation SESS-09 — 10 novembre 2026
+
+L'utilisateur a confirmé VERTS les commandes suivantes :
+
+- `php artisan test --filter=AuthenticationWorkflowTest`
+- `php artisan test --filter=AuthenticationWorkflowTransactionTest`
+- `php artisan test --filter=UnusualActivityDetectionServiceTest`
+- `php artisan test --filter=KnownDeviceTest`
+- `php vendor/bin/pint --test`
+
+SESS-09 est donc **VALIDÉ**. Le workflow de connexion détecte un appareil avant sa mémorisation ; un premier appareil déclenche un SecurityEvent et un événement Audit, tandis qu'un appareil déjà connu ne crée pas de doublon.
+
+### SESS-10 — audit du périmètre e-mail nouvel appareil
+
+Décision de référence déjà présente dans la section « Nouvel appareil » : l'authentification reste autorisée si les identifiants et le compte sont valides ; une alerte e-mail informe l'utilisateur de la date/heure, de l'appareil, du navigateur et de la localisation approximative si disponible. Les autres sessions restent actives.
+
+Constats du code réel sur `feature/Identity` :
+
+- `AuthenticationWorkflow::execute()` appelle le hook dans la transaction qui crée la session et persiste la détection du nouvel appareil.
+- `RecordNewDeviceAuthenticationWorkflowHook` écrit actuellement le SecurityEvent et l'événement Audit, mais n'envoie aucune notification.
+- `AppServiceProvider` lie effectivement le hook de détection au workflow d'authentification.
+- Le domaine Identity possède déjà des notifications Laravel envoyées par `$user->notify(...)`, notamment `PasswordResetLinkNotification` et `UserInvitationNotification`.
+- Le modèle `User` expose les attributs e-mail, locale et timezone ; le contexte de connexion expose IP, User-Agent, navigateur et appareil via `AuthenticationSession`.
+- Le transport e-mail est configurable par `config/mail.php` ; le mailer par défaut est `log` en configuration de développement si aucun transport n'est défini.
+
+### Points à traiter avant implémentation
+
+1. Ajouter une notification dédiée au nouvel appareil, avec date/heure formatée selon le fuseau et la langue de l'utilisateur.
+2. Ajouter une localisation approximative uniquement si un fournisseur GeoIP fiable est déjà disponible ou est explicitement configuré ; ne jamais présenter l'IP comme une localisation exacte et ne pas inventer ville/pays en l'absence de résultat.
+3. Définir le comportement d'échec d'envoi : une panne e-mail ne doit pas annuler ni faire échouer une authentification valide. L'envoi doit être isolé du commit de connexion (événement après commit ou traitement résilient).
+4. Préserver la trace SecurityEvent/Audit même si l'envoi e-mail échoue ; journaliser l'état d'envoi sans stocker de secret.
+5. Tester nouvel appareil (mail envoyé une seule fois), appareil connu (aucun mail), données de notification, localisation absente/présente, échec du transport et conservation des autres sessions.
+
+### Cartographie initiale des fichiers
+
+| Fichier | Responsabilité actuelle / modification proposée | Relation Audit / sécurité |
+|---|---|---|
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php` | Détecte le nouvel appareil et orchestre la session ; devra déclencher l'alerte après validation transactionnelle, sans retarder ni annuler la connexion. | Garde l'événement dans le workflow transactionnel ; le déclenchement e-mail doit être découplé du succès d'authentification. |
+| `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` | Enregistre déjà SecurityEvent et Audit ; à conserver comme source de détection et à compléter par un déclenchement résilient après commit. | `unusual_activity_detected` et `identity.authentication.new_device_detected` restent les traces de sécurité/audit canoniques. |
+| `app/Domains/Identity/Authentication/Services/SecurityEventService.php` | Persiste l'événement de sécurité avec IP, User-Agent, navigateur, appareil et métadonnées de session. | Ne doit pas contenir de contenu e-mail ni de secrets. |
+| `app/Domains/Identity/Authentication/Models/AuthenticationSession.php` | Porte l'horodatage de connexion, IP, navigateur, appareil et User-Agent nécessaires au message. | Source de contexte de connexion ; aucun audit depuis le modèle. |
+| `app/Domains/Identity/Users/Models/User.php` | Fournit e-mail, locale et timezone pour le destinataire et le formatage. | Aucune mutation de User ; pas d'événement Audit supplémentaire attendu. |
+| `app/Domains/Identity/Password/Notifications/PasswordResetLinkNotification.php` et `app/Domains/Identity/UserManagement/Notifications/UserInvitationNotification.php` | Exemples existants de notifications Laravel synchrones par canal mail. | Références de convention ; la nouvelle notification doit rester dans un domaine Identity cohérent. |
+| `app/Providers/AppServiceProvider.php` | Binding actuel du hook de détection ; pas nécessairement à modifier si le déclenchement est intégré au hook/workflow. | Aucun événement Audit dans le provider. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` | Tests de détection première apparition et absence de doublon. | À compléter pour prouver l'envoi unique et l'absence d'envoi pour appareil connu. |
+| `tests/Feature/Domains/Identity/Authentication/...` | À créer/compléter pour le rendu de notification et les pannes d'envoi. | Vérifier que le mail n'expose pas de données excessives et qu'une panne n'annule pas la session. |
+
+### État SESS-10
+
+**À AUDITER / conception établie — aucune modification applicative SESS-10 n'est encore effectuée.** L'implémentation doit d'abord vérifier si un fournisseur GeoIP est présent dans les dépendances/configurations et choisir un déclenchement e-mail résilient après commit. La détection SESS-09 et les règles multi-sessions restent gelées.
+
+
+## 20.61 — SESS-10 : implémentation de l'alerte e-mail nouvel appareil
+
+### Comportement implémenté sur `feature/Identity`
+
+- Une alerte est envoyée uniquement lorsque `isNewDevice` est vrai pour l'utilisateur.
+- L'écriture SecurityEvent et Audit reste dans la transaction d'authentification ; l'envoi e-mail intervient après le retour réussi de cette transaction.
+- Une panne du dispatcher ou du transport e-mail est interceptée et journalisée en warning avec uniquement l'identifiant utilisateur, l'identifiant de session et la classe d'exception. Elle ne transforme pas une connexion valide en échec.
+- Le message est disponible en français, anglais et arabe.
+- La date/heure utilise le fuseau IANA de l'utilisateur ; un fuseau absent/invalide retombe sur `app.timezone`.
+- Le message contient navigateur et appareil. Aucun IP brut n'est exposé dans le mail.
+- Aucun fournisseur GeoIP n'existe dans les dépendances/configurations auditées. La notification indique donc explicitement que la localisation approximative est indisponible ; aucune ville ou aucun pays n'est deviné.
+- Une connexion depuis un appareil déjà connu ne renvoie pas d'e-mail.
+- Les autres sessions web restent actives : la règle `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` n'est pas modifiée.
+
+### Cartographie fichier par fichier — fonctions et relations Audit
+
+| Fichier | Fonction / responsabilité | Relation sécurité / Audit |
+|---|---|---|
+| `app/Domains/Identity/Users/Models/User.php` | Ajoute le trait Laravel `Notifiable` nécessaire à l'envoi via `$user->notify()`. | Aucun changement de données ni événement Audit ; active le canal de notification standard. |
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php` | Récupère le couple session/détection depuis la transaction, puis appelle `afterAuthenticationCommitted()` uniquement après commit. | Les écritures SecurityEvent/Audit restent atomiques ; la notification est hors transaction. |
+| `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowHook.php` | Ajoute le contrat post-commit `afterAuthenticationCommitted()`. | Contrat uniquement, aucune écriture. |
+| `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` | Conserve `afterDeviceRemembered()` pour SecurityEvent/Audit ; ajoute l'envoi e-mail post-commit et intercepte les exceptions du transport. | `unusual_activity_detected` et `identity.authentication.new_device_detected` sont écrits avant l'envoi ; l'échec mail ne supprime pas ces événements. |
+| `app/Domains/Identity/Authentication/Workflows/NullAuthenticationWorkflowHook.php` | Implémente le nouveau contrat post-commit sans action. | Aucun événement. |
+| `app/Domains/Identity/Authentication/Notifications/NewDeviceLoginNotification.php` | Construit le MailMessage FR/EN/AR, date locale, navigateur, appareil et disponibilité de localisation. | Notification uniquement ; ne crée pas de trace Audit additionnelle et ne révèle pas l'IP. |
+| `app/Providers/AppServiceProvider.php` | Conserve le binding vers `RecordNewDeviceAuthenticationWorkflowHook`. | Active le hook applicatif réel. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTest.php` | Vérifie l'envoi unique pour un nouvel appareil et l'absence de doublon sur le même appareil ; couvre aussi l'échec du dispatcher. | Vérifie que session, SecurityEvent et Audit persistent même si le mail échoue. |
+| `tests/Framework/Domains/Identity/Authentication/Workflows/AuthenticationWorkflowTransactionTest.php` | Adapte les doubles de test au contrat étendu. | Préserve la couverture d'atomicité/rollback avant commit. |
+
+### État
+
+**SESS-10 — IMPLÉMENTÉ, À TESTER.** Exécuter les tests ciblés et Pint avant validation. Aucun fournisseur GeoIP n'a été ajouté ; l'intégration d'une localisation réelle reste conditionnée à un choix/configuration distincts.
+
+
+
+## 20.62 — Validation SESS-10 et démarrage de l'audit SESS-11
+
+### Validation SESS-10 — 10 novembre 2026
+
+L'utilisateur a confirmé VERTS :
+- `php artisan test --filter=AuthenticationWorkflowTransactionTest`
+- `php artisan test --filter=AuthenticationWorkflowTest`
+- `php vendor/bin/pint --test`
+
+Le conflit de visibilité entre la méthode privée `locale()` et `Illuminate\\Notifications\\Notification::locale()` a été corrigé en renommant la méthode privée `resolveLocale()` dans `NewDeviceLoginNotification.php`. SESS-10 est **VALIDÉ**.
+
+### SESS-11 — périmètre à auditer
+
+Objectif du backlog : permettre à chaque utilisateur de consulter ses propres sessions Web et de révoquer individuellement une session, sans pouvoir consulter ni révoquer celles d'un autre utilisateur. Toute capacité administrative éventuelle doit respecter les rôles et permissions déjà validés.
+
+L'audit doit vérifier le code réel avant toute modification :
+- liste des sessions actives et historique utile ;
+- affichage des métadonnées sans exposer les secrets de session ;
+- révocation d'une session autre que la session courante ;
+- traitement spécifique de la révocation de la session courante ;
+- isolation stricte par `user_id` et contrôle d'autorisation côté serveur ;
+- protection des sessions concurrentes : révoquer une session ne doit pas affecter les autres sessions actives du même utilisateur ;
+- événements Login History et Audit, avec un motif explicite ;
+- routes, contrôleurs, services, policies, vues et tests HTTP existants.
+
+La règle gelée `ONE USER → MULTIPLE ACTIVE WEB SESSIONS` reste impérative. Aucune nouvelle connexion ne révoque les anciennes sessions.
+
+État : **AUDIT À EFFECTUER — aucune modification SESS-11 autorisée avant examen des fichiers réels et présentation des constats/propositions.**
+
+
+## 20.63 — Validation SESS-11 et audit SESS-12
+
+### Validation SESS-11 — 10 novembre 2026
+
+L'utilisateur confirme VERTS :
+- `php artisan test --filter=AuthenticationSessionControllerTest`
+- `php artisan test --filter=SessionServiceTest`
+- `php vendor/bin/pint --test`
+
+SESS-11 est **VALIDÉ**. Renforcements effectués sur `feature/Identity` :
+- Révocation de la session du navigateur courant suivie d'une déconnexion immédiate et invalidation du cookie/session Laravel.
+- Application du délai d'inactivité par rôle pour filtrer les sessions affichées, dans l'espace personnel et la fiche utilisateur root ; le listing ne révoque ni ne modifie les sessions expirées.
+- Maintien de l'isolation des autres sessions Web du même utilisateur.
+- Assertions explicites de la traçabilité Login History et Audit, incluant acteur, utilisateur cible, session et motif dans les tests HTTP.
+
+Fichiers applicatifs concernés :
+- `app/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionController.php`
+- `app/Domains/Identity/Authentication/Services/SessionService.php`
+- `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php`
+- `resources/views/identity/security/sessions/index.blade.php`
+- `resources/views/super-admin-root/users/show.blade.php`
+
+Tests renforcés :
+- `tests/Feature/Domains/Identity/Authentication/Http/Controllers/AuthenticationSessionControllerTest.php`
+- `tests/Framework/Domains/Identity/Authentication/Services/SessionServiceTest.php`
+
+### SESS-12 — démarrage de l'audit
+
+Objectif : détecter une connexion depuis un pays inhabituel et décider, selon les règles de sécurité déjà gelées, si un challenge OTP e-mail complémentaire est requis. L'audit doit vérifier l'existant (données de localisation, fournisseur GeoIP éventuel, registre d'appareils/pays, workflow d'authentification, notifications, OTP, rate limits, tests et journalisation) avant toute proposition de modification.
+
+Aucune localisation ne doit être devinée à partir d'une IP. Une donnée pays absente ou un fournisseur indisponible ne doit pas créer un faux pays ni bloquer arbitrairement une connexion. La règle SESS-09/10 relative au nouvel appareil reste distincte et doit être préservée.
+
+État : **AUDIT EN COURS — aucune modification applicative SESS-12 avant examen du dépôt réel et présentation des constats/propositions.**
+
+
+## 20.64 — Résultats de l'audit SESS-12 (sans modification applicative)
+
+### Constat sur le dépôt réel de `feature/Identity`
+
+Fichiers et ressources examinés : `AuthenticationContext`, `AuthenticationController`, `AuthenticationService`, `AuthenticationWorkflow`, `AuthenticationWorkflowHook`, `RecordNewDeviceAuthenticationWorkflowHook`, `UnusualActivityDetectionService`, `SecurityEventService`, `KnownDevice`, `SecurityEvent`, migrations `known_devices`, `security_events` et `authentication_sessions`, `NewDeviceLoginNotification`, `config/services.php`, `composer.json`, routes Web, tests d'authentification/workflow et standards ID-I-002 / ID-I-004.
+
+Constats confirmés :
+- La détection actuelle porte uniquement sur le couple utilisateur/appareil normalisé. Aucun pays connu par utilisateur n'est enregistré.
+- `AuthenticationContext` transporte l'IP, le User-Agent, le navigateur et l'appareil, mais aucun pays ou résultat GeoIP.
+- Les tables `known_devices`, `authentication_sessions` et `security_events` ne possèdent pas de champ pays/code ISO. Les événements peuvent toutefois porter des métadonnées JSON.
+- `composer.json` ne déclare aucun fournisseur/bibliothèque GeoIP ; `config/services.php` ne configure aucun fournisseur de géolocalisation.
+- Aucune table, entité, notification, route ou service OTP/challenge n'a été trouvé dans le périmètre Identity audité.
+- Le workflow actuel authentifie par mot de passe, fait `Auth::login()`, crée la session Web et mémorise l'appareil dans la transaction ; la notification nouvel appareil part après commit. Il n'existe pas de point de suspension pré-session pour un challenge pays.
+- Le comportement SESS-09/10 « nouvel appareil » est déjà transactionnel et résilient ; il ne doit pas être réutilisé comme équivalent d'un pays inhabituel.
+- Le code de sécurité actuel n'autorise pas à déduire un pays à partir du texte d'IP. Une localisation doit provenir d'un fournisseur explicite et fiable, tenant compte de la configuration des proxies de confiance.
+
+### Risques et décisions de conception à préserver
+
+1. Une IP privée, locale, invalide, absente ou non résolue doit produire un résultat « pays inconnu », jamais un pays supposé.
+2. Une panne GeoIP ne doit pas bloquer arbitrairement les utilisateurs ni convertir un pays inconnu en pays inhabituel.
+3. Le challenge doit intervenir après vérification des identifiants, mais avant `Auth::login()`, création de `AuthenticationSession`, enregistrement de l'appareil et réponse de connexion réussie.
+4. Le pays ne doit être ajouté à la liste des pays de confiance qu'après authentification complète, notamment après OTP si un challenge est requis. Un mot de passe valide seul ne doit pas permettre à un attaquant de faire approuver son pays.
+5. Le pays inhabituel et le nouvel appareil sont deux signaux distincts ; les événements et notifications SESS-09/10 restent conservés.
+6. Le challenge ne doit jamais stocker le code OTP en clair, exposer le code dans les logs, ni créer une session authentifiée prématurément.
+
+### Proposition de mise en œuvre à valider avant modification
+
+- Ajouter un contrat de résolution IP → code pays ISO 3166-1 alpha-2 et un adaptateur fournisseur configurable, avec tests sur IP privée/invalide, absence de résultat, timeout et indisponibilité.
+- Ajouter un registre indépendant des pays approuvés par utilisateur (nouveau modèle/table avec contrainte unique utilisateur + code pays). Ne pas fusionner ce registre avec `known_devices`, car appareil et pays sont des signaux indépendants.
+- Transporter le résultat pays via un DTO d'authentification explicite ; ne pas faire dépendre les services métier de `Request`.
+- Ajouter une étape de décision pays inhabituel avant l'ouverture de session. Si le pays est nouveau et résolu, demander un challenge OTP et interrompre le workflow normal jusqu'à vérification ; pays inconnu ou GeoIP indisponible suit une règle fail-open explicitement journalisée, sans faux positif.
+- Enregistrer les événements SecurityEvent/Audit pour pays inhabituel, challenge demandé, vérification réussie/échouée et pays approuvé, sans code OTP ni donnée sensible inutile.
+- Développer le moteur OTP selon SESS-13 (hash, cinq minutes, cinq tentatives, renvoi 60 secondes, invalidation atomique, rate limiting, notifications FR/EN/AR), puis raccorder le challenge au workflow pays. La validation du challenge doit être le seul chemin qui autorise la création de session pour un pays nouveau.
+- Ajouter tests unitaires, transactionnels et HTTP prouvant l'absence de session avant OTP, le refus des codes invalides/expirés/réutilisés, l'approbation du pays uniquement après succès, le maintien des sessions concurrentes et l'absence de régression SESS-09/10.
+
+**Aucune modification applicative SESS-12 n'a été effectuée.** Le dépôt ne contient actuellement ni source GeoIP ni socle OTP ; les ajouter sans décision sur le fournisseur et les règles fail-open serait prématuré.
+
+État : **AUDIT SESS-12 EFFECTUÉ — conception proposée, implémentation en attente de validation des choix de fournisseur GeoIP et du comportement en cas d'indisponibilité.**
+
+## 20.65 — Clôture fonctionnelle et validation globale API-01 / API-02
+
+### API-01 — Gestion des tokens Sanctum
+
+**Règles fonctionnelles retenues :**
+- Tous les rôles (`super_admin_root`, `super_admin`, `cooperative_admin`, `user`) peuvent gérer uniquement leurs propres tokens : création, liste, consultation des métadonnées, révocation individuelle et révocation globale.
+- Seul `super_admin_root` peut consulter et révoquer les tokens d'autres utilisateurs, sans restriction de coopérative.
+- Root ne peut jamais créer un token pour autrui : le secret doit être remis directement au propriétaire.
+- `super_admin` et `cooperative_admin` ne peuvent pas gérer les tokens d'autres utilisateurs, y compris ceux de leur périmètre.
+- Les parcours personnels sont disponibles en API et en back-office ; les parcours d'administration root sont disponibles depuis la fiche utilisateur.
+- Le secret en clair est retourné une seule fois à la création. Les listes, métadonnées, réponses de consultation et événements Audit n'exposent ni secret ni hash.
+- La révocation d'un token API ne révoque jamais une session Web. Les sessions Web et tokens Sanctum restent deux mécanismes distincts.
+- Les abilities Sanctum par défaut restent vides (`[]`) tant que la matrice API-06 n'est pas définie. Une ability `*` ne contourne jamais les Policies, Gates, contrôles de propriété ou middleware métier.
+- Les opérations de création et révocation sont centralisées dans `ApiTokenService`, transactionnelles et auditées ; les flux de révocation communs délèguent à ce service.
+
+**Validation locale :** le 11 novembre 2026, l'utilisateur confirme **VERTS** `php artisan test` et `php vendor/bin/pint --test` après les ajouts API-09 et l'implémentation API-02. Cette validation globale couvre donc API-01 et API-02 ainsi que les tests de régression associés. Les tests ciblés API-01/API-09 et Pint avaient également été confirmés verts précédemment.
+
+### API-02 — Expiration fixe des tokens
+
+**Décision définitive :**
+- Tous les tokens API ont une durée fixe de **90 jours**, tous rôles et tous tokens confondus.
+- Aucun choix de durée par utilisateur, aucune expiration personnalisée et aucun token permanent, y compris pour `super_admin_root`.
+- La date d'expiration est imposée au niveau du modèle Sanctum pour couvrir aussi les créations directes hors du service.
+- Les tokens déjà présents sont régularisés par migration à partir de leur date de création (`created_at + 90 jours`) ; aucune ligne n'est supprimée par cette migration.
+- L'expiration est vérifiée par Sanctum au moment de chaque authentification API. Une date d'expiration absente ne rend pas un token actif.
+- `config('sanctum.expiration')` reste `null` : l'expiration individuelle `expires_at` porte la règle fixe et les sessions Web restent indépendantes.
+- La migration de régularisation ne restaure pas de tokens permanents lors d'un rollback.
+
+**Validation locale :** le test d'authentification avant/après expiration, les tests du service, du modèle et de la migration ont été confirmés verts ; après correction du test d'expiration HTTP, l'utilisateur a confirmé la suite globale `php artisan test` et le contrôle `php vendor/bin/pint --test` verts le 11 novembre 2026.
+
+### Périmètre restant du lot API
+
+- API-01 : **VALIDÉ**.
+- API-02 : **VALIDÉ**.
+- API-09 : tests de renforcement ajoutés et suites ciblées confirmées vertes ; la suite complète et Pint sont désormais également confirmés verts.
+- API-06 (matrice d'abilities) reste explicitement à définir. Les autres tâches API du backlog qui ne sont pas cochées restent ouvertes ; cette clôture ne les déclare pas implémentées.
+
+**Statut : API-01 et API-02 VALIDÉS localement sur la branche synchronisée `feature/Identity`. Aucun merge n'a été effectué.**
+
+## 20.66 — Décision validée API-03 : rétention avant purge des tokens expirés
+
+**Décision confirmée le 11 novembre 2026 :**
+- Un token est conservé pendant **90 jours supplémentaires après sa date `expires_at`**.
+- Il devient éligible à la suppression physique lorsque `expires_at <= now() - 90 jours`.
+- La date de révocation anticipée (`revoked_at`) ne raccourcit pas cette période : même un token révoqué avant son expiration est conservé jusqu'à l'expiration + 90 jours.
+- Un token sans `expires_at` n'est jamais purgé par cette tâche ; les tokens existants ont vocation à être régularisés par la migration API-02.
+- La purge ne supprime et ne modifie aucune session Web.
+- Les événements Audit restent indépendants et sont conservés après la suppression de la ligne du token. L'événement de purge ne doit contenir ni secret ni hash.
+- La purge doit être exécutée automatiquement par Laravel Scheduler, de manière quotidienne, avec traitement par lots et protection contre les exécutions concurrentes.
+
+**Implémentation réalisée sur `feature/Identity` :**
+- `ApiTokenService::pruneExpiredTokens()` supprime par lots de 500 (taille configurable et bornée) les lignes dont `expires_at` a dépassé la période de rétention ; chaque ligne est relue et verrouillée dans une transaction avant suppression.
+- La révocation anticipée n'exclut pas le token de la purge après la date d'éligibilité ; les dates `expires_at` nulles sont exclues.
+- Un événement Audit indépendant `identity.authentication.api_token_purged` est enregistré dans la même transaction avant la suppression ; il ne contient ni secret ni hash.
+- La commande `identity:tokens:prune-expired` est enregistrée dans `app/Console/Commands/PruneExpiredApiTokens.php`.
+- `routes/console.php` programme la commande quotidiennement avec `withoutOverlapping()`.
+- Tests ajoutés pour la limite de rétention, les tokens révoqués, les expirations nulles, les tokens encore récents/futurs, l'absence de fuite dans Audit, l'isolation des sessions Web, la commande et le Scheduler.
+
+**État :** implémentation et tests ajoutés sur `feature/Identity` ; validation locale confirmée VERT par l'utilisateur pour `ApiTokenServiceTest`, `PruneExpiredApiTokensCommandTest` et `php vendor/bin/pint --test`. Aucun merge effectué.
+
+
+## 20.67 — Correction de l'authentification des tests Sanctum avec modèle final
+
+- Le modèle MAHLINE `App\\Domains\\Identity\\Authentication\\Models\\PersonalAccessToken` reste déclaré `final`. Aucun affaiblissement de cette garantie n'est introduit.
+- `Sanctum::actingAs()` ne peut pas être utilisé avec ce modèle : Sanctum tente de créer un mock Mockery du modèle configuré, ce qui échoue pour une classe finale.
+- Dans `tests/Feature/Domains/Identity/Authentication/Http/Controllers/ApiTokenControllerTest.php`, les cas d'administration root utilisent désormais un véritable bearer token créé avec `User::createToken()`, avec les abilities de test explicitement fournies. Le guard Sanctum est réinitialisé entre les identités afin d'éviter la réutilisation de l'utilisateur authentifié en cache.
+- Les contrôles de rôle `super_admin_root`, de permission métier `users.view` et les middleware d'abilities restent actifs et testés ; le modèle, les routes et les règles d'autorisation ne sont pas contournés.
+- Commit de correction : `5ab52ce48f73f331dfc5473dd12ba0c8359f3de5`.
+- SHA du fichier de test après correction : `48572ee76ec37c396fdf18886d6237b3bdb6bce3`.
+- **Validation locale confirmée par l'utilisateur le 11 novembre 2026 :** `php artisan optimize:clear`, `php artisan test --filter=ApiTokenControllerTest`, `php artisan test --filter=ApiTokenManagementControllerTest` et `php vendor/bin/pint --test` sont VERTS.
+- Cette validation confirme la correction de compatibilité et les suites ciblées exécutées. Elle ne vaut pas validation globale des implémentations API-04 à API-08 : les suites de service, UserManagement et invitations doivent encore être confirmées avant clôture de ces lots.
+
+
+## 20.68 — Correction de la fixture pays dans UserManagementServiceTest
+
+- L'utilisateur confirme VERTS pour `php artisan test --filter=UserManagementServiceTest` et `php vendor/bin/pint --test` après correction de la fixture de pays.
+- Cause : `CountryFactory` crée systématiquement le pays Maroc avec le code unique `MA`, tandis que le helper `createCooperative()` du test créait un nouveau pays à chaque appel sans partager l'enregistrement existant.
+- Correction : le helper utilise désormais `Country::query()->firstOrCreate(['code' => 'MA'], ...)`, puis réutilise ce pays pour les adresses des coopératives créées dans le test.
+- La contrainte unique `countries_code_unique`, la factory métier et le seeder ne sont pas affaiblis ou modifiés.
+- Fichier : `tests/Framework/Domains/Identity/UserManagement/Services/UserManagementServiceTest.php`.
+- Commit : `2fee6eaa768bb34a983d86d02bd4e9cfc1744d9e`.
+- SHA vérifié du fichier corrigé : `17008dd07ea58a74022292f82477f37c38680cfa`.
+- Cette confirmation valide uniquement la suite UserManagementServiceTest et Pint ; elle ne clôt pas les autres suites API-04 à API-08, qui restent à confirmer.
+
+
+## 20.69 — Validation ciblée du lot API-04 à API-08
+
+L'utilisateur confirme VERTS les suites complémentaires suivantes sur la branche locale synchronisée avec `feature/Identity` :
+
+- `php artisan test --filter=ApiTokenServiceTest` — quotas, abilities disponibles, création, révocation, expiration, rétention et audit du service.
+- `php artisan test --filter=UserInvitationControllerTest` — révocation des tokens API résiduels après acceptation et vérification d'invitation.
+- Les confirmations précédentes couvrent également `ApiTokenControllerTest`, `ApiTokenManagementControllerTest`, `UserManagementServiceTest` et `php vendor/bin/pint --test`.
+
+**État par tâche :**
+- **API-04 — VALIDÉ :** quotas actifs par rôle (root 10, super_admin 5, cooperative_admin 5, user 3), exclusion des tokens expirés/révoqués et verrouillage de l'utilisateur pendant la création.
+- **API-05 — VALIDÉ :** nom, date de création et dernière utilisation accessibles ; secret en clair affiché une seule fois ; ni secret ni hash dans les listes, métadonnées ou Audit.
+- **API-06 — VALIDÉ :** abilities limitées aux slugs des permissions MAHLINE actives réellement accordées ; sélection d'un sous-ensemble, rejet de `*` et des permissions non accordées ; défaut `[]`.
+- **API-07 — VALIDÉ :** middleware Sanctum combiné aux contrôles métier Gate/Policy, rôle, propriété et périmètre coopératif ; une ability ne contourne pas l'autorisation métier.
+- **API-08 — VALIDÉ :** révocation centralisée des tokens lors des événements sensibles déjà prévus, notamment affectation/retrait coopératif d'un super_admin et acceptation/vérification d'une invitation ; les changements API-only ne révoquent pas les sessions Web.
+
+La validation est limitée aux suites ciblées listées ci-dessus et à Pint ; aucune nouvelle confirmation de la suite complète du domaine Identity n'est revendiquée ici. Aucun merge n'a été effectué.
+
+
+## 20.70 — Audit USR-01 : état réel du profil utilisateur
+
+Audit effectué sur les fichiers réels de `feature/Identity`, sans modification applicative.
+
+**Constats vérifiés :**
+- `routes/web.php` (SHA `94d6754f544dcceb1cccefc8339d5c320feecd31`) expose les parcours d'administration des utilisateurs (root et back-office), les sessions, les tokens et les invitations ; aucun endpoint de consultation ou de modification du profil personnel n'est défini.
+- `app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php` (SHA `7e030581b14feacbe596624719c6bfc6c7e5cadd`) gère la création, consultation et transitions administratives des utilisateurs ; il ne fournit pas de workflow de profil personnel.
+- `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php` (SHA `9e6348946dc609b1d0eb0e7e139c0416aa237ca4`) permet à root de modifier les données d'un autre compte ; ce parcours administratif n'est pas un profil self-service.
+- `app/Domains/Identity/Users/Models/User.php` (SHA `37af822f1cbbd5573095082b66fa7fe6e23a6032`) expose notamment prénom, nom, nom affiché, e-mail, téléphone, locale et fuseau horaire ; aucun attribut d'adresse personnelle, photo/avatar ou préférences de notification n'est présent dans le modèle.
+- `database/migrations/2026_09_15_151055_create_users_table.php` (SHA `bdccd16309a85a23f673613f227dc676af6b9fdd`) crée les champs d'identité/contact/localisation et de sécurité, mais ne contient pas les champs adresse personnelle, photo/avatar ou préférences de notification.
+- Les vues listées sous `resources/views/user` se limitent au dashboard ; les vues `backoffice/users` et `super-admin-root/users` correspondent à l'administration des comptes, pas à un espace profil personnel.
+- L'arborescence de tests `tests/Feature/Domains/Identity/UserManagement` couvre les parcours HTTP d'administration/invitation ; aucun parcours HTTP de profil personnel n'a été identifié.
+
+**Conclusion USR-01 :** audit terminé. Les champs d'identité de base existent déjà, mais le profil personnel self-service est absent ; adresse personnelle, photo/avatar et préférences de notification ne sont pas modélisés. Les parcours administratifs existants doivent être préservés et ne doivent pas être réutilisés comme substitut au profil personnel.
+
+**Périmètre proposé pour USR-02 / USR-03 :** concevoir les ajouts de données et le workflow de profil dans des fichiers dédiés, utiliser de nouvelles migrations uniquement, préserver les workflows séparés d'e-mail/mot de passe/rôle/statut/cooperative, et définir explicitement les champs éditables par l'utilisateur avant implémentation. Aucun code n'a été modifié pendant cet audit.
+
+
+## 20.71 — Audit technique préalable USR-02 / USR-03 : profil personnel et liaisons
+
+**Branche examinée :** `feature/Identity`  
+**Nature :** lecture du code et vérification des liaisons ; aucune modification applicative et aucun test exécuté pendant cette passe.
+
+### 20.71.1 Cartographie des liaisons réellement présentes
+
+| Couche | Fichier / SHA | Constat |
+|---|---|---|
+| Routes Web | `routes/web.php` — `94d6754f544dcceb1cccefc8339d5c320feecd31` | Routes d'administration, sécurité, sessions et tokens présentes ; aucune route de profil personnel. |
+| Routes API | `routes/api.php` — `8ed1e3698d785fe64a225ee6d8f9df7de311d889` | Tokens et audit uniquement pour les routes Identity ; aucun endpoint de profil. |
+| Modèle utilisateur | `app/Domains/Identity/Users/Models/User.php` — `37af822f1cbbd5573095082b66fa7fe6e23a6032` | Champs identité/contact/localisation existants ; aucune relation d'adresse personnelle, aucun chemin photo et aucune préférence de notification. `fillable` comprend aussi des attributs sensibles (email, password, status, cooperative_id) : le futur workflow devra imposer une allowlist stricte indépendante. |
+| Contrôleur de gestion | `app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php` — `7e030581b14feacbe596624719c6bfc6c7e5cadd` | Contrôleur administratif ; aucune action self-service. |
+| Service de gestion | `app/Domains/Identity/UserManagement/Services/UserManagementService.php` — `8c546c6d3f85149f9f90c9803d5fdec8a3054560` | `updateUserAccount()` est réservé à root et modifie identité, e-mail, téléphone, coopérative et rôle ; il révoque ensuite les sessions Web et tokens API. Ne pas le réutiliser pour une simple modification personnelle du profil. |
+| Request existante | `CreateUserRequest.php` — `e0c760a7873a4e9c163710c21e82918517ccf7da` | Validation dédiée à la création administrative uniquement ; aucune validation de profil personnel. |
+| Policy | `UserPolicy.php` — `839caab4d1429ece63c544d10ef969aa3d1b331f` | Policy utilisateur administrative ; méthodes de profil personnel (consultation/modification de soi) absentes. |
+| Enregistrement Policy | `AuthorizationServiceProvider.php` — `5a859ad9d154a8326a0f634ac1c9dd48ba05a61b` | `UserPolicy` est déjà enregistrée pour `User::class` ; les nouvelles méthodes pourront être ajoutées à cette Policy sans créer un second mécanisme concurrent. |
+| Session active | `EnsureActiveAuthenticationSession.php` — `a922ce1b24219513107492830621e19644082777` | Vérifie compte autorisé, session Identity active, correspondance de session et changement obligatoire de mot de passe ; middleware réutilisable pour les routes de profil. |
+| Audit | `AuditService.php` — `b13e549e49a9b13760ed1a82426b52c347ee3462`, `AuditEntryDTO.php` — `300386a461a0a2c84370e20e0d2da39669b95753` | Service append-only disponible et filtrage récursif de clés sensibles ; le futur service de profil doit produire un événement dédié et ne jamais journaliser photo binaire, secret ou contenu inutile. |
+| Vue utilisateur | `resources/views/user/dashboard.blade.php` — `39cfffe2ed89271b4a52556c47ef5c466348d02f` | Dashboard uniquement, sans écran de profil. |
+| Layouts | `layouts/admin.blade.php` — `8e45bb46c42d34d915f83c5b1fabbe5051d73f99`, `layouts/root.blade.php` — `1eae669387716ecb5d964a3c854a64b3841663f6` | Deux navigations distinctes ; aucun lien « Mon profil ». Root utilise un layout séparé. |
+| Tests HTTP | `UserManagementControllerTest.php` — `7390ce92ee0a46c65a7ccf9b10298ddcd75b7e20` | Tests d'administration/invitation ; aucun test de profil personnel dans l'arborescence Identity examinée. |
+
+### 20.71.2 Schéma et domaines transversaux
+
+- La migration initiale `create_users_table` (SHA `bdccd16309a85a23f673613f227dc676af6b9fdd`) contient prénom, nom, nom affiché, e-mail, téléphone, mot de passe, statut, locale, timezone, vérification e-mail, audit actors, timestamps et soft delete. Les migrations suivantes ajoutent notamment cooperative_id, must_change_password et emergency lock ; aucune des migrations présentes n'ajoute adresse personnelle, photo ou préférences de notification.
+- Le domaine Localization contient déjà `Address` (`app/Domains/Localization/Models/Address.php`, SHA `e98ff0250747298459c5cea5d7d0cd949f5358c1`) et sa table (`2026_10_03_150543_create_addresses_table.php`, SHA `ca57b9c90f36bbe83021991025d7bfafb749a13f`). L'adresse comprend lignes d'adresse, code postal, ville, région, pays et coordonnées. Elle est actuellement reliée à Cooperative ; User n'a aucune relation. Réutiliser ce modèle est possible, mais la relation propriétaire et les contrôles empêchant toute modification d'une adresse d'une coopérative ou d'un autre utilisateur doivent être définis explicitement.
+- L'arborescence `app/Domains` présente Audit, Catalog, Categories, Cooperatives, Countries, Dashboard, Identity, Localization et Products ; aucun domaine Media ni Communication n'est présent dans cette branche. Le workflow de photo ne doit donc pas présumer l'existence d'un service Media ou d'un stockage applicatif déjà intégré.
+- Les notifications Identity actuellement identifiées sont Laravel Notifiable, `NewDeviceLoginNotification` (mail) et `UserInvitationNotification` (mail). Aucun stockage de préférences ni service de filtrage des notifications n'a été identifié. Les tâches `NOT-01` et `NOT-03` du backlog couvrent déjà le service transversal et les préférences ; USR-02 doit s'y raccorder sans créer un second système concurrent. Les alertes critiques restent obligatoires selon les décisions fonctionnelles existantes.
+- Les champs locale et timezone existent déjà et sont utilisés par la notification de nouvel appareil ; ils ne nécessitent pas de nouvelle colonne. Leur validation doit néanmoins être normalisée (locale autorisée et identifiant timezone valide).
+
+### 20.71.3 Écarts de sécurité et de liaison à corriger / préserver
+
+1. **Séparation du self-service :** aucune méthode dédiée `viewOwnProfile` / `updateOwnProfile` n'existe. La méthode administrative `UserPolicy::view` exige `users.view` et ne constitue pas une autorisation propriétaire. Le profil doit autoriser uniquement l'utilisateur authentifié sur sa propre clé, sans dépendre d'une permission administrative.
+2. **Allowlist :** `User::fillable` comprend email, password, status et cooperative_id. Une validation générique ou un `fill($request->all())` créerait un risque d'élévation de privilèges ou de contournement des workflows. Seuls prénom, nom, téléphone, adresse personnelle, photo, locale, timezone et préférences validées par décision 93 pourront être modifiés par ce parcours. E-mail, mot de passe, rôle, coopérative et statut sont exclus.
+3. **Révocation excessive :** `UserManagementService::updateUserAccount()` appelle `revokeAccessCredentials()` après mise à jour administrative. Ce comportement est approprié au changement de rôle/compte déjà prévu, mais ne doit pas être déclenché pour une modification de nom, téléphone, adresse, photo, langue, timezone ou préférences.
+4. **Dépendance à l'adresse :** `Address` est aujourd'hui associée à Cooperative, et non à User. Une liaison utilisateur doit être ajoutée par migration additive et validée par service ; il ne faut pas exposer un identifiant d'adresse arbitraire fourni par le navigateur.
+5. **Photo :** aucun domaine Media, service d'upload, politique de stockage ou route privée de diffusion d'avatar n'a été repéré. Le chemin seul en base ne suffit pas : stockage, validation MIME/taille, remplacement, suppression de l'ancien fichier, autorisation de lecture et nettoyage en cas d'échec doivent être conçus avant implémentation.
+6. **Préférences :** aucune infrastructure de préférences n'est présente. Le stockage doit être cohérent avec NOT-01/NOT-03 et garantir côté serveur que les notifications critiques ne puissent pas être désactivées.
+7. **Audit et données personnelles :** le service Audit existant peut être réutilisé. Définir les événements et champs journalisés sans stocker de binaire, secret ou copie inutile de données personnelles. La décision 95 exige explicitement anciennes/nouvelles valeurs pour les corrections administratives ; ne pas étendre cette exposition aux journaux de self-service sans règle dédiée.
+8. **Navigation :** les layouts admin et root sont séparés ; un lien vers le profil doit être ajouté dans les deux parcours sans exposer les routes d'administration au rôle user.
+
+### 20.71.4 Écart déjà présent sur l'accès aux profils administratifs — USR-04
+
+La décision 91 indique que `cooperative_admin` n'a aucun accès aux données personnelles des autres utilisateurs. Or :
+- `UserPolicy::viewAny()` accepte `cooperative_admin` si `users.view` est accordée.
+- `UserPolicy::canAccessUser()` accepte un utilisateur de la même coopérative pour ce rôle.
+- `UserManagementController::index()` retourne les utilisateurs du périmètre ; la vue `backoffice/users/index.blade.php` affiche e-mail, téléphone, nom et prénom.
+- `backoffice/users/show.blade.php` affiche identité, e-mail et téléphone.
+- `UserManagementControllerTest` contient des tests qui confirment actuellement la consultation par cooperative_admin d'une fiche d'un utilisateur de sa coopérative.
+
+Il s'agit d'une divergence entre code/tests et décision validée, à corriger dans USR-04 avec ses propres tests. Elle ne doit pas être aggravée ni considérée comme une autorisation de consulter les profils personnels.
+
+### 20.71.5 Plan de réalisation proposé — aucun code commencé
+
+**USR-02 — données :**
+- migration additive pour relier une adresse personnelle à User en réutilisant le modèle Address après validation de la règle de propriété ;
+- colonne nullable de chemin de photo, avec stratégie de stockage privé et service Media à définir ;
+- stockage des préférences selon le contrat NOT-01/NOT-03 (pas de second système de notifications) ;
+- aucune modification des migrations déjà présentes.
+
+**USR-03 — self-service :**
+- contrôleur dédié au profil personnel dans Identity, sans réutiliser le contrôleur administratif ;
+- Form Request avec allowlist stricte et règles de validation ;
+- service dédié transactionnel, qui met à jour uniquement les champs personnels autorisés et journalise l'événement approprié ;
+- méthodes Policy dédiées au propriétaire, routes protégées par `auth` et `EnsureActiveAuthenticationSession`, accessibles aux rôles autorisés y compris root ;
+- vues de consultation/édition adaptées aux deux layouts, lien de navigation « Mon profil » ;
+- tests Feature couvrant tous les rôles, accès direct à l'ID d'un autre utilisateur, tentative de mass assignment (email/password/status/role/cooperative_id), validation, adresse étrangère, upload/remplacement/suppression photo, préférences critiques non désactivables, audit et absence de révocation des sessions/tokens pour les changements ordinaires.
+
+**Ordre conseillé :** figer les choix techniques adresse/photo/préférences ; implémenter USR-02 ; implémenter USR-03 ; exécuter les tests ciblés et Pint ; puis traiter séparément la divergence USR-04. Le présent audit ne modifie ni code, ni migrations, ni tests.
+
+## 20.72 — Device Trust : implémentation et validation
+
+**Branche d'implémentation :** `feature/Marketplace`  
+**Commit de référence au moment de la validation :** `a646148ff1deb96f5e5dcd9a859ae4f72e3f4cc6`  
+**État :** implémentation et suites de validation confirmées VERTES par l'utilisateur.
+
+### Décisions appliquées
+- Première preuve navigateur d'un compte : appareil `trusted` automatiquement.
+- Nouvel appareil : `pending`, accès MAHLINE autorisé ; promotion automatique après 24 h si un emplacement de confiance est disponible.
+- Maximum de cinq appareils trusted ; au-delà, remplacement explicite et atomique d'un appareil trusted, avec révocation de ses sessions Web.
+- Révocation d'un appareil : état `non_trusted`, révocation de toutes ses sessions Web et refus de reconnexion avec la preuve navigateur révoquée.
+- Sessions Web multiples et simultanées sans limite ; la révocation d'un appareil ne révoque pas les tokens API.
+- Preuve indépendante de la session Laravel : cookie HttpOnly chiffré contenant un secret aléatoire, seul son hash SHA-256 est stocké en base.
+- Règles communes aux rôles root, super_admin, cooperative_admin, user et customer ; chaque compte gère ses propres appareils.
+- Notification de sécurité après révocation, sans secret, token ou URL exploitable.
+
+### Fichiers structurants
+- Service : `app/Domains/Identity/Authentication/Services/DeviceTrustService.php`
+- Middleware de vérification : `app/Domains/Identity/Authentication/Http/Middleware/EnsureActiveAuthenticationSession.php`
+- Cookie : `app/Domains/Identity/Authentication/Support/DeviceTrustCookie.php`
+- Contrôleur : `app/Domains/Identity/Authentication/Http/Controllers/DeviceTrustController.php`
+- Modèles : `KnownDevice.php`, `AuthenticationSession.php`, `User.php`
+- Migration : `2026_11_14_000003_add_device_trust_to_identity_sessions.php`
+- Commande planifiée : `identity:devices:promote-pending` (scheduler requis chaque minute en production)
+- Tests : `DeviceTrustServiceTest.php`, tests AuthenticationSessionController, AuthenticationController, EnsureActiveAuthenticationSession, CustomerRegistration, AuthenticationWorkflow et AuthenticationWorkflowTransaction.
+
+### Validation locale confirmée par l'utilisateur
+- `DeviceTrustServiceTest.php` — VERT.
+- `AuthenticationSessionControllerTest.php` — VERT.
+- `AuthenticationControllerTest.php` — VERT après correction du cookie de preuve sur la réponse de connexion.
+- `EnsureActiveAuthenticationSessionTest.php` — VERT.
+- `CustomerRegistrationTest.php` — VERT.
+- `AuthenticationWorkflowTest.php` — VERT après correction de la traduction de notification.
+- `AuthenticationWorkflowTransactionTest.php` — VERT.
+- `php vendor/bin/pint --test` — VERT.
+- `php artisan test` (suite complète) — VERT, confirmation utilisateur du 14 novembre 2026.
+
+**Limites opérationnelles :** la promotion des appareils pending inactifs dépend du scheduler Laravel exécuté chaque minute. Si l'utilisateur efface le cookie de preuve ou réinitialise son profil navigateur, le navigateur sera considéré comme un nouvel appareil ; l'identification physique persistante nécessiterait une preuve liée au matériel, telle que WebAuthn/passkey.
+
+**Statut de clôture :** Device Trust est validé par les tests ciblés, Pint et la suite complète selon les résultats communiqués par l'utilisateur. Aucun merge n'a été effectué.

@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 final class PasswordResetServiceTest extends TestCase
@@ -456,7 +462,6 @@ final class PasswordResetServiceTest extends TestCase
         }
     }
 
-
     public function test_reset_audit_is_created_after_token_is_consumed(): void
     {
         $user = User::factory()->create(['password' => 'Secure!Current2026']);
@@ -490,7 +495,7 @@ final class PasswordResetServiceTest extends TestCase
             newPassword: 'Secure!NewPass2026',
         );
 
-        $event = \App\Domains\Audit\Models\AuditEvent::query()
+        $event = AuditEvent::query()
             ->where('event_key', 'identity.password.reset')
             ->firstOrFail();
 
@@ -505,4 +510,38 @@ final class PasswordResetServiceTest extends TestCase
         $this->assertStringNotContainsString('Secure!NewPass2026', $serialized);
     }
 
+    public function test_audit_failure_rolls_back_reset_password_history_token_and_api_token_revocation(): void
+    {
+        $user = User::factory()->create(['password' => 'Secure!Current2026']);
+        $token = $this->passwordResetService->createToken($user);
+        $user->createToken('rollback-test');
+
+        AuditEvent::creating(static fn () => abort(500));
+
+        $service = new PasswordResetService(
+            app(SessionService::class),
+            app(AuditService::class),
+            app(PasswordHistoryService::class),
+        );
+
+        try {
+            $service->resetPassword($token, 'Secure!NewPass2026');
+            $this->fail('Expected audit failure.');
+        } catch (\Throwable $exception) {
+            Event::forget('eloquent.creating: '.AuditEvent::class);
+            $this->assertSame(500, $exception->getStatusCode());
+        }
+
+        $user->refresh();
+        $resetRecord = \DB::table('password_reset_tokens')
+            ->where('user_id', $user->getKey())
+            ->first();
+
+        $this->assertTrue(Hash::check('Secure!Current2026', (string) $user->password));
+        $this->assertFalse(Hash::check('Secure!NewPass2026', (string) $user->password));
+        $this->assertNotNull($resetRecord);
+        $this->assertNull($resetRecord->used_at);
+        $this->assertDatabaseCount('user_password_histories', 0);
+        $this->assertSame(1, $user->tokens()->count());
+    }
 }

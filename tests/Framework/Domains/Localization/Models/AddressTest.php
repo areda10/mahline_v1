@@ -15,7 +15,7 @@ final class AddressTest extends TestCase
 
     public function test_address_uses_the_expected_table(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         self::assertSame(
             'addresses',
@@ -35,7 +35,7 @@ final class AddressTest extends TestCase
 
     public function test_address_has_expected_fillable_attributes(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         self::assertSame(
             [
@@ -54,7 +54,7 @@ final class AddressTest extends TestCase
 
     public function test_address_casts_coordinates_as_decimal(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         $casts = $address->getCasts();
 
@@ -71,7 +71,7 @@ final class AddressTest extends TestCase
 
     public function test_address_casts_deleted_at_as_datetime(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         self::assertSame(
             'datetime',
@@ -81,7 +81,7 @@ final class AddressTest extends TestCase
 
     public function test_address_can_be_instantiated(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         self::assertInstanceOf(
             Address::class,
@@ -91,7 +91,7 @@ final class AddressTest extends TestCase
 
     public function test_address_uses_ulid_primary_key_configuration(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         self::assertSame(
             'string',
@@ -105,7 +105,7 @@ final class AddressTest extends TestCase
 
     public function test_address_has_no_context_specific_foreign_keys(): void
     {
-        $address = new Address();
+        $address = new Address;
 
         self::assertNotContains(
             'cooperative_id',

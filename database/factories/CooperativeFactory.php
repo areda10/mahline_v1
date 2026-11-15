@@ -9,7 +9,6 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-
 /**
  * @extends Factory<Cooperative>
  */

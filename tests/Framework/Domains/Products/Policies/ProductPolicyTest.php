@@ -24,7 +24,7 @@ final class ProductPolicyTest extends TestCase
     {
         parent::setUp();
 
-        $this->policy = new ProductPolicy();
+        $this->policy = new ProductPolicy;
     }
 
     public function test_root_can_access_product_from_any_cooperative(): void

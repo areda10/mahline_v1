@@ -104,6 +104,7 @@
                 <a href="{{ route('root.backoffice.users.index') }}">Utilisateurs</a>
                 <a href="{{ route('security.password.edit') }}">Changer le mot de passe</a>
                 <a href="{{ route('root.backoffice.security.sessions.index') }}">Appareils connectés</a>
+                <a href="{{ route('root.backoffice.security.authentication-lockouts.index') }}">Déverrouillage des accès</a>
             </nav>
         @endif
     @endauth
@@ -128,5 +129,6 @@
 <footer class="footer">
     MAHLINE — Administration centrale
 </footer>
+@include('identity.security.session-warning')
 </body>
 </html>

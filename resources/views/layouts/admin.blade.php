@@ -143,5 +143,6 @@
 <footer class="footer">
     MAHLINE — Gestion des coopératives
 </footer>
+@include('identity.security.session-warning')
 </body>
 </html>

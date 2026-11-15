@@ -21,7 +21,6 @@ final class IndexMacros
                     ?string $name = null,
                 ): void {
                     /** @var Blueprint $this */
-
                     $this->index(
                         $column,
                         $name
@@ -38,7 +37,6 @@ final class IndexMacros
                     ?string $name = null,
                 ): void {
                     /** @var Blueprint $this */
-
                     $this->unique(
                         $column,
                         $name
@@ -55,7 +53,6 @@ final class IndexMacros
                     ?string $name = null,
                 ): void {
                     /** @var Blueprint $this */
-
                     $this->index(
                         $columns,
                         $name
@@ -72,7 +69,6 @@ final class IndexMacros
                     ?string $name = null,
                 ): void {
                     /** @var Blueprint $this */
-
                     $this->unique(
                         $columns,
                         $name

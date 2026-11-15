@@ -10,6 +10,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -67,8 +68,8 @@ final class BackOfficeDashboardController
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array<int, \BackedEnum> $statuses
+     * @param  Builder  $query
+     * @param  array<int, \BackedEnum>  $statuses
      * @return Collection<string, int>
      */
     private function countByStatus($query, array $statuses): Collection

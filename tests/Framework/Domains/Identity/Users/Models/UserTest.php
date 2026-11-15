@@ -23,7 +23,7 @@ final class UserTest extends TestCase
     {
         self::assertInstanceOf(
             BaseModel::class,
-            new User(),
+            new User,
         );
     }
 
@@ -72,7 +72,7 @@ final class UserTest extends TestCase
 
     public function test_user_uses_users_table(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertSame(
             'users',
@@ -82,7 +82,7 @@ final class UserTest extends TestCase
 
     public function test_user_uses_ulid_configuration_from_base_model(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertSame(
             'string',
@@ -96,7 +96,7 @@ final class UserTest extends TestCase
 
     public function test_user_uses_timestamps(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertTrue(
             $user->usesTimestamps(),
@@ -105,7 +105,7 @@ final class UserTest extends TestCase
 
     public function test_user_casts_status_to_user_status_enum(): void
     {
-        $user = new User();
+        $user = new User;
 
         $casts = $user->getCasts();
 
@@ -122,7 +122,7 @@ final class UserTest extends TestCase
 
     public function test_user_casts_email_verified_at_to_datetime(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertSame(
             'datetime',
@@ -132,7 +132,7 @@ final class UserTest extends TestCase
 
     public function test_user_casts_password_as_hashed(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertSame(
             'hashed',
@@ -142,7 +142,7 @@ final class UserTest extends TestCase
 
     public function test_user_casts_deleted_at_to_datetime(): void
     {
-        $user = new User();
+        $user = new User;
 
         self::assertSame(
             'datetime',
@@ -152,7 +152,7 @@ final class UserTest extends TestCase
 
     public function test_user_hides_sensitive_attributes(): void
     {
-        $user = new User();
+        $user = new User;
 
         $hidden = $user->getHidden();
 
@@ -169,7 +169,7 @@ final class UserTest extends TestCase
 
     public function test_user_contains_expected_fillable_attributes(): void
     {
-        $user = new User();
+        $user = new User;
 
         $expected = [
             'first_name',
@@ -181,7 +181,7 @@ final class UserTest extends TestCase
             'status',
             'locale',
             'timezone',
-            'cooperative_id'
+            'cooperative_id',
         ];
 
         self::assertSame(
@@ -192,7 +192,7 @@ final class UserTest extends TestCase
 
     public function test_user_does_not_include_audit_columns_in_fillable(): void
     {
-        $user = new User();
+        $user = new User;
 
         $fillable = $user->getFillable();
 
@@ -204,25 +204,25 @@ final class UserTest extends TestCase
         self::assertNotContains('deleted_at', $fillable);
     }
 
-    public function test_user_uses_has_factory_trait(): void 
-    { 
-        self::assertContains( 
-            HasFactory::class, 
-            class_uses_recursive(User::class), 
-            ); 
+    public function test_user_uses_has_factory_trait(): void
+    {
+        self::assertContains(
+            HasFactory::class,
+            class_uses_recursive(User::class),
+        );
     }
 
-    public function test_user_defines_roles_relationship(): void 
-    { 
-        $user = new User(); 
-        self::assertInstanceOf( 
-            BelongsToMany::class, 
-            $user->roles(), 
-        ); 
-        
-        self::assertSame( 
-            Role::class, 
-            $user->roles()->getRelated()::class, 
-        ); 
+    public function test_user_defines_roles_relationship(): void
+    {
+        $user = new User;
+        self::assertInstanceOf(
+            BelongsToMany::class,
+            $user->roles(),
+        );
+
+        self::assertSame(
+            Role::class,
+            $user->roles()->getRelated()::class,
+        );
     }
 }

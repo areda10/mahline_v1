@@ -30,8 +30,7 @@ final class CooperativeService
 
     public function __construct(
         private readonly AuditService $audit,
-    ) {
-    }
+    ) {}
 
     /** @param array<string, mixed> $attributes */
     public function create(User $actor, array $attributes): Cooperative
@@ -40,7 +39,7 @@ final class CooperativeService
         $attributes = $this->filterWritableAttributes($attributes);
 
         return DB::transaction(function () use ($actor, $attributes): Cooperative {
-            $cooperative = new Cooperative();
+            $cooperative = new Cooperative;
             $cooperative->fill($attributes);
             $cooperative->status ??= CooperativeStatus::PENDING;
             $cooperative->created_by = (string) $actor->getKey();
@@ -244,7 +243,7 @@ final class CooperativeService
     }
 
     /** @param array<string, mixed> $attributes
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function filterWritableAttributes(array $attributes): array
     {
@@ -273,9 +272,9 @@ final class CooperativeService
     }
 
     /**
-     * @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
-     * @param array<string, mixed>|null $metadata
+     * @param  array<string, mixed>|null  $oldValues
+     * @param  array<string, mixed>|null  $newValues
+     * @param  array<string, mixed>|null  $metadata
      */
     private function record(
         User $actor,

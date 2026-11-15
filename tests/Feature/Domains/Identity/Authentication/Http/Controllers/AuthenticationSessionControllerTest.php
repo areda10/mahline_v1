@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
+use App\Domains\Identity\Authentication\Enums\KnownDeviceStatus;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class AuthenticationSessionControllerTest extends TestCase
@@ -40,7 +46,7 @@ final class AuthenticationSessionControllerTest extends TestCase
 
         $response->assertOk()
             ->assertViewIs('super-admin-root.users.show')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \Illuminate\Support\Collection && $sessions->count() === 2)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof Collection && $sessions->count() === 2)
             ->assertSee('Target laptop')
             ->assertSee('Target phone')
             ->assertDontSee('Old revoked device')
@@ -67,6 +73,18 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNotNull($selected->fresh()->revoked_at);
         $this->assertSame('root_revocation', $selected->fresh()->revocation_reason);
         $this->assertNull($other->fresh()->revoked_at);
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $target->getKey(),
+            'event' => 'session_revoked',
+            'reason' => 'root_revocation',
+            'authentication_session_id' => $selected->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $selected->getKey(),
+        ]);
     }
 
     public function test_root_cannot_revoke_a_session_through_another_users_detail_url(): void
@@ -97,7 +115,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->get(route('backoffice.security.sessions.index'))
             ->assertOk()
             ->assertViewIs('identity.security.sessions.index')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \Illuminate\Support\Collection && $sessions->count() === 1)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof Collection && $sessions->count() === 1)
             ->assertSee('My personal laptop')
             ->assertDontSee('Someone else device');
 
@@ -118,6 +136,92 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNotNull($selected->fresh()->revoked_at);
         $this->assertSame('user_revocation', $selected->fresh()->revocation_reason);
         $this->assertNull($other->fresh()->revoked_at);
+
+        $this->assertDatabaseHas('login_histories', [
+            'user_id' => $user->getKey(),
+            'event' => 'session_revoked',
+            'reason' => 'user_revocation',
+            'authentication_session_id' => $selected->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.session_revoked',
+            'actor_id' => $user->getKey(),
+            'subject_id' => $selected->getKey(),
+        ]);
+    }
+
+    public function test_revoking_the_current_personal_session_logs_out_this_browser_only(): void
+    {
+        $user = $this->actor('user');
+        $current = $this->createAuthenticationSession($user, Str::random(40), 'Current browser');
+        $other = $this->createAuthenticationSession($user, 'preserved-other-browser', 'Other browser');
+
+        $this->withCurrentAuthenticationSession($user, $current)
+            ->delete(route('backoffice.security.sessions.destroy', $current))
+            ->assertRedirect(route('authentication.login'));
+
+        $this->assertGuest();
+        $this->assertNotNull($current->fresh()->revoked_at);
+        $this->assertSame('user_revocation', $current->fresh()->revocation_reason);
+        $this->assertNull($other->fresh()->revoked_at);
+    }
+
+    public function test_root_revoking_its_current_session_from_user_detail_logs_out_root_browser_only(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $current = $this->createAuthenticationSession($root, Str::random(40), 'Root current browser');
+        $other = $this->createAuthenticationSession($root, 'root-preserved-browser', 'Root other browser');
+
+        $this->withCurrentAuthenticationSession($root, $current)
+            ->delete(route('root.backoffice.users.sessions.destroy', [
+                'user' => $root,
+                'session' => $current,
+            ]))
+            ->assertRedirect(route('authentication.login'));
+
+        $this->assertGuest();
+        $this->assertNotNull($current->fresh()->revoked_at);
+        $this->assertSame('root_revocation', $current->fresh()->revocation_reason);
+        $this->assertNull($other->fresh()->revoked_at);
+    }
+
+    public function test_session_lists_hide_sessions_past_the_users_inactivity_limit_without_revoking_them(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->actor('user');
+        $active = $this->createAuthenticationSession($user, 'visible-active-session', 'Visible active browser');
+        $expired = $this->createAuthenticationSession($user, 'hidden-expired-session', 'Hidden expired browser');
+        $expired->forceFill(['last_activity_at' => now()->subMinutes(60)])->save();
+
+        $this->actingAs($user)
+            ->get(route('backoffice.security.sessions.index'))
+            ->assertOk()
+            ->assertSee('Visible active browser')
+            ->assertDontSee('Hidden expired browser');
+
+        $this->assertNull($active->fresh()->revoked_at);
+        $this->assertNull($expired->fresh()->revoked_at);
+    }
+
+    public function test_root_user_detail_hides_sessions_past_root_inactivity_limit_without_revoking_them(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $root = $this->actor('super_admin_root', ['users.view']);
+        $target = $this->actor('super_admin_root');
+        $active = $this->createAuthenticationSession($target, 'root-visible-session', 'Visible target browser');
+        $expired = $this->createAuthenticationSession($target, 'root-expired-session', 'Expired target browser');
+        $expired->forceFill(['last_activity_at' => now()->subMinutes(15)])->save();
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.users.show', $target))
+            ->assertOk()
+            ->assertSee('Visible target browser')
+            ->assertDontSee('Expired target browser');
+
+        $this->assertNull($active->fresh()->revoked_at);
+        $this->assertNull($expired->fresh()->revoked_at);
     }
 
     public function test_user_cannot_revoke_another_users_session_by_identifier(): void
@@ -144,7 +248,7 @@ final class AuthenticationSessionControllerTest extends TestCase
             ->get(route('root.backoffice.security.sessions.index'))
             ->assertOk()
             ->assertViewIs('identity.security.sessions.index')
-            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof \Illuminate\Support\Collection && $sessions->count() === 1)
+            ->assertViewHas('sessions', fn ($sessions) => $sessions instanceof Collection && $sessions->count() === 1)
             ->assertSee('Root private workstation')
             ->assertDontSee('Other private device');
     }
@@ -169,6 +273,317 @@ final class AuthenticationSessionControllerTest extends TestCase
         $this->assertNull($session->fresh()->revoked_at);
     }
 
+    public function test_user_can_extend_only_their_current_unexpired_session(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->actor('user');
+        $sessionId = Str::random(40);
+        $session = $this->createAuthenticationSession($user, $sessionId, 'Current browser');
+        $previousActivity = now()->subMinutes(59);
+
+        $session->forceFill([
+            'last_activity_at' => $previousActivity,
+        ])->save();
+
+        $this->withCurrentAuthenticationSession($user, $session)
+            ->postJson(route('backoffice.security.sessions.extend'))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'extended',
+                'timeout_seconds' => 3600,
+            ]);
+
+        $this->assertTrue($session->fresh()->last_activity_at->equalTo(now()));
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_authenticated_layout_displays_the_two_minute_session_warning(): void
+    {
+        $user = $this->actor('user');
+        $session = $this->createAuthenticationSession(
+            $user,
+            Str::random(40),
+            'Current browser',
+        );
+
+        $this->withCurrentAuthenticationSession($user, $session)
+            ->get(route('backoffice.security.sessions.index'))
+            ->assertOk()
+            ->assertSee('mahline-session-warning')
+            ->assertSee('data-timeout-seconds="3600"', false)
+            ->assertSee('data-warning-seconds="120"', false)
+            ->assertSee(route('backoffice.security.sessions.extend'), false);
+    }
+
+    public function test_root_layout_uses_the_root_timeout_and_extension_route(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $session = $this->createAuthenticationSession(
+            $root,
+            Str::random(40),
+            'Root browser',
+        );
+
+        $this->withCurrentAuthenticationSession($root, $session)
+            ->get(route('root.backoffice.security.sessions.index'))
+            ->assertOk()
+            ->assertSee('mahline-session-warning')
+            ->assertSee('data-timeout-seconds="900"', false)
+            ->assertSee(route('root.backoffice.security.sessions.extend'), false);
+    }
+
+    public function test_user_cannot_extend_a_different_active_device_session(): void
+    {
+        $user = $this->actor('user');
+        $session = $this->createAuthenticationSession(
+            $user,
+            Str::random(40),
+            'Another device',
+        );
+
+        $this->actingAs($user)
+            ->withCookie(
+                config('session.cookie'),
+                encrypt(Str::random(40)),
+            )
+            ->withSession([
+                'authentication_session_id' => (string) $session->getKey(),
+            ])
+            ->postJson(route('backoffice.security.sessions.extend'))
+            ->assertUnauthorized()
+            ->assertJson([
+                'message' => 'La session ne peut plus être prolongée.',
+            ]);
+
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_expired_session_cannot_be_extended_or_revived(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = $this->actor('user');
+        $session = $this->createAuthenticationSession(
+            $user,
+            Str::random(40),
+            'Expired browser',
+        );
+
+        $session->forceFill([
+            'last_activity_at' => now()->subMinutes(60),
+        ])->save();
+
+        $this->withCurrentAuthenticationSession($user, $session)
+            ->postJson(route('backoffice.security.sessions.extend'))
+            ->assertUnauthorized()
+            ->assertJson([
+                'message' => 'La session a expiré. Veuillez vous reconnecter.',
+            ]);
+
+        $this->assertSame('inactivity_timeout', $session->fresh()->revocation_reason);
+        $this->assertNotNull($session->fresh()->revoked_at);
+    }
+
+    public function test_root_can_extend_its_own_session_using_the_root_route(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $root = $this->actor('super_admin_root');
+        $session = $this->createAuthenticationSession(
+            $root,
+            session()->getId(),
+            'Root browser',
+        );
+
+        $this->withCurrentAuthenticationSession($root, $session)
+            ->postJson(route('root.backoffice.security.sessions.extend'))
+            ->assertOk()
+            ->assertJson([
+                'status' => 'extended',
+                'timeout_seconds' => 900,
+            ]);
+
+        $this->assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens(): void
+    {
+        $user = $this->actor('user');
+        $otherUser = User::factory()->create();
+
+        $firstSession = $this->createAuthenticationSession(
+            $user,
+            'global-logout-first-session',
+            'First personal device',
+        );
+        $secondSession = $this->createAuthenticationSession(
+            $user,
+            'global-logout-second-session',
+            'Second personal device',
+        );
+        $otherSession = $this->createAuthenticationSession(
+            $otherUser,
+            'global-logout-foreign-session',
+            'Other user device',
+        );
+
+        $firstIssuedToken = $user->createToken('personal-api-token');
+        $secondIssuedToken = $user->createToken('mobile-api-token');
+        $foreignIssuedToken = $otherUser->createToken('foreign-api-token');
+        $firstToken = $firstIssuedToken->accessToken;
+        $secondToken = $secondIssuedToken->accessToken;
+        $foreignToken = $foreignIssuedToken->accessToken;
+
+        $this->actingAs($user)
+            ->post(route('backoffice.security.sessions.logout-everywhere'))
+            ->assertRedirect(route('authentication.login'))
+            ->assertSessionHas('success');
+
+        $this->assertGuest();
+
+        $this->assertNotNull($firstSession->fresh()->revoked_at);
+        $this->assertNotNull($secondSession->fresh()->revoked_at);
+        $this->assertSame('global_logout', $firstSession->fresh()->revocation_reason);
+        $this->assertSame('global_logout', $secondSession->fresh()->revocation_reason);
+
+        $this->assertNull($otherSession->fresh()->revoked_at);
+
+        $this->assertNotNull(
+            PersonalAccessToken::query()->findOrFail($firstToken->getKey())->revoked_at,
+        );
+        $this->assertNotNull(
+            PersonalAccessToken::query()->findOrFail($secondToken->getKey())->revoked_at,
+        );
+        $this->assertNull(PersonalAccessToken::findToken($firstIssuedToken->plainTextToken));
+        $this->assertNull(PersonalAccessToken::findToken($secondIssuedToken->plainTextToken));
+        $this->assertNotNull(PersonalAccessToken::findToken($foreignIssuedToken->plainTextToken));
+        $this->assertNull(
+            PersonalAccessToken::query()->findOrFail($foreignToken->getKey())->revoked_at,
+        );
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.token_revoked',
+            'subject_type' => PersonalAccessToken::class,
+            'subject_id' => $firstToken->getKey(),
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.token_revoked',
+            'subject_type' => PersonalAccessToken::class,
+            'subject_id' => $secondToken->getKey(),
+        ]);
+    }
+
+    private function withCurrentAuthenticationSession(
+        User $user,
+        AuthenticationSession $session,
+    ): static {
+        $this->actingAs($user);
+
+        $sessionStore = $this->app['session']->driver();
+        $sessionStore->setId($session->session_id);
+        $sessionStore->start();
+        $sessionStore->put(
+            'authentication_session_id',
+            (string) $session->getKey(),
+        );
+        $sessionStore->save();
+
+        // withCookie() encrypts cookie values automatically. Passing an
+        // already encrypted ID would make Laravel encrypt it twice.
+        // JSON requests omit cookies unless withCredentials() is enabled.
+        return $this->withCookie(
+            config('session.cookie'),
+            $sessionStore->getId(),
+        )->withCredentials();
+    }
+
+    public function test_device_management_is_available_in_all_role_spaces(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $internal = $this->actor('user');
+        $customer = $this->actor('customer');
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.security.devices.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.devices.index');
+
+        $this->actingAs($internal)
+            ->get(route('backoffice.security.devices.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.devices.index');
+
+        $this->actingAs($customer)
+            ->get(route('customer.security.devices.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.devices.index');
+    }
+
+    public function test_customer_cannot_revoke_another_accounts_device(): void
+    {
+        $customer = $this->actor('customer');
+        $otherCustomer = $this->actor('customer');
+        $otherDevice = KnownDevice::query()->create([
+            'user_id' => $otherCustomer->getKey(),
+            'device' => 'private-other-customer-device',
+            'device_token_hash' => hash('sha256', str_repeat('x', 64)),
+            'status' => KnownDeviceStatus::Trusted,
+            'trusted_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+
+        $this->actingAs($customer)
+            ->delete(route('customer.security.devices.destroy', $otherDevice))
+            ->assertNotFound();
+
+        $this->assertSame(KnownDeviceStatus::Trusted, $otherDevice->fresh()->status);
+        $this->assertNull($otherDevice->fresh()->revoked_at);
+    }
+
+    public function test_customer_can_revoke_an_own_device_and_its_web_sessions_only(): void
+    {
+        Mail::fake();
+        $customer = $this->actor('customer');
+        $otherUser = User::factory()->create();
+        $device = KnownDevice::query()->create([
+            'user_id' => $customer->getKey(),
+            'device' => 'customer-phone',
+            'device_token_hash' => hash('sha256', str_repeat('c', 64)),
+            'status' => KnownDeviceStatus::Trusted,
+            'trusted_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+        $selectedSession = AuthenticationSession::query()->create([
+            'user_id' => $customer->getKey(),
+            'known_device_id' => $device->getKey(),
+            'session_id' => 'customer-selected-device-session',
+            'ip_address' => '203.0.113.10',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+        $otherSession = $this->createAuthenticationSession(
+            $otherUser,
+            'customer-other-account-session',
+            'Other account device',
+        );
+
+        $this->actingAs($customer)
+            ->delete(route('customer.security.devices.destroy', $device))
+            ->assertRedirect(route('customer.security.devices.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSame(KnownDeviceStatus::NonTrusted, $device->fresh()->status);
+        $this->assertNotNull($selectedSession->fresh()->revoked_at);
+        $this->assertSame('device_revoked', $selectedSession->fresh()->revocation_reason);
+        $this->assertNull($otherSession->fresh()->revoked_at);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_type' => User::class,
+            'notifiable_id' => $customer->getKey(),
+            'data->ip_address' => '203.0.113.10',
+        ]);
+    }
+
     private function createAuthenticationSession(
         User $user,
         string $sessionId,
@@ -190,7 +605,7 @@ final class AuthenticationSessionControllerTest extends TestCase
     }
 
     /**
-     * @param list<string> $permissions
+     * @param  list<string>  $permissions
      */
     private function actor(string $roleSlug, array $permissions = []): User
     {

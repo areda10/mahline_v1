@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Services;
 
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use ReflectionNamedType;
 use ReflectionClass;
+use ReflectionNamedType;
 use Tests\TestCase;
 
 final class LoginHistoryServiceTest extends TestCase
@@ -35,7 +34,7 @@ final class LoginHistoryServiceTest extends TestCase
             SessionService::class
         );
     }
-    
+
     // LoginHistoryServiceTest.php
     /**
      * A successful login can be recorded.

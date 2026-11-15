@@ -9,6 +9,4 @@ namespace App\Core\Foundation\ValueObjects;
  *
  * Un Value Object représente une valeur métier sans identité.
  */
-abstract class BaseValueObject
-{
-}
+abstract class BaseValueObject {}

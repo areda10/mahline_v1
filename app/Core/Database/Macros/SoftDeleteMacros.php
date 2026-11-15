@@ -18,7 +18,6 @@ final class SoftDeleteMacros
                 'softDeleteColumn',
                 function (string $column = 'deleted_at'): void {
                     /** @var Blueprint $this */
-
                     $this->softDeletes($column);
                 }
             );

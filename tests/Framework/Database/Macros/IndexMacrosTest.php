@@ -59,8 +59,7 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    in_array('email', $index['columns'], true)
+                static fn (array $index): bool => in_array('email', $index['columns'], true)
                     && $index['unique'] === false
             )
         );
@@ -82,8 +81,7 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['name'] === 'custom_email_index'
+                static fn (array $index): bool => $index['name'] === 'custom_email_index'
             )
         );
     }
@@ -101,8 +99,7 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    in_array('email', $index['columns'], true)
+                static fn (array $index): bool => in_array('email', $index['columns'], true)
                     && $index['unique'] === true
             )
         );
@@ -124,8 +121,7 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['name'] === 'custom_email_unique'
+                static fn (array $index): bool => $index['name'] === 'custom_email_unique'
                     && $index['unique'] === true
             )
         );
@@ -148,11 +144,10 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['columns'] === [
-                        'cooperative_id',
-                        'status',
-                    ]
+                static fn (array $index): bool => $index['columns'] === [
+                    'cooperative_id',
+                    'status',
+                ]
                     && $index['unique'] === false
             )
         );
@@ -175,11 +170,10 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['columns'] === [
-                        'cooperative_id',
-                        'slug',
-                    ]
+                static fn (array $index): bool => $index['columns'] === [
+                    'cooperative_id',
+                    'slug',
+                ]
                     && $index['unique'] === true
             )
         );
@@ -205,8 +199,7 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['name'] === 'cooperative_status_index'
+                static fn (array $index): bool => $index['name'] === 'cooperative_status_index'
             )
         );
     }
@@ -231,8 +224,7 @@ final class IndexMacrosTest extends TestCase
 
         $this->assertTrue(
             collect($indexes)->contains(
-                static fn (array $index): bool =>
-                    $index['name'] === 'cooperative_slug_unique'
+                static fn (array $index): bool => $index['name'] === 'cooperative_slug_unique'
                     && $index['unique'] === true
             )
         );

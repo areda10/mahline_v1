@@ -906,3 +906,22 @@ Un User peut rester authentifié simultanément dans plusieurs navigateurs ou ap
 
 Cette règle est **OFFICIELLE — GELÉE**. Toute modification future nécessite une décision explicite d'architecture.
 
+
+
+## 34. Verrouillage d'urgence root-only
+
+Le verrouillage d'urgence est un état de sécurité distinct du statut métier (active, inactive, suspended, etc.) et des compteurs temporaires anti-brute-force.
+
+- Seul super_admin_root peut appliquer ou lever ce verrouillage.
+- Le verrouillage est conservé sur User par emergency_locked_at et emergency_lock_reason.
+- L'application du verrouillage refuse toute nouvelle authentification et toute autorisation via User::isAuthorized().
+- Toutes les sessions Web actives du compte sont révoquées avec le motif emergency_lock ; chaque révocation conserve son entrée Login History et son événement Audit.
+- Tous les API Tokens actifs sont marqués revoked_at ; chaque token conserve son enregistrement et son événement Audit individuel.
+- La levée supprime uniquement l'état d'urgence et le compteur d'échecs propre au compte. Elle ne réactive aucune session ni aucun token et ne remet pas à zéro le compteur IP partagé.
+- L'utilisateur doit se reconnecter et créer de nouveaux tokens API après la levée.
+
+Le parcours HTTP est exposé uniquement sous le groupe root.backoffice protégé par auth, EnsureActiveAuthenticationSession et role:super_admin_root. Le contrôleur répète le contrôle root-only.
+
+Événements d'audit : identity.authentication.emergency_lock.applied (sujet User, acteur root, motif et contexte IP/User-Agent) ; identity.authentication.emergency_lock.released (sujet User, acteur root, motif de levée) ; identity.authentication.session_revoked (un événement par session, motif emergency_lock) ; identity.authentication.token_revoked (un événement par token, raison emergency_lock).
+
+Fichiers de référence : AuthenticationLockoutController, AuthenticationService, SessionService, User, HasAuthorization, routes/web.php, la vue identity/security/lockouts/index.blade.php et la migration 2026_11_10_000001_add_emergency_lock_fields_to_users_table.php.

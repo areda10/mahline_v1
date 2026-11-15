@@ -114,7 +114,6 @@ final class AddressFactoryTest extends TestCase
         );
     }
 
-
     public function test_factory_can_create_multiple_addresses(): void
     {
         $country = Country::factory()->create();
@@ -137,8 +136,7 @@ final class AddressFactoryTest extends TestCase
 
         self::assertTrue(
             $addresses->every(
-                fn (Address $address): bool =>
-                    $address->country_id === $country->id,
+                fn (Address $address): bool => $address->country_id === $country->id,
             ),
         );
     }

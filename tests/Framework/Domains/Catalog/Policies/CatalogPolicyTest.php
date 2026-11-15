@@ -24,7 +24,7 @@ final class CatalogPolicyTest extends TestCase
     {
         parent::setUp();
 
-        $this->policy = new CatalogPolicy();
+        $this->policy = new CatalogPolicy;
     }
 
     public function test_view_any_requires_catalog_view_permission(): void

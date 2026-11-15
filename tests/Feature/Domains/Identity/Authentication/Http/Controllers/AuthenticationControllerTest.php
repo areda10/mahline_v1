@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,8 +23,8 @@ final class AuthenticationControllerTest extends TestCase
 
     private string $userAgent =
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-        . 'AppleWebKit/537.36 (KHTML, like Gecko) '
-        . 'Chrome/140.0.0.0 Safari/537.36';
+        .'AppleWebKit/537.36 (KHTML, like Gecko) '
+        .'Chrome/140.0.0.0 Safari/537.36';
 
     protected function setUp(): void
     {
@@ -70,6 +72,9 @@ final class AuthenticationControllerTest extends TestCase
 
         $loginResponse->assertRedirect(route('user.dashboard'));
         $this->assertAuthenticatedAs($user);
+        $deviceCookie = $loginResponse->getCookie(DeviceTrustCookie::NAME);
+        $this->assertNotNull($deviceCookie);
+        $this->withCookie(DeviceTrustCookie::NAME, $deviceCookie->getValue());
 
         $authenticationSession = AuthenticationSession::query()
             ->where('user_id', $user->getKey())
@@ -107,14 +112,12 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertJsonPath(
             'errors.email',
-            fn ($errors): bool =>
-                is_array($errors) && $errors !== [],
+            fn ($errors): bool => is_array($errors) && $errors !== [],
         );
 
         $response->assertJsonPath(
             'errors.password',
-            fn ($errors): bool =>
-                is_array($errors) && $errors !== [],
+            fn ($errors): bool => is_array($errors) && $errors !== [],
         );
     }
 
@@ -132,8 +135,7 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertJsonPath(
             'errors.email',
-            fn ($errors): bool =>
-                is_array($errors) && $errors !== [],
+            fn ($errors): bool => is_array($errors) && $errors !== [],
         );
     }
 
@@ -159,7 +161,7 @@ final class AuthenticationControllerTest extends TestCase
         $response->assertUnauthorized();
 
         $response->assertJson([
-            'message' => 'Email address is not verified.',
+            'message' => 'Authentication failed.',
         ]);
 
         $this->assertGuest();
@@ -202,11 +204,16 @@ final class AuthenticationControllerTest extends TestCase
         );
 
         $this->assertNotNull($sessionCookie);
+        $this->assertSame(0, $sessionCookie->getExpiresTime());
 
         $this->withCookie(
             config('session.cookie'),
             $sessionCookie->getValue(),
         );
+
+        $deviceCookie = $response->getCookie(DeviceTrustCookie::NAME);
+        $this->assertNotNull($deviceCookie);
+        $this->withCookie(DeviceTrustCookie::NAME, $deviceCookie->getValue());
 
         $dashboardResponse = $this->get(
             route('root.backoffice.dashboard'),
@@ -216,7 +223,6 @@ final class AuthenticationControllerTest extends TestCase
 
         $this->assertAuthenticatedAs($root);
     }
-
 
     public function test_regular_user_is_redirected_to_its_personal_dashboard_after_login(): void
     {
@@ -242,6 +248,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertRedirect(route('user.dashboard'));
         $this->assertAuthenticatedAs($user);
+
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertGreaterThan(now()->getTimestamp(), $sessionCookie->getExpiresTime());
     }
 
     public function test_super_admin_is_redirected_to_the_backoffice_dashboard_after_login(): void
@@ -264,6 +274,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertRedirect(route('backoffice.dashboard'));
         $this->assertAuthenticatedAs($user);
+
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertSame(0, $sessionCookie->getExpiresTime());
     }
 
     public function test_cooperative_admin_is_redirected_to_the_cooperative_dashboard_after_login(): void
@@ -286,6 +300,10 @@ final class AuthenticationControllerTest extends TestCase
 
         $response->assertRedirect(route('backoffice.dashboard'));
         $this->assertAuthenticatedAs($user);
+
+        $sessionCookie = $response->getCookie(config('session.cookie'));
+        $this->assertNotNull($sessionCookie);
+        $this->assertGreaterThan(now()->getTimestamp(), $sessionCookie->getExpiresTime());
     }
 
     public function test_user_can_keep_multiple_active_web_sessions_on_different_devices(): void
@@ -363,5 +381,167 @@ final class AuthenticationControllerTest extends TestCase
         );
 
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_authentication_failures_return_the_same_public_response_for_unknown_invalid_inactive_and_unverified_accounts(): void
+    {
+        $inactive = User::factory()->create([
+            'email' => 'inactive-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Inactive,
+            'email_verified_at' => now(),
+        ]);
+
+        $unverified = User::factory()->create([
+            'email' => 'unverified-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => null,
+        ]);
+
+        $active = User::factory()->create([
+            'email' => 'active-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $locked = User::factory()->create([
+            'email' => 'locked-public-response@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+
+        $securityService = app(AuthenticationSecurityService::class);
+
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $securityService->recordFailedAttempt($locked->email);
+        }
+
+        $attempts = [
+            [
+                'email' => 'missing-public-response@example.com',
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $active->email,
+                'password' => 'WrongPassword123!',
+            ],
+            [
+                'email' => $inactive->email,
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $unverified->email,
+                'password' => 'ValidPassword123!',
+            ],
+            [
+                'email' => $locked->email,
+                'password' => 'ValidPassword123!',
+            ],
+        ];
+
+        foreach ($attempts as $credentials) {
+            $response = $this
+                ->withHeader('User-Agent', $this->userAgent)
+                ->postJson($this->loginUrl, $credentials);
+
+            $response->assertUnauthorized();
+            $response->assertExactJson([
+                'message' => 'Authentication failed.',
+            ]);
+
+            $this->assertGuest();
+        }
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $inactive->email,
+            'event' => 'failed',
+            'reason' => 'account_not_active',
+        ]);
+
+        $this->assertDatabaseHas('login_histories', [
+            'email' => $unverified->email,
+            'event' => 'failed',
+            'reason' => 'email_not_verified',
+        ]);
+    }
+
+    public function test_more_than_five_login_requests_from_one_ip_are_not_blocked_before_domain_failure_limits_apply(): void
+    {
+        for ($attempt = 1; $attempt <= 6; $attempt++) {
+            $response = $this
+                ->withServerVariables([
+                    'REMOTE_ADDR' => '198.51.100.55',
+                ])
+                ->postJson($this->loginUrl, [
+                    'email' => 'unknown-shared-network-'.$attempt.'@example.com',
+                    'password' => 'ValidPassword123!',
+                ]);
+
+            $response->assertUnauthorized();
+            $response->assertExactJson([
+                'message' => 'Authentication failed.',
+            ]);
+        }
+    }
+
+    public function test_browser_login_validation_errors_redirect_back_to_the_form(): void
+    {
+        $response = $this
+            ->from(route('authentication.login'))
+            ->post($this->loginUrl, []);
+
+        $response->assertRedirect(route('authentication.login'));
+        $response->assertSessionHasErrors(['email', 'password']);
+    }
+
+    public function test_browser_login_failure_redirects_with_the_generic_error(): void
+    {
+        $response = $this
+            ->from(route('authentication.login'))
+            ->post($this->loginUrl, [
+                'email' => 'unknown-browser-login@example.com',
+                'password' => 'WrongPassword123!',
+            ]);
+
+        $response->assertRedirect(route('authentication.login'));
+        $response->assertSessionHasErrors([
+            'email' => 'Authentication failed.',
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_json_logout_returns_success_after_revoking_only_the_current_session(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'json-logout@example.com',
+            'password' => 'ValidPassword123!',
+            'status' => UserStatus::Active,
+        ]);
+
+        $loginResponse = $this
+            ->withHeader('User-Agent', $this->userAgent)
+            ->postJson($this->loginUrl, [
+                'email' => $user->email,
+                'password' => 'ValidPassword123!',
+            ]);
+
+        $loginResponse->assertOk();
+
+        $authenticationSession = AuthenticationSession::query()
+            ->where('user_id', $user->getKey())
+            ->whereNull('revoked_at')
+            ->firstOrFail();
+
+        $this->postJson($this->logoutUrl)
+            ->assertOk()
+            ->assertExactJson([
+                'message' => 'Logout successful.',
+            ]);
+
+        $this->assertGuest();
+        $this->assertNotNull($authenticationSession->fresh()->revoked_at);
     }
 }

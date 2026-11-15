@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Audit;
 
-use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Services\AuditService;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -130,6 +129,7 @@ final class AuditServiceTest extends TestCase
             $event->correlation_id,
         );
     }
+
     public function test_uses_ip_address_from_current_http_request(): void
     {
         $request = Request::create(

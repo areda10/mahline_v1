@@ -17,8 +17,7 @@ final class GlobalCategoryController
     public function __construct(
         private readonly CategoryRepository $categoryRepository,
         private readonly CategoryService $categoryService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -36,7 +35,7 @@ final class GlobalCategoryController
         Gate::authorize('create', Category::class);
 
         return view('super-admin-root.categories.create', [
-            'category' => new Category(),
+            'category' => new Category,
             'categories' => Category::query()->global()->active()
                 ->orderBy('sort_order')->orderBy('name')->get(),
         ]);

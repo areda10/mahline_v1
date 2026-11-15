@@ -38,7 +38,7 @@ final class ProductVariantService
                 $normalizedLabel,
             );
 
-            $variant = new ProductVariant();
+            $variant = new ProductVariant;
 
             // La variante appartient au produit.
             // La coopérative est déterminée via Product::cooperative_id.

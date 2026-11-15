@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\DTOs;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 final class AuthenticationContextTest extends TestCase
@@ -98,7 +99,7 @@ final class AuthenticationContextTest extends TestCase
             }
 
             $this->assertNotSame(
-                \Illuminate\Http\Request::class,
+                Request::class,
                 $type->getName()
             );
         }

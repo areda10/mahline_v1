@@ -7,11 +7,10 @@ namespace App\Domains\Identity\Authentication\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
 
 final class AuthenticationService extends BaseService
 {
@@ -19,8 +18,7 @@ final class AuthenticationService extends BaseService
         private readonly LoginHistoryService $loginHistoryService,
         private readonly AuthenticationSecurityService $securityService,
         private readonly SecurityEventService $securityEventService,
-    ) {
-    }
+    ) {}
 
     /**
      * Authenticate a user.
@@ -46,66 +44,10 @@ final class AuthenticationService extends BaseService
             ->first();
 
         /*
-         * Unknown user.
-         *
-         * No authentication session is created.
+         * IP lock takes precedence over account lock. This is an explicit
+         * security decision: when both limits are exhausted, the event
+         * recorded in login history must be ip_locked.
          */
-        if ($user === null) {
-            $this->loginHistoryService->recordFailure(
-                email: $email,
-                reason: 'user_not_found',
-                user: null,
-                ipAddress: $context->ipAddress,
-                userAgent: $context->userAgent,
-                browser: $context->browser,
-                device: $context->device,
-            );
-
-            throw (new ModelNotFoundException())
-                ->setModel(
-                    User::class,
-                    [$context->email],
-                );
-        }
-
-        /*
-         * The account must be active.
-         */
-        if (! $this->isAccountActive($user)) {
-            $this->loginHistoryService->recordFailure(
-                email: $email,
-                reason: 'account_not_active',
-                user: $user,
-                ipAddress: $context->ipAddress,
-                userAgent: $context->userAgent,
-                browser: $context->browser,
-                device: $context->device,
-            );
-
-            throw new RuntimeException(
-                'User account is not active.',
-            );
-        }
-
-        /*
-         * An active account must also have a verified email address.
-         */
-        if ($user->email_verified_at === null) {
-            $this->loginHistoryService->recordFailure(
-                email: $email,
-                reason: 'email_not_verified',
-                user: $user,
-                ipAddress: $context->ipAddress,
-                userAgent: $context->userAgent,
-                browser: $context->browser,
-                device: $context->device,
-            );
-
-            throw new RuntimeException(
-                'Email address is not verified.',
-            );
-        }
-
         /*
          * Verify IP lock.
          */
@@ -125,13 +67,15 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'IP address is temporarily locked.',
             );
         }
 
         /*
-         * Verify account lock.
+         * Apply the account-based lock consistently, including email
+         * addresses that do not currently belong to a user. This avoids
+         * making the lockout behavior depend on account existence.
          */
         if ($this->securityService->isLocked($email)) {
             $this->loginHistoryService->recordFailure(
@@ -144,8 +88,108 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'Account is temporarily locked.',
+            );
+        }
+
+        /*
+         * The IP + normalized email pair is isolated from other users
+         * sharing the same network. IP lock remains the highest-priority
+         * event, followed by account lock, then the pair lock.
+         */
+        if (
+            $context->ipAddress !== null
+            && $this->securityService->isIpEmailLocked(
+                $context->ipAddress,
+                $email,
+            )
+        ) {
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'ip_email_locked',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new AuthenticationFailedException(
+                'IP address and email are temporarily locked.',
+            );
+        }
+
+        /*
+         * Unknown user.
+         *
+         * Count the failed attempt against the normalized email key even
+         * when no account exists. The public response remains generic.
+         */
+        if ($user === null) {
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
+
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'user_not_found',
+                user: null,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new AuthenticationFailedException('Invalid credentials.');
+        }
+
+        /*
+         * The account must be active.
+         */
+        if (! $this->isAccountActive($user)) {
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
+
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'account_not_active',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new AuthenticationFailedException(
+                'User account is not active.',
+            );
+        }
+
+        /*
+         * An active account must also have a verified email address.
+         */
+        if ($user->email_verified_at === null) {
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
+
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'email_not_verified',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new AuthenticationFailedException(
+                'Email address is not verified.',
             );
         }
 
@@ -161,8 +205,9 @@ final class AuthenticationService extends BaseService
             $attemptsBeforeFailure = $this->securityService
                 ->remainingAttempts($email);
 
-            $this->securityService->recordFailedAttempt(
+            $this->securityService->recordFailedAuthentication(
                 $email,
+                $context->ipAddress,
             );
 
             if ($attemptsBeforeFailure === 1) {
@@ -187,12 +232,6 @@ final class AuthenticationService extends BaseService
                 );
             }
 
-            if ($context->ipAddress !== null) {
-                $this->securityService->recordFailedAttemptByIp(
-                    $context->ipAddress,
-                );
-            }
-
             $this->loginHistoryService->recordFailure(
                 email: $email,
                 reason: 'invalid_credentials',
@@ -203,9 +242,27 @@ final class AuthenticationService extends BaseService
                 device: $context->device,
             );
 
-            throw new RuntimeException(
+            throw new AuthenticationFailedException(
                 'Invalid credentials.',
             );
+        }
+
+        /*
+         * Upgrade a valid legacy hash when the configured hashing
+         * parameters have changed. This custom authentication flow uses
+         * Hash::check() and Auth::login(), so Laravel's provider-level
+         * rehash-on-login hook is not invoked automatically.
+         *
+         * Rehashing the same password is not a password change and must
+         * not create a password-history entry.
+         */
+        if (
+            (bool) config('hashing.rehash_on_login', true)
+            && Hash::needsRehash((string) $user->password)
+        ) {
+            $user->forceFill([
+                'password' => Hash::make($context->password),
+            ])->save();
         }
 
         /*
@@ -224,8 +281,9 @@ final class AuthenticationService extends BaseService
         );
 
         if ($context->ipAddress !== null) {
-            $this->securityService->clearFailedIpAttempts(
+            $this->securityService->clearFailedIpEmailAttempts(
                 $context->ipAddress,
+                $email,
             );
         }
 
@@ -237,6 +295,7 @@ final class AuthenticationService extends BaseService
      */
     private function isAccountActive(User $user): bool
     {
-        return $user->status === UserStatus::Active;
+        return $user->status === UserStatus::Active
+            && $user->emergency_locked_at === null;
     }
 }

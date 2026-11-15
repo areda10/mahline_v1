@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
-use App\Domains\Identity\Authentication\Services\SessionService;
-use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\UserManagement\Services\UserManagementService;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
-use App\Domains\Localization\Models\Address;
+use App\Domains\Identity\Authentication\Models\LoginHistory;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -51,7 +51,7 @@ final class UserLifecycleServiceTest extends TestCase
         self::assertNull(PersonalAccessToken::findToken($newToken->plainTextToken));
         self::assertSame(
             2,
-            \App\Domains\Identity\Authentication\Models\LoginHistory::query()
+            LoginHistory::query()
                 ->where('user_id', $target->getKey())
                 ->where('event', 'session_revoked')
                 ->count(),
@@ -84,7 +84,7 @@ final class UserLifecycleServiceTest extends TestCase
         self::assertNull(PersonalAccessToken::findToken($newToken->plainTextToken));
         self::assertSame(
             2,
-            \App\Domains\Identity\Authentication\Models\LoginHistory::query()
+            LoginHistory::query()
                 ->where('user_id', $target->getKey())
                 ->where('event', 'session_revoked')
                 ->count(),
@@ -128,6 +128,7 @@ final class UserLifecycleServiceTest extends TestCase
             'action' => 'api_token_revoked',
         ]);
     }
+
     public function test_root_can_change_own_status(): void
     {
         $root = $this->userWithRole('super_admin_root');

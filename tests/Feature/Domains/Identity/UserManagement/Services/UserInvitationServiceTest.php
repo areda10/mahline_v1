@@ -7,12 +7,14 @@ namespace Tests\Feature\Domains\Identity\UserManagement\Services;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
+use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
-use Throwable;
 
 final class UserInvitationServiceTest extends TestCase
 {
@@ -28,7 +30,7 @@ final class UserInvitationServiceTest extends TestCase
         ]);
 
         $previousInvitation = UserInvitation::query()->create([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $user->getKey(),
             'token_hash' => hash('sha256', 'previous-token'),
             'expires_at' => now()->addMinutes(30),
@@ -71,7 +73,7 @@ final class UserInvitationServiceTest extends TestCase
         ]);
 
         Notification::assertSentOnDemand(
-            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
+            UserInvitationNotification::class,
         );
     }
 
@@ -93,7 +95,7 @@ final class UserInvitationServiceTest extends TestCase
         ]);
 
         Notification::assertSentOnDemand(
-            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
+            UserInvitationNotification::class,
         );
     }
 
@@ -126,7 +128,7 @@ final class UserInvitationServiceTest extends TestCase
         ]);
 
         Notification::assertSentOnDemand(
-            \App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification::class,
+            UserInvitationNotification::class,
         );
     }
 
@@ -141,7 +143,7 @@ final class UserInvitationServiceTest extends TestCase
         $token = 'root-manual-verification-token';
 
         $invitation = UserInvitation::query()->create([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $user->getKey(),
             'purpose' => 'root_manual_verification',
             'token_hash' => hash('sha256', $token),
@@ -161,7 +163,7 @@ final class UserInvitationServiceTest extends TestCase
         $this->assertSame(UserStatus::Active, $acceptedUser->status);
         $this->assertNotNull($acceptedUser->email_verified_at);
         $this->assertFalse((bool) $acceptedUser->must_change_password);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check(
+        $this->assertTrue(Hash::check(
             'MahlineSecure2026!',
             $acceptedUser->password,
         ));
@@ -185,7 +187,7 @@ final class UserInvitationServiceTest extends TestCase
         $token = 'root-manual-verification-suspended-token';
 
         UserInvitation::query()->create([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'user_id' => $user->getKey(),
             'purpose' => 'root_manual_verification',
             'token_hash' => hash('sha256', $token),
@@ -281,7 +283,8 @@ final class UserInvitationServiceTest extends TestCase
         */
 
         Notification::extend('mail', function () {
-            return new class {
+            return new class
+            {
                 public function send(
                     object $notifiable,
                     object $notification,

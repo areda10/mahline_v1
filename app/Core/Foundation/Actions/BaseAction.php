@@ -9,6 +9,4 @@ namespace App\Core\Foundation\Actions;
  *
  * Une Action représente un cas d'utilisation unique.
  */
-abstract class BaseAction
-{
-}
+abstract class BaseAction {}

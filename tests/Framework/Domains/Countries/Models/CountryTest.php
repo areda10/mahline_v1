@@ -15,7 +15,7 @@ final class CountryTest extends TestCase
 
     public function test_country_uses_the_expected_table(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertSame(
             'countries',
@@ -35,7 +35,7 @@ final class CountryTest extends TestCase
 
     public function test_country_has_expected_fillable_attributes(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertSame(
             [
@@ -54,7 +54,7 @@ final class CountryTest extends TestCase
 
     public function test_country_casts_is_active_as_boolean(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertSame(
             'boolean',
@@ -64,7 +64,7 @@ final class CountryTest extends TestCase
 
     public function test_country_casts_deleted_at_as_datetime(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertSame(
             'datetime',
@@ -74,7 +74,7 @@ final class CountryTest extends TestCase
 
     public function test_country_can_be_instantiated(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertInstanceOf(
             Country::class,
@@ -84,7 +84,7 @@ final class CountryTest extends TestCase
 
     public function test_country_uses_ulid_primary_key_configuration(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertSame(
             'string',
@@ -98,7 +98,7 @@ final class CountryTest extends TestCase
 
     public function test_country_has_no_context_specific_foreign_keys(): void
     {
-        $country = new Country();
+        $country = new Country;
 
         self::assertNotContains(
             'address_id',

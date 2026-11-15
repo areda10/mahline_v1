@@ -14,8 +14,7 @@ final class UserInvitationNotification extends Notification
 
     public function __construct(
         private readonly string $invitationUrl,
-    ) {
-    }
+    ) {}
 
     /**
      * Envoi direct : aucun worker de queue n'est requis.
@@ -29,7 +28,7 @@ final class UserInvitationNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Invitation à rejoindre MAHLINE')
             ->greeting('Bonjour,')
             ->line(

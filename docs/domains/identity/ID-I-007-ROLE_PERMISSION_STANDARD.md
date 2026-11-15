@@ -159,3 +159,10 @@ Versions 1.1 and 1.2 add user-management matrix, policy, lifecycle, session-enfo
 Authorization behavior is frozen.
 
 Any change to roles, permissions, Gates or authorization semantics requires synchronized code, tests and documentation.
+
+
+## 12. Emergency lock authorization
+
+The emergency account lock and its release are root-only administrative capabilities. Both HTTP actions are registered inside the root back-office route group protected by authentication, active-session enforcement and the super_admin_root role. AuthenticationLockoutController repeats the root-role check at action level. A super_admin, cooperative_admin or user must receive HTTP 403 when attempting either action.
+
+The emergency-locked target is denied by User::isAuthorized(); therefore role and permission checks based on this method also deny access while the lock is active. The emergency lock is not a role, permission or business status transition. Its application and release are audited by the Authentication domain.

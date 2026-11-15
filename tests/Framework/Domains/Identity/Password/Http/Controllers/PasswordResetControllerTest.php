@@ -8,6 +8,7 @@ use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 final class PasswordResetControllerTest extends TestCase
@@ -93,7 +94,7 @@ final class PasswordResetControllerTest extends TestCase
             'password' => 'OldPassword123',
         ]);
 
-        /** @var \App\Domains\Identity\Password\Services\PasswordResetService $service */
+        /** @var PasswordResetService $service */
         $service = app(
             PasswordResetService::class,
         );
@@ -114,7 +115,7 @@ final class PasswordResetControllerTest extends TestCase
         $user->refresh();
 
         $this->assertTrue(
-            \Illuminate\Support\Facades\Hash::check(
+            Hash::check(
                 'NewPassword123!',
                 (string) $user->password,
             ),
@@ -148,7 +149,7 @@ final class PasswordResetControllerTest extends TestCase
 
         $token = $service->createToken($user);
 
-        \Illuminate\Support\Facades\DB::table('password_reset_tokens')
+        DB::table('password_reset_tokens')
             ->where('user_id', $user->getKey())
             ->update([
                 'expires_at' => now()->subMinute(),

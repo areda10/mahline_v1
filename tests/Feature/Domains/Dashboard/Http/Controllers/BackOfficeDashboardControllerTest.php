@@ -6,8 +6,8 @@ namespace Tests\Feature\Domains\Dashboard\Http\Controllers;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,7 +42,6 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertOk()
             ->assertViewIs('super-admin.dashboard');
     }
-
 
     public function test_root_can_view_its_dedicated_dashboard(): void
     {
@@ -84,7 +83,6 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->get(route('root.backoffice.dashboard'))
             ->assertForbidden();
     }
-
 
     public function test_cooperative_admin_cannot_access_root_or_user_workspaces(): void
     {
@@ -154,14 +152,12 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertViewHas('cooperativeTotal', 1)
             ->assertViewHas(
                 'cooperativeStatuses',
-                fn ($statuses): bool =>
-                    $statuses[CooperativeStatus::ACTIVE->value] === 1,
+                fn ($statuses): bool => $statuses[CooperativeStatus::ACTIVE->value] === 1,
             )
             ->assertViewHas('userTotal', 2)
             ->assertViewHas(
                 'userStatuses',
-                fn ($statuses): bool =>
-                    $statuses[UserStatus::Pending->value] === 1,
+                fn ($statuses): bool => $statuses[UserStatus::Pending->value] === 1,
             )
             ->assertViewHas(
                 'usersByRole',

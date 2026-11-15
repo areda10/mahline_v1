@@ -65,3 +65,10 @@ Covered by:
 ## 8. Freeze rule
 
 Changes to Sanctum integration, token persistence or Web/API separation require corresponding test and documentation changes.
+
+
+## 9. Emergency revocation
+
+When a root-only emergency account lock is applied, all active Sanctum tokens of the target user are revoked by setting revoked_at. The token rows are not deleted. Each token revocation is audited separately with the actor, token subject, user identifier, token name and reason emergency_lock; the plain token secret is never recorded.
+
+Lifting the emergency lock never reactivates an old token. A new token must be issued after the account is authorized again.

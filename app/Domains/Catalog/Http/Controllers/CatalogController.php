@@ -16,8 +16,7 @@ final class CatalogController
 {
     public function __construct(
         private readonly CatalogService $catalogService,
-    ) {
-    }
+    ) {}
 
     public function index(string $cooperative): View
     {
@@ -46,7 +45,7 @@ final class CatalogController
 
         return view('backoffice.catalogs.create', [
             'cooperative' => $cooperativeModel,
-            'catalog' => new Catalog(),
+            'catalog' => new Catalog,
         ]);
     }
 

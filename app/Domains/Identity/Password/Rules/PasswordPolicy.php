@@ -80,7 +80,7 @@ final class PasswordPolicy
 
         $candidates = [
             (string) $user->first_name,
-            trim((string) $user->first_name . ' ' . (string) $user->last_name),
+            trim((string) $user->first_name.' '.(string) $user->last_name),
         ];
 
         $emailLocalPart = strstr((string) $user->email, '@', true);

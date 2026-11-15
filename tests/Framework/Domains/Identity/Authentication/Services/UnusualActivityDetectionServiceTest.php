@@ -93,7 +93,7 @@ final class UnusualActivityDetectionServiceTest extends TestCase
 
         $service = app(UnusualActivityDetectionService::class);
 
-        self::expectException(\InvalidArgumentException::class);
+        self::expectException(InvalidArgumentException::class);
 
         $service->rememberDevice(
             user: $user,
@@ -506,6 +506,7 @@ final class UnusualActivityDetectionServiceTest extends TestCase
             'device' => 'android',
         ]);
     }
+
     // function added from other file
     public function test_authentication_detects_a_new_device_before_remembering_it(): void
     {
@@ -539,8 +540,8 @@ final class UnusualActivityDetectionServiceTest extends TestCase
             ->withHeader(
                 'User-Agent',
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                . 'AppleWebKit/537.36 '
-                . 'Chrome/140.0.0.0 Safari/537.36',
+                .'AppleWebKit/537.36 '
+                .'Chrome/140.0.0.0 Safari/537.36',
             )
             ->postJson($loginUrl, [
                 'email' => $user->email,

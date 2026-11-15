@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Password\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator; 
-use Illuminate\Foundation\Http\FormRequest; 
-use Illuminate\Http\Exceptions\HttpResponseException; 
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\ValidationException;
 
 final class ForgotPasswordRequest extends FormRequest

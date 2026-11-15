@@ -20,8 +20,7 @@ final class ProductController
     public function __construct(
         private readonly ProductRepository $productRepository,
         private readonly ProductService $productService,
-    ) {
-    }
+    ) {}
 
     public function index(string $cooperative): View
     {
@@ -51,7 +50,7 @@ final class ProductController
 
         return view('backoffice.products.create', [
             'cooperative' => $cooperativeModel,
-            'product' => new Product(),
+            'product' => new Product,
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Core\Foundation\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Model;
 
 abstract class BaseModel extends Model
 {

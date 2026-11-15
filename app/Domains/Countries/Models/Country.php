@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Countries\Models;
 
 use App\Core\Foundation\Models\BaseModel;
+use App\Domains\Localization\Models\Address;
 use Database\Factories\CountryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,7 +46,7 @@ final class Country extends BaseModel
     public function addresses(): HasMany
     {
         return $this->hasMany(
-            \App\Domains\Localization\Models\Address::class,
+            Address::class,
             'country_id',
         );
     }

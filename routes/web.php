@@ -1,27 +1,36 @@
 <?php
 
 use App\Domains\Catalog\Http\Controllers\CatalogController;
-use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
-use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeCategoryController as SuperAdminRootCooperativeCategoryController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogProductController as SuperAdminRootCatalogProductController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductController as SuperAdminRootProductController;
-use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Catalog\Http\Controllers\CatalogProductController;
 use App\Domains\Categories\Http\Controllers\CategoryController;
 use App\Domains\Cooperatives\Http\Controllers\CooperativeController;
+use App\Domains\Dashboard\Http\Controllers\BackOfficeDashboardController;
+use App\Domains\Dashboard\Http\Controllers\UserDashboardController;
+use App\Domains\Identity\Authentication\Http\Controllers\ApiTokenManagementController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
+use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
+use App\Domains\Identity\Authentication\Http\Controllers\DeviceTrustController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Media\Http\Controllers\MediaController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
+use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
+use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
+use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogProductController as SuperAdminRootCatalogProductController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeCategoryController as SuperAdminRootCooperativeCategoryController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController as SuperAdminRootCooperativeController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductController as SuperAdminRootProductController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserApiTokenController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
-use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
-use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,7 +42,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('authentication')
     ->name('authentication.')
-    ->middleware('web')
     ->group(function (): void {
         /*
          * Display authentication endpoint.
@@ -49,7 +57,7 @@ Route::prefix('authentication')
         Route::post(
             '/login',
             [AuthenticationController::class, 'login']
-        )->middleware('throttle:5,1')->name('login.store');
+        )->name('login.store');
 
         /*
          * Logout authenticated user.
@@ -60,6 +68,80 @@ Route::prefix('authentication')
         )->name('logout');
     });
 
+/*
+|--------------------------------------------------------------------------
+| Customer registration and email verification
+|--------------------------------------------------------------------------
+*/
+Route::prefix('customer')
+    ->name('customer.')
+    ->group(function (): void {
+        Route::middleware('guest')->group(function (): void {
+            Route::get('login', [AuthenticationController::class, 'showCustomerLogin'])
+                ->name('login');
+            Route::post('login', [AuthenticationController::class, 'loginCustomer'])
+                ->middleware('throttle:5,1')
+                ->name('login.store');
+            Route::get('register', [CustomerRegistrationController::class, 'create'])
+                ->name('register');
+            Route::post('register', [CustomerRegistrationController::class, 'store'])
+                ->middleware('throttle:5,1')
+                ->name('register.store');
+
+            Route::get('password/forgot', [PasswordResetController::class, 'showForgotForm'])
+                ->name('password.request');
+            Route::post('password/forgot', [PasswordResetController::class, 'forgot'])
+                ->middleware('throttle:5,1')
+                ->name('password.email');
+            Route::get('password/reset', [PasswordResetController::class, 'showResetForm'])
+                ->name('password.reset');
+            Route::post('password/reset', [PasswordResetController::class, 'reset'])
+                ->middleware('throttle:10,1')
+                ->name('password.update');
+        });
+
+        Route::get('verification/notice', [CustomerRegistrationController::class, 'notice'])
+            ->name('verification.notice');
+        Route::get('verification/verify', [CustomerRegistrationController::class, 'verify'])
+            ->middleware('throttle:10,1')
+            ->name('verification.verify');
+        Route::post('verification/resend', [CustomerRegistrationController::class, 'resend'])
+            ->middleware('throttle:10,1')
+            ->name('verification.resend');
+
+        Route::get('email/change/verify', [CustomerProfileController::class, 'verifyEmailChange'])
+            ->middleware('throttle:10,1')
+            ->name('email.change.verify');
+
+        Route::post('logout', [AuthenticationController::class, 'logout'])
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->name('logout');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
+
+        Route::prefix('security/password')
+            ->name('security.password.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+                Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+            });
+
+        Route::prefix('password/change-required')
+            ->name('password.force-change.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+                Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+            });
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -68,7 +150,6 @@ Route::prefix('authentication')
 */
 Route::prefix('password')
     ->name('password.')
-    ->middleware('web')
     ->group(function (): void {
         // Display the forgot-password form.
         Route::get(
@@ -97,14 +178,14 @@ Route::prefix('password')
 
 Route::prefix('password/change-required')
     ->name('password.force-change.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
         Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
     });
 
 Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit'])
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->name('security.password.edit');
 
 /*
@@ -119,6 +200,12 @@ Route::get('/', function () {
     }
 
     $user = auth()->user();
+
+    if ($user->hasRole('customer')) {
+        return redirect()->route($user->must_change_password
+            ? 'customer.password.force-change.edit'
+            : 'customer.dashboard');
+    }
 
     if ($user->must_change_password) {
         return redirect()->route('password.force-change.edit');
@@ -140,8 +227,23 @@ Route::get('/', function () {
 });
 
 Route::get('/user/dashboard', UserDashboardController::class)
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
+
+Route::get('/customer/dashboard', CustomerDashboardController::class)
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->name('customer.dashboard');
+
+Route::prefix('customer/profile')
+    ->name('customer.profile.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->group(function (): void {
+        Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
+        Route::post('email', [CustomerProfileController::class, 'requestEmailChange'])
+            ->middleware('throttle:5,1')
+            ->name('email.change');
+    });
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
     ->middleware('throttle:10,1')
@@ -153,18 +255,53 @@ Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept
 
 Route::prefix('root/back-office')
     ->name('root.backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
 
+        Route::get('security/authentication-lockouts', [AuthenticationLockoutController::class, 'index'])
+            ->name('security.authentication-lockouts.index');
+        Route::post('security/authentication-lockouts/unlock', [AuthenticationLockoutController::class, 'unlock'])
+            ->name('security.authentication-lockouts.unlock');
+        Route::post('security/authentication-lockouts/emergency-lock', [AuthenticationLockoutController::class, 'emergencyLock'])
+            ->name('security.authentication-lockouts.emergency-lock');
+        Route::post('security/authentication-lockouts/emergency-unlock', [AuthenticationLockoutController::class, 'releaseEmergencyLock'])
+            ->name('security.authentication-lockouts.emergency-unlock');
+
         Route::get('security/sessions', [AuthenticationSessionController::class, 'rootIndex'])
             ->name('security.sessions.index');
+        Route::post('security/sessions/extend', [AuthenticationSessionController::class, 'extend'])
+            ->name('security.sessions.extend');
+        Route::post('security/sessions/logout-everywhere', [AuthenticationController::class, 'logoutEverywhere'])
+            ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
 
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
+
+        Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
+            ->name('security.api-tokens.index');
+        Route::post('security/api-tokens', [ApiTokenManagementController::class, 'store'])
+            ->name('security.api-tokens.store');
+        Route::delete('security/api-tokens', [ApiTokenManagementController::class, 'destroyAll'])
+            ->name('security.api-tokens.destroy-all');
+        Route::delete('security/api-tokens/{token}', [ApiTokenManagementController::class, 'destroy'])
+            ->name('security.api-tokens.destroy');
+
         Route::delete('users/{user}/sessions/{session}', [AuthenticationSessionController::class, 'revokeForUser'])
             ->name('users.sessions.destroy');
+
+        Route::delete('users/{user}/api-tokens', [UserApiTokenController::class, 'destroyAllFromBackOffice'])
+            ->name('users.api-tokens.destroy-all');
+        Route::delete('users/{user}/api-tokens/{token}', [UserApiTokenController::class, 'destroyFromBackOffice'])
+            ->name('users.api-tokens.destroy');
 
         Route::get('users', [SuperAdminRootUserManagementController::class, 'index'])
             ->name('users.index');
@@ -203,7 +340,6 @@ Route::prefix('root/back-office')
             ->name('users.cooperatives.store');
         Route::delete('users/{superAdmin}/cooperatives/{cooperative}', [SuperAdminCooperativeAssignmentController::class, 'destroy'])
             ->name('users.cooperatives.destroy');
-
 
         Route::resource('cooperatives', SuperAdminRootCooperativeController::class)
             ->except(['destroy'])
@@ -279,17 +415,38 @@ Route::prefix('root/back-office')
 */
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
             ->name('security.sessions.index');
+        Route::post('security/sessions/extend', [AuthenticationSessionController::class, 'extend'])
+            ->name('security.sessions.extend');
+        Route::post('security/sessions/logout-everywhere', [AuthenticationController::class, 'logoutEverywhere'])
+            ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
+
+        Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
+            ->name('security.api-tokens.index');
+        Route::post('security/api-tokens', [ApiTokenManagementController::class, 'store'])
+            ->name('security.api-tokens.store');
+        Route::delete('security/api-tokens', [ApiTokenManagementController::class, 'destroyAll'])
+            ->name('security.api-tokens.destroy-all');
+        Route::delete('security/api-tokens/{token}', [ApiTokenManagementController::class, 'destroy'])
+            ->name('security.api-tokens.destroy');
     });
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
     ->group(function (): void {
 
         Route::get('dashboard', BackOfficeDashboardController::class)
@@ -330,7 +487,7 @@ Route::prefix('back-office')
 
         Route::post('users/{user}/resend-invitation', [UserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
-            
+
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
             ->group(function (): void {
@@ -402,7 +559,7 @@ Route::prefix('back-office')
                     [ProductController::class, 'reactivate'],
                 )->name('products.reactivate');
             });
-});
+    });
 
 // Route::get('/_debug/auth-session', function () {
 //     return response()->json([
@@ -414,3 +571,38 @@ Route::prefix('back-office')
 //         ),
 //     ]);
 // });
+
+
+/*
+|--------------------------------------------------------------------------
+| Media
+|--------------------------------------------------------------------------
+*/
+
+// Public product and cooperative images may be streamed without exposing
+// their physical storage location. Private media requires an authenticated
+// owner/administrator and is authorized by MediaPolicy.
+Route::get('/media/{media}', [MediaController::class, 'show'])
+    ->whereUlid('media')
+    ->name('media.show');
+
+Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
+    ->prefix('media')
+    ->name('media.')
+    ->group(function (): void {
+        Route::get('{media}/private', [MediaController::class, 'showPrivate'])
+            ->whereUlid('media')
+            ->name('private');
+        Route::post('/', [MediaController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('store');
+        Route::put('{media}/primary', [MediaController::class, 'primary'])
+            ->whereUlid('media')
+            ->name('primary');
+        Route::patch('{media}/order', [MediaController::class, 'reorder'])
+            ->whereUlid('media')
+            ->name('reorder');
+        Route::delete('{media}', [MediaController::class, 'destroy'])
+            ->whereUlid('media')
+            ->name('destroy');
+    });

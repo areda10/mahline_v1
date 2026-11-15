@@ -103,7 +103,7 @@ final class LoginHistoryService extends BaseService
      * - password_reset
      * - security_incident
      * - global_logout
-    */
+     */
     public function recordSessionRevoked(
         User $user,
         AuthenticationSession $session,

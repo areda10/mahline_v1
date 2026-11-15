@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authentication\Models;
 
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Authentication\Services\AuthenticationService;
-use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
-use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 final class AuthenticationSessionTest extends TestCase
@@ -116,12 +112,12 @@ final class AuthenticationSessionTest extends TestCase
         ]);
 
         $this->assertInstanceOf(
-            \Illuminate\Support\Carbon::class,
+            Carbon::class,
             $session->authenticated_at
         );
 
         $this->assertInstanceOf(
-            \Illuminate\Support\Carbon::class,
+            Carbon::class,
             $session->last_activity_at
         );
 
@@ -182,5 +178,4 @@ final class AuthenticationSessionTest extends TestCase
 
         $this->assertFalse($session->isActive());
     }
-
 }

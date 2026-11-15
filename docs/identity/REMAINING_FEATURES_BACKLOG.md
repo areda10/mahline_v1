@@ -1,14 +1,18 @@
 # MAHLINE V7.0 — Backlog des fonctionnalités restantes
 ## Domaine Identity — plan d'implémentation après les décisions et commits initiaux
 
-- **Version :** 2.4
+- **Version :** 5.7
 - **Date de création :** 8 novembre 2026
-- **Dernière mise à jour :** 9 novembre 2026
+- **Dernière mise à jour :** 11 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Document de décisions associé :** [USER_MANAGEMENT_DECISIONS_AND_TRACKING.md](./USER_MANAGEMENT_DECISIONS_AND_TRACKING.md)
 - **Statut :** backlog initial établi à partir des décisions validées et des constats d'audit ; tâches à revalider au fur et à mesure des tests et des nouveaux audits.
 
 ---
+
+## 0. Feuille de route globale des domaines
+
+L'inventaire global des domaines présents/absents, les priorités de développement, les dépendances et le parcours vers la mise en production sont suivis dans [`docs/roadmap/DOMAIN_DEVELOPMENT_ROADMAP.md`](../roadmap/DOMAIN_DEVELOPMENT_ROADMAP.md). Ce backlog reste le registre détaillé des fonctionnalités Identity ; les deux documents sont complémentaires.
 
 ## 1. Règles de gestion du backlog
 
@@ -44,7 +48,7 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 - [ ] **ID01-01** Auditer tous les points d'entrée qui créent ou modifient un mot de passe : création administrative, activation manuelle, invitation, activation, changement volontaire, changement forcé, reset et éventuels endpoints API.
 - [ ] **ID01-02** Faire passer chaque parcours par un validateur commun, sans possibilité de contourner la politique.
-- [ ] **ID01-03** Implémenter la vérification des mots de passe courants/compromis avec une approche respectueuse de la confidentialité (k-anonymity ou mécanisme équivalent).
+- [ ] **ID01-03** (REPORTÉ — à reprendre ultérieurement à la demande de l'utilisateur) Implémenter la vérification des mots de passe courants/compromis avec une approche respectueuse de la confidentialité (k-anonymity ou mécanisme équivalent).
 - [ ] **ID01-04** Concevoir la liste locale de mots de passe refusés : format documenté, source, version, date, taille, empreinte SHA-256 et statut de validité.
 - [ ] **ID01-05** Implémenter l'import sécurisé de la liste : provenance vérifiée, intégrité vérifiée, rejet des listes incomplètes/corrompues et conservation de la dernière version valide.
 - [ ] **ID01-06** Permettre la mise à jour sans modification du code applicatif.
@@ -58,32 +62,34 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 - [ ] **ID01-14** Pendant le changement obligatoire, bloquer l'accès au dashboard et aux autres routes métier ; autoriser uniquement changement de mot de passe et déconnexion.
 - [ ] **ID01-15** Envoyer l'e-mail informatif prévu lorsqu'un changement devient obligatoire, sans mot de passe ni lien de reset non sollicité.
 - [ ] **ID01-16** Présenter à l'utilisateur les motifs de refus utiles sans révéler les détails internes de détection.
-- [ ] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation.
-- [ ] **ID01-18** Exécuter et valider les tests existants de `PasswordPolicyTest` après le commit de correction des fixtures.
+- [x] **ID01-17** Compléter les tests de longueur, classes de caractères, Unicode, espaces, données personnelles, limites et messages de validation. Couverture vérifiée : prénom, nom complet, partie locale et fragments d'e-mail, normalisation casse/séparateurs, acceptation sans information personnelle, lettres/chiffres/caractères spéciaux Unicode, longueur Unicode et messages exacts des erreurs. Tests ciblés et Pint confirmés VERTS le 9 novembre 2026 ; commit `45290bceefc84158f1158ecf7b626537e9682c43`.
+- [x] **ID01-18** Exécuter et valider `php artisan test --filter=PasswordPolicyTest` après l'ajout des tests de données personnelles — VERT confirmé par l'utilisateur le 9 novembre 2026 ; Pint `php vendor/bin/pint --test` également VERT.
 - [x] **ID01-19** Corriger les fixtures de `PasswordServiceTest` pour respecter ID-01 et remplacer le rejet erroné des espaces par un test d'acceptation (`Mahline Password13!`). Commit `8a31970f8d983df7926f3a13d696903edd0471b3` ; exécution locale du test ciblé encore à confirmer.
 
 ### ID-02 — Historique des mots de passe
 
 - [x] **ID02-01** Exécuter la migration `2026_11_08_000001_create_user_password_histories_table.php` — exécutée localement avec succès le 8 novembre 2026 (Laravel : `229.90ms DONE`). La validation du schéma et des parcours reste couverte par les tests d'intégration.
-- [ ] **ID02-02** Vérifier que l'archivage de l'ancien hash et le remplacement du mot de passe sont toujours dans une transaction atomique.
-- [ ] **ID02-03** Vérifier le verrouillage concurrent de la ligne utilisateur pour empêcher deux changements simultanés de contourner l'historique.
-- [ ] **ID02-04** Tester le refus du mot de passe courant et de chacun des cinq anciens mots de passe.
-- [ ] **ID02-05** Tester la rotation : conservation de cinq anciens hashes et suppression du plus ancien lors de l'ajout du sixième.
-- [ ] **ID02-06** Tester qu'un échec de validation, une exception ou un rollback ne crée aucune entrée d'historique.
-- [ ] **ID02-07** Vérifier l'application commune aux changements volontaires/forcés, reset, invitation et activation.
-- [ ] **ID02-08** Vérifier les cas de compte sans hash courant (si techniquement possibles) et la compatibilité avec les comptes historiques.
-- [ ] **ID02-09** Vérifier la politique de suppression des historiques lors de la suppression physique exceptionnelle d'un compte, en cohérence avec les obligations de conservation et la FK choisie.
+- [x] **ID02-02** Vérifier l'atomicité de l'archivage de l'ancien hash et du remplacement du mot de passe : les quatre parcours testés (changement volontaire, reset, changement forcé et acceptation d'invitation) exécutent ces opérations dans une transaction ; les tests de panne d'audit confirment le rollback complet. Validation locale confirmée le 9 novembre 2026.
+- [x] **ID02-03** Vérifier le verrouillage concurrent de la ligne utilisateur : test du service confirmant l'émission d'un `SELECT ... FOR UPDATE` sur `users`, et test MySQL à deux connexions confirmant qu'un verrou `FOR UPDATE` détenu par une transaction empêche une seconde connexion d'obtenir le même verrou (`NOWAIT`). Tests ciblés `PasswordServiceTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026. Cette couverture valide le mécanisme de verrouillage ; un scénario de concurrence bout-en-bout entre deux changements de mot de passe reste à distinguer.
+- [x] **ID02-04** Tester le refus du mot de passe courant et de chacun des cinq anciens mots de passe. Tests ajoutés dans `PasswordServiceTest` ; validation locale `php artisan test --filter=PasswordServiceTest` et Pint confirmée VERTS par l'utilisateur le 9 novembre 2026. Commit `f4595f26502e0e74d4853fb0dbe09a5d70f6d11d`.
+- [x] **ID02-05** Tester la rotation : conservation de cinq anciens hashes et suppression du plus ancien lors de l'ajout du sixième. Test ajouté dans `PasswordServiceTest` ; validation locale `php artisan test --filter=PasswordServiceTest` et Pint confirmée VERTS par l'utilisateur le 9 novembre 2026. Commit `f4595f26502e0e74d4853fb0dbe09a5d70f6d11d`.
+- [x] **ID02-06** Tester le rollback après une exception pendant la persistance de l'audit : aucun historique n'est conservé et les mutations associées sont annulées dans les quatre parcours testés. Les cas généraux d'échec de validation restent couverts par les tests de chaque service ; validation ciblée confirmée le 9 novembre 2026.
+- [x] **ID02-07** Vérifier l'application commune aux changements volontaires/forcés, reset, invitation et activation. Les quatre parcours initiaux utilisent le service commun d'historique dans leurs transactions ; l'activation manuelle root a été corrigée pour archiver le hash existant avant de définir `MahlineMahline`. Test `test_root_temporary_activation_archives_the_existing_password` validé localement par l'utilisateur le 9 novembre 2026 ; commits `6b70f2065d6f1ba15f57640787bda0e8324ee30e` et `9f5d774293fcb86ac0a05cd52da53cca8fe48d25`.
+- [x] **ID02-08** Vérifier le cas d'un compte sans hash courant : `PasswordHistoryService::archiveCurrentPassword()` refuse désormais un hash nul/vide avec une `InvalidArgumentException` explicite ; test `test_password_history_refuses_to_archive_an_empty_current_hash` ajouté et validation locale `PasswordServiceTest` + `UserManagementServiceTest` + Pint confirmée VERTS le 9 novembre 2026. La compatibilité des formats de hash des comptes historiques reste à auditer.
+- [x] **ID02-09** Vérifier la suppression des historiques : le test `test_password_history_survives_soft_delete_and_cascades_on_force_delete` confirme que la suppression logique conserve les historiques et que la suppression physique exceptionnelle les supprime par cascade FK. Validation locale `UserManagementServiceTest` + Pint confirmée VERTS le 9 novembre 2026 ; commit `b231483c25ab1fba5dfa5020fd3e8f7fbb840017`.
 - [ ] **ID02-10** Compléter les tests HTTP/intégration et concurrence ; les tests ciblés `php artisan test --filter=PasswordHistory` sont verts (confirmation utilisateur du 8 novembre 2026).
+- [x] **ID02-11** Appliquer le rehash des hashes obsolètes après authentification réussie : `AuthenticationService` vérifie `hashing.rehash_on_login` et `Hash::needsRehash()`, puis remplace le hash sans créer d'historique de changement de mot de passe. Tests de hash obsolète et d'option désactivée ajoutés ; `AuthenticationServiceTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026. Commits `d8585f716ec2eb97be8705407ce5dfd5c8634af9` et `7d01d96f7950d0ea7748c09393cb14186bcaf68e`.
+- [ ] **ID02-12 (REPORTÉ — décision utilisateur du 9 novembre 2026)** Auditer la compatibilité inter-algorithmes des hashes historiques, notamment bcrypt ↔ Argon, ainsi que la stratégie de migration progressive. Ne pas intégrer cette analyse au périmètre courant ; la reprendre ultérieurement.
 
 ### Authentification — protection des réponses et des tentatives
 
-- [ ] **AUTH-01** Uniformiser les réponses publiques de connexion pour compte inexistant, mot de passe incorrect, compte inactif/suspendu, e-mail non vérifié et verrouillage ; conserver les détails uniquement dans les journaux internes.
-- [ ] **AUTH-02** Compter les tentatives échouées de façon cohérente pour les comptes connus/inconnus et les états de compte, sans créer de fuite d'information.
-- [ ] **AUTH-03** Renforcer la limitation par compte et par IP contre les attaques distribuées et les contournements via IP partagée.
-- [ ] **AUTH-04** Vérifier la remise à zéro des compteurs après authentification réussie sans effacer abusivement les compteurs IP communs.
-- [ ] **AUTH-05** Tester le blocage après cinq échecs pendant quinze minutes, son expiration automatique et l'absence de blocage permanent.
-- [ ] **AUTH-06** Vérifier que seul `super_admin_root` peut lever manuellement un blocage lorsque cette action est autorisée.
-- [ ] **AUTH-07** Vérifier les réponses, statuts HTTP et messages sur toutes les routes web/API.
+- [x] **AUTH-01** Uniformiser les réponses publiques de connexion pour compte inexistant, mot de passe incorrect, compte inactif/suspendu, e-mail non vérifié et verrouillage ; conserver les détails uniquement dans les journaux internes. Réponses JSON et formulaire harmonisés (`401`, `Authentication failed.`), compte inexistant non distingué par un `404`, motifs internes conservés dans `login_histories`. Tests `AuthenticationControllerTest` + `AuthenticationServiceTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026. Commits applicatifs/tests : `ccb0a3d5fc24cf80b62d6c41a2562b8699e6d19e`, `d98ea4f41965c9e726fb73807c0bc1f5c3e7a1e3`, `97836aebf459b7fe182a3f0822407bdef5601aa3`, `ed274a592c8d364f6d91769c815160668e825341`.
+- [x] **AUTH-02 — VALIDÉ** Compter les tentatives échouées de façon cohérente pour les comptes connus/inconnus et les états de compte, sans créer de fuite d'information. Tests ciblés `AuthenticationServiceTest`, `AuthenticationControllerTest` et `pint --test` confirmés verts par l'utilisateur le 9 novembre 2026. La priorité du blocage IP sur le blocage du compte est également validée (`bfa963f7c0e47204fa4ede19230a609589bc826a`).
+- [x] **AUTH-03 — VALIDÉ** Limitation à trois niveaux : 5 échecs par compte/e-mail normalisé, 30 par IP et 5 par couple IP + e-mail, sur 15 minutes. Échecs inconnus/inactifs/non vérifiés/mot de passe incorrect comptabilisés ; clés HMAC ; route login sans throttle qui compte les succès. Tests de service et HTTP ajoutés. Détails et commits dans `USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`, section 20.37. Après première exécution, tests historiques IP alignés sur 30 et test transactionnel aligné sur la réponse publique `Authentication failed.` ; commits correctifs consignés en section 20.37. Tests `AuthenticationSecurityServiceTest`, `AuthenticationWorkflowTransactionTest`, `AuthenticationServiceTest`, `AuthenticationControllerTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.
+- [x] **AUTH-04 — VALIDÉ** Une connexion réussie efface le compteur du compte et le compteur du couple IP + e-mail, mais jamais le compteur IP partagé. Test de non-régression ajouté.
+- [x] **AUTH-05 — VALIDÉ** Seuils et expiration automatique après 15 minutes testés pour les trois compteurs ; tests de seuils et d'expiration confirmés VERTS avec `AuthenticationSecurityServiceTest` et Pint le 9 novembre 2026.
+- [x] **AUTH-06 — VALIDÉ** Déverrouillage root-only des trois compteurs (compte, IP partagée et couple IP + e-mail), page dédiée et lien de navigation Root, motif obligatoire, audit append-only et tests HTTP. Tests ciblés confirmés VERTS par l'utilisateur le 9 novembre 2026 ; voir section 20.38 du cahier de décisions. La validation Pint de ce lot reste à confirmer séparément.
+- [x] **AUTH-07 — VALIDÉ** Contrat HTTP Web/API : négociation HTML/JSON, réponses génériques de refus, erreurs techniques inattendues en `500`, retrait de `/api/test-auth` des routes de production et route de diagnostic limitée au contexte de test. Tests ciblés et `php vendor/bin/pint --test` confirmés VERTS par l'utilisateur le 9 novembre 2026. Détails en sections 20.39–20.40 du cahier de décisions.
 
 ---
 
@@ -91,42 +97,42 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Sessions multi-appareils et expiration
 
-- [ ] **SESS-01** Implémenter et tester les délais d'inactivité serveur par rôle : root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min.
-- [ ] **SESS-02** Ajouter l'avertissement côté interface deux minutes avant expiration et l'action de prolongation.
-- [ ] **SESS-03** Vérifier que l'expiration d'une session ferme uniquement la session courante et conserve les autres sessions valides.
-- [ ] **SESS-04** Implémenter le comportement de cookie demandé : non persistant pour root/super_admin ; persistant pour cooperative_admin/user jusqu'à expiration d'inactivité ou révocation.
-- [ ] **SESS-05** Ajouter la déconnexion globale personnelle avec confirmation, révocation de toutes les sessions et tokens propres, et journalisation.
-- [ ] **SESS-06** Conserver plusieurs sessions web actives simultanément ; une nouvelle connexion ne doit pas révoquer les anciennes.
-- [ ] **SESS-07** Tester la révocation individuelle, globale, par changement de mot de passe, changement de rôle, changement d'e-mail et verrouillage d'urgence.
-- [ ] **SESS-08** Vérifier que les anciennes sessions et anciens tokens ne sont pas restaurés après restauration d'un compte archivé/supprimé.
+- [x] **SESS-01 — VALIDÉ (9 novembre 2026)** Délais d'inactivité serveur par rôle : root 15 min, super_admin 30 min, cooperative_admin 30 min, user 60 min ; le délai le plus court prévaut si plusieurs rôles. Expiration atomique, révocation `inactivity_timeout`, LoginHistory/Audit, invalidation de la session Laravel et refus de la requête. Tests `SessionInactivityPolicyTest`, `EnsureActiveAuthenticationSessionTest`, `SessionServiceTest` et Pint confirmés VERTS par l'utilisateur.
+- [x] **SESS-02 — VALIDÉ (9 novembre 2026)** Avertissement global T−2 minutes dans les layouts authentifiés admin/root, compte à rebours basé sur `last_activity_at` et la politique de rôle centralisée, interface FR/AR/EN, prolongation POST limitée à la session courante et protégée contre toute résurrection après expiration. Tests HTTP utilisateur/root, rendu des layouts, refus d'une autre session et expiration ; tests ciblés et Pint confirmés VERTS par l'utilisateur. Correction du helper : identifiant brut fourni à `withCookie()` (qui chiffre déjà automatiquement) et `withCredentials()` pour transmettre les cookies aux requêtes JSON. Commit final du helper `b77f7bde74582c2079976ca0b2cbf2794d571c81`.
+- [x] **SESS-03 — VALIDÉ (10 novembre 2026)** Vérifier que l'expiration d'une session ferme uniquement la session courante et conserve les autres sessions valides. Le test `test_expiring_one_session_keeps_the_users_other_session_active()` confirme la révocation de la seule session expirée, le maintien de la deuxième session et l'accès HTTP `200` depuis celle-ci. Tests ciblés `EnsureActiveAuthenticationSessionTest`, `SessionServiceTest` et Pint confirmés VERTS par l'utilisateur. Commit final du test : `ae09c0e1c0ef159305f875ca742375d554e5173c`.
+- [x] **SESS-04 — VALIDÉ (10 novembre 2026)** Cookies non persistants pour super_admin_root/super_admin ; cookies persistants pour cooperative_admin/user. ApplyRoleBasedSessionCookiePolicy applique la politique avant l'ajout du cookie par StartSession ; les délais d'inactivité serveur restent indépendants. Tests AuthenticationControllerTest, EnsureActiveAuthenticationSessionTest et Pint confirmés VERTS par l'utilisateur.
+- [x] **SESS-05 — VALIDÉ (10 novembre 2026)** Déconnexion globale personnelle avec confirmation, révocation des sessions web et jetons Sanctum appartenant à l'utilisateur courant, invalidation du navigateur courant et journalisation individuelle + événement global. Le test `test_user_can_log_out_everywhere_and_revoke_all_own_sessions_and_api_tokens()` et les tests ciblés `AuthenticationSessionControllerTest`, `AuthenticationControllerTest`, `PersonalAccessTokenTest` ainsi que `php vendor/bin/pint --test` sont confirmés VERTS par l'utilisateur le 10 novembre 2026.
+- [x] **SESS-06 — VALIDÉ (10 novembre 2026)** Conserver plusieurs sessions web actives simultanément ; une nouvelle connexion ne doit pas révoquer les anciennes. `SessionService::create()` crée une nouvelle ligne sans révoquer les précédentes et verrouille la ligne utilisateur ; `AuthenticationWorkflow` utilise ce service à chaque connexion. Tests existants confirmés VERTS par l'utilisateur : `test_previous_session_is_retained_without_revocation()`, `test_new_login_does_not_create_session_revocation_history()`, `test_new_login_keeps_previous_session_active()` et `test_phone_login_keeps_previous_computer_session_active()` ; suites `SessionServiceTest`, `AuthenticationWorkflowTest` et Pint confirmés VERTS.
+- [x] **SESS-07 — VALIDÉ (10 novembre 2026)** Révocations individuelles/globales et liées aux changements sensibles ; tokens conservés avec revoked_at et audit ; verrouillage d’urgence root-only persistant, révocation immédiate des sessions et tokens, refus d’authentification et levée root-only sans restauration des anciens accès.
+- [x] **SESS-08 — VALIDÉ (10 novembre 2026)** La restauration d'un compte archivé ou soft-deleted révoque défensivement toute session Web, tout token API et toute invitation encore actifs (`user_restored`). Tests HTTP de restauration archivage/suppression et Pint confirmés VERTS par l'utilisateur.
 
 ### Détection des appareils et alertes de connexion
 
-- [ ] **SESS-09** Remplacer le hook d'authentification nul par une intégration effective du workflow de détection de nouvel appareil.
-- [ ] **SESS-10** Envoyer une alerte e-mail lors d'une connexion depuis un nouvel appareil avec date/heure, navigateur, appareil et localisation approximative.
-- [ ] **SESS-11** Permettre à l'utilisateur de consulter et révoquer ses propres sessions ; interdire la révocation des sessions d'un autre utilisateur sauf rôle autorisé.
+- [x] **SESS-09 — VALIDÉ (10 novembre 2026)** Le workflow compare l'appareil au registre `known_devices` avant mémorisation ; un premier appareil déclenche `unusual_activity_detected` et `identity.authentication.new_device_detected`. Le hook nul n'est plus utilisé par le conteneur. Tests ciblés `AuthenticationWorkflowTest`, `AuthenticationWorkflowTransactionTest`, `UnusualActivityDetectionServiceTest`, `KnownDeviceTest` et `php vendor/bin/pint --test` confirmés VERTS par l'utilisateur.
+- [x] **SESS-10 — VALIDÉ (10 novembre 2026)** Notification e-mail FR/EN/AR envoyée uniquement lors de la première connexion depuis un appareil inconnu ; date/heure selon le fuseau utilisateur, navigateur/appareil, localisation signalée indisponible faute de fournisseur GeoIP. Envoi après commit ; une panne e-mail ne bloque pas la connexion ni les traces SecurityEvent/Audit. `AuthenticationWorkflowTransactionTest`, `AuthenticationWorkflowTest` et `php vendor/bin/pint --test` confirmés VERTS par l'utilisateur. Le conflit de méthode avec `Notification::locale()` a été corrigé en renommant la méthode privée `resolveLocale()`.
+- [x] **SESS-11 — VALIDÉ (10 novembre 2026)** Consultation des sessions actives selon le délai d'inactivité par rôle ; révocation individuelle isolée par propriétaire ; déconnexion immédiate du navigateur courant lorsqu'il est révoqué ; autres sessions conservées ; traçabilité Login History + Audit vérifiée par tests HTTP et service. Tests `AuthenticationSessionControllerTest`, `SessionServiceTest` et `php vendor/bin/pint --test` confirmés VERTS par l'utilisateur.
 - [ ] **SESS-12** Implémenter la détection d'un pays inhabituel et le challenge OTP e-mail complémentaire.
 - [ ] **SESS-13** OTP : six chiffres, durée cinq minutes, maximum cinq tentatives, renvoi après 60 secondes, nouveau code invalidant l'ancien, stockage hashé, consommation atomique et journalisation sans code en clair.
 - [ ] **SESS-14** Tester les faux positifs et rappeler qu'une IP/localisation n'est pas une preuve d'identité.
 
 ### Tokens API Sanctum
 
-- [ ] **API-01** Créer les parcours autorisés de création, liste, consultation des métadonnées, révocation individuelle et révocation globale des tokens.
-- [ ] **API-02** Appliquer une durée maximale de 30 jours et vérifier l'expiration côté serveur à chaque authentification API.
-- [ ] **API-03** Ajouter le nettoyage périodique des tokens expirés via Laravel Scheduler.
-- [ ] **API-04** Limiter les tokens actifs : root 10, super_admin 5, cooperative_admin 5, user 3.
-- [ ] **API-05** Permettre à l'utilisateur de voir le nom du token, sa date de création et sa dernière utilisation ; le secret complet n'est affiché qu'une seule fois.
-- [ ] **API-06** Proposer une sélection explicite de capacités autorisées selon le rôle ; refuser toute capacité excédant les droits métier.
-- [ ] **API-07** Vérifier systématiquement que les abilities Sanctum ne contournent jamais Policies/Gates, propriété et appartenance à une coopérative.
-- [ ] **API-08** Révoquer les tokens lors des événements déjà décidés : changement mot de passe, changement rôle/e-mail, transfert, suspension/désactivation, suppression logique, verrouillage d'urgence et déconnexion globale.
-- [ ] **API-09** Ajouter tests HTTP et sécurité couvrant expiration, limite, capacité, révocation et cloisonnement coopératif.
+- [x] **API-01 — VALIDÉ (11 novembre 2026)** Parcours personnels API/back-office pour tous les rôles, gestion des tokens d'autres utilisateurs réservée à root (liste/métadonnées/révocations), aucune création pour autrui, secret affiché une seule fois, métadonnées/Audit sans secret ni hash, révocation API indépendante des sessions Web. Tests ciblés et validation globale confirmés VERTS par l'utilisateur.
+- [x] **API-02 — VALIDÉ (11 novembre 2026)** Durée fixe de 90 jours pour tous les rôles et tokens, sans personnalisation ni token permanent ; date imposée par le modèle, migration des tokens existants à `created_at + 90 jours`, expiration vérifiée à l'authentification Sanctum, `config('sanctum.expiration')` conservé à `null`. Tests ciblés, suite complète et Pint confirmés VERTS par l'utilisateur.
+- [x] **API-03 — VALIDÉ (11 novembre 2026)** Purge quotidienne via Laravel Scheduler : suppression physique uniquement lorsque `expires_at` date d'au moins 90 jours ; la révocation anticipée ne raccourcit pas la rétention ; tokens sans expiration ignorés ; traitement par lots, verrou anti-chevauchement, Audit indépendant sans secret/hash et aucune incidence sur les sessions Web. via Laravel Scheduler : suppression physique uniquement lorsque `expires_at` date d'au moins 90 jours ; la révocation anticipée ne raccourcit pas la rétention ; ignorer les tokens sans expiration ; traitement par lots, verrou anti-chevauchement, Audit indépendant sans secret/hash et aucune incidence sur les sessions Web.
+- [x] **API-04 — VALIDÉ (11 novembre 2026)** Quotas de tokens actifs : root 10, super_admin 5, cooperative_admin 5, user 3 ; tokens expirés/révoqués exclus ; création protégée contre les courses par verrouillage de la ligne utilisateur. Tests service/HTTP et Pint confirmés VERTS.
+- [x] **API-05 — VALIDÉ (11 novembre 2026)** Métadonnées nom/date de création/dernière utilisation ; secret en clair visible une seule fois ; secret et hash absents des listes, réponses de métadonnées et Audit. Tests ciblés API et Pint confirmés VERTS.
+- [x] **API-06 — VALIDÉ (11 novembre 2026)** Abilities = slugs de permissions MAHLINE actives réellement accordées ; sous-ensemble sélectionnable, rejet de `*` et des slugs non accordés, défaut `[]`. Tests service/HTTP confirmés VERTS.
+- [x] **API-07 — VALIDÉ (11 novembre 2026)** Middleware d'abilities Sanctum complété par Gates/Policies, rôle, propriété et périmètre coopératif ; les abilities seules ne confèrent aucun droit métier. Tests HTTP de refus et Pint confirmés VERTS.
+- [x] **API-08 — VALIDÉ (11 novembre 2026)** Révocation centralisée sur les événements sensibles, y compris changement d'affectation coopérative d'un super_admin et acceptation/vérification d'invitation ; les révocations API-only préservent les sessions Web. Tests UserManagement, invitation, service et Pint confirmés VERTS.
+- [x] **API-09 — TESTS RENFORCÉS / VALIDÉS (11 novembre 2026)** Tests HTTP et service couvrant gestion root multi-rôles et inter-coopératives, révocation globale root sans révocation des sessions Web, et Audit sans secret/hash. Tests ciblés, suite complète et Pint confirmés VERTS par l'utilisateur. Les limites et capacités qui ne sont pas encore spécifiées restent suivies par API-04/API-06.
 
 ### Verrouillage d'urgence
 
-- [ ] **EMG-01** Implémenter le verrouillage d'urgence réservé à `super_admin_root`.
-- [ ] **EMG-02** À l'activation, révoquer toutes les sessions et tokens et bloquer toute nouvelle connexion sans modifier le statut métier.
-- [ ] **EMG-03** Implémenter le déverrouillage après vérification d'identité, reset sécurisé, politique/historique de mot de passe et vérification de l'e-mail.
-- [ ] **EMG-04** Journaliser toutes les actions et tester les accès web/API pendant le verrouillage.
+- [x] **EMG-01 — VALIDÉ (10 novembre 2026)** Verrouillage d'urgence persistant réservé à `super_admin_root`.
+- [x] **EMG-02 — VALIDÉ (10 novembre 2026)** Révocation de toutes les sessions Web et tokens API, blocage de l'authentification sans modifier le statut métier.
+- [x] **EMG-03 — VALIDÉ (10 novembre 2026)** Levée du verrouillage réservée à root, avec parcours de sécurisation validé ; les accès révoqués ne sont pas restaurés.
+- [x] **EMG-04 — VALIDÉ (10 novembre 2026)** Actions auditées et refus des accès Web/API pendant le verrouillage ; tests ciblés et Pint confirmés VERTS.
 
 ---
 
@@ -134,9 +140,9 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 
 ### Profil personnel et données
 
-- [ ] **USR-01** Auditer les routes, migrations et contrôleurs existants du profil ; confirmer les éléments réellement absents.
-- [ ] **USR-02** Ajouter les champs/migrations manquants pour adresse personnelle, photo et préférences de notification, sans modifier les migrations déjà exécutées.
-- [ ] **USR-03** Implémenter consultation et modification de ses propres informations par tout utilisateur.
+- [x] **USR-01 — AUDIT TERMINÉ (11 novembre 2026)** Aucun endpoint ni écran de profil personnel identifié. Les données existantes couvrent identité, e-mail, téléphone, locale et timezone ; adresse personnelle, photo/avatar et préférences de notification sont absentes du modèle et de la migration initiale. Les contrôleurs existants sont des parcours d'administration et ne doivent pas être détournés en self-service. Voir section 20.70 du registre de décisions.
+- [ ] **USR-02 — AUDIT TECHNIQUE TERMINÉ (11 novembre 2026), IMPLÉMENTATION EN ATTENTE.** Écarts confirmés : aucune liaison User-Address, aucun champ de photo, aucune préférence persistée. Dépendances à résoudre : modèle Address existant, absence de domaine Media et raccordement au backlog NOT-01/NOT-03. Nouvelle migration additive uniquement. Voir section 20.71 du registre.
+- [ ] **USR-03 — AUDIT TECHNIQUE TERMINÉ (11 novembre 2026), IMPLÉMENTATION EN ATTENTE.** Aucun endpoint, contrôleur, service, Policy self-service, vue ni test de profil personnel. Prévoir une allowlist stricte, un service distinct de UserManagementService, des contrôles de propriété et les routes protégées par la session Identity active. Voir section 20.71 du registre.
 - [ ] **USR-04** Appliquer les droits de consultation/modification d'autres profils selon rôle et périmètre coopératif.
 - [ ] **USR-05** Séparer strictement les workflows du profil, de l'adresse e-mail, du mot de passe, du rôle, de la coopérative et du statut.
 - [ ] **USR-06** Exclure des réponses de profil les secrets d'authentification, hashes, tokens, codes OTP et données internes.
@@ -163,8 +169,8 @@ Ne jamais déclarer une fonctionnalité terminée parce qu'un fichier ou une cla
 ### Invitation et activation
 
 - [ ] **USR-20** Vérifier que tous les parcours d'invitation et d'activation appliquent la politique commune de mot de passe et l'historique.
-- [ ] **USR-21** Auditer l'activation manuelle root et le mot de passe initial imposant un changement avant dashboard.
-- [ ] **USR-22** Vérifier que le mot de passe initial est inutilisable après son premier remplacement.
+- [x] **USR-21** Auditer et implémenter l'activation manuelle root avec mot de passe initial imposant un changement avant tout accès métier — parcours limité à `super_admin_root`, temporaire `MahlineMahline`, communication manuelle ; validation `ForcedPasswordChangeControllerTest`, suite complète et Pint confirmées vertes le 9 novembre 2026.
+- [x] **USR-22** Vérifier que le mot de passe initial est inutilisable après son premier remplacement — le changement obligatoire applique la politique et l'historique ; tests ciblés confirmés verts le 9 novembre 2026.
 - [ ] **USR-23** Vérifier les délais, l'usage unique et l'invalidation des invitations précédentes.
 - [ ] **USR-24** Vérifier les e-mails, messages et transitions pending → active et ajouter tests HTTP/service.
 
@@ -250,6 +256,10 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 - [ ] **VAL-11** Faire un audit final du diff et confirmer que les commits respectent l'architecture V7.0 et les conventions MAHLINE.
 - [x] **VAL-12** Mettre à jour les deux documents de suivi avec les résultats, preuves et commits de validation — mise à jour effectuée après confirmation du test HTTP de reset, commits documentaires du 9 novembre 2026.
 - [x] **VAL-13** Exécuter `php artisan test --filter=UserManagementControllerTest` — VERT confirmé par l'utilisateur ; l'erreur `all() on array` n'est plus bloquante dans cette exécution ciblée.
+- [x] **VAL-17** Exécuter `php artisan test --filter=ForcedPasswordChangeControllerTest` après l'ajout des tests de régression de session — VERT confirmé par l'utilisateur le 9 novembre 2026.
+- [x] **VAL-18** Exécuter `php vendor/bin/pint --test` après les changements d'activation manuelle — VERT confirmé par l'utilisateur le 9 novembre 2026.
+- [x] **VAL-19** Exécuter `php artisan test` après les changements d'activation manuelle — VERT confirmé par l'utilisateur le 9 novembre 2026 ; aucun décompte n'a été communiqué pour cette exécution.
+- [x] **VAL-20** Corriger la validation contextuelle du mot de passe dans `ForcedPasswordChangeController` : exécuter `PasswordPolicy::validate()` et `PasswordPolicy::validateChange()` après `lockForUpdate()`, sur `$lockedUser`, dans la transaction ; tests `ForcedPasswordChangeControllerTest` et Pint confirmés VERTS par l'utilisateur le 9 novembre 2026.
 
 ---
 
@@ -274,6 +284,8 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 ---
 
 ## 9. Historique des mises à jour
+| 9 novembre 2026 | 3.1 | Implémentation AUTH-03 sur `feature/Identity` après validation des seuils 5/30/5 sur 15 minutes : compteurs compte/IP/couple IP-e-mail, clés HMAC, comptabilisation de tous les échecs traités, remise à zéro ciblée, retrait du throttle HTTP trop strict et tests de seuils/expiration/réseau partagé. Un test complémentaire couvre le rejet d'un couple IP + e-mail déjà verrouillé sans incrément supplémentaire (commit `15e472431450c6ab08e65c2573354249746c1e03`). AUTH-03 à AUTH-05 restent en attente de confirmation locale des tests ciblés et de Pint. |
+| 9 novembre 2026 | 3.3 | Correction des tests AUTH-03 révélés en échec : tests IP historiques mis à jour pour le seuil de 30, test de remise à zéro renommé, test transactionnel aligné sur la réponse publique générique `Authentication failed.`. Corrections commitées ; nouvelle validation locale en attente. |
 
 | Date | Version | Mise à jour |
 |---|---|---|
@@ -303,3 +315,93 @@ Ces tâches sont prioritaires avant d'élargir le développement. Le code a ét�
 | 9 novembre 2026 | 2.2 | L'utilisateur confirme vertes les commandes `php artisan test --filter=PasswordServiceTest` et `php artisan test --filter=Password` ; VAL-14 cochée. La suite complète Identity et les tests d'intégration complémentaires restent ouverts. |
 | 9 novembre 2026 | 2.3 | Test `php artisan test --filter=PasswordResetControllerTest` confirmé vert ; VAL-15 cochée. Les deux documents de suivi ont été mis à jour ; la suite complète Identity reste à exécuter. |
 | 9 novembre 2026 | 2.4 | Trois suites HTTP confirmées vertes : `AuthenticationSessionControllerTest`, `UserInvitationControllerTest`, `UserInvitationThrottleTest` ; VAL-16 cochée. Corrections des routes de sessions personnelles et des fixtures d'invitation documentées ; suite complète Identity toujours ouverte. |
+
+## Validation globale — 9 novembre 2026
+
+Les validations suivantes sont confirmées par l'utilisateur sur la branche locale synchronisée avec `feature/Identity` :
+
+- [x] **VAL-09** Exécuter la suite complète : `php artisan test` — **1 189 tests réussis, 3 147 assertions réussies**.
+- [x] **VAL-10** Exécuter le contrôle de style : `php vendor/bin/pint --test` — **351 fichiers passés**.
+- [ ] **VAL-11** Faire l'audit final du diff et confirmer la conformité à l'architecture V7.0 et aux conventions MAHLINE — reste à réaliser.
+
+Cette validation globale couvre notamment les tests des domaines Identity, Catalog, Categories et Products. Elle ne signifie pas que toutes les fonctionnalités restantes du backlog sont implémentées : les tâches métier non validées restent ouvertes.
+
+
+## Validation de l'activation manuelle root — 9 novembre 2026
+
+Le parcours d'activation manuelle et de changement obligatoire du mot de passe est implémenté et validé localement sur `feature/Identity`.
+
+- [x] Bloquer l'accès aux routes métier web tant que le changement obligatoire n'est pas terminé.
+- [x] Refuser l'accès aux routes API authentifiées protégées tant que le changement obligatoire n'est pas terminé.
+- [x] Autoriser uniquement le changement obligatoire et la déconnexion pendant cette étape.
+- [x] Conserver la session web courante après le changement obligatoire réussi.
+- [x] Révoquer les autres sessions web actives.
+- [x] Supprimer les tokens API existants.
+- [x] Préserver le parcours d'invitation et le changement volontaire de mot de passe.
+- [x] Valider `ForcedPasswordChangeControllerTest`, `php vendor/bin/pint --test` et `php artisan test` — résultats verts confirmés par l'utilisateur.
+
+Le mot de passe temporaire reste `MahlineMahline` jusqu'à une évolution ultérieure vers un mot de passe aléatoire. Sa communication est manuelle ; aucune livraison automatique par e-mail ou appel vocal n'est incluse. L'audit final du diff reste à faire.
+
+
+## Validation des tests de données personnelles — 9 novembre 2026
+
+- [x] Ajouter les tests de rejet du prénom, du nom complet, de la partie locale de l'e-mail et d'un fragment d'e-mail reconnaissable.
+- [x] Ajouter un test confirmant que la détection ignore la casse et les séparateurs.
+- [x] Ajouter un test confirmant qu'un mot de passe ne contenant pas d'information personnelle reconnaissable reste accepté.
+- [x] Confirmer `php artisan test --filter=PasswordPolicyTest` — VERT selon l'utilisateur.
+- [x] Confirmer `php vendor/bin/pint --test` — VERT selon l'utilisateur.
+- Commit des tests : `8814862caca5dae7c7e9e226e6dc766ed9cb74db`.
+
+La tâche ID01-17 reste partiellement ouverte pour les cas Unicode, les limites détaillées et les messages de validation. La vérification des mots de passe courants/compromis (ID01-03) est explicitement reportée et reste au backlog.
+
+## Validation de la correction de concurrence du changement de mot de passe — 9 novembre 2026
+
+- [x] Déplacer les validations contextuelles du mot de passe à l'intérieur de la transaction, après le verrouillage de l'utilisateur.
+- [x] Utiliser les données de l'utilisateur verrouillé (`$lockedUser`) pour éviter une validation contextuelle sur un état devenu obsolète.
+- [x] Préserver la conversion des erreurs de politique en erreurs de formulaire.
+- [x] Confirmer `php artisan test --filter=ForcedPasswordChangeControllerTest` — VERT selon l'utilisateur.
+- [x] Confirmer `php vendor/bin/pint --test` — VERT selon l'utilisateur.
+
+Le changement ne modifie pas les workflows d'invitation ni le changement volontaire de mot de passe. La validation globale complète devra être relancée après les prochains changements significatifs.
+
+
+| 9 novembre 2026 | 3.6 | AUTH-06 : ajout de la page root-only de déverrouillage, du formulaire, du lien de navigation, de l'action POST auditée et des tests HTTP de périmètre/confidentialité. Validation locale en attente. |
+| 9 novembre 2026 | 3.7 | AUTH-06 tests ciblés confirmés VERTS. Démarrage AUTH-07 : correction de la négociation HTML/JSON pour les erreurs de validation de connexion navigateur et ajout de tests HTTP Web/API ; validation locale en attente. |
+| 9 novembre 2026 | 3.8 | AUTH-07 : retrait de la route de diagnostic `/api/test-auth` des routes de production (conservée uniquement dans le test) ; introduction de l'exception métier `AuthenticationFailedException` pour les refus attendus et suppression de la capture générique `RuntimeException` du contrôleur. Tests locaux des derniers changements en attente. |
+| 9 novembre 2026 | 3.9 | SESS-01 validé par l'utilisateur : tests de politique, middleware HTTP, service de session et Pint confirmés VERTS. SESS-02 devient la prochaine tâche d'audit. |
+
+| 9 novembre 2026 | 4.0 | SESS-02 : ajout du dialogue d'avertissement T−2 min dans les deux layouts authentifiés, routes d'extension root et standard, prolongation atomique non ressuscitable et tests HTTP utilisateur/root/expiration. Validation locale en attente. |
+
+| 10 novembre 2026 | 4.1 | SESS-05 validé par l'utilisateur : déconnexion globale personnelle, révocation des sessions web et tokens Sanctum propres, isolation des autres utilisateurs et journalisation ; tests ciblés et Pint confirmés VERTS. Prochaine tâche : audit SESS-06. |
+
+| 10 novembre 2026 | 4.2 | SESS-06 validé par l'utilisateur : conservation des sessions web antérieures lors des connexions successives et multi-appareils ; `SessionServiceTest`, `AuthenticationWorkflowTest` et Pint confirmés VERTS. Prochaine tâche : audit SESS-07. |
+
+| 10 novembre 2026 | 4.3 | SESS-06 clôturé. Démarrage de l'audit SESS-07 : révocation individuelle, globale et déclenchée par les changements sensibles du compte. |
+
+| 10 novembre 2026 | 4.4 | SESS-07 : ajout du verrouillage d'urgence root-only persistant, de la révocation des sessions et tokens API, du blocage de l'authentification et de la levée root-only auditée ; correction du changement obligatoire de mot de passe pour conserver les tokens révoqués. Tests ciblés `AuthenticationLockoutControllerTest`, `AuthenticationServiceTest`, `ForcedPasswordChangeControllerTest`, `PasswordServiceTest`, `PasswordResetServiceTest` et Pint en attente. |
+
+| 10 novembre 2026 | 4.5 | SESS-07 validé par l'utilisateur : verrouillage d'urgence root-only, révocation de toutes les sessions Web et de tous les tokens API, refus de connexion jusqu'à levée root-only, conservation des tokens révoqués et audit détaillé. Tests ciblés et Pint confirmés VERTS par l'utilisateur. Mise à jour du registre fonctionnel et des standards de relations Audit fichier par fichier. |
+
+| 10 novembre 2026 | 4.6 | SESS-08 : audit des restaurations de comptes archivés/supprimés ; révocation défensive des sessions, tokens API et invitations au moment même de la restauration. Tests de non-régression ajoutés ; validation locale en attente. |
+
+| 10 novembre 2026 | 4.7 | SESS-08 validé par l'utilisateur : restauration sécurisée des comptes archivés/supprimés, révocation défensive des sessions, tokens et invitations résiduels ; tests ciblés et Pint confirmés VERTS. Démarrage de l'audit SESS-09 : détection effective des nouveaux appareils. |
+
+| 10 novembre 2026 | 4.8 | SESS-09 : branchement de la détection de nouvel appareil au workflow d'authentification ; création d'un SecurityEvent et d'un événement Audit pour la première apparition d'un appareil. Tests ciblés ajoutés ; validation locale en attente. |
+| 10 novembre 2026 | 4.9 | SESS-09 validé après confirmation utilisateur des tests ciblés `AuthenticationWorkflowTest`, `AuthenticationWorkflowTransactionTest`, `UnusualActivityDetectionServiceTest`, `KnownDeviceTest` et Pint. Démarrage de l'audit SESS-10 : alerte e-mail sur nouvel appareil. |
+| 10 novembre 2026 | 5.0 | SESS-10 implémenté sur `feature/Identity` : notification e-mail FR/EN/AR, date/heure selon le fuseau utilisateur, navigateur/appareil, localisation signalée indisponible faute de fournisseur GeoIP. Envoi après commit et échec e-mail non bloquant ; tests de notification unique et de résilience ajoutés, validation locale en attente. |
+| 10 novembre 2026 | 5.1 | Correction du conflit de visibilité avec `Illuminate\\Notifications\\Notification::locale()` : méthode privée renommée `resolveLocale()` dans `NewDeviceLoginNotification.php`. L'utilisateur confirme VERT `AuthenticationWorkflowTransactionTest`. `AuthenticationWorkflowTest` et `php vendor/bin/pint --test` restaient à confirmer. |
+| 10 novembre 2026 | 5.2 | SESS-10 validé après confirmation utilisateur des tests `AuthenticationWorkflowTransactionTest`, `AuthenticationWorkflowTest` et Pint. Démarrage de l'audit SESS-11 : consultation et révocation individuelle des sessions propres. |
+
+| 10 novembre 2026 | 5.3 | SESS-11 renforcé et validé : déconnexion immédiate du navigateur courant, listes filtrées par délai d'inactivité du compte, isolation des autres sessions et assertions Login History/Audit. Tests ciblés `AuthenticationSessionControllerTest`, `SessionServiceTest` et Pint confirmés VERTS par l'utilisateur. Démarrage de l'audit SESS-12 : pays inhabituel et challenge OTP e-mail. |
+
+
+| 11 novembre 2026 | 5.3 | API-01 et API-02 validés après confirmation utilisateur de `php artisan test` et `php vendor/bin/pint --test` VERTS. API-01 couvre la gestion personnelle et l'administration root des tokens, le secret à usage unique, l'absence de fuite dans Audit et la séparation sessions/tokens. API-02 fixe l'expiration à 90 jours pour tous les rôles, avec migration des tokens existants et contrôle à l'authentification. API-09 renforcé par tests root multi-rôles/inter-coopératives, révocation globale sans effet sur les sessions Web et absence de secret/hash dans Audit. API-03 à API-06 restent ouverts selon leur périmètre ; API-06 (abilities) reste reporté à une décision dédiée. |
+
+
+| 11 novembre 2026 | 5.6 | API-03 validé par l'utilisateur : tests du service, de la commande, du Scheduler et Pint confirmés VERTS. Purge transactionnelle par lots après 90 jours post-expiration, conservation des tokens révoqués jusqu'à la date d'éligibilité, exclusion des expirations nulles, Audit indépendant sans secret/hash, commande Artisan et planification quotidienne anti-chevauchement. Démarrage du cadrage/audit API-04 à API-08. |
+| 11 novembre 2026 | 5.7 | Correction du test d'authentification Sanctum compatible avec le modèle `PersonalAccessToken` final : remplacement de `Sanctum::actingAs()` par de vrais bearer tokens de test, sans retirer `final` ni contourner les contrôles de rôle/permission/abilities. L'utilisateur confirme VERTS : optimize:clear, ApiTokenControllerTest, ApiTokenManagementControllerTest et Pint. Cette validation ne clôt pas encore API-04 à API-08 ; leurs suites de service, gestion utilisateur et invitation restent à confirmer. API-03 est marqué validé conformément à la confirmation antérieure des tests ciblés de service/commande/Scheduler et Pint. |
+
+
+| 11 novembre 2026 | 5.8 | Correction d'une collision de fixture dans `UserManagementServiceTest` : le helper `createCooperative()` réutilise désormais le pays Maroc `MA` via `firstOrCreate` au lieu de tenter de créer plusieurs pays portant le même code unique. Contrainte SQL et factories métier conservées. Commit `2fee6eaa768bb34a983d86d02bd4e9cfc1744d9e`. L'utilisateur confirme `php artisan test --filter=UserManagementServiceTest` et Pint VERTS. |
+| 11 novembre 2026 | 5.9 | API-04 à API-08 validés après confirmation des suites `ApiTokenServiceTest`, `UserInvitationControllerTest`, `ApiTokenControllerTest`, `ApiTokenManagementControllerTest`, `UserManagementServiceTest` et Pint. Quotas, métadonnées, abilities, contrôles Gate/Policy et révocations d'événements sensibles documentés. EMG-01 à EMG-04 cochés comme déjà implémentés et testés. La suite complète Identity n'est pas déclarée validée par cette étape. |
+| 11 novembre 2026 | 6.0 | Audit préalable USR-02/USR-03 terminé sans modification applicative. Cartographie des routes, contrôleurs, services, User/Address, migrations, Policy/Gates, Audit, sessions, layouts, notifications et tests enregistrée en section 20.71. Points structurants : allowlist de profil nécessaire, ne pas réutiliser `updateUserAccount()` qui révoque les accès, Address existant à relier proprement, absence de domaine Media et préférences à coordonner avec NOT-01/NOT-03. Écart USR-04 confirmé : cooperative_admin voit actuellement des données personnelles malgré la décision 91. USR-02/03 restent non implémentés ; aucun merge ni test exécuté pendant l'audit. |
