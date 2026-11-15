@@ -199,6 +199,23 @@ final class AddressesTest extends TestCase
     public function test_country_cannot_be_physically_deleted_when_used_by_an_address(): void
     {
         $countryId = (string) Str::ulid();
+        $userId = (string) Str::ulid();
+
+        DB::table('users')->insert([
+            'id' => $userId,
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'display_name' => 'Test User',
+            'email' => 'address-owner-'.Str::lower(Str::random(8)).'@example.test',
+            'telephone' => '+212600000000',
+            'password' => bcrypt('password'),
+            'status' => 'active',
+            'locale' => 'fr',
+            'timezone' => 'UTC',
+            'email_verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         DB::table('countries')->insert([
             'id' => $countryId,
