@@ -29,6 +29,7 @@ return [
             'cooperatives.delete',
 
             'users.view',
+            'users.update',
             'users.create',
             'users.activate',
             'users.deactivate',
@@ -74,6 +75,7 @@ return [
             'cooperatives.delete',
 
             'users.view',
+            'users.update',
             'users.create',
             'users.activate',
             'users.deactivate',
@@ -109,6 +111,7 @@ return [
             'cooperatives.update',
 
             'users.view',
+            'users.update',
 
             'catalogs.view',
             'catalogs.create',
