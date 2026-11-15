@@ -59,7 +59,7 @@ final class UserManagementController
 
         abort_if($user->roles()->where('slug', 'super_admin_root')->exists(), 404);
 
-        $user->load(['roles', 'cooperative']);
+        $user->load(['roles', 'cooperative', 'address.country']);
 
         return view('super-admin-root.users.edit', [
             'user' => $user,
@@ -219,6 +219,7 @@ final class UserManagementController
         $user->load([
             'roles' => static fn ($query) => $query->orderBy('name'),
             'cooperative',
+            'address.country',
         ]);
 
         $canViewAssignments = Gate::allows('viewAssignments', $user);
