@@ -103,7 +103,7 @@ final class AddressService extends BaseService
         Cooperative $cooperative,
         array $attributes,
     ): Address {
-        Gate::forUser($actor)->authorize('updateCooperativeAddress', $cooperative);
+        Gate::forUser($actor)->authorize('createCooperativeAddress');
 
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
             $lockedCooperative = Cooperative::query()
@@ -111,7 +111,7 @@ final class AddressService extends BaseService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            Gate::forUser($actor)->authorize('updateCooperativeAddress', $lockedCooperative);
+            Gate::forUser($actor)->authorize('createCooperativeAddress');
 
             if ($lockedCooperative->address()->exists()) {
                 throw new InvalidArgumentException('This cooperative already has an address.');
