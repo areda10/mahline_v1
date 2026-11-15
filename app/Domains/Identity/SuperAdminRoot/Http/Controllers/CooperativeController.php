@@ -63,17 +63,21 @@ final class CooperativeController
             ...$this->addressRules(),
         ]);
 
-        $cooperative = DB::transaction(function () use ($request, $data): Cooperative {
-            $address = $this->createAddress($request, $data);
-            $cooperativeData = array_diff_key($data, array_flip([
-                'address_line_1', 'city', 'country_id', 'postal_code', 'state',
-            ]));
+        $addressData = [
+            'street' => $data['address_line_1'],
+            'city' => $data['city'],
+            'postal_code' => $data['postal_code'],
+            'region' => $data['state'],
+        ];
+        $cooperativeData = array_diff_key($data, array_flip([
+            'address_line_1', 'city', 'country_id', 'postal_code', 'state',
+        ]));
 
-            return $this->cooperativeService->create($request->user(), [
-                ...$cooperativeData,
-                'address_id' => $address->getKey(),
-            ]);
-        });
+        $cooperative = $this->cooperativeService->create(
+            $request->user(),
+            $cooperativeData,
+            $addressData,
+        );
 
         return redirect()
             ->route('root.backoffice.cooperatives.show', $cooperative)
@@ -258,23 +262,6 @@ final class CooperativeController
                     'Dakhla-Oued Ed-Dahab',
                 ])],
         ];
-    }
-
-    /** @param array<string, mixed> $data */
-    private function createAddress(Request $request, array $data): Address
-    {
-        $address = new Address;
-        $address->fill([
-            'address_line_1' => $data['address_line_1'],
-            'city' => $data['city'],
-            'country_id' => $data['country_id'],
-            'postal_code' => $data['postal_code'],
-            'state' => $data['state'],
-        ]);
-        $address->created_by = (string) $request->user()->getKey();
-        $address->save();
-
-        return $address;
     }
 
     private function authorizeRoot(Request $request): void
