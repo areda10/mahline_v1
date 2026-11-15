@@ -333,6 +333,21 @@ final class CooperativeControllerTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_create_form_uses_new_address_fields_without_address_picker(): void
+    {
+        $actor = $this->actor('super_admin', ['cooperatives.view', 'cooperatives.create']);
+
+        $this->actingAs($actor)
+            ->get(route('backoffice.cooperatives.create'))
+            ->assertOk()
+            ->assertSee('name="street"', false)
+            ->assertSee('name="city"', false)
+            ->assertSee('name="region"', false)
+            ->assertSee('Pays : Maroc')
+            ->assertDontSee('name="address_id"', false)
+            ->assertDontSee('Sélectionner une adresse');
+    }
+
     public function test_root_create_form_lists_all_moroccan_regions_and_morocco(): void
     {
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.create']);
@@ -354,7 +369,11 @@ final class CooperativeControllerTest extends TestCase
             ->assertSee('Souss-Massa')
             ->assertSee('Guelmim-Oued Noun')
             ->assertSee('Laâyoune-Sakia El Hamra')
-            ->assertSee('Dakhla-Oued Ed-Dahab');
+            ->assertSee('Dakhla-Oued Ed-Dahab')
+            ->assertSee('name="street"', false)
+            ->assertSee('name="city"', false)
+            ->assertDontSee('name="address_id"', false)
+            ->assertDontSee('name="country_id"', false);
     }
 
     public function test_root_edit_form_preselects_saved_morocco_and_region(): void
