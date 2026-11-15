@@ -26,6 +26,12 @@ final class AddressesTest extends TestCase
     {
         $columns = [
             'id',
+            'number',
+            'street',
+            'floor',
+            'region',
+            'user_id',
+            'cooperative_id',
             'address_line_1',
             'city',
             'country_id',
@@ -88,6 +94,30 @@ final class AddressesTest extends TestCase
     {
         self::assertTrue(
             Schema::hasColumn('addresses', 'deleted_at'),
+        );
+    }
+
+    public function test_addresses_table_has_unique_user_owner_index(): void
+    {
+        $indexes = Schema::getIndexes('addresses');
+
+        self::assertTrue(
+            collect($indexes)->contains(
+                fn (array $index): bool => $index['unique']
+                    && $index['columns'] === ['user_id'],
+            ),
+        );
+    }
+
+    public function test_addresses_table_has_unique_cooperative_owner_index(): void
+    {
+        $indexes = Schema::getIndexes('addresses');
+
+        self::assertTrue(
+            collect($indexes)->contains(
+                fn (array $index): bool => $index['unique']
+                    && $index['columns'] === ['cooperative_id'],
+            ),
         );
     }
 
