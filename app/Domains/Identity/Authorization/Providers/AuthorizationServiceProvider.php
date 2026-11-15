@@ -56,5 +56,23 @@ final class AuthorizationServiceProvider extends ServiceProvider
             UserPolicy::class,
         );
 
+        Gate::define(
+            'updateUserAddress',
+            fn (User $actor, User $target): bool => app(AddressPolicy::class)
+                ->updateUserAddress($actor, $target),
+        );
+
+        Gate::define(
+            'createCooperativeAddress',
+            fn (User $actor): bool => app(AddressPolicy::class)
+                ->createCooperativeAddress($actor),
+        );
+
+        Gate::define(
+            'updateCooperativeAddress',
+            fn (User $actor, Cooperative $cooperative): bool => app(AddressPolicy::class)
+                ->updateCooperativeAddress($actor, $cooperative),
+        );
+
     }
 }
