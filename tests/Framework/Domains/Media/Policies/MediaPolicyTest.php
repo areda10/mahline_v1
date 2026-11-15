@@ -144,11 +144,10 @@ final class MediaPolicyTest extends TestCase
     {
         $user = User::factory()->create(array_merge(['cooperative_id' => $cooperativeId], $attributes));
         $role = $this->role($roleSlug);
-        $permission = Permission::query()->create([
-            'name' => $permissionSlug,
-            'slug' => $permissionSlug,
-            'is_active' => true,
-        ]);
+        $permission = Permission::query()->firstOrCreate(
+            ['slug' => $permissionSlug],
+            ['name' => $permissionSlug, 'is_active' => true],
+        );
         $role->permissions()->attach($permission->getKey());
         $user->roles()->attach($role->getKey());
 
@@ -165,10 +164,9 @@ final class MediaPolicyTest extends TestCase
 
     private function role(string $slug): Role
     {
-        return Role::query()->create([
-            'name' => $slug,
-            'slug' => $slug,
-            'is_active' => true,
-        ]);
+        return Role::query()->firstOrCreate(
+            ['slug' => $slug],
+            ['name' => $slug, 'is_active' => true],
+        );
     }
 }
