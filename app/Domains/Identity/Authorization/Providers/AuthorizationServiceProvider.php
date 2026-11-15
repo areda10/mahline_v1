@@ -11,10 +11,12 @@ use App\Domains\Catalog\Policies\CatalogPolicy;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Policies\CategoryPolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Policies\AddressPolicy;
 use App\Domains\Identity\Authorization\Policies\CooperativePolicy;
 use App\Domains\Identity\Authorization\Policies\UserPolicy;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
+use App\Domains\Localization\Models\Address;
 use App\Domains\Media\Policies\MediaPolicy;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Policies\ProductPolicy;
@@ -26,6 +28,7 @@ final class AuthorizationServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(AuditEvent::class, AuditEventPolicy::class);
+        Gate::policy(Address::class, AddressPolicy::class);
         Gate::policy(Media::class, MediaPolicy::class);
 
         Gate::policy(
