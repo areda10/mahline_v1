@@ -30,6 +30,17 @@ final class ProductRepository
             ->findOrFail($productId);
     }
 
+    public function findTrashedForCooperativeOrFail(
+        string $productId,
+        string $cooperativeId,
+    ): Product {
+        return Product::withTrashed()
+            ->forCooperative($cooperativeId)
+            ->with(['categories', 'catalogs', 'variants'])
+            ->onlyTrashed()
+            ->findOrFail($productId);
+    }
+
     public function create(array $attributes): Product
     {
         return Product::query()->create($attributes);
