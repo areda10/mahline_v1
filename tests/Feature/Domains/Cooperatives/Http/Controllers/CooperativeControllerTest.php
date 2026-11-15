@@ -55,6 +55,7 @@ final class CooperativeControllerTest extends TestCase
 
         $response = $this->actingAs($actor)->post(route('backoffice.cooperatives.store'), [
             ...$this->validCooperativeAttributes('Coopérative HTTP'),
+            ...$this->validAddressServiceAttributes(),
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -64,6 +65,13 @@ final class CooperativeControllerTest extends TestCase
         $this->assertDatabaseHas('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
             'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $this->assertDatabaseHas('addresses', [
+            'cooperative_id' => $cooperative->getKey(),
+            'user_id' => null,
+            'street' => '10 Avenue Hassan II',
+            'city' => 'Casablanca',
+            'region' => 'Casablanca-Settat',
         ]);
     }
 
@@ -82,6 +90,13 @@ final class CooperativeControllerTest extends TestCase
         $response->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
         $this->assertDatabaseMissing('super_admin_cooperative', [
             'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $this->assertDatabaseHas('addresses', [
+            'cooperative_id' => $cooperative->getKey(),
+            'user_id' => null,
+            'street' => '10 Avenue Hassan II',
+            'city' => 'Casablanca',
+            'region' => 'Casablanca-Settat',
         ]);
     }
 
@@ -449,11 +464,23 @@ final class CooperativeControllerTest extends TestCase
             'name' => $name,
             'rib' => '123456789012345678901234',
             'tax_id' => 'TAX-HTTP',
-            'address_id' => Address::factory()->create()->getKey(),
             'phone' => '+212600000001',
             'email' => strtolower(str_replace(' ', '-', $name)).'@example.test',
             'rc' => 'RC-HTTP',
             'ice' => '001234567890123',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function validAddressServiceAttributes(): array
+    {
+        $this->morocco();
+
+        return [
+            'street' => '10 Avenue Hassan II',
+            'city' => 'Casablanca',
+            'postal_code' => '20000',
+            'region' => 'Casablanca-Settat',
         ];
     }
 
