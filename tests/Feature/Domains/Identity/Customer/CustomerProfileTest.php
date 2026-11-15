@@ -48,6 +48,12 @@ final class CustomerProfileTest extends TestCase
                 'first_name' => 'Nadia',
                 'last_name' => 'Amrani',
                 'telephone' => '+212 612345679',
+                'number' => '10',
+                'street' => 'Avenue Hassan II',
+                'floor' => '2e étage',
+                'city' => 'Casablanca',
+                'region' => 'Casablanca-Settat',
+                'postal_code' => '20000',
             ])
             ->assertRedirect(route('customer.profile.edit'))
             ->assertSessionHas('success');
@@ -58,6 +64,13 @@ final class CustomerProfileTest extends TestCase
         $this->assertSame('Amrani', $customer->last_name);
         $this->assertSame('Nadia Amrani', $customer->display_name);
         $this->assertSame('+212 612345679', $customer->telephone);
+        $this->assertDatabaseHas('addresses', [
+            'user_id' => $customer->getKey(),
+            'number' => '10',
+            'street' => 'Avenue Hassan II',
+            'city' => 'Casablanca',
+            'region' => 'Casablanca-Settat',
+        ]);
 
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.customer.profile_updated',
@@ -75,6 +88,10 @@ final class CustomerProfileTest extends TestCase
                 'first_name' => 'Nadia',
                 'last_name' => 'Amrani',
                 'telephone' => '+212 612345679',
+                'number' => '10',
+                'street' => 'Avenue Hassan II',
+                'city' => 'Casablanca',
+                'region' => 'Casablanca-Settat',
                 'email' => 'attacker@example.com',
                 'status' => UserStatus::Inactive->value,
                 'cooperative_id' => '01J00000000000000000000000',
