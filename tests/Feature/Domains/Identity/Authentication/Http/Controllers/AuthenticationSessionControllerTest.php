@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
+use App\Domains\Identity\Authentication\Enums\KnownDeviceStatus;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -13,6 +15,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -493,6 +496,92 @@ final class AuthenticationSessionControllerTest extends TestCase
             config('session.cookie'),
             $sessionStore->getId(),
         )->withCredentials();
+    }
+
+    public function test_device_management_is_available_in_all_role_spaces(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $internal = $this->actor('user');
+        $customer = $this->actor('customer');
+
+        $this->actingAs($root)
+            ->get(route('root.backoffice.security.devices.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.devices.index');
+
+        $this->actingAs($internal)
+            ->get(route('backoffice.security.devices.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.devices.index');
+
+        $this->actingAs($customer)
+            ->get(route('customer.security.devices.index'))
+            ->assertOk()
+            ->assertViewIs('identity.security.devices.index');
+    }
+
+    public function test_customer_cannot_revoke_another_accounts_device(): void
+    {
+        $customer = $this->actor('customer');
+        $otherCustomer = $this->actor('customer');
+        $otherDevice = KnownDevice::query()->create([
+            'user_id' => $otherCustomer->getKey(),
+            'device' => 'private-other-customer-device',
+            'device_token_hash' => hash('sha256', str_repeat('x', 64)),
+            'status' => KnownDeviceStatus::Trusted,
+            'trusted_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+
+        $this->actingAs($customer)
+            ->delete(route('customer.security.devices.destroy', $otherDevice))
+            ->assertNotFound();
+
+        $this->assertSame(KnownDeviceStatus::Trusted, $otherDevice->fresh()->status);
+        $this->assertNull($otherDevice->fresh()->revoked_at);
+    }
+
+    public function test_customer_can_revoke_an_own_device_and_its_web_sessions_only(): void
+    {
+        Mail::fake();
+        $customer = $this->actor('customer');
+        $otherUser = User::factory()->create();
+        $device = KnownDevice::query()->create([
+            'user_id' => $customer->getKey(),
+            'device' => 'customer-phone',
+            'device_token_hash' => hash('sha256', str_repeat('c', 64)),
+            'status' => KnownDeviceStatus::Trusted,
+            'trusted_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+        $selectedSession = AuthenticationSession::query()->create([
+            'user_id' => $customer->getKey(),
+            'known_device_id' => $device->getKey(),
+            'session_id' => 'customer-selected-device-session',
+            'ip_address' => '203.0.113.10',
+            'authenticated_at' => now(),
+            'last_activity_at' => now(),
+        ]);
+        $otherSession = $this->createAuthenticationSession(
+            $otherUser,
+            'customer-other-account-session',
+            'Other account device',
+        );
+
+        $this->actingAs($customer)
+            ->delete(route('customer.security.devices.destroy', $device))
+            ->assertRedirect(route('customer.security.devices.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSame(KnownDeviceStatus::NonTrusted, $device->fresh()->status);
+        $this->assertNotNull($selectedSession->fresh()->revoked_at);
+        $this->assertSame('device_revoked', $selectedSession->fresh()->revocation_reason);
+        $this->assertNull($otherSession->fresh()->revoked_at);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_type' => User::class,
+            'notifiable_id' => $customer->getKey(),
+            'data->ip_address' => '203.0.113.10',
+        ]);
     }
 
     private function createAuthenticationSession(

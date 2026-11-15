@@ -27,7 +27,7 @@ final class PasswordResetService extends BaseService
         private readonly PasswordHistoryService $passwordHistory,
     ) {}
 
-    public function createToken(User $user): string
+    public function createToken(User $user, bool $customerOnly = false): string
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
@@ -58,7 +58,8 @@ final class PasswordResetService extends BaseService
             '/',
         );
 
-        $resetUrl = $resetBaseUrl.'/password/reset?'.http_build_query([
+        $resetPath = $customerOnly ? '/customer/password/reset' : '/password/reset';
+        $resetUrl = $resetBaseUrl.$resetPath.'?'.http_build_query([
             'token' => $token,
             'email' => $user->email,
         ]);
@@ -103,9 +104,9 @@ final class PasswordResetService extends BaseService
      * Consume the token, change the password, revoke all active
      * sessions and append the audit event atomically.
      */
-    public function resetPassword(string $token, string $newPassword): void
+    public function resetPassword(string $token, string $newPassword, bool $customerOnly = false): void
     {
-        DB::transaction(function () use ($token, $newPassword): void {
+        DB::transaction(function () use ($token, $newPassword, $customerOnly): void {
             $tokenHash = hash('sha256', $token);
 
             // Keep the global lock order consistent: User -> reset token.
@@ -122,7 +123,20 @@ final class PasswordResetService extends BaseService
                 ->lockForUpdate()
                 ->first();
 
-            if ($user === null || $user->status->value !== 'active') {
+            if (
+                $user === null
+                || $user->status->value !== 'active'
+                || ($customerOnly && (
+                    ! $user->hasRole('customer')
+                    || $user->hasAnyRole([
+                        'super_admin_root',
+                        'super_admin',
+                        'cooperative_admin',
+                        'user',
+                    ])
+                ))
+                || (! $customerOnly && $user->hasRole('customer'))
+            ) {
                 throw new InvalidPasswordResetTokenException('Invalid password reset token.');
             }
 

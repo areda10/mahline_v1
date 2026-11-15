@@ -6,10 +6,13 @@ namespace App\Domains\Identity\Users\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\KnownDevice;
 use App\Domains\Identity\Authorization\Concerns\HasAuthorization;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Media\Models\Media;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -17,6 +20,9 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
@@ -97,6 +103,16 @@ final class User extends BaseModel implements AuthenticatableContract
         );
     }
 
+    public function knownDevices(): HasMany
+    {
+        return $this->hasMany(KnownDevice::class, 'user_id');
+    }
+
+    public function authenticationSessions(): HasMany
+    {
+        return $this->hasMany(AuthenticationSession::class, 'user_id');
+    }
+
     // reste inchangée pour cooperative_admin / user.
     public function cooperative(): BelongsTo
     {
@@ -117,5 +133,24 @@ final class User extends BaseModel implements AuthenticatableContract
         )
             ->using(SuperAdminCooperative::class)
             ->withTimestamps();
+    }
+
+    public function media(): MorphMany
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function profileImage(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'mediable')
+            ->where('category', 'profile_image')
+            ->where('is_primary', true);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->media()->where('category', 'document')
+            ->orderBy('sort_order')
+            ->orderBy('created_at');
     }
 }

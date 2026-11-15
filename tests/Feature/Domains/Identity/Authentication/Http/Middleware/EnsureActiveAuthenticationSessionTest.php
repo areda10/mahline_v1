@@ -151,9 +151,7 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
 
     private function middleware(): EnsureActiveAuthenticationSession
     {
-        return new EnsureActiveAuthenticationSession(
-            app(SessionService::class),
-        );
+        return app(EnsureActiveAuthenticationSession::class);
     }
 
     private function userWithRole(string $slug): User

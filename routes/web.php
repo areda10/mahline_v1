@@ -10,7 +10,13 @@ use App\Domains\Identity\Authentication\Http\Controllers\ApiTokenManagementContr
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutController;
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
+use App\Domains\Identity\Authentication\Http\Controllers\DeviceTrustController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Media\Http\Controllers\MediaController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
+use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
+use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
 use App\Domains\Identity\Password\Http\Controllers\PasswordResetController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CatalogController as SuperAdminRootCatalogController;
@@ -36,7 +42,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('authentication')
     ->name('authentication.')
-    ->middleware('web')
     ->group(function (): void {
         /*
          * Display authentication endpoint.
@@ -65,12 +70,86 @@ Route::prefix('authentication')
 
 /*
 |--------------------------------------------------------------------------
+| Customer registration and email verification
+|--------------------------------------------------------------------------
+*/
+Route::prefix('customer')
+    ->name('customer.')
+    ->group(function (): void {
+        Route::middleware('guest')->group(function (): void {
+            Route::get('login', [AuthenticationController::class, 'showCustomerLogin'])
+                ->name('login');
+            Route::post('login', [AuthenticationController::class, 'loginCustomer'])
+                ->middleware('throttle:5,1')
+                ->name('login.store');
+            Route::get('register', [CustomerRegistrationController::class, 'create'])
+                ->name('register');
+            Route::post('register', [CustomerRegistrationController::class, 'store'])
+                ->middleware('throttle:5,1')
+                ->name('register.store');
+
+            Route::get('password/forgot', [PasswordResetController::class, 'showForgotForm'])
+                ->name('password.request');
+            Route::post('password/forgot', [PasswordResetController::class, 'forgot'])
+                ->middleware('throttle:5,1')
+                ->name('password.email');
+            Route::get('password/reset', [PasswordResetController::class, 'showResetForm'])
+                ->name('password.reset');
+            Route::post('password/reset', [PasswordResetController::class, 'reset'])
+                ->middleware('throttle:10,1')
+                ->name('password.update');
+        });
+
+        Route::get('verification/notice', [CustomerRegistrationController::class, 'notice'])
+            ->name('verification.notice');
+        Route::get('verification/verify', [CustomerRegistrationController::class, 'verify'])
+            ->middleware('throttle:10,1')
+            ->name('verification.verify');
+        Route::post('verification/resend', [CustomerRegistrationController::class, 'resend'])
+            ->middleware('throttle:10,1')
+            ->name('verification.resend');
+
+        Route::get('email/change/verify', [CustomerProfileController::class, 'verifyEmailChange'])
+            ->middleware('throttle:10,1')
+            ->name('email.change.verify');
+
+        Route::post('logout', [AuthenticationController::class, 'logout'])
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->name('logout');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
+
+        Route::prefix('security/password')
+            ->name('security.password.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+                Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+            });
+
+        Route::prefix('password/change-required')
+            ->name('password.force-change.')
+            ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+            ->group(function (): void {
+                Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
+                Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
+            });
+    });
+
+/*
+|--------------------------------------------------------------------------
 | Password Reset
 |--------------------------------------------------------------------------
 */
 Route::prefix('password')
     ->name('password.')
-    ->middleware('web')
     ->group(function (): void {
         // Display the forgot-password form.
         Route::get(
@@ -99,14 +178,14 @@ Route::prefix('password')
 
 Route::prefix('password/change-required')
     ->name('password.force-change.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('/', [ForcedPasswordChangeController::class, 'edit'])->name('edit');
         Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
     });
 
 Route::get('/security/password', [ForcedPasswordChangeController::class, 'edit'])
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user'])
     ->name('security.password.edit');
 
 /*
@@ -121,6 +200,12 @@ Route::get('/', function () {
     }
 
     $user = auth()->user();
+
+    if ($user->hasRole('customer')) {
+        return redirect()->route($user->must_change_password
+            ? 'customer.password.force-change.edit'
+            : 'customer.dashboard');
+    }
 
     if ($user->must_change_password) {
         return redirect()->route('password.force-change.edit');
@@ -142,8 +227,23 @@ Route::get('/', function () {
 });
 
 Route::get('/user/dashboard', UserDashboardController::class)
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
+
+Route::get('/customer/dashboard', CustomerDashboardController::class)
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->name('customer.dashboard');
+
+Route::prefix('customer/profile')
+    ->name('customer.profile.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->group(function (): void {
+        Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
+        Route::post('email', [CustomerProfileController::class, 'requestEmailChange'])
+            ->middleware('throttle:5,1')
+            ->name('email.change');
+    });
 
 Route::get('/user/invitation/accept', [UserInvitationController::class, 'show'])
     ->middleware('throttle:10,1')
@@ -155,7 +255,7 @@ Route::post('/user/invitation/accept', [UserInvitationController::class, 'accept
 
 Route::prefix('root/back-office')
     ->name('root.backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
     ->group(function (): void {
         Route::get('dashboard', SuperAdminRootDashboardController::class)
             ->name('dashboard');
@@ -177,6 +277,14 @@ Route::prefix('root/back-office')
             ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
 
         Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
             ->name('security.api-tokens.index');
@@ -307,7 +415,7 @@ Route::prefix('root/back-office')
 */
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin,user'])
     ->group(function (): void {
         Route::get('security/sessions', [AuthenticationSessionController::class, 'index'])
             ->name('security.sessions.index');
@@ -317,6 +425,14 @@ Route::prefix('back-office')
             ->name('security.sessions.logout-everywhere');
         Route::delete('security/sessions/{session}', [AuthenticationSessionController::class, 'revokeOwn'])
             ->name('security.sessions.destroy');
+
+        Route::prefix('security/devices')
+            ->name('security.devices.')
+            ->group(function (): void {
+                Route::get('/', [DeviceTrustController::class, 'index'])->name('index');
+                Route::delete('{device}', [DeviceTrustController::class, 'destroy'])->name('destroy');
+                Route::post('{device}/replace', [DeviceTrustController::class, 'replace'])->name('replace');
+            });
 
         Route::get('security/api-tokens', [ApiTokenManagementController::class, 'index'])
             ->name('security.api-tokens.index');
@@ -330,7 +446,7 @@ Route::prefix('back-office')
 
 Route::prefix('back-office')
     ->name('backoffice.')
-    ->middleware(['web', 'auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
     ->group(function (): void {
 
         Route::get('dashboard', BackOfficeDashboardController::class)
@@ -455,3 +571,38 @@ Route::prefix('back-office')
 //         ),
 //     ]);
 // });
+
+
+/*
+|--------------------------------------------------------------------------
+| Media
+|--------------------------------------------------------------------------
+*/
+
+// Public product and cooperative images may be streamed without exposing
+// their physical storage location. Private media requires an authenticated
+// owner/administrator and is authorized by MediaPolicy.
+Route::get('/media/{media}', [MediaController::class, 'show'])
+    ->whereUlid('media')
+    ->name('media.show');
+
+Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
+    ->prefix('media')
+    ->name('media.')
+    ->group(function (): void {
+        Route::get('{media}/private', [MediaController::class, 'showPrivate'])
+            ->whereUlid('media')
+            ->name('private');
+        Route::post('/', [MediaController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('store');
+        Route::put('{media}/primary', [MediaController::class, 'primary'])
+            ->whereUlid('media')
+            ->name('primary');
+        Route::patch('{media}/order', [MediaController::class, 'reorder'])
+            ->whereUlid('media')
+            ->name('reorder');
+        Route::delete('{media}', [MediaController::class, 'destroy'])
+            ->whereUlid('media')
+            ->name('destroy');
+    });

@@ -1,4 +1,6 @@
-@extends(auth()->user()->hasRole('super_admin_root') ? 'layouts.root' : 'layouts.admin')
+@extends(auth()->user()->hasRole('customer')
+    ? 'layouts.customer'
+    : (auth()->user()->hasRole('super_admin_root') ? 'layouts.root' : 'layouts.admin'))
 
 @section('title', 'Sécurité — Changer le mot de passe')
 
@@ -23,7 +25,9 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('password.force-change.update') }}">
+        <form method="POST" action="{{ auth()->user()->hasRole('customer')
+            ? route('customer.password.force-change.update')
+            : route('password.force-change.update') }}">
             @csrf
             @method('PUT')
 
@@ -52,7 +56,9 @@
         </form>
 
         @if(auth()->user()->must_change_password)
-            <form method="POST" action="{{ route('authentication.logout') }}" style="margin-top:16px">
+            <form method="POST" action="{{ auth()->user()->hasRole('customer')
+                ? route('customer.logout')
+                : route('authentication.logout') }}" style="margin-top:16px">
                 @csrf
                 <button class="button button-secondary" type="submit">Se déconnecter</button>
             </form>

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Workflows;
 
 use App\Domains\Identity\Authentication\DTOs\AuthenticationContext;
+use App\Domains\Identity\Authentication\Exceptions\AuthenticationFailedException;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\AuthenticationService;
+use App\Domains\Identity\Authentication\Services\DeviceTrustService;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
-use App\Domains\Identity\Authentication\Services\UnusualActivityDetectionService;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +23,7 @@ final class AuthenticationWorkflow
         private readonly AuthenticationService $authenticationService,
         private readonly SessionService $sessionService,
         private readonly LoginHistoryService $loginHistoryService,
-        private readonly UnusualActivityDetectionService $unusualActivityDetectionService,
+        private readonly DeviceTrustService $deviceTrustService,
         private readonly AuthenticationWorkflowHook $hook,
     ) {}
 
@@ -29,11 +31,26 @@ final class AuthenticationWorkflow
         AuthenticationContext $context,
         string $sessionId,
         ?Request $request = null,
+        bool $customerOnly = false,
     ): AuthenticationSession {
         $request ??= request();
         $user = $this->authenticationService->authenticate(
             context: $context,
         );
+
+        // A customer URL must never create a session for an internal account.
+        // Keep the public authentication response identical for every mismatch.
+        if ((! $customerOnly && $user->hasRole('customer')) || ($customerOnly && (
+            ! $user->hasRole('customer')
+            || $user->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ])
+        ))) {
+            throw new AuthenticationFailedException;
+        }
 
         try {
             Auth::login($user);
@@ -42,12 +59,19 @@ final class AuthenticationWorkflow
 
             $newSessionId = $request->session()->getId();
 
-            [$authenticationSession, $isNewDevice] = DB::transaction(
+            [$authenticationSession, $deviceResolution] = DB::transaction(
                 function () use (
                     $user,
                     $context,
                     $newSessionId,
                 ): array {
+                    $deviceResolution = $this->deviceTrustService->resolveForAuthentication(
+                        user: $user,
+                        presentedToken: $context->deviceTrustToken,
+                        device: $context->device,
+                        browser: $context->browser,
+                    );
+
                     $authenticationSession = $this->sessionService->create(
                         user: $user,
                         sessionId: $newSessionId,
@@ -55,20 +79,10 @@ final class AuthenticationWorkflow
                         userAgent: $context->userAgent,
                         browser: $context->browser,
                         device: $context->device,
+                        knownDeviceId: (string) $deviceResolution->device->getKey(),
                     );
 
-                    $isNewDevice = $context->device !== null
-                        && $this->unusualActivityDetectionService->isNewDevice(
-                            user: $user,
-                            device: $context->device,
-                        );
-
-                    if ($context->device !== null) {
-                        $this->unusualActivityDetectionService->rememberDevice(
-                            user: $user,
-                            device: $context->device,
-                        );
-                    }
+                    $isNewDevice = $deviceResolution->isNewDevice;
 
                     $this->hook->afterDeviceRemembered(
                         user: $user,
@@ -85,8 +99,15 @@ final class AuthenticationWorkflow
                         device: $context->device,
                     );
 
-                    return [$authenticationSession, $isNewDevice];
+                    return [$authenticationSession, $deviceResolution];
                 },
+            );
+
+            $isNewDevice = $deviceResolution->isNewDevice;
+
+            $request->attributes->set(
+                DeviceTrustCookie::REQUEST_ATTRIBUTE,
+                $deviceResolution->cookieToken,
             );
 
             $this->hook->afterAuthenticationCommitted(

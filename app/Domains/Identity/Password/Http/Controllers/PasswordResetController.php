@@ -41,9 +41,25 @@ final class PasswordResetController
             ->where('email', $request->validated('email'))
             ->first();
 
-        if ($user !== null && $user->status->value === 'active') {
+        $customerOnly = $request->routeIs('customer.password.email');
+
+        $isCustomerAccount = $user !== null
+            && $user->hasRole('customer')
+            && ! $user->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]);
+
+        if (
+            $user !== null
+            && $user->status->value === 'active'
+            && ($customerOnly ? $isCustomerAccount : ! $user->hasRole('customer'))
+        ) {
             $this->passwordResetService->createToken(
                 user: $user,
+                customerOnly: $customerOnly,
             );
         }
 
@@ -56,7 +72,9 @@ final class PasswordResetController
         }
 
         return redirect()
-            ->route('password.request')
+            ->route($request->routeIs('customer.password.email')
+                ? 'customer.password.request'
+                : 'password.request')
             ->with('status', $message);
     }
 
@@ -67,6 +85,7 @@ final class PasswordResetController
             $this->passwordResetService->resetPassword(
                 token: $request->validated('token'),
                 newPassword: $request->validated('password'),
+                customerOnly: $request->routeIs('customer.password.update'),
             );
         } catch (InvalidPasswordResetTokenException $exception) {
             if ($this->wantsJson($request)) {
@@ -101,7 +120,9 @@ final class PasswordResetController
         }
 
         return redirect()
-            ->route('authentication.login')
+            ->route($request->routeIs('customer.password.update')
+                ? 'customer.login'
+                : 'authentication.login')
             ->with('status', 'Password has been reset successfully.');
     }
 

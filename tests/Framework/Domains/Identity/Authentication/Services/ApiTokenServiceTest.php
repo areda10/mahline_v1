@@ -9,6 +9,7 @@ use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -296,7 +297,7 @@ final class ApiTokenServiceTest extends TestCase
         self::assertNotNull($legacyToken);
         self::assertEquals(
             $createdAt->copy()->addDays(90)->toDateTimeString(),
-            \Illuminate\Support\Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
+            Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
         );
 
         $customExpiryToken = DB::table('personal_access_tokens')
@@ -306,12 +307,11 @@ final class ApiTokenServiceTest extends TestCase
         self::assertNotNull($customExpiryToken);
         self::assertEquals(
             $createdAt->copy()->addDays(90)->toDateTimeString(),
-            \Illuminate\Support\Carbon::parse($customExpiryToken->expires_at)->toDateTimeString(),
+            Carbon::parse($customExpiryToken->expires_at)->toDateTimeString(),
         );
 
         $this->travelBack();
     }
-
 
     public function test_prune_removes_only_tokens_past_expiry_retention_and_keeps_audit_and_web_sessions(): void
     {
@@ -411,6 +411,4 @@ final class ApiTokenServiceTest extends TestCase
 
         $this->service->pruneExpiredTokens(chunkSize: 0);
     }
-
-
 }

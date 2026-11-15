@@ -1,9 +1,9 @@
 # MAHLINE V7.0 — Feuille de route globale des domaines
 
-- **Version :** 5.12
-- **Date :** 12 novembre 2026
-- **Branche de référence :** `feature/Identity`
-- **Commit audité :** `63b9d4cb767643fc30b1a03ef992d3aa1985ae05`
+- **Version :** 5.105
+- **Date :** 14 novembre 2026
+- **Branche de référence :** `feature/Marketplace`
+- **Commit audité :** `6ff7271a6525bbbe797a6c8f5c6af18210481f84`
 - **Nature :** référentiel fonctionnel cible et feuille de route, à confirmer par audits détaillés
 - **Statut :** PROPOSITION DE SUIVI — les statuts doivent être confirmés par audit fonctionnel et tests.
 
@@ -31,6 +31,34 @@ La priorité officielle de MAHLINE V1 est de livrer un parcours métier complet 
 - Supervision : super_admin_root et super_admin selon périmètre d'affectation, sans contourner l'isolation des coopératives.
 - Client / public : consulter la marketplace, les fiches produits, les photos, les prix et la disponibilité ; les quantités affichées ne doivent jamais révéler le stock interne sensible.
 - Sources de vérité : Catalog/Products pour les données descriptives et prix publiés ; Media pour les fichiers/photos ; Inventory pour stock physique, réservations et quantité disponible ; Sales consomme un instantané cohérent au panier/checkout.
+- **Seuil « Presque épuisé » (Q282) :** seuil entier configurable par produit par le `cooperative_admin` propriétaire ; indicateur « Presque épuisé » si la disponibilité nette est positive et inférieure ou égale au seuil, « Indisponible » à zéro ou moins, sinon « Disponible ». Le seuil n'affecte ni le stock ni la commandabilité. Une valeur par défaut de **5 unités** s'applique si le seuil est absent/null. Un seuil explicitement configuré à **0** désactive « Presque épuisé » pour le produit : statut « Disponible » tant que la disponibilité nette est positive, puis « Indisponible » à zéro ou moins. Les valeurs négatives et décimales sont refusées ; Products distingue null de 0. Products possède le paramètre, Inventory la quantité disponible, Catalog l'indicateur et Sales la revalidation ; validation serveur, isolation coopérative et audit obligatoires.
+- **Indicateur public de stock (Q281) :** ne jamais exposer la quantité exacte au client. Catalog affiche « Indisponible » si la quantité disponible nette est nulle ou négative, « Presque épuisé » sous un seuil bas centralisé à définir avant implémentation, sinon « Disponible ». Inventory demeure source de vérité ; Sales revalide et réserve côté serveur. Les informations internes plus détaillées restent protégées par les permissions et l'isolation coopérative.
+- **Retour de disponibilité après réapprovisionnement (Q280) :** Catalog rétablit automatiquement l'état disponible dès qu'Inventory confirme une quantité disponible strictement positive après prise en compte des réservations et engagements ; aucune validation manuelle n'est requise. Inventory demeure la source de vérité, Catalog n'expose pas le stock physique et Sales revalide/réserve côté serveur. Prévoir propagation fiable, idempotence, prévention des états obsolètes, isolation coopérative et audit ; aucun changement de prix ou de version promotionnelle.
+- **Promotion sans variante disponible (Q279) :** conserver la promotion visible pendant sa validité, mais afficher « Indisponible » et bloquer toute commande. Inventory reste source de vérité ; Catalog expose l'indisponibilité sans révéler le stock physique ; Sales revalide disponibilité et réservation côté serveur au panier/checkout. Le retour du stock ne modifie pas la promotion ni ses versions.
+- **Réactivation d'une promotion annulée (Q278) :** une promotion annulée ne peut pas être réactivée par remise en service d'une ancienne version. Une nouvelle version, avec nouvelle période et paramètres validés, peut relancer la promotion logique ; la version annulée reste clôturée et immuable. Catalog expose la nouvelle version pendant sa période applicable ; Sales conserve les snapshots des opérations déjà enregistrées. Prévoir identité/version distincte, contrôles de dates et de chevauchement, droits coopératifs et audit.
+- **Modification d'une annulation planifiée (Q277) :** le `cooperative_admin` peut remplacer la date/heure prévue avant exécution. Chaque ancienne programmation reste historisée avec auteur et échéances ; la promotion demeure applicable jusqu'à l'échéance courante. Prévoir validation serveur, isolation coopérative, traitement atomique/idempotent des échéances et arbitrage des courses modification/exécution. Les snapshots Sales restent immuables.
+- **Prise d'effet de l'annulation d'une promotion (Q276) :** annulation immédiate ou planifiée au choix du `cooperative_admin`. Une annulation planifiée ne désactive pas la promotion avant son instant d'effet ; Catalog continue d'exposer la version applicable jusque-là, puis cesse de l'exposer. Products conserve programmation, auteur, dates et événements ; Sales préserve les snapshots historiques. Prévoir validation chronologique, traitement fiable à l'échéance, isolation coopérative et journalisation.
+- **Suppression/annulation des promotions (Q275) :** aucune suppression physique. La coopérative annule logiquement la promotion selon ses droits ; Products conserve versions, paramètres, auteurs, dates et événements. Catalog cesse de l'exposer à compter de l'effet de l'annulation ; Sales préserve tous les snapshots et commandes déjà enregistrés. Contrôles serveur, isolation coopérative, journalisation et absence de suppression en cascade obligatoires.
+- **Remplacement d'une version planifiée (Q274) :** si une version future n'est pas encore entrée en vigueur, une nouvelle modification remplace la version planifiée courante. La version remplacée est conservée dans l'historique avec son état, ses paramètres, son auteur et ses dates ; la version actuellement active reste applicable jusqu'à la nouvelle date d'effet. Products gère le cycle de vie et Catalog expose la seule version applicable ; Sales ne réécrit pas les commandes enregistrées. Contrôles serveur, chronologie cohérente, isolation coopérative et journalisation obligatoires.
+- **Entrée en vigueur des versions de promotion (Q273) :** le `cooperative_admin` choisit entre application immédiate après validation serveur ou planification à une date/heure future. Jusqu'à l'entrée en vigueur planifiée, la version précédente reste applicable ; Catalog expose la version correspondant à l'instant courant. Products conserve l'historique et les bornes d'effet ; Sales ne réécrit aucun panier/commande déjà enregistré. Validation chronologique, isolation coopérative et journalisation obligatoires.
+- **Versionnement des promotions actives (Q272) :** toute modification d'une promotion active crée une nouvelle version ; l'ancienne version et ses paramètres sont conservés dans l'historique, avec auteur et date. Products possède le versionnement ; Catalog expose la version applicable ; Sales conserve les prix figés des paniers/commandes et aucune commande déjà enregistrée n'est réécrite. La règle exacte d'entrée en vigueur d'une nouvelle version (immédiate ou planifiée) reste à décider avant implémentation.
+- **Publication des promotions V1 (Q271) :** publication immédiate sans approbation préalable dès que les validations serveur sont satisfaites ; une promotion planifiée reste inactive jusqu'à sa date de début et cesse d'être exposée à sa date de fin. Products valide et conserve les paramètres, Catalog n'expose que les promotions actives dans leur période, Sales revalide et fige le prix. Les actions sont journalisées ; les contrôles/suspensions de supervision restent possibles selon habilitations, sans écriture directe des paramètres commerciaux.
+- **Gestion des promotions V1 — autorisations (Q270) :** seul le `cooperative_admin` crée, modifie et supprime les promotions des produits de sa propre coopérative. `super_admin` affecté et `super_admin_root` disposent d'une supervision selon leurs droits, sans écriture directe des paramètres commerciaux au premier release. Contrôles serveur et isolation stricte obligatoires. Products possède les paramètres et l'historique ; Catalog expose ; Sales revalide et fige le prix appliqué.
+- **Affichage des promotions V1 (Q269) :** prix normal barré + prix promotionnel + badge de pourcentage pendant la seule période active. Pour les produits à variantes, le prix affiché et le taux doivent correspondre à la même variante disponible ; Catalog expose les données, Sales revalide et fige la variante/prix choisis.
+- **Arrondi des promotions V1 (Q268) :** arrondi commercial au centime de MAD le plus proche, demi-centime vers le haut ; calculs intermédiaires décimaux exacts. La règle doit être centralisée et testée pour garantir des résultats identiques dans Products, Catalog, Sales et Finance. Cet arrondi de calcul ne modifie jamais les règles de rejet des prix/taux saisis invalides.
+- **Précision du taux promotionnel V1 (Q267) :** jusqu'à deux décimales ; taux strictement positif et plafonné à 90 %. Validation serveur, stockage/calcul décimal exacts, aucun arrondi/troncature du taux saisi. Le prix promotionnel calculé suit l'arrondi commercial au centime le plus proche, demi-centime vers le haut (Q268).
+- **Plafond des promotions V1 (Q266) :** le taux de réduction doit être strictement positif et inférieur ou égal à 90 % ; rejet obligatoire côté serveur au-delà de 90 %. La précision du taux est limitée à deux décimales (Q267) et le prix promotionnel calculé suit l'arrondi commercial au centime le plus proche, demi-centime vers le haut (Q268).
+- **Calcul des promotions V1 (Q265) :** un taux unique défini au niveau du produit est appliqué au prix normal applicable de chaque variante (prix variante ou prix de base hérité). Le résultat est exposé par Catalog et revalidé/figé par Sales. La règle d'arrondi, la plage/précision du taux et les cumuls restent à décider avant codage.
+- **Portée des promotions V1 (Q264) :** la promotion est portée par le produit et s'applique à toutes ses variantes ; aucune promotion propre à une variante en V1. Le mécanisme exact de calcul du prix promotionnel par variante reste ouvert et devra être validé avant implémentation.
+- **Promotions V1 (Q263) :** promotion simple par produit avec prix normal, prix promotionnel inférieur et période de validité début/fin. Products possède les paramètres, Catalog expose le prix applicable, Sales revalide et fige le prix de vente. Les coupons, campagnes complexes et cumuls sont exclus ; fuseau/bornes, chevauchements et variantes restent à préciser.
+- **Saisie des prix V1 (Q262) :** refuser côté serveur toute valeur comportant plus de deux décimales significatives ; ne jamais arrondir ni tronquer silencieusement. Cette validation couvre les prix de base et de variantes, quelle que soit l'interface/API utilisée.
+- **Précision monétaire V1 (Q261) :** les prix en MAD sont limités à deux décimales ; utiliser une représentation décimale exacte, jamais des flottants binaires pour les calculs monétaires. Les règles d'arrondi détaillées pour taxes, remises, frais et répartitions restent à cadrer.
+- **Devise V1 (Q260) :** MAD est la devise du premier release. Le modèle de prix doit permettre une extension ultérieure à d'autres devises, mais aucune conversion automatique ni mélange de devises n'est autorisé ; Sales fige la devise avec le montant et Finance consomme ces données sans conversion implicite.
+- Prix V1 : prix de base obligatoire par produit ; prix spécifique facultatif par variante ; à défaut, la variante hérite du prix de base. Catalog affiche le prix applicable et Sales le fige dans le panier/commande ; toute validation de prix est serveur.
+- Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
+- Pour un produit sans variante, la carte affiche directement le prix de base, sans la mention « À partir de » ; Catalog l'expose depuis Products et Sales le revalide puis le fige côté serveur.
+- Affichage V1 : lorsqu'un produit possède plusieurs variantes commercialisables avec des prix différents, la carte affiche le prix applicable le plus bas avec la mention « À partir de ». La fiche produit présente les prix des variantes ; Sales revalide le prix de la variante sélectionnée et le fige dans le panier/commande. Le calcul du minimum est côté serveur.
+- Calcul du prix minimum : exclure les variantes en rupture ou indisponibles ; seules les variantes commercialisables et disponibles participent au prix « À partir de ». Inventory fournit l'information de disponibilité, et Sales la revalide au panier/checkout. Si aucune variante n'est disponible, afficher l'indisponibilité sans prix d'appel achetable.
 - Première étape obligatoire : audit du code existant et des routes, contrôleurs, services, modèles, migrations, policies/gates, vues, tests et liaisons inter-domaines avant toute modification.
 - Développement incrémental sur une branche de travail dédiée, tests ciblés puis suite requise ; aucune fusion vers main sans demande explicite.
 
@@ -213,6 +241,8 @@ Les périmètres **Delivery** et **Subscriptions / SaaS Billing** sont retenus c
 **Travaux à suivre :**
 - [ ] USR-02 : adresse personnelle, photo de profil et préférences de notification.
 - [ ] USR-03 : consultation et modification du profil personnel.
+- [x] Client — isolation du changement de mot de passe forcé : routes customer dédiées, redirection depuis `/`, layout client et déconnexion client ; tests Feature dédiés validés avec la suite complète.
+- [x] Client — changement d'adresse e-mail : implémenté et validé (voir version 5.104).
 - [ ] USR-04 : résoudre la divergence entre la décision 91 (absence d'accès de cooperative_admin aux données personnelles d'autres utilisateurs) et les autorisations/tests actuellement présents.
 - [ ] Reprendre les fonctionnalités explicitement reportées dans le backlog Identity.
 - [ ] Auditer les liens Identity ↔ Media, Localization, Communication, Audit et Cooperatives.
@@ -475,6 +505,508 @@ Le lancement production intervient seulement après :
 Ne pas présumer que toute offre mutualisée fournit les workers persistants ou l'accès CLI requis ; vérifier les capacités exactes de l'offre.
 
 ## 8. Journal des mises à jour
+
+## Parcours directeur de développement — Client → Coopérative → Transporteur
+Le développement fonctionnel du premier release suit le parcours opérationnel transversal défini dans le registre de découverte :
+1. Client / Identity : inscription en statut pending, vérification e-mail puis activation automatique ; connexion, profil et adresses après activation.
+2. Marketplace / Catalog + Products : consultation des coopératives et découverte des produits, prix et disponibilités.
+3. Panier / commande / Sales : panier multi-coopératives, quantités, validation et passage de commande.
+4. Réception / espace coopérative : consultation de la sous-commande, des lignes, quantités et informations client autorisées.
+5. Confirmation / Sales + Inventory : acceptation, refus ou ajustement des lignes, confirmation de sous-commande et réservation de stock selon les règles métier.
+6. Préparation / remise / Delivery : préparation du colis, déclaration prêt et remise au transporteur.
+7. Suivi / Delivery + Communication : statuts d'expédition et notifications au client et à la coopérative.
+
+**Identité client (Q286) :** l'inscription crée un compte client en attente ; la vérification e-mail réussie active automatiquement ce compte sans validation administrative. Avant activation et vérification, pas d'accès authentifié à l'espace client ni de commande. La consultation publique du catalogue reste possible. Cette activation automatique est propre au parcours d'inscription client et ne modifie pas les règles d'activation/réactivation des comptes internes. Les liens de vérification sont sécurisés, expirants et invalidés après succès ; protection contre abus et énumération ; contrôle serveur et audit.
+
+**Implémentation progressive Client — tranche 1 (en cours) :** le socle d'inscription est développé dans `Identity/Customer` en conservant le modèle d'authentification `User` existant, mais avec un rôle `customer` dédié et des routes, contrôleurs, vues et tableau de bord séparés du rôle interne `user`. L'inscription crée un compte `pending` ; le mot de passe suit `PasswordPolicy` ; la vérification utilise un jeton aléatoire à usage unique, stocké sous forme de hash et expirant après 24 heures. Le renvoi invalide le lien précédent, autorise cinq demandes par heure puis applique un blocage d'une heure. Le cookie de session client expire à la fermeture du navigateur par défaut et le délai d'inactivité reprend la politique Identity de 60 minutes ; le « Se souvenir de moi » individuel reste à développer.
+
+**Audit technique de l'espace Client — état réel au commit `c8004a77998046abc0f355bf8d37ec3debb76092` (14 novembre 2026) :**
+
+- **Routes réellement présentes :** inscription et vérification sous `/customer/register` et `/customer/verification/*` ; tableau de bord `/customer/dashboard` ; profil `/customer/profile` (GET/PUT). Les noms sont préfixés `customer.*`. Le dashboard et le profil utilisent `auth`, `EnsureActiveAuthenticationSession`, `role:customer` et `EnsureCustomerAccount`. Ce middleware exige le rôle customer et refuse tout compte cumulant un rôle interne.
+- **Routes partagées Identity :** connexion `/authentication/login`, déconnexion `/authentication/logout`, réinitialisation `/password/*` et changement de mot de passe `/security/password` / `/password/change-required`. Les routes de sessions et tokens sous `/back-office/security/*` autorisent explicitement les rôles internes et excluent customer. Le chemin `/security/password` reste toutefois générique et n'a pas de garde de rôle customer dédiée ; la navigation client l'utilise actuellement. Pour une isolation d'URL stricte, créer des alias `/customer/security/*` et `/customer/logout`, en réutilisant les services Identity sans dupliquer l'authentification.
+- **Déjà codé :** rôle `customer` distinct sur le modèle Identity partagé `User` ; inscription pending avec nom, prénom, e-mail, téléphone et mot de passe ; politique de mot de passe ; vérification e-mail par jeton aléatoire stocké haché, à usage unique, 24 h ; renvoi limité à cinq demandes/heure avec blocage d'une heure et invalidation du lien précédent ; activation automatique après vérification ; audit de création/validation/envoi ; connexion commune par e-mail, compte actif et e-mail vérifié ; sessions multiples et timeout client 60 min ; cookie client par défaut expirant à la fermeture du navigateur ; consultation et modification du prénom, nom et téléphone avec audit ; vues, layout, dashboard et profil client séparés.
+- **Tests présents mais non confirmés exécutés :** `CustomerRegistrationTest` couvre inscription pending, activation, expiration, anti-énumération, renvoi/limitation et refus croisés customer/interne ; `CustomerProfileTest` couvre lecture, modification, audit, champs protégés et refus d'accès croisé. Les tests désactivent parfois le middleware de session pour isoler les assertions d'autorisation ; il faut aussi des tests d'intégration avec le pipeline middleware complet. Aucun résultat d'exécution n'est déduit de la seule présence des fichiers.
+- **Écarts de sécurité bloquants :** le mécanisme `known_devices` actuel identifie un appareil par une chaîne `device` issue du User-Agent et mémorise automatiquement cette valeur à la connexion. Il ne constitue pas une preuve de confiance sécurisée et révocable, n'est pas lié à une session, ne gère pas la limite de cinq appareils, le remplacement confirmé, ni la révocation de toutes les sessions de l'appareil. La notification existante de nouvel appareil est uniquement un e-mail informatif sans lien sécurisé de validation/révocation et sans notification in-app. Les décisions Q328-Q337 ne sont donc pas implémentées.
+- **Fonctions client encore absentes ou incomplètes :** photo de profil via Media (2 Mo) ; sécurité client (liste/révocation individuelle des sessions, déconnexion des autres appareils, appareils reconnus) ; option « Se souvenir de moi » ; demande de suppression/anonymisation de compte ; carnet d'adresses client. Le changement d'e-mail Q338-Q340 est désormais implémenté et validé (détail en version 5.104). Le modèle `Address` actuel appartient à Localization mais n'a ni propriétaire customer ni relation client ; la migration `addresses` ne contient pas de `user_id`.
+- **Parcours marketplace non encore présent dans ce dépôt :** aucun domaine `Sales`, `Inventory`, `Delivery`, `Media` ou `Communication` dans `app/Domains` au commit audité. Aucun contrôleur/route client pour catalogue public, panier, checkout, commandes, sous-commandes, suivi ou notifications marketplace n'a été trouvé dans l'inventaire. Catalog/Products existent côté domaine, mais les routes inspectées dans `routes/web.php` sont dans les espaces back-office, pas dans un espace de navigation client.
+- **Ordre d'exécution recommandé :** (1) achever l'isolation des routes Customer, notamment alias sécurité/déconnexion et tests négatifs croisés ; (2) corriger le mécanisme appareil/session et implémenter Q328-Q337 ; (3) intégrer Media/photo ; (4) carnet d'adresses Sales/Localization ; (5) catalogue public puis panier/checkout/commandes, en poursuivant le parcours client → coopérative → transporteur. Le changement d'e-mail est validé ; conserver les frontières Identity/Localization/Sales et ne pas dupliquer les routes métier sous chaque rôle.
+- **Conclusion d'audit :** le socle d'inscription, d'activation, de connexion partagée, de dashboard et de profil de base est présent ; l'espace client n'est pas encore une expérience complète ni prête pour la production. L'isolation des routes principales est déjà en place, mais l'isolation des parcours de sécurité doit être achevée. Aucune modification applicative ni exécution de tests n'est réalisée par cet audit.
+
+Tests feature ajoutés pour inscription, activation, expiration, unicité d'e-mail et limitation du renvoi ; ils restent à exécuter localement. **Point de sécurité bloquant avant mise en production :** le mécanisme existant `known_devices` repose actuellement sur une étiquette d'appareil dérivée du User-Agent et l'enregistre automatiquement ; il ne satisfait pas encore le mécanisme de confiance sécurisé, révocable et lié aux sessions prévu par Q328-Q337 (lien à usage unique d'une heure, révocation ciblée, cinq appareils, remplacement confirmé). Ne pas considérer ces décisions comme implémentées. Prochaines tranches : sécurisation complète des appareils/sessions clients, CRUD du profil, intégration Media pour la photo (2 Mo max), puis carnet d'adresses client dans le périmètre Sales/Localization selon les décisions validées.
+
+
+**Intervention administrateur — habilitations (Q310) :** seuls `super_admin_root` (toutes les coopératives) et `super_admin` affecté (coopératives de son périmètre) peuvent relancer ou décider à la place d'une coopérative après échéance. Le `cooperative_admin` ne peut pas prendre une décision administrative de substitution. Contrôle d'affectation côté serveur et audit obligatoires.
+
+****Compte client — suppression à l'initiative du client (Q311) :** le client peut demander la suppression ; l'accès au compte est désactivé immédiatement, les sessions et jetons sont révoqués, puis les données personnelles sont supprimées ou anonymisées dans la mesure permise. Les commandes, factures, preuves et journaux légalement ou opérationnellement nécessaires sont conservés avec accès restreint et durée définie. Avant codage, cadrer les commandes en cours, les délais, les sauvegardes, la réversibilité et la conservation ; ne pas supprimer aveuglément les relations métier.
+
+**Espace personnel client isolé :** créer un espace distinct de ceux de `super_admin_root`, `super_admin`, `cooperative_admin` et des utilisateurs internes. Séparer routes, contrôleurs, vues et navigation ; appliquer l'autorisation côté serveur et vérifier la propriété de chaque ressource pour prévenir les accès inter-comptes/IDOR. Définir explicitement l'identité/le rôle client, sans réutiliser implicitement le rôle interne `user`.
+
+**Photo de profil client :** permettre l'ajout et le remplacement d'une photo avec une taille maximale stricte de **2 Mo**, vérifiée côté serveur. Contrôler le contenu réel et les formats autorisés, sécuriser le nom et le stockage, empêcher l'exécution de fichiers, contrôler l'accès et éviter les fichiers orphelins. Identity ne conserve que la référence ; Media prend en charge les fichiers. Auditer le domaine Media et le stockage existant avant implémentation.
+
+**Profil client modifiable (Q312) :** le client peut modifier directement son nom, son prénom, son téléphone, son adresse e-mail et sa photo de profil. Le carnet d'adresses de livraison reste une section séparée, avec ses propres règles (Q288-Q298) et sans altération des snapshots de commande. Tout changement d'e-mail suit Q9-Q12 : l'ancienne adresse reste principale jusqu'à vérification de la nouvelle ; après validation, toutes les sessions web et tous les tokens API sont révoqués et une notification de sécurité est envoyée à l'ancienne adresse. Les validations, autorisations, audits et tests sont exécutés côté serveur.
+
+**Authentification du client avant changement d'e-mail (Q338) :** exiger et vérifier le mot de passe actuel avant d'envoyer tout lien à la nouvelle adresse. Un mot de passe absent ou incorrect bloque la demande et ne déclenche aucun e-mail. L'ancienne adresse reste principale jusqu'à vérification de la nouvelle ; après validation, révoquer toutes les sessions web et tous les tokens API et notifier l'ancienne adresse conformément à Q312/Q9-Q12. Réutiliser les protections anti-abus d'Identity ; auditer le parcours et les limites existantes avant implémentation.
+
+**Expiration du lien de changement d'e-mail (Q339) :** le lien envoyé à la nouvelle adresse après vérification du mot de passe actuel est valable 30 minutes, à usage unique et lié à la demande concernée. Le serveur contrôle l'expiration ; un lien expiré ne peut pas valider le changement. L'ancienne adresse reste principale jusqu'à validation. Ne jamais journaliser le jeton ou le lien secret ; appliquer ensuite les révocations et notifications Q9-Q12/Q312.
+
+**Renvoi après expiration du lien de changement d'e-mail (Q340) :** le client doit refaire une demande, saisir à nouveau son mot de passe actuel et confirmer la nouvelle adresse. Le serveur vérifie le mot de passe avant tout envoi ; le nouveau lien à usage unique valable 30 minutes (Q339) invalide immédiatement les précédents. L'ancienne adresse reste principale jusqu'à validation. Aucun secret dans les journaux.
+
+**Vérification du téléphone client (Q313) :** aucune vérification SMS/OTP du numéro n'est exigée en V1, ni à l'inscription ni lors de sa modification. Seule la vérification de l'adresse e-mail est obligatoire avant activation et commande (Q286-Q287). Le téléphone reste validé côté serveur pour son format et n'est pas considéré comme vérifié ; aucun fournisseur SMS n'est requis pour ce parcours.
+
+**Connexion du client (Q314) :** l'adresse e-mail est l'unique identifiant de connexion en V1. Le numéro de téléphone du profil ou d'une adresse de livraison ne permet pas de s'authentifier. Le parcours applique les contrôles Identity existants (compte actif, e-mail vérifié et protections anti-abus) ; aucune authentification par SMS/téléphone n'est prévue sans décision ultérieure.
+
+**Récupération du mot de passe client (Q315) :** le client demande un lien de réinitialisation envoyé à son adresse e-mail ; ce lien est valable 30 minutes et utilisable une seule fois. L'expiration et l'usage unique sont vérifiés côté serveur, le nouveau mot de passe respecte les règles de complexité Identity et aucun OTP n'est requis. Les mots de passe et secrets de réinitialisation sont exclus des journaux.
+
+**Sessions après réinitialisation du mot de passe client (Q316) :** dès que la réinitialisation est réussie, toutes les sessions web et tous les tokens API du client sont révoqués, y compris la session courante. Le client doit se reconnecter avec son nouveau mot de passe. L'opération est auditée sans conserver le mot de passe, le lien ni le secret de réinitialisation.
+
+**Protection du login client (Q317) :** reprendre les limites anti-abus Identity déjà établies : maximum 5 tentatives par compte, 30 par adresse IP et 5 par combinaison IP + adresse e-mail sur 15 minutes. Les limites sont appliquées côté serveur, sans mécanisme client plus permissif ni divulgation permettant l'énumération des comptes ; aucun secret n'est journalisé.
+
+**Persistance de connexion client (Q318) :** proposer une option facultative « Se souvenir de moi », activée uniquement par le choix explicite du client. La persistance doit être sécurisée côté serveur et révocable individuellement par appareil ; toute révocation globale de sessions/tokens, notamment après réinitialisation du mot de passe (Q316), invalide également cette persistance. La durée, le renouvellement/rotation et le comportement à expiration restent à définir avant codage.
+
+**Gestion des appareils client (Q319) :** l'espace sécurité liste les sessions/appareils actifs avec date de connexion, navigateur, système d'exploitation et dernière activité lorsque ces informations sont disponibles. Le client peut révoquer une session individuellement ou déconnecter toutes les autres sessions en conservant la session courante. L'accès est strictement limité à ses propres sessions ; la persistance « Se souvenir de moi » associée est invalidée lors d'une révocation. La révocation globale de Q316 reste prioritaire et inclut la session courante et tous les tokens API.
+
+Espace client — première tranche de développement :** démarrer par le CRUD du compte/profil client, des coordonnées téléphone/e-mail et des adresses. Réutiliser les règles Q286-Q298 : inscription en attente puis activation après vérification e-mail, sécurité des liens, coordonnées du destinataire propres à chaque adresse, maximum cinq adresses actives, gestion explicite de l'adresse par défaut et snapshots de commande immuables. La suppression/désactivation du compte, les conséquences sur les sessions et les règles de conservation doivent être précisées avant codage ; ne pas supposer une suppression physique. Toute modification d'e-mail doit être alignée sur les règles Identity existantes. Les opérations sont limitées au compte client authentifié, contrôlées côté serveur, auditées et couvertes par des tests d'isolation/IDOR. Le développement commence par un audit détaillé des fichiers Identity/Localization, routes, modèles, migrations, vues, notifications et tests ; aucune migration déjà exécutée ne sera modifiée.
+
+**Intervention administrateur sur une sous-commande en retard (Q309) :** un administrateur autorisé peut relancer la coopérative avec un nouveau délai (durée définie centralement, maximum 24 heures), ou accepter/refuser la sous-commande à sa place. Une décision administrative est explicitement attribuée à son auteur et ne doit pas être imputée à la coopérative. Chaque intervention conserve l'acteur, l'horodatage, l'action, les états avant/après et le motif/commentaire lorsqu'il est fourni ; les parties concernées sont notifiées.
+
+**Sous-commande sans réponse à l'échéance (Q308) :** l'expiration du délai commun ne déclenche ni refus ni annulation automatique. La sous-commande reste en attente et est signalée comme en retard ; un administrateur est alerté pour intervention manuelle autorisée. Les autres sous-commandes continuent indépendamment. Toute intervention est horodatée et auditée. Une sous-commande en attente ne compte pas comme refusée pour la clôture globale de Q306.
+
+**Délai de réponse des coopératives (Q307) :** MAHLINE définit un délai commun à toutes les coopératives pour accepter ou refuser une sous-commande. La durée de référence est de 12 heures ; elle est configurable centralement sans pouvoir dépasser 24 heures. Le point de départ doit correspondre à la transmission effective de la sous-commande. Le traitement d'une échéance dépassée sans réponse (refus automatique, annulation, relance ou autre) reste à cadrer : ne pas déduire de comportement automatique de cette seule décision.
+
+**Refus de toutes les sous-commandes (Q306) :** lorsque toutes les sous-commandes d'une commande globale sont définitivement refusées, Sales clôt automatiquement la commande globale au statut « Refusée ». Aucune expédition ne subsistant, les frais de livraison sont ramenés à zéro. Communication informe le client ; les refus, horodatages, statuts et montants recalculés sont conservés et audités. La clôture est déclenchée côté serveur après enregistrement du dernier refus et doit être idempotente. Cette décision ne spécifie pas les remboursements ou paiements en ligne, hors périmètre de paiement V1 déjà cadré.
+
+**Frais d'une sous-commande entièrement refusée avant expédition (Q305) :** si une coopérative refuse entièrement sa sous-commande avant expédition et qu'aucun colis n'est remis au transporteur, les frais de cette expédition sont retirés du total de livraison dû par le client. Le total est recalculé sur les seules expéditions restantes (Q303). Un refus partiel qui laisse une sous-commande active conserve son expédition unique (Q304) ; les règles tarifaires applicables à cette expédition restent à préciser. Les frais après préparation, remise au transporteur ou échec de livraison relèvent de règles distinctes à cadrer.
+
+**Colis et expéditions par sous-commande (Q304) :** en V1, chaque sous-commande coopérative confirmée correspond à un seul colis et une seule expédition Delivery, avec son propre suivi transporteur. Une commande globale multi-coopératives peut donc produire plusieurs expéditions, une par sous-commande confirmée. Les frais restent calculés par expédition puis additionnés (Q303). Le multi-colis pour une même sous-commande est reporté à une évolution ultérieure ; conserver une conception extensible sans activer cette capacité en V1.
+
+**Frais de livraison multi-coopératives (Q303) :** calculer séparément les frais de chaque expédition depuis le lieu de départ de la coopérative vers l'adresse commune du client, puis additionner ces frais pour obtenir le total de livraison de la commande globale. Chaque expédition conserve ses frais ; si une sous-commande est refusée ou annulée, le total est recalculé à partir des expéditions restantes selon les règles Sales/Delivery. La destination commune ne change pas (Q300/Q302). La grille tarifaire doit être fournie/validée et rester configurable ; ne pas inventer de tarifs ni coder en dur des valeurs non validées.
+
+**Adresse après refus d'une sous-commande (Q302) :** le refus d'une coopérative n'affecte pas l'adresse commune de la commande globale. Toutes les sous-commandes restantes poursuivent leur traitement avec le même snapshot de destination ; aucune nouvelle adresse n'est demandée ou sélectionnée automatiquement. Les coûts et expéditions peuvent être recalculés selon les règles Delivery, sans changement de destination.
+
+**Changement d'adresse après confirmation (Q301) :** aucun changement de destination à la demande du client après confirmation de la commande, même avant remise au transporteur. Le client doit annuler puis repasser commande uniquement si les règles d'annulation et l'état courant l'autorisent ; sinon l'adresse reste inchangée. Le snapshot global, les sous-commandes et les expéditions conservent la destination figée. Cette règle restreint toute possibilité générale de correction postérieure mentionnée à Q300 ; contrôle serveur et audit obligatoires.
+
+**Adresse unique d'une commande multi-coopératives (Q300) :** une commande globale utilise une seule adresse de livraison commune à toutes ses sous-commandes et expéditions. Sales enregistre le snapshot de destination au niveau de la commande ; les sous-commandes coopératives et Delivery s'y réfèrent sans destination indépendante en V1. La propriété de l'adresse est vérifiée côté serveur ; toute correction postérieure relève d'un processus Sales/Delivery autorisé, contrôlé et audité. Les frais et opérations de transport peuvent être répartis par expédition sans changer la destination commune. Plusieurs destinations pour une même commande globale sont exclues du premier release.
+
+**Mode de commande V1 (Q299) :** toutes les commandes V1 sont exclusivement en livraison à une adresse valide appartenant au client. Le checkout exige cette adresse et enregistre son snapshot ; aucun retrait à la coopérative n'est disponible en V1. Un éventuel retrait sera traité dans une évolution dédiée.
+
+**Suppression de la dernière adresse (Q298) :** le client peut avoir un carnet vide, sans adresse par défaut. La suppression de la dernière adresse est autorisée. En revanche, le serveur interdit la confirmation d'une commande tant qu'une adresse de livraison valide appartenant au client n'a pas été créée et sélectionnée. Les snapshots des commandes existantes restent intacts.
+
+**Suppression d'une adresse utilisée par une commande en cours (Q297) :** la suppression du carnet reste autorisée, même si l'adresse a servi à une commande en préparation ou en livraison. La suppression n'affecte pas la commande ; son snapshot de livraison autonome est conservé et reste accessible aux acteurs autorisés.
+
+**Adresse choisie au checkout (Q296) :** le choix d'une adresse différente lors du checkout vaut uniquement pour la commande en cours et ne modifie pas l'adresse par défaut du carnet. Le serveur vérifie la propriété de l'adresse et enregistre le snapshot de livraison de la commande ; le client modifie séparément sa préférence durable.
+
+**Changement manuel de l'adresse par défaut (Q295) :** lorsqu'un client désigne une autre adresse par défaut, l'ancienne perd immédiatement ce statut et la nouvelle le reçoit dans une opération atomique côté serveur. Zéro ou une adresse par défaut est autorisé, jamais plusieurs. Ce changement ne réécrit aucun snapshot de commande ; choix par défaut et adresse choisie au checkout sont distincts.
+
+**Modification de l'adresse par défaut (Q294) :** modifier les informations d'une adresse ne change pas son statut par défaut ; si elle était définie par défaut, elle le reste après modification. Les snapshots de livraison des commandes existantes ne sont jamais modifiés.
+
+**Première adresse par défaut (Q293) :** à la création de la toute première adresse active du client, celle-ci devient automatiquement l'adresse par défaut. Les adresses ultérieures ne remplacent jamais automatiquement le choix. Si le client n'a plus d'adresse par défaut mais conserve d'autres adresses, la création d'une nouvelle adresse ne rétablit pas automatiquement une valeur par défaut ; le client doit choisir explicitement.
+
+**Suppression de l'adresse par défaut (Q292) :** la suppression de l'adresse par défaut ne déclenche aucune sélection automatique. Le client peut conserver d'autres adresses sans adresse par défaut ; au prochain checkout, il doit en sélectionner explicitement une ou en créer une. Zéro adresse par défaut est autorisé, une seule au maximum par client ; les snapshots historiques restent intacts.
+
+**Limite du carnet d'adresses (Q291) :** chaque client peut enregistrer au maximum cinq adresses de livraison simultanément. Le serveur refuse toute sixième création tant qu'une adresse existante n'a pas été supprimée ; modifier une adresse existante ne consomme pas de place supplémentaire. Cette limite concerne le carnet actif uniquement et n'affecte pas les snapshots de livraison des commandes historiques.
+
+**Modification des adresses utilisées (Q290) : une modification du carnet d'adresses ne s'applique qu'aux commandes futures. Toutes les commandes déjà créées conservent leur snapshot de livraison initial, même si elles ne sont pas encore expédiées. Le client peut modifier l'adresse enregistrée ; aucune propagation vers les commandes existantes n'est autorisée. Une éventuelle correction de livraison d'une commande en cours relève d'un processus Sales/Delivery distinct, contrôlé et tracé.
+
+Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son propre nom de destinataire et son propre numéro de téléphone, indépendants du profil client. Sales conserve l'association au client et copie l'adresse complète ainsi que les coordonnées du destinataire dans le snapshot de livraison de la commande au checkout. Une modification ultérieure du carnet d'adresses ou du profil ne réécrit pas la commande. L'adresse doit appartenir au client authentifié ; les coordonnées du destinataire ne confèrent aucun droit sur son compte. Les règles détaillées de validation des champs restent à préciser.
+
+**Adresses client (Q288) :** le client peut enregistrer plusieurs adresses de livraison et désigner une adresse par défaut, proposée automatiquement à la prochaine commande ; il peut en choisir une autre au checkout. Localization possède les adresses structurées ; Sales gère leur association au client, le choix par défaut et le snapshot de l'adresse retenue dans la commande. Contrôle serveur strict de propriété et isolation entre clients ; les modifications ultérieures du carnet d'adresses ne réécrivent pas les commandes existantes. Le nombre maximal d'adresses et les champs/règles de validation restent à préciser.
+
+**Vérification e-mail client (Q287) :** le lien de vérification est valable 24 heures à compter de son émission. Après expiration, le client peut demander un nouveau lien dans la limite de 5 demandes par heure, puis blocage temporaire d'une heure ; chaque nouveau lien invalide immédiatement tous les liens précédents. Un seul lien reste utilisable par compte. L'expiration, l'invalidation et la validation sont contrôlées côté serveur ; aucun jeton ou secret n'est journalisé. Cette durée de 24 heures remplace l'ancienne durée de 60 minutes des décisions Q6-Q7.
+
+**Règle de pilotage :** développer les capacités nécessaires étape par étape dans cet ordre, avec audit préalable des implémentations existantes, contrats entre domaines, tests ciblés et régression. Ne pas attendre qu'un domaine entier soit achevé pour avancer dans le parcours. Les domaines conservent la propriété de leurs données : Identity (comptes), Products (données commerciales et seuils), Inventory (stock/réservations), Catalog (exposition marketplace), Sales (panier/commandes/sous-commandes), Delivery (préparation/transport), Communication (notifications).
+
+**Notifications de sécurité du client (Q320) :** envoyer un e-mail pour chaque événement sensible du compte, notamment nouvelle connexion, changement de mot de passe, révocation d'un appareil/session et changement d'adresse e-mail. Inclure la date/heure et les informations utiles sur l'appareil lorsqu'elles sont disponibles. Ne jamais inclure mot de passe, token, identifiant de session, code, lien secret ou autre secret d'authentification. Déclencher les notifications à partir d'événements serveur fiables ; elles complètent les contrôles et l'audit sans s'y substituer.
+
+**Tentatives de connexion échouées du client (Q321) :** ne pas envoyer d'e-mail pour les échecs d'authentification, y compris répétés, dans le périmètre V1. Les consigner dans les journaux de sécurité côté serveur pour analyse, sans stocker mot de passe, token, code, secret d'authentification ou contenu sensible. Les limites anti-abus et blocages Identity restent actifs indépendamment des notifications. Cette règle ne remplace pas les e-mails liés aux événements sensibles réussis prévus par Q320.
+
+**Blocage temporaire du compte client (Q322) :** appliquer après les échecs de connexion le blocage temporaire selon les seuils, durées et règles déjà détenus par Identity. Ne créer aucun seuil ni délai parallèle pour la marketplace. Maintenir les limites Q317, la journalisation sans secrets et l'absence d'e-mail pour les tentatives échouées Q321 ; les notifications Q320 restent réservées aux événements sensibles couverts.
+
+**Sessions client simultanées sur plusieurs appareils (Q323) :** autoriser plusieurs sessions web actives par compte client ; une nouvelle connexion ne déconnecte pas les appareils déjà connectés. Chaque session reste consultable et révocable individuellement depuis l'espace sécurité client, conformément à Q319, avec vérification stricte de propriété côté serveur. Les révocations globales prévues notamment par Q316 continuent d'invalider toutes les sessions et les tokens API. Aucun plafond arbitraire n'est ajouté.
+
+**Durée d'inactivité des sessions client (Q324) :** réutiliser la politique centralisée Identity pour la durée d'inactivité et la déconnexion automatique. Ne créer aucune durée spécifique marketplace. Chaque session multi-appareils de Q323 reste soumise à cette politique ; révocations individuelles/globales selon Q319 et Q316.
+
+**Déconnexion manuelle du client (Q325) :** l'action standard déconnecte uniquement l'appareil courant. Une action distincte « Déconnecter tous les appareils » révoque les autres sessions, tout en conservant la session courante conformément à Q319. Cette action n'inclut pas les tokens API ; les révocations de sécurité Q316 continuent de révoquer toutes les sessions et tous les tokens API. Contrôle de propriété côté serveur et journalisation sans secrets.
+
+**Confirmation avant révocation des autres sessions (Q326) :** l'action « Déconnecter tous les appareils » exige une confirmation explicite. Tant que le client annule ou ferme la confirmation, aucune session n'est modifiée. Après confirmation, appliquer la portée Q325 : révoquer les autres sessions et conserver la session courante. Pas de nouvelle demande de mot de passe définie par Q326.
+
+**Informations des sessions client (Q327) :** afficher pour chaque session la date de connexion, la dernière activité, le navigateur et le système d'exploitation, ainsi qu'un repère clair pour la session courante. N'afficher que les données disponibles et fiables ; l'adresse IP et la localisation approximative sont exclues de l'interface V1. Ces informations soutiennent la gestion/révocation Q319/Q325/Q326.
+
+**Nouvel appareil non reconnu — alerte et contrôle client (Q328) :** autoriser immédiatement la connexion du nouvel appareil, puis envoyer simultanément un e-mail permettant au client de confirmer qu'il est à l'origine de la connexion ou, s'il ne la reconnaît pas, de révoquer cette nouvelle session et d'en bloquer l'accès. Si une session client est déjà active sur Mahline, afficher également une notification dans l'espace client ; sinon l'e-mail est le canal de notification disponible. La révocation vise uniquement la session suspecte, sans déconnecter les autres appareils. Liens/actions sécurisés à usage unique et à durée limitée ; durée, absence de réponse et confiance durable de l'appareil restent à définir avant développement. Ne jamais journaliser les secrets du lien.
+**Délai de confirmation d'un nouvel appareil non reconnu (Q329) :** le lien sécurisé envoyé au client pour confirmer la connexion ou révoquer la nouvelle session suspecte est valable une heure à compter de son émission. Il est individuel, à usage unique et lié à cette session. À expiration, il devient inutilisable. Le comportement de la session en l'absence de réponse et les modalités de renvoi restent à définir ; aucune validation ni révocation automatique n'est déduite de ce délai. La révocation déclenchée par le client reste limitée à la nouvelle session, sans affecter les autres appareils.
+
+**Absence de réponse à l'alerte de nouvel appareil (Q330) :** si le client ne confirme ni ne signale la connexion pendant l'heure de validité du lien Q329, la nouvelle session reste active ; seul le lien expire. Aucune révocation automatique n'est effectuée. Les autres sessions restent inchangées. Un parcours sécurisé permettant au client de signaler ultérieurement une connexion non reconnue et de révoquer la session concernée reste à définir avant développement. Audit des événements sans secrets.
+
+**Signalement tardif d'un appareil non reconnu (Q331) :** depuis son espace sécurité, le client peut sélectionner l'appareil/session concerné(e), choisir « Signaler comme non reconnu », puis confirmer explicitement la révocation. L'action est vérifiée côté serveur (propriété du compte et correspondance exacte de la session) et révoque uniquement la session sélectionnée ; les autres appareils restent actifs. Ce parcours reste disponible après expiration du lien Q329.
+
+**Confirmation avant révocation manuelle (Q332) :** le client doit confirmer explicitement une boîte de dialogue avant de révoquer la session sélectionnée depuis son espace sécurité. Annuler/fermer n'a aucun effet. Aucun mot de passe supplémentaire n'est demandé en V1. La révocation demeure ciblée, soumise au contrôle de propriété côté serveur, et auditée sans secret.
+
+**Notification après révocation d'un appareil suspect (Q333) :** après confirmation et révocation effective de la session, informer le client par e-mail et par notification dans son espace. N'annoncer le succès qu'après confirmation serveur. Le message peut contenir la date/heure et les informations d'appareil fiables disponibles, mais aucun mot de passe, token, identifiant de session exploitable, lien secret ou autre secret d'authentification. Tracer l'événement et l'envoi sans secret.
+
+**Mémorisation d'un appareil reconnu (Q334) :** après reconnaissance explicite, conserver l'appareil comme reconnu sans durée calendaire fixe, jusqu'à révocation par le client depuis son espace sécurité. Le client peut consulter et révoquer individuellement cette confiance. Après révocation, toute connexion ultérieure repasse par le contrôle d'un nouvel appareil. La confiance doit être fondée sur une preuve sécurisée côté serveur, révocable et non réduite à l'IP ou au User-Agent ; elle est distincte de la session active. Le mécanisme technique précis doit être audité avant développement, sans exposer ni journaliser les secrets.
+
+**Sessions actives lors de la révocation d'un appareil reconnu (Q335) :** retirer immédiatement la preuve de confiance et révoquer toutes les sessions web actives réellement associées à l'appareil sélectionné. Les autres appareils restent connectés. Cette révocation ciblée n'inclut pas les API tokens ni les sessions d'autres appareils. L'association appareil/session doit être établie et vérifiée côté serveur, jamais déduite uniquement de l'IP ou du User-Agent. Auditer les opérations sans secret ; valider le mécanisme technique avant développement.
+
+**Nombre maximal d'appareils reconnus (Q336) :** limiter à cinq le nombre d'appareils reconnus simultanément par compte client. Le serveur doit faire respecter cette limite. La procédure lorsqu'un sixième appareil doit être reconnu (choix/remplacement ou révocation préalable) reste à définir ; aucun appareil existant ne doit être supprimé silencieusement. Cette limite ne plafonne pas les sessions actives et reste distincte du modèle multi-session.
+
+**Remplacement au-delà de cinq appareils reconnus (Q337) :** si le client veut reconnaître un sixième appareil, afficher ses cinq appareils reconnus et lui demander de choisir explicitement celui à remplacer. Aucune révocation automatique ou silencieuse. Après confirmation, retirer la confiance de l'appareil choisi et révoquer immédiatement ses sessions web associées conformément à Q335 ; préserver les autres appareils. Le serveur doit valider l'appartenance, la limite et la sélection, puis réaliser le remplacement de manière atomique. En cas d'annulation ou d'échec, conserver l'état antérieur et ne pas reconnaître le nouvel appareil.
+
+
+### Version 5.105 — 14 novembre 2026
+- Correction de l'isolation du changement de mot de passe forcé pour les comptes customer : redirection de `/` vers la route client dédiée, allowlist des routes de sécurité client dans le middleware, layout/formulaire/déconnexion adaptés au rôle client.
+- Ajout de trois tests `CustomerAuthenticationIsolationTest` couvrant l'accès au formulaire, la redirection d'accueil et la déconnexion client.
+- Validation confirmée par l'utilisateur : test ciblé, `php vendor/bin/pint --test` et suite complète `php artisan test` — VERTS. Aucun décompte communiqué.
+- Mise à jour du suivi Identity : cette tranche Client est validée ; Identity et les autres travaux Client restent ouverts. Aucun merge ; branche conservée sur `feature/Marketplace`, commit applicatif `6ff7271a6525bbbe797a6c8f5c6af18210481f84`.
+
+### Version 5.104 — 14 novembre 2026
+- Changement d'adresse e-mail client Q338-Q340 implémenté dans `Identity/Customer` sur `feature/Marketplace` : mot de passe actuel exigé avant toute notification ; nouvelle adresse contrôlée comme unique ; ancienne adresse conservée jusqu'à validation du lien ; lien à usage unique valable 30 minutes ; nouvelle demande révoquant les demandes précédentes.
+- Après validation : mise à jour de l'adresse principale, révocation de toutes les sessions web et de tous les tokens API, notification de sécurité à l'ancienne adresse et journalisation sans secret.
+- Validation confirmée par l'utilisateur : `CustomerEmailChangeTest`, suite complète `php artisan test` et `php vendor/bin/pint --test` — VERTS. Aucun décompte de tests n'a été communiqué.
+- Cette validation clôt uniquement le changement d'e-mail ; les autres fonctions Client listées comme ouvertes restent à développer/auditer. Aucun merge ; branche conservée sur `feature/Marketplace`, commit applicatif validé `43181a71026e734245ba9dc20c9c1bf9ab89a45b`.
+
+### Version 5.103 — 14 novembre 2026
+- Audit du dépôt Client sur le commit `c8004a77998046abc0f355bf8d37ec3debb76092` : inventaire des routes isolées et partagées, contrôleurs, middleware, services, vues, migrations et tests.
+- Confirmation du socle inscription/activation/profil, et des écarts bloquants : appareils reconnus non sécurisés, routes sécurité partagées, changement e-mail, Media, adresses client, sécurité client et parcours Sales/Inventory/Delivery absents.
+- Aucun code applicatif modifié ; tests présents mais non exécutés/confirmés ; aucune fusion.
+
+### Version 5.102 — 14 novembre 2026
+- Q340 : renvoi après expiration soumis à une nouvelle vérification du mot de passe actuel ; nouveau lien de 30 minutes qui invalide les précédents.
+
+### Version 5.101 — 14 novembre 2026
+- Q339 : lien de vérification du changement d'e-mail valable 30 minutes, à usage unique et contrôlé côté serveur ; aucun secret dans les journaux.
+
+### Version 5.100 — 14 novembre 2026
+- Q338 : mot de passe actuel obligatoire avant l'envoi du lien de vérification de changement d'e-mail ; vérification serveur, aucun envoi si absent/incorrect, conservation de l'ancienne adresse jusqu'à validation et révocation de sécurité après validation.
+
+### Version 5.99 — 14 novembre 2026
+- Renforcement de l'espace client isolé : middleware `EnsureCustomerAccount` vérifie le rôle customer exclusif sur le dashboard et les routes de profil.
+- Test feature ajouté pour refuser l'accès au dashboard et au profil lorsqu'un compte porte simultanément un rôle interne. Tests non exécutés dans cet environnement.
+
+### Version 5.98 — 14 novembre 2026
+- Profil client — première tranche développée : lecture et modification du prénom, nom et téléphone depuis des routes dédiées et protégées par le rôle customer.
+- Mise à jour transactionnelle avec contrôle du compte actif/vérifié et événement d'audit ; tests feature ajoutés mais non exécutés dans cet environnement.
+- E-mail maintenu en lecture seule jusqu'au parcours de changement avec vérification sécurisée ; photo de profil en attente du domaine Media (2 Mo max). Carnet d'adresses à développer ensuite selon le parcours validé.
+- Aucun merge ; la suite complète des tests doit être exécutée avant clôture.
+### Version 5.85 — 14 novembre 2026
+- Enregistrement de Q328 : alerte e-mail et contrôle de sécurité pour une connexion depuis un nouvel appareil non reconnu, sans blocage initial.
+- Notification in-app si une session existe ; action de révocation limitée à la nouvelle session ; paramètres du lien et absence de réponse à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.84 — 14 novembre 2026
+- Enregistrement de Q327 : informations essentielles de session et identification de la session courante.
+- Exclusion IP/localisation de l'interface client V1 ; données d'appareil limitées aux éléments fiables disponibles.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.83 — 14 novembre 2026
+- Enregistrement de Q326 : confirmation explicite avant révocation des autres sessions.
+- Annulation sans effet et maintien de la portée Q325 après confirmation.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.82 — 14 novembre 2026
+- Enregistrement de Q325 : déconnexion locale et action distincte de révocation des autres appareils.
+- Session courante conservée lors de la révocation des autres sessions ; portée API séparée de la révocation de sécurité Q316.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.81 — 14 novembre 2026
+- Enregistrement de Q324 : durée d'inactivité et déconnexion automatique client alignées sur la politique Identity existante.
+- Aucune règle ou durée concurrente dans Marketplace ; maintien des règles Q316/Q319/Q323.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.80 — 14 novembre 2026
+- Enregistrement de Q323 : sessions simultanées multi-appareils pour le client, sans révocation automatique lors d'une nouvelle connexion.
+- Gestion/révocation individuelle selon Q319 ; maintien des révocations globales de sécurité, notamment Q316.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.79 — 14 novembre 2026
+- Enregistrement de Q322 : blocage temporaire du compte client par réutilisation stricte des règles Identity existantes.
+- Aucun seuil/délai propre à la marketplace ; maintien des limites Q317, de la journalisation sans secrets et de Q321/Q320.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.78 — 14 novembre 2026
+- Enregistrement de Q321 : les tentatives de connexion échouées ne déclenchent pas d'e-mail ; elles sont consignées dans les journaux de sécurité.
+- Maintien des contrôles anti-abus et exclusion de tout secret des journaux ; distinction explicite avec les notifications Q320.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.77 — 14 novembre 2026
+- Enregistrement de Q320 : notification e-mail pour chaque événement sensible du compte client (nouvelle connexion, changement de mot de passe, révocation d'appareil/session, changement d'e-mail).
+- Contenu contextuel limité à la date/heure et aux informations d'appareil disponibles ; exclusion stricte de tout secret d'authentification.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.76 — 14 novembre 2026
+- Enregistrement de Q319 : liste des appareils/sessions client avec date, navigateur, système et dernière activité lorsque disponibles ; révocation individuelle ou de toutes les autres sessions.
+- Contrôle d'appartenance serveur, invalidation de la persistance associée et maintien de la révocation globale stricte Q316.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.75 — 14 novembre 2026
+- Enregistrement de Q318 : option facultative « Se souvenir de moi », choisie explicitement, avec persistance sécurisée et révocable par appareil.
+- Invalidation par la révocation globale ; durée et rotation à préciser avant implémentation.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.74 — 14 novembre 2026
+- Enregistrement de Q317 : login client soumis aux limites cumulatives de 5 tentatives/compte, 30/IP et 5/IP + e-mail sur 15 minutes.
+- Réutilisation de la politique anti-abus Identity côté serveur, sans énumération de comptes ni journalisation de secrets.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.73 — 14 novembre 2026
+- Enregistrement de Q316 : révocation complète des sessions web et tokens API du client après réinitialisation du mot de passe, session courante incluse.
+- Reconnexion obligatoire ; audit sans conservation des secrets.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.72 — 14 novembre 2026
+- Enregistrement de Q315 : réinitialisation client par lien e-mail sécurisé, valable 30 minutes et à usage unique.
+- Contrôles serveur d'expiration/usage unique, règles de complexité Identity et absence d'OTP ou de secrets dans les journaux.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.71 — 14 novembre 2026
+- Enregistrement de Q314 : authentification client par e-mail uniquement ; téléphone exclu des identifiants de connexion en V1.
+- Application des contrôles Identity d'activation, de vérification e-mail et de protection anti-abus.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.70 — 14 novembre 2026
+- Enregistrement de Q313 : téléphone client sans vérification SMS/OTP en V1 ; vérification e-mail seule requise pour activation et commande.
+- Validation du format du numéro côté serveur, sans statut « vérifié » ni dépendance à un service SMS.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.69 — 14 novembre 2026
+- Enregistrement de Q312 : modification directe du nom, prénom, téléphone, e-mail et photo dans le profil client ; adresses de livraison gérées séparément.
+- Application du processus sécurisé Q9-Q12 à tout changement d'e-mail : vérification préalable, révocation des sessions/tokens après validation et notification à l'ancienne adresse.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.68 — 14 novembre 2026
+- Enregistrement de Q311 : suppression client à la demande avec désactivation immédiate, puis suppression/anonymisation et conservation encadrées.
+- Précisions Espace client : espace isolé de tous les rôles internes et photo de profil plafonnée à 2 Mo, contrôles serveur et audit Media requis.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.67 — 14 novembre 2026
+- Enregistrement de Q310 : habilitations de substitution limitées à `super_admin_root` et au `super_admin` affecté à la coopérative.
+- Ouverture de la première tranche Espace client : CRUD du profil, téléphone, e-mail et adresses ; réemploi des décisions Q286-Q298 et audit Identity/Localization avant tout codage. Suppression/désactivation et effets de changement d'e-mail à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.66 — 14 novembre 2026
+- Enregistrement de Q309 : relance avec nouveau délai (maximum 24 h) ou décision administrative au nom de la coopérative ; audit et notifications obligatoires.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.65 — 14 novembre 2026
+- Enregistrement de Q308 : une sous-commande sans réponse reste en attente après échéance ; alerte administrateur et intervention manuelle, sans refus automatique.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.64 — 14 novembre 2026
+- Enregistrement de Q307 : délai commun de réponse des coopératives, référence 12 heures et plafond 24 heures ; expiration sans réponse à spécifier.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.63 — 14 novembre 2026
+- Enregistrement de Q306 : clôture automatique « Refusée » si toutes les sous-commandes sont refusées ; frais de livraison nuls et notification client.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.62 — 14 novembre 2026
+- Enregistrement de Q305 : retrait des frais d'une expédition entièrement refusée avant expédition ; recalcul sur les expéditions restantes.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.61 — 14 novembre 2026
+- Enregistrement de Q304 : une expédition et un colis uniques par sous-commande coopérative en V1.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.60 — 14 novembre 2026
+- Enregistrement de Q303 : frais calculés par expédition puis additionnés ; recalcul lorsque des sous-commandes sont refusées/annulées.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.59 — 14 novembre 2026
+- Enregistrement de Q301 : aucun changement d'adresse après confirmation ; annulation puis nouvelle commande seulement si autorisée.
+- Enregistrement de Q302 : refus d'une sous-commande sans effet sur la destination commune des sous-commandes restantes.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.57 — 14 novembre 2026
+- Enregistrement de Q300 : destination unique commune à la commande multi-coopératives et à toutes ses sous-commandes/expéditions.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.56 — 14 novembre 2026
+- Enregistrement de Q299 : livraison obligatoire pour toutes les commandes V1 ; retrait coopérative exclu de cette version.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.55 — 14 novembre 2026
+- Enregistrement de Q298 : suppression de la dernière adresse autorisée ; adresse valide obligatoire pour confirmer une commande.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.54 — 14 novembre 2026
+- Enregistrement de Q297 : suppression du carnet autorisée sans effet sur les commandes en cours ; conservation du snapshot de livraison autonome.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.53 — 14 novembre 2026
+- Enregistrement de Q296 : l'adresse choisie au checkout ne remplace pas l'adresse par défaut enregistrée.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.52 — 14 novembre 2026
+- Enregistrement de Q295 : remplacement atomique de l'adresse par défaut lors d'un choix manuel ; une seule au maximum.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.51 — 14 novembre 2026
+- Enregistrement de Q294 : une adresse modifiée conserve son statut par défaut ; les snapshots des commandes existantes restent inchangés.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.50 — 14 novembre 2026
+- Enregistrement de Q293 : première adresse active automatiquement définie par défaut ; aucune modification automatique lors des créations suivantes.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.49 — 14 novembre 2026
+- Enregistrement de Q292 : suppression de l'adresse par défaut sans remplacement automatique ; sélection explicite requise au prochain checkout si aucune valeur par défaut n'existe.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.48 — 14 novembre 2026
+- Enregistrement de Q291 : plafond de cinq adresses de livraison simultanées par client ; vérification serveur et protection des snapshots historiques.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.47 — 14 novembre 2026
+- Enregistrement de Q290 : modifications du carnet d'adresses applicables uniquement aux commandes futures ; snapshots historiques immuables même avant expédition.
+- Toute correction de livraison d'une commande en cours doit passer par un processus Sales/Delivery distinct, contrôlé et tracé.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.46 — 14 novembre 2026
+- Enregistrement de Q289 : coordonnées de destinataire propres à chaque adresse et snapshot complet au checkout.
+- Les règles détaillées de validation du nom et du téléphone restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.45 — 14 novembre 2026
+- Enregistrement de Q288 : plusieurs adresses de livraison par client, adresse par défaut et choix alternatif au checkout ; isolation et snapshot dans la commande.
+- Le nombre maximal d'adresses et les champs/règles de validation restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.44 — 14 novembre 2026
+- Enregistrement de Q287 : lien de vérification e-mail client valable 24 heures, renouvelable sous limite anti-abus ; émission d'un nouveau lien invalidant immédiatement les précédents.
+- Harmonisation de la durée indiquée dans Q6-Q7 ; maintien de la limite de renvoi Q8.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.43 — 14 novembre 2026
+- Enregistrement de Q286 : inscription client en attente, activation automatique après vérification e-mail réussie.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.42 — 14 novembre 2026
+- Enregistrement de Q285 : changement du seuil appliqué immédiatement après validation serveur.
+- Ajout du parcours directeur Client → Coopérative → Transporteur en sept étapes et de la règle de développement transversal progressif.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.41 — 14 novembre 2026
+- Enregistrement de Q284 : seuil personnalisé à zéro = désactivation de « Presque épuisé », distincte d'une absence de configuration (défaut 5 unités).
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.40 — 14 novembre 2026
+- Enregistrement de Q283 : seuil « Presque épuisé » fixé par défaut à 5 unités, configurable individuellement par produit.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.39 — 14 novembre 2026
+- Enregistrement de Q282 : seuil « Presque épuisé » configurable par produit par le cooperative_admin, avec valeur par défaut centrale à définir.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.38 — 14 novembre 2026
+- Enregistrement de Q281 : indicateur public de disponibilité sans quantité exacte, avec seuil « Presque épuisé » à définir avant codage.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.37 — 14 novembre 2026
+- Enregistrement de Q280 : disponibilité marketplace rétablie automatiquement à la confirmation Inventory d'un stock disponible net des réservations.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.36 — 13 novembre 2026
+- Enregistrement de Q279 : promotion visible mais non achetable lorsque toutes les variantes sont indisponibles.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.35 — 13 novembre 2026
+- Enregistrement de Q278 : reprise d'une promotion annulée via une nouvelle version, sans réactivation de l'ancienne version.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.34 — 13 novembre 2026
+- Enregistrement de Q277 : modification d'une annulation planifiée avant son effet, avec historique des échéances remplacées.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.33 — 13 novembre 2026
+- Enregistrement de Q276 : choix entre annulation immédiate et planifiée d'une promotion active.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.32 — 13 novembre 2026
+- Enregistrement de Q275 : annulation logique uniquement, sans suppression physique des promotions ni de leur historique.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.31 — 13 novembre 2026
+- Enregistrement de Q274 : remplacement de la version promotionnelle future non encore active, avec conservation de la version remplacée dans l'historique.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.30 — 13 novembre 2026
+- Enregistrement de Q273 : choix entre application immédiate ou planifiée des nouvelles versions de promotion ; maintien de l'ancienne version jusqu'à la date d'effet.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.29 — 13 novembre 2026
+- Enregistrement de Q272 : versionnement obligatoire des modifications d'une promotion active, conservation de l'historique et protection des commandes déjà enregistrées ; entrée en vigueur d'une nouvelle version à préciser.
+- Aucun code applicatif modifié ; aucune fusion de branche.
+
+### Version 5.28 — 13 novembre 2026
+- Enregistrement de Q271 : publication immédiate sans validation préalable après contrôles serveur ; activation selon les dates, journalisation et supervision.
+
+### Version 5.27 — 13 novembre 2026
+- Enregistrement de Q270 : gestion des promotions réservée au `cooperative_admin` dans sa coopérative ; supervision sans modification directe des paramètres commerciaux par les rôles supérieurs.
+- Confirmation des contrôles serveur et de l'isolation stricte des coopératives.
+
+### Version 5.26 — 13 novembre 2026
+- Enregistrement de Q269 : présentation visible du prix normal barré, prix promotionnel et pourcentage de remise.
+- Ajout de la règle de cohérence d'affichage pour les produits à variantes.
+
+### Version 5.25 — 13 novembre 2026
+- Enregistrement de Q268 : arrondi commercial du résultat promotionnel au centime le plus proche, demi-centime vers le haut.
+- Exigence de calcul décimal exact, de centralisation et de tests transversaux ajoutée.
+
+### Version 5.24 — 13 novembre 2026
+- Enregistrement de Q267 : précision du taux limitée à deux décimales ; validation serveur et représentation décimale exacte.
+- Règle d'arrondi du prix final promotionnel maintenue comme point ouvert avant codage.
+
+### Version 5.23 — 13 novembre 2026
+- Enregistrement de Q266 : plafond de réduction fixé à 90 % et validation serveur obligatoire.
+- Précision du taux et règles d'arrondi conservées comme points ouverts avant codage.
+
+### Version 5.22 — 13 novembre 2026
+- Enregistrement de Q265 : réduction en pourcentage appliquée au prix applicable de chaque variante.
+- Règle d'arrondi et bornes de saisie du taux conservées comme décisions préalables au codage.
+
+### Version 5.21 — 13 novembre 2026
+- Enregistrement de Q264 : promotion au niveau du produit, applicable à toutes les variantes ; pas de promotion distincte par variante au premier release.
+- Calcul exact du prix promotionnel des variantes conservé comme décision préalable au développement.
+
+### Version 5.20 — 13 novembre 2026
+- Enregistrement de Q263 : promotions simples limitées à un prix promotionnel et une période de validité.
+- Frontières Products/Catalog/Sales/Finance documentées ; questions techniques de temporalité et chevauchement conservées comme ouvertes.
+
+### Version 5.19 — 13 novembre 2026
+- Enregistrement de Q262 : rejet des prix ayant plus de deux décimales ; aucune correction automatique.
+- Validation serveur obligatoire sur les prix de base et de variantes.
+- Aucun code applicatif modifié ; aucune fusion.
+
+### Version 5.18 — 13 novembre 2026
+- Enregistrement de Q261 : précision maximale de deux décimales pour les prix en MAD.
+- Exigence de calcul monétaire en décimal exact ; règles d'arrondi détaillées à cadrer.
+- Aucun code applicatif modifié ; aucune fusion.
+
+### Version 5.17 — 13 novembre 2026
+- Enregistrement de Q260 : MAD comme devise du premier release, avec extension multi-devises possible ultérieurement.
+- Les montants figés par Sales conservent leur devise ; aucune conversion implicite ni mélange de devises.
+- Alignement de la feuille de route avec le registre de découverte pour Q257 à Q259 et suppression d'une ligne d'affichage Q257 dupliquée.
+- Aucun code applicatif modifié ; aucune fusion.
+
+### Version 5.16 — 13 novembre 2026
+- Enregistrement de Q259 : un produit sans variantes affiche directement son prix de base, sans « À partir de ».
+- Alignement Catalog/Products/Sales : exposition du prix de base, revalidation serveur et gel dans le panier/la commande.
+- Aucun code applicatif modifié ; aucune fusion.
+
+### Version 5.15 — 13 novembre 2026
+- Enregistrement de Q258 : le prix minimum exclut les variantes en rupture ou indisponibles ; il reflète une variante réellement achetable.
+- Inventory fournit la disponibilité et Sales la revalide au panier/checkout ; si aucune variante n'est disponible, la carte indique l'indisponibilité sans prix d'appel.
+- Aucun code applicatif modifié ; aucune fusion.
+
+### Version 5.14 — 13 novembre 2026
+- Enregistrement de Q257 : carte produit avec variantes à prix différents = prix applicable le plus bas, précédé de « À partir de ».
+- Précision du calcul côté serveur, de l'affichage des prix par variante sur la fiche et de la revalidation/du gel par Sales.
+- Devise, arrondis, variantes indisponibles, promotions et produits sans variantes restent à préciser.
+- Aucun code applicatif modifié ; aucune fusion.
+
+### Version 5.13 — 13 novembre 2026
+- Enregistrement de Q256 : prix de base par produit et surcharge de prix facultative par variante, avec héritage du prix de base.
+- Clarification des responsabilités Products, Catalog, Sales et Finance sur l'exposition et le gel du prix.
+- Devise, arrondis, promotions et présentation des variantes à prix différents restent à définir.
+- Aucun code applicatif modifié.
 
 ### Version 5.12 — 13 novembre 2026
 - Enregistrement de Q255 : expiration configurable d'une proposition sans réponse et annulation automatique de la seule ligne concernée.

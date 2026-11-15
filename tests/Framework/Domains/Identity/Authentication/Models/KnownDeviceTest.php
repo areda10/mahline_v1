@@ -43,6 +43,13 @@ final class KnownDeviceTest extends TestCase
                     'id',
                     'user_id',
                     'device',
+                    'browser',
+                    'device_token_hash',
+                    'status',
+                    'pending_until',
+                    'trusted_at',
+                    'last_seen_at',
+                    'revoked_at',
                     'created_at',
                     'updated_at',
                 ],
@@ -50,14 +57,19 @@ final class KnownDeviceTest extends TestCase
         );
     }
 
-    public function test_user_and_device_combination_is_unique(): void
+    public function test_device_proof_hash_is_unique_and_device_labels_may_repeat(): void
     {
         self::assertTrue(
             \Schema::hasIndex(
                 'known_devices',
-                'known_devices_user_id_device_unique',
+                'known_devices_device_token_hash_unique',
             ),
         );
+
+        self::assertFalse(\Schema::hasIndex(
+            'known_devices',
+            'known_devices_user_id_device_unique',
+        ));
     }
 
     public function test_it_persists_a_known_device_for_a_user(): void
@@ -114,7 +126,7 @@ final class KnownDeviceTest extends TestCase
         ]);
     }
 
-    public function test_successful_authentication_does_not_duplicate_a_known_device(): void
+    public function test_legacy_device_category_does_not_identify_a_browser(): void
     {
         $user = User::factory()->create([
             'email' => 'known-device@example.com',
@@ -137,10 +149,18 @@ final class KnownDeviceTest extends TestCase
         $response->assertOk();
 
         $this->assertSame(
-            1,
+            2,
             KnownDevice::query()
                 ->where('user_id', $user->getKey())
                 ->where('device', 'windows')
+                ->count(),
+        );
+
+        $this->assertSame(
+            1,
+            KnownDevice::query()
+                ->where('user_id', $user->getKey())
+                ->whereNotNull('device_token_hash')
                 ->count(),
         );
     }

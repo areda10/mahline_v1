@@ -183,5 +183,4 @@ final class PersonalAccessTokenTest extends TestCase
 
         $this->travelBack();
     }
-
 }
