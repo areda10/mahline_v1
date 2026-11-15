@@ -10,11 +10,13 @@ use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Media\Models\Media;
+use App\Domains\Products\Models\Product;
 use Database\Factories\CooperativeFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -77,6 +79,24 @@ final class Cooperative extends BaseModel
         }
 
         return $query->whereRaw('1 = 0');
+    }
+
+    /**
+     * Products owned by this cooperative.
+     *
+     * ProductVariant ownership is inherited through Product::cooperative_id.
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'cooperative_id');
+    }
+
+    /**
+     * Active products owned by this cooperative.
+     */
+    public function activeProducts(): HasMany
+    {
+        return $this->products()->where('is_active', true);
     }
 
     public function settings(): HasOne
