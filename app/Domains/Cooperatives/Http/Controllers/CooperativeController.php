@@ -49,14 +49,28 @@ final class CooperativeController
             'name' => ['required', 'string', 'max:255'],
             'rib' => ['required', 'string', 'max:255'],
             'tax_id' => ['nullable', 'string', 'max:255'],
-            'address_id' => ['required', 'string', 'size:26', 'exists:addresses,id'],
+            'number' => ['nullable', 'string', 'max:50'],
+            'street' => ['required', 'string', 'max:255'],
+            'floor' => ['nullable', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:120'],
+            'region' => ['nullable', 'string', 'max:120'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
             'phone' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
             'rc' => ['nullable', 'string', 'max:255'],
             'ice' => ['required', 'string', 'max:255'],
         ]);
 
-        $cooperative = $this->cooperativeService->create($request->user(), $data);
+        $addressData = array_intersect_key($data, array_flip([
+            'number', 'street', 'floor', 'postal_code', 'city', 'region',
+        ]));
+        $cooperativeData = array_diff_key($data, $addressData);
+
+        $cooperative = $this->cooperativeService->create(
+            $request->user(),
+            $cooperativeData,
+            $addressData,
+        );
 
         return redirect()
             ->route('backoffice.cooperatives.show', $cooperative)
