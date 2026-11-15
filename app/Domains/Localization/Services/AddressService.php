@@ -281,13 +281,22 @@ final class AddressService extends BaseService
         ?array $oldValues = null,
         ?array $newValues = null,
     ): void {
+        $auditCooperativeId = $cooperativeId ?? $address->cooperative_id;
+
+        if ($auditCooperativeId === null && $address->user_id !== null) {
+            $auditCooperativeId = User::query()
+                ->whereKey($address->user_id)
+                ->value('cooperative_id');
+        }
+
         $this->audit->record(new AuditEntryDTO(
             eventKey: $eventKey,
             action: $action,
             actorType: User::class,
             actorId: (string) $actor->getKey(),
-            cooperativeId: $cooperativeId
-                ?? ($address->cooperative_id === null ? null : (string) $address->cooperative_id),
+            cooperativeId: $auditCooperativeId === null
+                ? null
+                : (string) $auditCooperativeId,
             subjectType: Address::class,
             subjectId: (string) $address->getKey(),
             oldValues: $oldValues,
