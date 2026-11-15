@@ -62,15 +62,13 @@ return new class extends Migration
                 ->nullable()
                 ->after('country_id')
                 ->constrained('users')
-                ->restrictOnDelete()
-                ->cascadeOnUpdate();
+                ->restrictOnDelete();
 
             $table->foreignUlid('cooperative_id')
                 ->nullable()
                 ->after('user_id')
                 ->constrained('cooperatives')
-                ->restrictOnDelete()
-                ->cascadeOnUpdate();
+                ->restrictOnDelete();
 
             $table->unique('user_id', 'addresses_user_id_unique');
             $table->unique('cooperative_id', 'addresses_cooperative_id_unique');
