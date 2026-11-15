@@ -26,12 +26,7 @@ final class AddressesTest extends TestCase
     {
         $columns = [
             'id',
-            'number',
             'street',
-            'floor',
-            'region',
-            'user_id',
-            'cooperative_id',
             'address_line_1',
             'city',
             'country_id',
@@ -48,6 +43,11 @@ final class AddressesTest extends TestCase
     public function test_addresses_table_has_optional_columns(): void
     {
         $columns = [
+            'number',
+            'floor',
+            'region',
+            'user_id',
+            'cooperative_id',
             'address_line_2',
             'postal_code',
             'state',
