@@ -11,7 +11,7 @@ use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
+use App\Domains\Countries\Models\Country;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +33,7 @@ final class CooperativeServiceTest extends TestCase
     public function test_create_persists_cooperative_and_audit_event(): void
     {
         $actor = $this->rootActor();
-        $cooperative = $this->service->create($actor, $this->attributes());
+        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseHas('cooperatives', [
             'id' => $cooperative->id,
@@ -82,7 +82,7 @@ final class CooperativeServiceTest extends TestCase
             ...$this->attributes(),
             'name' => 'Deuxième coopérative',
             'email' => 'second-coop@example.test',
-        ]);
+        ], $this->addressAttributes());
 
         $this->assertSame(
             1,
@@ -336,7 +336,7 @@ final class CooperativeServiceTest extends TestCase
 
         try {
             DB::transaction(function () use ($actor): void {
-                $this->service->create($actor, $this->attributes());
+                $this->service->create($actor, $this->attributes(), $this->addressAttributes());
                 throw new \RuntimeException('Rollback requested by test.');
             });
         } catch (\RuntimeException $exception) {
@@ -523,13 +523,36 @@ final class CooperativeServiceTest extends TestCase
     }
 
     /** @return array<string, mixed> */
+    private function addressAttributes(): array
+    {
+        Country::query()->firstOrCreate(
+            ['code' => 'MA'],
+            [
+                'iso3' => 'MAR',
+                'name' => 'Maroc',
+                'native_name' => 'المغرب',
+                'phone_code' => '+212',
+                'currency' => 'MAD',
+                'locale' => 'fr',
+                'is_active' => true,
+            ],
+        );
+
+        return [
+            'street' => '10 Avenue Hassan II',
+            'city' => 'Casablanca',
+            'postal_code' => '20000',
+            'region' => 'Casablanca-Settat',
+        ];
+    }
+
+    /** @return array<string, mixed> */
     private function attributes(): array
     {
         return [
             'name' => 'Coopérative Audit',
             'rib' => '123456789012345678901234',
             'tax_id' => 'TAX-001',
-            'address_id' => Address::factory()->create()->id,
             'phone' => '+212600000001',
             'email' => 'audit-coop@example.test',
             'rc' => 'RC-001',
