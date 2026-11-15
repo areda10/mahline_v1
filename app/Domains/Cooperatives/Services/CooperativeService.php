@@ -7,6 +7,7 @@ namespace App\Domains\Cooperatives\Services;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Localization\Services\AddressService;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -17,28 +18,29 @@ final class CooperativeService
 {
     /** @var list<string> */
     private const WRITABLE_FIELDS = [
-        'name', 'rib', 'tax_id', 'address_id', 'phone', 'email', 'rc', 'ice',
+        'name', 'rib', 'tax_id', 'phone', 'email', 'rc', 'ice',
     ];
 
     /** @var list<string> */
-    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email', 'address_id'];
+    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email'];
 
     /** @var list<string> */
     private const AUDITABLE_FIELDS = [
-        'name', 'address_id', 'phone', 'email', 'rc', 'status',
+        'name', 'phone', 'email', 'rc', 'status',
     ];
 
     public function __construct(
         private readonly AuditService $audit,
+        private readonly AddressService $addressService,
     ) {}
 
     /** @param array<string, mixed> $attributes */
-    public function create(User $actor, array $attributes): Cooperative
+    public function create(User $actor, array $attributes, array $addressAttributes): Cooperative
     {
         Gate::forUser($actor)->authorize('create', Cooperative::class);
         $attributes = $this->filterWritableAttributes($attributes);
 
-        return DB::transaction(function () use ($actor, $attributes): Cooperative {
+        return DB::transaction(function () use ($actor, $attributes, $addressAttributes): Cooperative {
             $cooperative = new Cooperative;
             $cooperative->fill($attributes);
             $cooperative->status ??= CooperativeStatus::PENDING;
@@ -52,6 +54,11 @@ final class CooperativeService
                     $cooperative->getKey(),
                 ]);
             }
+
+            // The cooperative and its unique address are created atomically.
+            // The super_admin assignment is established first so address authorization
+            // and audit context observe the final cooperative ownership scope.
+            $this->addressService->createForCooperative($actor, $cooperative, $addressAttributes);
 
             $this->record(
                 actor: $actor,
