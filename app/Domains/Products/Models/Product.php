@@ -60,6 +60,16 @@ final class Product extends BaseModel
         return $this->hasMany(ProductVariant::class, 'product_id');
     }
 
+    /**
+     * Active variants only. Inactive and soft-deleted variants remain
+     * available through variants() for administration and historical review.
+     */
+    public function activeVariants(): HasMany
+    {
+        return $this->variants()
+            ->where('is_active', true);
+    }
+
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(
