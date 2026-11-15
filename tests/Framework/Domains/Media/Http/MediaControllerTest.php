@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Media\\Http;
+namespace Tests\Framework\Domains\Media\Http;
 
-use App\\Domains\\Cooperatives\\Enums\\CooperativeStatus;
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authorization\\Models\\Permission;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Media\\Models\\Media;
-use App\\Domains\\Products\\Models\\Product;
-use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Support\\Facades\\Storage;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Models\Media;
+use App\Domains\Products\Models\Product;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 final class MediaControllerTest extends TestCase
 {
