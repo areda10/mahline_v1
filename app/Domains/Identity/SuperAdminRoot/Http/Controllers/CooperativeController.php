@@ -43,8 +43,7 @@ final class CooperativeController
 
         return view('super-admin-root.cooperatives.create', [
             'cooperative' => new Cooperative,
-            'countries' => $this->availableCountries(),
-        ]);
+            ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -60,18 +59,19 @@ final class CooperativeController
             'email' => ['required', 'email', 'max:255'],
             'rc' => ['nullable', 'string', 'max:255'],
             'ice' => ['required', 'string', 'max:255'],
-            ...$this->addressRules(),
+            'number' => ['nullable', 'string', 'max:50'],
+            'street' => ['required', 'string', 'max:255'],
+            'floor' => ['nullable', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:120'],
+            'region' => ['nullable', 'string', 'max:120'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+            'country_id' => ['prohibited'],
         ]);
 
-        $addressData = [
-            'street' => $data['address_line_1'],
-            'city' => $data['city'],
-            'postal_code' => $data['postal_code'],
-            'region' => $data['state'],
-        ];
-        $cooperativeData = array_diff_key($data, array_flip([
-            'address_line_1', 'city', 'country_id', 'postal_code', 'state',
+        $addressData = array_intersect_key($data, array_flip([
+            'number', 'street', 'floor', 'postal_code', 'city', 'region',
         ]));
+        $cooperativeData = array_diff_key($data, $addressData);
 
         $cooperative = $this->cooperativeService->create(
             $request->user(),
