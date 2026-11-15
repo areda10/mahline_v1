@@ -171,12 +171,12 @@ final class AddressService extends BaseService
     {
         $before = $this->snapshot($address);
         $address->fill($this->validatedAttributes($attributes));
-        $address->updated_by = (string) $actor->getKey();
 
         if (! $address->isDirty()) {
             return $address;
         }
 
+        $address->updated_by = (string) $actor->getKey();
         $address->save();
 
         $this->recordAddressAudit(
@@ -218,16 +218,21 @@ final class AddressService extends BaseService
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
         ])->validate();
 
-        return [
-            'number' => $validated['number'] ?? null,
-            'street' => trim($validated['street']),
-            'floor' => $validated['floor'] ?? null,
-            'postal_code' => $validated['postal_code'] ?? null,
-            'city' => trim($validated['city']),
-            'region' => $validated['region'] ?? null,
-            'latitude' => $validated['latitude'] ?? null,
-            'longitude' => $validated['longitude'] ?? null,
-        ];
+        if (isset($validated['street'])) {
+            $validated['street'] = trim($validated['street']);
+        }
+
+        if (isset($validated['city'])) {
+            $validated['city'] = trim($validated['city']);
+        }
+
+        foreach (['number', 'floor', 'postal_code', 'region'] as $field) {
+            if (isset($validated[$field])) {
+                $validated[$field] = trim($validated[$field]);
+            }
+        }
+
+        return $validated;
     }
 
     private function moroccoCountry(): Country
