@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Database\\Factories;
+namespace Database\Factories;
 
-use App\\Domains\\Countries\\Models\\Country;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Localization\\Models\\Address;
-use Illuminate\\Database\\Eloquent\\Factories\\Factory;
+use App\Domains\Countries\Models\Country;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends Factory<Address>
