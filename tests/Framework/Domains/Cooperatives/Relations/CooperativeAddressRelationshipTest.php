@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Cooperatives\\Relations;
+namespace Tests\Framework\Domains\Cooperatives\Relations;
 
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Localization\\Models\\Address;
-use Illuminate\\Database\\Eloquent\\Relations\\HasOne;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Localization\Models\Address;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class CooperativeAddressRelationshipTest extends TestCase
 {
@@ -26,7 +26,7 @@ final class CooperativeAddressRelationshipTest extends TestCase
         $cooperative = Cooperative::factory()->create();
 
         self::assertInstanceOf(
-            \\Illuminate\\Database\\Eloquent\\Relations\\BelongsTo::class,
+            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
             $cooperative->address->cooperative(),
         );
     }
