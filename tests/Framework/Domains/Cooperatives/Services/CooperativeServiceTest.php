@@ -16,6 +16,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 final class CooperativeServiceTest extends TestCase
@@ -40,6 +41,12 @@ final class CooperativeServiceTest extends TestCase
             'name' => 'Coopérative Audit',
             'created_by' => $actor->id,
         ]);
+        $this->assertDatabaseHas('addresses', [
+            'cooperative_id' => $cooperative->getKey(),
+            'user_id' => null,
+            'street' => '10 Avenue Hassan II',
+        ]);
+        $this->assertSame(1, $cooperative->address()->count());
         $this->assertAuditEvent('cooperatives.created', 'created', $actor, $cooperative);
     }
 
@@ -130,6 +137,30 @@ final class CooperativeServiceTest extends TestCase
         $this->assertDatabaseMissing('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
         ]);
+    }
+
+    public function test_missing_morocco_configuration_rolls_back_cooperative_creation(): void
+    {
+        $actor = $this->rootActor();
+
+        try {
+            $this->service->create($actor, $this->attributes(), [
+                'street' => '10 Avenue Hassan II',
+                'city' => 'Casablanca',
+                'region' => 'Casablanca-Settat',
+            ]);
+            $this->fail('Cooperative creation must fail when Morocco is not configured.');
+        } catch (ValidationException) {
+            $this->assertDatabaseMissing('cooperatives', [
+                'name' => 'Coopérative Audit',
+            ]);
+            $this->assertDatabaseMissing('audit_events', [
+                'event_key' => 'cooperatives.created',
+            ]);
+            $this->assertDatabaseMissing('addresses', [
+                'street' => '10 Avenue Hassan II',
+            ]);
+        }
     }
 
     public function test_create_excludes_confidential_fields_from_audit(): void
