@@ -401,6 +401,11 @@ Route::prefix('root/back-office')
                     'products/{product}/reactivate',
                     [SuperAdminRootProductController::class, 'reactivate'],
                 )->name('products.reactivate');
+
+                Route::patch(
+                    'products/{product}/restore',
+                    [SuperAdminRootProductController::class, 'restore'],
+                )->name('products.restore');
             });
 
         Route::resource('categories', GlobalCategoryController::class)
@@ -567,6 +572,11 @@ Route::prefix('back-office')
                     'products/{product}/reactivate',
                     [ProductController::class, 'reactivate'],
                 )->name('products.reactivate');
+
+                Route::patch(
+                    'products/{product}/restore',
+                    [ProductController::class, 'restore'],
+                )->name('products.restore');
             });
     });
 
