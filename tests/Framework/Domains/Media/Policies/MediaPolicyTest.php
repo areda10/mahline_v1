@@ -148,8 +148,8 @@ final class MediaPolicyTest extends TestCase
             ['slug' => $permissionSlug],
             ['name' => $permissionSlug, 'is_active' => true],
         );
-        $role->permissions()->attach($permission->getKey());
-        $user->roles()->attach($role->getKey());
+        $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        $user->roles()->syncWithoutDetaching([$role->getKey()]);
 
         return $user->refresh();
     }
@@ -157,7 +157,7 @@ final class MediaPolicyTest extends TestCase
     private function userWithRole(string $roleSlug, string $cooperativeId): User
     {
         $user = User::factory()->create(['cooperative_id' => $cooperativeId]);
-        $user->roles()->attach($this->role($roleSlug)->getKey());
+        $user->roles()->syncWithoutDetaching([$this->role($roleSlug)->getKey()]);
 
         return $user->refresh();
     }
