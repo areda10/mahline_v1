@@ -69,7 +69,8 @@ final class CooperativeControllerTest extends TestCase
         $this->assertDatabaseHas('addresses', [
             'cooperative_id' => $cooperative->getKey(),
             'user_id' => null,
-            'street' => '10 Avenue Hassan II',
+            'number' => '10',
+            'street' => 'Avenue Hassan II',
             'city' => 'Casablanca',
             'region' => 'Casablanca-Settat',
         ]);
@@ -94,7 +95,8 @@ final class CooperativeControllerTest extends TestCase
         $this->assertDatabaseHas('addresses', [
             'cooperative_id' => $cooperative->getKey(),
             'user_id' => null,
-            'street' => '10 Avenue Hassan II',
+            'number' => '10',
+            'street' => 'Avenue Hassan II',
             'city' => 'Casablanca',
             'region' => 'Casablanca-Settat',
         ]);
@@ -497,7 +499,8 @@ final class CooperativeControllerTest extends TestCase
         $this->morocco();
 
         return [
-            'street' => '10 Avenue Hassan II',
+            'number' => '10',
+            'street' => 'Avenue Hassan II',
             'city' => 'Casablanca',
             'postal_code' => '20000',
             'region' => 'Casablanca-Settat',
