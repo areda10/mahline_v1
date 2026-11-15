@@ -83,6 +83,40 @@ final class MediaControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_cannot_stream_private_document_from_unassigned_cooperative(): void
+    {
+        Storage::fake('local');
+        $assignedCooperative = Cooperative::factory()->create();
+        $unassignedCooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($unassignedCooperative)->create();
+        Storage::disk('local')->put('media/private/unassigned-proof.pdf', 'private-pdf');
+
+        $media = $product->media()->create($this->attributes('media/private/unassigned-proof.pdf', 'document', 'private', 'local', 'application/pdf', 'pdf'));
+        $actor = $this->userWithPermission('super_admin', 'products.view', (string) $assignedCooperative->getKey());
+        $actor->cooperatives()->attach($assignedCooperative->getKey());
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($actor)
+            ->get(route('media.private', $media))
+            ->assertForbidden();
+    }
+
+    public function test_user_cannot_stream_another_users_private_document(): void
+    {
+        Storage::fake('local');
+        $cooperative = Cooperative::factory()->create();
+        $owner = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        Storage::disk('local')->put('media/private/other-user-proof.pdf', 'private-user-pdf');
+
+        $media = $owner->media()->create($this->attributes('media/private/other-user-proof.pdf', 'document', 'private', 'local', 'application/pdf', 'pdf'));
+        $actor = $this->userWithRole('user', (string) $cooperative->getKey());
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($actor)
+            ->get(route('media.private', $media))
+            ->assertForbidden();
+    }
+
     public function test_root_can_stream_private_product_pdf_with_private_headers(): void
     {
         Storage::fake('local');
