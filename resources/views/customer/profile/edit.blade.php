@@ -82,6 +82,45 @@
                 </p>
             </div>
 
+            <h2>Adresse personnelle</h2>
+            <p class="muted">Votre adresse personnelle est indépendante de celle d'une coopérative. Pays fixé à Maroc pour la V1.</p>
+            <div class="form-field">
+                <label for="number">Numéro</label>
+                <input id="number" name="number" maxlength="50" value="{{ old('number', $address?->number) }}">
+            </div>
+            <div class="form-field">
+                <label for="street">Rue</label>
+                <input id="street" name="street" maxlength="255" required value="{{ old('street', $address?->street) }}">
+                @error('street')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            <div class="form-field">
+                <label for="floor">Étage / Complément</label>
+                <input id="floor" name="floor" maxlength="50" value="{{ old('floor', $address?->floor) }}">
+            </div>
+            <div class="form-field">
+                <label for="city">Ville</label>
+                <input id="city" name="city" maxlength="120" required value="{{ old('city', $address?->city) }}">
+                @error('city')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            <div class="form-field">
+                <label for="region">Région</label>
+                <select id="region" name="region" required>
+                    <option value="">Sélectionner une région</option>
+                    @foreach ($regions as $region)
+                        <option value="{{ $region }}" @selected(old('region', $address?->region) === $region)>{{ $region }}</option>
+                    @endforeach
+                </select>
+                @error('region')<p class="field-error">{{ $message }}</p>@enderror
+            </div>
+            <div class="form-field">
+                <label for="postal_code">Code postal</label>
+                <input id="postal_code" name="postal_code" maxlength="20" value="{{ old('postal_code', $address?->postal_code) }}">
+            </div>
+            <div class="form-field">
+                <label for="country">Pays</label>
+                <input id="country" type="text" value="Maroc" readonly>
+            </div>
+
             <button type="submit">Enregistrer les modifications</button>
         </form>
     </section>
