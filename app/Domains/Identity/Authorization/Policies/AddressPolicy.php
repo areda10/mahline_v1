@@ -70,6 +70,19 @@ final class AddressPolicy extends BasePolicy
     }
 
     /**
+     * Determine whether an actor may create the address as part of cooperative creation.
+     */
+    public function createCooperativeAddress(User $actor): bool
+    {
+        return $actor->isAuthorized()
+            && $actor->hasPermission('cooperatives.create')
+            && $actor->hasAnyRole([
+                self::ROLE_SUPER_ADMIN_ROOT,
+                self::ROLE_SUPER_ADMIN,
+            ]);
+    }
+
+    /**
      * Determine whether an actor may update a cooperative's address.
      */
     public function updateCooperativeAddress(User $actor, Cooperative $cooperative): bool
