@@ -37,7 +37,6 @@ final class CooperativeController
 
         return view('backoffice.cooperatives.create', [
             'cooperative' => new Cooperative,
-            'addresses' => $this->availableAddresses(),
         ]);
     }
 
