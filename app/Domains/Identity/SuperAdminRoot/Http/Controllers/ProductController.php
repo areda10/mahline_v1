@@ -194,6 +194,23 @@ final class ProductController
             ->with('success', 'Le produit a été réactivé avec succès.');
     }
 
+    public function restore(Request $request, string $cooperative, string $product): RedirectResponse
+    {
+        $this->rootOnly($request);
+        $coop = $this->cooperative($cooperative);
+        $cooperativeId = (string) $coop->getKey();
+        $item = $this->productRepository->findTrashedForCooperativeOrFail($product, $cooperativeId);
+        Gate::authorize('restore', $item);
+        $this->productService->restore($item);
+
+        return redirect()
+            ->route('root.backoffice.cooperatives.products.show', [
+                'cooperative' => $cooperativeId,
+                'product' => $item->getKey(),
+            ])
+            ->with('success', 'Le produit a été restauré.');
+    }
+
     private function rootOnly(Request $request): void
     {
         abort_unless($request->user()?->hasRole('super_admin_root'), 403);
