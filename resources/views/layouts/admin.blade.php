@@ -96,6 +96,7 @@
                 <a href="{{ route('user.dashboard') }}">Mon tableau de bord</a>
             @endif
 
+            <a href="{{ route('profile.address.edit') }}">Mon adresse</a>
             <a href="{{ route('security.password.edit') }}">Sécurité · Mot de passe</a>
             <a href="{{ route('backoffice.security.sessions.index') }}">Mes appareils connectés</a>
             <form method="POST" action="{{ route('authentication.logout') }}" style="display:inline">
