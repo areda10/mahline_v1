@@ -30,6 +30,10 @@ final class UserPolicy extends BasePolicy
     {
         return ! $target->trashed()
             && $this->canAccessUser($actor, $target)
+            && ! (
+                $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)
+                && $target->hasRole(self::ROLE_COOPERATIVE_ADMIN)
+            )
             && $this->hasPermission($actor, 'users.view');
     }
 
