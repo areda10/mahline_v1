@@ -103,7 +103,11 @@ final class UserPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
-            return true;
+            return $target->hasAnyRole([
+                self::ROLE_SUPER_ADMIN,
+                self::ROLE_COOPERATIVE_ADMIN,
+                'user',
+            ]);
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
