@@ -234,10 +234,9 @@ final class CooperativePolicyTest extends TestCase
         );
     }
 
-    public function test_super_admin_can_delete_only_an_assigned_cooperative(): void
+    public function test_super_admin_cannot_delete_any_cooperative_even_when_assigned(): void
     {
         $assigned = $this->createCooperative();
-        $unassigned = $this->createCooperative();
 
         $user = $this->userWithRoleAndPermissions(
             'super_admin',
@@ -245,8 +244,7 @@ final class CooperativePolicyTest extends TestCase
         );
         $user->cooperatives()->attach($assigned->id);
 
-        self::assertTrue(Gate::forUser($user)->allows('delete', $assigned));
-        self::assertFalse(Gate::forUser($user)->allows('delete', $unassigned));
+        self::assertFalse(Gate::forUser($user)->allows('delete', $assigned));
     }
 
     public function test_super_admin_root_can_delete_any_cooperative(): void
