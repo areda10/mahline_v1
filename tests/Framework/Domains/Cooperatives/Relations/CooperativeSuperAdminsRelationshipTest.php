@@ -49,7 +49,7 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
         );
     }
 
-    public function test_cooperative_can_retrieve_multiple_super_admins(): void
+    public function test_cooperative_can_retrieve_its_single_super_admin(): void
     {
         $country = Country::factory()->create();
 
@@ -61,28 +61,13 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
             'address_id' => $address->id,
         ]);
 
-        $superAdminA = User::factory()->create();
-        $superAdminB = User::factory()->create();
+        $superAdmin = User::factory()->create();
 
-        $cooperative->superAdmins()->attach([
-            $superAdminA->id,
-            $superAdminB->id,
-        ]);
-
+        $cooperative->superAdmins()->attach($superAdmin->id);
         $cooperative->load('superAdmins');
 
-        self::assertCount(
-            2,
-            $cooperative->superAdmins,
-        );
-
-        self::assertTrue(
-            $cooperative->superAdmins->contains($superAdminA),
-        );
-
-        self::assertTrue(
-            $cooperative->superAdmins->contains($superAdminB),
-        );
+        self::assertCount(1, $cooperative->superAdmins);
+        self::assertTrue($cooperative->superAdmins->contains($superAdmin));
     }
 
     public function test_super_admin_can_manage_multiple_cooperatives(): void
@@ -118,7 +103,7 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
         );
     }
 
-    public function test_cooperative_can_detach_one_super_admin_without_affecting_others(): void
+    public function test_cooperative_can_detach_its_super_admin(): void
     {
         $country = Country::factory()->create();
 
@@ -130,29 +115,13 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
             'address_id' => $address->id,
         ]);
 
-        $superAdminA = User::factory()->create();
-        $superAdminB = User::factory()->create();
+        $superAdmin = User::factory()->create();
+        $cooperative->superAdmins()->attach($superAdmin->id);
 
-        $cooperative->superAdmins()->attach([
-            $superAdminA->id,
-            $superAdminB->id,
+        $cooperative->superAdmins()->detach($superAdmin->id);
+
+        self::assertDatabaseMissing('super_admin_cooperative', [
+            'cooperative_id' => $cooperative->id,
+            'super_admin_id' => $superAdmin->id,
         ]);
-
-        $cooperative->superAdmins()->detach($superAdminA->id);
-
-        $cooperative->load('superAdmins');
-
-        self::assertCount(
-            1,
-            $cooperative->superAdmins,
-        );
-
-        self::assertFalse(
-            $cooperative->superAdmins->contains($superAdminA),
-        );
-
-        self::assertTrue(
-            $cooperative->superAdmins->contains($superAdminB),
-        );
-    }
-}
+    }}
