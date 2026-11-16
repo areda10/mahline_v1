@@ -7,7 +7,6 @@ namespace App\Domains\Identity\UserManagement\Http\Controllers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
