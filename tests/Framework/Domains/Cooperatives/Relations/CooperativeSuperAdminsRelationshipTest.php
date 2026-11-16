@@ -124,4 +124,6 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
             'cooperative_id' => $cooperative->id,
             'super_admin_id' => $superAdmin->id,
         ]);
-    }}
+    }
+}
+
