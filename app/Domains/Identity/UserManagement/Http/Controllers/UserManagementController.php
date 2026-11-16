@@ -370,6 +370,14 @@ final class UserManagementController
         abort_if($deletedOnly && ! $isRoot, 403);
 
         $users = User::query()
+            ->whereDoesntHave('roles', static fn (Builder $roles) => $roles->where('slug', 'super_admin_root'))
+            ->when(
+                $actor->hasRole('cooperative_admin'),
+                static fn (Builder $query) => $query->whereHas(
+                    'roles',
+                    static fn (Builder $roles) => $roles->where('slug', 'user'),
+                ),
+            )
             ->when($deletedOnly, static fn (Builder $query) => $query->onlyTrashed())
             ->when(
                 ! $isRoot && $actor->hasRole('super_admin'),
