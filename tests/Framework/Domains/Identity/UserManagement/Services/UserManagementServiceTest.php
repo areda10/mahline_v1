@@ -831,6 +831,109 @@ final class UserManagementServiceTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_can_create_only_the_first_cooperative_admin_in_assigned_cooperative(): void
+    {
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $cooperative = $this->createCooperative();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+
+        $attributes = [
+            'first_name' => 'First',
+            'last_name' => 'Cooperative Admin',
+            'email' => 'first.coop.admin@example.com',
+            'telephone' => '+212600000031',
+            'cooperative_id' => $cooperative->getKey(),
+        ];
+
+        $created = $this->service->createUser(
+            $superAdmin,
+            $attributes,
+            'cooperative_admin',
+        );
+
+        self::assertSame($cooperative->getKey(), $created->cooperative_id);
+
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage('A super admin can create only the first cooperative admin for a cooperative.');
+
+        $this->service->createUser(
+            $superAdmin,
+            [
+                ...$attributes,
+                'email' => 'second.coop.admin@example.com',
+            ],
+            'cooperative_admin',
+        );
+    }
+
+    public function test_root_can_create_multiple_cooperative_admins_in_same_cooperative(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+
+        foreach (['one', 'two'] as $suffix) {
+            $this->service->createUser(
+                $root,
+                [
+                    'first_name' => 'Cooperative',
+                    'last_name' => 'Admin',
+                    'email' => $suffix.'.coop.admin@example.com',
+                    'telephone' => '+212600000032',
+                    'cooperative_id' => $cooperative->getKey(),
+                ],
+                'cooperative_admin',
+            );
+        }
+
+        $this->assertDatabaseCount('users', 3);
+    }
+
+    public function test_super_admin_can_update_user_profile_without_changing_role_or_cooperative(): void
+    {
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $cooperative = $this->createCooperative();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $target = $this->createUserWithRole('user', (string) $cooperative->getKey());
+
+        $updated = $this->service->updateUserAccount(
+            $superAdmin,
+            $target,
+            [
+                'first_name' => 'Updated',
+                'last_name' => 'Profile',
+                'email' => $target->email,
+                'telephone' => '+212600000033',
+            ],
+            'user',
+        );
+
+        self::assertSame('Updated', $updated->first_name);
+        self::assertSame($target->cooperative_id, $updated->cooperative_id);
+        self::assertTrue($updated->hasRole('user'));
+    }
+
+    public function test_cooperative_admin_can_update_only_user_profile_in_own_cooperative(): void
+    {
+        $cooperative = $this->createCooperative();
+        $admin = $this->createUserWithRole('cooperative_admin', (string) $cooperative->getKey());
+        $target = $this->createUserWithRole('user', (string) $cooperative->getKey());
+
+        $updated = $this->service->updateUserAccount(
+            $admin,
+            $target,
+            [
+                'first_name' => 'Local',
+                'last_name' => 'User',
+                'email' => $target->email,
+                'telephone' => '+212600000034',
+            ],
+            'user',
+        );
+
+        self::assertSame('Local', $updated->first_name);
+        self::assertSame($cooperative->getKey(), $updated->cooperative_id);
+    }
+
     public function test_database_rejects_duplicate_super_admin_cooperative_assignment(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
