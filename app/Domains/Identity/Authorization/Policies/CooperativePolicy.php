@@ -52,8 +52,7 @@ final class CooperativePolicy extends BasePolicy
     public function delete(User $user, Cooperative $cooperative): bool
     {
         return $user->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
-            && $this->hasPermission($user, 'cooperatives.delete')
-            && ! $cooperative->trashed();
+            && $this->hasPermission($user, 'cooperatives.delete');
     }
 
     private function canAccessCooperative(User $user, Cooperative $cooperative): bool
