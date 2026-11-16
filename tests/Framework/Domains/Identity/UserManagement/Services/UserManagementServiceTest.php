@@ -771,6 +771,21 @@ final class UserManagementServiceTest extends TestCase
         ]);
     }
 
+    public function test_root_cannot_assign_a_second_super_admin_to_the_same_cooperative(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $firstSuperAdmin = $this->createUserWithRole('super_admin');
+        $secondSuperAdmin = $this->createUserWithRole('super_admin');
+
+        $this->service->assignSuperAdminToCooperative($root, $firstSuperAdmin, $cooperative);
+
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage('A cooperative can be assigned to only one super admin.');
+
+        $this->service->assignSuperAdminToCooperative($root, $secondSuperAdmin, $cooperative);
+    }
+
     public function test_removing_non_existing_assignment_does_not_record_audit_event(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
