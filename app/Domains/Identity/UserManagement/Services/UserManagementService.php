@@ -159,8 +159,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 action: 'updated',
                 oldValues: $oldValues,
                 newValues: $newValues,
-                metadata: ['profile_scope' => $isRoot ? 'root' : $actor->hasRole(self::ROLE_SUPER_ADMIN)
-                    ? 'assigned_cooperative' : 'own_cooperative'],
+                metadata: ['profile_scope' => $isRoot
+                    ? 'root'
+                    : ($actor->hasRole(self::ROLE_SUPER_ADMIN)
+                        ? 'assigned_cooperative'
+                        : 'own_cooperative')],
             );
 
             $this->revokeAccessCredentials(
