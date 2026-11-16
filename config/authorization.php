@@ -98,8 +98,9 @@ return [
 
         /*
          * Administration of the user's own cooperative.
-         * Cooperative administrators may only consult users in their
-         * own cooperative. They cannot create or manage user accounts.
+         * Cooperative administrators may consult users and update the
+         * profile fields permitted in their own cooperative. They cannot
+         * create, delete, reassign, or change account roles/statuses.
          */
         'cooperative_admin' => [
             'cooperatives.view',
