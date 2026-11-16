@@ -48,7 +48,7 @@ final class AddressPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
-            return true;
+            return ! $target->hasAnyRole(['super_admin_root', 'customer']);
         }
 
         if ($target->cooperative_id === null) {
