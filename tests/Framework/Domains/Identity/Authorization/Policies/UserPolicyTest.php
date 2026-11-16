@@ -331,6 +331,47 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($admin)->allows('delete', $target));
     }
 
+    public function test_super_admin_can_update_users_and_cooperative_admins_in_assigned_cooperatives(): void
+    {
+        $cooperative = $this->createCooperative();
+        $actor = $this->userWithRoleAndPermissions('super_admin', ['users.update']);
+        $actor->cooperatives()->attach($cooperative->getKey());
+
+        $user = $this->userWithRoleAndPermissions('user', [], [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $cooperativeAdmin = $this->userWithRoleAndPermissions('cooperative_admin', [], [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+
+        self::assertTrue(Gate::forUser($actor)->allows('update', $user));
+        self::assertTrue(Gate::forUser($actor)->allows('update', $cooperativeAdmin));
+    }
+
+    public function test_cooperative_admin_can_update_only_users_in_own_cooperative(): void
+    {
+        $own = $this->createCooperative();
+        $other = $this->createCooperative();
+        $actor = $this->userWithRoleAndPermissions('cooperative_admin', ['users.update'], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+
+        $ownUser = $this->userWithRoleAndPermissions('user', [], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+        $otherUser = $this->userWithRoleAndPermissions('user', [], [
+            'cooperative_id' => $other->getKey(),
+        ]);
+        $peerAdmin = $this->userWithRoleAndPermissions('cooperative_admin', [], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+
+        self::assertTrue(Gate::forUser($actor)->allows('update', $ownUser));
+        self::assertFalse(Gate::forUser($actor)->allows('update', $otherUser));
+        self::assertFalse(Gate::forUser($actor)->allows('update', $peerAdmin));
+        self::assertFalse(Gate::forUser($actor)->allows('view', $peerAdmin));
+    }
+
     private function createCooperative(): Cooperative
     {
         $country = Country::query()->firstOrCreate(
