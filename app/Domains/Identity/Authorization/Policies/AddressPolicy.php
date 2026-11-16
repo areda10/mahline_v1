@@ -62,7 +62,8 @@ final class AddressPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
-            return $actor->cooperative_id !== null
+            return $target->hasRole(self::ROLE_USER)
+                && $actor->cooperative_id !== null
                 && (string) $actor->cooperative_id === (string) $target->cooperative_id;
         }
 
