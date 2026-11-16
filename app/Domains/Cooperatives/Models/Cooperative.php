@@ -115,6 +115,36 @@ final class Cooperative extends BaseModel
         );
     }
 
+    /**
+     * Internal accounts attached to this cooperative.
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'cooperative_id');
+    }
+
+    /**
+     * Cooperative administrators attached to this cooperative.
+     */
+    public function cooperativeAdmins(): HasMany
+    {
+        return $this->users()->whereHas(
+            'roles',
+            static fn ($query) => $query->where('slug', 'cooperative_admin'),
+        );
+    }
+
+    /**
+     * Operational users attached to this cooperative.
+     */
+    public function members(): HasMany
+    {
+        return $this->users()->whereHas(
+            'roles',
+            static fn ($query) => $query->where('slug', 'user'),
+        );
+    }
+
     public function superAdmins(): BelongsToMany
     {
         return $this->belongsToMany(
