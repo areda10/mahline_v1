@@ -31,7 +31,6 @@ return [
             'users.view',
             'users.update',
             'users.create',
-            'users.activate',
             'users.deactivate',
             'users.suspend',
             'users.archive',
@@ -67,12 +66,9 @@ return [
          * Administration of assigned cooperatives.
          */
         'super_admin' => [
-            'audit.view',
-
             'cooperatives.view',
             'cooperatives.create',
             'cooperatives.update',
-            'cooperatives.delete',
 
             'users.view',
             'users.update',
@@ -106,7 +102,6 @@ return [
          * own cooperative. They cannot create or manage user accounts.
          */
         'cooperative_admin' => [
-            'audit.view',
             'cooperatives.view',
             'cooperatives.update',
 
