@@ -306,13 +306,31 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             // Revalidation après acquisition du verrou.
             $this->assertSuperAdminTarget($lockedSuperAdmin);
 
-            // Vérification de l'affectation après verrouillage.
-            $alreadyAssigned = $lockedSuperAdmin->cooperatives()
+            // Lock the cooperative so concurrent assignment attempts cannot
+            // attach two different super administrators to the same cooperative.
+            $lockedCooperative = Cooperative::query()
                 ->whereKey($cooperative->getKey())
+                ->lockForUpdate()
+                ->first();
+
+            if ($lockedCooperative === null) {
+                throw new DomainException('The cooperative does not exist or is deleted.');
+            }
+
+            $alreadyAssigned = $lockedSuperAdmin->cooperatives()
+                ->whereKey($lockedCooperative->getKey())
                 ->exists();
 
             if ($alreadyAssigned) {
                 return;
+            }
+
+            $assignedToAnotherSuperAdmin = $lockedCooperative->superAdmins()
+                ->where('users.id', '<>', $lockedSuperAdmin->getKey())
+                ->exists();
+
+            if ($assignedToAnotherSuperAdmin) {
+                throw new DomainException('A cooperative can be assigned to only one super admin.');
             }
 
             $lockedSuperAdmin->cooperatives()->attach(
