@@ -780,7 +780,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->service->assignSuperAdminToCooperative($root, $firstSuperAdmin, $cooperative);
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('A cooperative can be assigned to only one super admin.');
 
         $this->service->assignSuperAdminToCooperative($root, $secondSuperAdmin, $cooperative);
@@ -868,7 +868,7 @@ final class UserManagementServiceTest extends TestCase
 
         self::assertSame($cooperative->getKey(), $created->cooperative_id);
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('A super admin can create only the first cooperative admin for a cooperative.');
 
         $this->service->createUser(
