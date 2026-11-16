@@ -273,10 +273,9 @@ final class UserPolicy extends BasePolicy
 
     private function isInternalManagedTarget(User $target): bool
     {
-        return $target->hasAnyRole([
-            self::ROLE_SUPER_ADMIN,
-            self::ROLE_COOPERATIVE_ADMIN,
-            'user',
+        return ! $target->hasAnyRole([
+            self::ROLE_SUPER_ADMIN_ROOT,
+            'customer',
         ]);
     }
 
