@@ -10,6 +10,9 @@
     </div>
 
     <div class="actions">
+        @can('update', $user)
+            <a class="button" href="{{ route('backoffice.users.edit', $user) }}">Modifier la fiche</a>
+        @endcan
         <a class="button button-secondary" href="{{ route('backoffice.dashboard') }}">Retour au tableau de bord</a>
         @if($canViewAssignments)
             <a class="button button-secondary" href="{{ route('backoffice.super-admins.cooperatives.index', $user) }}">Gérer les affectations</a>
