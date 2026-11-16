@@ -48,20 +48,12 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         string $roleSlug,
     ): User {
         $this->assertActorIsActive($actor);
-        $this->assertSuperAdminRoot($actor);
 
         if ($roleSlug === self::ROLE_SUPER_ADMIN_ROOT) {
             throw new DomainException('The super admin root role cannot be assigned through user management.');
         }
 
         $role = $this->findRole($roleSlug);
-        $cooperativeId = $roleSlug === self::ROLE_SUPER_ADMIN
-            ? null
-            : ($attributes['cooperative_id'] ?? null);
-
-        if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
-            $this->assertCooperativeExists($cooperativeId);
-        }
 
         return DB::transaction(function () use (
             $actor,
@@ -69,15 +61,46 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $attributes,
             $role,
             $roleSlug,
-            $cooperativeId,
         ): User {
             $lockedTarget = User::query()
                 ->whereKey($target->getKey())
                 ->lockForUpdate()
                 ->first();
 
-            if ($lockedTarget === null || $lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
+            if ($lockedTarget === null
+                || $lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
                 throw new DomainException('Root accounts cannot be modified through ordinary user management.');
+            }
+
+            $currentRoleSlugs = $lockedTarget->roles()->pluck('slug')->all();
+            if (count($currentRoleSlugs) !== 1) {
+                throw new DomainException('The target account must have exactly one operational role.');
+            }
+
+            $currentRole = $currentRoleSlugs[0];
+            $isRoot = $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+
+            if (! $isRoot) {
+                if ($roleSlug !== $currentRole) {
+                    throw new DomainException('Only the super admin root can change an account role.');
+                }
+
+                $this->assertCanUpdateTarget($actor, $lockedTarget, $currentRole);
+
+                if (array_key_exists('cooperative_id', $attributes)
+                    && (string) $attributes['cooperative_id'] !== (string) $lockedTarget->cooperative_id) {
+                    throw new DomainException('Only the super admin root can change a cooperative assignment.');
+                }
+
+                $cooperativeId = $lockedTarget->cooperative_id;
+            } else {
+                $cooperativeId = $roleSlug === self::ROLE_SUPER_ADMIN
+                    ? null
+                    : ($attributes['cooperative_id'] ?? null);
+
+                if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+                    $this->assertCooperativeExists($cooperativeId);
+                }
             }
 
             $emailChanged = $lockedTarget->email !== $attributes['email'];
@@ -90,7 +113,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
                 'telephone' => $lockedTarget->telephone,
                 'cooperative_id' => $lockedTarget->cooperative_id,
-                'roles' => $lockedTarget->roles()->pluck('slug')->all(),
+                'roles' => $currentRoleSlugs,
             ];
 
             $lockedTarget->fill([
@@ -101,6 +124,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'telephone' => $attributes['telephone'],
                 'cooperative_id' => $cooperativeId,
             ]);
+
             if ($emailChanged) {
                 $lockedTarget->email_verified_at = null;
                 $lockedTarget->status = UserStatus::Pending;
@@ -109,10 +133,12 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $lockedTarget->save();
 
-            $lockedTarget->roles()->sync([$role->getKey()]);
+            if ($isRoot) {
+                $lockedTarget->roles()->sync([$role->getKey()]);
 
-            if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
-                $lockedTarget->cooperatives()->detach();
+                if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+                    $lockedTarget->cooperatives()->detach();
+                }
             }
 
             $newValues = [
@@ -123,7 +149,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'email_verified_at' => $lockedTarget->email_verified_at?->toISOString(),
                 'telephone' => $lockedTarget->telephone,
                 'cooperative_id' => $lockedTarget->cooperative_id,
-                'roles' => [$roleSlug],
+                'roles' => $isRoot ? [$roleSlug] : $currentRoleSlugs,
             ];
 
             $this->recordLifecycleAudit(
@@ -133,12 +159,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 action: 'updated',
                 oldValues: $oldValues,
                 newValues: $newValues,
+                metadata: ['profile_scope' => $isRoot ? 'root' : $actor->hasRole(self::ROLE_SUPER_ADMIN)
+                    ? 'assigned_cooperative' : 'own_cooperative'],
             );
 
             $this->revokeAccessCredentials(
                 actor: $actor,
                 target: $lockedTarget,
-                reason: 'user_role_or_profile_changed',
+                reason: $emailChanged ? 'user_email_changed' : 'user_profile_or_role_changed',
             );
 
             return $lockedTarget->fresh();
@@ -715,6 +743,34 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             return $lockedTarget->fresh();
         });
+    }
+
+    private function assertCanUpdateTarget(
+        User $actor,
+        User $target,
+        string $targetRole,
+    ): void {
+        if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
+            if (! in_array($targetRole, [self::ROLE_COOPERATIVE_ADMIN, self::ROLE_USER], true)
+                || $target->cooperative_id === null
+                || ! $actor->cooperatives()->whereKey($target->cooperative_id)->exists()) {
+                throw new DomainException('The super admin cannot update this account outside its assigned cooperative scope.');
+            }
+
+            return;
+        }
+
+        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
+            if ($targetRole !== self::ROLE_USER
+                || $actor->cooperative_id === null
+                || (string) $actor->cooperative_id !== (string) $target->cooperative_id) {
+                throw new DomainException('The cooperative admin can update only users in its own cooperative.');
+            }
+
+            return;
+        }
+
+        throw new DomainException('The actor is not authorized to update this account.');
     }
 
     private function assertSuperAdminCanManageTarget(
