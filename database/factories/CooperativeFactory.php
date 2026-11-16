@@ -23,7 +23,7 @@ final class CooperativeFactory extends Factory
             'name' => fake()->company(),
             'rib' => fake()->numerify('########################'),
             'tax_id' => fake()->optional()->bothify('PAT-#####'),
-            'address_id' => Address::factory(),
+            'address_id' => Address::factory()->state(['user_id' => null]),
             'phone' => fake()->numerify('+2126########'),
             'email' => fake()->unique()->safeEmail(),
             'rc' => fake()->optional()->bothify('RC-#####'),
