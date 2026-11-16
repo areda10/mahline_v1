@@ -211,6 +211,34 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $roleSlug,
             $initialStatus,
         ): User {
+            if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
+                $cooperative = Cooperative::query()
+                    ->whereKey($attributes['cooperative_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($cooperative === null) {
+                    throw new DomainException('The cooperative does not exist or is no longer available.');
+                }
+
+                if ($actor->hasRole(self::ROLE_SUPER_ADMIN)
+                    && ! $actor->cooperatives()->whereKey($cooperative->getKey())->exists()) {
+                    throw new DomainException('The super admin is not assigned to this cooperative.');
+                }
+
+                if ($roleSlug === self::ROLE_COOPERATIVE_ADMIN
+                    && $actor->hasRole(self::ROLE_SUPER_ADMIN)) {
+                    $existingCooperativeAdmin = User::query()
+                        ->where('cooperative_id', $cooperative->getKey())
+                        ->whereHas('roles', static fn ($query) => $query->where('slug', self::ROLE_COOPERATIVE_ADMIN))
+                        ->exists();
+
+                    if ($existingCooperativeAdmin) {
+                        throw new DomainException('A super admin can create only the first cooperative admin for a cooperative.');
+                    }
+                }
+            }
+
             $userAttributes = array_merge($attributes, [
                 'display_name' => trim(
                     $attributes['first_name'].' '.$attributes['last_name'],
