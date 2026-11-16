@@ -13,6 +13,7 @@ final class AuditEventPolicy extends BasePolicy
     public function viewAny(User $user): bool
     {
         return $user->isAuthorized()
+            && $user->hasRole('super_admin_root')
             && $user->hasPermission('audit.view');
     }
 
