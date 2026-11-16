@@ -58,7 +58,7 @@ final class UserManagementController
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
 
-        abort_if($user->roles()->where('slug', 'super_admin_root')->exists(), 404);
+        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
 
         $user->load(['roles', 'cooperative', 'address.country']);
 
@@ -440,6 +440,7 @@ final class UserManagementController
         abort_if($deletedOnly && ! $isRoot, 403);
 
         $users = User::query()
+            ->whereHas('roles', static fn (Builder $roles) => $roles->whereIn('slug', ['super_admin', 'cooperative_admin', 'user']))
             ->when($deletedOnly, static fn (Builder $query) => $query->onlyTrashed())
             ->when(
                 ! $isRoot && $actor->hasRole('super_admin'),
