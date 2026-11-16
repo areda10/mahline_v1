@@ -89,6 +89,30 @@ final class UserPolicy extends BasePolicy
             && ! $cooperative->trashed();
     }
 
+    public function update(User $actor, User $target): bool
+    {
+        if ($target->trashed()
+            || $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            || ! $this->hasPermission($actor, 'users.update')
+            || ! $this->canAccessUser($actor, $target)) {
+            return false;
+        }
+
+        if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            return true;
+        }
+
+        if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
+            return $target->hasAnyRole(['cooperative_admin', 'user']);
+        }
+
+        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
+            return $target->hasRole('user');
+        }
+
+        return false;
+    }
+
     public function create(User $actor): bool
     {
         if (! $this->hasPermission($actor, 'users.create')) {
