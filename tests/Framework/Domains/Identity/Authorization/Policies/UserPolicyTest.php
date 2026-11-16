@@ -267,11 +267,11 @@ final class UserPolicyTest extends TestCase
         );
     }
 
-    public function test_root_can_change_own_status(): void
+    public function test_root_cannot_change_own_status(): void
     {
         $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.deactivate']);
 
-        self::assertTrue(Gate::forUser($root)->allows('deactivate', $root));
+        self::assertFalse(Gate::forUser($root)->allows('deactivate', $root));
     }
 
     public function test_super_admin_cannot_change_own_status(): void
