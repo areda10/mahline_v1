@@ -900,7 +900,13 @@ final class UserManagementServiceTest extends TestCase
             );
         }
 
-        $this->assertDatabaseCount('users', 3);
+        self::assertSame(
+            2,
+            User::query()
+                ->where('cooperative_id', $cooperative->getKey())
+                ->whereHas('roles', static fn ($query) => $query->where('slug', 'cooperative_admin'))
+                ->count(),
+        );
     }
 
     public function test_super_admin_can_update_user_profile_without_changing_role_or_cooperative(): void
