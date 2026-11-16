@@ -139,7 +139,8 @@ final class UserPolicy extends BasePolicy
     {
         if (! $this->hasPermission($actor, 'users.create')
             || $target->trashed()
-            || $target->email_verified_at !== null) {
+            || $target->email_verified_at !== null
+            || ! $this->isInternalManagedTarget($target)) {
             return false;
         }
 
@@ -161,7 +162,7 @@ final class UserPolicy extends BasePolicy
 
     public function activate(User $actor, User $target): bool
     {
-        if (! $this->hasPermission($actor, 'users.activate') || $target->trashed() || $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+        if (! $this->hasPermission($actor, 'users.activate') || $target->trashed() || ! $this->isInternalManagedTarget($target)) {
             return false;
         }
 
@@ -192,7 +193,7 @@ final class UserPolicy extends BasePolicy
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.archive')
             && ! $target->trashed()
-            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            && $this->isInternalManagedTarget($target)
             && $target->status !== UserStatus::Archived;
     }
 
@@ -201,7 +202,7 @@ final class UserPolicy extends BasePolicy
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.restore')
             && ! $target->trashed()
-            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            && $this->isInternalManagedTarget($target)
             && $target->status === UserStatus::Archived;
     }
 
@@ -210,7 +211,7 @@ final class UserPolicy extends BasePolicy
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.delete')
             && ! $target->trashed()
-            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+            && $this->isInternalManagedTarget($target);
     }
 
     public function restoreDeleted(User $actor, User $target): bool
@@ -218,7 +219,7 @@ final class UserPolicy extends BasePolicy
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.restore_deleted')
             && $target->trashed()
-            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+            && $this->isInternalManagedTarget($target);
     }
 
     private function canChangeActiveStatus(
@@ -229,7 +230,7 @@ final class UserPolicy extends BasePolicy
         if (! $this->hasPermission($actor, $permission)
             || $target->trashed()
             || $target->status !== UserStatus::Active
-            || $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            || ! $this->isInternalManagedTarget($target)) {
             return false;
         }
 
@@ -268,6 +269,15 @@ final class UserPolicy extends BasePolicy
         }
 
         return false;
+    }
+
+    private function isInternalManagedTarget(User $target): bool
+    {
+        return $target->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_COOPERATIVE_ADMIN,
+            'user',
+        ]);
     }
 
     private function targetHasActiveRole(User $target, string $roleSlug): bool
