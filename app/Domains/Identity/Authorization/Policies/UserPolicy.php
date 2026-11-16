@@ -157,7 +157,7 @@ final class UserPolicy extends BasePolicy
 
     public function activate(User $actor, User $target): bool
     {
-        if (! $this->hasPermission($actor, 'users.activate') || $target->trashed()) {
+        if (! $this->hasPermission($actor, 'users.activate') || $target->trashed() || $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
             return false;
         }
 
@@ -188,6 +188,7 @@ final class UserPolicy extends BasePolicy
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.archive')
             && ! $target->trashed()
+            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $target->status !== UserStatus::Archived;
     }
 
@@ -196,6 +197,7 @@ final class UserPolicy extends BasePolicy
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.restore')
             && ! $target->trashed()
+            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $target->status === UserStatus::Archived;
     }
 
@@ -203,14 +205,16 @@ final class UserPolicy extends BasePolicy
     {
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.delete')
-            && ! $target->trashed();
+            && ! $target->trashed()
+            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
     }
 
     public function restoreDeleted(User $actor, User $target): bool
     {
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.restore_deleted')
-            && $target->trashed();
+            && $target->trashed()
+            && ! $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
     }
 
     private function canChangeActiveStatus(
@@ -220,7 +224,8 @@ final class UserPolicy extends BasePolicy
     ): bool {
         if (! $this->hasPermission($actor, $permission)
             || $target->trashed()
-            || $target->status !== UserStatus::Active) {
+            || $target->status !== UserStatus::Active
+            || $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
             return false;
         }
 
