@@ -123,6 +123,66 @@ final class UserManagementController
             );
     }
 
+    public function edit(Request $request, User $user): View
+    {
+        Gate::authorize('update', $user);
+
+        $user->load(['roles', 'cooperative', 'address.country']);
+
+        return view('backoffice.users.edit', [
+            'user' => $user,
+        ]);
+    }
+
+    public function update(
+        Request $request,
+        User $user,
+        UserManagementService $userManagementService,
+        UserInvitationService $invitationService,
+    ): RedirectResponse {
+        Gate::authorize('update', $user);
+
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users', 'email')->ignore($user->getKey())],
+            'telephone' => ['required', 'string', 'max:255'],
+        ]);
+
+        $roleSlug = $user->roles()->value('slug');
+
+        if (! in_array($roleSlug, ['cooperative_admin', 'user'], true)) {
+            abort(403);
+        }
+
+        $emailChanged = $user->email !== $data['email'];
+
+        try {
+            $updatedUser = $userManagementService->updateUserAccount(
+                $request->user(),
+                $user,
+                $data,
+                $roleSlug,
+            );
+
+            if ($emailChanged) {
+                $invitationService->sendInvitation($updatedUser, 'account_activation');
+            }
+        } catch (UserInvitationDeliveryException) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'La fiche a été mise à jour, mais le nouvel e-mail de vérification n’a pas pu être envoyé. Vous pourrez réessayer.');
+        } catch (\DomainException $exception) {
+            return back()->withInput()->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $updatedUser)
+            ->with('success', $emailChanged
+                ? 'La fiche a été mise à jour. La nouvelle adresse doit être vérifiée ; une invitation a été envoyée. Les anciens accès ont été révoqués.'
+                : 'La fiche utilisateur a été mise à jour.');
+    }
+
     public function show(Request $request, User $user): View
     {
         Gate::authorize('view', $user);
