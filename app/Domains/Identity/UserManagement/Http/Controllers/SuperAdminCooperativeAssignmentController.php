@@ -39,10 +39,7 @@ final class SuperAdminCooperativeAssignmentController
         $availableCooperatives = $this->isSuperAdminRoot(request()->user())
             ? Cooperative::query()
                 ->with('address.country')
-                ->whereDoesntHave(
-                    'superAdmins',
-                    static fn (Builder $query) => $query->whereKey($superAdmin->getKey()),
-                )
+                ->whereDoesntHave('superAdmins')
                 ->orderBy('name')
                 ->paginate(15, ['*'], 'available_page')
             : new LengthAwarePaginator(
