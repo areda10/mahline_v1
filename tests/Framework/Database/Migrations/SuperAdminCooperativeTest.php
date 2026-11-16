@@ -138,6 +138,18 @@ final class SuperAdminCooperativeTest extends TestCase
         self::assertNotNull($uniqueIndex);
     }
 
+    public function test_cooperative_id_is_unique_to_one_super_admin(): void
+    {
+        $indexes = Schema::getIndexes('super_admin_cooperative');
+
+        $uniqueIndex = collect($indexes)->first(
+            fn (array $index): bool => $index['unique'] === true
+                && $index['columns'] === ['cooperative_id'],
+        );
+
+        self::assertNotNull($uniqueIndex);
+    }
+
     public function test_super_admin_cooperative_pair_can_be_created(): void
     {
         $user = User::factory()->create();
