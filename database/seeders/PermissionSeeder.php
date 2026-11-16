@@ -23,7 +23,7 @@ final class PermissionSeeder extends Seeder
 
             // User management
             'users.view' => 'Consulter les utilisateurs',
-            'users.update' => 'Modifier les adresses personnelles des utilisateurs dans le périmètre autorisé',
+            'users.update' => 'Modifier les fiches et adresses des utilisateurs dans le périmètre autorisé',
             'users.create' => 'Créer les utilisateurs',
             'users.activate' => 'Activer les utilisateurs',
             'users.deactivate' => 'Désactiver les utilisateurs',
