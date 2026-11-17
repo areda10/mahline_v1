@@ -78,7 +78,8 @@ return new class extends Migration
     public function down(): void
     {
         if (DB::getDriverName() === 'mysql') {
-            DB::statement('ALTER TABLE addresses DROP CHECK addresses_exactly_one_owner_check');
+            DB::statement('DROP TRIGGER IF EXISTS addresses_exactly_one_owner_before_insert');
+            DB::statement('DROP TRIGGER IF EXISTS addresses_exactly_one_owner_before_update');
             DB::statement('ALTER TABLE addresses DROP INDEX addresses_one_primary_per_user_unique');
             DB::statement('ALTER TABLE addresses DROP INDEX addresses_one_primary_per_cooperative_unique');
             DB::statement('ALTER TABLE addresses DROP INDEX addresses_one_active_address_per_cooperative_unique');
