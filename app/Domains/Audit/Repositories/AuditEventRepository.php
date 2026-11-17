@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Audit\\Repositories;
+namespace App\Domains\Audit\Repositories;
 
-use App\\Domains\\Audit\\Models\\AuditEvent;
-use Illuminate\\Support\\Facades\\DB;
+use App\Domains\Audit\Models\AuditEvent;
+use Illuminate\Support\Facades\DB;
 use JsonException;
 
 final class AuditEventRepository
@@ -26,7 +26,7 @@ final class AuditEventRepository
                 ->first();
 
             if ($head === null) {
-                throw new \\LogicException('The audit chain head has not been initialized.');
+                throw new \LogicException('The audit chain head has not been initialized.');
             }
 
             $previousHash = $head->last_hash;
