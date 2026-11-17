@@ -7,6 +7,8 @@ namespace Tests\Framework\Domains\Catalog\Services;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Repositories\CatalogRepository;
 use App\Domains\Catalog\Services\CatalogService;
+use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -24,9 +26,7 @@ final class CatalogServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new CatalogService(
-            new CatalogRepository
-        );
+        $this->service = app(CatalogService::class);
     }
 
     public function test_it_creates_catalog_for_a_cooperative(): void
@@ -44,6 +44,28 @@ final class CatalogServiceTest extends TestCase
             (string) $cooperative->getKey(),
             (string) $catalog->cooperative_id,
         );
+    }
+
+    public function test_catalog_creation_is_audited_with_actor_and_snapshot(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = User::factory()->create();
+
+        $catalog = $this->service->createForCooperative(
+            (string) $cooperative->getKey(),
+            ['name' => 'Catalogue tracé'],
+            $actor,
+        );
+
+        $event = AuditEvent::query()
+            ->where('event_key', 'catalog.created')
+            ->where('subject_id', $catalog->getKey())
+            ->firstOrFail();
+
+        self::assertSame((string) $actor->getKey(), $event->actor_id);
+        self::assertSame((string) $cooperative->getKey(), $event->cooperative_id);
+        self::assertSame('Catalogue tracé', $event->new_values['name']);
+        self::assertSame('catalogue-trace', $event->new_values['slug']);
     }
 
     public function test_it_generates_a_unique_slug_within_the_cooperative(): void
