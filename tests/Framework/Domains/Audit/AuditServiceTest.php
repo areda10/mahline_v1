@@ -128,6 +128,33 @@ final class AuditServiceTest extends TestCase
         DB::table('audit_events')->where('id', $event->getKey())->delete();
     }
 
+    public function test_database_prevents_audit_chain_head_replacement_and_deletion(): void
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            self::markTestSkipped('Database-level audit chain head triggers are configured for MySQL.');
+        }
+
+        app(AuditService::class)->record(new AuditEntryDTO(
+            eventKey: 'CHAIN_HEAD_GUARD',
+            action: 'CREATE',
+        ));
+
+        try {
+            DB::table('audit_chain_heads')->where('id', 1)->update([
+                'last_hash' => str_repeat('f', 64),
+            ]);
+            self::fail('Expected database trigger to reject an invalid audit chain head.');
+        } catch (QueryException) {
+            self::assertSame(
+                DB::table('audit_events')->orderByDesc('occurred_at')->value('event_hash'),
+                DB::table('audit_chain_heads')->where('id', 1)->value('last_hash'),
+            );
+        }
+
+        $this->expectException(QueryException::class);
+        DB::table('audit_chain_heads')->where('id', 1)->delete();
+    }
+
     public function test_rejects_empty_event_key_or_action(): void
     {
         $this->expectException(\InvalidArgumentException::class);
