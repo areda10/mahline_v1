@@ -17,39 +17,22 @@ final class AuditService
     ) {}
 
     private const SENSITIVE_KEYS = [
-        'password',
-        'password_confirmation',
-        'current_password',
-        'new_password',
-        'token',
-        'access_token',
-        'refresh_token',
-        'plain_text_token',
-        'secret',
-        'client_secret',
-        'api_key',
-        'authorization',
-        'cookie',
-        'set-cookie',
-        'session',
-        'session_id',
-        'session_secret',
-        'remember_token',
-        'private_key',
+        'password', 'password_confirmation', 'current_password', 'new_password',
+        'temporary_password', 'password_hash', 'token', 'access_token',
+        'refresh_token', 'plain_text_token', 'reset_token', 'verification_token',
+        'secret', 'client_secret', 'api_key', 'authorization', 'cookie',
+        'set-cookie', 'session', 'session_id', 'session_secret', 'remember_token',
+        'private_key', 'otp', 'one_time_password', 'recovery_code',
+        'verification_code', 'email_verification_code', 'pin',
     ];
 
     public function record(AuditEntryDTO $entry): AuditEvent
     {
         if (trim($entry->eventKey) === '' || trim($entry->action) === '') {
-            throw new InvalidArgumentException(
-                'Audit event key and action are required.'
-            );
+            throw new InvalidArgumentException('Audit event key and action are required.');
         }
 
-        $request = app()->bound('request')
-            ? app('request')
-            : null;
-
+        $request = app()->bound('request') ? app('request') : null;
         if (! $request instanceof Request) {
             $request = null;
         }
@@ -65,16 +48,9 @@ final class AuditService
             'old_values' => $this->sanitize($entry->oldValues),
             'new_values' => $this->sanitize($entry->newValues),
             'metadata' => $this->sanitize($entry->metadata),
-
-            'ip_address' => $entry->ipAddress
-                ?? $request?->ip(),
-
-            'user_agent' => $entry->userAgent
-                ?? $request?->userAgent(),
-
-            'correlation_id' => $entry->correlationId
-                ?? $request?->attributes->get('correlation_id'),
-
+            'ip_address' => $entry->ipAddress ?? $request?->ip(),
+            'user_agent' => $entry->userAgent ?? $request?->userAgent(),
+            'correlation_id' => $entry->correlationId ?? $request?->attributes->get('correlation_id'),
             'occurred_at' => $entry->occurredAt ?? now(),
         ]);
     }
@@ -86,28 +62,24 @@ final class AuditService
         }
 
         $safe = [];
-
         foreach ($values as $key => $value) {
-            if (
-                is_string($key)
-                && in_array(
-                    strtolower($key),
-                    self::SENSITIVE_KEYS,
-                    true,
-                )
-            ) {
+            if (is_string($key) && $this->isSensitiveKey($key)) {
                 continue;
             }
 
-            if (is_array($value)) {
-                $safe[$key] = $this->sanitize($value);
-
-                continue;
-            }
-
-            $safe[$key] = $value;
+            $safe[$key] = is_array($value) ? $this->sanitize($value) : $value;
         }
 
         return $safe;
+    }
+
+    private function isSensitiveKey(string $key): bool
+    {
+        $normalized = strtolower(str_replace(['-', ' '], '_', $key));
+
+        return in_array($normalized, self::SENSITIVE_KEYS, true)
+            || str_ends_with($normalized, '_password')
+            || str_ends_with($normalized, '_token')
+            || str_ends_with($normalized, '_secret');
     }
 }

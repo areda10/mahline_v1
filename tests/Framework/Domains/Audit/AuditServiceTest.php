@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Audit;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Services\AuditService;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +16,7 @@ final class AuditServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_records_a_business_audit_event(): void
+    public function test_records_a_business_audit_event_and_hash_chain_fields(): void
     {
         $event = app(AuditService::class)->record(new AuditEntryDTO(
             eventKey: 'PRODUCT_STATUS_CHANGED',
@@ -37,6 +38,19 @@ final class AuditServiceTest extends TestCase
         ]);
         $this->assertSame(['is_active' => false], $event->old_values);
         $this->assertSame(['is_active' => true], $event->new_values);
+        self::assertSame(64, strlen($event->event_hash));
+        self::assertNull($event->previous_hash);
+    }
+
+    public function test_appends_events_to_a_single_hash_chain_in_order(): void
+    {
+        $service = app(AuditService::class);
+        $first = $service->record(new AuditEntryDTO(eventKey: 'FIRST', action: 'CREATE'));
+        $second = $service->record(new AuditEntryDTO(eventKey: 'SECOND', action: 'UPDATE'));
+
+        self::assertSame($first->event_hash, $second->previous_hash);
+        self::assertNotSame($first->event_hash, $second->event_hash);
+        self::assertSame($second->event_hash, \Illuminate\Support\Facades\DB::table('audit_chain_heads')->where('id', 1)->value('last_hash'));
     }
 
     public function test_filters_sensitive_keys_recursively(): void
@@ -50,6 +64,8 @@ final class AuditServiceTest extends TestCase
                 'profile' => [
                     'email' => 'example@example.test',
                     'access_token' => 'must-not-persist',
+                    'otp' => '123456',
+                    'reset-token' => 'must-not-persist',
                 ],
             ],
             metadata: ['authorization' => 'Bearer secret'],
@@ -78,7 +94,6 @@ final class AuditServiceTest extends TestCase
         }
 
         $event->refresh();
-
         $this->expectException(LogicException::class);
         $event->delete();
     }
@@ -86,155 +101,66 @@ final class AuditServiceTest extends TestCase
     public function test_rejects_empty_event_key_or_action(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-
-        app(AuditService::class)->record(new AuditEntryDTO(
-            eventKey: ' ',
-            action: 'CREATE',
-        ));
+        app(AuditService::class)->record(new AuditEntryDTO(eventKey: ' ', action: 'CREATE'));
     }
 
     public function test_records_http_request_context(): void
     {
-        $this->app['request']->server->set(
-            'REMOTE_ADDR',
-            '192.0.2.10',
-        );
+        $this->app['request']->server->set('REMOTE_ADDR', '192.0.2.10');
+        $this->app['request']->headers->set('User-Agent', 'Mozilla/5.0 MAHLINE Audit Test');
+        $this->app['request']->attributes->set('correlation_id', 'test-correlation-001');
 
-        $this->app['request']->headers->set(
-            'User-Agent',
-            'Mozilla/5.0 MAHLINE Audit Test',
-        );
-
-        $this->app['request']->attributes->set(
-            'correlation_id',
-            'test-correlation-001',
-        );
-
-        $event = app(AuditService::class)->record(
-            new AuditEntryDTO(
-                eventKey: 'TEST_HTTP_CONTEXT',
-                action: 'TEST',
-            ),
-        );
+        $event = app(AuditService::class)->record(new AuditEntryDTO(
+            eventKey: 'TEST_HTTP_CONTEXT',
+            action: 'TEST',
+        ));
 
         self::assertSame('192.0.2.10', $event->ip_address);
-
-        self::assertSame(
-            'Mozilla/5.0 MAHLINE Audit Test',
-            $event->user_agent,
-        );
-
-        self::assertSame(
-            'test-correlation-001',
-            $event->correlation_id,
-        );
+        self::assertSame('Mozilla/5.0 MAHLINE Audit Test', $event->user_agent);
+        self::assertSame('test-correlation-001', $event->correlation_id);
     }
 
     public function test_uses_ip_address_from_current_http_request(): void
     {
-        $request = Request::create(
-            '/',
-            'GET',
-            [],
-            [],
-            [],
-            ['REMOTE_ADDR' => '203.0.113.10'],
-        );
-
+        $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '203.0.113.10']);
         $this->app->instance('request', $request);
-
-        $event = app(AuditService::class)->record(
-            new AuditEntryDTO(
-                eventKey: 'TEST_IP_ADDRESS',
-                action: 'CREATE',
-            )
-        );
-
+        $event = app(AuditService::class)->record(new AuditEntryDTO(eventKey: 'TEST_IP_ADDRESS', action: 'CREATE'));
         $this->assertSame('203.0.113.10', $event->ip_address);
     }
 
     public function test_uses_user_agent_from_current_http_request(): void
     {
-        $request = Request::create(
-            '/',
-            'GET',
-            [],
-            [],
-            [],
-            [
-                'HTTP_USER_AGENT' => 'MAHLINE-Test-Agent/1.0',
-            ],
-        );
-
+        $request = Request::create('/', 'GET', [], [], [], ['HTTP_USER_AGENT' => 'MAHLINE-Test-Agent/1.0']);
         $this->app->instance('request', $request);
-
-        $event = app(AuditService::class)->record(
-            new AuditEntryDTO(
-                eventKey: 'TEST_USER_AGENT',
-                action: 'CREATE',
-            )
-        );
-
-        $this->assertSame(
-            'MAHLINE-Test-Agent/1.0',
-            $event->user_agent,
-        );
+        $event = app(AuditService::class)->record(new AuditEntryDTO(eventKey: 'TEST_USER_AGENT', action: 'CREATE'));
+        $this->assertSame('MAHLINE-Test-Agent/1.0', $event->user_agent);
     }
 
     public function test_uses_correlation_id_from_current_http_request(): void
     {
         $request = Request::create('/', 'GET');
-
-        $request->attributes->set(
-            'correlation_id',
-            'test-correlation-123',
-        );
-
+        $request->attributes->set('correlation_id', 'test-correlation-123');
         $this->app->instance('request', $request);
-
-        $event = app(AuditService::class)->record(
-            new AuditEntryDTO(
-                eventKey: 'TEST_CORRELATION_ID',
-                action: 'CREATE',
-            )
-        );
-
-        $this->assertSame(
-            'test-correlation-123',
-            $event->correlation_id,
-        );
+        $event = app(AuditService::class)->record(new AuditEntryDTO(eventKey: 'TEST_CORRELATION_ID', action: 'CREATE'));
+        $this->assertSame('test-correlation-123', $event->correlation_id);
     }
 
     public function test_explicit_dto_request_metadata_takes_priority(): void
     {
-        $request = Request::create(
-            '/',
-            'GET',
-            [],
-            [],
-            [],
-            [
-                'REMOTE_ADDR' => '203.0.113.10',
-                'HTTP_USER_AGENT' => 'Request-Agent/1.0',
-            ],
-        );
-
-        $request->attributes->set(
-            'correlation_id',
-            'request-correlation-id',
-        );
-
+        $request = Request::create('/', 'GET', [], [], [], [
+            'REMOTE_ADDR' => '203.0.113.10',
+            'HTTP_USER_AGENT' => 'Request-Agent/1.0',
+        ]);
+        $request->attributes->set('correlation_id', 'request-correlation-id');
         $this->app->instance('request', $request);
 
-        $event = app(AuditService::class)->record(
-            new AuditEntryDTO(
-                eventKey: 'TEST_DTO_PRIORITY',
-                action: 'CREATE',
-                ipAddress: '198.51.100.20',
-                userAgent: 'DTO-Agent/2.0',
-                correlationId: 'dto-correlation-id',
-            )
-        );
+        $event = app(AuditService::class)->record(new AuditEntryDTO(
+            eventKey: 'TEST_DTO_PRIORITY',
+            action: 'CREATE',
+            ipAddress: '198.51.100.20',
+            userAgent: 'DTO-Agent/2.0',
+            correlationId: 'dto-correlation-id',
+        ));
 
         $this->assertSame('198.51.100.20', $event->ip_address);
         $this->assertSame('DTO-Agent/2.0', $event->user_agent);
