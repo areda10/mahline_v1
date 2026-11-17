@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Catalog\Services;
 
 use App\Domains\Catalog\Models\Catalog;
-use App\Domains\Catalog\Repositories\CatalogRepository;
 use App\Domains\Catalog\Services\CatalogService;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Users\Models\User;
