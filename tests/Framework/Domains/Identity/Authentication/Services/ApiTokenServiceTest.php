@@ -114,6 +114,32 @@ final class ApiTokenServiceTest extends TestCase
         self::assertStringContainsString($owner->getKey(), $audit->metadata);
     }
 
+    public function test_root_cannot_create_an_api_token_for_a_customer_account(): void
+    {
+        $root = User::factory()->create();
+        $rootRole = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin_root'],
+            ['name' => 'Super Admin Root', 'is_active' => true],
+        );
+        $root->roles()->attach($rootRole->getKey());
+
+        $customer = User::factory()->create();
+        $customerRole = Role::query()->firstOrCreate(
+            ['slug' => 'customer'],
+            ['name' => 'Customer', 'is_active' => true],
+        );
+        $customer->roles()->attach($customerRole->getKey());
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('This account type cannot be managed through root API token workflows.');
+
+        $this->service->createForOwner(
+            owner: $customer,
+            actor: $root,
+            name: 'forbidden-customer-token',
+        );
+    }
+
     public function test_owner_cannot_create_an_api_token_for_another_user(): void
     {
         $owner = User::factory()->create();
