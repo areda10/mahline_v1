@@ -108,6 +108,20 @@ final class MediaMigrationTest extends TestCase
         self::assertSame('char(26)', $idColumn['type']);
     }
 
+    public function test_only_one_active_primary_media_item_is_allowed_per_owner_category(): void
+    {
+        $indexes = collect(Schema::getIndexes('media'));
+        $unique = $indexes->firstWhere('name', 'media_one_active_primary_per_owner_category_unique');
+
+        self::assertNotNull($unique);
+        self::assertTrue($unique['unique']);
+        self::assertSame([
+            'active_primary_mediable_type',
+            'active_primary_mediable_id',
+            'active_primary_category',
+        ], $unique['columns']);
+    }
+
     public function test_media_table_has_mediable_lookup_index(): void
     {
         $indexes = collect(
