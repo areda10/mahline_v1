@@ -254,7 +254,7 @@ final class MediaControllerTest extends TestCase
                     'spoofed.jpg',
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
-            ]);
+            ], ['Accept' => 'application/json']);
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('file');
@@ -280,7 +280,7 @@ final class MediaControllerTest extends TestCase
                     'not-an-image.pdf',
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
-            ]);
+            ], ['Accept' => 'application/json']);
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors('category');
