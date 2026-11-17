@@ -348,7 +348,7 @@ final class ApiTokenService extends BaseService
                     DB::transaction(function () use ($token, &$deleted): void {
                         $lockedToken = PersonalAccessToken::query()
                             ->whereKey($token->getKey())
-                                ->where('expires_at', '<=', now()->subDays(PersonalAccessToken::EXPIRATION_DAYS))
+                            ->where('expires_at', '<=', now()->subDays(PersonalAccessToken::EXPIRATION_DAYS))
                             ->lockForUpdate()
                             ->first();
 
