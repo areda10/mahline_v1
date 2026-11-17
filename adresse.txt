@@ -1,0 +1,331 @@
+app/Domains/Cooperatives/Http/Controllers/CooperativeController.php:22:        private readonly AddressService $addresses,
+app/Domains/Cooperatives/Http/Controllers/CooperativeController.php:103:            if ($address !== []) $this->addresses->updateForCooperative($actor, $model, $address);
+app/Domains/Cooperatives/Models/Cooperative.php:11:use App\Domains\Localization\Models\Address;
+app/Domains/Cooperatives/Models/Cooperative.php:77:    public function address(): HasOne
+app/Domains/Cooperatives/Models/Cooperative.php:79:        return $this->hasOne(Address::class, 'cooperative_id')->where('is_primary', true);
+app/Domains/Cooperatives/Services/CooperativeService.php:293:        if (array_key_exists('address_id', $attributes)) {
+app/Domains/Countries/Models/Country.php:8:use App\Domains\Localization\Models\Address;
+app/Domains/Countries/Models/Country.php:46:    public function addresses(): HasMany
+app/Domains/Countries/Models/Country.php:49:            Address::class,
+app/Domains/Identity/Authentication/Services/AuthenticationSecurityService.php:200:     * Keep raw email addresses and IP addresses out of cache key names.
+app/Domains/Identity/Authentication/Services/AuthenticationService.php:77:         * addresses that do not currently belong to a user. This avoids
+app/Domains/Identity/Authorization/Providers/AuthorizationServiceProvider.php:18:use App\Domains\Localization\Models\Address;
+app/Domains/Identity/Authorization/Providers/AuthorizationServiceProvider.php:31:        Gate::policy(Address::class, AddressPolicy::class);
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:12:use App\Domains\Localization\Models\Address;
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:25:        private readonly AddressService $addresses,
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:44:        $customer->load('primaryAddress.country');
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:48:            'address' => $customer->primaryAddress,
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:49:            'addresses' => $customer->addresses,
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:69:            if ($customer->addresses()->exists()) {
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:70:                $this->addresses->updateForUser($customer, $customer, $addressAttributes);
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:72:                $this->addresses->createForUser($customer, $customer, $addressAttributes);
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:94:        $this->addresses->createForUser($customer, $customer, $data);
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:98:    public function setPrimaryAddress(Request $request, Address $address): RedirectResponse
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:102:        $this->addresses->setPrimaryForUser($customer, $customer, $address);
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:106:    public function deleteAddress(Request $request, Address $address): RedirectResponse
+app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php:110:        $this->addresses->deleteForUser($customer, $customer, $address);
+app/Domains/Identity/Customer/Services/CustomerRegistrationService.php:201:     * a one-hour block. Unknown and ineligible addresses receive no mail.
+app/Domains/Identity/SuperAdminRoot/Http/Controllers/CooperativeController.php:23:        private readonly AddressService $addresses,
+app/Domains/Identity/SuperAdminRoot/Http/Controllers/CooperativeController.php:104:                    $this->addresses->updateForCooperative($request->user(), $model, $addressData);
+app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php:63:        $user->load(['roles', 'cooperative', 'primaryAddress.country']);
+app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php:224:            'primaryAddress.country',
+app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php:130:        $user->load(['roles', 'cooperative', 'primaryAddress.country']);
+app/Domains/Identity/UserManagement/Http/Controllers/UserManagementController.php:193:            'primaryAddress.country',
+app/Domains/Identity/UserManagement/Services/UserManagementService.php:37:        private readonly AddressService $addresses,
+app/Domains/Identity/UserManagement/Services/UserManagementService.php:606:            $this->addresses->softDeleteUserAddresses($lockedTarget, (string) $actor->getKey());
+app/Domains/Identity/UserManagement/Services/UserManagementService.php:642:            $this->addresses->restoreLatestUserAddresses($lockedTarget, (string) $actor->getKey());
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:21:        $user->load('primaryAddress.country');
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:25:            'address' => $user->primaryAddress,
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:31:    public function update(Request $request, AddressService $addresses): RedirectResponse
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:45:        if ($user->addresses()->exists()) {
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:46:            $addresses->updateForUser($user, $user, $data);
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:48:            $addresses->createForUser($user, $user, $data);
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:56:    public function updateUser(Request $request, User $user, AddressService $addresses): RedirectResponse
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:70:        if ($user->addresses()->exists()) {
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:71:            $addresses->updateForUser($actor, $user, $data);
+app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php:73:            $addresses->createForUser($actor, $user, $data);
+app/Domains/Identity/Users/Models/User.php:16:use App\Domains\Localization\Models\Address;
+app/Domains/Identity/Users/Models/User.php:71:    public function addresses(): HasMany
+app/Domains/Identity/Users/Models/User.php:73:        return $this->hasMany(Address::class, 'user_id')->orderBy('created_at')->orderBy('id');
+app/Domains/Identity/Users/Models/User.php:76:    public function primaryAddress(): HasOne
+app/Domains/Identity/Users/Models/User.php:78:        return $this->hasOne(Address::class, 'user_id')->where('is_primary', true);
+app/Domains/Identity/Users/Models/User.php:81:    /** @deprecated Use addresses() or primaryAddress(). */
+app/Domains/Identity/Users/Models/User.php:82:    public function address(): HasOne
+app/Domains/Identity/Users/Models/User.php:84:        return $this->primaryAddress();
+app/Domains/Localization/Models/Address.php:17:final class Address extends BaseModel
+app/Domains/Localization/Models/Address.php:22:    protected $table = 'addresses';
+app/Domains/Localization/Services/AddressService.php:13:use App\Domains\Localization\Models\Address;
+app/Domains/Localization/Services/AddressService.php:30:    public function createForUser(User $actor, User $owner, array $attributes): Address
+app/Domains/Localization/Services/AddressService.php:33:        return DB::transaction(function () use ($actor, $owner, $attributes): Address {
+app/Domains/Localization/Services/AddressService.php:37:            $count = Address::query()->where('user_id', $locked->getKey())->count();
+app/Domains/Localization/Services/AddressService.php:41:            $address = new Address($this->validatedAttributes($attributes));
+app/Domains/Localization/Services/AddressService.php:52:    public function updateForUser(User $actor, User $owner, array $attributes): Address
+app/Domains/Localization/Services/AddressService.php:55:        return DB::transaction(function () use ($actor, $owner, $attributes): Address {
+app/Domains/Localization/Services/AddressService.php:58:            $address = Address::query()->where('user_id', $locked->getKey())->where('is_primary', true)->lockForUpdate()->first()
+app/Domains/Localization/Services/AddressService.php:59:                ?? Address::query()->where('user_id', $locked->getKey())->oldest()->lockForUpdate()->first();
+app/Domains/Localization/Services/AddressService.php:67:    public function setPrimaryForUser(User $actor, User $owner, Address $address): Address
+app/Domains/Localization/Services/AddressService.php:70:        return DB::transaction(function () use ($actor, $owner, $address): Address {
+app/Domains/Localization/Services/AddressService.php:73:            $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->getKey())->lockForUpdate()->firstOrFail();
+app/Domains/Localization/Services/AddressService.php:74:            $previous = Address::query()->where('user_id', $owner->getKey())
+app/Domains/Localization/Services/AddressService.php:91:    public function deleteForUser(User $actor, User $owner, Address $address): void
+app/Domains/Localization/Services/AddressService.php:97:            $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->getKey())->lockForUpdate()->firstOrFail();
+app/Domains/Localization/Services/AddressService.php:103:                $next = Address::query()->where('user_id', $owner->getKey())
+app/Domains/Localization/Services/AddressService.php:127:    public function createForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
+app/Domains/Localization/Services/AddressService.php:131:        return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
+app/Domains/Localization/Services/AddressService.php:139:    public function updateForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
+app/Domains/Localization/Services/AddressService.php:143:        return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
+app/Domains/Localization/Services/AddressService.php:146:            $address = Address::query()->where('cooperative_id', $locked->getKey())->lockForUpdate()->first();
+app/Domains/Localization/Services/AddressService.php:154:    private function persistCooperativeAddress(User $actor, Cooperative $cooperative, array $attributes): Address
+app/Domains/Localization/Services/AddressService.php:156:        if (Address::query()->where('cooperative_id', $cooperative->getKey())->exists()) {
+app/Domains/Localization/Services/AddressService.php:162:        $address = new Address($this->validatedAttributes($attributes));
+app/Domains/Localization/Services/AddressService.php:201:            $rows = Address::query()->where($ownerColumn, $ownerId)->lockForUpdate()->get();
+app/Domains/Localization/Services/AddressService.php:235:            $batch = Address::withTrashed()->where('cooperative_id', $owner->getKey())
+app/Domains/Localization/Services/AddressService.php:243:            $rows = Address::withTrashed()->where('cooperative_id', $owner->getKey())
+app/Domains/Localization/Services/AddressService.php:247:            $active = Address::query()->where('cooperative_id', $owner->getKey())->count();
+app/Domains/Localization/Services/AddressService.php:280:        $batch = Address::withTrashed()->where('user_id', $owner->getKey())
+app/Domains/Localization/Services/AddressService.php:292:            $rows = Address::withTrashed()->where('user_id', $owner->getKey())
+app/Domains/Localization/Services/AddressService.php:296:            $active = Address::query()->where('user_id', $owner->getKey())->count();
+app/Domains/Localization/Services/AddressService.php:316:    private function updateAddress(User $actor, Address $address, array $attributes): Address
+app/Domains/Localization/Services/AddressService.php:357:    private function snapshot(Address $address): array
+app/Domains/Localization/Services/AddressService.php:369:        User $actor, Address $address, string $action, string $eventKey,
+app/Domains/Localization/Services/AddressService.php:380:            subjectType: Address::class, subjectId: (string) $address->getKey(),
+database/factories/AddressFactory.php:8:use App\Domains\Localization\Models\Address;
+database/factories/AddressFactory.php:13:    protected $model = Address::class;
+database/factories/CooperativeFactory.php:9:use App\Domains\Localization\Models\Address;
+database/factories/CooperativeFactory.php:33:            Address::factory()->forCooperative($cooperative)->create();
+database/migrations/2026_10_03_150543_create_addresses_table.php:13:        Schema::create('addresses', function (Blueprint $table): void {
+database/migrations/2026_10_03_150543_create_addresses_table.php:43:            $table->index(['user_id', 'deleted_at'], 'addresses_user_active_idx');
+database/migrations/2026_10_03_150543_create_addresses_table.php:52:        Schema::dropIfExists('addresses');
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:14:        if (! Schema::hasColumn('addresses', 'cooperative_id')) {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:15:            Schema::table('addresses', function (Blueprint $table): void {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:20:        $this->ensureRestrictUpdateForeignKey('user_id', 'addresses_user_id_foreign', 'users');
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:21:        $this->ensureRestrictUpdateForeignKey('cooperative_id', 'addresses_cooperative_id_foreign', 'cooperatives');
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:23:        $this->ensureIndex('addresses_cooperative_active_idx', ['cooperative_id', 'deleted_at']);
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:30:            'addresses_exactly_one_owner_before_insert',
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:32:                CREATE TRIGGER addresses_exactly_one_owner_before_insert
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:33:                BEFORE INSERT ON addresses
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:45:            'addresses_exactly_one_owner_before_update',
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:47:                CREATE TRIGGER addresses_exactly_one_owner_before_update
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:48:                BEFORE UPDATE ON addresses
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:63:        $this->ensureIndex('addresses_one_primary_per_user_unique', ['active_primary_user_id'], true);
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:69:        $this->ensureIndex('addresses_one_primary_per_cooperative_unique', ['active_primary_cooperative_id'], true);
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:75:        $this->ensureIndex('addresses_one_active_address_per_cooperative_unique', ['active_cooperative_id'], true);
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:82:            ->where('TABLE_NAME', 'addresses')
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:91:            DB::statement("ALTER TABLE `addresses` DROP FOREIGN KEY `{$constraint}`");
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:95:            "ALTER TABLE `addresses`
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:106:        if (Schema::hasColumn('addresses', $column)) {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:111:            "ALTER TABLE `addresses`
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:121:            ->where('TABLE_NAME', 'addresses')
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:135:        DB::statement("ALTER TABLE `addresses` ADD {$kind} `{$index}` ({$columnsSql})");
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:153:            DB::statement('DROP TRIGGER IF EXISTS addresses_exactly_one_owner_before_insert');
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:154:            DB::statement('DROP TRIGGER IF EXISTS addresses_exactly_one_owner_before_update');
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:157:                'addresses_one_primary_per_user_unique',
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:158:                'addresses_one_primary_per_cooperative_unique',
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:159:                'addresses_one_active_address_per_cooperative_unique',
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:160:                'addresses_cooperative_active_idx',
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:166:                if (Schema::hasColumn('addresses', $column)) {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:167:                    Schema::table('addresses', function (Blueprint $table) use ($column): void {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:176:            ->where('TABLE_NAME', 'addresses')
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:177:            ->where('CONSTRAINT_NAME', 'addresses_cooperative_id_foreign')
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:182:            DB::statement('ALTER TABLE `addresses` DROP FOREIGN KEY `addresses_cooperative_id_foreign`');
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:185:        if (Schema::hasColumn('addresses', 'cooperative_id')) {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:186:            Schema::table('addresses', function (Blueprint $table): void {
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:196:            ->where('TABLE_NAME', 'addresses')
+database/migrations/2026_10_04_224228_add_cooperative_owner_to_addresses.php:201:            DB::statement("ALTER TABLE `addresses` DROP INDEX `{$index}`");
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:20:            ->where('TABLE_NAME', 'addresses')
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:21:            ->where('CONSTRAINT_NAME', 'addresses_exactly_one_owner_check')
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:26:            DB::statement('ALTER TABLE addresses DROP CHECK addresses_exactly_one_owner_check');
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:31:            ->where('TRIGGER_NAME', 'addresses_exactly_one_owner_before_insert')
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:36:                CREATE TRIGGER addresses_exactly_one_owner_before_insert
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:37:                BEFORE INSERT ON addresses
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:50:            ->where('TRIGGER_NAME', 'addresses_exactly_one_owner_before_update')
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:55:                CREATE TRIGGER addresses_exactly_one_owner_before_update
+database/migrations/2026_11_17_000001_replace_address_owner_check_with_triggers.php:56:                BEFORE UPDATE ON addresses
+resources/views/backoffice/users/show.blade.php:130:            <label>Numéro<input name="number" maxlength="50" value="{{ old('number', $user->primaryAddress?->number) }}"></label>
+resources/views/backoffice/users/show.blade.php:131:            <label>Rue<input name="street" required maxlength="255" value="{{ old('street', $user->primaryAddress?->street) }}"></label>
+resources/views/backoffice/users/show.blade.php:132:            <label>Étage / Complément<input name="floor" maxlength="50" value="{{ old('floor', $user->primaryAddress?->floor) }}"></label>
+resources/views/backoffice/users/show.blade.php:133:            <label>Ville<input name="city" required maxlength="120" value="{{ old('city', $user->primaryAddress?->city) }}"></label>
+resources/views/backoffice/users/show.blade.php:138:                        <option value="{{ $region }}" @selected(old('region', $user->primaryAddress?->region) === $region)>{{ $region }}</option>
+resources/views/backoffice/users/show.blade.php:142:            <label>Code postal<input name="postal_code" maxlength="20" value="{{ old('postal_code', $user->primaryAddress?->postal_code) }}"></label>
+resources/views/customer/profile/edit.blade.php:129:            @foreach($addresses as $savedAddress)
+resources/views/customer/profile/edit.blade.php:139:                        <form method="POST" action="{{ route('customer.profile.addresses.primary', $savedAddress) }}">
+resources/views/customer/profile/edit.blade.php:145:                    <form method="POST" action="{{ route('customer.profile.addresses.destroy', $savedAddress) }}" onsubmit="return confirm('Supprimer cette adresse du carnet ?');">
+resources/views/customer/profile/edit.blade.php:153:            <form method="POST" action="{{ route('customer.profile.addresses.store') }}">
+resources/views/super-admin-root/users/show.blade.php:147:            <label>Numéro<input name="number" maxlength="50" value="{{ old('number', $user->primaryAddress?->number) }}"></label>
+resources/views/super-admin-root/users/show.blade.php:148:            <label>Rue<input name="street" required maxlength="255" value="{{ old('street', $user->primaryAddress?->street) }}"></label>
+resources/views/super-admin-root/users/show.blade.php:149:            <label>Étage / Complément<input name="floor" maxlength="50" value="{{ old('floor', $user->primaryAddress?->floor) }}"></label>
+resources/views/super-admin-root/users/show.blade.php:150:            <label>Ville<input name="city" required maxlength="120" value="{{ old('city', $user->primaryAddress?->city) }}"></label>
+resources/views/super-admin-root/users/show.blade.php:155:                        <option value="{{ $region }}" @selected(old('region', $user->primaryAddress?->region) === $region)>{{ $region }}</option>
+resources/views/super-admin-root/users/show.blade.php:159:            <label>Code postal<input name="postal_code" maxlength="20" value="{{ old('postal_code', $user->primaryAddress?->postal_code) }}"></label>
+routes/web.php:244:        Route::post('addresses', [CustomerProfileController::class, 'storeAddress'])->name('addresses.store');
+routes/web.php:245:        Route::patch('addresses/{address}/primary', [CustomerProfileController::class, 'setPrimaryAddress'])->name('addresses.primary');
+routes/web.php:246:        Route::delete('addresses/{address}', [CustomerProfileController::class, 'deleteAddress'])->name('addresses.destroy');
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:14:use App\Domains\Localization\Models\Address;
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:69:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:95:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:327:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:348:            ->assertDontSee('name="address_id"', false)
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:376:            ->assertDontSee('name="address_id"', false)
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:380:    public function test_root_edit_form_displays_the_cooperative_primary_address(): void
+tests/Feature/Domains/Cooperatives/Http/Controllers/CooperativeControllerTest.php:408:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:81:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:165:    public function test_customer_can_add_select_and_soft_delete_saved_addresses(): void
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:170:        $this->post(route('customer.profile.addresses.store'), [
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:174:        $first = $customer->addresses()->firstOrFail();
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:176:        $this->post(route('customer.profile.addresses.store'), [
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:180:        $second = $customer->addresses()->where('street', 'Rue Secondaire')->firstOrFail();
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:184:        $this->patch(route('customer.profile.addresses.primary', $second))
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:189:        $this->delete(route('customer.profile.addresses.destroy', $second))
+tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php:191:        $this->assertSoftDeleted('addresses', ['id' => $second->getKey()]);
+tests/Feature/Domains/Identity/Customer/CustomerRegistrationTest.php:164:    public function test_registration_does_not_disclose_an_existing_email_address(): void
+tests/Feature/Domains/Identity/Users/PersonalAddressControllerTest.php:40:    public function test_internal_user_can_load_and_update_their_personal_address(): void
+tests/Feature/Domains/Identity/Users/PersonalAddressControllerTest.php:56:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Identity/Users/PersonalAddressControllerTest.php:76:        $this->assertDatabaseHas('addresses', [
+tests/Feature/Domains/Identity/Users/PersonalAddressControllerTest.php:94:        $this->assertDatabaseMissing('addresses', [
+tests/Framework/Database/Migrations/AddressesTest.php:8:use App\Domains\Localization\Models\Address;
+tests/Framework/Database/Migrations/AddressesTest.php:20:    public function test_addresses_table_exists_with_v1_columns_only(): void
+tests/Framework/Database/Migrations/AddressesTest.php:22:        self::assertTrue(Schema::hasTable('addresses'));
+tests/Framework/Database/Migrations/AddressesTest.php:28:            self::assertTrue(Schema::hasColumn('addresses', $column), "Missing [{$column}].");
+tests/Framework/Database/Migrations/AddressesTest.php:31:            self::assertFalse(Schema::hasColumn('addresses', $legacy), "Legacy [{$legacy}] must be removed.");
+tests/Framework/Database/Migrations/AddressesTest.php:35:    public function test_addresses_have_audit_columns_and_timestamps(): void
+tests/Framework/Database/Migrations/AddressesTest.php:38:            self::assertTrue(Schema::hasColumn('addresses', $column));
+tests/Framework/Database/Migrations/AddressesTest.php:45:            'addresses_one_primary_per_user_unique',
+tests/Framework/Database/Migrations/AddressesTest.php:46:            'addresses_one_primary_per_cooperative_unique',
+tests/Framework/Database/Migrations/AddressesTest.php:47:            'addresses_one_active_address_per_cooperative_unique',
+tests/Framework/Database/Migrations/AddressesTest.php:49:            self::assertTrue(collect(Schema::getIndexes('addresses'))->contains(
+tests/Framework/Database/Migrations/AddressesTest.php:57:        $keys = collect(Schema::getForeignKeys('addresses'));
+tests/Framework/Database/Migrations/AddressesTest.php:71:        $countryId = Address::factory()->raw()['country_id'];
+tests/Framework/Database/Migrations/AddressesTest.php:73:        DB::table('addresses')->insert([
+tests/Framework/Database/Migrations/AddressesTest.php:84:        DB::table('addresses')->insert([
+tests/Framework/Database/Migrations/CooperativesTest.php:21:        self::assertFalse(Schema::hasColumn('cooperatives', 'address_id'));
+tests/Framework/Domains/Cooperatives/Factories/CooperativeFactoryTest.php:17:    public function test_cooperative_factory_creates_a_cooperative_with_its_owned_primary_address(): void
+tests/Framework/Domains/Cooperatives/Factories/CooperativeFactoryTest.php:40:        self::assertNull($cooperative->getAttribute('address_id'));
+tests/Framework/Domains/Cooperatives/Relations/CooperativeAddressRelationshipTest.php:8:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Cooperatives/Relations/CooperativeAddressRelationshipTest.php:21:        self::assertInstanceOf(HasOne::class, $cooperative->address());
+tests/Framework/Domains/Cooperatives/Relations/CooperativeAddressRelationshipTest.php:34:    public function test_cooperative_can_retrieve_its_owned_address(): void
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:10:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:56:        $address = Address::factory()->create([
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:61:            'address_id' => $address->id,
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:77:        $addressA = Address::factory()->create([
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:81:        $addressB = Address::factory()->create([
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:86:            'address_id' => $addressA->id,
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:90:            'address_id' => $addressB->id,
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:110:        $address = Address::factory()->create([
+tests/Framework/Domains/Cooperatives/Relations/CooperativeSuperAdminsRelationshipTest.php:115:            'address_id' => $address->id,
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:44:        $this->assertDatabaseHas('addresses', [
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:49:        $this->assertSame(1, $cooperative->address()->count());
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:53:    public function test_create_rejects_a_pre_existing_address_id(): void
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:62:            [...$this->attributes(), 'address_id' => '01H00000000000000000000000'],
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:174:            $this->assertDatabaseMissing('addresses', [
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:222:    public function test_cooperative_admin_can_update_only_phone_email_and_address(): void
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:472:    public function test_root_can_restore_deleted_cooperative_and_its_owner_deleted_address(): void
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:480:        $this->assertSoftDeleted('addresses', ['id' => $address->getKey()]);
+tests/Framework/Domains/Cooperatives/Services/CooperativeServiceTest.php:485:        $this->assertDatabaseHas('addresses', [
+tests/Framework/Domains/Countries/Models/CountryTest.php:104:            'address_id',
+tests/Framework/Domains/Identity/Authentication/Services/AuthenticationSecurityServiceTest.php:142:    public function test_failed_attempts_are_isolated_between_email_addresses(): void
+tests/Framework/Domains/Identity/Authentication/Services/AuthenticationSecurityServiceTest.php:167:    public function test_failed_attempts_can_be_tracked_by_ip_address(): void
+tests/Framework/Domains/Identity/Authentication/Services/AuthenticationSecurityServiceTest.php:323:    public function test_failed_ip_attempts_are_isolated_between_ip_addresses(): void
+tests/Framework/Domains/Identity/Authentication/Services/SecurityEventServiceTest.php:35:    public function test_it_records_the_ip_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:13:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:21:    public function test_every_role_can_update_its_own_personal_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:33:    public function test_root_can_update_any_users_personal_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:87:    public function test_user_and_customer_cannot_update_another_users_personal_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:113:    public function test_root_can_update_any_cooperative_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:121:    public function test_super_admin_can_update_only_assigned_cooperative_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:132:    public function test_cooperative_admin_can_update_only_own_cooperative_address(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:146:    public function test_user_and_customer_cannot_update_cooperative_addresses(): void
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:180:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/Authorization/Policies/AddressPolicyTest.php:185:            'address_id' => $address->getKey(),
+tests/Framework/Domains/Identity/Authorization/Policies/CooperativePolicyTest.php:13:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Identity/Authorization/Policies/CooperativePolicyTest.php:325:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/Authorization/Policies/CooperativePolicyTest.php:330:            'address_id' => $address->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:10:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:25:        $addressA = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:29:        $addressB = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:34:            'address_id' => $addressA->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:38:            'address_id' => $addressB->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:58:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:63:            'address_id' => $address->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:83:        $addressA = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:87:        $addressB = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:92:            'address_id' => $addressA->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:96:            'address_id' => $addressB->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:120:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:125:            'address_id' => $address->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:148:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:153:            'address_id' => $address->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:175:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:180:            'address_id' => $address->id,
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:198:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Rules/UserManagementScopeTest.php:203:            'address_id' => $address->id,
+tests/Framework/Domains/Identity/UserManagement/Services/UserLifecycleServiceTest.php:16:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Identity/UserManagement/Services/UserLifecycleServiceTest.php:262:        $address = Address::factory()->create([
+tests/Framework/Domains/Identity/UserManagement/Services/UserLifecycleServiceTest.php:267:            'address_id' => $address->getKey(),
+tests/Framework/Domains/Identity/UserManagement/Services/UserManagementServiceTest.php:15:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:8:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:20:        $address = Address::factory()->forUser($user)->create();
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:21:        self::assertInstanceOf(Address::class, $address);
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:22:        self::assertDatabaseHas('addresses', ['id' => $address->getKey(), 'user_id' => $user->getKey()]);
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:27:        $address = Address::factory()->forUser(User::factory()->create())->create();
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:33:        $address = Address::factory()->forUser(User::factory()->create())->create();
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:42:        $address = Address::factory()->forUser(User::factory()->create())->create([
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:54:    public function test_factory_can_create_multiple_addresses_with_a_single_primary(): void
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:57:        $addresses = Address::factory()->forUser($user)->count(3)->sequence(
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:62:        self::assertCount(3, $addresses);
+tests/Framework/Domains/Localization/Factories/AddressFactoryTest.php:63:        self::assertSame(1, $addresses->where('is_primary', true)->count());
+tests/Framework/Domains/Localization/Models/AddressTest.php:7:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Models/AddressTest.php:18:        self::assertSame('addresses', (new Address)->getTable());
+tests/Framework/Domains/Localization/Models/AddressTest.php:19:        self::assertArrayHasKey(SoftDeletes::class, class_uses_recursive(Address::class));
+tests/Framework/Domains/Localization/Models/AddressTest.php:27:        ], (new Address)->getFillable());
+tests/Framework/Domains/Localization/Models/AddressTest.php:32:        $casts = (new Address)->getCasts();
+tests/Framework/Domains/Localization/Models/AddressTest.php:41:        $address = new Address;
+tests/Framework/Domains/Localization/Models/AddressTest.php:48:        $fillable = (new Address)->getFillable();
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:9:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:26:    public function test_country_defines_an_addresses_has_many_relationship(): void
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:29:        self::assertInstanceOf(HasMany::class, $country->addresses());
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:40:    public function test_country_can_retrieve_its_addresses(): void
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:44:        self::assertTrue($country->addresses->contains($address));
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:47:    public function test_country_can_have_multiple_addresses_for_distinct_owners(): void
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:50:        $addresses = collect([
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:55:        self::assertCount(3, $country->fresh()->addresses);
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:56:        foreach ($addresses as $address) {
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:57:            self::assertTrue($country->fresh()->addresses->contains($address));
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:67:        self::assertFalse($france->addresses->contains($address));
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:70:    private function addressForCountry(Country $country): Address
+tests/Framework/Domains/Localization/Relations/AddressCountryRelationshipTest.php:72:        return Address::factory()->forUser(User::factory()->create())->create([
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:9:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:19:    public function test_user_can_own_multiple_addresses_and_primary_address_is_exposed(): void
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:22:        $primary = Address::factory()->forUser($user)->create();
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:23:        $secondary = Address::factory()->forUser($user)->state(['is_primary' => false])->create();
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:25:        self::assertCount(2, $user->fresh()->addresses);
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:26:        self::assertSame($primary->getKey(), $user->fresh()->primaryAddress->getKey());
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:36:        self::assertInstanceOf(Address::class, $address);
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:47:            Address::factory()->forCooperative($cooperative)->create();
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:48:            self::fail('A cooperative cannot have two active addresses.');
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:50:            self::assertDatabaseHas('addresses', [
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:57:        $replacement = Address::factory()->forCooperative($cooperative)->create();
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:65:        $countryId = Address::factory()->raw()['country_id'];
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:67:        DB::table('addresses')->insert([
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:84:        $countryId = Address::factory()->raw()['country_id'];
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:87:        DB::table('addresses')->insert([
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:101:    public function test_cooperative_can_have_only_one_active_address(): void
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:105:        Address::factory()->forCooperative($cooperative)->create();
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:111:        Address::factory()->forUser($user)->create();
+tests/Framework/Domains/Localization/Relations/AddressOwnershipIntegrityTest.php:113:        Address::factory()->forUser($user)->create();
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:8:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:22:        self::assertInstanceOf(HasMany::class, $user->addresses());
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:23:        self::assertInstanceOf(HasOne::class, $user->primaryAddress());
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:29:        $address = Address::factory()->forUser($user)->create();
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:33:    public function test_user_can_retrieve_its_primary_address(): void
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:36:        $address = Address::factory()->forUser($user)->create();
+tests/Framework/Domains/Localization/Relations/AddressUserRelationshipTest.php:37:        self::assertSame($address->getKey(), $user->fresh()->primaryAddress->getKey());
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:12:use App\Domains\Localization\Models\Address;
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:75:                ->where('subject_type', Address::class)
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:124:    public function test_customer_can_keep_five_active_addresses_but_not_a_sixth(): void
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:133:        self::assertSame(5, $customer->addresses()->count());
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:140:    public function test_voluntary_deletion_releases_a_slot_and_promotes_the_oldest_remaining_address(): void
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:147:        self::assertSoftDeleted('addresses', ['id' => $first->getKey()]);
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:154:    public function test_internal_user_is_limited_to_one_active_address(): void
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:170:        $cooperative->address()->firstOrFail()->delete();
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:204:        self::assertSoftDeleted('addresses', ['id' => $address->getKey()]);
+tests/Framework/Domains/Localization/Services/AddressServiceTest.php:209:        self::assertDatabaseHas('addresses', [
