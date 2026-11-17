@@ -35,6 +35,7 @@ final class UserManagementControllerTest extends TestCase
             'display_name' => 'Utilisateur affecté',
             'cooperative_id' => $cooperative->getKey(),
         ]);
+        $assignedUser->roles()->attach($this->ensureRole('user')->getKey());
         $unassignedSuperAdmin = $this->actor('super_admin', [], [
             'display_name' => 'Super admin non affecté',
         ]);
@@ -43,6 +44,7 @@ final class UserManagementControllerTest extends TestCase
             'cooperative_id' => null,
             'email_verified_at' => null,
         ]);
+        $userWithoutCooperative->roles()->attach($this->ensureRole('user')->getKey());
 
         $response = $this->actingAs($root)
             ->get(route('root.backoffice.users.index'));
@@ -679,10 +681,11 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('cooperative_admin', ['users.view'], [
             'cooperative_id' => $own->getKey(),
         ]);
-        User::factory()->create([
+        $ownUser = User::factory()->create([
             'display_name' => 'Utilisateur de ma coopérative',
             'cooperative_id' => $own->getKey(),
         ]);
+        $ownUser->roles()->attach($this->ensureRole('user')->getKey());
         User::factory()->create([
             'display_name' => 'Utilisateur autre coopérative',
             'cooperative_id' => $other->getKey(),
@@ -770,6 +773,7 @@ final class UserManagementControllerTest extends TestCase
             'display_name' => 'Compte supprimé à restaurer',
             'status' => UserStatus::Inactive,
         ]);
+        $target->roles()->attach($this->ensureRole('user')->getKey());
         $target->delete();
 
         $this->actingAs($root)
