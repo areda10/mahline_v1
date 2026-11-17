@@ -11,6 +11,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 final class ApiTokenManagementControllerTest extends TestCase
@@ -124,6 +125,42 @@ final class ApiTokenManagementControllerTest extends TestCase
         self::assertNotNull($first->fresh()->revoked_at);
         self::assertNotNull($second->fresh()->revoked_at);
         self::assertNull($session->fresh()->revoked_at);
+    }
+
+    public function test_root_cannot_manage_customer_tokens_from_the_web_fiche_routes(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $customer = $this->actor('customer');
+        $token = $customer->createToken('customer-private-token');
+
+        $this->actingAs($root)
+            ->delete(route('root.backoffice.users.api-tokens.destroy', [
+                'user' => $customer,
+                'token' => $token->accessToken,
+            ]))
+            ->assertNotFound();
+
+        self::assertNull($token->accessToken->fresh()->revoked_at);
+    }
+
+    public function test_root_cannot_manage_customer_tokens_from_the_sanctum_api_routes(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $customer = $this->actor('customer');
+        $token = $customer->createToken('customer-api-private-token');
+
+        Sanctum::actingAs($root, ['users.view']);
+
+        $this->getJson(route('identity.root.users.tokens.index', $customer))
+            ->assertNotFound();
+
+        $this->deleteJson(route('identity.root.users.tokens.destroy', [
+            'user' => $customer,
+            'token' => $token->accessToken,
+        ]))
+            ->assertNotFound();
+
+        self::assertNull($token->accessToken->fresh()->revoked_at);
     }
 
     private function actor(string $roleSlug): User
