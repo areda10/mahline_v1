@@ -113,7 +113,7 @@ final class UserManagementControllerTest extends TestCase
     {
         Notification::fake();
 
-        $root = $this->actor('super_admin_root', ['users.create']);
+        $root = $this->actor('super_admin_root', ['users.invite']);
         $target = User::factory()->create([
             'status' => UserStatus::Active,
             'email_verified_at' => null,
