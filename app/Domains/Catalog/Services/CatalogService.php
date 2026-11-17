@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Domains\Catalog\Services;
 
 use App\Domains\Catalog\Models\Catalog;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Catalog\Repositories\CatalogRepository;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Products\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -16,7 +19,8 @@ use Illuminate\Validation\ValidationException;
 final class CatalogService
 {
     public function __construct(
-        private readonly CatalogRepository $repository
+        private readonly CatalogRepository $repository,
+        private readonly AuditService $audit,
     ) {}
 
     public function paginateForCooperative(
@@ -47,7 +51,8 @@ final class CatalogService
 
     public function createForCooperative(
         string $cooperativeId,
-        array $attributes
+        array $attributes,
+        ?User $actor = null,
     ): Catalog {
         $name = trim((string) ($attributes['name'] ?? ''));
 
@@ -60,27 +65,35 @@ final class CatalogService
         return DB::transaction(function () use (
             $cooperativeId,
             $attributes,
-            $name
+            $name,
+            $actor,
         ): Catalog {
             $slug = $this->generateUniqueSlug(
                 $cooperativeId,
                 (string) ($attributes['slug'] ?? $name)
             );
 
-            return $this->repository->create([
+            $catalog = $this->repository->create([
                 'cooperative_id' => $cooperativeId,
                 'name' => $name,
                 'slug' => $slug,
                 'description' => $attributes['description'] ?? null,
                 'is_active' => $attributes['is_active'] ?? true,
+                'created_by' => $actor === null ? null : (string) $actor->getKey(),
             ]);
+
+            $this->record($actor, $catalog, 'catalog.created', 'created',
+                newValues: $this->snapshot($catalog));
+
+            return $catalog;
         });
     }
 
     public function update(
         Catalog $catalog,
         string $cooperativeId,
-        array $attributes
+        array $attributes,
+        ?User $actor = null,
     ): Catalog {
         if ($catalog->cooperative_id !== $cooperativeId) {
             throw (new ModelNotFoundException)
@@ -90,8 +103,11 @@ final class CatalogService
         return DB::transaction(function () use (
             $catalog,
             $cooperativeId,
-            $attributes
+            $attributes,
+            $actor,
         ): Catalog {
+            $catalog = Catalog::query()->whereKey($catalog->getKey())->lockForUpdate()->firstOrFail();
+            $before = $this->snapshot($catalog);
             $updates = [];
 
             if (array_key_exists('name', $attributes)) {
@@ -129,14 +145,25 @@ final class CatalogService
                 );
             }
 
-            return $this->repository->update($catalog, $updates);
+            if ($actor !== null) {
+                $updates['updated_by'] = (string) $actor->getKey();
+            }
+
+            $updated = $this->repository->update($catalog, $updates);
+            if ($before !== $this->snapshot($updated)) {
+                $this->record($actor, $updated, 'catalog.updated', 'updated',
+                    oldValues: $before, newValues: $this->snapshot($updated));
+            }
+
+            return $updated;
         });
     }
 
     public function addProduct(
         Catalog $catalog,
         string $cooperativeId,
-        string $productId
+        string $productId,
+        ?User $actor = null,
     ): void {
         $this->assertCatalogOwnership($catalog, $cooperativeId);
 
@@ -149,8 +176,10 @@ final class CatalogService
         DB::transaction(function () use (
             $catalog,
             $cooperativeId,
-            $productId
+            $productId,
+            $actor,
         ): void {
+            $catalog = Catalog::query()->whereKey($catalog->getKey())->lockForUpdate()->firstOrFail();
             $product = Product::query()
                 ->whereKey($productId)
                 ->where('cooperative_id', $cooperativeId)
@@ -165,22 +194,31 @@ final class CatalogService
                 ]);
             }
 
+            $alreadyAttached = $catalog->products()->whereKey($product->getKey())->exists();
             $catalog->products()->syncWithoutDetaching([$product->getKey()]);
+
+            if (! $alreadyAttached) {
+                $this->record($actor, $catalog, 'catalog.product_added', 'product_added',
+                    metadata: ['product_id' => (string) $product->getKey()]);
+            }
         });
     }
 
     public function removeProduct(
         Catalog $catalog,
         string $cooperativeId,
-        string $productId
+        string $productId,
+        ?User $actor = null,
     ): void {
         $this->assertCatalogOwnership($catalog, $cooperativeId);
 
         DB::transaction(function () use (
             $catalog,
             $cooperativeId,
-            $productId
+            $productId,
+            $actor,
         ): void {
+            $catalog = Catalog::query()->whereKey($catalog->getKey())->lockForUpdate()->firstOrFail();
             $productExists = Product::query()
                 ->whereKey($productId)
                 ->where('cooperative_id', $cooperativeId)
@@ -194,20 +232,78 @@ final class CatalogService
                 ]);
             }
 
+            $wasAttached = $catalog->products()->whereKey($productId)->exists();
             $catalog->products()->detach($productId);
+
+            if ($wasAttached) {
+                $this->record($actor, $catalog, 'catalog.product_removed', 'product_removed',
+                    metadata: ['product_id' => $productId]);
+            }
         });
     }
 
     public function delete(
         Catalog $catalog,
-        string $cooperativeId
+        string $cooperativeId,
+        ?User $actor = null,
     ): void {
         $this->assertCatalogOwnership($catalog, $cooperativeId);
 
-        DB::transaction(function () use ($catalog): void {
+        DB::transaction(function () use ($catalog, $actor): void {
+            $locked = Catalog::query()->whereKey($catalog->getKey())->lockForUpdate()->firstOrFail();
+            $before = $this->snapshot($locked);
+            if ($actor !== null) {
+                $locked->deleted_by = (string) $actor->getKey();
+                $locked->save();
+            }
             // Ne supprime pas les produits : seule l'entité Catalog est supprimée.
-            $this->repository->delete($catalog);
+            $this->repository->delete($locked);
+            $this->record($actor, $locked, 'catalog.deleted', 'deleted',
+                oldValues: $before, newValues: ['deleted' => true]);
         });
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshot(Catalog $catalog): array
+    {
+        return [
+            'cooperative_id' => (string) $catalog->cooperative_id,
+            'name' => $catalog->name,
+            'slug' => $catalog->slug,
+            'description' => $catalog->description,
+            'is_active' => (bool) $catalog->is_active,
+        ];
+    }
+
+    /** @param array<string, mixed>|null $oldValues
+     *  @param array<string, mixed>|null $newValues
+     *  @param array<string, mixed>|null $metadata
+     */
+    private function record(
+        ?User $actor,
+        Catalog $catalog,
+        string $eventKey,
+        string $action,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+        ?array $metadata = null,
+    ): void {
+        if ($actor === null) {
+            return;
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: (string) $catalog->cooperative_id,
+            subjectType: Catalog::class,
+            subjectId: (string) $catalog->getKey(),
+            oldValues: $oldValues,
+            newValues: $newValues,
+            metadata: $metadata,
+        ));
     }
 
     private function assertCatalogOwnership(
