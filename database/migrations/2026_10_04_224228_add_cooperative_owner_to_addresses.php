@@ -88,14 +88,14 @@ return new class extends Migration
         }
 
         if ($updateRule !== null) {
-            DB::statement("ALTER TABLE \`addresses\` DROP FOREIGN KEY \`{$constraint}\`");
+            DB::statement("ALTER TABLE `addresses` DROP FOREIGN KEY `{$constraint}`");
         }
 
         DB::statement(
-            "ALTER TABLE \`addresses\`
-             ADD CONSTRAINT \`{$constraint}\`
-             FOREIGN KEY (\`{$column}\`)
-             REFERENCES \`{$referencedTable}\` (\`id\`)
+            "ALTER TABLE `addresses`
+             ADD CONSTRAINT `{$constraint}`
+             FOREIGN KEY (`{$column}`)
+             REFERENCES `{$referencedTable}` (`id`)
              ON DELETE RESTRICT
              ON UPDATE RESTRICT",
         );
@@ -108,8 +108,8 @@ return new class extends Migration
         }
 
         DB::statement(
-            "ALTER TABLE \`addresses\`
-             ADD COLUMN \`{$column}\` CHAR(26)
+            "ALTER TABLE `addresses`
+             ADD COLUMN `{$column}` CHAR(26)
              GENERATED ALWAYS AS ({$expression}) STORED",
         );
     }
@@ -127,12 +127,12 @@ return new class extends Migration
         }
 
         $columnsSql = implode(', ', array_map(
-            static fn (string $column): string => "\`{$column}\`",
+            static fn (string $column): string => "`{$column}`",
             $columns,
         ));
         $kind = $unique ? 'UNIQUE INDEX' : 'INDEX';
 
-        DB::statement("ALTER TABLE \`addresses\` ADD {$kind} \`{$index}\` ({$columnsSql})");
+        DB::statement("ALTER TABLE `addresses` ADD {$kind} `{$index}` ({$columnsSql})");
     }
 
     private function ensureTrigger(string $trigger, string $definition): void
@@ -179,7 +179,7 @@ return new class extends Migration
             ->exists();
 
         if ($foreignKeyExists) {
-            DB::statement('ALTER TABLE \`addresses\` DROP FOREIGN KEY \`addresses_cooperative_id_foreign\`');
+            DB::statement('ALTER TABLE `addresses` DROP FOREIGN KEY `addresses_cooperative_id_foreign`');
         }
 
         if (Schema::hasColumn('addresses', 'cooperative_id')) {
@@ -198,7 +198,7 @@ return new class extends Migration
             ->exists();
 
         if ($exists) {
-            DB::statement("ALTER TABLE \`addresses\` DROP INDEX \`{$index}\`");
+            DB::statement("ALTER TABLE `addresses` DROP INDEX `{$index}`");
         }
     }
 };
