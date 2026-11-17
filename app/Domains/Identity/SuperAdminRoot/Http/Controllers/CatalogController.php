@@ -6,12 +6,14 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Services\CatalogService;
+use App\Domains\Catalog\Services\CatalogPdfService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 final class CatalogController
 {
@@ -116,6 +118,21 @@ final class CatalogController
 
         return redirect()->route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $coop->getKey()])
             ->with('success', 'Le catalogue a été supprimé.');
+    }
+
+
+    public function downloadPdf(Request $request, string $cooperative, string $catalog, CatalogPdfService $pdf): Response
+    {
+        $this->rootOnly($request);
+        $coop = $this->cooperative($cooperative);
+        $item = $this->service->findForCooperativeOrFail($catalog, (string) $coop->getKey());
+        Gate::authorize('downloadPdf', $item);
+
+        return response($pdf->generate($item), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$item->slug.'.pdf"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     private function rootOnly(Request $request): void

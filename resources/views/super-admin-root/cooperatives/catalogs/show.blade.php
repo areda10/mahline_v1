@@ -4,6 +4,9 @@
 <div class="page-header">
 <div><h1>{{ $catalog->name }}</h1><p class="muted">{{ $catalog->description }}</p></div>
 <div class="actions">
+        @can('downloadPdf', $catalog)
+            <a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.catalogs.pdf', ['cooperative' => $cooperative->getKey(), 'catalog' => $catalog->getKey()]) }}">Télécharger le PDF</a>
+        @endcan
 <a class="button button-secondary" href="{{ route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">Retour</a>
 @can('update', $catalog)<a class="button" href="{{ route('root.backoffice.cooperatives.catalogs.edit', ['cooperative' => $cooperative->getKey(), 'catalog' => $catalog->getKey()]) }}">Modifier</a>@endcan
 </div>

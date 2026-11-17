@@ -10,6 +10,9 @@
     </div>
 
     <div class="actions">
+        @can('downloadPdf', $catalog)
+            <a class="button button-secondary" href="{{ route('backoffice.catalogs.pdf', ['cooperative' => $cooperative->getKey(), 'catalog' => $catalog->getKey()]) }}">Télécharger le PDF</a>
+        @endcan
         <a class="button button-secondary"
            href="{{ route('backoffice.dashboard') }}">
             Retour

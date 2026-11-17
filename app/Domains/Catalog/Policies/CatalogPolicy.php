@@ -71,6 +71,13 @@ final class CatalogPolicy extends BasePolicy
         );
     }
 
+
+    public function downloadPdf(User $user, Catalog $catalog): bool
+    {
+        return $user->hasAnyRole(['super_admin_root', 'super_admin'])
+            && $this->canAccessCatalog($user, $catalog, 'catalogs.view');
+    }
+
     private function canAccessCatalog(
         User $user,
         Catalog $catalog,

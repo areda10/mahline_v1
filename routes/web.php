@@ -384,6 +384,9 @@ Route::prefix('root/back-office')
                     ->except(['destroy'])
                     ->names('catalogs');
 
+                Route::get('catalogs/{catalog}/pdf', [SuperAdminRootCatalogController::class, 'downloadPdf'])
+                    ->name('catalogs.pdf');
+
                 Route::delete(
                     'catalogs/{catalog}',
                     [SuperAdminRootCatalogController::class, 'destroy'],
@@ -555,6 +558,9 @@ Route::prefix('back-office')
                 Route::resource('catalogs', CatalogController::class)
                     ->except(['destroy'])
                     ->names('catalogs');
+
+                Route::get('catalogs/{catalog}/pdf', [CatalogController::class, 'downloadPdf'])
+                    ->name('catalogs.pdf');
 
                 Route::delete(
                     'catalogs/{catalog}',

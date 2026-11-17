@@ -137,6 +137,23 @@ final class CatalogPolicyTest extends TestCase
         $this->assertTrue($this->policy->update($admin, $catalog));
     }
 
+
+    public function test_only_root_and_assigned_super_admin_can_download_a_catalog_pdf(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $catalog = Catalog::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $root = $this->userWithPermission('catalogs.view', 'super_admin_root');
+        $assigned = $this->userWithPermission('catalogs.view', 'super_admin');
+        $assigned->cooperatives()->attach($cooperative->getKey());
+        $unassigned = $this->userWithPermission('catalogs.view', 'super_admin');
+        $cooperativeAdmin = $this->userWithPermission('catalogs.view', 'cooperative_admin', (string) $cooperative->getKey());
+
+        self::assertTrue($this->policy->downloadPdf($root, $catalog));
+        self::assertTrue($this->policy->downloadPdf($assigned, $catalog));
+        self::assertFalse($this->policy->downloadPdf($unassigned, $catalog));
+        self::assertFalse($this->policy->downloadPdf($cooperativeAdmin, $catalog));
+    }
+
     private function userWithPermission(
         string $permissionSlug,
         string $roleName = 'test-role',

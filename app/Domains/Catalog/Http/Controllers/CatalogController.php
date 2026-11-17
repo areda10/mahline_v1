@@ -6,11 +6,13 @@ namespace App\Domains\Catalog\Http\Controllers;
 
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Services\CatalogService;
+use App\Domains\Catalog\Services\CatalogPdfService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 final class CatalogController
 {
@@ -178,6 +180,20 @@ final class CatalogController
                 'cooperative' => $cooperativeModel->getKey(),
             ])
             ->with('success', 'Le catalogue a été supprimé.');
+    }
+
+
+    public function downloadPdf(string $cooperative, string $catalog, CatalogPdfService $pdf): Response
+    {
+        $cooperativeModel = $this->resolveCooperative($cooperative);
+        $catalogModel = $this->catalogService->findForCooperativeOrFail($catalog, (string) $cooperativeModel->getKey());
+        Gate::authorize('downloadPdf', $catalogModel);
+
+        return response($pdf->generate($catalogModel), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$catalogModel->slug.'.pdf"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     private function resolveCooperative(string $id): Cooperative
