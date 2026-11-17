@@ -72,6 +72,7 @@ final class CatalogController
         $this->catalogService->createForCooperative(
             (string) $cooperativeModel->getKey(),
             $attributes,
+            $request->user(),
         );
 
         return redirect()
@@ -147,6 +148,7 @@ final class CatalogController
             $catalogModel,
             (string) $cooperativeModel->getKey(),
             $attributes,
+            $request->user(),
         );
 
         return redirect()
@@ -157,6 +159,7 @@ final class CatalogController
     }
 
     public function destroy(
+        Request $request,
         string $cooperative,
         string $catalog,
     ): RedirectResponse {
@@ -173,6 +176,7 @@ final class CatalogController
         $this->catalogService->delete(
             $catalogModel,
             (string) $cooperativeModel->getKey(),
+            $request->user(),
         );
 
         return redirect()
