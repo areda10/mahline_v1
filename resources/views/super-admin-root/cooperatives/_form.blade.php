@@ -32,8 +32,9 @@
             <label>Région
                 <select name="region">
                     <option value="">Sélectionner une région</option>
-                    @foreach(\App\Domains\Localization\Enums\MoroccanRegion::values() as $region)
-                @endforeach
+                    @foreach($regions as $region)
+                        <option value="{{ $region }}" @selected(old('region') === $region)>{{ $region }}</option>
+                    @endforeach
                 </select>
             </label>
             <label>Code postal <input name="postal_code" maxlength="20" value="{{ old('postal_code') }}"></label>
