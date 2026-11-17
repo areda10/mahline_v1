@@ -56,7 +56,7 @@ final class CategoryServiceTest extends TestCase
         $this->service->delete($category, $actor);
 
         self::assertSoftDeleted('categories', ['id' => $category->getKey()]);
-        self::assertSame((string) $actor->getKey(), $category->fresh()->deleted_by);
+        self::assertSame((string) $actor->getKey(), Category::withTrashed()->findOrFail($category->getKey())->deleted_by);
         self::assertSame(2, AuditEvent::query()
             ->where('subject_type', Category::class)
             ->where('subject_id', $category->getKey())
