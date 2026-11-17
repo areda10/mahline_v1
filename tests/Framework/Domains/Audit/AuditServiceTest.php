@@ -98,6 +98,28 @@ final class AuditServiceTest extends TestCase
         $event->delete();
     }
 
+    public function test_database_rejects_direct_audit_event_updates_and_deletes(): void
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            self::markTestSkipped('Database-level append-only triggers are configured for MySQL.');
+        }
+
+        $event = app(AuditService::class)->record(new AuditEntryDTO(
+            eventKey: 'IMMUTABLE_EVENT',
+            action: 'CREATE',
+        ));
+
+        try {
+            DB::table('audit_events')->where('id', $event->getKey())->update(['action' => 'ALTERED']);
+            self::fail('Expected database trigger to reject audit update.');
+        } catch (QueryException) {
+            self::assertDatabaseHas('audit_events', ['id' => $event->getKey(), 'action' => 'CREATE']);
+        }
+
+        $this->expectException(QueryException::class);
+        DB::table('audit_events')->where('id', $event->getKey())->delete();
+    }
+
     public function test_rejects_empty_event_key_or_action(): void
     {
         $this->expectException(\InvalidArgumentException::class);

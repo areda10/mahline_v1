@@ -53,10 +53,26 @@ return new class extends Migration
             'last_hash' => null,
             'updated_at' => now(),
         ]);
+
+        if (DB::getDriverName() === 'mysql') {
+            DB::unprepared(
+                "CREATE TRIGGER audit_events_prevent_update BEFORE UPDATE ON audit_events "
+                ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit events are append-only'",
+            );
+            DB::unprepared(
+                "CREATE TRIGGER audit_events_prevent_delete BEFORE DELETE ON audit_events "
+                ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit events are append-only'",
+            );
+        }
     }
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'mysql') {
+            DB::unprepared('DROP TRIGGER IF EXISTS audit_events_prevent_update');
+            DB::unprepared('DROP TRIGGER IF EXISTS audit_events_prevent_delete');
+        }
+
         Schema::dropIfExists('audit_chain_heads');
         Schema::dropIfExists('audit_events');
     }
