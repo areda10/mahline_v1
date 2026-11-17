@@ -166,11 +166,13 @@ final class CatalogPolicyTest extends TestCase
 
         $roleSlug = $roleName;
 
-        $role = Role::query()->create([
-            'name' => $roleName,
-            'slug' => $roleSlug,
-            'is_active' => true,
-        ]);
+        $role = Role::query()->firstOrCreate(
+            ['slug' => $roleSlug],
+            [
+                'name' => $roleName,
+                'is_active' => true,
+            ],
+        );
 
         $permission = Permission::query()->firstOrCreate(
             ['slug' => $permissionSlug],
@@ -180,8 +182,8 @@ final class CatalogPolicyTest extends TestCase
             ],
         );
 
-        $role->permissions()->attach($permission->getKey());
-        $user->roles()->attach($role->getKey());
+        $role->permissions()->syncWithoutDetaching([$permission->getKey()]);
+        $user->roles()->syncWithoutDetaching([$role->getKey()]);
 
         return $user;
     }
