@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domains\Authorization;
+namespace Tests\Feature\Domains\Identity\Authorization;
 
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Policies\CatalogPolicy;
