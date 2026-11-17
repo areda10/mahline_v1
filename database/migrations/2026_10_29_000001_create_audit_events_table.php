@@ -32,7 +32,7 @@ return new class extends Migration
             $table->ipAddress('ip_address')->nullable();
             $table->text('user_agent')->nullable();
             $table->string('correlation_id', 100)->nullable();
-            $table->timestamp('occurred_at', 6)->useCurrent();
+            $table->dateTime('occurred_at', 6)->useCurrent();
             $table->timestamps(6);
 
             $table->index(['event_key', 'occurred_at'], 'audit_events_event_occurred_idx');
