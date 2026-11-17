@@ -8,6 +8,7 @@ use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Products\Models\Product;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,7 +62,7 @@ final class ProductServiceTest extends TestCase
         self::assertSame((string) $actor->getKey(), $product->fresh()->created_by);
         self::assertDatabaseHas('audit_events', [
             'event_key' => 'product.created',
-            'subject_type' => \\App\\Domains\\Products\\Models\\Product::class,
+            'subject_type' => Product::class,
             'subject_id' => $product->getKey(),
             'actor_id' => $actor->getKey(),
         ]);
