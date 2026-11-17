@@ -129,9 +129,8 @@ final class MediaPolicyTest extends TestCase
         $archived = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
             'status' => UserStatus::Archived,
         ]);
-        $emergencyLocked = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
-            'emergency_locked_at' => now(),
-        ]);
+        $emergencyLocked = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey());
+        $emergencyLocked->forceFill(['emergency_locked_at' => now()])->save();
 
         self::assertFalse(Gate::forUser($pending)->allows('view', $media));
         self::assertFalse(Gate::forUser($archived)->allows('view', $media));
