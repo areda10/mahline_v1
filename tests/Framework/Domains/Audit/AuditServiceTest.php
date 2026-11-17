@@ -8,6 +8,8 @@ use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Services\AuditService;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use LogicException;
 use Tests\TestCase;
