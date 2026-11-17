@@ -43,9 +43,11 @@ final class CooperativeController
             'tax_id' => ['nullable', 'string', 'max:255'], 'number' => ['nullable', 'string', 'max:50'],
             'street' => ['required', 'string', 'max:255'], 'floor' => ['nullable', 'string', 'max:50'],
             'city' => ['required', 'string', 'max:120'], 'region' => ['nullable', 'string', Rule::in(MoroccanRegion::values())],
-            'postal_code' => ['nullable', 'string', 'max:20'], 'phone' => ['required', 'string', 'max:255'],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'], 'rc' => ['nullable', 'string', 'max:255'],
             'ice' => ['required', 'string', 'max:255'],
+            'country_id' => ['prohibited'],
         ]);
         $address = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $attributes = array_diff_key($data, $address);
@@ -91,6 +93,7 @@ final class CooperativeController
             'city' => ['sometimes', 'required', 'string', 'max:120'],
             'region' => ['sometimes', 'nullable', 'string', Rule::in(MoroccanRegion::values())],
             'postal_code' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'country_id' => ['prohibited'],
         ];
         $data = $request->validate($rules);
         $address = array_intersect_key($data, array_flip($addressFields));

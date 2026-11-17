@@ -312,26 +312,25 @@ final class CooperativeControllerTest extends TestCase
     {
         $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
-        $country = $this->morocco();
 
         $this->actingAs($actor)
             ->put(route('root.backoffice.cooperatives.update', $cooperative), [
-                'address_line_1' => '12 Avenue Hassan II',
+                'number' => '12',
+                'street' => 'Avenue Hassan II',
                 'city' => 'Rabat',
-                'country_id' => $country->getKey(),
                 'postal_code' => '10000',
-                'state' => 'Rabat-Salé-Kénitra',
+                'region' => 'Rabat-Salé-Kénitra',
             ])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('root.backoffice.cooperatives.show', $cooperative));
 
         $this->assertDatabaseHas('addresses', [
-            'id' => $cooperative->fresh()->address_id,
-            'address_line_1' => '12 Avenue Hassan II',
+            'cooperative_id' => $cooperative->getKey(),
+            'number' => '12',
+            'street' => 'Avenue Hassan II',
             'city' => 'Rabat',
-            'country_id' => $country->getKey(),
             'postal_code' => '10000',
-            'state' => 'Rabat-Salé-Kénitra',
+            'region' => 'Rabat-Salé-Kénitra',
         ]);
     }
 
@@ -378,52 +377,37 @@ final class CooperativeControllerTest extends TestCase
             ->assertDontSee('name="country_id"', false);
     }
 
-    public function test_root_edit_form_preselects_saved_morocco_and_region(): void
+    public function test_root_edit_form_displays_the_cooperative_primary_address(): void
     {
-        $country = $this->morocco();
-        $address = Address::factory()->create([
-            'country_id' => $country->getKey(),
-            'state' => 'Rabat-Salé-Kénitra',
-        ]);
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->getKey(),
-        ]);
+        $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
 
         $this->actingAs($actor)
             ->get(route('root.backoffice.cooperatives.edit', $cooperative))
             ->assertOk()
             ->assertViewIs('super-admin-root.cooperatives.edit')
-            ->assertSee('Maroc')
-            ->assertSee('value="'.$country->getKey().'" selected', false)
-            ->assertSee('value="Rabat-Salé-Kénitra" selected', false);
+            ->assertSee('name="street"', false)
+            ->assertSee('value="'.$cooperative->address->street.'"', false)
+            ->assertSee('Casablanca-Settat');
     }
 
     public function test_root_update_rejects_a_region_outside_the_moroccan_list(): void
     {
-        $country = $this->morocco();
-        $address = Address::factory()->create([
-            'country_id' => $country->getKey(),
-            'state' => 'Rabat-Salé-Kénitra',
-        ]);
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->getKey(),
-        ]);
+        $cooperative = Cooperative::factory()->create();
+        $address = $cooperative->address;
         $actor = $this->actor('super_admin_root', ['cooperatives.view', 'cooperatives.update']);
 
         $this->actingAs($actor)
             ->put(route('root.backoffice.cooperatives.update', $cooperative), [
-                'address_line_1' => '10 Avenue Hassan II',
+                'street' => '10 Avenue Hassan II',
                 'city' => 'Rabat',
-                'country_id' => $country->getKey(),
-                'postal_code' => '10000',
-                'state' => 'Région inconnue',
+                'region' => 'Région inconnue',
             ])
-            ->assertSessionHasErrors(['state']);
+            ->assertSessionHasErrors(['region']);
 
         $this->assertDatabaseHas('addresses', [
             'id' => $address->getKey(),
-            'state' => 'Rabat-Salé-Kénitra',
+            'region' => $address->region,
         ]);
     }
 

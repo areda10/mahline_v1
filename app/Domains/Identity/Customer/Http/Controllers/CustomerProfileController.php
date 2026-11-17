@@ -9,6 +9,7 @@ use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerEmailChangeService;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Services\AddressService;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +46,7 @@ final class CustomerProfileController
         return view('customer.profile.edit', [
             'user' => $customer,
             'address' => $customer->primaryAddress,
+            'addresses' => $customer->addresses,
             'regions' => MoroccanRegion::values(),
         ]);
     }
@@ -74,6 +76,39 @@ final class CustomerProfileController
         return redirect()
             ->route('customer.profile.edit')
             ->with('success', 'Votre profil a été mis à jour.');
+    }
+
+
+    public function storeAddress(Request $request): RedirectResponse
+    {
+        $customer = $request->user();
+        abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
+        $data = $request->validate([
+            'number' => ['nullable', 'string', 'max:50'],
+            'street' => ['required', 'string', 'max:255'],
+            'floor' => ['nullable', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:120'],
+            'region' => ['nullable', 'string', 'in:'.implode(',', MoroccanRegion::values())],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+        ]);
+        $this->addresses->createForUser($customer, $customer, $data);
+        return redirect()->route('customer.profile.edit')->with('success', 'Adresse ajoutée à votre carnet.');
+    }
+
+    public function setPrimaryAddress(Request $request, Address $address): RedirectResponse
+    {
+        $customer = $request->user();
+        abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
+        $this->addresses->setPrimaryForUser($customer, $customer, $address);
+        return redirect()->route('customer.profile.edit')->with('success', 'Adresse principale mise à jour.');
+    }
+
+    public function deleteAddress(Request $request, Address $address): RedirectResponse
+    {
+        $customer = $request->user();
+        abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
+        $this->addresses->deleteForUser($customer, $customer, $address);
+        return redirect()->route('customer.profile.edit')->with('success', 'Adresse supprimée de votre carnet.');
     }
 
     public function requestEmailChange(RequestCustomerEmailChange $request): RedirectResponse

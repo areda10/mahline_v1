@@ -35,7 +35,7 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         Gate::authorize('create', Cooperative::class);
-        return view('super-admin-root.cooperatives.create', ['cooperative' => new Cooperative]);
+        return view('super-admin-root.cooperatives.create', ['cooperative' => new Cooperative, 'regions' => MoroccanRegion::values()]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -46,7 +46,7 @@ final class CooperativeController
             'name' => ['required', 'string', 'max:255'], 'rib' => ['required', 'string', 'max:255'],
             'tax_id' => ['nullable', 'string', 'max:255'], 'phone' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'], 'rc' => ['nullable', 'string', 'max:255'],
-            'ice' => ['required', 'string', 'max:255'], ...$this->addressRules(),
+            'ice' => ['required', 'string', 'max:255'], 'country_id' => ['prohibited'], ...$this->addressRules(),
         ]);
         $addressData = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $cooperativeData = array_diff_key($data, $addressData);
@@ -90,6 +90,7 @@ final class CooperativeController
             'email' => ['sometimes', 'required', 'email', 'max:255'],
             ...$this->addressRules('sometimes'),
             'status' => ['sometimes', 'required', Rule::in(array_map(static fn (CooperativeStatus $s): string => $s->value, CooperativeStatus::cases()))],
+            'country_id' => ['prohibited'],
         ];
         $data = $request->validate($rules);
         $status = isset($data['status']) ? CooperativeStatus::from($data['status']) : null;

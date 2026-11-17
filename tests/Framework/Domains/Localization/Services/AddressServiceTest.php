@@ -104,6 +104,37 @@ final class AddressServiceTest extends TestCase
         ]);
     }
 
+
+    public function test_customer_can_keep_five_active_addresses_but_not_a_sixth(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $service = app(AddressService::class);
+        for ($i = 1; $i <= 5; $i++) {
+            $service->createForUser($customer, $customer, [
+                'street' => "Rue {$i}", 'city' => 'Casablanca',
+            ]);
+        }
+        self::assertSame(5, $customer->addresses()->count());
+        $this->expectException(ValidationException::class);
+        $service->createForUser($customer, $customer, [
+            'street' => 'Rue supplémentaire', 'city' => 'Casablanca',
+        ]);
+    }
+
+    public function test_voluntary_deletion_releases_a_slot_and_promotes_the_oldest_remaining_address(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $service = app(AddressService::class);
+        $first = $service->createForUser($customer, $customer, ['street' => 'Rue 1', 'city' => 'Casablanca']);
+        $second = $service->createForUser($customer, $customer, ['street' => 'Rue 2', 'city' => 'Rabat']);
+        $service->deleteForUser($customer, $customer, $first);
+        self::assertSoftDeleted('addresses', ['id' => $first->getKey()]);
+        self::assertTrue($second->fresh()->is_primary);
+        $replacement = $service->createForUser($customer, $customer, ['street' => 'Rue 3', 'city' => 'Fès']);
+        self::assertSame($customer->getKey(), $replacement->user_id);
+        self::assertFalse($replacement->is_primary);
+    }
+
     private function userWithRole(string $slug): User
     {
         $user = User::factory()->create();

@@ -123,6 +123,52 @@
 
             <button type="submit">Enregistrer les modifications</button>
         </form>
+        <section class="card">
+            <h2>Mon carnet d’adresses</h2>
+            <p class="muted">Vous pouvez enregistrer jusqu’à cinq adresses actives. Une seule peut être principale. La suppression est logique et libère une place.</p>
+            @foreach($addresses as $savedAddress)
+                <article class="address-card">
+                    <p>
+                        {{ $savedAddress->number ? $savedAddress->number.' ' : '' }}{{ $savedAddress->street }},
+                        {{ $savedAddress->city }} — {{ $savedAddress->region ?? 'Région non précisée' }}
+                        @if($savedAddress->postal_code) ({{ $savedAddress->postal_code }}) @endif
+                    </p>
+                    @if($savedAddress->is_primary)
+                        <strong>Adresse principale</strong>
+                    @else
+                        <form method="POST" action="{{ route('customer.profile.addresses.primary', $savedAddress) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit">Définir comme principale</button>
+                        </form>
+                    @endif
+                    <form method="POST" action="{{ route('customer.profile.addresses.destroy', $savedAddress) }}" onsubmit="return confirm('Supprimer cette adresse du carnet ?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit">Supprimer</button>
+                    </form>
+                </article>
+            @endforeach
+            <h3>Ajouter une adresse</h3>
+            <form method="POST" action="{{ route('customer.profile.addresses.store') }}">
+                @csrf
+                <div class="form-field"><label for="new_number">Numéro</label><input id="new_number" name="number" maxlength="50"></div>
+                <div class="form-field"><label for="new_street">Rue</label><input id="new_street" name="street" maxlength="255" required></div>
+                <div class="form-field"><label for="new_floor">Étage / Complément</label><input id="new_floor" name="floor" maxlength="50"></div>
+                <div class="form-field"><label for="new_city">Ville</label><input id="new_city" name="city" maxlength="120" required></div>
+                <div class="form-field">
+                    <label for="new_region">Région</label>
+                    <select id="new_region" name="region">
+                        <option value="">Sélectionner une région</option>
+                        @foreach($regions as $region)
+                            <option value="{{ $region }}">{{ $region }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-field"><label for="new_postal_code">Code postal</label><input id="new_postal_code" name="postal_code" maxlength="20"></div>
+                <button type="submit">Ajouter l’adresse</button>
+            </form>
+        </section>
     </section>
 
     <section class="card">
@@ -181,7 +227,7 @@
 
 @push('styles')
     <style>
-        .form-field{margin:18px 0}
+        .address-card{padding:12px 0;border-bottom:1px solid #dce5df}.form-field{margin:18px 0}
         .form-field label{display:block;margin-bottom:7px;font-weight:600}
         .form-field input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd7d0;border-radius:7px;font:inherit}
         .form-field input[readonly]{background:#f4f7f5;color:#65736e}

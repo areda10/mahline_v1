@@ -20,7 +20,14 @@
             <label>Rue / adresse <input name="street" required maxlength="255" value="{{ old('street') }}"></label>
             <label>Appartement / étage <input name="floor" maxlength="50" value="{{ old('floor') }}"></label>
             <label>Ville <input name="city" required maxlength="120" value="{{ old('city') }}"></label>
-            <label>Région <input name="region" maxlength="120" value="{{ old('region') }}"></label>
+            <label>Région
+                <select name="region">
+                    <option value="">Sélectionner une région</option>
+                    @foreach($regions as $region)
+                        <option value="{{ $region }}" @selected(old('region') === $region)>{{ $region }}</option>
+                    @endforeach
+                </select>
+            </label>
             <label>Code postal <input name="postal_code" maxlength="20" value="{{ old('postal_code') }}"></label>
             <p>Pays : Maroc</p>
         </fieldset>

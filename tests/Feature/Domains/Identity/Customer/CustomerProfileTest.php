@@ -161,6 +161,37 @@ final class CustomerProfileTest extends TestCase
             ->assertForbidden();
     }
 
+
+    public function test_customer_can_add_select_and_soft_delete_saved_addresses(): void
+    {
+        $customer = $this->customer();
+        $this->actingAs($customer)->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+
+        $this->post(route('customer.profile.addresses.store'), [
+            'street' => 'Rue Principale', 'city' => 'Casablanca', 'region' => 'Casablanca-Settat',
+        ])->assertRedirect(route('customer.profile.edit'));
+
+        $first = $customer->addresses()->firstOrFail();
+
+        $this->post(route('customer.profile.addresses.store'), [
+            'street' => 'Rue Secondaire', 'city' => 'Rabat', 'region' => 'Rabat-Salé-Kénitra',
+        ])->assertRedirect(route('customer.profile.edit'));
+
+        $second = $customer->addresses()->where('street', 'Rue Secondaire')->firstOrFail();
+        self::assertTrue($first->fresh()->is_primary);
+        self::assertFalse($second->is_primary);
+
+        $this->patch(route('customer.profile.addresses.primary', $second))
+            ->assertRedirect(route('customer.profile.edit'));
+        self::assertTrue($second->fresh()->is_primary);
+        self::assertFalse($first->fresh()->is_primary);
+
+        $this->delete(route('customer.profile.addresses.destroy', $second))
+            ->assertRedirect(route('customer.profile.edit'));
+        $this->assertSoftDeleted('addresses', ['id' => $second->getKey()]);
+        self::assertTrue($first->fresh()->is_primary);
+    }
+
     private function customer(): User
     {
         $customer = User::factory()->create([

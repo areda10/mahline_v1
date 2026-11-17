@@ -422,13 +422,7 @@ final class UserManagementServiceTest extends TestCase
             ],
         );
 
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        return Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        return Cooperative::factory()->create();
     }
 
     public function test_unknown_role_cannot_be_assigned_during_user_creation(): void

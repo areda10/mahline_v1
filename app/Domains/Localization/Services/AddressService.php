@@ -70,9 +70,19 @@ final class AddressService extends BaseService
         return DB::transaction(function () use ($actor, $owner, $address): Address {
             User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
             $target = Address::query()->whereKey($address->getKey())->where('user_id', $owner->getKey())->lockForUpdate()->firstOrFail();
-            Address::query()->where('user_id', $owner->getKey())->where('is_primary', true)
-                ->where('id', '<>', $target->getKey())->update(['is_primary' => false]);
+            $previous = Address::query()->where('user_id', $owner->getKey())
+                ->where('is_primary', true)->where('id', '<>', $target->getKey())
+                ->lockForUpdate()->get();
+            foreach ($previous as $oldPrimary) {
+                $before = $this->snapshot($oldPrimary);
+                $oldPrimary->forceFill(['is_primary' => false, 'updated_by' => (string) $actor->getKey()])->save();
+                $this->record($actor, $oldPrimary, 'updated', 'localization.address.primary_changed',
+                    oldValues: $before, newValues: $this->snapshot($oldPrimary));
+            }
+            $before = $this->snapshot($target);
             $target->forceFill(['is_primary' => true, 'updated_by' => (string) $actor->getKey()])->save();
+            $this->record($actor, $target, 'updated', 'localization.address.primary_changed',
+                oldValues: $before, newValues: $this->snapshot($target));
             return $target;
         });
     }
@@ -144,12 +154,18 @@ final class AddressService extends BaseService
     {
         $batch = (string) Str::ulid();
         $rows = Address::query()->where($ownerColumn, $ownerId)->lockForUpdate()->get();
+        $actor = User::query()->find($actorId);
         foreach ($rows as $address) {
+            $before = $this->snapshot($address);
             $address->forceFill([
                 'is_primary' => false, 'deletion_source' => 'owner',
                 'owner_deletion_batch_id' => $batch, 'deleted_by' => $actorId,
             ])->save();
             $address->delete();
+            if ($actor !== null) {
+                $this->record($actor, $address, 'deleted', 'localization.address.owner_deleted',
+                    oldValues: $before, newValues: ['deleted' => true, 'deletion_source' => 'owner']);
+            }
         }
         return $batch;
     }
@@ -176,12 +192,18 @@ final class AddressService extends BaseService
             if ($active + $rows->count() > $limit) {
                 throw ValidationException::withMessages(['address' => 'La restauration dépasserait la limite d’adresses actives.']);
             }
+            $actor = User::query()->find($actorId);
             foreach ($rows as $index => $address) {
                 $address->restore();
                 $address->forceFill([
                     'deletion_source' => null, 'owner_deletion_batch_id' => null,
                     'is_primary' => $active === 0 && $index === 0, 'updated_by' => $actorId,
                 ])->save();
+                if ($actor !== null) {
+                    $this->record($actor, $address, 'restored', 'localization.address.owner_restored',
+                        oldValues: ['deleted' => true, 'deletion_source' => 'owner'],
+                        newValues: $this->snapshot($address));
+                }
             }
         });
     }
