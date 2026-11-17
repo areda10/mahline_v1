@@ -88,12 +88,54 @@ final class MediaPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($actor)->allows('view', $otherDocument));
     }
 
-    public function test_root_can_view_private_product_documents(): void
+    public function test_super_admin_can_view_user_private_documents_only_for_assigned_cooperatives(): void
+    {
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
+        $actor = $this->userWithPermission('super_admin', 'users.view', (string) $assigned->getKey());
+        $actor->cooperatives()->attach($assigned->getKey());
+
+        $assignedOwner = User::factory()->create(['cooperative_id' => $assigned->getKey()]);
+        $unassignedOwner = User::factory()->create(['cooperative_id' => $unassigned->getKey()]);
+        $assignedDocument = $assignedOwner->media()->create($this->documentAttributes('users/assigned/proof.pdf'));
+        $unassignedDocument = $unassignedOwner->media()->create($this->documentAttributes('users/unassigned/proof.pdf'));
+
+        self::assertTrue(Gate::forUser($actor)->allows('view', $assignedDocument));
+        self::assertFalse(Gate::forUser($actor)->allows('view', $unassignedDocument));
+    }
+
+    public function test_root_can_view_user_private_documents_only_with_users_view_permission(): void
     {
         $cooperative = Cooperative::factory()->create();
-        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+        $owner = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $document = $owner->media()->create($this->documentAttributes('users/root-check/proof.pdf'));
 
-        self::assertTrue(Gate::forUser($root)->allows('view', $this->privateProductDocument($cooperative)));
+        $rootWithoutPermission = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+        $rootWithPermission = $this->userWithPermission('super_admin_root', 'users.view', (string) $cooperative->getKey());
+
+        self::assertFalse(Gate::forUser($rootWithoutPermission)->allows('view', $document));
+        self::assertTrue(Gate::forUser($rootWithPermission)->allows('view', $document));
+    }
+
+    public function test_pending_archived_or_emergency_locked_users_cannot_view_private_media(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $media = $product->media()->create($this->documentAttributes('products/private/proof.pdf'));
+
+        $pending = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
+            'status' => UserStatus::Pending,
+        ]);
+        $archived = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
+            'status' => UserStatus::Archived,
+        ]);
+        $emergencyLocked = $this->userWithPermission('cooperative_admin', 'products.view', (string) $cooperative->getKey(), [
+            'emergency_locked_at' => now(),
+        ]);
+
+        self::assertFalse(Gate::forUser($pending)->allows('view', $media));
+        self::assertFalse(Gate::forUser($archived)->allows('view', $media));
+        self::assertFalse(Gate::forUser($emergencyLocked)->allows('view', $media));
     }
 
     public function test_unverified_or_inactive_users_cannot_view_private_media(): void
