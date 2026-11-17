@@ -13,6 +13,7 @@ use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Services\AddressService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -144,6 +145,19 @@ final class AddressServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $service->createForUser($user, $user, ['street' => 'Rue 2', 'city' => 'Rabat']);
+    }
+
+    public function test_super_admin_cannot_create_an_address_for_an_unassigned_cooperative(): void
+    {
+        $superAdmin = $this->userWithRole('super_admin');
+        $cooperative = Cooperative::factory()->create();
+
+        $this->expectException(AuthorizationException::class);
+
+        app(AddressService::class)->createForCooperative($superAdmin, $cooperative, [
+            'street' => 'Rue non autorisée',
+            'city' => 'Casablanca',
+        ]);
     }
 
     public function test_cooperative_address_is_restored_only_after_owner_deletion(): void
