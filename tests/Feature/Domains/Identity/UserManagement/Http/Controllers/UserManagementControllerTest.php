@@ -838,36 +838,15 @@ final class UserManagementControllerTest extends TestCase
             ->assertSee('value="user"', false);
     }
 
-    public function test_assigned_super_admin_can_access_user_creation_form_with_limited_roles_and_cooperatives(): void
+    public function test_assigned_super_admin_cannot_access_user_creation_form(): void
     {
         $cooperative = Cooperative::factory()->create();
-
         $actor = $this->actor('super_admin', ['users.create']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
-        Role::query()->firstOrCreate(
-            ['slug' => 'cooperative_admin'],
-            ['name' => 'Cooperative Admin', 'is_active' => true],
-        );
-
-        Role::query()->firstOrCreate(
-            ['slug' => 'user'],
-            ['name' => 'User', 'is_active' => true],
-        );
-
-        Role::query()->firstOrCreate(
-            ['slug' => 'super_admin'],
-            ['name' => 'Super Admin', 'is_active' => true],
-        );
-
         $this->actingAs($actor)
             ->get(route('backoffice.users.create'))
-            ->assertOk()
-            ->assertViewIs('backoffice.users.create')
-            ->assertDontSee('value="super_admin"', false)
-            ->assertSee('value="cooperative_admin"', false)
-            ->assertSee('value="user"', false)
-            ->assertSee($cooperative->name);
+            ->assertForbidden();
     }
 
     public function test_super_admin_without_cooperative_assignment_cannot_access_user_creation_form(): void
@@ -1047,7 +1026,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertSentOnDemand(UserInvitationNotification::class);
     }
 
-    public function test_assigned_super_admin_can_create_cooperative_admin_or_user_only_in_assigned_cooperative(): void
+    public function test_assigned_super_admin_cannot_create_cooperative_admin_or_user_accounts(): void
     {
         Notification::fake();
 
@@ -1055,27 +1034,15 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['users.create']);
         $actor->cooperatives()->attach($assigned->getKey());
 
-        foreach (['cooperative_admin', 'user'] as $roleSlug) {
-            Role::query()->firstOrCreate(
-                ['slug' => $roleSlug],
-                ['name' => str($roleSlug)->replace('_', ' ')->title()->toString(), 'is_active' => true],
-            );
+        $payload = $this->validCreationPayload('user', $assigned->getKey());
 
-            $payload = $this->validCreationPayload($roleSlug, $assigned->getKey());
+        $this->actingAs($actor)
+            ->post(route('backoffice.users.store'), $payload)
+            ->assertForbidden();
 
-            $this->actingAs($actor)
-                ->post(route('backoffice.users.store'), $payload)
-                ->assertRedirect(route('backoffice.users.index'))
-                ->assertSessionHas('success');
-
-            $created = User::query()->where('email', $payload['email'])->firstOrFail();
-
-            $this->assertSame(UserStatus::Pending, $created->status);
-            $this->assertSame((string) $assigned->getKey(), (string) $created->cooperative_id);
-            $this->assertTrue($created->roles()->where('slug', $roleSlug)->exists());
-        }
-
-        Notification::assertSentOnDemand(UserInvitationNotification::class);
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+        $this->assertDatabaseCount('user_invitations', 0);
+        Notification::assertNothingSent();
     }
 
     public function test_super_admin_without_assignment_cannot_create_user(): void
@@ -1108,16 +1075,11 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['users.create']);
         $actor->cooperatives()->attach($assigned->getKey());
 
-        Role::query()->firstOrCreate(
-            ['slug' => 'user'],
-            ['name' => 'User', 'is_active' => true],
-        );
         $payload = $this->validCreationPayload('user', $unassigned->getKey());
 
         $this->actingAs($actor)
             ->post(route('backoffice.users.store'), $payload)
-            ->assertRedirect()
-            ->assertSessionHas('error');
+            ->assertForbidden();
 
         $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
         $this->assertDatabaseCount('user_invitations', 0);
