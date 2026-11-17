@@ -1,6 +1,6 @@
 # MAHLINE — ROLE & PERMISSION STANDARD
 
-**Version:** 1.2
+**Version:** 1.3
 **Status:** GELÉ
 **Domain:** Identity / Authorization
 
@@ -93,8 +93,9 @@ status transitions are additionally enforced by `UserPolicy` and
 | Permission | super_admin_root | super_admin | cooperative_admin | user |
 |---|---:|---:|---:|---:|
 | `users.view` | Yes | Yes | Yes | No |
-| `users.create` | Yes | Yes | No | No |
-| `users.activate` | Yes | Yes | No | No |
+| `users.create` | Yes | No | No | No |
+| `users.invite` | Yes | Yes | No | No |
+| `users.activate` | Yes | No | No | No |
 | `users.deactivate` | Yes | Yes | No | No |
 | `users.suspend` | Yes | Yes | No | No |
 | `users.archive` | Yes | No | No | No |
@@ -107,13 +108,22 @@ status transitions are additionally enforced by `UserPolicy` and
 * `super_admin_root` can consult and manage users globally, including changing
   their own status. It is the only role allowed to archive, restore archived
   users, soft-delete users, and restore soft-deleted users.
+* `super_admin_root` is the only role allowed to create, edit as an
+  account, change roles/assignments, archive, restore, soft-delete or restore
+  deleted internal accounts (`super_admin`, `cooperative_admin`, `user`).
 * `super_admin` can consult users only in cooperatives assigned through
-  `super_admin_cooperative`. It can create users and manage eligible statuses
-  only in those assigned cooperatives. It cannot change its own status, lift a
-  suspension, archive, or delete users.
-* `cooperative_admin` can consult users only in its own cooperative. It cannot
-  create users or change any user status, including its own. It cannot archive,
-  delete, or restore users.
+  `super_admin_cooperative`. It may edit the profile of a `user` in that
+  scope and manage only the status transitions explicitly allowed by
+  `UserPolicy`; it cannot create/delete accounts, edit a
+  `cooperative_admin` account, change roles or cooperative assignments, lift
+  a suspension, archive, or delete users.
+* `cooperative_admin` can consult and edit the profile of `user` accounts
+  only in its own cooperative. It cannot create/delete accounts, edit another
+  cooperative administrator, change roles/assignments or change account
+  statuses.
+* `users.create` is root-only. `users.invite` is a separate permission for
+  sending or resending pending-account invitations to Root and assigned
+  super_admin. Invitation permission does not grant account-creation rights.
 * `user` has no user-management permission.
 * A user's status does not grant or remove role membership. Inactive users are
   denied authorization by `HasAuthorization::isAuthorized()`.
@@ -139,6 +149,15 @@ Baseline validation for version 1.0:
 Versions 1.1 and 1.2 add user-management matrix, policy, lifecycle, session-enforcement, and token-revocation tests. These tests must be executed in the Laravel environment before the updated specifications can be reported as validated.
 
 ## 10. Change history
+
+### Version 1.3
+
+* Reserved internal account creation and full account CRUD to
+  `super_admin_root`.
+* Limited super_admin and cooperative_admin profile editing to their
+  respective permitted user scope; neither may create or delete accounts.
+* Split invitation dispatch into the explicit `users.invite` permission so
+  invitation resend does not imply account-creation rights.
 
 ### Version 1.2
 
