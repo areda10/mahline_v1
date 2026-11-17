@@ -148,8 +148,8 @@ final class UserPolicyTest extends TestCase
 
     public function test_only_root_can_create_managed_accounts(): void
     {
-        $root = $this->userWithPermission('users.create', 'super_admin_root');
-        $superAdmin = $this->userWithPermission('users.create', 'super_admin');
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.create']);
+        $superAdmin = $this->userWithRoleAndPermissions('super_admin', ['users.create']);
 
         self::assertTrue(Gate::forUser($root)->allows('create', User::class));
         self::assertFalse(Gate::forUser($superAdmin)->allows('create', User::class));
