@@ -22,9 +22,9 @@ final class CreateUserRequest extends FormRequest
     {
         $actor = $this->user();
 
-        $allowedRoles = $actor->hasRole('super_admin_root')
+        $allowedRoles = $actor?->hasRole('super_admin_root')
             ? ['super_admin', 'cooperative_admin', 'user']
-            : ['cooperative_admin', 'user'];
+            : [];
 
         $roleRequiresCooperative = in_array(
             $this->input('role_slug'),
