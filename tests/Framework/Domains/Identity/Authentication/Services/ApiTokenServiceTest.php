@@ -109,7 +109,10 @@ final class ApiTokenServiceTest extends TestCase
             'actor_id' => $root->getKey(),
             'subject_id' => $created->accessToken->getKey(),
         ]);
-        self::assertSame($owner->getKey(), DB::table('audit_events')->where('subject_id', $created->accessToken->getKey())->value('cooperative_id') ?? null);
+        $audit = DB::table('audit_events')->where('subject_id', $created->accessToken->getKey())->first();
+        self::assertNotNull($audit);
+        self::assertSame($root->getKey(), $audit->actor_id);
+        self::assertStringContainsString($owner->getKey(), $audit->metadata);
     }
 
     public function test_owner_cannot_create_an_api_token_for_another_user(): void
