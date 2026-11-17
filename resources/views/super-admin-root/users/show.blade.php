@@ -270,7 +270,7 @@
                 <legend>Permissions accordées à cette clé</legend>
                 @forelse($apiTokenAbilities as $ability)
                     <label>
-                        <input type="checkbox" name="abilities[]" value="{{ $ability }}" @checked(in_array($ability, old('abilities', []), true))>
+                        <input type="checkbox" name="abilities[]" value="{{ $ability }}" @checked(in_array($ability, (array) old('abilities', []), true))>
                         {{ $ability }}
                     </label>
                 @empty
