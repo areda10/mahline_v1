@@ -79,8 +79,11 @@ final class CatalogService
                 'slug' => $slug,
                 'description' => $attributes['description'] ?? null,
                 'is_active' => $attributes['is_active'] ?? true,
-                'created_by' => $actor === null ? null : (string) $actor->getKey(),
             ]);
+
+            if ($actor !== null) {
+                $catalog->forceFill(['created_by' => (string) $actor->getKey()])->save();
+            }
 
             $this->record($actor, $catalog, 'catalog.created', 'created',
                 newValues: $this->snapshot($catalog));
@@ -145,11 +148,12 @@ final class CatalogService
                 );
             }
 
+            $updated = $this->repository->update($catalog, $updates);
+
             if ($actor !== null) {
-                $updates['updated_by'] = (string) $actor->getKey();
+                $updated->forceFill(['updated_by' => (string) $actor->getKey()])->save();
             }
 
-            $updated = $this->repository->update($catalog, $updates);
             if ($before !== $this->snapshot($updated)) {
                 $this->record($actor, $updated, 'catalog.updated', 'updated',
                     oldValues: $before, newValues: $this->snapshot($updated));
@@ -167,12 +171,6 @@ final class CatalogService
     ): void {
         $this->assertCatalogOwnership($catalog, $cooperativeId);
 
-        if (! $catalog->is_active) {
-            throw ValidationException::withMessages([
-                'catalog' => ['Impossible de modifier un catalogue inactif.'],
-            ]);
-        }
-
         DB::transaction(function () use (
             $catalog,
             $cooperativeId,
@@ -180,6 +178,12 @@ final class CatalogService
             $actor,
         ): void {
             $catalog = Catalog::query()->whereKey($catalog->getKey())->lockForUpdate()->firstOrFail();
+            if (! $catalog->is_active) {
+                throw ValidationException::withMessages([
+                    'catalog' => ['Impossible de modifier un catalogue inactif.'],
+                ]);
+            }
+
             $product = Product::query()
                 ->whereKey($productId)
                 ->where('cooperative_id', $cooperativeId)
