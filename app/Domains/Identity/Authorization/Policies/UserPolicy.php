@@ -136,7 +136,7 @@ final class UserPolicy extends BasePolicy
 
     public function resendInvitation(User $actor, User $target): bool
     {
-        if (! $this->hasPermission($actor, 'users.create')
+        if (! $this->hasPermission($actor, 'users.invite')
             || $target->trashed()
             || $target->email_verified_at !== null
             || ! $this->isInternalManagedTarget($target)) {
