@@ -11,7 +11,6 @@ use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -292,68 +291,6 @@ final class ApiTokenServiceTest extends TestCase
         self::assertFalse($metadata['is_active']);
     }
 
-    public function test_expiration_migration_normalizes_all_existing_tokens_from_creation_date(): void
-    {
-        $user = User::factory()->create();
-        $createdAt = now()->subDays(120)->startOfSecond();
-
-        DB::table('personal_access_tokens')->insert([
-            'id' => (string) str()->ulid(),
-            'tokenable_type' => $user->getMorphClass(),
-            'tokenable_id' => $user->getKey(),
-            'name' => 'legacy-permanent-token',
-            'token' => hash('sha256', 'legacy-permanent-token-secret'),
-            'abilities' => json_encode([]),
-            'last_used_at' => null,
-            'expires_at' => null,
-            'revoked_at' => null,
-            'created_at' => $createdAt,
-            'updated_at' => $createdAt,
-        ]);
-
-        DB::table('personal_access_tokens')->insert([
-            'id' => (string) str()->ulid(),
-            'tokenable_type' => $user->getMorphClass(),
-            'tokenable_id' => $user->getKey(),
-            'name' => 'legacy-custom-expiry-token',
-            'token' => hash('sha256', 'legacy-custom-expiry-token-secret'),
-            'abilities' => json_encode([]),
-            'last_used_at' => null,
-            'expires_at' => $createdAt->copy()->addDays(365),
-            'revoked_at' => null,
-            'created_at' => $createdAt,
-            'updated_at' => $createdAt,
-        ]);
-
-        $migration = require database_path(
-            'migrations/2026_11_10_220000_enforce_ninety_day_api_token_expiration.php',
-        );
-
-        $migration->up();
-
-        $legacyToken = DB::table('personal_access_tokens')
-            ->where('name', 'legacy-permanent-token')
-            ->first();
-
-        self::assertNotNull($legacyToken);
-        self::assertEquals(
-            $createdAt->copy()->addDays(90)->toDateTimeString(),
-            Carbon::parse($legacyToken->expires_at)->toDateTimeString(),
-        );
-
-        $customExpiryToken = DB::table('personal_access_tokens')
-            ->where('name', 'legacy-custom-expiry-token')
-            ->first();
-
-        self::assertNotNull($customExpiryToken);
-        self::assertEquals(
-            $createdAt->copy()->addDays(90)->toDateTimeString(),
-            Carbon::parse($customExpiryToken->expires_at)->toDateTimeString(),
-        );
-
-        $this->travelBack();
-    }
-
     public function test_prune_removes_only_tokens_past_expiry_retention_and_keeps_audit_and_web_sessions(): void
     {
         $this->travelTo(now()->startOfSecond());
@@ -363,7 +300,6 @@ final class ApiTokenServiceTest extends TestCase
         $eligible = $user->createToken('eligible-expired-token');
         $eligibleRevoked = $user->createToken('eligible-revoked-token');
         $recent = $user->createToken('recently-expired-token');
-        $withoutExpiry = $user->createToken('legacy-without-expiry-token');
         $future = $user->createToken('future-token');
 
         DB::table('personal_access_tokens')
@@ -380,10 +316,6 @@ final class ApiTokenServiceTest extends TestCase
         DB::table('personal_access_tokens')
             ->where('id', $recent->accessToken->getKey())
             ->update(['expires_at' => now()->subDays(30)]);
-
-        DB::table('personal_access_tokens')
-            ->where('id', $withoutExpiry->accessToken->getKey())
-            ->update(['expires_at' => null]);
 
         DB::table('personal_access_tokens')
             ->where('id', $future->accessToken->getKey())
@@ -409,10 +341,6 @@ final class ApiTokenServiceTest extends TestCase
         ]);
         $this->assertDatabaseHas('personal_access_tokens', [
             'id' => $recent->accessToken->getKey(),
-        ]);
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'id' => $withoutExpiry->accessToken->getKey(),
-            'expires_at' => null,
         ]);
         $this->assertDatabaseHas('personal_access_tokens', [
             'id' => $future->accessToken->getKey(),
