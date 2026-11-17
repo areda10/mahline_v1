@@ -10,12 +10,28 @@ use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 final class PersonalAccessTokenTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_token_expiration_is_required_and_revocation_is_persisted_in_the_initial_schema(): void
+    {
+        $columns = collect(Schema::getColumns('personal_access_tokens'));
+        $expiresAt = $columns->firstWhere('name', 'expires_at');
+        $revokedAt = $columns->firstWhere('name', 'revoked_at');
+
+        self::assertNotNull($expiresAt);
+        self::assertFalse($expiresAt['nullable']);
+        self::assertNotNull($revokedAt);
+        self::assertTrue($revokedAt['nullable']);
+
+        $indexes = collect(Schema::getIndexes('personal_access_tokens'));
+        self::assertTrue($indexes->contains('name', 'personal_access_tokens_revoked_at_index'));
+    }
 
     public function test_user_can_create_personal_access_token(): void
     {
