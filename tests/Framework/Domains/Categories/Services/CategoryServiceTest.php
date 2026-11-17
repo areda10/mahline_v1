@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Categories\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Services\CategoryService;
-use App\Domains\Audit\Models\AuditEvent;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
