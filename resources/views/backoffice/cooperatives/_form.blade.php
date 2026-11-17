@@ -25,20 +25,23 @@
             <p>Pays : Maroc</p>
         </fieldset>
     @else
-        <label>
-            Adresse
-            <select name="address_id" required>
-                <option value="">Sélectionner une adresse</option>
-                @foreach($addresses as $availableAddress)
-                    <option value="{{ $availableAddress->getKey() }}" @selected((string) old('address_id', $cooperative->address_id) === (string) $availableAddress->getKey())>
-                        {{ $availableAddress->address_line_1 }}
-                        @if($availableAddress->address_line_2), {{ $availableAddress->address_line_2 }}@endif
-                        — {{ $availableAddress->city }}
-                        @if($availableAddress->country), {{ $availableAddress->country->name }}@endif
-                    </option>
-                @endforeach
-            </select>
-        </label>
+        <fieldset class="form-fieldset">
+            <legend>Adresse de la coopérative</legend>
+            <label>Numéro <input name="number" maxlength="50" value="{{ old('number', $address?->number) }}"></label>
+            <label>Rue / adresse <input name="street" required maxlength="255" value="{{ old('street', $address?->street) }}"></label>
+            <label>Appartement / étage <input name="floor" maxlength="50" value="{{ old('floor', $address?->floor) }}"></label>
+            <label>Ville <input name="city" required maxlength="120" value="{{ old('city', $address?->city) }}"></label>
+            <label>Région
+                <select name="region">
+                    <option value="">Sélectionner une région</option>
+                    @foreach($regions as $region)
+                        <option value="{{ $region }}" @selected(old('region', $address?->region) === $region)>{{ $region }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>Code postal <input name="postal_code" maxlength="20" value="{{ old('postal_code', $address?->postal_code) }}"></label>
+            <p>Pays : Maroc</p>
+        </fieldset>
     @endif
 </div>
 @foreach($errors->all() as $error)<p class="error">{{ $error }}</p>@endforeach

@@ -9,7 +9,7 @@
 <dt>Adresse</dt>
 <dd>
     @if($cooperative->address)
-        {{ $cooperative->address->address_line_1 }}
+        {{ trim(($cooperative->address->number ? $cooperative->address->number.' ' : '').$cooperative->address->street) }}
         @if($cooperative->address->address_line_2), {{ $cooperative->address->address_line_2 }}@endif
         — {{ $cooperative->address->city }}
         @if($cooperative->address->country), {{ $cooperative->address->country->name }}@endif

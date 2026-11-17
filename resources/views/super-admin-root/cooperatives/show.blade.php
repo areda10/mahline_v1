@@ -12,11 +12,11 @@
 <dt>Adresse</dt>
 <dd>
     @if($cooperative->address)
-        {{ $cooperative->address->address_line_1 }}
+        {{ trim(($cooperative->address->number ? $cooperative->address->number.' ' : '').$cooperative->address->street) }}
         — {{ $cooperative->address->city }}
         — {{ $cooperative->address->country?->name ?? '—' }}
         — {{ $cooperative->address->postal_code }}
-        — {{ $cooperative->address->state }}
+        — {{ $cooperative->address->region }}
     @else
         —
     @endif

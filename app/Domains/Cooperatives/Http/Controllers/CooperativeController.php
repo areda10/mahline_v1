@@ -6,80 +6,56 @@ namespace App\Domains\Cooperatives\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
-use App\Domains\Localization\Models\Address;
+use App\Domains\Localization\Enums\MoroccanRegion;
+use App\Domains\Localization\Services\AddressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 final class CooperativeController
 {
     public function __construct(
         private readonly CooperativeService $cooperativeService,
+        private readonly AddressService $addresses,
     ) {}
 
     public function index(): View
     {
         Gate::authorize('viewAny', Cooperative::class);
-
-        $cooperatives = Cooperative::query()
-            ->visibleTo(request()->user())
-            ->with('address')
-            ->orderBy('name')
-            ->paginate(15);
-
+        $cooperatives = Cooperative::query()->visibleTo(request()->user())->with('address')->orderBy('name')->paginate(15);
         return view('backoffice.cooperatives.index', compact('cooperatives'));
     }
 
     public function create(): View
     {
         Gate::authorize('create', Cooperative::class);
-
-        return view('backoffice.cooperatives.create', [
-            'cooperative' => new Cooperative,
-        ]);
+        return view('backoffice.cooperatives.create', ['cooperative' => new Cooperative, 'regions' => MoroccanRegion::values()]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         Gate::authorize('create', Cooperative::class);
-
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'rib' => ['required', 'string', 'max:255'],
-            'tax_id' => ['nullable', 'string', 'max:255'],
-            'number' => ['nullable', 'string', 'max:50'],
-            'street' => ['required', 'string', 'max:255'],
-            'floor' => ['nullable', 'string', 'max:50'],
-            'city' => ['required', 'string', 'max:120'],
-            'region' => ['nullable', 'string', 'max:120'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
-            'phone' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'rc' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'], 'rib' => ['required', 'string', 'max:255'],
+            'tax_id' => ['nullable', 'string', 'max:255'], 'number' => ['nullable', 'string', 'max:50'],
+            'street' => ['required', 'string', 'max:255'], 'floor' => ['nullable', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:120'], 'region' => ['nullable', 'string', Rule::in(MoroccanRegion::values())],
+            'postal_code' => ['nullable', 'string', 'max:20'], 'phone' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'], 'rc' => ['nullable', 'string', 'max:255'],
             'ice' => ['required', 'string', 'max:255'],
         ]);
-
-        $addressData = array_intersect_key($data, array_flip([
-            'number', 'street', 'floor', 'postal_code', 'city', 'region',
-        ]));
-        $cooperativeData = array_diff_key($data, $addressData);
-
-        $cooperative = $this->cooperativeService->create(
-            $request->user(),
-            $cooperativeData,
-            $addressData,
-        );
-
-        return redirect()
-            ->route('backoffice.cooperatives.show', $cooperative)
-            ->with('success', 'La coopérative a été créée.');
+        $address = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
+        $attributes = array_diff_key($data, $address);
+        $cooperative = $this->cooperativeService->create($request->user(), $attributes, $address);
+        return redirect()->route('backoffice.cooperatives.show', $cooperative)->with('success', 'La coopérative a été créée.');
     }
 
     public function show(string $cooperative): View
     {
         $model = $this->resolveCooperative($cooperative);
-
         return view('backoffice.cooperatives.show', ['cooperative' => $model->load('address.country')]);
     }
 
@@ -87,108 +63,68 @@ final class CooperativeController
     {
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
-
-        return view('backoffice.cooperatives.edit', [
-            'cooperative' => $model,
-            'addresses' => $this->availableAddresses(),
-        ]);
+        return view('backoffice.cooperatives.edit', ['cooperative' => $model->load('address'), 'regions' => MoroccanRegion::values()]);
     }
 
     public function update(Request $request, string $cooperative): RedirectResponse
     {
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
-
-        $user = $request->user();
-
-        if ($user->hasRole('cooperative_admin')) {
-            $forbiddenFields = array_diff(
-                array_keys($request->all()),
-                ['phone', 'email', 'address_id', '_token', '_method'],
-            );
-
-            abort_if($forbiddenFields !== [], 403);
+        $actor = $request->user();
+        $addressFields = ['number', 'street', 'floor', 'postal_code', 'city', 'region'];
+        if ($actor->hasRole('cooperative_admin')) {
+            abort_if(array_diff(array_keys($request->all()), ['phone', 'email', ...$addressFields, '_token', '_method']) !== [], 403);
         }
-
-        $rules = $user->hasRole('cooperative_admin')
-            ? [
-                'phone' => ['sometimes', 'required', 'string', 'max:255'],
-                'email' => ['sometimes', 'required', 'email', 'max:255'],
-                'address_id' => ['sometimes', 'required', 'string', 'size:26', 'exists:addresses,id'],
-            ]
-            : [
+        $rules = [
+            ...($actor->hasRole('cooperative_admin') ? [] : [
                 'name' => ['sometimes', 'required', 'string', 'max:255'],
                 'rib' => ['sometimes', 'required', 'string', 'max:255'],
                 'tax_id' => ['sometimes', 'nullable', 'string', 'max:255'],
-                'address_id' => ['sometimes', 'required', 'string', 'size:26', 'exists:addresses,id'],
-                'phone' => ['sometimes', 'required', 'string', 'max:255'],
-                'email' => ['sometimes', 'required', 'email', 'max:255'],
                 'rc' => ['sometimes', 'nullable', 'string', 'max:255'],
                 'ice' => ['sometimes', 'required', 'string', 'max:255'],
-            ];
-
+            ]),
+            'phone' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => ['sometimes', 'required', 'email', 'max:255'],
+            'number' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'street' => ['sometimes', 'required', 'string', 'max:255'],
+            'floor' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'city' => ['sometimes', 'required', 'string', 'max:120'],
+            'region' => ['sometimes', 'nullable', 'string', Rule::in(MoroccanRegion::values())],
+            'postal_code' => ['sometimes', 'nullable', 'string', 'max:20'],
+        ];
         $data = $request->validate($rules);
-        $this->cooperativeService->update($user, $model, $data);
-
-        return redirect()
-            ->route('backoffice.cooperatives.show', $model)
-            ->with('success', 'La coopérative a été mise à jour.');
+        $address = array_intersect_key($data, array_flip($addressFields));
+        $attributes = array_diff_key($data, $address);
+        DB::transaction(function () use ($actor, $model, $attributes, $address): void {
+            if ($attributes !== []) $this->cooperativeService->update($actor, $model, $attributes);
+            if ($address !== []) $this->addresses->updateForCooperative($actor, $model, $address);
+        });
+        return redirect()->route('backoffice.cooperatives.show', $model)->with('success', 'La coopérative a été mise à jour.');
     }
 
-    public function activate(Request $request, string $cooperative): RedirectResponse
-    {
-        return $this->changeStatus($request, $cooperative, 'activate');
-    }
-
-    public function deactivate(Request $request, string $cooperative): RedirectResponse
-    {
-        return $this->changeStatus($request, $cooperative, 'deactivate');
-    }
-
-    public function suspend(Request $request, string $cooperative): RedirectResponse
-    {
-        return $this->changeStatus($request, $cooperative, 'suspend');
-    }
-
-    public function archive(Request $request, string $cooperative): RedirectResponse
-    {
-        return $this->changeStatus($request, $cooperative, 'archive');
-    }
+    public function activate(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'activate'); }
+    public function deactivate(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'deactivate'); }
+    public function suspend(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'suspend'); }
+    public function archive(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'archive'); }
 
     public function destroy(Request $request, string $cooperative): RedirectResponse
     {
         $model = Cooperative::query()->withTrashed()->findOrFail($cooperative);
         $this->cooperativeService->delete($request->user(), $model);
-
-        return redirect()
-            ->route('backoffice.cooperatives.index')
-            ->with('success', 'La coopérative a été supprimée.');
+        return redirect()->route('backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
 
     private function changeStatus(Request $request, string $id, string $action): RedirectResponse
     {
         $model = $this->resolveCooperative($id);
         $this->cooperativeService->{$action}($request->user(), $model);
-
-        return redirect()
-            ->route('backoffice.cooperatives.show', $model)
-            ->with('success', 'Le statut de la coopérative a été mis à jour.');
-    }
-
-    private function availableAddresses()
-    {
-        return Address::query()
-            ->with('country')
-            ->orderBy('city')
-            ->orderBy('address_line_1')
-            ->get();
+        return redirect()->route('backoffice.cooperatives.show', $model)->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
 
     private function resolveCooperative(string $id): Cooperative
     {
         $model = Cooperative::query()->findOrFail($id);
         Gate::authorize('view', $model);
-
         return $model;
     }
 }
