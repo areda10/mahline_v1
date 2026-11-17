@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
@@ -13,7 +12,6 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -258,14 +256,7 @@ final class UserLifecycleServiceTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        $country = Country::factory()->create();
-        $address = Address::factory()->create([
-            'country_id' => $country->getKey(),
-        ]);
-
-        return Cooperative::factory()->create([
-            'address_id' => $address->getKey(),
-        ]);
+        return Cooperative::factory()->create();
     }
 
     private function userWithRole(
