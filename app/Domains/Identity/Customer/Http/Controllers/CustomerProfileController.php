@@ -66,7 +66,7 @@ final class CustomerProfileController
         DB::transaction(function () use ($customer, $profileAttributes, $addressAttributes): void {
             $this->profiles->update($customer, $profileAttributes);
 
-            if ($customer->primaryAddress()->exists()) {
+            if ($customer->addresses()->exists()) {
                 $this->addresses->updateForUser($customer, $customer, $addressAttributes);
             } else {
                 $this->addresses->createForUser($customer, $customer, $addressAttributes);
