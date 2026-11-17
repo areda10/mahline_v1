@@ -12,6 +12,8 @@ final class AuditEvent extends BaseModel
 {
     protected $table = 'audit_events';
 
+    protected $dateFormat = 'Y-m-d H:i:s.u';
+
     protected $fillable = [
         'event_key', 'action', 'actor_type', 'actor_id', 'cooperative_id',
         'subject_type', 'subject_id', 'old_values', 'new_values', 'metadata',
