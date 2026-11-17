@@ -75,7 +75,6 @@ return [
             'users.view',
             'users.update',
             'users.invite',
-            'users.activate',
             'users.deactivate',
             'users.suspend',
 
