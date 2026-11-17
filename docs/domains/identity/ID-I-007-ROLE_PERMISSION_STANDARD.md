@@ -93,6 +93,7 @@ status transitions are additionally enforced by `UserPolicy` and
 | Permission | super_admin_root | super_admin | cooperative_admin | user |
 |---|---:|---:|---:|---:|
 | `users.view` | Yes | Yes | Yes | No |
+| `users.update` | Yes | Yes | Yes | No |
 | `users.create` | Yes | No | No | No |
 | `users.invite` | Yes | Yes | No | No |
 | `users.activate` | Yes | No | No | No |
@@ -102,6 +103,8 @@ status transitions are additionally enforced by `UserPolicy` and
 | `users.restore` | Yes | No | No | No |
 | `users.delete` | Yes | No | No | No |
 | `users.restore_deleted` | Yes | No | No | No |
+| `users.assign_super_admin` | Yes | No | No | No |
+| `users.unassign_super_admin` | Yes | No | No | No |
 
 ### Scope and transition constraints
 
