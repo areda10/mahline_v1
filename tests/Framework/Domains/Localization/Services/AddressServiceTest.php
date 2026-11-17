@@ -32,13 +32,13 @@ final class AddressServiceTest extends TestCase
             RoleSeeder::class,
             PermissionSeeder::class,
             RolePermissionSeeder::class,
+            \Database\Seeders\CountrySeeder::class,
         ]);
     }
 
     public function test_service_creates_and_updates_a_users_personal_address_with_audit(): void
     {
         $user = $this->userWithRole('user');
-        Country::factory()->create();
         $service = app(AddressService::class);
 
         $address = $service->createForUser($user, $user, [
@@ -95,9 +95,9 @@ final class AddressServiceTest extends TestCase
     {
         $user = $this->userWithRole('user');
 
-        \App\Domains\Countries\Models\Country::factory()
-            ->inactive()
-            ->create();
+        Country::query()
+            ->where('code', 'MA')
+            ->update(['is_active' => false]);
 
         $this->expectException(ValidationException::class);
 
