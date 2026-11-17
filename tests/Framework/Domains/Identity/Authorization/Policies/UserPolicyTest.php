@@ -151,8 +151,8 @@ final class UserPolicyTest extends TestCase
         $root = $this->userWithPermission('users.create', 'super_admin_root');
         $superAdmin = $this->userWithPermission('users.create', 'super_admin');
 
-        self::assertTrue($this->policy->create($root));
-        self::assertFalse($this->policy->create($superAdmin));
+        self::assertTrue(Gate::forUser($root)->allows('create', User::class));
+        self::assertFalse(Gate::forUser($superAdmin)->allows('create', User::class));
     }
 
     public function test_cooperative_admin_cannot_create_users(): void
