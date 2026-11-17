@@ -55,6 +55,18 @@ final class MediaControllerTest extends TestCase
         $this->get(route('media.private', $media))->assertRedirect('/authentication/login');
     }
 
+    public function test_authenticated_user_without_active_mahline_session_cannot_access_private_media(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $media = $product->media()->create($this->attributes('media/private/no-session.pdf', 'document', 'private', 'local', 'application/pdf', 'pdf'));
+        $actor = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+
+        $this->actingAs($actor)
+            ->get(route('media.private', $media))
+            ->assertRedirect(route('authentication.login'));
+    }
+
     public function test_public_product_image_is_hidden_when_product_is_inactive(): void
     {
         Storage::fake('public');
