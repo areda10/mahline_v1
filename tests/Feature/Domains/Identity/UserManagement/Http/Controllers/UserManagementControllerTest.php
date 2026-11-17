@@ -1434,6 +1434,17 @@ final class UserManagementControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    private function ensureRole(string $slug): Role
+    {
+        return Role::query()->firstOrCreate(
+            ['slug' => $slug],
+            [
+                'name' => str($slug)->replace('_', ' ')->title()->toString(),
+                'is_active' => true,
+            ],
+        );
+    }
+
     private function actor(string $roleSlug, array $permissions, array $attributes = []): User
     {
         $actor = User::factory()->create($attributes);
