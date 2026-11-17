@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Products\Services;
 
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Categories\Models\Category;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
@@ -30,6 +32,7 @@ final class ProductServiceTest extends TestCase
         $category = Category::factory()
             ->forCooperative($cooperative)
             ->create();
+        $actor = User::factory()->create();
 
         $product = $this->service->create(
             (string) $cooperative->getKey(),
@@ -40,6 +43,7 @@ final class ProductServiceTest extends TestCase
                 'is_active' => true,
                 'category_ids' => [$category->getKey()],
             ],
+            $actor,
         );
 
         $this->assertSame(
@@ -53,6 +57,17 @@ final class ProductServiceTest extends TestCase
             'name' => 'Miel naturel',
             'is_active' => true,
         ]);
+
+        self::assertSame((string) $actor->getKey(), $product->fresh()->created_by);
+        self::assertDatabaseHas('audit_events', [
+            'event_key' => 'product.created',
+            'subject_type' => \\App\\Domains\\Products\\Models\\Product::class,
+            'subject_id' => $product->getKey(),
+            'actor_id' => $actor->getKey(),
+        ]);
+        self::assertInstanceOf(AuditEvent::class, AuditEvent::query()
+            ->where('subject_id', $product->getKey())
+            ->firstOrFail());
     }
 
     public function test_it_does_not_return_another_cooperatives_product(): void
