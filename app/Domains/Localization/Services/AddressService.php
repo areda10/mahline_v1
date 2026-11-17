@@ -127,35 +127,55 @@ final class AddressService extends BaseService
     public function createForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('createCooperativeAddress', $cooperative);
+
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
             $locked = Cooperative::query()->lockForUpdate()->findOrFail($cooperative->getKey());
-            Gate::forUser($actor)->authorize('createCooperativeAddress', $cooperative);
-            if (Address::query()->where('cooperative_id', $locked->getKey())->exists()) {
-                throw ValidationException::withMessages(['address' => 'Cette coopérative possède déjà une adresse active.']);
-            }
-            $address = new Address($this->validatedAttributes($attributes));
-            $address->cooperative_id = $locked->getKey();
-            $address->country_id = $this->moroccoCountry()->getKey();
-            $address->is_primary = true;
-            $address->created_by = (string) $actor->getKey();
-            $address->save();
-            $this->record($actor, $address, 'created', 'localization.address.created',
-                cooperativeId: (string) $locked->getKey(), newValues: $this->snapshot($address));
-            return $address->load('country');
+            Gate::forUser($actor)->authorize('createCooperativeAddress', $locked);
+
+            return $this->persistCooperativeAddress($actor, $locked, $attributes);
         });
     }
 
     public function updateForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('updateCooperativeAddress', $cooperative);
+
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
             $locked = Cooperative::query()->lockForUpdate()->findOrFail($cooperative->getKey());
             Gate::forUser($actor)->authorize('updateCooperativeAddress', $locked);
             $address = Address::query()->where('cooperative_id', $locked->getKey())->lockForUpdate()->first();
+
             return $address === null
-                ? $this->createForCooperative($actor, $locked, $attributes)
+                ? $this->persistCooperativeAddress($actor, $locked, $attributes)
                 : $this->updateAddress($actor, $address, $attributes);
         });
+    }
+
+    private function persistCooperativeAddress(User $actor, Cooperative $cooperative, array $attributes): Address
+    {
+        if (Address::query()->where('cooperative_id', $cooperative->getKey())->exists()) {
+            throw ValidationException::withMessages([
+                'address' => 'Cette coopérative possède déjà une adresse active.',
+            ]);
+        }
+
+        $address = new Address($this->validatedAttributes($attributes));
+        $address->cooperative_id = $cooperative->getKey();
+        $address->country_id = $this->moroccoCountry()->getKey();
+        $address->is_primary = true;
+        $address->created_by = (string) $actor->getKey();
+        $address->save();
+
+        $this->record(
+            $actor,
+            $address,
+            'created',
+            'localization.address.created',
+            cooperativeId: (string) $cooperative->getKey(),
+            newValues: $this->snapshot($address),
+        );
+
+        return $address->load('country');
     }
 
     public function softDeleteUserAddresses(User $owner, string $actorId): string
