@@ -175,6 +175,41 @@ final class CooperativeService
         });
     }
 
+    public function restore(User $actor, Cooperative $cooperative): Cooperative
+    {
+        if (! $actor->hasRole('super_admin_root')) {
+            throw new AuthorizationException('Only super_admin_root may restore a deleted cooperative.');
+        }
+
+        return DB::transaction(function () use ($actor, $cooperative): Cooperative {
+            $locked = Cooperative::withTrashed()
+                ->whereKey($cooperative->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            Gate::forUser($actor)->authorize('delete', $locked);
+
+            if (! $locked->trashed()) {
+                return $locked;
+            }
+
+            $oldDeletedAt = $locked->deleted_at?->toISOString();
+            $locked->restore();
+            $this->addressService->restoreLatestCooperativeAddresses($locked, (string) $actor->getKey());
+
+            $this->record(
+                actor: $actor,
+                cooperative: $locked,
+                eventKey: 'cooperatives.restored',
+                action: 'restored',
+                oldValues: ['deleted_at' => $oldDeletedAt],
+                newValues: ['deleted_at' => null],
+            );
+
+            return $locked->fresh();
+        });
+    }
+
     private function changeStatus(
         User $actor,
         Cooperative $cooperative,

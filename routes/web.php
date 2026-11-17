@@ -355,6 +355,8 @@ Route::prefix('root/back-office')
 
         Route::delete('cooperatives/{cooperative}', [SuperAdminRootCooperativeController::class, 'destroy'])
             ->name('cooperatives.destroy');
+        Route::patch('cooperatives/{cooperative}/restore-deleted', [SuperAdminRootCooperativeController::class, 'restoreDeleted'])
+            ->name('cooperatives.restore-deleted');
 
         foreach (['activate', 'deactivate', 'suspend', 'archive'] as $action) {
             Route::patch(

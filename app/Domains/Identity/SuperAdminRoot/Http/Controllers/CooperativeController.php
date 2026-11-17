@@ -151,6 +151,17 @@ final class CooperativeController
         return redirect()->route('root.backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
 
+    public function restoreDeleted(Request $request, string $cooperative): RedirectResponse
+    {
+        $this->authorizeRoot($request);
+        $model = Cooperative::withTrashed()->findOrFail($cooperative);
+        $this->cooperativeService->restore($request->user(), $model);
+
+        return redirect()
+            ->route('root.backoffice.cooperatives.index')
+            ->with('success', 'La coopérative et son adresse ont été restaurées.');
+    }
+
     private function changeStatus(Request $request, string $id, string $action): RedirectResponse
     {
         $model = $this->resolveCooperative($id);

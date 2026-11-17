@@ -170,6 +170,54 @@ final class AddressService extends BaseService
         return $batch;
     }
 
+    public function restoreLatestCooperativeAddresses(Cooperative $owner, string $actorId): void
+    {
+        DB::transaction(function () use ($owner, $actorId): void {
+            Cooperative::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+
+            $batch = Address::withTrashed()->where('cooperative_id', $owner->getKey())
+                ->where('deletion_source', 'owner')->whereNotNull('owner_deletion_batch_id')
+                ->orderByDesc('deleted_at')->value('owner_deletion_batch_id');
+
+            if ($batch === null) {
+                return;
+            }
+
+            $rows = Address::withTrashed()->where('cooperative_id', $owner->getKey())
+                ->where('deletion_source', 'owner')->where('owner_deletion_batch_id', $batch)
+                ->orderBy('created_at')->lockForUpdate()->get();
+
+            $active = Address::query()->where('cooperative_id', $owner->getKey())->count();
+            if ($active + $rows->count() > 1) {
+                throw ValidationException::withMessages([
+                    'address' => 'La restauration dépasserait la limite d’une adresse active pour cette coopérative.',
+                ]);
+            }
+
+            $actor = User::query()->find($actorId);
+            foreach ($rows as $address) {
+                $address->restore();
+                $address->forceFill([
+                    'deletion_source' => null,
+                    'owner_deletion_batch_id' => null,
+                    'is_primary' => $active === 0,
+                    'updated_by' => $actorId,
+                ])->save();
+
+                if ($actor !== null) {
+                    $this->record(
+                        $actor,
+                        $address,
+                        'restored',
+                        'localization.address.owner_restored',
+                        oldValues: ['deleted' => true, 'deletion_source' => 'owner'],
+                        newValues: $this->snapshot($address),
+                    );
+                }
+            }
+        });
+    }
+
     public function restoreLatestUserAddresses(User $owner, string $actorId): void
     {
         $batch = Address::withTrashed()->where('user_id', $owner->getKey())
