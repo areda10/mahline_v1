@@ -55,7 +55,7 @@ final class GlobalCategoryController
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ]);
 
-        $this->categoryService->createGlobal($data);
+        $this->categoryService->createGlobal($data, $request->user());
 
         return redirect()->route('root.backoffice.categories.index')
             ->with('success', 'La catégorie globale a été créée.');
@@ -90,7 +90,7 @@ final class GlobalCategoryController
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ]);
 
-        $this->categoryService->update($categoryModel, $data);
+        $this->categoryService->update($categoryModel, $data, $request->user());
 
         return redirect()->route('root.backoffice.categories.index')
             ->with('success', 'La catégorie globale a été mise à jour.');
@@ -102,7 +102,7 @@ final class GlobalCategoryController
         $categoryModel = $this->findGlobalCategory($category);
         Gate::authorize('delete', $categoryModel);
 
-        $this->categoryService->delete($categoryModel);
+        $this->categoryService->delete($categoryModel, $request->user());
 
         return redirect()->route('root.backoffice.categories.index')
             ->with('success', 'La branche globale a été supprimée selon les règles MAHLINE.');
