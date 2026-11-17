@@ -556,7 +556,7 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_cannot_assign_root_role_through_user_edit(): void
     {
-        $root = $this->actor('super_admin_root', ['users.view']);
+        $root = $this->actor('super_admin_root', ['users.view', 'users.update']);
         $target = User::factory()->create();
         $target->roles()->attach($this->ensureRole('user')->getKey());
 
