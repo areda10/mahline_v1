@@ -217,7 +217,7 @@ final class UserManagementServiceTest extends TestCase
         $superAdmin->cooperatives()->attach($cooperative->getKey());
         $cooperativeAdmin = $this->createUserWithRole('cooperative_admin', (string) $cooperative->getKey());
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('The super admin cannot update this account outside its assigned cooperative scope.');
 
         $this->service->updateUserAccount(
