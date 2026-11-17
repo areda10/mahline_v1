@@ -191,6 +191,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         $this->assertActorIsActive($actor);
         $this->assertSuperAdminRoot($actor);
 
+        if ($roleSlug === self::ROLE_SUPER_ADMIN_ROOT) {
+            throw new DomainException('The super admin root role cannot be assigned through user management.');
+        }
+
         $role = $this->findRole($roleSlug);
 
         if ($roleSlug === self::ROLE_SUPER_ADMIN) {
