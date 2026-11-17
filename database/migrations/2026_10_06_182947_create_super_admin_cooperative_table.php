@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration
 {
@@ -25,10 +25,9 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique([
-                'super_admin_id',
-                'cooperative_id',
-            ]);
+            // One cooperative can be assigned to exactly one super_admin.
+            $table->unique('super_admin_id', 'super_admin_cooperative_admin_unique');
+            $table->unique('cooperative_id', 'super_admin_cooperative_cooperative_unique');
         });
     }
 
