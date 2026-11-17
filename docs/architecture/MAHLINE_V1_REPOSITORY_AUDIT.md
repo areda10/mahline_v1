@@ -3,7 +3,7 @@
 - **Date de l'audit :** 17 novembre 2026
 - **Dépôt :** areda10/mahline_v1
 - **Branche auditée :** feature/Marketplace
-- **HEAD vérifié :** 184d10db20305fa60cdc6b1835f6a6a51bd5aa1d
+- **HEAD du code audité (avant ajout de ce rapport) :** 184d10db20305fa60cdc6b1835f6a6a51bd5aa1d
 - **Déploiement antérieur :** aucun (confirmation du propriétaire du projet)
 - **Périmètre :** domaines actuellement présents dans app/Domains
 
