@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Database\Migrations;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -205,26 +203,10 @@ final class SuperAdminCooperativeTest extends TestCase
     public function test_super_admin_can_be_assigned_to_multiple_cooperatives(): void
     {
         $user = User::factory()->create();
+        $cooperativeA = Cooperative::factory()->create();
+        $cooperativeB = Cooperative::factory()->create();
 
-        $country = Country::factory()->create();
-
-        $addressA = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $addressB = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperativeA = Cooperative::factory()->create([
-            'address_id' => $addressA->id,
-        ]);
-
-        $cooperativeB = Cooperative::factory()->create([
-            'address_id' => $addressB->id,
-        ]);
-
-        \DB::table('super_admin_cooperative')->insert([
+        \\DB::table('super_admin_cooperative')->insert([
             'id' => (string) str()->ulid(),
             'super_admin_id' => $user->id,
             'cooperative_id' => $cooperativeA->id,
@@ -232,7 +214,7 @@ final class SuperAdminCooperativeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        \DB::table('super_admin_cooperative')->insert([
+        \\DB::table('super_admin_cooperative')->insert([
             'id' => (string) str()->ulid(),
             'super_admin_id' => $user->id,
             'cooperative_id' => $cooperativeB->id,
@@ -242,7 +224,7 @@ final class SuperAdminCooperativeTest extends TestCase
 
         self::assertSame(
             2,
-            \DB::table('super_admin_cooperative')
+            \\DB::table('super_admin_cooperative')
                 ->where('super_admin_id', $user->id)
                 ->count(),
         );
