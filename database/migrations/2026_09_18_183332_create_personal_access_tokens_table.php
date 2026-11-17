@@ -26,7 +26,8 @@ return new class extends Migration
             $table->text('abilities')->nullable();
 
             $table->timestamp('last_used_at')->nullable();
-            $table->timestamp('expires_at')->nullable();
+            $table->timestamp('expires_at');
+            $table->timestamp('revoked_at')->nullable();
 
             $table->timestamps();
 
@@ -38,6 +39,11 @@ return new class extends Migration
             $table->index(
                 'expires_at',
                 'personal_access_tokens_expires_at_index'
+            );
+
+            $table->index(
+                'revoked_at',
+                'personal_access_tokens_revoked_at_index'
             );
         });
     }
