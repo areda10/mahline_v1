@@ -686,6 +686,7 @@ final class UserManagementControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root', ['users.view']);
         $target = User::factory()->create(['display_name' => 'Utilisateur Root']);
+        $target->roles()->attach($this->ensureRole('user')->getKey());
 
         $this->actingAs($root)
             ->get(route('root.backoffice.users.index'))
