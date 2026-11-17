@@ -98,8 +98,24 @@ final class AddressService extends BaseService
             $target->forceFill(['is_primary' => false, 'deletion_source' => 'voluntary', 'deleted_by' => (string) $actor->getKey()])->save();
             $target->delete();
             if ($wasPrimary) {
-                $next = Address::query()->where('user_id', $owner->getKey())->oldest('created_at')->oldest('id')->first();
-                $next?->forceFill(['is_primary' => true, 'updated_by' => (string) $actor->getKey()])->save();
+                $next = Address::query()->where('user_id', $owner->getKey())
+                    ->orderBy('created_at')->orderBy('id')->lockForUpdate()->first();
+
+                if ($next !== null) {
+                    $nextBefore = $this->snapshot($next);
+                    $next->forceFill([
+                        'is_primary' => true,
+                        'updated_by' => (string) $actor->getKey(),
+                    ])->save();
+                    $this->record(
+                        $actor,
+                        $next,
+                        'updated',
+                        'localization.address.primary_promoted',
+                        oldValues: $nextBefore,
+                        newValues: $this->snapshot($next),
+                    );
+                }
             }
             $this->record($actor, $target, 'deleted', 'localization.address.deleted', oldValues: $before,
                 newValues: ['deleted' => true, 'deletion_source' => 'voluntary']);

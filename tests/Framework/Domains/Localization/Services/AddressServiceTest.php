@@ -135,6 +135,39 @@ final class AddressServiceTest extends TestCase
         self::assertFalse($replacement->is_primary);
     }
 
+    public function test_internal_user_is_limited_to_one_active_address(): void
+    {
+        $user = $this->userWithRole('user');
+        $service = app(AddressService::class);
+        $service->createForUser($user, $user, ['street' => 'Rue 1', 'city' => 'Casablanca']);
+
+        $this->expectException(ValidationException::class);
+        $service->createForUser($user, $user, ['street' => 'Rue 2', 'city' => 'Rabat']);
+    }
+
+    public function test_cooperative_address_is_restored_only_after_owner_deletion(): void
+    {
+        $actor = $this->userWithRole('super_admin_root');
+        $cooperative = Cooperative::factory()->create();
+        $address = $cooperative->address;
+        $service = app(AddressService::class);
+
+        $service->softDeleteCooperativeAddresses($cooperative, (string) $actor->getKey());
+        $cooperative->delete();
+        self::assertSoftDeleted('addresses', ['id' => $address->getKey()]);
+
+        $cooperative->restore();
+        $service->restoreLatestCooperativeAddresses($cooperative, (string) $actor->getKey());
+
+        self::assertDatabaseHas('addresses', [
+            'id' => $address->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+            'deleted_at' => null,
+            'deletion_source' => null,
+            'is_primary' => true,
+        ]);
+    }
+
     private function userWithRole(string $slug): User
     {
         $user = User::factory()->create();
