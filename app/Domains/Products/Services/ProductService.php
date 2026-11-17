@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Services;
 
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Catalog\Models\Catalog;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Repositories\ProductRepository;
@@ -16,15 +19,18 @@ final class ProductService
 {
     public function __construct(
         private readonly ProductRepository $repository,
+        private readonly AuditService $audit,
     ) {}
 
     public function create(
         string $cooperativeId,
         array $attributes,
+        ?User $actor = null,
     ): Product {
         return DB::transaction(function () use (
             $cooperativeId,
             $attributes,
+            $actor,
         ): Product {
             $categoryIds = $this->normalizeIds(
                 $attributes['category_ids'] ?? [],
@@ -65,6 +71,10 @@ final class ProductService
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
             ]);
 
+            if ($actor !== null) {
+                $product->forceFill(['created_by' => (string) $actor->getKey()])->save();
+            }
+
             $product->categories()->sync($categoryIds);
             $product->catalogs()->sync($catalogIds);
 
@@ -76,6 +86,9 @@ final class ProductService
                 $product->is_active = false;
                 $product->save();
             }
+
+            $this->record($actor, $product, 'product.created', 'created',
+                newValues: $this->snapshot($product));
 
             return $product->load([
                 'categories',
@@ -89,12 +102,15 @@ final class ProductService
         Product $product,
         string $cooperativeId,
         array $attributes,
+        ?User $actor = null,
     ): Product {
         return DB::transaction(function () use (
             $product,
             $cooperativeId,
             $attributes,
+            $actor,
         ): Product {
+            $product = Product::query()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             if ((string) $product->cooperative_id !== $cooperativeId) {
                 throw ValidationException::withMessages([
                     'product' => [
@@ -102,6 +118,8 @@ final class ProductService
                     ],
                 ]);
             }
+
+            $before = $this->snapshot($product);
 
             $categoryIds = array_key_exists('category_ids', $attributes)
                 ? $this->normalizeIds($attributes['category_ids'] ?? [])
@@ -185,6 +203,17 @@ final class ProductService
                 $product->save();
             }
 
+            $product->refresh();
+
+            if ($actor !== null) {
+                $product->forceFill(['updated_by' => (string) $actor->getKey()])->save();
+            }
+
+            if ($before !== $this->snapshot($product)) {
+                $this->record($actor, $product, 'product.updated', 'updated',
+                    oldValues: $before, newValues: $this->snapshot($product));
+            }
+
             return $product->refresh()
                 ->load([
                     'categories',
@@ -197,11 +226,26 @@ final class ProductService
     /**
      * Désactive un produit sans le supprimer.
      */
-    public function deactivate(Product $product): Product
+    public function deactivate(Product $product, ?User $actor = null): Product
     {
-        return $this->repository->update($product, [
-            'is_active' => false,
-        ]);
+        return DB::transaction(function () use ($product, $actor): Product {
+            $locked = Product::query()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+            if (! $locked->is_active) {
+                return $locked;
+            }
+
+            $before = $this->snapshot($locked);
+            $locked->is_active = false;
+            if ($actor !== null) {
+                $locked->updated_by = (string) $actor->getKey();
+            }
+            $locked->save();
+
+            $this->record($actor, $locked, 'product.deactivated', 'deactivated',
+                oldValues: $before, newValues: $this->snapshot($locked));
+
+            return $locked->refresh();
+        });
     }
 
     /**
@@ -209,17 +253,32 @@ final class ProductService
      *
      * Le modèle Product utilise SoftDeletes.
      */
-    public function delete(Product $product): bool
+    public function delete(Product $product, ?User $actor = null): bool
     {
-        return $this->repository->delete($product);
+        return DB::transaction(function () use ($product, $actor): bool {
+            $locked = Product::query()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+            $before = $this->snapshot($locked);
+            if ($actor !== null) {
+                $locked->deleted_by = (string) $actor->getKey();
+                $locked->save();
+            }
+
+            $deleted = $this->repository->delete($locked);
+            if ($deleted) {
+                $this->record($actor, $locked, 'product.deleted', 'deleted',
+                    oldValues: $before, newValues: ['deleted' => true]);
+            }
+
+            return $deleted;
+        });
     }
 
     /**
      * Restaure logiquement un produit sans modifier ses variantes.
      */
-    public function restore(Product $product): bool
+    public function restore(Product $product, ?User $actor = null): bool
     {
-        return DB::transaction(function () use ($product): bool {
+        return DB::transaction(function () use ($product, $actor): bool {
             $trashedProduct = Product::withTrashed()
                 ->whereKey($product->getKey())
                 ->lockForUpdate()
@@ -228,6 +287,8 @@ final class ProductService
             if (! $trashedProduct->trashed()) {
                 return false;
             }
+
+            $before = $this->snapshot($trashedProduct);
 
             // La restauration du parent ne touche jamais aux variantes.
             $trashedProduct->restore();
@@ -243,8 +304,16 @@ final class ProductService
 
             if ($trashedProduct->is_active && ! $hasActiveCategory) {
                 $trashedProduct->is_active = false;
-                $trashedProduct->save();
             }
+
+            if ($actor !== null) {
+                $trashedProduct->updated_by = (string) $actor->getKey();
+            }
+            $trashedProduct->save();
+
+            $this->record($actor, $trashedProduct, 'product.restored', 'restored',
+                oldValues: ['deleted' => true] + $before,
+                newValues: ['deleted' => false] + $this->snapshot($trashedProduct));
 
             return true;
         });
@@ -336,9 +405,9 @@ final class ProductService
         return $slug;
     }
 
-    public function reactivate(Product $product): Product
+    public function reactivate(Product $product, ?User $actor = null): Product
     {
-        return DB::transaction(function () use ($product): Product {
+        return DB::transaction(function () use ($product, $actor): Product {
             $lockedProduct = Product::query()
                 ->whereKey($product->getKey())
                 ->lockForUpdate()
@@ -368,10 +437,57 @@ final class ProductService
                 ]);
             }
 
+            $before = $this->snapshot($lockedProduct);
             $lockedProduct->is_active = true;
+            if ($actor !== null) {
+                $lockedProduct->updated_by = (string) $actor->getKey();
+            }
             $lockedProduct->save();
+
+            $this->record($actor, $lockedProduct, 'product.reactivated', 'reactivated',
+                oldValues: $before, newValues: $this->snapshot($lockedProduct));
 
             return $lockedProduct->refresh();
         });
     }
+
+    /** @return array<string, mixed> */
+    private function snapshot(Product $product): array
+    {
+        return [
+            'cooperative_id' => (string) $product->cooperative_id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'description' => $product->description,
+            'is_active' => (bool) $product->is_active,
+            'category_ids' => $product->categories()->orderBy('categories.id')->pluck('categories.id')->map(fn ($id): string => (string) $id)->all(),
+            'catalog_ids' => $product->catalogs()->orderBy('catalogs.id')->pluck('catalogs.id')->map(fn ($id): string => (string) $id)->all(),
+        ];
+    }
+
+    private function record(
+        ?User $actor,
+        Product $product,
+        string $eventKey,
+        string $action,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+    ): void {
+        if ($actor === null) {
+            return;
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: (string) $product->cooperative_id,
+            subjectType: Product::class,
+            subjectId: (string) $product->getKey(),
+            oldValues: $oldValues,
+            newValues: $newValues,
+        ));
+    }
+
 }
