@@ -206,7 +206,7 @@ final class SuperAdminCooperativeTest extends TestCase
         $cooperativeA = Cooperative::factory()->create();
         $cooperativeB = Cooperative::factory()->create();
 
-        \\DB::table('super_admin_cooperative')->insert([
+        \DB::table('super_admin_cooperative')->insert([
             'id' => (string) str()->ulid(),
             'super_admin_id' => $user->id,
             'cooperative_id' => $cooperativeA->id,
@@ -214,7 +214,7 @@ final class SuperAdminCooperativeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        \\DB::table('super_admin_cooperative')->insert([
+        \DB::table('super_admin_cooperative')->insert([
             'id' => (string) str()->ulid(),
             'super_admin_id' => $user->id,
             'cooperative_id' => $cooperativeB->id,
@@ -224,7 +224,7 @@ final class SuperAdminCooperativeTest extends TestCase
 
         self::assertSame(
             2,
-            \\DB::table('super_admin_cooperative')
+            \DB::table('super_admin_cooperative')
                 ->where('super_admin_id', $user->id)
                 ->count(),
         );
