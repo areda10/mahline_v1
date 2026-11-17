@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Cooperatives\Relations;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -51,15 +49,7 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
 
     public function test_cooperative_can_retrieve_its_single_super_admin(): void
     {
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $superAdmin = User::factory()->create();
 
@@ -72,23 +62,9 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
 
     public function test_super_admin_can_manage_multiple_cooperatives(): void
     {
-        $country = Country::factory()->create();
+        $cooperativeA = Cooperative::factory()->create();
 
-        $addressA = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $addressB = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperativeA = Cooperative::factory()->create([
-            'address_id' => $addressA->id,
-        ]);
-
-        $cooperativeB = Cooperative::factory()->create([
-            'address_id' => $addressB->id,
-        ]);
+        $cooperativeB = Cooperative::factory()->create();
 
         $superAdmin = User::factory()->create();
 
@@ -105,15 +81,7 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
 
     public function test_cooperative_can_detach_its_super_admin(): void
     {
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $superAdmin = User::factory()->create();
         $cooperative->superAdmins()->attach($superAdmin->id);
