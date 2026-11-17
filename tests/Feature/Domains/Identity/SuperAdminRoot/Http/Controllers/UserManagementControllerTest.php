@@ -456,7 +456,7 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_can_update_user_profile_and_role(): void
     {
-        $root = $this->actor('super_admin_root', ['users.view']);
+        $root = $this->actor('super_admin_root', ['users.view', 'users.update']);
         $target = User::factory()->create([
             'status' => UserStatus::Active,
             'first_name' => 'Ancien',
@@ -499,7 +499,7 @@ final class UserManagementControllerTest extends TestCase
     {
         Notification::fake();
 
-        $root = $this->actor('super_admin_root', ['users.view']);
+        $root = $this->actor('super_admin_root', ['users.view', 'users.update']);
         $cooperative = Cooperative::factory()->create();
         $target = User::factory()->create([
             'status' => UserStatus::Active,
