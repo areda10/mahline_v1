@@ -252,7 +252,7 @@ final class MediaControllerTest extends TestCase
                 'category' => 'product_image',
                 'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
                     'spoofed.jpg',
-                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
             ]);
 
@@ -278,7 +278,7 @@ final class MediaControllerTest extends TestCase
                 'category' => 'product_image',
                 'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
                     'not-an-image.pdf',
-                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
             ]);
 
