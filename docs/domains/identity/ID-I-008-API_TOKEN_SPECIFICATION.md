@@ -115,7 +115,7 @@ last_used_at
 revoked_at
 ```
 
-Les colonnes exactes dépendent de la migration finale. La migration complémentaire MAHLINE ajoute `revoked_at` à `personal_access_tokens` sans modifier la migration initiale.
+La migration initiale MAHLINE définit directement `expires_at` obligatoire et `revoked_at` nullable. Aucun token permanent n'est autorisé en V1.
 
 ---
 
@@ -245,21 +245,7 @@ Un token peut avoir une date d'expiration.
 expires_at
 ```
 
-Valeurs possibles :
-
-```text
-NULL
-```
-
-pour un token sans expiration selon la politique de sécurité applicable,
-
-ou :
-
-```text
-DATE/TIME
-```
-
-pour un token temporaire.
+La durée de vie est fixée à **90 jours** pour tous les rôles. `expires_at` est obligatoire en base ; aucun token permanent ou sans expiration n'est autorisé en V1.
 
 ---
 
@@ -929,9 +915,7 @@ pour une intégration temporaire.
 
 # 50. Long-Lived Token
 
-Un token sans expiration doit être considéré comme plus sensible.
-
-Il doit être soumis à une politique de sécurité appropriée.
+Les tokens sans expiration sont interdits en V1. Toute création, y compris par un chemin direct Sanctum, reçoit une expiration à 90 jours.
 
 ---
 
@@ -1142,6 +1126,13 @@ ID-001-ARCHITECTURE.md
 
 ## Historique des versions
 
+### Version 1.3
+
+* Expiration obligatoire à 90 jours pour tous les rôles ; aucun token permanent.
+* `expires_at` et `revoked_at` sont intégrés à la migration initiale, le dépôt n'ayant jamais été déployé.
+* Le super_admin_root peut créer un token pour un autre utilisateur depuis sa fiche, en plus de la création par le propriétaire dans son espace personnel.
+* Les abilities restent limitées aux permissions MAHLINE actives effectivement accordées au propriétaire du token.
+
 ### Version 1.2
 
 * Ajout de la révocation persistante via `revoked_at`.
@@ -1194,7 +1185,7 @@ respecter les permissions
 
 ```text
 DOCUMENT : API_TOKEN_SPECIFICATION.md
-VERSION  : 1.2
+VERSION  : 1.3
 DOMAINE  : IDENTITY / AUTHENTICATION
 STATUT   : OFFICIEL — GELÉ
 ```
@@ -1211,3 +1202,12 @@ The lock also blocks API authentication through the user's authorization state. 
 ## 62. User restoration and token revocation
 
 Restoring an archived or soft-deleted User never reactivates an old API token. The restoration service performs a defensive revocation pass over every token still marked active, sets `revoked_at`, retains the token row, and records `identity.authentication.api_token_revoked` with reason `user_restored`. Token secrets must never be written to Audit metadata. The restored User must complete a fresh activation/login flow and create new API tokens.
+
+
+## 63. Autorisation de création
+
+La création d'un API Token est permise :
+- au propriétaire du compte, depuis son espace personnel ;
+- à super_admin_root, depuis la fiche d'un autre utilisateur qu'il est autorisé à consulter.
+
+Aucun autre rôle ne peut créer un token pour un tiers. Le token créé pour un tiers appartient au compte cible, utilise exclusivement les permissions actives de ce compte et consigne super_admin_root comme acteur d'audit. Le quota actif et l'expiration de 90 jours sont calculés sur le compte propriétaire, jamais sur le compte de l'acteur.
