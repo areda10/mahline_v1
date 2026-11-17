@@ -11,7 +11,13 @@ final class MediaCleanupService
 {
     public function purgeExpired(): int
     {
-        $cutoff = now()->subDays((int) config('media.retention_days', 30));
+        $retentionDays = config('media.retention_days');
+
+        if (! is_numeric($retentionDays) || (int) $retentionDays < 1) {
+            return 0;
+        }
+
+        $cutoff = now()->subDays((int) $retentionDays);
         $purged = 0;
 
         Media::onlyTrashed()

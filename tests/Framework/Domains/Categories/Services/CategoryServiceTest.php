@@ -6,6 +6,8 @@ namespace Tests\Framework\Domains\Categories\Services;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Services\CategoryService;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -167,6 +169,59 @@ final class CategoryServiceTest extends TestCase
         $this->assertSoftDeleted('categories', [
             'id' => $category->getKey(),
         ]);
+    }
+
+
+    public function test_deleting_global_branch_detaches_local_children_and_preserves_their_subtree(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $global = $this->createCategory(['name' => 'Global', 'slug' => 'global']);
+        $local = $this->service->createForCooperative((string) $cooperative->getKey(), [
+            'name' => 'Local', 'slug' => 'local', 'parent_id' => $global->getKey(),
+        ]);
+        $localChild = $this->service->createForCooperative((string) $cooperative->getKey(), [
+            'name' => 'Sous-catégorie locale', 'slug' => 'sous-categorie-locale', 'parent_id' => $local->getKey(),
+        ]);
+
+        $this->service->delete($global);
+
+        $this->assertSoftDeleted('categories', ['id' => $global->getKey()]);
+        self::assertNull($local->fresh()->parent_id);
+        self::assertSame($local->getKey(), $localChild->fresh()->parent_id);
+        self::assertNull($local->fresh()->deleted_at);
+        self::assertNull($localChild->fresh()->deleted_at);
+    }
+
+    public function test_deleting_last_active_category_deactivates_but_does_not_delete_product(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $category = Category::factory()->forCooperative($cooperative)->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $product->categories()->attach($category->getKey());
+
+        $this->service->delete($category);
+
+        $this->assertSoftDeleted('categories', ['id' => $category->getKey()]);
+        $this->assertDatabaseHas('products', [
+            'id' => $product->getKey(), 'is_active' => false, 'deleted_at' => null,
+        ]);
+        $this->assertDatabaseMissing('category_product', [
+            'category_id' => $category->getKey(), 'product_id' => $product->getKey(),
+        ]);
+    }
+
+    public function test_product_remains_active_when_another_active_category_is_preserved(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $first = Category::factory()->forCooperative($cooperative)->create();
+        $second = Category::factory()->forCooperative($cooperative)->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $product->categories()->attach([$first->getKey(), $second->getKey()]);
+
+        $this->service->delete($first);
+
+        self::assertTrue($product->fresh()->is_active);
+        self::assertTrue($product->fresh()->categories()->whereKey($second->getKey())->exists());
     }
 
     private function createCategory(array $attributes = []): Category

@@ -48,6 +48,24 @@ final class MediaCleanupServiceTest extends TestCase
         Storage::disk('public')->assertExists('media/recent/original.jpg');
     }
 
+
+    public function test_it_does_not_purge_soft_deleted_media_when_retention_is_not_configured(): void
+    {
+        Storage::fake('public');
+        config(['media.retention_days' => null]);
+
+        Storage::disk('public')->put('media/unretained/original.jpg', 'original');
+        $media = Media::query()->create($this->attributes(
+            'media/unretained/original.jpg',
+            [],
+            now()->subYears(5),
+        ));
+
+        self::assertSame(0, app(MediaCleanupService::class)->purgeExpired());
+        self::assertTrue(Media::withTrashed()->whereKey($media->getKey())->exists());
+        Storage::disk('public')->assertExists('media/unretained/original.jpg');
+    }
+
     /**
      * @param array<string, mixed> $metadata
      * @return array<string, mixed>

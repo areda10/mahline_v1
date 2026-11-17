@@ -102,3 +102,8 @@ php artisan test tests/Framework/Domains/Media
 php artisan test tests/Framework/Database/Migrations/MediaCategoryIndexMigrationTest.php
 vendor/bin/pint --test
 ```
+
+
+## Rétention des médias supprimés
+
+La durée de conservation avant purge physique n'est pas une règle métier V1 validée. En conséquence, `MEDIA_RETENTION_DAYS` est non configurée par défaut et le nettoyage automatique ne purge aucun média tant qu'une durée positive n'est pas explicitement définie. La suppression applicative reste logique ; les fichiers et lignes sont conservés jusqu'à cette décision de rétention.

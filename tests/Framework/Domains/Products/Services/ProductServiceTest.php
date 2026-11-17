@@ -112,6 +112,28 @@ final class ProductServiceTest extends TestCase
         ]);
     }
 
+
+    public function test_restoring_product_without_an_active_category_keeps_it_inactive(): void
+    {
+        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $product = $this->service->create((string) $cooperative->getKey(), [
+            'name' => 'Produit sans catégorie',
+            'is_active' => true,
+            'category_ids' => [],
+        ]);
+
+        $this->assertFalse($product->is_active);
+        $this->service->delete($product);
+        $restored = $this->service->restore($product);
+
+        $this->assertTrue($restored);
+        $this->assertDatabaseHas('products', [
+            'id' => $product->getKey(),
+            'deleted_at' => null,
+            'is_active' => false,
+        ]);
+    }
+
     public function test_it_soft_deletes_a_product(): void
     {
         $cooperative = Cooperative::factory()->create();

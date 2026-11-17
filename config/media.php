@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'public_disk' => env('MEDIA_PUBLIC_DISK', 'local'),
     'private_disk' => env('MEDIA_PRIVATE_DISK', 'local'),
-    'retention_days' => 30,
+    'retention_days' => env('MEDIA_RETENTION_DAYS'),
     'collections' => [
         'product_image' => 'product-gallery',
         'cooperative_logo' => 'cooperative-logo',

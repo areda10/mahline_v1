@@ -230,7 +230,23 @@ final class ProductService
             }
 
             // La restauration du parent ne touche jamais aux variantes.
-            return (bool) $trashedProduct->restore();
+            $trashedProduct->restore();
+
+            // Un produit sans catégorie active ne peut pas redevenir publiable.
+            $hasActiveCategory = $trashedProduct->categories()
+                ->where('categories.is_active', true)
+                ->where(function ($query) use ($trashedProduct): void {
+                    $query->whereNull('categories.cooperative_id')
+                        ->orWhere('categories.cooperative_id', $trashedProduct->cooperative_id);
+                })
+                ->exists();
+
+            if ($trashedProduct->is_active && ! $hasActiveCategory) {
+                $trashedProduct->is_active = false;
+                $trashedProduct->save();
+            }
+
+            return true;
         });
     }
 
