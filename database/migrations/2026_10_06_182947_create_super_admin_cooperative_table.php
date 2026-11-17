@@ -27,6 +27,7 @@ return new class extends Migration
 
             // One cooperative can be assigned to exactly one super_admin.
             // A super_admin may manage several cooperatives.
+            $table->unique(['super_admin_id', 'cooperative_id'], 'super_admin_cooperative_pair_unique');
             $table->unique('cooperative_id', 'super_admin_cooperative_cooperative_unique');
         });
     }
