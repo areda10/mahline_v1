@@ -905,6 +905,39 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_ordinary_profile_edits_preserve_active_sessions_and_api_tokens(): void
+    {
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $cooperative = $this->createCooperative();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $target = $this->createUserWithRole('user', (string) $cooperative->getKey());
+
+        $token = $target->createToken('profile-edit')->accessToken;
+        $session = app(\\App\\Domains\\Identity\\Authentication\\Services\\SessionService::class)->create(
+            user: $target,
+            sessionId: 'profile-edit-session',
+            ipAddress: '127.0.0.1',
+            userAgent: 'MAHLINE test',
+            browser: 'Firefox',
+            device: 'Desktop',
+        );
+
+        $this->service->updateUserAccount(
+            $superAdmin,
+            $target,
+            [
+                'first_name' => 'Profile',
+                'last_name' => 'Updated',
+                'email' => $target->email,
+                'telephone' => '+212600000035',
+            ],
+            'user',
+        );
+
+        self::assertNull($token->fresh()->revoked_at);
+        self::assertNull($session->fresh()->revoked_at);
+    }
+
     public function test_super_admin_can_update_user_profile_without_changing_role_or_cooperative(): void
     {
         $superAdmin = $this->createUserWithRole('super_admin');
