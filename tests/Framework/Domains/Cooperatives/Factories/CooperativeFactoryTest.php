@@ -8,124 +8,55 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use Database\Factories\CooperativeFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class CooperativeFactoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cooperative_factory_creates_cooperative(): void
+    public function test_cooperative_factory_creates_a_cooperative_with_its_owned_primary_address(): void
     {
         $cooperative = Cooperative::factory()->create();
-
-        $this->assertInstanceOf(
-            Cooperative::class,
-            $cooperative,
-        );
-
-        $this->assertDatabaseHas('cooperatives', [
-            'id' => $cooperative->id,
-        ]);
+        self::assertInstanceOf(Cooperative::class, $cooperative);
+        self::assertDatabaseHas('cooperatives', ['id' => $cooperative->getKey()]);
+        self::assertNotNull($cooperative->fresh()->address);
+        self::assertSame($cooperative->getKey(), $cooperative->address->cooperative_id);
+        self::assertTrue($cooperative->address->is_primary);
     }
 
     public function test_cooperative_factory_is_bound_to_cooperative_model(): void
     {
-        $factory = CooperativeFactory::new();
-
-        $this->assertSame(
-            Cooperative::class,
-            $factory->modelName(),
-        );
+        self::assertSame(Cooperative::class, CooperativeFactory::new()->modelName());
     }
 
-    public function test_factory_generates_required_attributes(): void
+    public function test_factory_generates_required_cooperative_attributes_without_address_foreign_key(): void
     {
         $cooperative = Cooperative::factory()->make();
-
-        $this->assertNotEmpty($cooperative->name);
-        $this->assertNotEmpty($cooperative->rib);
-        $this->assertNotEmpty($cooperative->address_id);
-        $this->assertNotEmpty($cooperative->phone);
-        $this->assertNotEmpty($cooperative->email);
-        $this->assertNotEmpty($cooperative->ice);
-    }
-
-    public function test_factory_generates_valid_address_ulid(): void
-    {
-        $cooperative = Cooperative::factory()->make();
-
-        $this->assertTrue(
-            Str::isUlid($cooperative->address_id),
-        );
+        self::assertNotEmpty($cooperative->name);
+        self::assertNotEmpty($cooperative->rib);
+        self::assertNotEmpty($cooperative->phone);
+        self::assertNotEmpty($cooperative->email);
+        self::assertNotEmpty($cooperative->ice);
+        self::assertNull($cooperative->getAttribute('address_id'));
     }
 
     public function test_factory_uses_pending_status_by_default(): void
     {
-        $cooperative = Cooperative::factory()->make();
-
-        $this->assertSame(
-            CooperativeStatus::PENDING,
-            $cooperative->status,
-        );
+        self::assertSame(CooperativeStatus::PENDING, Cooperative::factory()->make()->status);
     }
 
-    public function test_factory_can_create_active_cooperative(): void
+    public function test_factory_can_create_other_statuses(): void
     {
-        $cooperative = Cooperative::factory()
-            ->active()
-            ->make();
-
-        $this->assertSame(
-            CooperativeStatus::ACTIVE,
-            $cooperative->status,
-        );
+        self::assertSame(CooperativeStatus::ACTIVE, Cooperative::factory()->active()->make()->status);
+        self::assertSame(CooperativeStatus::SUSPENDED, Cooperative::factory()->suspended()->make()->status);
+        self::assertSame(CooperativeStatus::INACTIVE, Cooperative::factory()->inactive()->make()->status);
+        self::assertSame(CooperativeStatus::ARCHIVED, Cooperative::factory()->archived()->make()->status);
     }
 
-    public function test_factory_can_create_suspended_cooperative(): void
+    public function test_optional_attributes_can_be_null(): void
     {
-        $cooperative = Cooperative::factory()
-            ->suspended()
-            ->make();
-
-        $this->assertSame(
-            CooperativeStatus::SUSPENDED,
-            $cooperative->status,
-        );
-    }
-
-    public function test_factory_can_create_inactive_cooperative(): void
-    {
-        $cooperative = Cooperative::factory()
-            ->inactive()
-            ->make();
-
-        $this->assertSame(
-            CooperativeStatus::INACTIVE,
-            $cooperative->status,
-        );
-    }
-
-    public function test_factory_can_create_archived_cooperative(): void
-    {
-        $cooperative = Cooperative::factory()
-            ->archived()
-            ->make();
-
-        $this->assertSame(
-            CooperativeStatus::ARCHIVED,
-            $cooperative->status,
-        );
-    }
-
-    public function test_factory_optional_attributes_can_be_null(): void
-    {
-        $cooperative = Cooperative::factory()->make([
-            'tax_id' => null,
-            'rc' => null,
-        ]);
-
-        $this->assertNull($cooperative->tax_id);
-        $this->assertNull($cooperative->rc);
+        $cooperative = Cooperative::factory()->make(['tax_id' => null, 'rc' => null]);
+        self::assertNull($cooperative->tax_id);
+        self::assertNull($cooperative->rc);
     }
 }

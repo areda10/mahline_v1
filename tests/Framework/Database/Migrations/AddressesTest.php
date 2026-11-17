@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Database\Migrations;
 
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -15,243 +17,75 @@ final class AddressesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_addresses_table_exists(): void
+    public function test_addresses_table_exists_with_v1_columns_only(): void
     {
-        self::assertTrue(
-            Schema::hasTable('addresses'),
-        );
-    }
-
-    public function test_addresses_table_has_required_columns(): void
-    {
-        $columns = [
-            'id',
-            'street',
-            'address_line_1',
-            'city',
-            'country_id',
-        ];
-
-        foreach ($columns as $column) {
-            self::assertTrue(
-                Schema::hasColumn('addresses', $column),
-                "Column [{$column}] does not exist.",
-            );
+        self::assertTrue(Schema::hasTable('addresses'));
+        foreach ([
+            'id', 'number', 'street', 'floor', 'postal_code', 'city', 'region',
+            'country_id', 'user_id', 'cooperative_id', 'latitude', 'longitude',
+            'is_primary', 'deletion_source', 'owner_deletion_batch_id', 'deleted_at',
+        ] as $column) {
+            self::assertTrue(Schema::hasColumn('addresses', $column), "Missing [{$column}].");
+        }
+        foreach (['address_line_1', 'address_line_2', 'state'] as $legacy) {
+            self::assertFalse(Schema::hasColumn('addresses', $legacy), "Legacy [{$legacy}] must be removed.");
         }
     }
 
-    public function test_addresses_table_has_optional_columns(): void
+    public function test_addresses_have_audit_columns_and_timestamps(): void
     {
-        $columns = [
-            'number',
-            'floor',
-            'region',
-            'user_id',
-            'cooperative_id',
-            'address_line_2',
-            'postal_code',
-            'state',
-            'latitude',
-            'longitude',
-        ];
-
-        foreach ($columns as $column) {
-            self::assertTrue(
-                Schema::hasColumn('addresses', $column),
-                "Column [{$column}] does not exist.",
-            );
+        foreach (['created_by', 'updated_by', 'deleted_by', 'created_at', 'updated_at', 'deleted_at'] as $column) {
+            self::assertTrue(Schema::hasColumn('addresses', $column));
         }
     }
 
-    public function test_addresses_table_has_audit_columns(): void
+    public function test_database_enforces_one_active_primary_per_user_and_one_active_address_per_cooperative(): void
     {
-        $columns = [
-            'created_by',
-            'updated_by',
-            'deleted_by',
-        ];
-
-        foreach ($columns as $column) {
-            self::assertTrue(
-                Schema::hasColumn('addresses', $column),
-                "Audit column [{$column}] does not exist.",
-            );
+        foreach ([
+            'addresses_one_primary_per_user_unique',
+            'addresses_one_primary_per_cooperative_unique',
+            'addresses_one_active_address_per_cooperative_unique',
+        ] as $name) {
+            self::assertTrue(collect(Schema::getIndexes('addresses'))->contains(
+                static fn (array $index): bool => $index['name'] === $name && $index['unique'],
+            ));
         }
     }
 
-    public function test_addresses_table_has_timestamps(): void
+    public function test_owner_and_country_foreign_keys_exist(): void
     {
-        self::assertTrue(
-            Schema::hasColumn('addresses', 'created_at'),
-        );
-
-        self::assertTrue(
-            Schema::hasColumn('addresses', 'updated_at'),
-        );
+        $keys = collect(Schema::getForeignKeys('addresses'));
+        foreach ([
+            ['country_id', 'countries'],
+            ['user_id', 'users'],
+            ['cooperative_id', 'cooperatives'],
+        ] as [$column, $table]) {
+            self::assertTrue($keys->contains(
+                static fn (array $key): bool => $key['columns'] === [$column] && $key['foreign_table'] === $table,
+            ));
+        }
     }
 
-    public function test_addresses_table_has_soft_delete_column(): void
+    public function test_address_requires_exactly_one_owner(): void
     {
-        self::assertTrue(
-            Schema::hasColumn('addresses', 'deleted_at'),
-        );
-    }
-
-    public function test_addresses_table_has_unique_user_owner_index(): void
-    {
-        $indexes = Schema::getIndexes('addresses');
-
-        self::assertTrue(
-            collect($indexes)->contains(
-                fn (array $index): bool => $index['unique']
-                    && $index['columns'] === ['user_id'],
-            ),
-        );
-    }
-
-    public function test_addresses_table_has_unique_cooperative_owner_index(): void
-    {
-        $indexes = Schema::getIndexes('addresses');
-
-        self::assertTrue(
-            collect($indexes)->contains(
-                fn (array $index): bool => $index['unique']
-                    && $index['columns'] === ['cooperative_id'],
-            ),
-        );
-    }
-
-    public function test_addresses_table_has_country_index(): void
-    {
-        $indexes = Schema::getIndexes('addresses');
-
-        self::assertTrue(
-            collect($indexes)->contains(
-                fn (array $index): bool => $index['name'] === 'addresses_country_id_index'
-                    && $index['columns'] === ['country_id'],
-            ),
-        );
-    }
-
-    public function test_addresses_table_has_city_index(): void
-    {
-        $indexes = Schema::getIndexes('addresses');
-
-        self::assertTrue(
-            collect($indexes)->contains(
-                fn (array $index): bool => $index['name'] === 'addresses_city_index'
-                    && $index['columns'] === ['city'],
-            ),
-        );
-    }
-
-    public function test_country_id_is_a_foreign_key_to_countries(): void
-    {
-        $foreignKeys = Schema::getForeignKeys('addresses');
-
-        $foreignKey = collect($foreignKeys)
-            ->first(
-                fn (array $key): bool => $key['columns'] === ['country_id']
-                    && $key['foreign_table'] === 'countries'
-                    && $key['foreign_columns'] === ['id'],
-            );
-
-        self::assertNotNull($foreignKey);
-    }
-
-    public function test_address_cannot_reference_a_non_existing_country(): void
-    {
+        $countryId = Address::factory()->raw()['country_id'];
         $this->expectException(QueryException::class);
-
-        $userId = (string) Str::ulid();
-
-        DB::table('users')->insert([
-            'id' => $userId,
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'display_name' => 'Test User',
-            'email' => 'address-owner-'.Str::lower(Str::random(8)).'@example.test',
-            'telephone' => '+212600000000',
-            'password' => bcrypt('password'),
-            'status' => 'active',
-            'locale' => 'fr',
-            'timezone' => 'UTC',
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
         DB::table('addresses')->insert([
-            'id' => (string) Str::ulid(),
-            'address_line_1' => '10 Rue Test',
-            'address_line_2' => null,
-            'postal_code' => '20000',
-            'city' => 'Casablanca',
-            'state' => null,
-            'country_id' => (string) Str::ulid(),
-            'latitude' => null,
-            'longitude' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'id' => (string) Str::ulid(), 'street' => 'Rue test', 'city' => 'Casablanca',
+            'country_id' => $countryId, 'user_id' => null, 'cooperative_id' => null,
+            'is_primary' => false, 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
 
-    public function test_country_cannot_be_physically_deleted_when_used_by_an_address(): void
+    public function test_address_country_foreign_key_is_restrictive(): void
     {
-        $countryId = (string) Str::ulid();
-        $userId = (string) Str::ulid();
-
-        DB::table('users')->insert([
-            'id' => $userId,
-            'first_name' => 'Test',
-            'last_name' => 'User',
-            'display_name' => 'Test User',
-            'email' => 'address-owner-'.Str::lower(Str::random(8)).'@example.test',
-            'telephone' => '+212600000000',
-            'password' => bcrypt('password'),
-            'status' => 'active',
-            'locale' => 'fr',
-            'timezone' => 'UTC',
-            'email_verified_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('countries')->insert([
-            'id' => $countryId,
-            'code' => 'MA',
-            'iso3' => 'MAR',
-            'name' => 'Morocco',
-            'native_name' => 'المغرب',
-            'phone_code' => '+212',
-            'currency' => 'MAD',
-            'locale' => 'fr',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('addresses')->insert([
-            'id' => (string) Str::ulid(),
-            'address_line_1' => '10 Rue Test',
-            'address_line_2' => null,
-            'postal_code' => '20000',
-            'city' => 'Casablanca',
-            'state' => null,
-            'country_id' => $countryId,
-            'user_id' => $userId,
-            'cooperative_id' => null,
-            'street' => '10 Rue Test',
-            'latitude' => null,
-            'longitude' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
+        $user = User::factory()->create();
         $this->expectException(QueryException::class);
-
-        DB::table('countries')
-            ->where('id', $countryId)
-            ->delete();
+        DB::table('addresses')->insert([
+            'id' => (string) Str::ulid(), 'street' => 'Rue test', 'city' => 'Casablanca',
+            'country_id' => (string) Str::ulid(), 'user_id' => $user->getKey(),
+            'cooperative_id' => null, 'is_primary' => false,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 }

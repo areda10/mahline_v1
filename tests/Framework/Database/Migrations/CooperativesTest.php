@@ -12,133 +12,34 @@ final class CooperativesTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cooperatives_table_exists(): void
+    public function test_cooperatives_table_has_no_address_pointer(): void
     {
-        self::assertTrue(
-            Schema::hasTable('cooperatives'),
-        );
+        self::assertTrue(Schema::hasTable('cooperatives'));
+        foreach (['id', 'name', 'rib', 'phone', 'email', 'ice', 'status'] as $column) {
+            self::assertTrue(Schema::hasColumn('cooperatives', $column));
+        }
+        self::assertFalse(Schema::hasColumn('cooperatives', 'address_id'));
     }
 
-    public function test_cooperatives_table_has_required_columns(): void
+    public function test_cooperatives_have_expected_optional_and_audit_columns(): void
     {
-        $columns = [
-            'id',
-            'name',
-            'rib',
-            'address_id',
-            'phone',
-            'email',
-            'ice',
-            'status',
-        ];
-
-        foreach ($columns as $column) {
-            self::assertTrue(
-                Schema::hasColumn('cooperatives', $column),
-                "Column [{$column}] does not exist.",
-            );
+        foreach (['tax_id', 'rc', 'created_by', 'updated_by', 'deleted_by', 'created_at', 'updated_at', 'deleted_at'] as $column) {
+            self::assertTrue(Schema::hasColumn('cooperatives', $column));
         }
     }
 
-    public function test_cooperatives_table_has_optional_columns(): void
+    public function test_cooperatives_have_expected_indexes(): void
     {
-        $columns = [
-            'tax_id',
-            'rc',
-        ];
-
-        foreach ($columns as $column) {
-            self::assertTrue(
-                Schema::hasColumn('cooperatives', $column),
-                "Column [{$column}] does not exist.",
-            );
+        $indexes = collect(Schema::getIndexes('cooperatives'))->pluck('name');
+        foreach (['cooperatives_status_index', 'cooperatives_email_index', 'cooperatives_ice_index'] as $name) {
+            self::assertTrue($indexes->contains($name));
         }
     }
 
-    public function test_cooperatives_table_has_audit_columns(): void
+    public function test_cooperative_status_defaults_to_pending(): void
     {
-        $columns = [
-            'created_by',
-            'updated_by',
-            'deleted_by',
-        ];
-
-        foreach ($columns as $column) {
-            self::assertTrue(
-                Schema::hasColumn('cooperatives', $column),
-                "Audit column [{$column}] does not exist.",
-            );
-        }
-    }
-
-    public function test_cooperatives_table_has_timestamps(): void
-    {
-        self::assertTrue(
-            Schema::hasColumn('cooperatives', 'created_at'),
-        );
-
-        self::assertTrue(
-            Schema::hasColumn('cooperatives', 'updated_at'),
-        );
-    }
-
-    public function test_cooperatives_table_has_soft_delete_column(): void
-    {
-        self::assertTrue(
-            Schema::hasColumn('cooperatives', 'deleted_at'),
-        );
-    }
-
-    public function test_cooperatives_table_has_expected_indexes(): void
-    {
-        $indexes = collect(
-            Schema::getIndexes('cooperatives'),
-        )->pluck('name');
-
-        self::assertTrue(
-            $indexes->contains('cooperatives_address_id_index'),
-        );
-
-        self::assertTrue(
-            $indexes->contains('cooperatives_status_index'),
-        );
-
-        self::assertTrue(
-            $indexes->contains('cooperatives_email_index'),
-        );
-
-        self::assertTrue(
-            $indexes->contains('cooperatives_ice_index'),
-        );
-    }
-
-    public function test_cooperatives_status_defaults_to_pending(): void
-    {
-        $statusColumn = collect(
-            Schema::getColumns('cooperatives'),
-        )->firstWhere('name', 'status');
-
-        self::assertNotNull($statusColumn);
-
-        self::assertSame(
-            'pending',
-            $statusColumn['default'],
-        );
-    }
-
-    public function test_address_id_is_a_foreign_key_to_addresses(): void
-    {
-        $foreignKeys = Schema::getForeignKeys(
-            'cooperatives',
-        );
-
-        $foreignKey = collect($foreignKeys)
-            ->first(
-                fn (array $key): bool => $key['columns'] === ['address_id']
-                    && $key['foreign_table'] === 'addresses'
-                    && $key['foreign_columns'] === ['id'],
-            );
-
-        self::assertNotNull($foreignKey);
+        $status = collect(Schema::getColumns('cooperatives'))->firstWhere('name', 'status');
+        self::assertNotNull($status);
+        self::assertSame('pending', $status['default']);
     }
 }

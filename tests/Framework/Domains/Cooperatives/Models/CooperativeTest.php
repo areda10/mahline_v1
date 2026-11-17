@@ -70,7 +70,6 @@ final class CooperativeTest extends TestCase
                 'name',
                 'rib',
                 'tax_id',
-                'address_id',
                 'phone',
                 'email',
                 'rc',
@@ -113,7 +112,6 @@ final class CooperativeTest extends TestCase
             'name' => 'Coopérative Test',
             'rib' => '123456789012345678901234',
             'tax_id' => 'PAT-001',
-            'address_id' => '01JTESTADDRESS00000000000000',
             'phone' => '+212600000000',
             'email' => 'contact@example.test',
             'rc' => 'RC-001',
@@ -134,11 +132,6 @@ final class CooperativeTest extends TestCase
         $this->assertSame(
             'PAT-001',
             $cooperative->tax_id,
-        );
-
-        $this->assertSame(
-            '01JTESTADDRESS00000000000000',
-            $cooperative->address_id,
         );
 
         $this->assertSame(

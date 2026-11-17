@@ -75,6 +75,14 @@ final class AddressOwnershipIntegrityTest extends TestCase
         ]);
     }
 
+
+    public function test_cooperative_can_have_only_one_active_address(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $this->expectException(QueryException::class);
+        Address::factory()->forCooperative($cooperative)->create();
+    }
+
     public function test_only_one_active_primary_address_per_user_is_allowed_by_database(): void
     {
         $user = User::factory()->create();

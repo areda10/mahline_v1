@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Localization\Factories;
 
-use App\Domains\Countries\Models\Country;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -14,130 +14,52 @@ final class AddressFactoryTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ADDRESS_COUNT = 3;
-
-    public function test_factory_creates_an_address(): void
+    public function test_factory_creates_an_address_for_an_explicit_user_owner(): void
     {
-        $address = Address::factory()->create();
-
-        self::assertInstanceOf(
-            Address::class,
-            $address,
-        );
-
-        self::assertDatabaseHas(
-            'addresses',
-            [
-                'id' => $address->id,
-            ],
-        );
+        $user = User::factory()->create();
+        $address = Address::factory()->forUser($user)->create();
+        self::assertInstanceOf(Address::class, $address);
+        self::assertDatabaseHas('addresses', ['id' => $address->getKey(), 'user_id' => $user->getKey()]);
     }
 
     public function test_factory_generates_a_ulid_identifier(): void
     {
-        $address = Address::factory()->create();
-
-        self::assertTrue(
-            Str::isUlid($address->id),
-        );
+        $address = Address::factory()->forUser(User::factory()->create())->create();
+        self::assertTrue(Str::isUlid($address->getKey()));
     }
 
-    public function test_factory_generates_required_attributes(): void
+    public function test_factory_generates_v1_address_fields(): void
     {
-        $address = Address::factory()->create();
-
-        self::assertNotEmpty($address->address_line_1);
+        $address = Address::factory()->forUser(User::factory()->create())->create();
+        self::assertNotEmpty($address->street);
         self::assertNotEmpty($address->city);
         self::assertNotEmpty($address->country_id);
+        self::assertNull($address->cooperative_id);
     }
 
-    public function test_factory_generates_a_valid_country_ulid(): void
+    public function test_factory_accepts_optional_address_fields_and_coordinates(): void
     {
-        $address = Address::factory()->create();
-
-        self::assertTrue(
-            Str::isUlid($address->country_id),
-        );
-    }
-
-    public function test_factory_generates_an_optional_address_line_2(): void
-    {
-        $address = Address::factory()->create([
-            'address_line_2' => 'Appartement 12',
+        $address = Address::factory()->forUser(User::factory()->create())->create([
+            'number' => '10', 'floor' => '2e étage', 'postal_code' => '20000',
+            'region' => 'Casablanca-Settat', 'latitude' => 33.5731100, 'longitude' => -7.5898430,
         ]);
-
-        self::assertSame(
-            'Appartement 12',
-            $address->address_line_2,
-        );
+        self::assertSame('10', $address->number);
+        self::assertSame('2e étage', $address->floor);
+        self::assertSame('20000', $address->postal_code);
+        self::assertSame('Casablanca-Settat', $address->region);
+        self::assertSame('33.5731100', $address->latitude);
+        self::assertSame('-7.5898430', $address->longitude);
     }
 
-    public function test_factory_generates_an_optional_postal_code(): void
+    public function test_factory_can_create_multiple_addresses_with_a_single_primary(): void
     {
-        $address = Address::factory()->create([
-            'postal_code' => '20000',
-        ]);
-
-        self::assertSame(
-            '20000',
-            $address->postal_code,
-        );
-    }
-
-    public function test_factory_generates_optional_state(): void
-    {
-        $address = Address::factory()->create([
-            'state' => 'Casablanca-Settat',
-        ]);
-
-        self::assertSame(
-            'Casablanca-Settat',
-            $address->state,
-        );
-    }
-
-    public function test_factory_accepts_coordinates(): void
-    {
-        $address = Address::factory()->create([
-            'latitude' => 33.5731100,
-            'longitude' => -7.5898430,
-        ]);
-
-        self::assertSame(
-            '33.5731100',
-            $address->latitude,
-        );
-
-        self::assertSame(
-            '-7.5898430',
-            $address->longitude,
-        );
-    }
-
-    public function test_factory_can_create_multiple_addresses(): void
-    {
-        $country = Country::factory()->create();
-
-        $addresses = Address::factory()
-            ->count(self::ADDRESS_COUNT)
-            ->create([
-                'country_id' => $country->id,
-            ]);
-
-        self::assertCount(
-            self::ADDRESS_COUNT,
-            $addresses,
-        );
-
-        self::assertCount(
-            self::ADDRESS_COUNT,
-            Address::query()->get(),
-        );
-
-        self::assertTrue(
-            $addresses->every(
-                fn (Address $address): bool => $address->country_id === $country->id,
-            ),
-        );
+        $user = User::factory()->create();
+        $addresses = Address::factory()->forUser($user)->count(3)->sequence(
+            ['is_primary' => true],
+            ['is_primary' => false],
+            ['is_primary' => false],
+        )->create();
+        self::assertCount(3, $addresses);
+        self::assertSame(1, $addresses->where('is_primary', true)->count());
     }
 }

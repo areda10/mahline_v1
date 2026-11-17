@@ -126,26 +126,7 @@ final class CooperativeSettingsTest extends TestCase
 
     public function test_default_values_are_correct(): void
     {
-        $country = Country::query()->firstOrCreate(
-            ['code' => 'MA'],
-            [
-                'iso3' => 'MAR',
-                'name' => 'Morocco',
-                'native_name' => 'المغرب',
-                'phone_code' => '+212',
-                'currency' => 'MAD',
-                'locale' => 'fr',
-                'is_active' => true,
-            ],
-        );
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $now = now();
 
