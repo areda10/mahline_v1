@@ -63,34 +63,25 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    public function test_super_admin_can_create_user_in_assigned_cooperative(): void
+    public function test_super_admin_cannot_create_user_even_in_an_assigned_cooperative(): void
     {
         $superAdmin = $this->createUserWithRole('super_admin');
-
         $cooperative = $this->createCooperative();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
 
-        $superAdmin->cooperatives()->attach(
-            $cooperative->id,
-        );
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Only the super admin root can perform this action.');
 
-        $user = $this->service->createUser(
+        $this->service->createUser(
             $superAdmin,
             [
                 'first_name' => 'Jane',
                 'last_name' => 'Doe',
-                'display_name' => 'Jane Doe',
                 'email' => 'jane@example.com',
                 'telephone' => '+212600000002',
-                'password' => 'Password123',
-                'status' => UserStatus::Active,
-                'cooperative_id' => $cooperative->id,
+                'cooperative_id' => $cooperative->getKey(),
             ],
             'user',
-        );
-
-        self::assertSame($cooperative->id, $user->cooperative_id);
-        self::assertTrue(
-            $user->roles()->where('slug', 'user')->exists(),
         );
     }
 
@@ -134,7 +125,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            'The actor is not authorized to assign the "user" role.',
+            'Only the super admin root can perform this action.',
         );
 
         $this->service->createUser(
@@ -487,7 +478,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            'The actor is not authorized to assign the "super_admin" role.',
+            'Only the super admin root can perform this action.',
         );
 
         $this->service->createUser(
@@ -519,7 +510,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            'The actor is not authorized to assign the "super_admin" role.',
+            'Only the super admin root can perform this action.',
         );
 
         $this->service->createUser(
@@ -547,7 +538,7 @@ final class UserManagementServiceTest extends TestCase
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage(
-            'The actor is not authorized to assign the "super_admin_root" role.',
+            'The super admin root role cannot be assigned through user management.',
         );
 
         $this->service->createUser(
@@ -864,36 +855,23 @@ final class UserManagementServiceTest extends TestCase
         ]);
     }
 
-    public function test_super_admin_can_create_only_the_first_cooperative_admin_in_assigned_cooperative(): void
+    public function test_super_admin_cannot_create_cooperative_admin_accounts(): void
     {
         $superAdmin = $this->createUserWithRole('super_admin');
         $cooperative = $this->createCooperative();
         $superAdmin->cooperatives()->attach($cooperative->getKey());
 
-        $attributes = [
-            'first_name' => 'First',
-            'last_name' => 'Cooperative Admin',
-            'email' => 'first.coop.admin@example.com',
-            'telephone' => '+212600000031',
-            'cooperative_id' => $cooperative->getKey(),
-        ];
-
-        $created = $this->service->createUser(
-            $superAdmin,
-            $attributes,
-            'cooperative_admin',
-        );
-
-        self::assertSame($cooperative->getKey(), $created->cooperative_id);
-
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('A super admin can create only the first cooperative admin for a cooperative.');
+        $this->expectExceptionMessage('Only the super admin root can perform this action.');
 
         $this->service->createUser(
             $superAdmin,
             [
-                ...$attributes,
-                'email' => 'second.coop.admin@example.com',
+                'first_name' => 'Cooperative',
+                'last_name' => 'Admin',
+                'email' => 'first.coop.admin@example.com',
+                'telephone' => '+212600000031',
+                'cooperative_id' => $cooperative->getKey(),
             ],
             'cooperative_admin',
         );
