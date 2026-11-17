@@ -11,6 +11,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\NewAccessToken;
 use RuntimeException;
@@ -51,7 +52,11 @@ final class ApiTokenService extends BaseService
         }
 
         if ((string) $owner->getKey() !== (string) $actor->getKey()) {
-            throw new RuntimeException('An API token can only be created by its owner.');
+            if (! $actor->hasRole('super_admin_root')) {
+                throw new RuntimeException('An API token can only be created by its owner or super_admin_root.');
+            }
+
+            Gate::forUser($actor)->authorize('viewAny', User::class);
         }
 
         return DB::transaction(function () use (
