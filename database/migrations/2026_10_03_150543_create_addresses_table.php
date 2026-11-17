@@ -28,7 +28,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('users')
                 ->restrictOnDelete()
-                ->cascadeOnUpdate();
+                ->restrictOnUpdate();
 
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
