@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Framework\Database\Migrations;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;

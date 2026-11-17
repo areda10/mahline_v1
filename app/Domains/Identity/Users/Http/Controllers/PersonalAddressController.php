@@ -18,11 +18,11 @@ final class PersonalAddressController
         $user = $request->user();
         abort_unless($user instanceof User, 403);
 
-        $user->load('address.country');
+        $user->load('primaryAddress.country');
 
         return view('identity.profile.address', [
             'user' => $user,
-            'address' => $user->address,
+            'address' => $user->primaryAddress,
             'regions' => MoroccanRegion::values(),
             'layout' => $user->hasRole('super_admin_root') ? 'layouts.root' : 'layouts.admin',
         ]);
@@ -42,7 +42,7 @@ final class PersonalAddressController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        if ($user->address()->exists()) {
+        if ($user->addresses()->exists()) {
             $addresses->updateForUser($user, $user, $data);
         } else {
             $addresses->createForUser($user, $user, $data);
