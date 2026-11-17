@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authorization\Policies;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -309,26 +307,7 @@ final class CooperativePolicyTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        $country = Country::query()->firstOrCreate(
-            ['code' => 'MA'],
-            [
-                'iso3' => 'MAR',
-                'name' => 'Morocco',
-                'native_name' => 'المغرب',
-                'phone_code' => '+212',
-                'currency' => 'MAD',
-                'locale' => 'fr',
-                'is_active' => true,
-            ],
-        );
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        return Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        return Cooperative::factory()->create();
     }
 
     /**
