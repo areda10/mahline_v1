@@ -244,6 +244,8 @@ final class UserManagementController
             'sessions' => $sessions,
             'apiTokens' => $apiTokens,
             'apiTokenAbilities' => $apiTokenService->availableAbilities($user),
+            'activeApiTokenCount' => $apiTokenService->activeTokenCount($user),
+            'apiTokenLimit' => $apiTokenService->tokenLimitForUser($user),
             'regions' => MoroccanRegion::values(),
         ]);
     }
