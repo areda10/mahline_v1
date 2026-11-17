@@ -50,6 +50,31 @@ final class RolePermissionMatrixSeederTest extends TestCase
         );
     }
 
+    public function test_account_creation_and_invitation_permissions_are_separated(): void
+    {
+        $this->seed([
+            RoleSeeder::class,
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
+        ]);
+
+        $root = Role::query()->where('slug', 'super_admin_root')->firstOrFail();
+        $superAdmin = Role::query()->where('slug', 'super_admin')->firstOrFail();
+        $cooperativeAdmin = Role::query()->where('slug', 'cooperative_admin')->firstOrFail();
+
+        self::assertTrue($root->permissions()->where('slug', 'users.create')->exists());
+        self::assertTrue($root->permissions()->where('slug', 'users.invite')->exists());
+        self::assertTrue($root->permissions()->where('slug', 'users.activate')->exists());
+
+        self::assertFalse($superAdmin->permissions()->where('slug', 'users.create')->exists());
+        self::assertTrue($superAdmin->permissions()->where('slug', 'users.invite')->exists());
+        self::assertFalse($superAdmin->permissions()->where('slug', 'users.activate')->exists());
+
+        self::assertFalse($cooperativeAdmin->permissions()->where('slug', 'users.create')->exists());
+        self::assertFalse($cooperativeAdmin->permissions()->where('slug', 'users.invite')->exists());
+        self::assertTrue($cooperativeAdmin->permissions()->where('slug', 'users.update')->exists());
+    }
+
     public function test_role_permission_matrix_is_idempotent(): void
     {
         $this->seed([
