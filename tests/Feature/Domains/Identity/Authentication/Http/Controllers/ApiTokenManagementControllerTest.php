@@ -11,7 +11,6 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 final class ApiTokenManagementControllerTest extends TestCase
@@ -149,15 +148,17 @@ final class ApiTokenManagementControllerTest extends TestCase
         $customer = $this->actor('customer');
         $token = $customer->createToken('customer-api-private-token');
 
-        Sanctum::actingAs($root, ['users.view']);
+        $rootToken = $root->createToken('root-api-test', ['users.view']);
 
-        $this->getJson(route('identity.root.users.tokens.index', $customer))
+        $this->withToken($rootToken->plainTextToken)
+            ->getJson(route('identity.root.users.tokens.index', $customer))
             ->assertNotFound();
 
-        $this->deleteJson(route('identity.root.users.tokens.destroy', [
-            'user' => $customer,
-            'token' => $token->accessToken,
-        ]))
+        $this->withToken($rootToken->plainTextToken)
+            ->deleteJson(route('identity.root.users.tokens.destroy', [
+                'user' => $customer,
+                'token' => $token->accessToken,
+            ]))
             ->assertNotFound();
 
         self::assertNull($token->accessToken->fresh()->revoked_at);
