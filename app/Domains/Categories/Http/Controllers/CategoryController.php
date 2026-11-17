@@ -77,6 +77,7 @@ final class CategoryController
         $this->categoryService->createForCooperative(
             (string) $cooperativeModel->getKey(),
             $data,
+            $request->user(),
         );
 
         return redirect()
@@ -139,7 +140,7 @@ final class CategoryController
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ]);
 
-        $this->categoryService->update($categoryModel, $data);
+        $this->categoryService->update($categoryModel, $data, $request->user());
 
         return redirect()
             ->route('backoffice.categories.index', [
@@ -149,6 +150,7 @@ final class CategoryController
     }
 
     public function destroy(
+        Request $request,
         string $cooperative,
         string $category,
     ): RedirectResponse {
@@ -162,7 +164,7 @@ final class CategoryController
 
         Gate::authorize('delete', $categoryModel);
 
-        $this->categoryService->delete($categoryModel);
+        $this->categoryService->delete($categoryModel, $request->user());
 
         return redirect()
             ->route('backoffice.categories.index', [
