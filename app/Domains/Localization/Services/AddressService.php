@@ -68,8 +68,9 @@ final class AddressService extends BaseService
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
         return DB::transaction(function () use ($actor, $owner, $address): Address {
-            User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
-            $target = Address::query()->whereKey($address->getKey())->where('user_id', $owner->getKey())->lockForUpdate()->firstOrFail();
+            $lockedOwner = User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
+            $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->getKey())->lockForUpdate()->firstOrFail();
             $previous = Address::query()->where('user_id', $owner->getKey())
                 ->where('is_primary', true)->where('id', '<>', $target->getKey())
                 ->lockForUpdate()->get();
@@ -91,8 +92,9 @@ final class AddressService extends BaseService
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
         DB::transaction(function () use ($actor, $owner, $address): void {
-            User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
-            $target = Address::query()->whereKey($address->getKey())->where('user_id', $owner->getKey())->lockForUpdate()->firstOrFail();
+            $lockedOwner = User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
+            $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->getKey())->lockForUpdate()->firstOrFail();
             $wasPrimary = $target->is_primary;
             $before = $this->snapshot($target);
             $target->forceFill(['is_primary' => false, 'deletion_source' => 'voluntary', 'deleted_by' => (string) $actor->getKey()])->save();
