@@ -250,7 +250,7 @@ final class MediaControllerTest extends TestCase
                 'owner_type' => 'product',
                 'owner_id' => (string) $product->getKey(),
                 'category' => 'product_image',
-                'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
+                'file' => \Illuminate\\Http\\UploadedFile::fake()->createWithContent(
                     'spoofed.jpg',
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
@@ -276,7 +276,7 @@ final class MediaControllerTest extends TestCase
                 'owner_type' => 'cooperative',
                 'owner_id' => (string) $cooperative->getKey(),
                 'category' => 'product_image',
-                'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
+                'file' => \Illuminate\\Http\\UploadedFile::fake()->createWithContent(
                     'not-an-image.pdf',
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
