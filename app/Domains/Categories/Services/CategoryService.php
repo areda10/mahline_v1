@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domains\Categories\Services;
 
-use App\Domains\Categories\Models\Category;
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Repositories\CategoryRepository;
 use App\Domains\Identity\Users\Models\User;
-use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Products\Models\Product;
+use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
