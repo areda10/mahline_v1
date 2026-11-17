@@ -276,6 +276,21 @@ final class ApiTokenServiceTest extends TestCase
         $this->travelBack();
     }
 
+    public function test_direct_sanctum_token_creation_also_enforces_the_ninety_day_lifetime(): void
+    {
+        $this->travelTo(now()->startOfSecond());
+
+        $user = User::factory()->create();
+        $created = $user->createToken('direct-sanctum-token');
+
+        self::assertEquals(
+            now()->addDays(PersonalAccessToken::EXPIRATION_DAYS),
+            $created->accessToken->fresh()->expires_at,
+        );
+
+        $this->travelBack();
+    }
+
     public function test_expired_token_metadata_is_inactive_even_when_not_revoked(): void
     {
         $user = User::factory()->create();
