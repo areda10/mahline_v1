@@ -15,6 +15,35 @@ use Illuminate\Support\Facades\Gate;
 
 final class UserApiTokenController
 {
+    public function storeForUser(
+        Request $request,
+        User $user,
+        ApiTokenService $service,
+    ): RedirectResponse {
+        Gate::authorize('viewAny', User::class);
+
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:1', 'max:255', 'not_regex:/^\\s*$/'],
+            'abilities' => ['sometimes', 'array', 'max:100'],
+            'abilities.*' => ['required', 'string', 'distinct'],
+        ]);
+
+        $newToken = $service->createForOwner(
+            owner: $user,
+            actor: $actor,
+            name: $validated['name'],
+            abilities: $validated['abilities'] ?? [],
+        );
+
+        return redirect()
+            ->route('root.backoffice.users.show', $user)
+            ->with('new_api_token', $newToken->plainTextToken)
+            ->with('success', 'La clé API a été créée. Copiez-la maintenant : elle ne sera plus affichée.');
+    }
+
     public function destroyFromBackOffice(
         Request $request,
         User $user,
