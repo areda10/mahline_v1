@@ -1,7 +1,7 @@
 # MAHLINE — Audit hiérarchie des rôles, périmètres et affectations
 
 > Branche auditée : `feature/Marketplace`
-> Date : 16 novembre 2026
+> Date : 17 novembre 2026
 > Statut : audit en cours, premières corrections appliquées. Ne pas fusionner.
 > Tests : non exécutés par l'assistant ; ils doivent être lancés localement avant validation.
 
@@ -43,14 +43,18 @@ Le client est un acteur commercial externe, distinct de l'utilisateur interne. I
 - Cela distingue déjà les parcours applicatifs, mais pas encore les modèles/tables/authentifications physiques. Ce point doit rester explicite dans la conception : la décision métier confirme un acteur client séparé, mais le choix d'un modèle/table séparé n'a pas encore été validé.
 
 ## 3. Matrice des droits métier
+> **Règle V1 prioritaire mise à jour le 17 novembre 2026 :** le tableau ci-dessous remplace les anciennes formulations autorisant super_admin à créer le premier cooperative_admin ou des comptes user. Le CRUD des comptes internes est réservé à `super_admin_root`. Les permissions d'invitation et de modification de fiche restent distinctes de la création/suppression de compte.
+
 
 | Opération | super_admin_root | super_admin | cooperative_admin | user |
 |---|---|---|---|---|
-| CRUD comptes super_admin | Oui | Non | Non | Non |
-| CRUD comptes cooperative_admin | Oui | Création du premier par coopérative ; lecture/modification dans le périmètre | Non ; ne peut même pas consulter les autres admins de sa coopérative | Non |
-| CRUD comptes user | Oui | Création/modification dans les coopératives assignées | Lecture/modification dans sa coopérative | Non |
-| Changer rôle d'un compte | Oui, hors root | Non | Non | Non |
-| Changer affectation d'un compte | Oui | Non | Non | Non |
+| CRUD comptes internes (création, suppression, restauration) | Oui | Non | Non | Non |
+| Changer le rôle ou l'affectation d'un compte | Oui, hors root | Non | Non | Non |
+| Consulter les fiches user | Toutes | Users des coopératives assignées | Users de sa coopérative | Soi-même |
+| Modifier la fiche d'un user | Tous les users internes | Users des coopératives assignées | Users de sa coopérative | Soi-même |
+| Modifier une fiche cooperative_admin | Oui | Non | Non | Non |
+| Modifier une fiche super_admin | Oui | Non | Non | Non |
+| Renvoyer une invitation à un compte pending | Oui | Comptes internes de son périmètre | Non | Non |
 | Affecter un super_admin à une coopérative | Oui uniquement | Non | Non | Non |
 | Créer une coopérative | Oui | Oui, affectation automatique au créateur | Non | Non |
 | Modifier une coopérative | Toutes les données non techniques/audit | Coopératives assignées, données non techniques/audit | Téléphone, email, adresse uniquement | Non |
@@ -70,7 +74,9 @@ Le client est un acteur commercial externe, distinct de l'utilisateur interne. I
 - Ajout des routes et de la vue d'édition de fiche utilisateur dans l'espace back-office.
 - Le listing cooperative_admin est limité aux comptes `user` ; l'accès direct à la fiche d'un autre cooperative_admin est refusé.
 - La Policy d'adresse interdit au cooperative_admin de modifier l'adresse d'un autre cooperative_admin.
-- Le service de création impose que le super_admin ne crée que le premier cooperative_admin d'une coopérative. La ligne coopérative est verrouillée pendant la vérification pour éviter deux créations concurrentes.
+- Décision V1 complémentaire validée le 17 novembre : seul `super_admin_root` crée et effectue le CRUD des comptes internes (`super_admin`, `cooperative_admin`, `user`). Les rôles inférieurs peuvent uniquement consulter/modifier les fiches user selon leur périmètre et exécuter les actions métier explicitement autorisées ; ils ne créent ni ne suppriment de comptes.
+- La permission `users.invite` est séparée de `users.create` : super_admin peut renvoyer une invitation pending dans son périmètre sans obtenir le droit de créer un compte.
+- Les droits de modification de fiche sont alignés entre `UserPolicy` et `UserManagementService` : super_admin et cooperative_admin ne modifient que les comptes `user` de leur périmètre.
 - Suppression du droit `cooperatives.delete` pour super_admin dans la matrice ; la Policy réserve la suppression de coopérative à Root.
 - Retrait de `audit.view` des matrices super_admin et cooperative_admin.
 - L'écran d'affectation Root ne propose plus les coopératives déjà affectées à un autre super_admin.
