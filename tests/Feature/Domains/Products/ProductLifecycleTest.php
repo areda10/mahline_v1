@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Products;
 
+use App\Domains\Categories\Models\Category;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Services\ProductService;
@@ -44,6 +45,10 @@ final class ProductLifecycleTest extends TestCase
     public function test_restoring_a_product_does_not_change_variant_states(): void
     {
         $product = Product::factory()->create(['is_active' => true]);
+        $category = Category::factory()
+            ->forCooperative((string) $product->cooperative_id)
+            ->create();
+        $product->categories()->attach($category);
         $activeVariant = ProductVariant::factory()->for($product)->create([
             'is_active' => true,
         ]);
