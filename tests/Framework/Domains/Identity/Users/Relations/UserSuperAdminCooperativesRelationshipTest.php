@@ -9,7 +9,6 @@ use App\Domains\Identity\Users\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class UserSuperAdminCooperativesRelationshipTest extends TestCase
