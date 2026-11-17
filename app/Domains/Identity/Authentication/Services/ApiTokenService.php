@@ -56,6 +56,10 @@ final class ApiTokenService extends BaseService
                 throw new RuntimeException('An API token can only be created by its owner.');
             }
 
+            if ($owner->hasAnyRole(['super_admin_root', 'customer'])) {
+                throw new RuntimeException('This account type cannot be managed through root API token workflows.');
+            }
+
             Gate::forUser($actor)->authorize('view', $owner);
         }
 
