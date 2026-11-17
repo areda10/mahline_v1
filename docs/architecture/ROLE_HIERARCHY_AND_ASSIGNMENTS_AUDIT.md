@@ -68,7 +68,7 @@ Le client est un acteur commercial externe, distinct de l'utilisateur interne. I
 ## 4. Écarts détectés et corrections déjà appliquées
 
 ### Corrigé dans cette série de commits
-- `UserManagementService::updateUserAccount()` n'était accessible qu'à Root : désormais, super_admin peut modifier les fiches cooperative_admin/user de son périmètre ; cooperative_admin peut modifier uniquement les fiches user de sa coopérative.
+- `UserManagementService::updateUserAccount()` autorise Root à gérer les fiches de tous les comptes internes ; super_admin et cooperative_admin peuvent modifier uniquement les fiches `user` de leur périmètre.
 - Les rôles et `cooperative_id` sont immuables pour super_admin et cooperative_admin lors de la modification d'une fiche.
 - Ajout de `UserPolicy::update()` avec le périmètre correspondant.
 - Ajout des routes et de la vue d'édition de fiche utilisateur dans l'espace back-office.
@@ -85,7 +85,7 @@ Le client est un acteur commercial externe, distinct de l'utilisateur interne. I
 
 ### À vérifier encore dans les tests locaux
 - Tests de Policy d'édition des fiches et de non-consultation des cooperative_admin pairs.
-- Tests de service de création du premier cooperative_admin, refus du second par super_admin et création multiple par Root.
+- Tests de création réservée à Root, refus de création par super_admin même dans son périmètre, et création multiple de cooperative_admin par Root.
 - Tests de contrainte de super_admin unique par coopérative.
 - Tests de routes et rendu de la nouvelle vue `backoffice.users.edit`.
 - Tests complets Identity, Cooperatives, puis suite complète MAHLINE et Pint.
