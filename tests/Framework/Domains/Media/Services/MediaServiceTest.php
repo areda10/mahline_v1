@@ -59,6 +59,39 @@ final class MediaServiceTest extends TestCase
         self::assertArrayNotHasKey('disk', $event->metadata ?? []);
     }
 
+    public function test_it_removes_stored_files_when_media_database_persistence_fails(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+
+        Media::creating(static function (): void {
+            throw new \RuntimeException('Simulated media persistence failure.');
+        });
+
+        try {
+            app(MediaService::class)->upload(
+                $actor,
+                $product,
+                UploadedFile::fake()->createWithContent(
+                    'rollback-proof.pdf',
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+                ),
+                'document',
+                'proof_of_origin',
+            );
+
+            self::fail('The simulated persistence failure should be rethrown.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame('Simulated media persistence failure.', $exception->getMessage());
+        }
+
+        self::assertSame(0, Media::query()->count());
+        self::assertSame([], Storage::disk('local')->allFiles('media'));
+    }
+
     public function test_soft_deleting_a_media_record_keeps_its_file_for_the_retention_period(): void
     {
         Storage::fake('local');
