@@ -64,7 +64,14 @@ final class SecurityEventServiceTest extends TestCase
             metadata: [
                 'attempts' => 5,
                 'password' => 'never-store',
-                'context' => ['otp' => '123456', 'source' => 'authentication'],
+                'accessToken' => 'never-store',
+                'apiTokenHash' => 'never-store',
+                'context' => [
+                    'otp' => '123456',
+                    'otpCode' => '654321',
+                    'sessionId' => 'never-store',
+                    'source' => 'authentication',
+                ],
             ],
         );
 

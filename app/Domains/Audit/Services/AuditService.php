@@ -7,6 +7,7 @@ namespace App\Domains\Audit\Services;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 
@@ -75,11 +76,12 @@ final class AuditService
 
     private function isSensitiveKey(string $key): bool
     {
-        $normalized = strtolower(str_replace(['-', ' '], '_', $key));
+        $normalized = Str::snake(str_replace(['-', ' '], '_', $key));
 
         return in_array($normalized, self::SENSITIVE_KEYS, true)
             || str_ends_with($normalized, '_password')
             || str_ends_with($normalized, '_token')
-            || str_ends_with($normalized, '_secret');
+            || str_ends_with($normalized, '_secret')
+            || str_ends_with($normalized, '_token_hash');
     }
 }

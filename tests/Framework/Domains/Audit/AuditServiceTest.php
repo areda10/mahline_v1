@@ -68,7 +68,11 @@ final class AuditServiceTest extends TestCase
                 'profile' => [
                     'email' => 'example@example.test',
                     'access_token' => 'must-not-persist',
+                    'accessToken' => 'must-not-persist',
+                    'plainTextToken' => 'must-not-persist',
+                    'apiTokenHash' => 'must-not-persist',
                     'otp' => '123456',
+                    'otpCode' => '654321',
                     'reset-token' => 'must-not-persist',
                 ],
             ],

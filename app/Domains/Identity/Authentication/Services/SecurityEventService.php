@@ -8,6 +8,7 @@ use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 
 final class SecurityEventService extends BaseService
@@ -55,7 +56,7 @@ final class SecurityEventService extends BaseService
         $safe = [];
         foreach ($metadata as $key => $value) {
             if (is_string($key)) {
-                $normalized = strtolower(str_replace(['-', ' '], '_', $key));
+                $normalized = Str::snake(str_replace(['-', ' '], '_', $key));
                 if (
                     in_array($normalized, self::SENSITIVE_KEYS, true)
                     || str_ends_with($normalized, '_password')
