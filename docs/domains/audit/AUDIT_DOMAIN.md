@@ -42,11 +42,11 @@ app(\App\Domains\Audit\Services\AuditService::class)->record(
 );
 ```
 
-Ne transmettez que les champs nécessaires. Le service filtre plusieurs clés de secrets connues, mais ce filtre n'est pas un substitut à la minimisation des données à la source.
+Ne transmettez que les champs nécessaires. Le service filtre récursivement les clés sensibles (mots de passe, tokens, secrets, OTP, codes de vérification, cookies et autorisations). Ce filtre ne remplace pas la minimisation des données à la source.
 
 ## Immutabilité et accès
 
-Les événements sont append-only au niveau des opérations Eloquent du modèle. Cette protection n'empêche pas un accès SQL direct ou une requête de masse via le Query Builder ; les droits de base de données et les procédures de maintenance doivent également protéger l'historique.
+Les événements sont append-only à trois niveaux : le modèle Eloquent interdit update/delete, des triggers MySQL rejettent aussi les mises à jour et suppressions SQL directes, et chaque événement est lié au précédent par SHA-256. La tête de chaîne est verrouillée transactionnellement dans `audit_chain_heads`, ce qui sérialise les écritures concurrentes. `AuditEventRepository::verifyIntegrity()` parcourt la chaîne complète et vérifie les empreintes et l'absence d'événements orphelins.
 
 La policy refuse les créations, modifications, suppressions et restaurations via les capacités d'autorisation. La consultation exige la permission `audit.view`; l'application doit ajouter cette permission à la matrice d'autorisation et aux rôles voulus avant d'exposer une interface ou une route.
 
@@ -58,7 +58,7 @@ Cette première phase fournit le contrat d'écriture commun. Elle ne branche pas
 
 - Ajouter `audit.view` à la matrice de permissions et décider précisément quels rôles la reçoivent.
 - Définir la politique de rétention, archivage et purge technique contrôlée.
-- Ajouter les tests d'intégration MySQL et les tests de politique selon la configuration réelle du projet.
+- Exécuter les tests d'intégration MySQL et les tests de politique dans l'environnement local avant validation V1.
 - Décider si l'IP et le user-agent sont nécessaires pour chaque type d'événement, compte tenu de la confidentialité.
 - Ajouter des intégrations explicites dans chaque domaine après validation de son service métier.
 
