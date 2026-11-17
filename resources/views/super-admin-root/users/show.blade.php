@@ -237,6 +237,13 @@
 @endif
 
 <section class="card" aria-labelledby="api-tokens-heading">
+    @if(session('new_api_token'))
+        <div class="alert alert-success" role="status">
+            <p>Copiez cette clé maintenant. Elle ne sera plus affichée après avoir quitté cette page.</p>
+            <textarea rows="3" readonly onclick="this.select()">{{ session('new_api_token') }}</textarea>
+        </div>
+    @endif
+
     <div class="page-header">
         <div>
             <h2 id="api-tokens-heading">Clés API de l’utilisateur</h2>
@@ -252,6 +259,32 @@
             </form>
         @endif
     </div>
+
+    @if($user->isAuthorized() && $activeApiTokenCount < $apiTokenLimit)
+        <form method="POST" action="{{ route('root.backoffice.users.api-tokens.store', $user) }}" class="form-grid">
+            @csrf
+            <label>Nom de la clé API
+                <input name="name" required maxlength="255" value="{{ old('name') }}" placeholder="Ex. intégration catalogue">
+            </label>
+            <fieldset>
+                <legend>Permissions accordées à cette clé</legend>
+                @forelse($apiTokenAbilities as $ability)
+                    <label>
+                        <input type="checkbox" name="abilities[]" value="{{ $ability }}" @checked(in_array($ability, old('abilities', []), true))>
+                        {{ $ability }}
+                    </label>
+                @empty
+                    <p class="muted">Aucune permission active n’est attribuée à cet utilisateur.</p>
+                @endforelse
+            </fieldset>
+            <p class="muted">Jetons actifs : {{ $activeApiTokenCount }} / {{ $apiTokenLimit }}. Expiration : 90 jours.</p>
+            <button class="button" type="submit">Créer une clé API pour cet utilisateur</button>
+        </form>
+    @elseif($user->isAuthorized())
+        <p class="muted">La limite de clés API actives de cet utilisateur est atteinte ({{ $apiTokenLimit }}).</p>
+    @else
+        <p class="muted">Une clé API ne peut être créée que pour un compte actif et vérifié.</p>
+    @endif
 
     @if($apiTokens->isEmpty())
         <div class="empty">Aucune clé API créée pour cet utilisateur.</div>
