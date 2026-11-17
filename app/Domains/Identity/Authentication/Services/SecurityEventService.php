@@ -62,6 +62,7 @@ final class SecurityEventService extends BaseService
                     || str_ends_with($normalized, '_password')
                     || str_ends_with($normalized, '_token')
                     || str_ends_with($normalized, '_secret')
+                    || str_ends_with($normalized, '_token_hash')
                 ) {
                     continue;
                 }
