@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Domains\Categories\Services;
 
 use App\Domains\Categories\Models\Category;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Categories\Repositories\CategoryRepository;
+use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Products\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,24 +19,27 @@ final class CategoryService
 {
     public function __construct(
         private readonly CategoryRepository $repository,
+        private readonly AuditService $audit,
     ) {}
 
-    public function create(array $attributes): Category
+    public function create(array $attributes, ?User $actor = null): Category
     {
-        return $this->createGlobal($attributes);
+        return $this->createGlobal($attributes, $actor);
     }
 
     public function createForCooperative(
         string $cooperativeId,
         array $attributes,
+        ?User $actor = null,
     ): Category {
         return DB::transaction(function () use (
             $cooperativeId,
             $attributes,
+            $actor,
         ): Category {
             $attributes['cooperative_id'] = $cooperativeId;
 
-            return $this->createInScope($attributes, $cooperativeId);
+            return $this->createInScope($attributes, $cooperativeId, $actor);
         });
     }
 
@@ -41,18 +47,19 @@ final class CategoryService
      * Cette méthode doit être réservée à l'administration MAHLINE
      * via l'autorisation du contrôleur ou la Policy.
      */
-    public function createGlobal(array $attributes): Category
+    public function createGlobal(array $attributes, ?User $actor = null): Category
     {
-        return DB::transaction(function () use ($attributes): Category {
+        return DB::transaction(function () use ($attributes, $actor): Category {
             $attributes['cooperative_id'] = null;
 
-            return $this->createInScope($attributes, null);
+            return $this->createInScope($attributes, null, $actor);
         });
     }
 
     private function createInScope(
         array $attributes,
         ?string $cooperativeId,
+        ?User $actor = null,
     ): Category {
         $name = trim((string) ($attributes['name'] ?? ''));
 
@@ -77,17 +84,31 @@ final class CategoryService
         $attributes['is_active'] = (bool) ($attributes['is_active'] ?? true);
         $attributes['sort_order'] = (int) ($attributes['sort_order'] ?? 0);
 
-        return $this->repository->create($attributes);
+        $category = $this->repository->create($attributes);
+
+        if ($actor !== null) {
+            $category->forceFill(['created_by' => (string) $actor->getKey()])->save();
+        }
+
+        $this->recordCategory($actor, $category, 'category.created', 'created',
+            newValues: $this->snapshotCategory($category));
+
+        return $category;
     }
 
     public function update(
         Category $category,
         array $attributes,
+        ?User $actor = null,
     ): Category {
         return DB::transaction(function () use (
             $category,
             $attributes,
+            $actor,
         ): Category {
+            $category = Category::query()->whereKey($category->getKey())->lockForUpdate()->firstOrFail();
+            $before = $this->snapshotCategory($category);
+
             // Le périmètre d'une catégorie ne change jamais via update.
             unset($attributes['cooperative_id']);
 
@@ -131,7 +152,18 @@ final class CategoryService
                 );
             }
 
-            return $this->repository->update($category, $attributes);
+            $updated = $this->repository->update($category, $attributes);
+
+            if ($actor !== null) {
+                $updated->forceFill(['updated_by' => (string) $actor->getKey()])->save();
+            }
+
+            if ($before !== $this->snapshotCategory($updated)) {
+                $this->recordCategory($actor, $updated, 'category.updated', 'updated',
+                    oldValues: $before, newValues: $this->snapshotCategory($updated));
+            }
+
+            return $updated;
         });
     }
 
@@ -252,16 +284,16 @@ final class CategoryService
         return $slug;
     }
 
-    public function delete(Category $category): void
+    public function delete(Category $category, ?User $actor = null): void
     {
-        DB::transaction(function () use ($category): void {
+        DB::transaction(function () use ($category, $actor): void {
             $lockedCategory = Category::query()
                 ->whereKey($category->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
             if ($lockedCategory->isGlobal()) {
-                $this->deleteGlobalBranch($lockedCategory);
+                $this->deleteGlobalBranch($lockedCategory, $actor);
 
                 return;
             }
@@ -271,6 +303,7 @@ final class CategoryService
             $this->deleteLocalBranch(
                 $lockedCategory,
                 $cooperativeId,
+                $actor,
             );
         });
     }
@@ -284,6 +317,7 @@ final class CategoryService
     private function deleteLocalBranch(
         Category $category,
         string $cooperativeId,
+        ?User $actor = null,
     ): void {
         $categories = $this->collectDescendants($category);
 
@@ -307,10 +341,17 @@ final class CategoryService
         $productIds = $this->detachCategoryProducts($categoryIds);
 
         foreach ($categories->reverse() as $item) {
+            $before = $this->snapshotCategory($item);
+            if ($actor !== null) {
+                $item->deleted_by = (string) $actor->getKey();
+                $item->save();
+            }
             $item->delete();
+            $this->recordCategory($actor, $item, 'category.deleted', 'deleted',
+                oldValues: $before, newValues: ['deleted' => true]);
         }
 
-        $this->deactivateProductsWithoutActiveCategories($productIds);
+        $this->deactivateProductsWithoutActiveCategories($productIds, $actor);
     }
 
     /**
@@ -320,7 +361,7 @@ final class CategoryService
      * Les enfants locaux directs de chaque catégorie globale supprimée
      * sont conservés et deviennent des racines.
      */
-    private function deleteGlobalBranch(Category $category): void
+    private function deleteGlobalBranch(Category $category, ?User $actor = null): void
     {
         $globalCategories = collect();
         $visited = [];
@@ -336,21 +377,37 @@ final class CategoryService
             ->all();
 
         // Préserver les catégories locales et leurs sous-arbres.
-        Category::query()
+        $localChildren = Category::query()
             ->whereIn('parent_id', $globalIds)
             ->whereNotNull('cooperative_id')
-            ->update([
-                'parent_id' => null,
-                'updated_at' => now(),
-            ]);
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($localChildren as $localChild) {
+            $before = $this->snapshotCategory($localChild);
+            $localChild->parent_id = null;
+            if ($actor !== null) {
+                $localChild->updated_by = (string) $actor->getKey();
+            }
+            $localChild->save();
+            $this->recordCategory($actor, $localChild, 'category.parent_detached', 'parent_detached',
+                oldValues: $before, newValues: $this->snapshotCategory($localChild));
+        }
 
         $productIds = $this->detachCategoryProducts($globalIds);
 
         foreach ($globalCategories->reverse() as $item) {
+            $before = $this->snapshotCategory($item);
+            if ($actor !== null) {
+                $item->deleted_by = (string) $actor->getKey();
+                $item->save();
+            }
             $item->delete();
+            $this->recordCategory($actor, $item, 'category.deleted', 'deleted',
+                oldValues: $before, newValues: ['deleted' => true]);
         }
 
-        $this->deactivateProductsWithoutActiveCategories($productIds);
+        $this->deactivateProductsWithoutActiveCategories($productIds, $actor);
     }
 
     /**
@@ -478,6 +535,7 @@ final class CategoryService
      */
     private function deactivateProductsWithoutActiveCategories(
         array $productIds,
+        ?User $actor = null,
     ): void {
         if ($productIds === []) {
             return;
@@ -494,8 +552,78 @@ final class CategoryService
         foreach ($products as $product) {
             if ($product->is_active) {
                 $product->is_active = false;
+                if ($actor !== null) {
+                    $product->updated_by = (string) $actor->getKey();
+                }
                 $product->save();
+                $this->recordProduct($actor, $product, 'product.deactivated_no_active_categories',
+                    'deactivated', oldValues: ['is_active' => true], newValues: ['is_active' => false]);
             }
         }
     }
+
+    /** @return array<string, mixed> */
+    private function snapshotCategory(Category $category): array
+    {
+        return [
+            'cooperative_id' => $category->cooperative_id === null ? null : (string) $category->cooperative_id,
+            'parent_id' => $category->parent_id === null ? null : (string) $category->parent_id,
+            'name' => $category->name,
+            'slug' => $category->slug,
+            'description' => $category->description,
+            'is_active' => (bool) $category->is_active,
+            'sort_order' => (int) $category->sort_order,
+        ];
+    }
+
+    private function recordCategory(
+        ?User $actor,
+        Category $category,
+        string $eventKey,
+        string $action,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+    ): void {
+        if ($actor === null) {
+            return;
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: $category->cooperative_id === null ? null : (string) $category->cooperative_id,
+            subjectType: Category::class,
+            subjectId: (string) $category->getKey(),
+            oldValues: $oldValues,
+            newValues: $newValues,
+        ));
+    }
+
+    private function recordProduct(
+        ?User $actor,
+        Product $product,
+        string $eventKey,
+        string $action,
+        ?array $oldValues = null,
+        ?array $newValues = null,
+    ): void {
+        if ($actor === null) {
+            return;
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: (string) $product->cooperative_id,
+            subjectType: Product::class,
+            subjectId: (string) $product->getKey(),
+            oldValues: $oldValues,
+            newValues: $newValues,
+        ));
+    }
+
 }
