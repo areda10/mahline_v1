@@ -169,7 +169,7 @@ final class UserPolicyTest extends TestCase
     {
         $root = $this->userWithRoleAndPermissions(
             'super_admin_root',
-            ['users.create'],
+            ['users.invite'],
         );
 
         $target = User::factory()->create([
@@ -188,7 +188,7 @@ final class UserPolicyTest extends TestCase
 
         $admin = $this->userWithRoleAndPermissions(
             'super_admin',
-            ['users.create'],
+            ['users.invite'],
         );
         $admin->cooperatives()->attach($cooperative->getKey());
 
@@ -209,7 +209,7 @@ final class UserPolicyTest extends TestCase
 
         $admin = $this->userWithRoleAndPermissions(
             'super_admin',
-            ['users.create'],
+            ['users.invite'],
         );
 
         $target = User::factory()->create([
@@ -228,7 +228,7 @@ final class UserPolicyTest extends TestCase
 
         $admin = $this->userWithRoleAndPermissions(
             'cooperative_admin',
-            ['users.create'],
+            ['users.invite'],
             ['cooperative_id' => $cooperative->getKey()],
         );
 
@@ -246,7 +246,7 @@ final class UserPolicyTest extends TestCase
     {
         $actor = $this->userWithRoleAndPermissions(
             'user',
-            ['users.create'],
+            ['users.invite'],
         );
 
         $target = User::factory()->create([
@@ -262,7 +262,7 @@ final class UserPolicyTest extends TestCase
     {
         $root = $this->userWithRoleAndPermissions(
             'super_admin_root',
-            ['users.create'],
+            ['users.invite'],
         );
 
         $target = User::factory()->create([
