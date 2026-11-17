@@ -18,7 +18,7 @@ final class SecurityEventService extends BaseService
         'temporary_password', 'password_hash', 'token', 'access_token',
         'refresh_token', 'plain_text_token', 'reset_token', 'verification_token',
         'secret', 'client_secret', 'api_key', 'authorization', 'cookie',
-        'set-cookie', 'session', 'session_id', 'session_secret', 'remember_token',
+        'set_cookie', 'session', 'session_id', 'session_secret', 'remember_token',
         'private_key', 'otp', 'otp_code', 'one_time_password', 'recovery_code',
         'verification_code', 'email_verification_code', 'pin',
     ];
