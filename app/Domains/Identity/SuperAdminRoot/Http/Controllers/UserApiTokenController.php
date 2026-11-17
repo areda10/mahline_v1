@@ -21,6 +21,7 @@ final class UserApiTokenController
         ApiTokenService $service,
     ): RedirectResponse {
         Gate::authorize('viewAny', User::class);
+        $this->assertManageableTarget($user);
 
         $actor = $request->user();
         abort_unless($actor instanceof User, 403);
@@ -138,5 +139,9 @@ final class UserApiTokenController
             'message' => 'All active API tokens have been revoked.',
             'revoked_count' => $count,
         ]);
+    }
+    private function assertManageableTarget(User $user): void
+    {
+        abort_if($user->hasAnyRole(['super_admin_root', 'customer']), 404);
     }
 }
