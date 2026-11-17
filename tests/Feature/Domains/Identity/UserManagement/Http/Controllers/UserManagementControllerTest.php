@@ -101,7 +101,7 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_sees_resend_invitation_button_for_pending_user(): void
     {
-        $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
+        $root = $this->actor('super_admin_root', ['users.view', 'users.invite']);
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -117,7 +117,7 @@ final class UserManagementControllerTest extends TestCase
     {
         $cooperative = Cooperative::factory()->create();
 
-        $actor = $this->actor('super_admin', ['users.view', 'users.create']);
+        $actor = $this->actor('super_admin', ['users.view', 'users.invite']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
         $target = User::factory()->create([
@@ -135,7 +135,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_assigned_super_admin_cannot_resend_verification_for_an_active_unverified_user(): void
     {
         $cooperative = Cooperative::factory()->create();
-        $actor = $this->actor('super_admin', ['users.view', 'users.create']);
+        $actor = $this->actor('super_admin', ['users.view', 'users.invite']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
         $target = User::factory()->create([
@@ -155,7 +155,7 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_does_not_see_resend_invitation_button_for_active_user(): void
     {
-        $root = $this->actor('super_admin_root', ['users.view', 'users.create']);
+        $root = $this->actor('super_admin_root', ['users.view', 'users.invite']);
         $target = User::factory()->create([
             'status' => UserStatus::Active,
         ]);
@@ -1207,7 +1207,7 @@ final class UserManagementControllerTest extends TestCase
     {
         Notification::fake();
 
-        $root = $this->actor('super_admin_root', ['users.create']);
+        $root = $this->actor('super_admin_root', ['users.invite']);
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -1238,7 +1238,7 @@ final class UserManagementControllerTest extends TestCase
 
         $cooperative = Cooperative::factory()->create();
 
-        $actor = $this->actor('super_admin', ['users.create']);
+        $actor = $this->actor('super_admin', ['users.invite']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
         $target = User::factory()->create([
@@ -1268,7 +1268,7 @@ final class UserManagementControllerTest extends TestCase
         $assigned = Cooperative::factory()->create();
         $unassigned = Cooperative::factory()->create();
 
-        $actor = $this->actor('super_admin', ['users.create']);
+        $actor = $this->actor('super_admin', ['users.invite']);
         $actor->cooperatives()->attach($assigned->getKey());
 
         $target = User::factory()->create([
@@ -1301,7 +1301,7 @@ final class UserManagementControllerTest extends TestCase
         ]);
 
         foreach (['cooperative_admin', 'user'] as $roleSlug) {
-            $actor = $this->actor($roleSlug, ['users.create'], [
+            $actor = $this->actor($roleSlug, ['users.invite'], [
                 'cooperative_id' => $cooperative->getKey(),
             ]);
 
@@ -1345,7 +1345,7 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_failed_resend_keeps_user_pending_and_revokes_new_invitation(): void
     {
-        $root = $this->actor('super_admin_root', ['users.create']);
+        $root = $this->actor('super_admin_root', ['users.invite']);
 
         $target = User::factory()->create([
             'status' => UserStatus::Pending,
