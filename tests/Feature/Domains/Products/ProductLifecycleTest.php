@@ -25,7 +25,7 @@ final class ProductLifecycleTest extends TestCase
         ]);
         $inactiveVariant = ProductVariant::factory()->for($product)->inactive()->create();
 
-        $service = new ProductService(new ProductRepository());
+        $service = app(ProductService::class);
 
         $this->assertTrue($service->delete($product));
 
