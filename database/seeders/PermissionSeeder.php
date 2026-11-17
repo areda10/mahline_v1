@@ -24,7 +24,8 @@ final class PermissionSeeder extends Seeder
             // User management
             'users.view' => 'Consulter les utilisateurs',
             'users.update' => 'Modifier les fiches et adresses des utilisateurs dans le périmètre autorisé',
-            'users.create' => 'Créer les utilisateurs',
+            'users.create' => 'Créer les comptes internes (réservé à super_admin_root)',
+            'users.invite' => 'Envoyer et renvoyer les invitations de compte',
             'users.activate' => 'Activer les utilisateurs',
             'users.deactivate' => 'Désactiver les utilisateurs',
             'users.suspend' => 'Suspendre les utilisateurs',
