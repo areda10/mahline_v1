@@ -6,6 +6,8 @@ namespace Tests\Framework\Domains\Categories\Services;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Services\CategoryService;
+use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -39,6 +41,26 @@ final class CategoryServiceTest extends TestCase
             'id' => $category->getKey(),
             'slug' => 'bien-etre',
         ]);
+    }
+
+    public function test_category_creation_and_deletion_are_audited_with_actor(): void
+    {
+        $actor = User::factory()->create();
+        $category = $this->service->createGlobal([
+            'name' => 'Catégorie auditée',
+            'slug' => 'categorie-auditee',
+        ], $actor);
+
+        self::assertSame((string) $actor->getKey(), $category->fresh()->created_by);
+
+        $this->service->delete($category, $actor);
+
+        self::assertSoftDeleted('categories', ['id' => $category->getKey()]);
+        self::assertSame((string) $actor->getKey(), $category->fresh()->deleted_by);
+        self::assertSame(2, AuditEvent::query()
+            ->where('subject_type', Category::class)
+            ->where('subject_id', $category->getKey())
+            ->count());
     }
 
     public function test_service_creates_child_category(): void
