@@ -72,7 +72,6 @@ final class LoginHistoryFactory extends Factory
              */
             'created_by' => null,
 
-            'updated_by' => null,
         ];
     }
 
