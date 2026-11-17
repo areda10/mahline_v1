@@ -93,6 +93,7 @@ final class ProductController
         $product = $this->productService->create(
             $cooperativeId,
             $data,
+            $request->user(),
         );
 
         return redirect()
@@ -179,6 +180,7 @@ final class ProductController
             $productModel,
             $cooperativeId,
             $data,
+            $request->user(),
         );
 
         return redirect()
@@ -190,6 +192,7 @@ final class ProductController
     }
 
     public function destroy(
+        Request $request,
         string $cooperative,
         string $product,
     ): RedirectResponse {
@@ -202,7 +205,7 @@ final class ProductController
         Gate::authorize('delete', $productModel);
 
         // ProductService applique la suppression logique (SoftDeletes).
-        $this->productService->delete($productModel);
+        $this->productService->delete($productModel, $request->user());
 
         return redirect()
             ->route('backoffice.products.index', [
@@ -212,6 +215,7 @@ final class ProductController
     }
 
     public function restore(
+        Request $request,
         string $cooperative,
         string $product,
     ): RedirectResponse {
@@ -223,7 +227,7 @@ final class ProductController
 
         Gate::authorize('restore', $productModel);
 
-        $this->productService->restore($productModel);
+        $this->productService->restore($productModel, $request->user());
 
         return redirect()
             ->route('backoffice.products.show', [
@@ -244,6 +248,7 @@ final class ProductController
     }
 
     public function reactivate(
+        Request $request,
         string $cooperative,
         string $product,
     ): RedirectResponse {
@@ -256,7 +261,7 @@ final class ProductController
 
         Gate::authorize('reactivate', $productModel);
 
-        $this->productService->reactivate($productModel);
+        $this->productService->reactivate($productModel, $request->user());
 
         return redirect()
             ->route('backoffice.products.show', [
