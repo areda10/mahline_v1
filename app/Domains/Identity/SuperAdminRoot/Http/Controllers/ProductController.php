@@ -82,7 +82,7 @@ final class ProductController
         $data['category_ids'] ??= [];
         $data['catalog_ids'] ??= [];
 
-        $product = $this->productService->create($cooperativeId, $data);
+        $product = $this->productService->create($cooperativeId, $data, $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.products.show', [
@@ -151,7 +151,7 @@ final class ProductController
             'catalog_ids.*' => ['required', 'string', 'max:26', 'distinct'],
         ]);
 
-        $this->productService->update($item, $cooperativeId, $data);
+        $this->productService->update($item, $cooperativeId, $data, $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.products.show', [
@@ -168,7 +168,7 @@ final class ProductController
         $cooperativeId = (string) $coop->getKey();
         $item = $this->productRepository->findForCooperativeOrFail($product, $cooperativeId);
         Gate::authorize('delete', $item);
-        $this->productService->delete($item);
+        $this->productService->delete($item, $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.products.index', [
@@ -184,7 +184,7 @@ final class ProductController
         $cooperativeId = (string) $coop->getKey();
         $item = $this->productRepository->findForCooperativeOrFail($product, $cooperativeId);
         Gate::authorize('reactivate', $item);
-        $this->productService->reactivate($item);
+        $this->productService->reactivate($item, $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.products.show', [
@@ -201,7 +201,7 @@ final class ProductController
         $cooperativeId = (string) $coop->getKey();
         $item = $this->productRepository->findTrashedForCooperativeOrFail($product, $cooperativeId);
         Gate::authorize('restore', $item);
-        $this->productService->restore($item);
+        $this->productService->restore($item, $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.products.show', [
