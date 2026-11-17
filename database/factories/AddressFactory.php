@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domains\Countries\Models\Country;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Address>
- */
 final class AddressFactory extends Factory
 {
     protected $model = Address::class;
@@ -22,12 +18,9 @@ final class AddressFactory extends Factory
             'number' => fake()->optional()->buildingNumber(),
             'street' => fake()->streetAddress(),
             'floor' => fake()->optional()->secondaryAddress(),
-            'address_line_1' => fake()->streetAddress(),
-            'address_line_2' => fake()->optional()->secondaryAddress(),
             'postal_code' => fake()->optional()->postcode(),
             'city' => fake()->city(),
-            'region' => fake()->optional()->state(),
-            'state' => fake()->optional()->state(),
+            'region' => fake()->optional()->randomElement(\App\Domains\Localization\Enums\MoroccanRegion::values()),
             'country_id' => Country::query()->firstOrCreate(
                 ['code' => 'MA'],
                 [
@@ -40,10 +33,27 @@ final class AddressFactory extends Factory
                     'is_active' => true,
                 ],
             )->getKey(),
-            'user_id' => User::factory(),
+            'user_id' => null,
             'cooperative_id' => null,
+            'is_primary' => true,
             'latitude' => fake()->optional()->latitude(),
             'longitude' => fake()->optional()->longitude(),
         ];
+    }
+
+    public function forUser(\App\Domains\Identity\Users\Models\User $user): static
+    {
+        return $this->state(fn (): array => [
+            'user_id' => $user->getKey(),
+            'cooperative_id' => null,
+        ]);
+    }
+
+    public function forCooperative(\App\Domains\Cooperatives\Models\Cooperative $cooperative): static
+    {
+        return $this->state(fn (): array => [
+            'user_id' => null,
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
     }
 }

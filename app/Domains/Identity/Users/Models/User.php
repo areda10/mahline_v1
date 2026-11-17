@@ -40,77 +40,48 @@ final class User extends BaseModel implements AuthenticatableContract
     use Notifiable;
     use SoftDeletes;
 
-    /**
-     * The table associated with the model.
-     */
     protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'display_name',
-        'email',
-        'telephone',
-        'password',
-        'status',
-        'locale',
-        'timezone',
-        'cooperative_id',
+        'first_name', 'last_name', 'display_name', 'email', 'telephone',
+        'password', 'status', 'locale', 'timezone', 'cooperative_id',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected function casts(): array
     {
         return [
-            'status' => UserStatus::class,
-            'email_verified_at' => 'datetime',
-            'must_change_password' => 'boolean',
-            'password' => 'hashed',
-            'deleted_at' => 'datetime',
-            'emergency_locked_at' => 'datetime',
+            'status' => UserStatus::class, 'email_verified_at' => 'datetime',
+            'must_change_password' => 'boolean', 'password' => 'hashed',
+            'deleted_at' => 'datetime', 'emergency_locked_at' => 'datetime',
         ];
     }
 
-    /**
-     * Call factory
-     */
     protected static function newFactory(): Factory
     {
         return UserFactory::new();
     }
 
-    /**
-     * Relation btw User and Role
-     */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Role::class,
-            'user_role',
-            'user_id',
-            'role_id',
-        );
+        return $this->belongsToMany(Role::class, 'user_role', 'user_id', 'role_id');
     }
 
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class, 'user_id')->orderBy('created_at')->orderBy('id');
+    }
+
+    public function primaryAddress(): HasOne
+    {
+        return $this->hasOne(Address::class, 'user_id')->where('is_primary', true);
+    }
+
+    /** @deprecated Use addresses() or primaryAddress(). */
     public function address(): HasOne
     {
-        return $this->hasOne(
-            Address::class,
-            'user_id',
-        );
+        return $this->primaryAddress();
     }
 
     public function knownDevices(): HasMany
@@ -123,26 +94,15 @@ final class User extends BaseModel implements AuthenticatableContract
         return $this->hasMany(AuthenticationSession::class, 'user_id');
     }
 
-    // reste inchangée pour cooperative_admin / user.
     public function cooperative(): BelongsTo
     {
-        return $this->belongsTo(
-            Cooperative::class,
-            'cooperative_id',
-        );
+        return $this->belongsTo(Cooperative::class, 'cooperative_id');
     }
 
-    // sera réservée au super_admin.
     public function cooperatives(): BelongsToMany
     {
-        return $this->belongsToMany(
-            Cooperative::class,
-            'super_admin_cooperative',
-            'super_admin_id',
-            'cooperative_id',
-        )
-            ->using(SuperAdminCooperative::class)
-            ->withTimestamps();
+        return $this->belongsToMany(Cooperative::class, 'super_admin_cooperative', 'super_admin_id', 'cooperative_id')
+            ->using(SuperAdminCooperative::class)->withTimestamps();
     }
 
     public function media(): MorphMany
@@ -153,14 +113,11 @@ final class User extends BaseModel implements AuthenticatableContract
     public function profileImage(): MorphOne
     {
         return $this->morphOne(Media::class, 'mediable')
-            ->where('category', 'profile_image')
-            ->where('is_primary', true);
+            ->where('category', 'profile_image')->where('is_primary', true);
     }
 
     public function documents(): MorphMany
     {
-        return $this->media()->where('category', 'document')
-            ->orderBy('sort_order')
-            ->orderBy('created_at');
+        return $this->media()->where('category', 'document')->orderBy('sort_order')->orderBy('created_at');
     }
 }

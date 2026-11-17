@@ -29,24 +29,11 @@ final class Cooperative extends BaseModel
 
     protected $table = 'cooperatives';
 
-    protected $fillable = [
-        'name',
-        'rib',
-        'tax_id',
-        'address_id',
-        'phone',
-        'email',
-        'rc',
-        'ice',
-        'status',
-    ];
+    protected $fillable = ['name', 'rib', 'tax_id', 'phone', 'email', 'rc', 'ice', 'status'];
 
     protected function casts(): array
     {
-        return [
-            'status' => CooperativeStatus::class,
-            'deleted_at' => 'datetime',
-        ];
+        return ['status' => CooperativeStatus::class, 'deleted_at' => 'datetime'];
     }
 
     protected static function newFactory(): Factory
@@ -54,26 +41,17 @@ final class Cooperative extends BaseModel
         return CooperativeFactory::new();
     }
 
-    /**
-     * Restrict cooperative queries to the records visible to the given user.
-     */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if (! $user->isAuthorized()) {
             return $query->whereRaw('1 = 0');
         }
-
         if ($user->hasRole('super_admin_root')) {
             return $query;
         }
-
         if ($user->hasRole('super_admin')) {
-            return $query->whereIn(
-                $this->getQualifiedKeyName(),
-                $user->cooperatives()->select('cooperatives.id'),
-            );
+            return $query->whereIn($this->getQualifiedKeyName(), $user->cooperatives()->select('cooperatives.id'));
         }
-
         if ($user->hasAnyRole(['cooperative_admin', 'user']) && $user->cooperative_id !== null) {
             return $query->where($this->getQualifiedKeyName(), $user->cooperative_id);
         }
@@ -81,19 +59,11 @@ final class Cooperative extends BaseModel
         return $query->whereRaw('1 = 0');
     }
 
-    /**
-     * Products owned by this cooperative.
-     *
-     * ProductVariant ownership is inherited through Product::cooperative_id.
-     */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'cooperative_id');
     }
 
-    /**
-     * Active products owned by this cooperative.
-     */
     public function activeProducts(): HasMany
     {
         return $this->products()->where('is_active', true);
@@ -101,60 +71,33 @@ final class Cooperative extends BaseModel
 
     public function settings(): HasOne
     {
-        return $this->hasOne(
-            CooperativeSettings::class,
-            'cooperative_id',
-        );
+        return $this->hasOne(CooperativeSettings::class, 'cooperative_id');
     }
 
     public function address(): HasOne
     {
-        return $this->hasOne(
-            Address::class,
-            'cooperative_id',
-        );
+        return $this->hasOne(Address::class, 'cooperative_id')->where('is_primary', true);
     }
 
-    /**
-     * Internal accounts attached to this cooperative.
-     */
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'cooperative_id');
     }
 
-    /**
-     * Cooperative administrators attached to this cooperative.
-     */
     public function cooperativeAdmins(): HasMany
     {
-        return $this->users()->whereHas(
-            'roles',
-            static fn ($query) => $query->where('slug', 'cooperative_admin'),
-        );
+        return $this->users()->whereHas('roles', static fn ($query) => $query->where('slug', 'cooperative_admin'));
     }
 
-    /**
-     * Operational users attached to this cooperative.
-     */
     public function members(): HasMany
     {
-        return $this->users()->whereHas(
-            'roles',
-            static fn ($query) => $query->where('slug', 'user'),
-        );
+        return $this->users()->whereHas('roles', static fn ($query) => $query->where('slug', 'user'));
     }
 
     public function superAdmins(): BelongsToMany
     {
-        return $this->belongsToMany(
-            User::class,
-            'super_admin_cooperative',
-            'cooperative_id',
-            'super_admin_id',
-        )
-            ->using(SuperAdminCooperative::class)
-            ->withTimestamps();
+        return $this->belongsToMany(User::class, 'super_admin_cooperative', 'cooperative_id', 'super_admin_id')
+            ->using(SuperAdminCooperative::class)->withTimestamps();
     }
 
     public function media(): MorphMany
@@ -165,21 +108,16 @@ final class Cooperative extends BaseModel
     public function logo(): MorphOne
     {
         return $this->morphOne(Media::class, 'mediable')
-            ->where('category', 'cooperative_logo')
-            ->where('is_primary', true);
+            ->where('category', 'cooperative_logo')->where('is_primary', true);
     }
 
     public function photos(): MorphMany
     {
-        return $this->media()->where('category', 'cooperative_photo')
-            ->orderBy('sort_order')
-            ->orderBy('created_at');
+        return $this->media()->where('category', 'cooperative_photo')->orderBy('sort_order')->orderBy('created_at');
     }
 
     public function documents(): MorphMany
     {
-        return $this->media()->where('category', 'document')
-            ->orderBy('sort_order')
-            ->orderBy('created_at');
+        return $this->media()->where('category', 'document')->orderBy('sort_order')->orderBy('created_at');
     }
 }

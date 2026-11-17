@@ -15,6 +15,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -22,218 +23,186 @@ use RuntimeException;
 
 final class AddressService extends BaseService
 {
-    private const WRITABLE_FIELDS = [
-        'number',
-        'street',
-        'floor',
-        'postal_code',
-        'city',
-        'region',
-        'latitude',
-        'longitude',
-    ];
+    private const WRITABLE_FIELDS = ['number', 'street', 'floor', 'postal_code', 'city', 'region', 'latitude', 'longitude'];
 
-    public function __construct(
-        private readonly AuditService $audit,
-    ) {}
+    public function __construct(private readonly AuditService $audit) {}
 
-    /** @param array<string, mixed> $attributes */
     public function createForUser(User $actor, User $owner, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
-
         return DB::transaction(function () use ($actor, $owner, $attributes): Address {
-            $lockedOwner = User::query()
-                ->whereKey($owner->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
-
-            if ($lockedOwner->address()->exists()) {
-                throw new InvalidArgumentException('This user already has a personal address.');
+            $locked = User::query()->lockForUpdate()->findOrFail($owner->getKey());
+            Gate::forUser($actor)->authorize('updateUserAddress', $locked);
+            $limit = $locked->hasRole('customer') ? 5 : 1;
+            $count = Address::query()->where('user_id', $locked->getKey())->count();
+            if ($count >= $limit) {
+                throw ValidationException::withMessages(['address' => "La limite de {$limit} adresse(s) active(s) est atteinte."]);
             }
-
-            $validated = $this->validatedAttributes($attributes);
-            $address = $lockedOwner->address()->make(
-                $this->withLegacyAddressFields($validated),
-            );
-            $address->forceFill([
-                'country_id' => $this->moroccoCountry()->getKey(),
-                'created_by' => (string) $actor->getKey(),
-            ])->save();
-
-            $this->recordAddressAudit(
-                actor: $actor,
-                address: $address,
-                action: 'created',
-                eventKey: 'localization.address.created',
-                newValues: $this->snapshot($address),
-            );
-
-            return $address;
+            $address = new Address($this->validatedAttributes($attributes));
+            $address->user_id = $locked->getKey();
+            $address->country_id = $this->moroccoCountry()->getKey();
+            $address->is_primary = $count === 0;
+            $address->created_by = (string) $actor->getKey();
+            $address->save();
+            $this->record($actor, $address, 'created', 'localization.address.created', newValues: $this->snapshot($address));
+            return $address->load('country');
         });
     }
 
-    /** @param array<string, mixed> $attributes */
     public function updateForUser(User $actor, User $owner, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
-
         return DB::transaction(function () use ($actor, $owner, $attributes): Address {
-            $lockedOwner = User::query()
-                ->whereKey($owner->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
-
-            $address = $lockedOwner->address()
-                ->lockForUpdate()
-                ->first();
-
+            $locked = User::query()->lockForUpdate()->findOrFail($owner->getKey());
+            Gate::forUser($actor)->authorize('updateUserAddress', $locked);
+            $address = Address::query()->where('user_id', $locked->getKey())->where('is_primary', true)->lockForUpdate()->first()
+                ?? Address::query()->where('user_id', $locked->getKey())->oldest()->lockForUpdate()->first();
             if ($address === null) {
-                throw new RuntimeException('The user does not have a personal address to update.');
+                throw new RuntimeException('The user has no active address to update.');
             }
-
             return $this->updateAddress($actor, $address, $attributes);
         });
     }
 
-    /** @param array<string, mixed> $attributes */
-    public function createForCooperative(
-        User $actor,
-        Cooperative $cooperative,
-        array $attributes,
-    ): Address {
+    public function setPrimaryForUser(User $actor, User $owner, Address $address): Address
+    {
+        Gate::forUser($actor)->authorize('updateUserAddress', $owner);
+        return DB::transaction(function () use ($actor, $owner, $address): Address {
+            User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+            $target = Address::query()->whereKey($address->getKey())->where('user_id', $owner->getKey())->lockForUpdate()->firstOrFail();
+            Address::query()->where('user_id', $owner->getKey())->where('is_primary', true)
+                ->where('id', '<>', $target->getKey())->update(['is_primary' => false]);
+            $target->forceFill(['is_primary' => true, 'updated_by' => (string) $actor->getKey()])->save();
+            return $target;
+        });
+    }
+
+    public function deleteForUser(User $actor, User $owner, Address $address): void
+    {
+        Gate::forUser($actor)->authorize('updateUserAddress', $owner);
+        DB::transaction(function () use ($actor, $owner, $address): void {
+            User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+            $target = Address::query()->whereKey($address->getKey())->where('user_id', $owner->getKey())->lockForUpdate()->firstOrFail();
+            $wasPrimary = $target->is_primary;
+            $before = $this->snapshot($target);
+            $target->forceFill(['is_primary' => false, 'deletion_source' => 'voluntary', 'deleted_by' => (string) $actor->getKey()])->save();
+            $target->delete();
+            if ($wasPrimary) {
+                $next = Address::query()->where('user_id', $owner->getKey())->oldest('created_at')->oldest('id')->first();
+                $next?->forceFill(['is_primary' => true, 'updated_by' => (string) $actor->getKey()])->save();
+            }
+            $this->record($actor, $target, 'deleted', 'localization.address.deleted', oldValues: $before,
+                newValues: ['deleted' => true, 'deletion_source' => 'voluntary']);
+        });
+    }
+
+    public function createForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
+    {
         Gate::forUser($actor)->authorize('createCooperativeAddress');
-
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
-            $lockedCooperative = Cooperative::query()
-                ->whereKey($cooperative->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
+            $locked = Cooperative::query()->lockForUpdate()->findOrFail($cooperative->getKey());
             Gate::forUser($actor)->authorize('createCooperativeAddress');
-
-            if ($lockedCooperative->address()->exists()) {
-                throw new InvalidArgumentException('This cooperative already has an address.');
+            if (Address::query()->where('cooperative_id', $locked->getKey())->exists()) {
+                throw ValidationException::withMessages(['address' => 'Cette coopérative possède déjà une adresse active.']);
             }
-
-            $validated = $this->validatedAttributes($attributes);
-            $address = $lockedCooperative->address()->make(
-                $this->withLegacyAddressFields($validated),
-            );
-            $address->forceFill([
-                'country_id' => $this->moroccoCountry()->getKey(),
-                'created_by' => (string) $actor->getKey(),
-            ])->save();
-
-            $this->recordAddressAudit(
-                actor: $actor,
-                address: $address,
-                action: 'created',
-                eventKey: 'localization.address.created',
-                cooperativeId: (string) $lockedCooperative->getKey(),
-                newValues: $this->snapshot($address),
-            );
-
-            return $address;
+            $address = new Address($this->validatedAttributes($attributes));
+            $address->cooperative_id = $locked->getKey();
+            $address->country_id = $this->moroccoCountry()->getKey();
+            $address->is_primary = true;
+            $address->created_by = (string) $actor->getKey();
+            $address->save();
+            $this->record($actor, $address, 'created', 'localization.address.created',
+                cooperativeId: (string) $locked->getKey(), newValues: $this->snapshot($address));
+            return $address->load('country');
         });
     }
 
-    /** @param array<string, mixed> $attributes */
-    public function updateForCooperative(
-        User $actor,
-        Cooperative $cooperative,
-        array $attributes,
-    ): Address {
+    public function updateForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
+    {
         Gate::forUser($actor)->authorize('updateCooperativeAddress', $cooperative);
-
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
-            $lockedCooperative = Cooperative::query()
-                ->whereKey($cooperative->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            Gate::forUser($actor)->authorize('updateCooperativeAddress', $lockedCooperative);
-
-            $address = $lockedCooperative->address()
-                ->lockForUpdate()
-                ->first();
-
-            if ($address === null) {
-                throw new RuntimeException('The cooperative does not have an address to update.');
-            }
-
-            return $this->updateAddress($actor, $address, $attributes);
+            $locked = Cooperative::query()->lockForUpdate()->findOrFail($cooperative->getKey());
+            Gate::forUser($actor)->authorize('updateCooperativeAddress', $locked);
+            $address = Address::query()->where('cooperative_id', $locked->getKey())->lockForUpdate()->first();
+            return $address === null
+                ? $this->createForCooperative($actor, $locked, $attributes)
+                : $this->updateAddress($actor, $address, $attributes);
         });
     }
 
-    /** @param array<string, mixed> $attributes */
+    public function softDeleteUserAddresses(User $owner, string $actorId): string
+    {
+        return $this->softDeleteOwnerAddresses('user_id', (string) $owner->getKey(), $actorId);
+    }
+
+    public function softDeleteCooperativeAddresses(Cooperative $owner, string $actorId): string
+    {
+        return $this->softDeleteOwnerAddresses('cooperative_id', (string) $owner->getKey(), $actorId);
+    }
+
+    private function softDeleteOwnerAddresses(string $ownerColumn, string $ownerId, string $actorId): string
+    {
+        $batch = (string) Str::ulid();
+        $rows = Address::query()->where($ownerColumn, $ownerId)->lockForUpdate()->get();
+        foreach ($rows as $address) {
+            $address->forceFill([
+                'is_primary' => false, 'deletion_source' => 'owner',
+                'owner_deletion_batch_id' => $batch, 'deleted_by' => $actorId,
+            ])->save();
+            $address->delete();
+        }
+        return $batch;
+    }
+
+    public function restoreLatestUserAddresses(User $owner, string $actorId): void
+    {
+        $batch = Address::withTrashed()->where('user_id', $owner->getKey())
+            ->where('deletion_source', 'owner')->whereNotNull('owner_deletion_batch_id')
+            ->orderByDesc('deleted_at')->value('owner_deletion_batch_id');
+        if ($batch !== null) {
+            $this->restoreUserAddresses($owner, (string) $batch, $actorId);
+        }
+    }
+
+    public function restoreUserAddresses(User $owner, string $batch, string $actorId): void
+    {
+        DB::transaction(function () use ($owner, $batch, $actorId): void {
+            User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+            $rows = Address::withTrashed()->where('user_id', $owner->getKey())
+                ->where('deletion_source', 'owner')->where('owner_deletion_batch_id', $batch)
+                ->orderBy('created_at')->lockForUpdate()->get();
+            $limit = $owner->hasRole('customer') ? 5 : 1;
+            $active = Address::query()->where('user_id', $owner->getKey())->count();
+            if ($active + $rows->count() > $limit) {
+                throw ValidationException::withMessages(['address' => 'La restauration dépasserait la limite d’adresses actives.']);
+            }
+            foreach ($rows as $index => $address) {
+                $address->restore();
+                $address->forceFill([
+                    'deletion_source' => null, 'owner_deletion_batch_id' => null,
+                    'is_primary' => $active === 0 && $index === 0, 'updated_by' => $actorId,
+                ])->save();
+            }
+        });
+    }
+
     private function updateAddress(User $actor, Address $address, array $attributes): Address
     {
         $before = $this->snapshot($address);
-        $validated = $this->validatedAttributes($attributes);
-        $address->fill($this->withLegacyAddressFields(array_merge([
-            'number' => $address->number,
-            'street' => $address->street,
-            'floor' => $address->floor,
-            'region' => $address->region,
-        ], $validated)));
-
-        if (! $address->isDirty()) {
-            return $address;
-        }
-
+        $address->fill($this->validatedAttributes($attributes));
+        if (! $address->isDirty()) return $address;
         $address->updated_by = (string) $actor->getKey();
         $address->save();
-
-        $this->recordAddressAudit(
-            actor: $actor,
-            address: $address,
-            action: 'updated',
-            eventKey: 'localization.address.updated',
-            cooperativeId: $address->cooperative_id === null
-                ? null
-                : (string) $address->cooperative_id,
-            oldValues: $before,
-            newValues: $this->snapshot($address),
-        );
-
-        return $address;
+        $this->record($actor, $address, 'updated', 'localization.address.updated',
+            cooperativeId: $address->cooperative_id, oldValues: $before, newValues: $this->snapshot($address));
+        return $address->load('country');
     }
 
-    /** @param array<string, mixed> $attributes
-     * @return array<string, mixed>
-     */
-    private function withLegacyAddressFields(array $attributes): array
-    {
-        $number = trim((string) ($attributes['number'] ?? ''));
-        $street = trim((string) ($attributes['street'] ?? ''));
-
-        return array_merge($attributes, [
-            // Keep legacy columns synchronized until dependent domains are migrated.
-            'address_line_1' => trim($number.' '.$street),
-            'address_line_2' => $attributes['floor'] ?? null,
-            'state' => $attributes['region'] ?? null,
-        ]);
-    }
-
-    /** @param array<string, mixed> $attributes
-     * @return array<string, mixed>
-     */
     private function validatedAttributes(array $attributes): array
     {
         $unknown = array_diff(array_keys($attributes), self::WRITABLE_FIELDS);
-
-        if ($unknown !== []) {
-            throw new InvalidArgumentException(
-                'Unsupported address attributes: '.implode(', ', $unknown),
-            );
-        }
-
-        $validated = Validator::make($attributes, [
+        if ($unknown !== []) throw new InvalidArgumentException('Unsupported address attributes: '.implode(', ', $unknown));
+        $data = Validator::make($attributes, [
             'number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'street' => ['required', 'string', 'max:255'],
             'floor' => ['sometimes', 'nullable', 'string', 'max:50'],
@@ -243,90 +212,46 @@ final class AddressService extends BaseService
             'latitude' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
         ])->validate();
-
-        if (isset($validated['street'])) {
-            $validated['street'] = trim($validated['street']);
+        foreach (['number', 'street', 'floor', 'postal_code', 'city', 'region'] as $field) {
+            if (isset($data[$field])) $data[$field] = trim($data[$field]);
         }
-
-        if (isset($validated['city'])) {
-            $validated['city'] = trim($validated['city']);
-        }
-
-        foreach (['number', 'floor', 'postal_code', 'region'] as $field) {
-            if (isset($validated[$field])) {
-                $validated[$field] = trim($validated[$field]);
-            }
-        }
-
-        return $validated;
+        return $data;
     }
 
     private function moroccoCountry(): Country
     {
-        $country = Country::query()
-            ->where('code', 'MA')
-            ->where('is_active', true)
-            ->first();
-
+        $country = Country::query()->where('code', 'MA')->where('is_active', true)->first();
         if ($country === null) {
-            throw ValidationException::withMessages([
-                'country' => 'Le Maroc doit être configuré et actif pour enregistrer une adresse en V1.',
-            ]);
+            throw ValidationException::withMessages(['country' => 'Le Maroc doit être configuré et actif pour enregistrer une adresse en V1.']);
         }
-
         return $country;
     }
 
-    /** @return array<string, mixed> */
     private function snapshot(Address $address): array
     {
         return [
-            'number' => $address->number,
-            'street' => $address->street,
-            'floor' => $address->floor,
-            'postal_code' => $address->postal_code,
-            'city' => $address->city,
-            'region' => $address->region,
-            'country_code' => $address->country?->code,
-            'latitude' => $address->latitude,
-            'longitude' => $address->longitude,
-            'user_id' => $address->user_id,
-            'cooperative_id' => $address->cooperative_id,
+            'number' => $address->number, 'street' => $address->street, 'floor' => $address->floor,
+            'postal_code' => $address->postal_code, 'city' => $address->city, 'region' => $address->region,
+            'country_code' => $address->country?->code, 'latitude' => $address->latitude,
+            'longitude' => $address->longitude, 'user_id' => $address->user_id,
+            'cooperative_id' => $address->cooperative_id, 'is_primary' => $address->is_primary,
         ];
     }
 
-    /** @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
-     */
-    private function recordAddressAudit(
-        User $actor,
-        Address $address,
-        string $action,
-        string $eventKey,
-        ?string $cooperativeId = null,
-        ?array $oldValues = null,
-        ?array $newValues = null,
+    private function record(
+        User $actor, Address $address, string $action, string $eventKey,
+        ?string $cooperativeId = null, ?array $oldValues = null, ?array $newValues = null,
     ): void {
-        $auditCooperativeId = $cooperativeId ?? $address->cooperative_id;
-
-        if ($auditCooperativeId === null && $address->user_id !== null) {
-            $auditCooperativeId = User::query()
-                ->whereKey($address->user_id)
-                ->value('cooperative_id');
+        $coopId = $cooperativeId ?? $address->cooperative_id;
+        if ($coopId === null && $address->user_id !== null) {
+            $coopId = User::query()->whereKey($address->user_id)->value('cooperative_id');
         }
-
         $this->audit->record(new AuditEntryDTO(
-            eventKey: $eventKey,
-            action: $action,
-            actorType: User::class,
+            eventKey: $eventKey, action: $action, actorType: User::class,
             actorId: (string) $actor->getKey(),
-            cooperativeId: $auditCooperativeId === null
-                ? null
-                : (string) $auditCooperativeId,
-            subjectType: Address::class,
-            subjectId: (string) $address->getKey(),
-            oldValues: $oldValues,
-            newValues: $newValues,
+            cooperativeId: $coopId === null ? null : (string) $coopId,
+            subjectType: Address::class, subjectId: (string) $address->getKey(),
+            oldValues: $oldValues, newValues: $newValues,
         ));
     }
 }

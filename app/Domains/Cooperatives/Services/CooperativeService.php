@@ -18,15 +18,15 @@ final class CooperativeService
 {
     /** @var list<string> */
     private const WRITABLE_FIELDS = [
-        'name', 'rib', 'tax_id', 'address_id', 'phone', 'email', 'rc', 'ice',
+        'name', 'rib', 'tax_id', 'phone', 'email', 'rc', 'ice',
     ];
 
     /** @var list<string> */
-    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email', 'address_id'];
+    private const COOPERATIVE_ADMIN_WRITABLE_FIELDS = ['phone', 'email'];
 
     /** @var list<string> */
     private const AUDITABLE_FIELDS = [
-        'name', 'address_id', 'phone', 'email', 'rc', 'status',
+        'name', 'phone', 'email', 'rc', 'status',
     ];
 
     public function __construct(
@@ -159,6 +159,7 @@ final class CooperativeService
             }
 
             $before = $this->auditSnapshot($cooperative);
+            $this->addressService->softDeleteCooperativeAddresses($cooperative, (string) $actor->getKey());
             $cooperative->deleted_by = (string) $actor->getKey();
             $cooperative->save();
             $cooperative->delete();
@@ -254,10 +255,6 @@ final class CooperativeService
      */
     private function filterCreateAttributes(array $attributes): array
     {
-        if (array_key_exists('address_id', $attributes)) {
-            throw new \InvalidArgumentException('A cooperative address must be created through AddressService.');
-        }
-
         return $this->filterWritableAttributes($attributes);
     }
 

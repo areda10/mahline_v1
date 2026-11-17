@@ -14,6 +14,7 @@ use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Services\AddressService;
 use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         private readonly SessionService $sessions,
         private readonly ApiTokenService $apiTokens,
         private readonly PasswordHistoryService $passwordHistory,
+        private readonly AddressService $addresses,
     ) {}
 
     /**
@@ -619,6 +621,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             $this->revokePendingInvitations($lockedTarget);
+            $this->addresses->softDeleteUserAddresses($lockedTarget, (string) $actor->getKey());
 
             $this->revokeAccessCredentials(
                 actor: $actor,
@@ -654,6 +657,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
 
             $lockedTarget->restore();
+            $this->addresses->restoreLatestUserAddresses($lockedTarget, (string) $actor->getKey());
             $lockedTarget->status = UserStatus::Pending;
             $lockedTarget->email_verified_at = null;
             $lockedTarget->must_change_password = false;

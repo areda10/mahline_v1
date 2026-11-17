@@ -12,35 +12,38 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table): void {
             $table->ulidPrimary();
-
-            $table->string('address_line_1');
-
-            $table->string('address_line_2')->nullable();
-
-            $table->string('postal_code')->nullable();
-
-            $table->string('city');
-
-            $table->string('state')->nullable();
+            $table->string('number', 50)->nullable();
+            $table->string('street');
+            $table->string('floor', 50)->nullable();
+            $table->string('postal_code', 20)->nullable();
+            $table->string('city', 120);
+            $table->string('region', 120)->nullable();
 
             $table->foreignUlid('country_id')
                 ->constrained('countries')
                 ->restrictOnDelete()
                 ->cascadeOnUpdate();
 
-            $table->decimal('latitude', 10, 7)->nullable();
+            $table->foreignUlid('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->restrictOnDelete()
+                ->cascadeOnUpdate();
 
+            $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->string('deletion_source', 24)->nullable();
+            $table->ulid('owner_deletion_batch_id')->nullable();
 
             $table->auditActorColumns();
-
             $table->timestamps();
-
             $table->softDeletes();
 
+            $table->index(['user_id', 'deleted_at'], 'addresses_user_active_idx');
+            $table->index(['city', 'region']);
             $table->index('country_id');
-
-            $table->index('city');
+            $table->index('owner_deletion_batch_id');
         });
     }
 

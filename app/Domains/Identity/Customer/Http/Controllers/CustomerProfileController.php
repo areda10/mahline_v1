@@ -13,6 +13,7 @@ use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Services\AddressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 final class CustomerProfileController
@@ -39,11 +40,11 @@ final class CustomerProfileController
             403,
         );
 
-        $customer->load('address.country');
+        $customer->load('primaryAddress.country');
 
         return view('customer.profile.edit', [
             'user' => $customer,
-            'address' => $customer->address,
+            'address' => $customer->primaryAddress,
             'regions' => MoroccanRegion::values(),
         ]);
     }
@@ -60,13 +61,15 @@ final class CustomerProfileController
         ]));
         $profileAttributes = array_diff_key($validated, $addressAttributes);
 
-        $this->profiles->update($customer, $profileAttributes);
+        DB::transaction(function () use ($customer, $profileAttributes, $addressAttributes): void {
+            $this->profiles->update($customer, $profileAttributes);
 
-        if ($customer->address()->exists()) {
-            $this->addresses->updateForUser($customer, $customer, $addressAttributes);
-        } else {
-            $this->addresses->createForUser($customer, $customer, $addressAttributes);
-        }
+            if ($customer->primaryAddress()->exists()) {
+                $this->addresses->updateForUser($customer, $customer, $addressAttributes);
+            } else {
+                $this->addresses->createForUser($customer, $customer, $addressAttributes);
+            }
+        });
 
         return redirect()
             ->route('customer.profile.edit')

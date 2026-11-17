@@ -22,20 +22,9 @@ final class Address extends BaseModel
     protected $table = 'addresses';
 
     protected $fillable = [
-        'number',
-        'street',
-        'floor',
-        'address_line_1',
-        'address_line_2',
-        'postal_code',
-        'city',
-        'region',
-        'state',
-        'country_id',
-        'user_id',
-        'cooperative_id',
-        'latitude',
-        'longitude',
+        'number', 'street', 'floor', 'postal_code', 'city', 'region',
+        'country_id', 'user_id', 'cooperative_id', 'latitude', 'longitude',
+        'is_primary',
     ];
 
     protected function casts(): array
@@ -43,6 +32,7 @@ final class Address extends BaseModel
         return [
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
+            'is_primary' => 'boolean',
             'deleted_at' => 'datetime',
         ];
     }
@@ -54,10 +44,7 @@ final class Address extends BaseModel
 
     public function country(): BelongsTo
     {
-        return $this->belongsTo(
-            Country::class,
-            'country_id',
-        );
+        return $this->belongsTo(Country::class, 'country_id');
     }
 
     public function user(): BelongsTo

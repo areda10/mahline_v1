@@ -7,8 +7,8 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
-use App\Domains\Countries\Models\Country;
-use App\Domains\Localization\Models\Address;
+use App\Domains\Localization\Enums\MoroccanRegion;
+use App\Domains\Localization\Services\AddressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,19 +20,14 @@ final class CooperativeController
 {
     public function __construct(
         private readonly CooperativeService $cooperativeService,
+        private readonly AddressService $addresses,
     ) {}
 
     public function index(Request $request): View
     {
         $this->authorizeRoot($request);
         Gate::authorize('viewAny', Cooperative::class);
-
-        $cooperatives = Cooperative::query()
-            ->visibleTo(request()->user())
-            ->with('address')
-            ->orderBy('name')
-            ->paginate(15);
-
+        $cooperatives = Cooperative::query()->visibleTo($request->user())->with('address')->orderBy('name')->paginate(15);
         return view('super-admin-root.cooperatives.index', compact('cooperatives'));
     }
 
@@ -40,56 +35,29 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         Gate::authorize('create', Cooperative::class);
-
-        return view('super-admin-root.cooperatives.create', [
-            'cooperative' => new Cooperative,
-            ]);
+        return view('super-admin-root.cooperatives.create', ['cooperative' => new Cooperative]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $this->authorizeRoot($request);
         Gate::authorize('create', Cooperative::class);
-
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'rib' => ['required', 'string', 'max:255'],
-            'tax_id' => ['nullable', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'rc' => ['nullable', 'string', 'max:255'],
-            'ice' => ['required', 'string', 'max:255'],
-            'number' => ['nullable', 'string', 'max:50'],
-            'street' => ['required', 'string', 'max:255'],
-            'floor' => ['nullable', 'string', 'max:50'],
-            'city' => ['required', 'string', 'max:120'],
-            'region' => ['nullable', 'string', 'max:120'],
-            'postal_code' => ['nullable', 'string', 'max:20'],
-            'country_id' => ['prohibited'],
+            'name' => ['required', 'string', 'max:255'], 'rib' => ['required', 'string', 'max:255'],
+            'tax_id' => ['nullable', 'string', 'max:255'], 'phone' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'], 'rc' => ['nullable', 'string', 'max:255'],
+            'ice' => ['required', 'string', 'max:255'], ...$this->addressRules(),
         ]);
-
-        $addressData = array_intersect_key($data, array_flip([
-            'number', 'street', 'floor', 'postal_code', 'city', 'region',
-        ]));
+        $addressData = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $cooperativeData = array_diff_key($data, $addressData);
-
-        $cooperative = $this->cooperativeService->create(
-            $request->user(),
-            $cooperativeData,
-            $addressData,
-        );
-
-        return redirect()
-            ->route('root.backoffice.cooperatives.show', $cooperative)
-            ->with('success', 'La coopérative a été créée.');
+        $cooperative = $this->cooperativeService->create($request->user(), $cooperativeData, $addressData);
+        return redirect()->route('root.backoffice.cooperatives.show', $cooperative)->with('success', 'La coopérative a été créée.');
     }
 
     public function show(Request $request, string $cooperative): View
     {
         $this->authorizeRoot($request);
-        $model = $this->resolveCooperative($cooperative);
-
-        return view('super-admin-root.cooperatives.show', ['cooperative' => $model->load('address.country')]);
+        return view('super-admin-root.cooperatives.show', ['cooperative' => $this->resolveCooperative($cooperative)->load('address.country')]);
     }
 
     public function edit(Request $request, string $cooperative): View
@@ -97,11 +65,7 @@ final class CooperativeController
         $this->authorizeRoot($request);
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
-
-        return view('super-admin-root.cooperatives.edit', [
-            'cooperative' => $model->load('address'),
-            'countries' => $this->availableCountries(),
-        ]);
+        return view('super-admin-root.cooperatives.edit', ['cooperative' => $model->load('address'), 'regions' => MoroccanRegion::values()]);
     }
 
     public function update(Request $request, string $cooperative): RedirectResponse
@@ -109,22 +73,13 @@ final class CooperativeController
         $this->authorizeRoot($request);
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
-
-        $user = $request->user();
-
-        $addressFields = ['address_line_1', 'city', 'country_id', 'postal_code', 'state'];
-
-        if ($user->hasRole('cooperative_admin')) {
-            $forbiddenFields = array_diff(
-                array_keys($request->all()),
-                ['phone', 'email', ...$addressFields, '_token', '_method'],
-            );
-
-            abort_if($forbiddenFields !== [], 403);
+        $addressFields = ['number', 'street', 'floor', 'postal_code', 'city', 'region'];
+        $allowed = ['phone', 'email', ...$addressFields, '_token', '_method'];
+        if ($request->user()->hasRole('cooperative_admin')) {
+            abort_if(array_diff(array_keys($request->all()), $allowed) !== [], 403);
         }
-
         $rules = [
-            ...($user->hasRole('cooperative_admin') ? [] : [
+            ...($request->user()->hasRole('cooperative_admin') ? [] : [
                 'name' => ['sometimes', 'required', 'string', 'max:255'],
                 'rib' => ['sometimes', 'required', 'string', 'max:255'],
                 'tax_id' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -134,40 +89,25 @@ final class CooperativeController
             'phone' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'email', 'max:255'],
             ...$this->addressRules('sometimes'),
-            'status' => ['sometimes', 'required', Rule::in(array_map(static fn (CooperativeStatus $status): string => $status->value, CooperativeStatus::cases()))],
+            'status' => ['sometimes', 'required', Rule::in(array_map(static fn (CooperativeStatus $s): string => $s->value, CooperativeStatus::cases()))],
         ];
-
         $data = $request->validate($rules);
-        $requestedStatus = isset($data['status']) ? CooperativeStatus::from($data['status']) : null;
+        $status = isset($data['status']) ? CooperativeStatus::from($data['status']) : null;
         unset($data['status']);
         $addressData = array_intersect_key($data, array_flip($addressFields));
         $cooperativeData = array_diff_key($data, array_flip($addressFields));
-
         try {
-            DB::transaction(function () use ($user, $model, $addressData, $cooperativeData, $requestedStatus): void {
+            DB::transaction(function () use ($request, $model, $addressData, $cooperativeData, $status): void {
+                $this->cooperativeService->update($request->user(), $model, $cooperativeData);
                 if ($addressData !== []) {
-                    $address = $model->address_id
-                        ? Address::query()->findOrFail($model->address_id)
-                        : new Address;
-
-                    $address->fill($addressData);
-                    if (! $address->exists) {
-                        $address->created_by = (string) $user->getKey();
-                    } else {
-                        $address->updated_by = (string) $user->getKey();
-                    }
-                    $address->save();
-                    $cooperativeData['address_id'] = $address->getKey();
+                    $this->addresses->updateForCooperative($request->user(), $model, $addressData);
                 }
-
-                $this->cooperativeService->update($user, $model, $cooperativeData);
-
-                if ($requestedStatus !== null && $requestedStatus !== $model->fresh()->status) {
-                    match ($requestedStatus) {
-                        CooperativeStatus::ACTIVE => $this->cooperativeService->activate($user, $model),
-                        CooperativeStatus::INACTIVE => $this->cooperativeService->deactivate($user, $model),
-                        CooperativeStatus::SUSPENDED => $this->cooperativeService->suspend($user, $model),
-                        CooperativeStatus::ARCHIVED => $this->cooperativeService->archive($user, $model),
+                if ($status !== null && $status !== $model->fresh()->status) {
+                    match ($status) {
+                        CooperativeStatus::ACTIVE => $this->cooperativeService->activate($request->user(), $model),
+                        CooperativeStatus::INACTIVE => $this->cooperativeService->deactivate($request->user(), $model),
+                        CooperativeStatus::SUSPENDED => $this->cooperativeService->suspend($request->user(), $model),
+                        CooperativeStatus::ARCHIVED => $this->cooperativeService->archive($request->user(), $model),
                         CooperativeStatus::PENDING => throw new \DomainException('Une coopérative ne peut pas revenir au statut en attente.'),
                     };
                 }
@@ -175,37 +115,30 @@ final class CooperativeController
         } catch (\DomainException $exception) {
             return back()->withInput()->with('error', $exception->getMessage());
         }
-
-        return redirect()
-            ->route('root.backoffice.cooperatives.show', $model)
-            ->with('success', 'La coopérative a été mise à jour.');
+        return redirect()->route('root.backoffice.cooperatives.show', $model)->with('success', 'La coopérative a été mise à jour.');
     }
 
     public function activate(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
-
         return $this->changeStatus($request, $cooperative, 'activate');
     }
 
     public function deactivate(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
-
         return $this->changeStatus($request, $cooperative, 'deactivate');
     }
 
     public function suspend(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
-
         return $this->changeStatus($request, $cooperative, 'suspend');
     }
 
     public function archive(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
-
         return $this->changeStatus($request, $cooperative, 'archive');
     }
 
@@ -214,53 +147,26 @@ final class CooperativeController
         $this->authorizeRoot($request);
         $model = Cooperative::query()->withTrashed()->findOrFail($cooperative);
         $this->cooperativeService->delete($request->user(), $model);
-
-        return redirect()
-            ->route('root.backoffice.cooperatives.index')
-            ->with('success', 'La coopérative a été supprimée.');
+        return redirect()->route('root.backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
 
     private function changeStatus(Request $request, string $id, string $action): RedirectResponse
     {
         $model = $this->resolveCooperative($id);
         $this->cooperativeService->{$action}($request->user(), $model);
-
-        return redirect()
-            ->route('root.backoffice.cooperatives.show', $model)
-            ->with('success', 'Le statut de la coopérative a été mis à jour.');
+        return redirect()->route('root.backoffice.cooperatives.show', $model)->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
 
-    private function availableCountries()
-    {
-        return Country::query()->where('code', 'MA')->where('is_active', true)->orderBy('name')->get();
-    }
-
-    /** @return array<string, array<int, mixed>> */
     private function addressRules(string $presence = ''): array
     {
-        $required = $presence === '' ? [] : [$presence];
-
+        $p = $presence === '' ? [] : [$presence];
         return [
-            'address_line_1' => [...$required, 'required', 'string', 'max:255'],
-            'city' => [...$required, 'required', 'string', 'max:255'],
-            'country_id' => [...$required, 'required', 'string', 'size:26',
-                Rule::exists('countries', 'id')->where('code', 'MA')->where('is_active', true)->whereNull('deleted_at')],
-            'postal_code' => [...$required, 'required', 'string', 'max:32'],
-            'state' => [...$required, 'required', 'string', 'max:255',
-                Rule::in([
-                    'Tanger-Tétouan-Al Hoceïma',
-                    "L'Oriental",
-                    'Fès-Meknès',
-                    'Rabat-Salé-Kénitra',
-                    'Béni Mellal-Khénifra',
-                    'Casablanca-Settat',
-                    'Marrakech-Safi',
-                    'Drâa-Tafilalet',
-                    'Souss-Massa',
-                    'Guelmim-Oued Noun',
-                    'Laâyoune-Sakia El Hamra',
-                    'Dakhla-Oued Ed-Dahab',
-                ])],
+            'number' => [...$p, 'nullable', 'string', 'max:50'],
+            'street' => [...$p, 'required', 'string', 'max:255'],
+            'floor' => [...$p, 'nullable', 'string', 'max:50'],
+            'city' => [...$p, 'required', 'string', 'max:120'],
+            'region' => [...$p, 'nullable', 'string', 'max:120', Rule::in(MoroccanRegion::values())],
+            'postal_code' => [...$p, 'nullable', 'string', 'max:20'],
         ];
     }
 
@@ -273,7 +179,6 @@ final class CooperativeController
     {
         $model = Cooperative::query()->findOrFail($id);
         Gate::authorize('view', $model);
-
         return $model;
     }
 }

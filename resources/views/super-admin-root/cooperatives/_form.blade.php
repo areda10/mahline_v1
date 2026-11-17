@@ -32,60 +32,31 @@
             <label>Région
                 <select name="region">
                     <option value="">Sélectionner une région</option>
-                    @foreach([
-                        'Tanger-Tétouan-Al Hoceïma',
-                        "L'Oriental",
-                        'Fès-Meknès',
-                        'Rabat-Salé-Kénitra',
-                        'Béni Mellal-Khénifra',
-                        'Casablanca-Settat',
-                        'Marrakech-Safi',
-                        'Drâa-Tafilalet',
-                        'Souss-Massa',
-                        'Guelmim-Oued Noun',
-                        'Laâyoune-Sakia El Hamra',
-                        'Dakhla-Oued Ed-Dahab',
-                    ] as $region)
-                        <option value="{{ $region }}" @selected(old('region') === $region)>{{ $region }}</option>
-                    @endforeach
+                    @foreach(\App\Domains\Localization\Enums\MoroccanRegion::values() as $region)
+                @endforeach
                 </select>
             </label>
             <label>Code postal <input name="postal_code" maxlength="20" value="{{ old('postal_code') }}"></label>
             <p>Pays : Maroc</p>
         </fieldset>
     @else
-        <label>Adresse <input name="address_line_1" required maxlength="255" value="{{ old('address_line_1', $address?->address_line_1) }}"></label>
-        <label>Ville <input name="city" required maxlength="255" value="{{ old('city', $address?->city) }}"></label>
-        <label>Pays
-            <select name="country_id" required>
-                <option value="">Sélectionner un pays</option>
-                @foreach($countries as $country)
-                    <option value="{{ $country->getKey() }}" @selected((string) old('country_id', $address?->country_id ?? $country->getKey()) === (string) $country->getKey())>Maroc</option>
-                @endforeach
-            </select>
-        </label>
-        <label>Code postal <input name="postal_code" required maxlength="32" value="{{ old('postal_code', $address?->postal_code) }}"></label>
-        <label>Région
-            <select name="state" required>
-                <option value="">Sélectionner une région</option>
-                @foreach([
-                    'Tanger-Tétouan-Al Hoceïma',
-                    "L'Oriental",
-                    'Fès-Meknès',
-                    'Rabat-Salé-Kénitra',
-                    'Béni Mellal-Khénifra',
-                    'Casablanca-Settat',
-                    'Marrakech-Safi',
-                    'Drâa-Tafilalet',
-                    'Souss-Massa',
-                    'Guelmim-Oued Noun',
-                    'Laâyoune-Sakia El Hamra',
-                    'Dakhla-Oued Ed-Dahab',
-                ] as $region)
-                    <option value="{{ $region }}" @selected(old('state', $address?->state) === $region)>{{ $region }}</option>
-                @endforeach
-            </select>
-        </label>
+        <fieldset class="form-fieldset">
+            <legend>Adresse de la coopérative</legend>
+            <label>Numéro <input name="number" maxlength="50" value="{{ old('number', $address?->number) }}"></label>
+            <label>Rue / adresse <input name="street" required maxlength="255" value="{{ old('street', $address?->street) }}"></label>
+            <label>Appartement / étage <input name="floor" maxlength="50" value="{{ old('floor', $address?->floor) }}"></label>
+            <label>Ville <input name="city" required maxlength="120" value="{{ old('city', $address?->city) }}"></label>
+            <label>Région
+                <select name="region">
+                    <option value="">Sélectionner une région</option>
+                    @foreach($regions as $region)
+                        <option value="{{ $region }}" @selected(old('region', $address?->region) === $region)>{{ $region }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>Code postal <input name="postal_code" maxlength="20" value="{{ old('postal_code', $address?->postal_code) }}"></label>
+            <p>Pays : Maroc</p>
+        </fieldset>
     @endif
 </div>
 @foreach($errors->all() as $error)<p class="error">{{ $error }}</p>@endforeach

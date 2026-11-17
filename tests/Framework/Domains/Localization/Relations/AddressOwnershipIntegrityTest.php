@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Localization\Relations;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\QueryException;
@@ -17,137 +16,70 @@ final class AddressOwnershipIntegrityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_defines_an_address_relationship(): void
+    public function test_user_can_own_multiple_addresses_and_primary_address_is_exposed(): void
     {
         $user = User::factory()->create();
-        $address = Address::factory()->create([
-            'user_id' => $user->getKey(),
-            'cooperative_id' => null,
-        ]);
+        $primary = Address::factory()->forUser($user)->create();
+        $secondary = Address::factory()->forUser($user)->state(['is_primary' => false])->create();
 
-        self::assertSame($address->getKey(), $user->address->getKey());
-        self::assertSame($user->getKey(), $address->user->getKey());
+        self::assertCount(2, $user->fresh()->addresses);
+        self::assertSame($primary->getKey(), $user->fresh()->primaryAddress->getKey());
+        self::assertSame($user->getKey(), $secondary->user->getKey());
+        self::assertNull($secondary->cooperative_id);
     }
 
-    public function test_cooperative_defines_an_address_relationship_owned_by_cooperative(): void
+    public function test_cooperative_address_is_owned_by_cooperative(): void
     {
         $cooperative = Cooperative::factory()->create();
-        $address = $cooperative->address;
+        $address = $cooperative->fresh()->address;
 
         self::assertInstanceOf(Address::class, $address);
         self::assertNull($address->user_id);
         self::assertSame($cooperative->getKey(), $address->cooperative->getKey());
     }
 
-    public function test_two_users_can_have_identical_physical_address_values_without_sharing_the_record(): void
+    public function test_address_cannot_be_created_without_exactly_one_owner(): void
     {
-        $firstUser = User::factory()->create();
-        $secondUser = User::factory()->create();
-
-        $addressAttributes = [
-            'number' => '12',
-            'street' => 'Rue des Fleurs',
-            'floor' => null,
-            'city' => 'Casablanca',
-            'region' => 'Casablanca-Settat',
-            'postal_code' => '20000',
-            'country_id' => Country::factory()->create()->getKey(),
-        ];
-
-        $firstAddress = Address::factory()->create($addressAttributes + [
-            'user_id' => $firstUser->getKey(),
-            'cooperative_id' => null,
-        ]);
-
-        $secondAddress = Address::factory()->create($addressAttributes + [
-            'user_id' => $secondUser->getKey(),
-            'cooperative_id' => null,
-        ]);
-
-        self::assertNotSame($firstAddress->getKey(), $secondAddress->getKey());
-        self::assertSame($firstAddress->street, $secondAddress->street);
-        self::assertSame($firstAddress->number, $secondAddress->number);
-        self::assertSame($firstAddress->city, $secondAddress->city);
-        self::assertSame($firstUser->getKey(), $firstAddress->user_id);
-        self::assertSame($secondUser->getKey(), $secondAddress->user_id);
-    }
-
-    public function test_an_address_cannot_be_created_without_an_owner(): void
-    {
+        $countryId = Address::factory()->raw()['country_id'];
         $this->expectException(QueryException::class);
-
-        DB::table('addresses')->insert($this->addressRow([
-            'user_id' => null,
-            'cooperative_id' => null,
-        ]));
-    }
-
-    public function test_an_address_cannot_belong_to_a_user_and_a_cooperative_at_the_same_time(): void
-    {
-        $user = User::factory()->create();
-        $cooperative = Cooperative::factory()->create();
-
-        $this->expectException(QueryException::class);
-
-        DB::table('addresses')->insert($this->addressRow([
-            'user_id' => $user->getKey(),
-            'cooperative_id' => $cooperative->getKey(),
-        ]));
-    }
-
-    public function test_a_user_can_own_only_one_address(): void
-    {
-        $user = User::factory()->create();
-
-        Address::factory()->create([
-            'user_id' => $user->getKey(),
-            'cooperative_id' => null,
-        ]);
-
-        $this->expectException(QueryException::class);
-
-        Address::factory()->create([
-            'user_id' => $user->getKey(),
-            'cooperative_id' => null,
-        ]);
-    }
-
-    public function test_a_cooperative_can_own_only_one_address(): void
-    {
-        $cooperative = Cooperative::factory()->create();
-
-        $this->expectException(QueryException::class);
-
-        Address::factory()->create([
-            'user_id' => null,
-            'cooperative_id' => $cooperative->getKey(),
-        ]);
-    }
-
-    /**
-     * @param array{user_id: string|null, cooperative_id: string|null} $owner
-     * @return array<string, mixed>
-     */
-    private function addressRow(array $owner): array
-    {
-        return [
+        DB::table('addresses')->insert([
             'id' => (string) \Illuminate\Support\Str::ulid(),
-            'number' => null,
             'street' => 'Rue de Test',
-            'floor' => null,
-            'address_line_1' => 'Rue de Test',
-            'address_line_2' => null,
-            'postal_code' => '20000',
             'city' => 'Casablanca',
-            'region' => null,
-            'state' => null,
-            'country_id' => Country::factory()->create()->getKey(),
-            'latitude' => null,
-            'longitude' => null,
-            'user_id' => $owner['user_id'],
-            'cooperative_id' => $owner['cooperative_id'],
+            'country_id' => $countryId,
+            'user_id' => null,
+            'cooperative_id' => null,
+            'is_primary' => false,
             'created_at' => now(),
             'updated_at' => now(),
-        ];
+        ]);
+    }
+
+    public function test_address_cannot_have_two_owners(): void
+    {
+        $user = User::factory()->create();
+        $cooperative = Cooperative::factory()->create();
+        $countryId = Address::factory()->raw()['country_id'];
+
+        $this->expectException(QueryException::class);
+        DB::table('addresses')->insert([
+            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'street' => 'Rue de Test',
+            'city' => 'Casablanca',
+            'country_id' => $countryId,
+            'user_id' => $user->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+            'is_primary' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    public function test_only_one_active_primary_address_per_user_is_allowed_by_database(): void
+    {
+        $user = User::factory()->create();
+        Address::factory()->forUser($user)->create();
+        $this->expectException(QueryException::class);
+        Address::factory()->forUser($user)->create();
     }
 }
