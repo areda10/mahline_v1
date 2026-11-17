@@ -28,7 +28,7 @@ final class CatalogProductController
             'product_id' => ['required', 'string', 'max:26'],
         ]);
 
-        $this->catalogService->addProduct($catalogModel, $cooperativeId, $data['product_id']);
+        $this->catalogService->addProduct($catalogModel, $cooperativeId, $data['product_id'], $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.catalogs.show', [
@@ -55,7 +55,7 @@ final class CatalogProductController
             ->where('cooperative_id', $cooperativeId)
             ->findOrFail($product);
 
-        $this->catalogService->removeProduct($catalogModel, $cooperativeId, $product);
+        $this->catalogService->removeProduct($catalogModel, $cooperativeId, $product, $request->user());
 
         return redirect()
             ->route('root.backoffice.cooperatives.catalogs.show', [
