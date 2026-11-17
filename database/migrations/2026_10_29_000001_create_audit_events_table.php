@@ -63,6 +63,19 @@ return new class extends Migration
                 "CREATE TRIGGER audit_events_prevent_delete BEFORE DELETE ON audit_events "
                 ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit events are append-only'",
             );
+            DB::unprepared(
+                "CREATE TRIGGER audit_chain_heads_guard_update BEFORE UPDATE ON audit_chain_heads "
+                ."FOR EACH ROW BEGIN "
+                ."IF NEW.last_hash IS NULL OR NOT EXISTS ("
+                ."SELECT 1 FROM audit_events WHERE event_hash = NEW.last_hash "
+                ."AND previous_hash <=> OLD.last_hash"
+                .") THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit chain head must advance to the next appended event'; "
+                ."END IF; END",
+            );
+            DB::unprepared(
+                "CREATE TRIGGER audit_chain_heads_prevent_delete BEFORE DELETE ON audit_chain_heads "
+                ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit chain head cannot be deleted'",
+            );
         }
     }
 
@@ -71,6 +84,8 @@ return new class extends Migration
         if (DB::getDriverName() === 'mysql') {
             DB::unprepared('DROP TRIGGER IF EXISTS audit_events_prevent_update');
             DB::unprepared('DROP TRIGGER IF EXISTS audit_events_prevent_delete');
+            DB::unprepared('DROP TRIGGER IF EXISTS audit_chain_heads_guard_update');
+            DB::unprepared('DROP TRIGGER IF EXISTS audit_chain_heads_prevent_delete');
         }
 
         Schema::dropIfExists('audit_chain_heads');
