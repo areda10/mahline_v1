@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\\Database\\Migrations\\Migration;
+use Illuminate\\Database\\Schema\\Blueprint;
+use Illuminate\\Support\\Facades\\DB;
+use Illuminate\\Support\\Facades\\Schema;
 
 return new class extends Migration
 {
@@ -15,7 +16,6 @@ return new class extends Migration
             $table->string('event_key', 120);
             $table->string('action', 80);
 
-            // Polymorphic identifiers avoid coupling Audit to Identity or another domain.
             $table->string('actor_type', 120)->nullable();
             $table->char('actor_id', 26)->nullable();
             $table->char('cooperative_id', 26)->nullable();
@@ -25,6 +25,9 @@ return new class extends Migration
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
             $table->json('metadata')->nullable();
+
+            $table->char('previous_hash', 64)->nullable();
+            $table->char('event_hash', 64)->unique('audit_events_event_hash_unique');
 
             $table->ipAddress('ip_address')->nullable();
             $table->text('user_agent')->nullable();
@@ -38,10 +41,23 @@ return new class extends Migration
             $table->index(['subject_type', 'subject_id'], 'audit_events_subject_idx');
             $table->index('correlation_id');
         });
+
+        Schema::create('audit_chain_heads', function (Blueprint $table): void {
+            $table->unsignedTinyInteger('id')->primary();
+            $table->char('last_hash', 64)->nullable();
+            $table->timestamp('updated_at')->nullable();
+        });
+
+        DB::table('audit_chain_heads')->insert([
+            'id' => 1,
+            'last_hash' => null,
+            'updated_at' => now(),
+        ]);
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('audit_chain_heads');
         Schema::dropIfExists('audit_events');
     }
 };
