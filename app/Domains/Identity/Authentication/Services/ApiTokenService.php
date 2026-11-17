@@ -53,7 +53,7 @@ final class ApiTokenService extends BaseService
 
         if ((string) $owner->getKey() !== (string) $actor->getKey()) {
             if (! $actor->hasRole('super_admin_root')) {
-                throw new RuntimeException('An API token can only be created by its owner or super_admin_root.');
+                throw new RuntimeException('An API token can only be created by its owner.');
             }
 
             Gate::forUser($actor)->authorize('viewAny', User::class);
