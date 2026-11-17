@@ -1,9 +1,9 @@
 # MAHLINE V7.0 — Feuille de route centrale des domaines
 
 - **Version :** 1.0
-- **Mise à jour :** 8 novembre 2026
+- **Mise à jour :** 17 novembre 2026
 - **Dépôt :** `areda10/mahline_v1`
-- **Branche de référence :** `feature/Identity`
+- **Branche de référence :** `feature/Marketplace`
 - **Statut :** registre de suivi — périmètres à auditer et décisions à consolider
 
 > Ce document est le point d'entrée central du suivi des domaines MAHLINE. Il complète les cahiers de décisions propres à chaque domaine. Il ne remplace pas les spécifications détaillées et ne signifie pas qu'un domaine est déjà implémenté, audité ou validé.
@@ -30,7 +30,7 @@
 
 ## 2. État du dépôt — inventaire observé
 
-Sur la branche `feature/Identity`, l'arborescence `app/Domains/` contient actuellement les dossiers suivants :
+Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient actuellement les dossiers suivants :
 
 - `Audit`
 - `Catalog`
@@ -40,6 +40,7 @@ Sur la branche `feature/Identity`, l'arborescence `app/Domains/` contient actuel
 - `Dashboard`
 - `Identity`
 - `Localization`
+- `Media`
 - `Products`
 
 Cet inventaire décrit uniquement la présence de dossiers dans le dépôt au moment de cette mise à jour. Il ne constitue pas une validation fonctionnelle ou technique de ces domaines.
@@ -56,10 +57,10 @@ Les documents d'architecture décrivent également des domaines ou périmètres 
 | Categories | Arborescence et règles de catégories globales et coopératives | Oui | Décisions et tests déjà travaillés ; conserver le suivi dédié |
 | Products | Données et cycle de vie des produits | Oui | À auditer selon les frontières Catalog / Products |
 | Countries | Référentiel des pays | Oui | À inventorier et auditer |
-| Localization | Adresses, langues, devises, fuseaux horaires et données géographiques selon spécification | Oui | À inventorier et auditer |
+| Localization | Adresses, langues, devises, fuseaux horaires et données géographiques selon spécification | Oui | V1 implémentée pour le carnet d'adresses ; à tester et à auditer sur les références restantes |
 | Audit | Journalisation métier, traçabilité et consultation sécurisée | Oui | À auditer indépendamment des simples colonnes techniques |
 | Dashboard | Présentation des indicateurs et vues de pilotage | Oui | À cadrer avec Statistics |
-| Media | Fichiers et ressources média transversales consommés par plusieurs domaines | Non | À planifier |
+| Media | Fichiers et ressources média transversales consommés par plusieurs domaines | Oui | Présent dans le dépôt ; audit V1 et tests à poursuivre |
 | Inventory | Stocks, mouvements, réservations, entrepôts et ajustements | Non | À planifier |
 | Orders | Commandes client, lignes, cycle de vie et éventuelle segmentation par coopérative | Non | À cadrer : le document DOMAIN_BOUNDARIES place actuellement Order dans Sales |
 | Delivery | Expédition, transport, tarifs, suivi, statuts et documents de livraison | Non | À cadrer : le document DOMAIN_BOUNDARIES place actuellement Delivery dans Sales |
