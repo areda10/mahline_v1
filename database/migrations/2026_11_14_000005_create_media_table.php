@@ -54,21 +54,6 @@ return new class extends Migration
                 ['mediable_type', 'mediable_id', 'category', 'deleted_at'],
                 'media_mediable_category_deleted_index',
             );
-            // One active primary item per owner and category.
-            $table->string('active_primary_mediable_type', 160)
-                ->nullable()
-                ->storedAs('CASE WHEN deleted_at IS NULL AND is_primary = 1 THEN mediable_type ELSE NULL END');
-            $table->char('active_primary_mediable_id', 26)
-                ->nullable()
-                ->storedAs('CASE WHEN deleted_at IS NULL AND is_primary = 1 THEN mediable_id ELSE NULL END');
-            $table->string('active_primary_category', 40)
-                ->nullable()
-                ->storedAs('CASE WHEN deleted_at IS NULL AND is_primary = 1 THEN category ELSE NULL END');
-            $table->unique(
-                ['active_primary_mediable_type', 'active_primary_mediable_id', 'active_primary_category'],
-                'media_one_active_primary_per_owner_category_unique',
-            );
-
         });
     }
 
