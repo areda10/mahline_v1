@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -13,30 +13,14 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('addresses', 'cooperative_id')) {
             Schema::table('addresses', function (Blueprint $table): void {
-                $table->foreignUlid('cooperative_id')
-                    ->nullable()
-                    ->after('user_id');
+                $table->foreignUlid('cooperative_id')->nullable()->after('user_id');
             });
         }
 
-        // MySQL does not permit CASCADE referential actions on FK columns
-        // referenced by STORED generated-column expressions.
-        $this->ensureRestrictUpdateForeignKey(
-            'user_id',
-            'addresses_user_id_foreign',
-            'users',
-        );
+        $this->ensureRestrictUpdateForeignKey('user_id', 'addresses_user_id_foreign', 'users');
+        $this->ensureRestrictUpdateForeignKey('cooperative_id', 'addresses_cooperative_id_foreign', 'cooperatives');
 
-        $this->ensureRestrictUpdateForeignKey(
-            'cooperative_id',
-            'addresses_cooperative_id_foreign',
-            'cooperatives',
-        );
-
-        $this->ensureIndex(
-            'addresses_cooperative_active_idx',
-            ['cooperative_id', 'deleted_at'],
-        );
+        $this->ensureIndex('addresses_cooperative_active_idx', ['cooperative_id', 'deleted_at']);
 
         if (DB::getDriverName() !== 'mysql') {
             return;
@@ -76,41 +60,23 @@ return new class extends Migration
             'active_primary_user_id',
             'CASE WHEN deleted_at IS NULL AND is_primary = 1 THEN user_id ELSE NULL END',
         );
-
-        $this->ensureIndex(
-            'addresses_one_primary_per_user_unique',
-            ['active_primary_user_id'],
-            true,
-        );
+        $this->ensureIndex('addresses_one_primary_per_user_unique', ['active_primary_user_id'], true);
 
         $this->ensureGeneratedColumn(
             'active_primary_cooperative_id',
             'CASE WHEN deleted_at IS NULL AND is_primary = 1 THEN cooperative_id ELSE NULL END',
         );
-
-        $this->ensureIndex(
-            'addresses_one_primary_per_cooperative_unique',
-            ['active_primary_cooperative_id'],
-            true,
-        );
+        $this->ensureIndex('addresses_one_primary_per_cooperative_unique', ['active_primary_cooperative_id'], true);
 
         $this->ensureGeneratedColumn(
             'active_cooperative_id',
             'CASE WHEN deleted_at IS NULL THEN cooperative_id ELSE NULL END',
         );
-
-        $this->ensureIndex(
-            'addresses_one_active_address_per_cooperative_unique',
-            ['active_cooperative_id'],
-            true,
-        );
+        $this->ensureIndex('addresses_one_active_address_per_cooperative_unique', ['active_cooperative_id'], true);
     }
 
-    private function ensureRestrictUpdateForeignKey(
-        string $column,
-        string $constraint,
-        string $referencedTable,
-    ): void {
+    private function ensureRestrictUpdateForeignKey(string $column, string $constraint, string $referencedTable): void
+    {
         $updateRule = DB::table('information_schema.REFERENTIAL_CONSTRAINTS')
             ->where('CONSTRAINT_SCHEMA', DB::getDatabaseName())
             ->where('TABLE_NAME', 'addresses')
@@ -122,14 +88,14 @@ return new class extends Migration
         }
 
         if ($updateRule !== null) {
-            DB::statement("ALTER TABLE `addresses` DROP FOREIGN KEY `{$constraint}`");
+            DB::statement("ALTER TABLE \`addresses\` DROP FOREIGN KEY \`{$constraint}\`");
         }
 
         DB::statement(
-            "ALTER TABLE `addresses`
-             ADD CONSTRAINT `{$constraint}`
-             FOREIGN KEY (`{$column}`)
-             REFERENCES `{$referencedTable}` (`id`)
+            "ALTER TABLE \`addresses\`
+             ADD CONSTRAINT \`{$constraint}\`
+             FOREIGN KEY (\`{$column}\`)
+             REFERENCES \`{$referencedTable}\` (\`id\`)
              ON DELETE RESTRICT
              ON UPDATE RESTRICT",
         );
@@ -142,17 +108,14 @@ return new class extends Migration
         }
 
         DB::statement(
-            "ALTER TABLE `addresses`
-             ADD COLUMN `{$column}` CHAR(26)
+            "ALTER TABLE \`addresses\`
+             ADD COLUMN \`{$column}\` CHAR(26)
              GENERATED ALWAYS AS ({$expression}) STORED",
         );
     }
 
-    private function ensureIndex(
-        string $index,
-        array $columns,
-        bool $unique = false,
-    ): void {
+    private function ensureIndex(string $index, array $columns, bool $unique = false): void
+    {
         $exists = DB::table('information_schema.STATISTICS')
             ->where('TABLE_SCHEMA', DB::getDatabaseName())
             ->where('TABLE_NAME', 'addresses')
@@ -164,14 +127,12 @@ return new class extends Migration
         }
 
         $columnsSql = implode(', ', array_map(
-            static fn (string $column): string => "`{$column}`",
+            static fn (string $column): string => "\`{$column}\`",
             $columns,
         ));
         $kind = $unique ? 'UNIQUE INDEX' : 'INDEX';
 
-        DB::statement(
-            "ALTER TABLE `addresses` ADD {$kind} `{$index}` ({$columnsSql})",
-        );
+        DB::statement("ALTER TABLE \`addresses\` ADD {$kind} \`{$index}\` ({$columnsSql})");
     }
 
     private function ensureTrigger(string $trigger, string $definition): void
@@ -201,21 +162,13 @@ return new class extends Migration
                 $this->dropIndexIfExists($index);
             }
 
-            foreach ([
-                'active_primary_user_id',
-                'active_primary_cooperative_id',
-                'active_cooperative_id',
-            ] as $column) {
+            foreach (['active_primary_user_id', 'active_primary_cooperative_id', 'active_cooperative_id'] as $column) {
                 if (Schema::hasColumn('addresses', $column)) {
                     Schema::table('addresses', function (Blueprint $table) use ($column): void {
                         $table->dropColumn($column);
                     });
                 }
             }
-        } else {
-            Schema::table('addresses', function (Blueprint $table): void {
-                $table->dropIndex('addresses_cooperative_active_idx');
-            });
         }
 
         $foreignKeyExists = DB::table('information_schema.KEY_COLUMN_USAGE')
@@ -226,9 +179,7 @@ return new class extends Migration
             ->exists();
 
         if ($foreignKeyExists) {
-            DB::statement(
-                'ALTER TABLE `addresses` DROP FOREIGN KEY `addresses_cooperative_id_foreign`',
-            );
+            DB::statement('ALTER TABLE \`addresses\` DROP FOREIGN KEY \`addresses_cooperative_id_foreign\`');
         }
 
         if (Schema::hasColumn('addresses', 'cooperative_id')) {
@@ -247,7 +198,7 @@ return new class extends Migration
             ->exists();
 
         if ($exists) {
-            DB::statement("ALTER TABLE `addresses` DROP INDEX `{$index}`");
+            DB::statement("ALTER TABLE \`addresses\` DROP INDEX \`{$index}\`");
         }
     }
 };
