@@ -106,6 +106,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $emailChanged = $lockedTarget->email !== $attributes['email'];
+            $roleChanged = $isRoot && $roleSlug !== $currentRole;
+            $cooperativeAssignmentChanged = (string) $lockedTarget->cooperative_id
+                !== (string) $cooperativeId;
+            $accessScopeChanged = $roleChanged || $cooperativeAssignmentChanged;
 
             $oldValues = [
                 'first_name' => $lockedTarget->first_name,
@@ -168,11 +172,15 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                         : 'own_cooperative')],
             );
 
-            $this->revokeAccessCredentials(
-                actor: $actor,
-                target: $lockedTarget,
-                reason: $emailChanged ? 'user_email_changed' : 'user_profile_or_role_changed',
-            );
+            if ($emailChanged || $accessScopeChanged) {
+                $this->revokeAccessCredentials(
+                    actor: $actor,
+                    target: $lockedTarget,
+                    reason: $emailChanged
+                        ? 'user_email_changed'
+                        : ($roleChanged ? 'user_role_changed' : 'user_cooperative_assignment_changed'),
+                );
+            }
 
             return $lockedTarget->fresh();
         });
