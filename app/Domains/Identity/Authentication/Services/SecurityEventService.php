@@ -8,8 +8,8 @@ use App\Core\Foundation\Services\BaseService;
 use App\Domains\Identity\Authentication\Enums\SecurityEventType;
 use App\Domains\Identity\Authentication\Models\SecurityEvent;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 final class SecurityEventService extends BaseService
 {
