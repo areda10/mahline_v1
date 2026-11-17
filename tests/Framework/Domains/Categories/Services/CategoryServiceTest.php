@@ -220,12 +220,19 @@ final class CategoryServiceTest extends TestCase
         $category = Category::factory()->forCooperative($cooperative)->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $product->categories()->attach($category->getKey());
+        $actor = User::factory()->create();
 
-        $this->service->delete($category);
+        $this->service->delete($category, $actor);
 
         $this->assertSoftDeleted('categories', ['id' => $category->getKey()]);
         $this->assertDatabaseHas('products', [
             'id' => $product->getKey(), 'is_active' => false, 'deleted_at' => null,
+        ]);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'product.deactivated_no_active_categories',
+            'subject_type' => Product::class,
+            'subject_id' => $product->getKey(),
+            'actor_id' => $actor->getKey(),
         ]);
         $this->assertDatabaseMissing('category_product', [
             'category_id' => $category->getKey(), 'product_id' => $product->getKey(),
