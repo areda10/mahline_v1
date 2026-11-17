@@ -131,8 +131,7 @@ final class UserPolicy extends BasePolicy
             return true;
         }
 
-        return $actor->hasRole(self::ROLE_SUPER_ADMIN)
-            && $actor->cooperatives()->exists();
+        return false;
     }
 
     public function resendInvitation(User $actor, User $target): bool
