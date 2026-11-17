@@ -235,6 +235,59 @@ final class MediaControllerTest extends TestCase
         self::assertSame('private-pdf-content', $response->streamedContent());
     }
 
+    public function test_upload_rejects_a_file_whose_real_mime_does_not_match_its_extension(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $actor = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+
+        $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($actor)
+            ->post(route('media.store'), [
+                'owner_type' => 'product',
+                'owner_id' => (string) $product->getKey(),
+                'category' => 'product_image',
+                'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
+                    'spoofed.jpg',
+                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                ),
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('file');
+        self::assertSame(0, Media::query()->count());
+        self::assertSame([], Storage::disk('public')->allFiles('media'));
+    }
+
+    public function test_upload_rejects_a_category_that_does_not_match_the_owner_type(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+
+        $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($actor)
+            ->post(route('media.store'), [
+                'owner_type' => 'cooperative',
+                'owner_id' => (string) $cooperative->getKey(),
+                'category' => 'product_image',
+                'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
+                    'not-an-image.pdf',
+                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                ),
+            ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors('category');
+        self::assertSame(0, Media::query()->count());
+        self::assertSame([], Storage::disk('public')->allFiles('media'));
+    }
+
     private function userWithPermission(string $roleSlug, string $permissionSlug, string $cooperativeId): User
     {
         $user = User::factory()->create(['cooperative_id' => $cooperativeId]);
