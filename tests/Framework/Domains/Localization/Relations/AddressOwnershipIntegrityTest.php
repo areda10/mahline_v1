@@ -38,6 +38,28 @@ final class AddressOwnershipIntegrityTest extends TestCase
         self::assertSame($cooperative->getKey(), $address->cooperative->getKey());
     }
 
+    public function test_cooperative_can_have_only_one_active_address_and_can_replace_a_soft_deleted_one(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $first = $cooperative->address;
+
+        try {
+            Address::factory()->forCooperative($cooperative)->create();
+            self::fail('A cooperative cannot have two active addresses.');
+        } catch (QueryException) {
+            self::assertDatabaseHas('addresses', [
+                'id' => $first->getKey(),
+                'deleted_at' => null,
+            ]);
+        }
+
+        $first->delete();
+        $replacement = Address::factory()->forCooperative($cooperative)->create();
+
+        self::assertSame($cooperative->getKey(), $replacement->cooperative_id);
+        self::assertTrue($replacement->is_primary);
+    }
+
     public function test_address_cannot_be_created_without_exactly_one_owner(): void
     {
         $countryId = Address::factory()->raw()['country_id'];
