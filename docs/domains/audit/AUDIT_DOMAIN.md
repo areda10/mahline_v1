@@ -43,7 +43,7 @@ Les identifiants acteur/sujet restent des références descriptives sans FK afin
 
 Les services métier doivent appeler `AuditService::record(AuditEntryDTO $entry)` dans la même transaction que l'opération lorsque l'atomicité est requise. Les événements Identity spécialisés restent séparés et complémentaires.
 
-L'implémentation comprend notamment des événements d'audit pour les changements d'identité, les sessions/tokens sensibles, les coopératives, les adresses, les médias et plusieurs opérations de catalogue/produit. Cette liste n'est pas une preuve que chaque opération de chaque domaine est déjà couverte : chaque service doit encore être vérifié avec ses tests dédiés.
+L'implémentation comprend notamment des événements d'audit pour les changements d'identité, les sessions/tokens sensibles, les coopératives, les adresses, les médias, les catalogues, les catégories et les produits. Les créations, modifications, suppressions et changements d'associations des catalogues sont attribués à l'acteur HTTP ; les suppressions de branches de catégories tracent aussi le détachement des catégories locales et la désactivation des produits devenus sans catégorie active. Cette liste n'est pas une preuve que chaque opération de chaque domaine est déjà couverte : chaque service doit encore être vérifié avec ses tests dédiés.
 
 ## 6. Tests et validation
 
