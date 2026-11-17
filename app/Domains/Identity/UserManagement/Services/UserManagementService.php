@@ -804,7 +804,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         string $targetRole,
     ): void {
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            if (! in_array($targetRole, [self::ROLE_COOPERATIVE_ADMIN, self::ROLE_USER], true)
+            if ($targetRole !== self::ROLE_USER
                 || $target->cooperative_id === null
                 || ! $actor->cooperatives()->whereKey($target->cooperative_id)->exists()) {
                 throw new DomainException('The super admin cannot update this account outside its assigned cooperative scope.');
