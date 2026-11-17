@@ -60,7 +60,7 @@ final class UserManagementController
 
         Gate::authorize('update', $user);
 
-        $user->load(['roles', 'cooperative', 'address.country']);
+        $user->load(['roles', 'cooperative', 'primaryAddress.country']);
 
         return view('super-admin-root.users.edit', [
             'user' => $user,
@@ -221,7 +221,7 @@ final class UserManagementController
         $user->load([
             'roles' => static fn ($query) => $query->orderBy('name'),
             'cooperative',
-            'address.country',
+            'primaryAddress.country',
         ]);
 
         $canViewAssignments = Gate::allows('viewAssignments', $user);
