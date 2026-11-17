@@ -32,6 +32,7 @@ return [
             'users.update',
             'users.create',
             'users.invite',
+            'users.activate',
             'users.deactivate',
             'users.suspend',
             'users.archive',
