@@ -56,7 +56,7 @@ final class ApiTokenService extends BaseService
                 throw new RuntimeException('An API token can only be created by its owner.');
             }
 
-            Gate::forUser($actor)->authorize('viewAny', User::class);
+            Gate::forUser($actor)->authorize('view', $owner);
         }
 
         return DB::transaction(function () use (
