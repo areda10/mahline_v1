@@ -306,6 +306,8 @@ Route::prefix('root/back-office')
         Route::delete('users/{user}/sessions/{session}', [AuthenticationSessionController::class, 'revokeForUser'])
             ->name('users.sessions.destroy');
 
+        Route::post('users/{user}/api-tokens', [UserApiTokenController::class, 'storeForUser'])
+            ->name('users.api-tokens.store');
         Route::delete('users/{user}/api-tokens', [UserApiTokenController::class, 'destroyAllFromBackOffice'])
             ->name('users.api-tokens.destroy-all');
         Route::delete('users/{user}/api-tokens/{token}', [UserApiTokenController::class, 'destroyFromBackOffice'])
