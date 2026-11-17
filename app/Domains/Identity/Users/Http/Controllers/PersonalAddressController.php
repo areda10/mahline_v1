@@ -67,7 +67,7 @@ final class PersonalAddressController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        if ($user->primaryAddress()->exists()) {
+        if ($user->addresses()->exists()) {
             $addresses->updateForUser($actor, $user, $data);
         } else {
             $addresses->createForUser($actor, $user, $data);
