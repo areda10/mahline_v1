@@ -7,6 +7,8 @@ namespace Tests\Framework\Domains\Identity\Authentication\Services;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -72,6 +74,42 @@ final class ApiTokenServiceTest extends TestCase
         self::assertArrayNotHasKey('token', $metadata);
         self::assertArrayNotHasKey('plainTextToken', $metadata);
         self::assertArrayNotHasKey('tokenable_id', $metadata);
+    }
+
+    public function test_root_can_create_an_api_token_for_a_user_from_the_user_fiche(): void
+    {
+        $root = User::factory()->create();
+        $rootRole = Role::query()->firstOrCreate(
+            ['slug' => 'super_admin_root'],
+            ['name' => 'Super Admin Root', 'is_active' => true],
+        );
+        $usersView = Permission::query()->firstOrCreate(
+            ['slug' => 'users.view'],
+            ['name' => 'View users', 'is_active' => true],
+        );
+        $rootRole->permissions()->syncWithoutDetaching([$usersView->getKey()]);
+        $root->roles()->attach($rootRole->getKey());
+
+        $owner = User::factory()->create();
+        $userRole = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $owner->roles()->attach($userRole->getKey());
+
+        $created = $this->service->createForOwner(
+            owner: $owner,
+            actor: $root,
+            name: 'root-created-token',
+        );
+
+        self::assertSame($owner->getKey(), $created->accessToken->tokenable_id);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.api_token_created',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $created->accessToken->getKey(),
+        ]);
+        self::assertSame($owner->getKey(), DB::table('audit_events')->where('subject_id', $created->accessToken->getKey())->value('cooperative_id') ?? null);
     }
 
     public function test_owner_cannot_create_an_api_token_for_another_user(): void
