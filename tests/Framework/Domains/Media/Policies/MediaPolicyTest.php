@@ -110,11 +110,30 @@ final class MediaPolicyTest extends TestCase
         $owner = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
         $document = $owner->media()->create($this->documentAttributes('users/root-check/proof.pdf'));
 
-        $rootWithoutPermission = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
-        $rootWithPermission = $this->userWithPermission('super_admin_root', 'users.view', (string) $cooperative->getKey());
+        $rootRole = $this->role('super_admin_root');
+        $usersViewPermission = Permission::query()->firstOrCreate(
+            ['slug' => 'users.view'],
+            ['name' => 'users.view', 'is_active' => true],
+        );
 
-        self::assertFalse(Gate::forUser($rootWithoutPermission)->allows('view', $document));
-        self::assertTrue(Gate::forUser($rootWithPermission)->allows('view', $document));
+        // The permission belongs to the shared role, so assert the negative case
+        // before granting it to that role.
+        $rootRole->permissions()->detach($usersViewPermission->getKey());
+
+        $rootWithoutPermission = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $rootWithoutPermission->roles()->attach($rootRole->getKey());
+
+        self::assertFalse(Gate::forUser($rootWithoutPermission->refresh())->allows('view', $document));
+
+        $rootRole->permissions()->syncWithoutDetaching([$usersViewPermission->getKey()]);
+        $rootWithPermission = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $rootWithPermission->roles()->attach($rootRole->getKey());
+
+        self::assertTrue(Gate::forUser($rootWithPermission->refresh())->allows('view', $document));
     }
 
     public function test_pending_archived_or_emergency_locked_users_cannot_view_private_media(): void
