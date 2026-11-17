@@ -1,91 +1,59 @@
-# MAHLINE — Domaine Audit
+# MAHLINE V1 — Domaine Audit
 
-## Statut
+- **Branche de travail :** `feature/Marketplace`
+- **Statut technique :** implémentation présente ; validation d'exécution MySQL à effectuer localement
+- **Périmètre :** événements métier et administratifs append-only
 
-Première implémentation technique sur la branche `feature/audit-domain-v7`. À valider avant intégration dans `main`.
+## 1. Responsabilités
 
-## Responsabilité
+Audit conserve les opérations métier et administratives importantes : création, modification, suppression logique, restauration, changement de statut, changement de rôle et opérations sensibles. Il ne remplace pas les journaux Identity :
 
-Le domaine Audit conserve les événements métier et administratifs importants sous forme d'historique append-only. Il ne remplace ni les logs techniques ni les journaux d'authentification, de sessions ou de sécurité du domaine Identity.
+- Login History conserve les tentatives et résultats d'authentification.
+- Les journaux de session et de sécurité conservent leurs événements spécialisés.
+- Audit conserve la trace métier et administrative correspondante lorsqu'elle est requise.
 
-### Séparation des responsabilités
+## 2. Schéma et intégrité
 
-- **Identity** conserve les événements de connexion, de session et de sécurité.
-- **Audit** conserve les opérations métier et administratives : changements de statut, création/modification/suppression/restauration d'entités, changements de rôles et permissions, actions de gestion.
-- Les journaux techniques servent au diagnostic d'exploitation.
+La migration `2026_10_29_000001_create_audit_events_table.php` crée :
 
-## Stockage
+- `audit_events`, sans clés étrangères vers les entités métier afin de préserver l'historique ;
+- `audit_chain_heads`, tête unique de la chaîne SHA-256 ;
+- `previous_hash` et `event_hash` sur chaque événement ;
+- les index de consultation par événement, acteur, coopérative, sujet et corrélation.
 
-La table `audit_events` contient l'acteur, la coopérative de contexte, le sujet, l'action, les valeurs avant/après, les métadonnées minimales et l'heure de l'événement.
+L'écriture est sérialisée par verrouillage de la ligne `audit_chain_heads`. Le hash porte sur un payload canonique incluant les valeurs avant/après, métadonnées, acteur, sujet, contexte HTTP et date. `AuditEventRepository::verifyIntegrity()` vérifie la chaîne complète et détecte les événements manquants, altérés ou orphelins.
 
-Les identifiants d'acteur et de sujet sont conservés sans clés étrangères vers les domaines concernés afin que la suppression ou l'archivage d'une entité ne fasse pas disparaître l'historique. Le type et l'identifiant du sujet sont des références descriptives, pas une relation Eloquent garantie.
+L'immutabilité est appliquée à plusieurs niveaux :
 
-## Écriture
+1. `AuditEvent` refuse les mises à jour et suppressions Eloquent ;
+2. les triggers MySQL refusent les UPDATE/DELETE SQL directs sur `audit_events` ;
+3. un trigger empêche de remplacer ou supprimer la tête de chaîne sans avancer vers l'événement suivant.
 
-Les domaines appellent `AuditService::record(AuditEntryDTO $entry)` après avoir autorisé l'action métier. Lorsque l'opération métier et son événement doivent être atomiques, les deux écritures doivent être exécutées dans la même transaction de base de données.
+## 3. Données sensibles
 
-Exemple :
+`AuditService` filtre récursivement les clés sensibles avant écriture : mots de passe, tokens, secrets, cookies, sessions, OTP, codes de vérification et clés privées. Ce filtrage est une défense complémentaire : chaque domaine doit minimiser les données envoyées à l'audit et ne jamais transmettre de secret en clair.
 
-```php
-app(\App\Domains\Audit\Services\AuditService::class)->record(
-    new \App\Shared\DTOs\AuditEntryDTO(
-        eventKey: 'PRODUCT_STATUS_CHANGED',
-        action: 'STATUS_CHANGE',
-        actorType: \App\Domains\Identity\Users\Models\User::class,
-        actorId: (string) $user->getKey(),
-        cooperativeId: (string) $product->cooperative_id,
-        subjectType: $product::class,
-        subjectId: (string) $product->getKey(),
-        oldValues: ['is_active' => false],
-        newValues: ['is_active' => true],
-    ),
-);
-```
+## 4. Autorisations
 
-Ne transmettez que les champs nécessaires. Le service filtre récursivement les clés sensibles (mots de passe, tokens, secrets, OTP, codes de vérification, cookies et autorisations). Ce filtre ne remplace pas la minimisation des données à la source.
+La consultation du journal d'audit est réservée à `super_admin_root` avec la permission `audit.view`. Les autres rôles ne disposent pas d'un accès au journal. La Policy refuse les opérations de création, modification, suppression et restauration par les utilisateurs.
 
-## Immutabilité et accès
+Les identifiants acteur/sujet restent des références descriptives sans FK afin que la suppression logique ou physique d'une entité ne supprime pas son historique.
 
-Les événements sont append-only à trois niveaux : le modèle Eloquent interdit update/delete, des triggers MySQL rejettent aussi les mises à jour et suppressions SQL directes, et chaque événement est lié au précédent par SHA-256. La tête de chaîne est verrouillée transactionnellement dans `audit_chain_heads`, ce qui sérialise les écritures concurrentes. `AuditEventRepository::verifyIntegrity()` parcourt la chaîne complète et vérifie les empreintes et l'absence d'événements orphelins.
+## 5. Intégration dans les domaines
 
-La policy refuse les créations, modifications, suppressions et restaurations via les capacités d'autorisation. La consultation exige la permission `audit.view`; l'application doit ajouter cette permission à la matrice d'autorisation et aux rôles voulus avant d'exposer une interface ou une route.
+Les services métier doivent appeler `AuditService::record(AuditEntryDTO $entry)` dans la même transaction que l'opération lorsque l'atomicité est requise. Les événements Identity spécialisés restent séparés et complémentaires.
 
-## Événements des autres domaines
+L'implémentation comprend notamment des événements d'audit pour les changements d'identité, les sessions/tokens sensibles, les coopératives, les adresses, les médias et plusieurs opérations de catalogue/produit. Cette liste n'est pas une preuve que chaque opération de chaque domaine est déjà couverte : chaque service doit encore être vérifié avec ses tests dédiés.
 
-Cette première phase fournit le contrat d'écriture commun. Elle ne branche pas automatiquement chaque action des domaines Identity, Cooperatives, Catalog, Categories, Products, Finance ou Inventory. Chaque intégration doit être ajoutée explicitement et couverte par des tests de régression, sans dupliquer les journaux propres à Identity.
+## 6. Tests et validation
 
-## Limites à traiter avant mise en production
+`tests/Framework/Domains/Audit/AuditServiceTest.php` couvre notamment :
 
-- Ajouter `audit.view` à la matrice de permissions et décider précisément quels rôles la reçoivent.
-- Définir la politique de rétention, archivage et purge technique contrôlée.
-- Exécuter les tests d'intégration MySQL et les tests de politique dans l'environnement local avant validation V1.
-- Décider si l'IP et le user-agent sont nécessaires pour chaque type d'événement, compte tenu de la confidentialité.
-- Ajouter des intégrations explicites dans chaque domaine après validation de son service métier.
+- l'écriture et l'ordre de la chaîne ;
+- la vérification d'intégrité ;
+- le filtrage récursif des clés sensibles ;
+- l'immutabilité Eloquent ;
+- les triggers MySQL d'immutabilité et de protection de la tête ;
+- la capture du contexte HTTP et de l'identifiant de corrélation.
 
-
-## Intégration Identity — verrouillage d'urgence root-only
-
-L'implémentation Identity du verrouillage d'urgence utilise le contrat commun AuditService::record(AuditEntryDTO $entry) et les événements suivants :
-
-- identity.authentication.emergency_lock.applied : opération administrative de verrouillage du User ;
-- identity.authentication.session_revoked : révocation unitaire de chaque session avec le motif emergency_lock ;
-- identity.authentication.token_revoked : révocation unitaire de chaque token API avec le motif emergency_lock ;
-- identity.authentication.emergency_lock.released : levée administrative du verrouillage.
-
-Le contrôleur exécute l'état d'urgence, les révocations et les événements dans la même transaction. Les événements Identity spécialisés (Login History, session et sécurité) restent complémentaires et ne sont pas remplacés par l'Audit. Aucun secret de session, mot de passe ou token en clair ne doit être enregistré.
-
-Fichiers d'intégration : app/Domains/Identity/Authentication/Http/Controllers/AuthenticationLockoutController.php et app/Domains/Identity/Authentication/Services/SessionService.php.
-
-
-## Intégration Identity — détection d'un nouvel appareil
-
-Lorsqu'un utilisateur s'authentifie depuis un appareil jamais enregistré pour son compte, le hook applicatif `RecordNewDeviceAuthenticationWorkflowHook` écrit l'événement append-only `identity.authentication.new_device_detected`, dont le sujet est la nouvelle `AuthenticationSession`. L'événement spécialisé `unusual_activity_detected` / `new_device_detected` est également persisté dans `security_events`. Les deux journaux sont complémentaires ; Login History conserve séparément le succès de connexion normal. Un appareil déjà connu ne génère aucun doublon.
-
-Fichiers d'intégration : `app/Domains/Identity/Authentication/Workflows/AuthenticationWorkflow.php`, `app/Domains/Identity/Authentication/Workflows/RecordNewDeviceAuthenticationWorkflowHook.php` et `app/Providers/AppServiceProvider.php`.
-
-
-## Intégration — alerte de nouvel appareil (SESS-10)
-
-La détection de première apparition déclenche d'abord les écritures SecurityEvent et Audit dans la transaction d'authentification. Après commit, une notification e-mail est tentée. L'envoi n'écrit pas un deuxième événement Audit de détection : `identity.authentication.new_device_detected` reste la trace canonique de l'événement, avec la session comme sujet.
-
-Une panne de transport e-mail est interceptée et journalisée sans secret, sans IP brute et sans annuler la connexion. L'état de notification n'est pas encore conservé dans une table d'historique dédiée ; cette traçabilité appartient au futur service transversal de notifications (NOT-01 à NOT-06). Aucun fournisseur GeoIP n'est actuellement configuré ; la localisation est donc annoncée indisponible plutôt que supposée.
+Les tests existent dans le dépôt, mais leur exécution sur MySQL 8.4 et la suite complète MAHLINE restent à effectuer localement. Aucun statut « tests verts » n'est déclaré ici.
