@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\UserManagement\Rules;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -20,23 +18,9 @@ final class UserManagementScopeTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $country = Country::factory()->create();
+        $cooperativeA = Cooperative::factory()->create();
 
-        $addressA = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $addressB = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperativeA = Cooperative::factory()->create([
-            'address_id' => $addressA->id,
-        ]);
-
-        $cooperativeB = Cooperative::factory()->create([
-            'address_id' => $addressB->id,
-        ]);
+        $cooperativeB = Cooperative::factory()->create();
 
         $superAdmin->cooperatives()->attach([
             $cooperativeA->id,
@@ -53,15 +37,7 @@ final class UserManagementScopeTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $superAdmin->cooperatives()->attach(
             $cooperative->id,
@@ -78,23 +54,9 @@ final class UserManagementScopeTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $country = Country::factory()->create();
+        $assignedCooperative = Cooperative::factory()->create();
 
-        $addressA = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $addressB = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $assignedCooperative = Cooperative::factory()->create([
-            'address_id' => $addressA->id,
-        ]);
-
-        $unassignedCooperative = Cooperative::factory()->create([
-            'address_id' => $addressB->id,
-        ]);
+        $unassignedCooperative = Cooperative::factory()->create();
 
         $superAdmin->cooperatives()->attach(
             $assignedCooperative->id,
@@ -115,15 +77,7 @@ final class UserManagementScopeTest extends TestCase
 
     public function test_cooperative_user_belongs_to_only_one_cooperative(): void
     {
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $user = User::factory()->create([
             'cooperative_id' => $cooperative->id,
@@ -143,15 +97,7 @@ final class UserManagementScopeTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $superAdmin->cooperatives()->attach(
             $cooperative->id,
@@ -170,15 +116,7 @@ final class UserManagementScopeTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $superAdmin->cooperatives()->attach($cooperative->id);
 
@@ -193,15 +131,7 @@ final class UserManagementScopeTest extends TestCase
     {
         $superAdmin = User::factory()->create();
 
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperative = Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        $cooperative = Cooperative::factory()->create();
 
         $superAdmin->cooperatives()->attach($cooperative->id);
 
