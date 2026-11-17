@@ -6,8 +6,8 @@ namespace Tests\Framework\Domains\Products\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Categories\Models\Category;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
