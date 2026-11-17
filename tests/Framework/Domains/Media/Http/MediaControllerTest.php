@@ -37,6 +37,55 @@ final class MediaControllerTest extends TestCase
         self::assertStringNotContainsString('/storage/', $response->headers->get('Content-Disposition', ''));
     }
 
+    public function test_public_cooperative_logo_and_photos_are_streamed(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+
+        foreach ([
+            ['cooperative_logo', 'media/cooperative/logo.jpg'],
+            ['cooperative_photo', 'media/cooperative/photo.jpg'],
+        ] as [$category, $path]) {
+            Storage::disk('public')->put($path, 'cooperative-image');
+
+            $media = $cooperative->media()->create(array_replace(
+                $this->attributes($path, $category, 'public', 'public', 'image/jpeg', 'jpg'),
+                ['collection' => $category === 'cooperative_logo' ? 'logo' : 'photos'],
+            ));
+
+            $response = $this->get(route('media.show', $media));
+
+            $response->assertOk();
+            $response->assertHeader('Content-Type', 'image/jpeg');
+            self::assertSame('cooperative-image', $response->streamedContent());
+        }
+    }
+
+    public function test_user_can_stream_own_private_profile_image(): void
+    {
+        Storage::fake('local');
+
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->userWithRole('user', (string) $cooperative->getKey());
+        $path = 'media/private/profile-image.jpg';
+        Storage::disk('local')->put($path, 'private-profile-image');
+
+        $media = $actor->media()->create(array_replace(
+            $this->attributes($path, 'profile_image', 'private', 'local', 'image/jpeg', 'jpg'),
+            ['collection' => 'profile'],
+        ));
+
+        $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($actor)
+            ->get(route('media.private', $media));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/jpeg');
+        $response->assertHeader('Cache-Control', 'no-store, private');
+        self::assertSame('private-profile-image', $response->streamedContent());
+    }
+
     public function test_private_media_is_not_available_on_the_public_route(): void
     {
         $cooperative = Cooperative::factory()->create();
