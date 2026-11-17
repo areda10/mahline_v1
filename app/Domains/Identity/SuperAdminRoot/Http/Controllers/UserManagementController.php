@@ -243,6 +243,7 @@ final class UserManagementController
             'canViewAssignments' => $canViewAssignments,
             'sessions' => $sessions,
             'apiTokens' => $apiTokens,
+            'apiTokenAbilities' => $apiTokenService->availableAbilities($user),
             'regions' => MoroccanRegion::values(),
         ]);
     }
