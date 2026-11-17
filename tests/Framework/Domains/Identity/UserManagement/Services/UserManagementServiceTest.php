@@ -210,6 +210,30 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_super_admin_cannot_update_cooperative_admin_account(): void
+    {
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $cooperativeAdmin = $this->createUserWithRole('cooperative_admin', (string) $cooperative->getKey());
+
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage('The super admin cannot update this account outside its assigned cooperative scope.');
+
+        $this->service->updateUserAccount(
+            $superAdmin,
+            $cooperativeAdmin,
+            [
+                'first_name' => $cooperativeAdmin->first_name,
+                'last_name' => $cooperativeAdmin->last_name,
+                'email' => 'cooperative-admin-updated@example.test',
+                'telephone' => $cooperativeAdmin->telephone,
+                'cooperative_id' => $cooperative->getKey(),
+            ],
+            'cooperative_admin',
+        );
+    }
+
     public function test_email_role_and_cooperative_scope_changes_revoke_api_tokens(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
