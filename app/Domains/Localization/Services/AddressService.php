@@ -190,22 +190,41 @@ final class AddressService extends BaseService
 
     private function softDeleteOwnerAddresses(string $ownerColumn, string $ownerId, string $actorId): string
     {
-        $batch = (string) Str::ulid();
-        $rows = Address::query()->where($ownerColumn, $ownerId)->lockForUpdate()->get();
-        $actor = User::query()->find($actorId);
-        foreach ($rows as $address) {
-            $before = $this->snapshot($address);
-            $address->forceFill([
-                'is_primary' => false, 'deletion_source' => 'owner',
-                'owner_deletion_batch_id' => $batch, 'deleted_by' => $actorId,
-            ])->save();
-            $address->delete();
-            if ($actor !== null) {
-                $this->record($actor, $address, 'deleted', 'localization.address.owner_deleted',
-                    oldValues: $before, newValues: ['deleted' => true, 'deletion_source' => 'owner']);
+        return DB::transaction(function () use ($ownerColumn, $ownerId, $actorId): string {
+            match ($ownerColumn) {
+                'user_id' => User::query()->whereKey($ownerId)->lockForUpdate()->firstOrFail(),
+                'cooperative_id' => Cooperative::query()->whereKey($ownerId)->lockForUpdate()->firstOrFail(),
+                default => throw new InvalidArgumentException('Unsupported address owner column.'),
+            };
+
+            $batch = (string) Str::ulid();
+            $rows = Address::query()->where($ownerColumn, $ownerId)->lockForUpdate()->get();
+            $actor = User::query()->find($actorId);
+
+            foreach ($rows as $address) {
+                $before = $this->snapshot($address);
+                $address->forceFill([
+                    'is_primary' => false,
+                    'deletion_source' => 'owner',
+                    'owner_deletion_batch_id' => $batch,
+                    'deleted_by' => $actorId,
+                ])->save();
+                $address->delete();
+
+                if ($actor !== null) {
+                    $this->record(
+                        $actor,
+                        $address,
+                        'deleted',
+                        'localization.address.owner_deleted',
+                        oldValues: $before,
+                        newValues: ['deleted' => true, 'deletion_source' => 'owner'],
+                    );
+                }
             }
-        }
-        return $batch;
+
+            return $batch;
+        });
     }
 
     public function restoreLatestCooperativeAddresses(Cooperative $owner, string $actorId): void
