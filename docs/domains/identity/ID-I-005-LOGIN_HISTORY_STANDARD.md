@@ -98,3 +98,8 @@ Lorsqu'un appareil inconnu est détecté pour un utilisateur, MAHLINE envoie une
 En l'absence de fournisseur GeoIP configuré, le message indique que la localisation approximative est indisponible. L'ajout ultérieur d'un fournisseur GeoIP doit rester optionnel, documenter la source et la précision, et ne jamais bloquer l'authentification en cas d'indisponibilité.
 
 Une erreur d'envoi e-mail ne doit pas annuler une connexion valide ni les traces SecurityEvent/Audit déjà persistées. Les autres sessions de l'utilisateur restent actives.
+
+
+## 13. Append-only retention
+
+Login history is immutable in V1. The `login_histories` table has no soft-delete lifecycle; Eloquent rejects update/delete and MySQL triggers reject direct SQL updates/deletes. A history row is retained even when the associated user or authentication session is later removed; nullable foreign keys preserve the historical event without retaining the related operational record.
