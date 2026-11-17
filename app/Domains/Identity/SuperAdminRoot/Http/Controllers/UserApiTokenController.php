@@ -52,6 +52,7 @@ final class UserApiTokenController
         ApiTokenService $service,
     ): RedirectResponse {
         Gate::authorize('viewAny', User::class);
+        $this->assertManageableTarget($user);
 
         $revoked = $service->revokeToken(
             owner: $user,
@@ -74,6 +75,7 @@ final class UserApiTokenController
         ApiTokenService $service,
     ): RedirectResponse {
         Gate::authorize('viewAny', User::class);
+        $this->assertManageableTarget($user);
 
         $count = $service->revokeForUser(
             user: $user,
@@ -90,6 +92,7 @@ final class UserApiTokenController
     public function index(User $user, ApiTokenService $service): JsonResponse
     {
         Gate::authorize('viewAny', User::class);
+        $this->assertManageableTarget($user);
 
         return ApiTokenResource::collection(
             $service->tokensForUser($user),
@@ -103,6 +106,7 @@ final class UserApiTokenController
         ApiTokenService $service,
     ): JsonResponse {
         Gate::authorize('viewAny', User::class);
+        $this->assertManageableTarget($user);
 
         $revoked = $service->revokeToken(
             owner: $user,
@@ -126,6 +130,7 @@ final class UserApiTokenController
         ApiTokenService $service,
     ): JsonResponse {
         Gate::authorize('viewAny', User::class);
+        $this->assertManageableTarget($user);
 
         $count = $service->revokeForUser(
             user: $user,
