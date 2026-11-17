@@ -162,7 +162,6 @@ final class ApiTokenService extends BaseService
             ->where('tokenable_type', $user->getMorphClass())
             ->where('tokenable_id', $user->getKey())
             ->whereNull('revoked_at')
-            ->whereNotNull('expires_at')
             ->where('expires_at', '>', now())
             ->count();
     }
@@ -330,8 +329,8 @@ final class ApiTokenService extends BaseService
      * retention period. Audit events are written before deletion and are
      * intentionally independent from the token row.
      *
-     * Revocation does not shorten retention. Tokens without expires_at are
-     * excluded. Web authentication sessions are never queried or modified.
+     * Revocation does not shorten retention. Web authentication sessions are
+     * never queried or modified.
      */
     public function pruneExpiredTokens(int $chunkSize = 500): int
     {
@@ -343,15 +342,13 @@ final class ApiTokenService extends BaseService
         $deleted = 0;
 
         PersonalAccessToken::query()
-            ->whereNotNull('expires_at')
             ->where('expires_at', '<=', $cutoff)
             ->chunkById($chunkSize, function (Collection $tokens) use (&$deleted): void {
                 foreach ($tokens as $token) {
                     DB::transaction(function () use ($token, &$deleted): void {
                         $lockedToken = PersonalAccessToken::query()
                             ->whereKey($token->getKey())
-                            ->whereNotNull('expires_at')
-                            ->where('expires_at', '<=', now()->subDays(PersonalAccessToken::EXPIRATION_DAYS))
+                                ->where('expires_at', '<=', now()->subDays(PersonalAccessToken::EXPIRATION_DAYS))
                             ->lockForUpdate()
                             ->first();
 
