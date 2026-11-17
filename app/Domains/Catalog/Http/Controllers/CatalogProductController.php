@@ -37,6 +37,7 @@ final class CatalogProductController
             $catalogModel,
             $cooperativeId,
             $data['product_id'],
+            $request->user(),
         );
 
         return redirect()
@@ -48,6 +49,7 @@ final class CatalogProductController
     }
 
     public function destroy(
+        Request $request,
         string $cooperative,
         string $catalog,
         string $product,
@@ -64,6 +66,7 @@ final class CatalogProductController
             $catalogModel,
             $cooperativeId,
             $product,
+            $request->user(),
         );
 
         return redirect()
