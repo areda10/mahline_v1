@@ -185,27 +185,18 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         UserStatus $initialStatus = UserStatus::Pending,
     ): User {
         if ($initialStatus !== UserStatus::Pending) {
-            throw new DomainException(
-                'A newly created user must start as pending.',
-            );
+            throw new DomainException('A newly created user must start as pending.');
         }
 
         $this->assertActorIsActive($actor);
+        $this->assertSuperAdminRoot($actor);
 
         $role = $this->findRole($roleSlug);
 
-        $this->assertCanAssignRole($actor, $roleSlug);
-
         if ($roleSlug === self::ROLE_SUPER_ADMIN) {
-            $this->assertSuperAdminRoot($actor);
-
-            // Un super_admin n'appartient pas directement
-            // à une coopérative.
             $attributes['cooperative_id'] = null;
         } else {
             $cooperativeId = $attributes['cooperative_id'] ?? null;
-
-            $this->assertCanCreateUser($actor, $cooperativeId);
             $this->assertCooperativeExists($cooperativeId);
         }
 
@@ -217,31 +208,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $initialStatus,
         ): User {
             if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
-                $cooperative = Cooperative::query()
+                Cooperative::query()
                     ->whereKey($attributes['cooperative_id'])
                     ->lockForUpdate()
-                    ->first();
-
-                if ($cooperative === null) {
-                    throw new DomainException('The cooperative does not exist or is no longer available.');
-                }
-
-                if ($actor->hasRole(self::ROLE_SUPER_ADMIN)
-                    && ! $actor->cooperatives()->whereKey($cooperative->getKey())->exists()) {
-                    throw new DomainException('The super admin is not assigned to this cooperative.');
-                }
-
-                if ($roleSlug === self::ROLE_COOPERATIVE_ADMIN
-                    && $actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-                    $existingCooperativeAdmin = User::query()
-                        ->where('cooperative_id', $cooperative->getKey())
-                        ->whereHas('roles', static fn ($query) => $query->where('slug', self::ROLE_COOPERATIVE_ADMIN))
-                        ->exists();
-
-                    if ($existingCooperativeAdmin) {
-                        throw new DomainException('A super admin can create only the first cooperative admin for a cooperative.');
-                    }
-                }
+                    ->firstOrFail();
             }
 
             $userAttributes = array_merge($attributes, [
@@ -915,60 +885,6 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         if (! $actor->isAuthorized()) {
             throw new DomainException(
                 'An inactive user cannot manage users or assignments.',
-            );
-        }
-    }
-
-    private function assertCanCreateUser(
-        User $actor,
-        string|int|null $cooperativeId,
-    ): void {
-        $this->assertCooperativeIdProvided($cooperativeId);
-
-        if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
-            return;
-        }
-
-        if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            if (! $actor->cooperatives()
-                ->whereKey($cooperativeId)
-                ->exists()) {
-                throw new DomainException(
-                    'The super admin is not assigned to this cooperative.',
-                );
-            }
-
-            return;
-        }
-
-        throw new DomainException(
-            'The user is not authorized to create users.',
-        );
-    }
-
-    private function assertCanAssignRole(
-        User $actor,
-        string $roleSlug,
-    ): void {
-        $allowedRoles = match (true) {
-            $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT) => [
-                self::ROLE_SUPER_ADMIN,
-                self::ROLE_COOPERATIVE_ADMIN,
-                self::ROLE_USER,
-            ],
-            $actor->hasRole(self::ROLE_SUPER_ADMIN) => [
-                self::ROLE_COOPERATIVE_ADMIN,
-                self::ROLE_USER,
-            ],
-            default => [],
-        };
-
-        if (! in_array($roleSlug, $allowedRoles, true)) {
-            throw new DomainException(
-                sprintf(
-                    'The actor is not authorized to assign the "%s" role.',
-                    $roleSlug,
-                ),
             );
         }
     }
