@@ -31,6 +31,7 @@ return [
             'users.view',
             'users.update',
             'users.create',
+            'users.invite',
             'users.deactivate',
             'users.suspend',
             'users.archive',
@@ -72,7 +73,7 @@ return [
 
             'users.view',
             'users.update',
-            'users.create',
+            'users.invite',
             'users.activate',
             'users.deactivate',
             'users.suspend',
