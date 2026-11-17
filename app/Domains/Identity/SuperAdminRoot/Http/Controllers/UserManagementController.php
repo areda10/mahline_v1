@@ -56,9 +56,9 @@ final class UserManagementController
     public function edit(Request $request, User $user): View
     {
         $this->authorizeRoot($request);
-        Gate::authorize('update', $user);
-
         abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+
+        Gate::authorize('update', $user);
 
         $user->load(['roles', 'cooperative', 'address.country']);
 
@@ -82,8 +82,8 @@ final class UserManagementController
         UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
-        Gate::authorize('update', $user);
         abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+        Gate::authorize('update', $user);
 
         $data = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
