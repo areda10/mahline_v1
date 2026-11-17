@@ -95,6 +95,43 @@ final class MediaControllerTest extends TestCase
         $this->get(route('media.show', $media))->assertNotFound();
     }
 
+    public function test_public_cooperative_image_is_hidden_when_cooperative_is_inactive(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::INACTIVE]);
+        $path = 'media/inactive-cooperative/logo.jpg';
+        Storage::disk('public')->put($path, 'cooperative-image');
+
+        $media = $cooperative->media()->create(array_replace(
+            $this->attributes($path, 'cooperative_logo', 'public', 'public', 'image/jpeg', 'jpg'),
+            ['collection' => 'logo'],
+        ));
+
+        $this->get(route('media.show', $media))->assertNotFound();
+    }
+
+    public function test_user_cannot_stream_another_users_private_profile_image(): void
+    {
+        Storage::fake('local');
+
+        $cooperative = Cooperative::factory()->create();
+        $owner = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $actor = $this->userWithRole('user', (string) $cooperative->getKey());
+        $path = 'media/private/another-profile-image.jpg';
+        Storage::disk('local')->put($path, 'private-profile-image');
+
+        $media = $owner->media()->create(array_replace(
+            $this->attributes($path, 'profile_image', 'private', 'local', 'image/jpeg', 'jpg'),
+            ['collection' => 'profile'],
+        ));
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($actor)
+            ->get(route('media.private', $media))
+            ->assertForbidden();
+    }
+
     public function test_private_media_route_requires_an_authenticated_active_session(): void
     {
         $cooperative = Cooperative::factory()->create();
