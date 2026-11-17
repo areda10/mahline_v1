@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Audit\\Models;
+namespace App\Domains\Audit\Models;
 
-use App\\Core\\Foundation\\Models\\BaseModel;
-use Illuminate\\Database\\Eloquent\\Builder;
+use App\Core\Foundation\Models\BaseModel;
+use Illuminate\Database\Eloquent\Builder;
 use LogicException;
 
 final class AuditEvent extends BaseModel
