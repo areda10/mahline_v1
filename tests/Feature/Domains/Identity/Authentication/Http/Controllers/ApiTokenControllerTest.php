@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -67,6 +68,35 @@ final class ApiTokenControllerTest extends TestCase
 
         self::assertNotNull($owned->accessToken->fresh()->revoked_at);
         self::assertNull($foreign->accessToken->fresh()->revoked_at);
+    }
+
+    public function test_root_can_create_a_token_for_another_user_from_the_user_fiche(): void
+    {
+        $root = $this->actor('super_admin_root');
+        $this->grantPermission($root, 'users.view');
+        $target = $this->actor('user');
+
+        $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($root)
+            ->post(route('root.backoffice.users.api-tokens.store', $target), [
+                'name' => 'root-created-user-token',
+                'abilities' => [],
+            ]);
+
+        $response->assertRedirect(route('root.backoffice.users.show', $target))
+            ->assertSessionHas('new_api_token');
+
+        $token = PersonalAccessToken::query()
+            ->where('tokenable_id', $target->getKey())
+            ->where('name', 'root-created-user-token')
+            ->firstOrFail();
+
+        self::assertSame($target->getKey(), $token->tokenable_id);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.authentication.api_token_created',
+            'actor_id' => $root->getKey(),
+            'subject_id' => $token->getKey(),
+        ]);
     }
 
     public function test_owner_can_revoke_all_api_tokens_without_revoking_web_sessions(): void
