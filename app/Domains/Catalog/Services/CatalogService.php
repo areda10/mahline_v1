@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Domains\Catalog\Services;
 
-use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Repositories\CatalogRepository;
 use App\Domains\Identity\Users\Models\User;
-use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Products\Models\Product;
+use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
