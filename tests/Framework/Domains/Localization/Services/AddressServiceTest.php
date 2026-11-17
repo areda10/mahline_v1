@@ -14,12 +14,26 @@ use App\Domains\Localization\Services\AddressService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use InvalidArgumentException;
 use Tests\TestCase;
 
 final class AddressServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed([
+            RoleSeeder::class,
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
+        ]);
+    }
 
     public function test_service_creates_and_updates_a_users_personal_address_with_audit(): void
     {
@@ -145,6 +159,24 @@ final class AddressServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $service->createForUser($user, $user, ['street' => 'Rue 2', 'city' => 'Rabat']);
+    }
+
+    public function test_cooperative_admin_can_create_a_missing_cooperative_address_without_create_permission(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $admin = $this->userWithRole('cooperative_admin');
+        $admin->forceFill(['cooperative_id' => $cooperative->getKey()])->save();
+
+        $cooperative->address()->firstOrFail()->delete();
+
+        $address = app(AddressService::class)->updateForCooperative($admin, $cooperative, [
+            'street' => 'Nouvelle adresse',
+            'city' => 'Casablanca',
+        ]);
+
+        self::assertSame($cooperative->getKey(), $address->cooperative_id);
+        self::assertSame('Nouvelle adresse', $address->street);
+        self::assertTrue($address->is_primary);
     }
 
     public function test_super_admin_cannot_create_an_address_for_an_unassigned_cooperative(): void
