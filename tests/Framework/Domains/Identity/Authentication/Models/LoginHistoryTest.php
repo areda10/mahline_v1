@@ -9,6 +9,9 @@ use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
+use LogicException;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
@@ -99,20 +102,38 @@ final class LoginHistoryTest extends TestCase
         );
     }
 
-    /**
-     * Login history supports soft deletion.
-     */
-    public function test_login_history_can_be_soft_deleted(): void
+    public function test_login_history_is_immutable_through_eloquent(): void
     {
         $history = LoginHistory::factory()->create();
 
-        $history->delete();
+        try {
+            $history->event = 'altered';
+            $history->save();
+            self::fail('Expected immutable login history update to throw.');
+        } catch (LogicException $exception) {
+            self::assertSame('Login history is append-only.', $exception->getMessage());
+        }
 
-        $this->assertSoftDeleted(
-            'login_histories',
-            [
-                'id' => $history->getKey(),
-            ]
-        );
+        $this->expectException(LogicException::class);
+        $history->delete();
+    }
+
+    public function test_database_rejects_direct_login_history_updates_and_deletes(): void
+    {
+        if (DB::getDriverName() !== 'mysql') {
+            self::markTestSkipped('Database-level append-only triggers are configured for MySQL.');
+        }
+
+        $history = LoginHistory::factory()->create();
+
+        try {
+            DB::table('login_histories')->where('id', $history->getKey())->update(['event' => 'altered']);
+            self::fail('Expected database trigger to reject login history update.');
+        } catch (QueryException) {
+            $this->assertDatabaseHas('login_histories', ['id' => $history->getKey(), 'event' => $history->event]);
+        }
+
+        $this->expectException(QueryException::class);
+        DB::table('login_histories')->where('id', $history->getKey())->delete();
     }
 }

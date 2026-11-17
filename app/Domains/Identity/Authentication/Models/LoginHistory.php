@@ -9,13 +9,13 @@ use App\Domains\Identity\Users\Models\User;
 use Database\Factories\LoginHistoryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use LogicException;
 
 final class LoginHistory extends BaseModel
 {
     use HasFactory;
-    use SoftDeletes;
 
     /**
      * The table associated with the model.
@@ -37,7 +37,6 @@ final class LoginHistory extends BaseModel
         'device',
         'occurred_at',
         'created_by',
-        'updated_by',
     ];
 
     /**
@@ -55,8 +54,17 @@ final class LoginHistory extends BaseModel
     {
         return [
             'occurred_at' => 'datetime',
-            'deleted_at' => 'datetime',
         ];
+    }
+
+    protected function performUpdate(Builder $query): bool
+    {
+        throw new LogicException('Login history is append-only.');
+    }
+
+    protected function performDeleteOnModel(): void
+    {
+        throw new LogicException('Login history is append-only.');
     }
 
     /**

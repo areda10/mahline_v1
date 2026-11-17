@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -119,7 +120,6 @@ return new class extends Migration
              */
             $table->char('created_by', 26)->nullable();
 
-            $table->char('updated_by', 26)->nullable();
 
             /*
              * ============================================================
@@ -133,7 +133,6 @@ return new class extends Migration
              * SOFT DELETE
              * ============================================================
              */
-            $table->softDeletes();
 
             /*
              * ============================================================
@@ -180,6 +179,17 @@ return new class extends Migration
                 'occurred_at',
             ]);
         });
+
+        if (DB::getDriverName() === 'mysql') {
+            DB::unprepared(
+                "CREATE TRIGGER login_histories_prevent_update BEFORE UPDATE ON login_histories "
+                ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Login history is append-only'",
+            );
+            DB::unprepared(
+                "CREATE TRIGGER login_histories_prevent_delete BEFORE DELETE ON login_histories "
+                ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Login history is append-only'",
+            );
+        }
     }
 
     /**
@@ -187,6 +197,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'mysql') {
+            DB::unprepared('DROP TRIGGER IF EXISTS login_histories_prevent_update');
+            DB::unprepared('DROP TRIGGER IF EXISTS login_histories_prevent_delete');
+        }
+
         Schema::dropIfExists('login_histories');
     }
 };
