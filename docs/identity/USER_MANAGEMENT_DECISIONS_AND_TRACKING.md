@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.7
-- **Dernière mise à jour :** 10 novembre 2026
+- **Version :** 3.8
+- **Dernière mise à jour :** 17 novembre 2026
 - **Branche de référence :** `feature/Identity`
 - **Dépôt :** `areda10/mahline_v1`
 - **Statut :** décisions fonctionnelles validées ; implémentation à auditer
@@ -11,6 +11,10 @@
 > Ce document est le registre vivant des décisions prises pendant l'audit. Il distingue les règles validées des tâches restant à réaliser. Toute nouvelle décision validée doit être ajoutée ici et commitée sur la branche `feature/Identity`.
 
 ---
+
+## Décision V1 complémentaire — 17 novembre 2026
+
+La règle ci-dessous est prioritaire sur toute formulation antérieure de ce document qui autoriserait super_admin à créer le premier cooperative_admin, créer des comptes user, changer les rôles ou transférer des comptes. Le CRUD administratif des comptes internes est réservé à `super_admin_root`. Les rôles inférieurs disposent uniquement des droits de fiche, de consultation, d'invitation et de statut décrits explicitement dans les sections actualisées.
 
 ## 1. Objectif et règles de suivi
 
@@ -50,10 +54,11 @@ Le verrouillage de sécurité est indépendant du statut métier.
 
 ### Modification du profil
 - Tous les utilisateurs peuvent modifier leur propre profil.
-- `super_admin` peut modifier le profil d'un utilisateur dans une coopérative qui lui est attribuée.
-- `super_admin_root` peut modifier tous les profils.
-- `cooperative_admin` ne peut pas modifier le profil des autres utilisateurs.
-- Les modifications du profil ne changent pas le statut et ne révoquent pas les sessions.
+- `super_admin_root` peut modifier les fiches de tous les comptes internes gérés.
+- `super_admin` peut modifier uniquement la fiche d'un compte `user` appartenant à une coopérative qui lui est attribuée.
+- `cooperative_admin` peut modifier uniquement la fiche d'un compte `user` de sa propre coopérative, dans les champs autorisés par la Policy.
+- La modification d'une fiche opérationnelle ne confère pas un droit de création, suppression, restauration, changement de rôle ou de transfert de compte.
+- Les modifications du profil ne changent pas le statut et ne révoquent pas les sessions, sauf changement d'e-mail selon la règle dédiée.
 - Les changements sont journalisés.
 
 ### Changement d'adresse e-mail
@@ -66,17 +71,19 @@ Le verrouillage de sécurité est indépendant du statut métier.
 - Toute nouvelle adresse doit être vérifiée ; l'ancien e-mail n'est jamais restauré automatiquement.
 - Les changements sont audités (acteur, ancienne/nouvelle adresse, date).
 
-### Gestion des rôles
+### Gestion des rôles et CRUD des comptes
+- Seul `super_admin_root` peut créer, supprimer logiquement, restaurer ou effectuer le CRUD administratif des comptes `super_admin`, `cooperative_admin` et `user`.
 - `super_admin_root` peut attribuer ou retirer les rôles, sauf créer ou attribuer un second rôle root.
-- `super_admin` peut gérer uniquement `cooperative_admin` et `user` dans ses coopératives attribuées.
-- `cooperative_admin` et `user` ne gèrent aucun rôle.
+- `super_admin`, `cooperative_admin` et `user` ne peuvent ni créer/supprimer un compte, ni changer son rôle, ni modifier son affectation à une coopérative.
+- `super_admin` et `cooperative_admin` conservent uniquement les droits de consultation, de modification de fiche user et d'actions de statut/invitation expressément autorisés dans leur périmètre.
+- `users.create` est réservé à `super_admin_root`. La permission distincte `users.invite` autorise Root et super_admin à envoyer/renvoyer une invitation pending dans leur périmètre, sans autoriser la création du compte.
 - Un changement de rôle révoque toutes les sessions et tous les tokens API ; reconnexion obligatoire.
 
 ## 4. Affectation à une coopérative
 
 - Un utilisateur possède une seule coopérative principale.
-- `super_admin_root` peut effectuer tous les transferts.
-- `super_admin` peut transférer un utilisateur uniquement entre ses coopératives attribuées.
+- Seul `super_admin_root` peut effectuer ou modifier une affectation de compte.
+- `super_admin` ne peut pas transférer un compte entre ses coopératives, même lorsqu'elles lui sont toutes deux attribuées.
 - `cooperative_admin` et `user` ne peuvent pas transférer d'utilisateur.
 - Le transfert révoque toutes les sessions et tous les tokens API.
 - Les droits et le dashboard sont recalculés après reconnexion.
