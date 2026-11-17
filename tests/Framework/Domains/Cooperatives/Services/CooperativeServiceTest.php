@@ -469,6 +469,29 @@ final class CooperativeServiceTest extends TestCase
         }
     }
 
+    public function test_root_can_restore_deleted_cooperative_and_its_owner_deleted_address(): void
+    {
+        $actor = $this->rootActor();
+        $cooperative = Cooperative::factory()->create();
+        $address = $cooperative->address;
+
+        $this->service->delete($actor, $cooperative);
+        $this->assertSoftDeleted('cooperatives', ['id' => $cooperative->getKey()]);
+        $this->assertSoftDeleted('addresses', ['id' => $address->getKey()]);
+
+        $restored = $this->service->restore($actor, $cooperative);
+
+        self::assertFalse($restored->trashed());
+        $this->assertDatabaseHas('addresses', [
+            'id' => $address->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+            'deleted_at' => null,
+            'deletion_source' => null,
+            'is_primary' => true,
+        ]);
+        $this->assertAuditEvent('cooperatives.restored', 'restored', $actor, $cooperative);
+    }
+
     private function cooperativeAdminActor(Cooperative $cooperative): User
     {
         $actor = User::factory()->create(['cooperative_id' => $cooperative->id]);
