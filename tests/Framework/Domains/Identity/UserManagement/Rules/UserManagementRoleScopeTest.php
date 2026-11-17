@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\UserManagement\Rules;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -145,15 +143,7 @@ final class UserManagementRoleScopeTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        $country = Country::factory()->create();
-
-        $address = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        return Cooperative::factory()->create([
-            'address_id' => $address->id,
-        ]);
+        return Cooperative::factory()->create();
     }
 
     /**
@@ -161,23 +151,8 @@ final class UserManagementRoleScopeTest extends TestCase
      */
     private function createTwoCooperatives(): array
     {
-        $country = Country::factory()->create();
-
-        $addressA = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $addressB = Address::factory()->create([
-            'country_id' => $country->id,
-        ]);
-
-        $cooperativeA = Cooperative::factory()->create([
-            'address_id' => $addressA->id,
-        ]);
-
-        $cooperativeB = Cooperative::factory()->create([
-            'address_id' => $addressB->id,
-        ]);
+        $cooperativeA = Cooperative::factory()->create();
+        $cooperativeB = Cooperative::factory()->create();
 
         return [
             $cooperativeA,
