@@ -53,7 +53,7 @@ final class CatalogController
             'description' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
-        $this->service->createForCooperative((string) $coop->getKey(), $data);
+        $this->service->createForCooperative((string) $coop->getKey(), $data, $request->user());
 
         return redirect()->route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $coop->getKey()])
             ->with('success', 'Le catalogue a été créé.');
@@ -102,7 +102,7 @@ final class CatalogController
             'description' => ['sometimes', 'nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
         ]);
-        $this->service->update($item, (string) $coop->getKey(), $data);
+        $this->service->update($item, (string) $coop->getKey(), $data, $request->user());
 
         return redirect()->route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $coop->getKey()])
             ->with('success', 'Le catalogue a été mis à jour.');
@@ -114,7 +114,7 @@ final class CatalogController
         $coop = $this->cooperative($cooperative);
         $item = $this->service->findForCooperativeOrFail($catalog, (string) $coop->getKey());
         Gate::authorize('delete', $item);
-        $this->service->delete($item, (string) $coop->getKey());
+        $this->service->delete($item, (string) $coop->getKey(), $request->user());
 
         return redirect()->route('root.backoffice.cooperatives.catalogs.index', ['cooperative' => $coop->getKey()])
             ->with('success', 'Le catalogue a été supprimé.');
