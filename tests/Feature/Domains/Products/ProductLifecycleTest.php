@@ -6,7 +6,6 @@ namespace Tests\Feature\Domains\Products;
 
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductVariant;
-use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use App\Domains\Products\Services\ProductVariantService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,7 +49,7 @@ final class ProductLifecycleTest extends TestCase
         ]);
         $inactiveVariant = ProductVariant::factory()->for($product)->inactive()->create();
 
-        $service = new ProductService(new ProductRepository());
+        $service = app(ProductService::class);
         $service->delete($product);
 
         $trashedProduct = Product::withTrashed()->findOrFail($product->getKey());
