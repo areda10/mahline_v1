@@ -67,7 +67,11 @@ final class AddressPolicyTest extends TestCase
             ['users.update'],
             ['cooperative_id' => $cooperative->getKey()],
         );
-        $target = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $target = $this->userWithRoleAndPermissions(
+            'user',
+            [],
+            ['cooperative_id' => $cooperative->getKey()],
+        );
 
         self::assertTrue(app(AddressPolicy::class)->updateUserAddress($admin, $target));
     }
@@ -81,7 +85,11 @@ final class AddressPolicyTest extends TestCase
             ['users.update'],
             ['cooperative_id' => $ownCooperative->getKey()],
         );
-        $target = User::factory()->create(['cooperative_id' => $otherCooperative->getKey()]);
+        $target = $this->userWithRoleAndPermissions(
+            'user',
+            [],
+            ['cooperative_id' => $otherCooperative->getKey()],
+        );
 
         self::assertFalse(app(AddressPolicy::class)->updateUserAddress($admin, $target));
     }
