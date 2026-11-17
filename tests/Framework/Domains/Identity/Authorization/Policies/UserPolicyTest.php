@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Authorization\Policies;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -340,7 +338,7 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($admin)->allows('delete', $target));
     }
 
-    public function test_super_admin_can_update_users_and_cooperative_admins_in_assigned_cooperatives(): void
+    public function test_super_admin_can_update_only_users_in_assigned_cooperatives(): void
     {
         $cooperative = $this->createCooperative();
         $actor = $this->userWithRoleAndPermissions('super_admin', ['users.update']);
@@ -354,7 +352,7 @@ final class UserPolicyTest extends TestCase
         ]);
 
         self::assertTrue(Gate::forUser($actor)->allows('update', $user));
-        self::assertTrue(Gate::forUser($actor)->allows('update', $cooperativeAdmin));
+        self::assertFalse(Gate::forUser($actor)->allows('update', $cooperativeAdmin));
     }
 
     public function test_cooperative_admin_can_update_only_users_in_own_cooperative(): void
@@ -383,26 +381,7 @@ final class UserPolicyTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        $country = Country::query()->firstOrCreate(
-            ['code' => 'MA'],
-            [
-                'iso3' => 'MAR',
-                'name' => 'Morocco',
-                'native_name' => 'المغرب',
-                'phone_code' => '+212',
-                'currency' => 'MAD',
-                'locale' => 'fr',
-                'is_active' => true,
-            ],
-        );
-
-        $address = Address::factory()->create([
-            'country_id' => $country->getKey(),
-        ]);
-
-        return Cooperative::factory()->create([
-            'address_id' => $address->getKey(),
-        ]);
+        return Cooperative::factory()->create();
     }
 
     /**
