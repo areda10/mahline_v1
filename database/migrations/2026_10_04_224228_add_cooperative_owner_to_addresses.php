@@ -22,11 +22,32 @@ return new class extends Migration
         });
 
         if (DB::getDriverName() === 'mysql') {
-            DB::statement(
-                'ALTER TABLE addresses ADD CONSTRAINT addresses_exactly_one_owner_check '
-                .'CHECK ((user_id IS NOT NULL AND cooperative_id IS NULL) '
-                .'OR (user_id IS NULL AND cooperative_id IS NOT NULL))',
-            );
+            // MySQL cannot use cooperative_id in a CHECK constraint while that
+            // column participates in a foreign key referential action. Triggers
+            // preserve the exactly-one-owner invariant at the database boundary.
+            DB::unprepared(<<<'SQL'
+                CREATE TRIGGER addresses_exactly_one_owner_before_insert
+                BEFORE INSERT ON addresses
+                FOR EACH ROW
+                BEGIN
+                    IF ((NEW.user_id IS NULL) = (NEW.cooperative_id IS NULL)) THEN
+                        SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'An address must belong to exactly one user or cooperative.';
+                    END IF;
+                END
+            SQL);
+
+            DB::unprepared(<<<'SQL'
+                CREATE TRIGGER addresses_exactly_one_owner_before_update
+                BEFORE UPDATE ON addresses
+                FOR EACH ROW
+                BEGIN
+                    IF ((NEW.user_id IS NULL) = (NEW.cooperative_id IS NULL)) THEN
+                        SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'An address must belong to exactly one user or cooperative.';
+                    END IF;
+                END
+            SQL);
 
             DB::statement(
                 'ALTER TABLE addresses ADD COLUMN active_primary_user_id CHAR(26) '
