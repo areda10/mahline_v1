@@ -60,6 +60,7 @@ final class ProductControllerTest extends TestCase
         ), [
             'name' => 'Miel de montagne',
             'description' => 'Miel naturel',
+            'price' => '125.50',
             'is_active' => true,
             'category_ids' => [
                 $this->category->getKey(),
@@ -84,6 +85,8 @@ final class ProductControllerTest extends TestCase
             'id' => $product->getKey(),
             'cooperative_id' => $this->cooperative->getKey(),
             'name' => 'Miel de montagne',
+            'price' => '125.50',
+            'currency' => 'MAD',
             'slug' => 'miel-de-montagne',
             'is_active' => true,
             'deleted_at' => null,
