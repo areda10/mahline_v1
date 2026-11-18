@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Services;
 
+use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
@@ -22,6 +23,7 @@ final class MediaIncidentService
 {
     public function __construct(
         private readonly AuditService $audit,
+        private readonly AuditEventRepository $auditEvents,
         private readonly MediaService $media,
     ) {}
 
@@ -146,6 +148,10 @@ final class MediaIncidentService
 
     private function record(User $actor, MediaIncident $incident, string $eventKey, string $action): void
     {
+        if (! $this->auditEvents->verifyIntegrity()) {
+            throw new \\RuntimeException('La chaîne d’audit est invalide ; opération incident refusée.');
+        }
+
         $this->audit->record(new AuditEntryDTO(
             eventKey: $eventKey,
             action: $action,
