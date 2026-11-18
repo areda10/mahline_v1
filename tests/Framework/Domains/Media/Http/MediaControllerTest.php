@@ -14,9 +14,9 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
 use App\Domains\Media\Services\MediaIncidentService;
 use App\Domains\Products\Models\Product;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
