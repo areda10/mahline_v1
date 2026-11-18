@@ -12,6 +12,8 @@ use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductVariant;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
