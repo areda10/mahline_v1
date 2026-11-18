@@ -57,9 +57,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
 
         /*
-         * API routes always return JSON. Authentication web routes
-         * negotiate JSON only when requested by the client, allowing
-         * browser form submissions to use redirects and session errors.
+         * API routes always return JSON. Authentication and Media web
+         * endpoints negotiate JSON only when requested by the client,
+         * while browser form submissions retain redirects and session errors.
          */
 
         $exceptions->shouldRenderJsonWhen(
