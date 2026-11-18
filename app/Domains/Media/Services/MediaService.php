@@ -8,6 +8,7 @@ use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Contracts\MediaAntivirusScanner as MediaAntivirusScannerContract;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Enums\MediaDocumentCategory;
 use App\Domains\Media\Models\Media;
