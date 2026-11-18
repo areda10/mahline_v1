@@ -208,6 +208,33 @@ final class MediaController
         ]);
     }
 
+    public function ownerHistory(Request $request, string $ownerType, string $ownerId): JsonResponse
+    {
+        $owner = match ($ownerType) {
+            'product' => Product::withTrashed()->findOrFail($ownerId),
+            'cooperative' => Cooperative::withTrashed()->findOrFail($ownerId),
+            'user' => User::withTrashed()->findOrFail($ownerId),
+            'incident' => MediaIncident::query()->findOrFail($ownerId),
+            default => abort(404),
+        };
+
+        $history = $this->media->ownerHistory($request->user(), $owner);
+
+        return response()->json([
+            'data' => $history->map(fn (Media $item): array => [
+                'id' => $item->getKey(),
+                'category' => $item->category,
+                'original_name' => $item->original_name,
+                'mime_type' => $item->mime_type,
+                'size' => $item->size,
+                'deleted_at' => $item->deleted_at?->toIso8601String(),
+                'restorable' => $item->trashed()
+                    && ! (method_exists($owner, 'trashed') && $owner->trashed())
+                    && $this->media->isMediaIntegrityValid($item),
+            ])->values(),
+        ]);
+    }
+
     public function replacementHistory(Request $request, Media $media): JsonResponse
     {
         $history = $this->media->replacementHistory($request->user(), $media);
