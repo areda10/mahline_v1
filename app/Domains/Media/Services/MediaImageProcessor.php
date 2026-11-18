@@ -86,7 +86,7 @@ final class MediaImageProcessor
 
         if (in_array($orientation, [3, 5, 6, 7, 8], true)) {
             $angle = match ($orientation) {
-                3, 4 => 180,
+                3 => 180,
                 5, 8 => 90,
                 6, 7 => -90,
             };
@@ -100,10 +100,14 @@ final class MediaImageProcessor
             $source = $rotated;
         }
 
-        if (in_array($orientation, [2, 4, 5, 7], true)) {
+        if (in_array($orientation, [2, 5, 7], true)) {
             if (! imageflip($source, IMG_FLIP_HORIZONTAL)) {
                 throw new RuntimeException('Impossible de corriger l’orientation EXIF de l’image.');
             }
+        }
+
+        if ($orientation === 4 && ! imageflip($source, IMG_FLIP_VERTICAL)) {
+            throw new RuntimeException('Impossible de corriger l’orientation EXIF de l’image.');
         }
 
         imagealphablending($source, false);
