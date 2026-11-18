@@ -8,7 +8,6 @@ use App\Domains\Media\Services\MediaOrphanCleanupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 final class MediaOrphanCleanupServiceTest extends TestCase
