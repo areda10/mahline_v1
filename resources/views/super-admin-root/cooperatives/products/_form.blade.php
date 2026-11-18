@@ -12,6 +12,24 @@
 </div>
 
 <div class="field">
+    @if($hasVariants)
+        <label>Unité de stock</label>
+        <p class="muted">Ce produit possède des variantes. L’unité doit être définie séparément sur chaque variante.</p>
+    @else
+        <label for="unit_id">Unité de stock *</label>
+        <select id="unit_id" name="unit_id" required>
+            <option value="">— Sélectionner une unité —</option>
+            @foreach($productUnits as $unit)
+                <option value="{{ $unit->getKey() }}" @selected((string) old('unit_id', $product->unit_id) === (string) $unit->getKey())>
+                    {{ $unit->label }}
+                </option>
+            @endforeach
+        </select>
+        @error('unit_id') <div class="error">{{ $message }}</div> @enderror
+    @endif
+</div>
+
+<div class="field">
     <label for="description">Description</label>
     <textarea id="description" name="description">{{ old('description', $product->description) }}</textarea>
     @error('description') <div class="error">{{ $message }}</div> @enderror
