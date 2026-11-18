@@ -116,7 +116,7 @@ final class ProductVariantService
                 $variant->unit_id = $this->validatedUnitId($attributes['unit_id']);
             }
 
-            if (array_key_exists('price', $attributes))
+            if (array_key_exists('price', $attributes)) {
                 $variant->price = $this->validatedPrice($attributes['price']);
             }
 
