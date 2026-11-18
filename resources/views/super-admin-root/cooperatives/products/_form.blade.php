@@ -5,6 +5,13 @@
 </div>
 
 <div class="field">
+    <label for="price">Prix de vente (MAD) *</label>
+    <input id="price" name="price" type="number" min="0.01" step="0.01"
+           value="{{ old('price', $product->price) }}" required>
+    @error('price') <div class="error">{{ $message }}</div> @enderror
+</div>
+
+<div class="field">
     <label for="description">Description</label>
     <textarea id="description" name="description">{{ old('description', $product->description) }}</textarea>
     @error('description') <div class="error">{{ $message }}</div> @enderror
