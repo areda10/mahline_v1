@@ -80,6 +80,22 @@ final class ProductServiceTest extends TestCase
             ->firstOrFail());
     }
 
+    public function test_it_accepts_piece_unit_for_a_simple_product(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $pieceUnit = ProductUnit::query()->where('code', 'u')->firstOrFail();
+
+        $product = $this->service->create(
+            (string) $cooperative->getKey(),
+            [
+                'name' => 'Produit vendu à la pièce',
+                'unit_id' => (string) $pieceUnit->getKey(),
+            ],
+        );
+
+        $this->assertSame('u', $product->unit->code);
+    }
+
     public function test_it_rejects_product_creation_without_a_registered_unit(): void
     {
         $cooperative = Cooperative::factory()->create();
