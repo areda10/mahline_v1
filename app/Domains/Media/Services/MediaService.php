@@ -450,6 +450,14 @@ final class MediaService
                     });
             }
 
+            if ($locked->category === MediaCategory::PRODUCT_IMAGE->value) {
+                $hasActivePrimary = $owner->media()
+                    ->where('category', MediaCategory::PRODUCT_IMAGE->value)
+                    ->where('is_primary', true)
+                    ->exists();
+                $makePrimary = $makePrimary || ! $hasActivePrimary;
+            }
+
             if ($locked->category === MediaCategory::PRODUCT_IMAGE->value && $makePrimary) {
                 $owner->media()
                     ->where('category', MediaCategory::PRODUCT_IMAGE->value)
