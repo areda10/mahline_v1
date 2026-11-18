@@ -128,7 +128,7 @@ final class MediaController
             ? $media->path
             : ($media->metadata['derivatives'][$variant] ?? null);
 
-        abort_unless(is_string($path) && Storage::disk($media->disk)->exists($path), 404);
+        abort_unless(is_string($path) && $this->isManagedPath($path) && Storage::disk($media->disk)->exists($path), 404);
 
         $stream = Storage::disk($media->disk)->readStream($path);
         abort_unless(is_resource($stream), 404);
@@ -255,6 +255,21 @@ final class MediaController
                 ];
             })->values(),
         ]);
+    }
+
+    private function isManagedPath(string $path): bool
+    {
+        if (! str_starts_with($path, 'media/')) {
+            return false;
+        }
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function resolveOwner(string $type, string $id): Model
