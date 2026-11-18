@@ -637,7 +637,7 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
     ->group(function (): void {
         Route::prefix('incidents')
             ->name('incidents.')
-            ->middleware('role:super_admin_root')
+            ->middleware(['media.root-audit', 'role:super_admin_root'])
             ->group(function (): void {
                 Route::get('/', [MediaIncidentController::class, 'index'])->name('index');
                 Route::post('/', [MediaIncidentController::class, 'store'])->name('store');
@@ -667,7 +667,7 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
         Route::get('owners/{ownerType}/{ownerId}/history', [MediaController::class, 'ownerHistory'])
             ->whereIn('ownerType', ['product', 'cooperative', 'user', 'incident'])
             ->whereUlid('ownerId')
-            ->middleware('role:super_admin_root')
+            ->middleware(['media.root-audit', 'role:super_admin_root'])
             ->name('owners.history');
         Route::get('{media}/replacements', [MediaController::class, 'replacementHistory'])
             ->whereUlid('media')
