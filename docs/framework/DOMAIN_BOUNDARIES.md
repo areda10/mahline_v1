@@ -1135,3 +1135,56 @@ This rule exists to keep MAHLINE maintainable, testable, scalable and evolvable.
 **Next architectural action:**
 
 Validate this document before starting Identity Authorization.
+
+
+
+# 33. Marketplace V1 — séparation explicite Orders / Sales (amendement du 18 novembre 2026)
+
+Cette section complète et, pour les responsabilités ci-dessous, remplace les formulations antérieures des sections 10 et 11 qui plaçaient Order et OrderItem dans Sales. Elle formalise le chantier demandé pour MAHLINE V1 ; elle ne prétend pas que les domaines sont déjà implémentés.
+
+## 33.1 Sales
+
+Sales possède le parcours commercial avant et au moment du checkout :
+- panier et lignes de panier ;
+- calcul commercial préalable, validation du panier et checkout ;
+- orchestration de la demande de création de commande ;
+- échanges de décision client concernant les propositions de modification, en coordination avec Orders.
+
+Sales ne possède pas l'agrégat persistant de commande ni son cycle de vie après création.
+
+## 33.2 Orders
+
+Orders possède :
+- commande client globale ;
+- lignes de commande et instantanés historiques ;
+- segmentation de la commande en sous-commandes / segments coopératifs ;
+- cycle de vie, transitions et motifs ;
+- propositions de réduction de quantité ou de remplacement, décisions et expirations ;
+- historique immuable des décisions et changements autorisés.
+
+Le nom définitif des entités/tables de segmentation sera confirmé dans la spécification Orders avant migration.
+
+## 33.3 Inventory
+
+Inventory reste seul propriétaire des quantités physiques, mouvements, disponibilités calculées et réservations. Orders demande les opérations via un contrat ; il ne modifie jamais les tables Inventory.
+
+## 33.4 Delivery
+
+Delivery est un domaine autonome prévu : sociétés de livraison, contrats/tarifs de livraison, missions, attribution, expéditions, suivi, preuves de remise et événements d'encaissement/collecte liés au transport. Ni Sales ni Orders ne possèdent les expéditions.
+
+## 33.5 Finance et Invoicing
+
+Finance possède les opérations et documents financiers, y compris factures, paiements, commissions, transferts, reversements et rapprochements. Invoicing est, à ce stade, le sous-périmètre fonctionnel de facturation dans Finance ; aucun domaine applicatif autonome Invoicing ne doit être créé sans décision d'architecture ultérieure.
+
+## 33.6 Flux de dépendances
+
+- Sales demande la création de commande à Orders après validation commerciale.
+- Orders sollicite Inventory pour revalidation, réservation et libération.
+- Orders publie les événements métier utiles à Finance, Delivery et Communication.
+- Finance émet les factures après les conditions validées de commande et de réservation.
+- Statistics consomme des données/projections autorisées sans devenir propriétaire des données sources.
+- Incidents reçoit les signalements transversaux et leurs pièces jointes selon ses règles d'accès.
+
+Les contrats doivent être explicites, idempotents, traçables et testés. Aucun domaine ne doit écrire directement dans les tables d'un autre domaine.
+
+**Statut :** frontières de responsabilité enregistrées pour le montage V1 ; spécifications détaillées et contrats techniques à auditer avant implémentation des flux.
