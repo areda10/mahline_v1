@@ -87,20 +87,30 @@ final class ProductVariantServiceTest extends TestCase
     }
 
 
-    public function test_creating_first_variant_clears_the_parent_unit(): void
+    public function test_it_blocks_variant_creation_until_parent_stock_transfer_is_available(): void
     {
         $product = $this->createProduct();
         $parentUnit = ProductUnit::query()->where('code', 'l')->firstOrFail();
         $product->update(['unit_id' => $parentUnit->getKey()]);
 
-        $this->service->create($product, [
-            'name' => 'Bouteille 500 ml',
-            'price' => '12.50',
-            'unit_id' => $this->unitId,
-            'is_active' => true,
-        ]);
+        try {
+            $this->service->create($product, [
+                'name' => 'Bouteille 500 ml',
+                'price' => '12.50',
+                'unit_id' => $this->unitId,
+                'is_active' => true,
+            ]);
 
-        $this->assertNull($product->fresh()->unit_id);
+            $this->fail('La conversion doit attendre le transfert atomique du stock parent.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('unit_id', $exception->errors());
+        }
+
+        $this->assertSame($parentUnit->getKey(), $product->fresh()->unit_id);
+        $this->assertDatabaseMissing('product_variants', [
+            'product_id' => $product->getKey(),
+            'normalized_label' => 'bouteille 500 ml',
+        ]);
     }
 
     public function test_it_requires_a_registered_unit_for_a_new_variant(): void
