@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Domains\Media\Services;
 
 use App\Domains\Media\Models\Media;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 final class MediaCleanupService
 {
     public function purgeExpired(): int
     {
-        $retentionDays = filter_var(config('media.retention_days'), FILTER_VALIDATE_INT);
+        $retentionDays = filter_var(config('media.retention_days', 90), FILTER_VALIDATE_INT);
 
         if ($retentionDays === false || $retentionDays < 1) {
+            Log::warning('MEDIA purge skipped because retention configuration is invalid.');
+
             return 0;
         }
 
@@ -25,23 +28,96 @@ final class MediaCleanupService
             ->chunkById(100, function ($items) use (&$purged): void {
                 foreach ($items as $media) {
                     $disk = Storage::disk($media->disk);
-                    $paths = [$media->path];
+                    $paths = $this->managedPaths($media);
+                    $remaining = [];
 
-                    if ($media->category !== 'document') {
-                        foreach (['medium', 'thumbnail'] as $variant) {
-                            $paths[] = dirname($media->path).'/'.$variant.'.'.$media->extension;
+                    foreach ($paths as $path) {
+                        if (! $this->isManagedPath($path)) {
+                            $remaining[] = $path;
+                            Log::error('MEDIA purge refused an unmanaged storage path.', [
+                                'media_id' => (string) $media->getKey(),
+                            ]);
+
+                            continue;
+                        }
+
+                        try {
+                            if ($disk->exists($path) && ! $disk->delete($path)) {
+                                $remaining[] = $path;
+                            }
+                        } catch (\Throwable $exception) {
+                            $remaining[] = $path;
+                            Log::error('MEDIA file deletion failed; purge will resume on the next run.', [
+                                'media_id' => (string) $media->getKey(),
+                                'exception' => $exception::class,
+                            ]);
                         }
                     }
 
-                    if (! $disk->delete($paths)) {
+                    if ($remaining !== []) {
+                        $metadata = $media->metadata ?? [];
+                        $metadata['purge_remaining_paths'] = array_values(array_unique($remaining));
+                        $media->forceFill(['metadata' => $metadata])->save();
+
                         continue;
                     }
 
-                    $media->forceDelete();
-                    $purged++;
+                    try {
+                        $media->forceDelete();
+                        $purged++;
+                        Log::info('MEDIA record and files purged.', [
+                            'media_id' => (string) $media->getKey(),
+                        ]);
+                    } catch (\Throwable $exception) {
+                        Log::error('MEDIA database purge failed after file cleanup.', [
+                            'media_id' => (string) $media->getKey(),
+                            'exception' => $exception::class,
+                        ]);
+                    }
                 }
             });
 
         return $purged;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function managedPaths(Media $media): array
+    {
+        $paths = [$media->path];
+        $derivatives = $media->metadata['derivatives'] ?? [];
+
+        if (is_array($derivatives)) {
+            foreach ($derivatives as $path) {
+                if (is_string($path)) {
+                    $paths[] = $path;
+                }
+            }
+        }
+
+        // Compatibility for records created before derivative paths were stored explicitly.
+        if ($media->category !== 'document' && $derivatives === []) {
+            foreach (['thumbnail', 'small', 'medium', 'large'] as $variant) {
+                $paths[] = dirname($media->path).'/'.$variant.'.'.$media->extension;
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    private function isManagedPath(string $path): bool
+    {
+        if (! str_starts_with($path, 'media/')) {
+            return false;
+        }
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
