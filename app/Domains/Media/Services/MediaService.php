@@ -118,7 +118,6 @@ final class MediaService
                 if ($mediaCategory->isSingle()) {
                     $lockedOwner->media()
                         ->where('category', $mediaCategory->value)
-                        ->where('is_primary', true)
                         ->get()
                         ->each(function (Media $previous) use ($actor): void {
                             $previous->deleted_by = (string) $actor->getKey();
