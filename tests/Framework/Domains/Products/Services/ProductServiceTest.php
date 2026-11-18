@@ -15,6 +15,7 @@ use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 final class ProductServiceTest extends TestCase
