@@ -139,7 +139,7 @@ final class MediaController
             'Content-Disposition' => ($isDocument ? 'attachment' : 'inline').'; filename="'.$filename.'"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => $media->visibility === 'public'
-                ? 'public, max-age=3600'
+                ? 'no-cache, must-revalidate'
                 : 'private, no-store',
         ]);
     }
