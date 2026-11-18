@@ -497,6 +497,33 @@ final class MediaServiceTest extends TestCase
         }
     }
 
+    public function test_restore_is_refused_when_a_retained_file_has_been_altered(): void
+    {
+        Storage::fake('local');
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $media = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent(
+                'altered-proof.pdf',
+                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+            ),
+            'document',
+            'legal',
+        );
+
+        app(MediaService::class)->delete($actor, $media);
+        Storage::disk('local')->put($media->path, "%PDF-1.4\\nALTERED CONTENT\\n%%EOF");
+
+        try {
+            app(MediaService::class)->restore($actor, $media->fresh(), false);
+            self::fail('An altered retained file must prevent restoration.');
+        } catch (ValidationException) {
+            self::assertSoftDeleted('media', ['id' => $media->getKey()]);
+        }
+    }
+
     public function test_replacement_history_is_linked_to_the_replacing_media_and_can_be_restored(): void
     {
         self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
