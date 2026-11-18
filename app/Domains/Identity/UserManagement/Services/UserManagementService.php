@@ -593,7 +593,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('The user does not exist or is already deleted.');
             }
 
-            if ($lockedTarget->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            if ($lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
                 throw new DomainException('The super admin root account cannot be deleted.');
             }
 
