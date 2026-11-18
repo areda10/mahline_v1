@@ -377,7 +377,7 @@ final class UserManagementServiceTest extends TestCase
         try {
             $this->service->deleteUser($root, $root);
             self::fail('The super admin root account must not be deleted.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
         }
 
