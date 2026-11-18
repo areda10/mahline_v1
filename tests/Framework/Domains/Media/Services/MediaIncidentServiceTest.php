@@ -8,7 +8,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Media\Models\MediaIncident;
-use App\Domains\Media\Services\MediaAntivirusScanner;
+use App\Domains\Media\Contracts\MediaAntivirusScanner;
 use App\Domains\Media\Services\MediaIncidentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
