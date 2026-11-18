@@ -86,6 +86,12 @@ final class CooperativeOrderResponseService
                 ]);
             }
 
+            if ($locked->response_deadline_at !== null && $deadline->lessThanOrEqualTo($locked->response_deadline_at)) {
+                throw ValidationException::withMessages([
+                    'response_deadline_at' => ['La nouvelle échéance doit être postérieure à l’échéance actuelle.'],
+                ]);
+            }
+
             $locked->response_deadline_at = $deadline;
             $locked->response_overdue_at = null;
             $locked->forceFill(['updated_by' => (string) $actor->getKey()])->save();
