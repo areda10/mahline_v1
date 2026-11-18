@@ -6,6 +6,8 @@ namespace Tests\Framework\Domains\Products\Services;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,9 +109,12 @@ final class ProductServiceReactivationTest extends TestCase
 
     public function test_update_cannot_reactivate_an_inactive_product_directly(): void
     {
+        $this->seed(ProductUnitSeeder::class);
+        $unit = ProductUnit::query()->where('code', 'kg')->firstOrFail();
+
         $product = Product::factory()
             ->inactive()
-            ->create();
+            ->create(['unit_id' => $unit->getKey()]);
 
         $this->expectException(ValidationException::class);
 
