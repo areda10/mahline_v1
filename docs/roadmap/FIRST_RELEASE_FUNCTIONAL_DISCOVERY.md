@@ -3591,7 +3591,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 
 ### Suivi de conformité technique MEDIA V1 — vague 1 (18 novembre 2026)
 
-**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. La vague 1 a été déclarée verte par l'utilisateur : 70 tests MEDIA (258 assertions), le test de migration `MediaCategoryIndexMigrationTest` et Pint. La vague 2 ci-dessous vient d'être enregistrée sur `feature/Marketplace` et doit encore être testée localement.
+**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. Les vagues 1 et 2 ont été déclarées vertes par l'utilisateur : 70 tests MEDIA (258 assertions) pour la vague 1, puis les suites ciblées Policy/Controller, la suite MEDIA, la migration et Pint pour la vague 2. La vague 3 ci-dessous est enregistrée sur `feature/Marketplace` et reste à tester localement.
 
 #### Corrections applicatives enregistrées
 
@@ -3614,7 +3614,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - `MediaCategoryIndexMigrationTest` réussi.
 - `vendor/bin/pint --test` déclaré vert par l'utilisateur.
 
-#### Corrections de la vague 2 — tests en attente
+#### Corrections de la vague 2 — tests locaux déclarés verts par l'utilisateur
 
 - La relation polymorphe Media résout désormais les propriétaires supprimés logiquement afin d'appliquer la règle d'accès aux documents privés pendant la rétention.
 - La Policy réserve cet accès au `super_admin_root` et refuse les opérations de modification sur les médias d'un propriétaire supprimé.
@@ -3632,6 +3632,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Journalisation de la détection, de la suppression et des erreurs sans écrire les chemins complets dans les logs (empreinte SHA-256).
 - Commande `media:cleanup-orphans`, planifiée quotidiennement à 02:30 après la purge de rétention de 02:00, avec `withoutOverlapping()`.
 - Tests ajoutés : délai de sécurité, suppression après 24 heures, protection des fichiers référencés.
+- Ces nouveaux tests n'ont pas encore été exécutés localement ; migration et Pint doivent également être relancés après cette vague.
 
 #### Tests adaptés ou ajoutés — nouvelle exécution requise
 
@@ -3639,7 +3640,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Tests des quatre dérivés et de l'absence d'agrandissement.
 - Tests des quotas galerie et documents.
 - Tests de consultation PDF inline et de téléchargement explicite.
-- Les tests ciblés MEDIA, les tests globaux et Pint doivent être réexécutés localement après la vague 2 avant de valider ces corrections.
+- Les tests ciblés MEDIA et Pint ont été exécutés avec succès après la vague 2, selon le retour utilisateur. La suite globale reste à exécuter avant la clôture finale MEDIA V1.
 
 #### Écarts V1 restant à traiter
 
