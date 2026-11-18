@@ -57,12 +57,21 @@ final class MediaValidationService
 
         if ($category->isImage() || str_starts_with($mime, 'image/')) {
             $this->validateImageContent($path, $mime, $extension);
-        } elseif (
-            $mime !== 'application/pdf'
-            || ! str_starts_with((string) file_get_contents($path, false, null, 0, 8), '%PDF-')
-        ) {
+        } elseif ($mime === 'application/pdf') {
+            $pdfContents = file_get_contents($path);
+
+            if (
+                ! is_string($pdfContents)
+                || ! str_starts_with($pdfContents, '%PDF-')
+                || ! str_contains($pdfContents, '%%EOF')
+            ) {
+                throw ValidationException::withMessages([
+                    'file' => ['Le document PDF est invalide ou incomplet.'],
+                ]);
+            }
+        } else {
             throw ValidationException::withMessages([
-                'file' => ['Le document PDF est invalide.'],
+                'file' => ['Le document n’est pas un PDF valide.'],
             ]);
         }
 
