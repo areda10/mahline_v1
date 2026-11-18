@@ -30,6 +30,7 @@ final class MediaService
         private readonly MediaImageProcessor $processor,
         private readonly AuditService $audit,
         private readonly AuditEventRepository $auditEvents,
+        private readonly MediaAntivirusScanner $antivirus,
     ) {}
 
     public function upload(
@@ -64,6 +65,11 @@ final class MediaService
         }
 
         $validated = $this->validator->validate($file, $mediaCategory);
+
+        if ($mediaCategory === MediaCategory::INCIDENT_ATTACHMENT) {
+            $this->antivirus->scan($file);
+        }
+
         $mediaId = (string) Str::ulid();
         $visibility = $mediaCategory->isPublic() ? 'public' : 'private';
         $disk = (string) config(
