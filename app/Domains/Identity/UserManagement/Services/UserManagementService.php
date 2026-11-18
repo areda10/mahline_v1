@@ -432,7 +432,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         return DB::transaction(function () use ($actor, $target, $rootCanActivateFrom): User {
             $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
 
-            if ($lockedTarget === null || ! in_array($lockedTarget->status, $rootCanActivateFrom, true)) {
+            if ($lockedTarget === null) {
+                throw new DomainException('The user does not exist or is deleted.');
+            }
+
+            $this->assertTargetIsNotRoot($lockedTarget);
+
+            if (! in_array($lockedTarget->status, $rootCanActivateFrom, true)) {
                 throw new DomainException('This account cannot be activated from its current status.');
             }
 
@@ -467,7 +473,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         return DB::transaction(function () use ($actor, $target): User {
             $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
 
-            if ($lockedTarget === null || ! in_array($lockedTarget->status, [
+            if ($lockedTarget === null) {
+                throw new DomainException('The user does not exist or is deleted.');
+            }
+
+            $this->assertTargetIsNotRoot($lockedTarget);
+
+            if (! in_array($lockedTarget->status, [
                 UserStatus::Pending, UserStatus::Inactive, UserStatus::Suspended,
             ], true)) {
                 throw new DomainException('This account cannot be activated from its current status.');
@@ -638,6 +650,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('Only a soft-deleted user can be restored.');
             }
 
+            $this->assertTargetIsNotRoot($lockedTarget);
+
             $oldDeletedAt = $lockedTarget->deleted_at?->toISOString();
             $oldStatus = $lockedTarget->status->value;
             $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
@@ -715,6 +729,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             if ($lockedTarget === null) {
                 throw new DomainException('The user does not exist or is deleted.');
             }
+
+            $this->assertTargetIsNotRoot($lockedTarget);
 
             $isRoot = $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
 
@@ -928,6 +944,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             throw new DomainException(
                 'The cooperative does not exist or is no longer available.',
             );
+        }
+    }
+
+    private function assertTargetIsNotRoot(User $target): void
+    {
+        if ($target->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
+            throw new DomainException('The super admin root account status cannot be changed.');
         }
     }
 
