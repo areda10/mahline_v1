@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Framework\\Domains\\Media\\Http;
+namespace Tests\Framework\Domains\Media\Http;
 
-use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Media\\Enums\\MediaIncidentStatus;
-use App\\Domains\\Media\\Models\\Media;
-use App\\Domains\\Media\\Services\\MediaIncidentService;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Illuminate\\Http\\UploadedFile;
-use Illuminate\\Support\\Facades\\Notification;
-use Illuminate\\Support\\Facades\\Storage;
-use Tests\\TestCase;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Enums\MediaIncidentStatus;
+use App\Domains\Media\Models\Media;
+use App\Domains\Media\Services\MediaIncidentService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 final class MediaIncidentControllerTest extends TestCase
 {
@@ -66,7 +66,7 @@ final class MediaIncidentControllerTest extends TestCase
                 'category' => 'incident_attachment',
                 'file' => UploadedFile::fake()->createWithContent(
                     'generic-attachment.pdf',
-                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
             ]);
 
@@ -75,7 +75,7 @@ final class MediaIncidentControllerTest extends TestCase
         $incidentUpload = $this->post(route('media.incidents.attachments.store', $incident), [
             'file' => UploadedFile::fake()->createWithContent(
                 'incident-attachment.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
         ]);
 
