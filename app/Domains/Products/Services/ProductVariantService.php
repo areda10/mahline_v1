@@ -46,7 +46,7 @@ final class ProductVariantService
             $variant->label = $name;
             $variant->normalized_label = $normalizedLabel;
             $variant->sku = $attributes['sku'] ?? null;
-            $variant->price = $attributes['price'] ?? null;
+            $variant->price = $this->validatedPrice($attributes['price'] ?? null);
             $variant->attributes = $attributes['attributes'] ?? null;
             $variant->is_active = $attributes['is_active'] ?? true;
 
@@ -105,7 +105,7 @@ final class ProductVariantService
             }
 
             if (array_key_exists('price', $attributes)) {
-                $variant->price = $attributes['price'];
+                $variant->price = $this->validatedPrice($attributes['price']);
             }
 
             if (array_key_exists('attributes', $attributes)) {
@@ -165,6 +165,22 @@ final class ProductVariantService
                 ],
             ]);
         }
+    }
+
+    private function validatedPrice(mixed $price): ?string
+    {
+        if ($price === null || $price === '') {
+            return null;
+        }
+
+        $value = (string) $price;
+        if (! preg_match('/^\\d{1,12}(?:\\.\\d{1,2})?$/', $value) || (float) $value <= 0) {
+            throw ValidationException::withMessages([
+                'price' => ['Le prix de la variante doit être positif et comporter au maximum deux décimales.'],
+            ]);
+        }
+
+        return number_format((float) $value, 2, '.', '');
     }
 
     private function normalizeLabel(string $label): string
