@@ -25,6 +25,8 @@ final class ProductFactory extends Factory
             'name' => Str::title($name),
             'slug' => Str::slug($name),
             'description' => fake()->optional()->paragraph(),
+            'price' => fake()->randomFloat(2, 1, 5000),
+            'currency' => 'MAD',
             'is_active' => true,
         ];
     }
