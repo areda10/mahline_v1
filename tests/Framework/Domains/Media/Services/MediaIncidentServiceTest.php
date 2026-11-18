@@ -68,7 +68,7 @@ final class MediaIncidentServiceTest extends TestCase
             $incident,
             UploadedFile::fake()->createWithContent(
                 'diagnostic.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
         );
 
