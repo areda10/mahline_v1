@@ -470,6 +470,44 @@ final class MediaServiceTest extends TestCase
         ]);
     }
 
+    public function test_root_can_restore_a_deleted_product_image_as_primary_from_owner_history(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+        Storage::fake('local');
+        Storage::fake('public');
+        config(['media.public_disk' => 'public']);
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $service = app(MediaService::class);
+
+        $oldImage = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->image('old-product.jpg', 600, 400),
+            'product_image',
+        );
+        $newImage = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->image('new-product.jpg', 600, 400),
+            'product_image',
+        );
+
+        $service->delete($actor, $oldImage);
+        self::assertTrue($newImage->fresh()->is_primary);
+
+        $history = $service->ownerHistory($actor, $product);
+        self::assertTrue($history->contains(fn (Media $item): bool => $item->is($oldImage->fresh())));
+
+        $restored = $service->restore($actor, $oldImage->fresh(), true);
+
+        self::assertFalse($restored->trashed());
+        self::assertTrue($restored->is_primary);
+        self::assertFalse($newImage->fresh()->is_primary);
+        self::assertSame($oldImage->getKey(), $product->fresh()->primaryImage->getKey());
+    }
+
     public function test_restore_is_refused_when_a_retained_file_is_missing(): void
     {
         Storage::fake('local');
