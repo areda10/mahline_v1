@@ -243,7 +243,7 @@ final class MediaControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_root_can_stream_private_product_pdf_with_private_headers(): void
+    public function test_root_can_stream_private_product_pdf_inline_or_as_a_download(): void
     {
         Storage::fake('local');
         $cooperative = Cooperative::factory()->create();
@@ -259,8 +259,16 @@ final class MediaControllerTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/pdf');
         $response->assertHeader('Cache-Control', 'no-store, private');
-        self::assertStringContainsString('attachment', $response->headers->get('Content-Disposition', ''));
+        self::assertStringContainsString('inline', $response->headers->get('Content-Disposition', ''));
         self::assertSame('private-pdf-content', $response->streamedContent());
+
+        $download = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($root)
+            ->get(route('media.private', $media).'?download=1');
+
+        $download->assertOk();
+        self::assertStringContainsString('attachment', $download->headers->get('Content-Disposition', ''));
+        self::assertSame('private-pdf-content', $download->streamedContent());
     }
 
     public function test_upload_rejects_a_file_whose_real_mime_does_not_match_its_extension(): void
