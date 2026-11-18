@@ -1,8 +1,8 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.28
+- **Version :** 4.29
 - **Date d'ouverture :** 12 novembre 2026
-- **Dernière mise à jour :** 18 novembre 2026 — clôture du cadrage fonctionnel MEDIA V1 (74 décisions complémentaires validées)
+- **Dernière mise à jour :** 18 novembre 2026 — clôture MEDIA V1 et première vague de corrections techniques (tests locaux en attente)
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
 - **Périmètre :** premier release de MAHLINE (SaaS de gestion coopérative + marketplace publique)
@@ -3588,6 +3588,47 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Étape suivante : audit technique du domaine app/Domains/Media, comparaison exigence par exigence avec les implémentations, routes, Policies, migrations, stockage et tests ; établir la liste des écarts avant toute correction.
 - Les écrans MEDIA seront préparés après l'audit technique et la validation de la conformité V1.
 - Les développements non couverts par ce périmètre sont reportés à MEDIA V2.
+
+### Suivi de conformité technique MEDIA V1 — vague 1 (18 novembre 2026)
+
+**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. Les corrections ci-dessous sont enregistrées sur `feature/Marketplace`, mais les tests n'ont pas encore été exécutés localement.
+
+#### Corrections applicatives enregistrées
+
+- Limites serveur : 5 Mo pour toutes les images, 10 Mo pour les documents privés.
+- Formats documentaires : PDF, JPG, JPEG et PNG ; catégories obligatoires `identity`, `legal`, `administrative`, `certification`, `other`.
+- Validation de dimensions : 4000 × 4000 pixels maximum et 16 millions de pixels maximum ; rejet des WebP animés.
+- Traitement image : quatre dérivés obligatoires (`thumbnail` 150×150, `small` 300×300, `medium` 600×600, `large` 1600×1600), ratio préservé, sans agrandissement.
+- Formats de dérivés intelligents : JPEG vers WebP ; PNG avec transparence vers PNG ; PNG opaque vers WebP ; WebP vers WebP. Les originaux sont conservés.
+- Correction de l'orientation EXIF des JPEG ; les dérivés sont réencodés sans métadonnées EXIF.
+- Quotas : 10 images actives par produit et 20 documents actifs par propriétaire, vérifiés dans la transaction après verrouillage du propriétaire.
+- Réorganisation : verrouillage du propriétaire et de la collection, réindexation atomique de l'ordre.
+- Diffusion : prise en charge des quatre variantes ; affichage inline des documents privés et téléchargement explicite via `?download=1`.
+- Rétention : 90 jours par défaut, désactivation si la configuration est absente/nulle/invalide/négative ; planification quotidienne à 02:00.
+- Purge : suppression fichier par fichier, vérification des chemins MEDIA gérés, conservation de la ligne tant qu'un fichier reste et reprise à l'exécution suivante ; erreurs de nettoyage journalisées.
+- README technique MEDIA actualisé pour refléter les règles V1 et distinguer les corrections enregistrées des travaux restants.
+
+#### Tests adaptés ou ajoutés — exécution encore requise
+
+- Tests de validation des formats documentaires, des limites de taille et des dimensions.
+- Tests des quatre dérivés et de l'absence d'agrandissement.
+- Tests des quotas galerie et documents.
+- Tests de consultation PDF inline et de téléchargement explicite.
+- Les tests ciblés MEDIA, les tests globaux et Pint doivent être exécutés localement avant de valider cette vague.
+
+#### Écarts V1 restant à traiter
+
+1. Détection et suppression sécurisée des fichiers orphelins après le délai de sécurité minimal de 24 heures.
+2. Restauration des médias supprimés logiquement, historique des remplacements et restauration secondaire des images produits.
+3. Cycle de vie des médias lié à la suppression/restauration d'un propriétaire (coopérative/utilisateur/produit), avec restauration partielle si un fichier manque ou est corrompu.
+4. Contrôle d'accès aux médias privés des propriétaires supprimés, réservé au `super_admin_root` pendant la rétention.
+5. Audit exhaustif de toutes les opérations et tentatives refusées, chaîne cryptographique, vérification avant écriture et contrôle quotidien.
+6. Détection anti-énumération, compteurs IP/acteur, rate limiting et notifications de sécurité.
+7. Gestion des incidents `OPEN`, `IN_PROGRESS`, `RESOLVED`, `CLOSED`, réouverture, pièces jointes privées, exports et notifications.
+8. Vérification des opérations concurrentes de suppression, restauration et purge, ainsi que des cas de défaillance partielle.
+9. Compléter les tests de non-régression, exécuter la suite MEDIA, la suite complète du projet et Pint.
+
+**Règle de clôture :** aucune interface MEDIA ne sera considérée prête à intégrer avant la fermeture des écarts backend V1 et la réussite des vérifications requises. Les nouvelles fonctionnalités hors de ce périmètre restent reportées à MEDIA V2.
 
 
 ### Question 269 — Affichage des promotions dans la marketplace
