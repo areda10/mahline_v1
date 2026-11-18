@@ -125,6 +125,8 @@ final class ProductController
         return view('super-admin-root.cooperatives.products.edit', [
             'cooperative' => $coop,
             'product' => $item,
+            'productUnits' => ProductUnit::query()->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
+            'hasVariants' => $item->variants()->exists(),
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()
