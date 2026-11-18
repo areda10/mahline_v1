@@ -27,7 +27,7 @@
                     <tr>
                         <td><strong>{{ $product->name }}</strong>@if($product->description)<div class="muted">{{ $product->description }}</div>@endif</td>
                         <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td>
-                            <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td><td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
+                            <td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
                         <td>{{ $product->catalogs->pluck('name')->join(', ') ?: '—' }}</td>
                         <td><span class="badge {{ $product->is_active ? '' : 'badge-inactive' }}">{{ $product->is_active ? 'Actif' : 'Inactif' }}</span></td>
                         <td><div class="actions">
