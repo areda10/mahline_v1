@@ -85,7 +85,7 @@ final class ProductController
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
-            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
+            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)->whereIn('code', ProductUnit::V1_CODES)],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
@@ -145,7 +145,7 @@ final class ProductController
         return view('backoffice.products.edit', [
             'cooperative' => $cooperativeModel,
             'product' => $productModel,
-            'productUnits' => ProductUnit::query()->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
+            'productUnits' => ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
             'hasVariants' => $productModel->variants()->exists(),
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
@@ -180,7 +180,7 @@ final class ProductController
             'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
             'unit_id' => $productModel->variants()->exists()
                 ? ['prohibited']
-                : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)],
+                : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
