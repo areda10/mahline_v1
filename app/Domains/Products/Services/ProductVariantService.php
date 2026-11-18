@@ -174,13 +174,21 @@ final class ProductVariantService
         }
 
         $value = (string) $price;
-        if (! preg_match('/^\\d{1,12}(?:\\.\\d{1,2})?$/', $value) || (float) $value <= 0) {
+        if (! preg_match('/^\d{1,12}(?:\.\d{1,2})?$/', $value)) {
             throw ValidationException::withMessages([
                 'price' => ['Le prix de la variante doit être positif et comporter au maximum deux décimales.'],
             ]);
         }
 
-        return number_format((float) $value, 2, '.', '');
+        [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '0');
+        $fraction = str_pad($fraction, 2, '0');
+        if ((int) $whole === 0 && (int) $fraction === 0) {
+            throw ValidationException::withMessages([
+                'price' => ['Le prix de la variante doit être strictement positif.'],
+            ]);
+        }
+
+        return ((string) (int) $whole).'.'.$fraction;
     }
 
     private function normalizeLabel(string $label): string
