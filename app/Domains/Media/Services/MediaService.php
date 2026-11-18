@@ -85,12 +85,14 @@ final class MediaService
             $this->putOrFail($disk, $path, $originalContents);
 
             $derivativePaths = [];
+            $derivativeMimeTypes = [];
 
-            foreach ($derivatives as $name => $contents) {
-                $derivativePath = $directory.'/'.$name.'.'.$validated['extension'];
+            foreach ($derivatives as $name => $derivative) {
+                $derivativePath = $directory.'/'.$name.'.'.$derivative['extension'];
                 $storedPaths[] = $derivativePath;
-                $this->putOrFail($disk, $derivativePath, $contents);
+                $this->putOrFail($disk, $derivativePath, $derivative['contents']);
                 $derivativePaths[$name] = $derivativePath;
+                $derivativeMimeTypes[$name] = $derivative['mime_type'];
             }
 
             return DB::transaction(function () use (
@@ -103,11 +105,38 @@ final class MediaService
                 $disk,
                 $path,
                 $derivativePaths,
+                $derivativeMimeTypes,
                 $mediaId,
             ): Media {
                 $lockedOwner = $owner->newQuery()
                     ->lockForUpdate()
                     ->findOrFail($owner->getKey());
+
+                if ($mediaCategory === MediaCategory::PRODUCT_IMAGE) {
+                    $limit = $this->positiveLimit('media.limits.product_gallery', 10);
+                    $activeCount = $lockedOwner->media()
+                        ->where('category', $mediaCategory->value)
+                        ->count();
+
+                    if ($activeCount >= $limit) {
+                        throw ValidationException::withMessages([
+                            'file' => ["La galerie du produit est limitée à {$limit} images actives."],
+                        ]);
+                    }
+                }
+
+                if ($mediaCategory === MediaCategory::DOCUMENT) {
+                    $limit = $this->positiveLimit('media.limits.documents_per_owner', 20);
+                    $activeCount = $lockedOwner->media()
+                        ->where('category', MediaCategory::DOCUMENT->value)
+                        ->count();
+
+                    if ($activeCount >= $limit) {
+                        throw ValidationException::withMessages([
+                            'file' => ["Le propriétaire est limité à {$limit} documents actifs."],
+                        ]);
+                    }
+                }
 
                 $isPrimary = $mediaCategory->isSingle();
 
@@ -150,6 +179,7 @@ final class MediaService
                         ->max('sort_order') + 1,
                     'metadata' => array_filter([
                         'derivatives' => $derivativePaths,
+                        'derivative_mime_types' => $derivativeMimeTypes,
                         'document_category' => $documentCategory,
                     ], static fn (mixed $value): bool => $value !== null),
                     'created_by' => (string) $actor->getKey(),
@@ -268,6 +298,13 @@ final class MediaService
                 }
             }
         });
+    }
+
+    private function positiveLimit(string $key, int $default): int
+    {
+        $value = filter_var(config($key, $default), FILTER_VALIDATE_INT);
+
+        return $value !== false && $value > 0 ? $value : $default;
     }
 
     private function putOrFail(string $disk, string $path, string|false $contents): void
