@@ -651,10 +651,16 @@ final class MediaService
                 ->whereNotNull('email')
                 ->get();
 
-            Notification::send(
-                $roots,
-                new MediaSecurityAlertNotification('private_access_denied', $actorHash, $ipHash, $attempts),
-            );
+            try {
+                Notification::send(
+                    $roots,
+                    new MediaSecurityAlertNotification('private_access_denied', $actorHash, $ipHash, $attempts),
+                );
+            } catch (\\Throwable $exception) {
+                Log::error('MEDIA security notification delivery failed.', [
+                    'exception' => $exception::class,
+                ]);
+            }
         }
     }
 
