@@ -169,10 +169,18 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 
 ## 9. État d'avancement initial
 
-À la référence de cet inventaire :
+À la référence de l'inventaire initial (avant les premiers commits Orders) :
 - domaines existants repérés : Identity, Cooperatives, Catalog, Categories, Products, Media, Localization, Countries, Audit, Dashboard ;
-- Orders : documentation de cadrage créée, pas de schéma métier ni de flux complet déclaré ;
+- Orders : README, migration additive initiale (5 tables), 5 Enums et 5 modèles ajoutés ; services, autorisations, routes, interfaces, intégrations et tests restent à réaliser. Le domaine n'est pas terminé ni testé ;
 - Sales, Inventory, Delivery, Finance, Statistics, Incidents et Communication : montage à réaliser après audit des éventuels composants transversaux ;
 - aucune suite de tests n'est déclarée exécutée par ce plan.
 
 **Ce plan est la référence de coordination de la V1. Les statuts techniques seront mis à jour module par module avec commit, fichiers, SHA et résultats de tests vérifiables.**
+
+
+## 10. Journal d'exécution — 18 novembre 2026
+
+- Orders : migration additive initiale, modèles et Enums créés sur `feature/Marketplace`.
+- Commit de la fondation Orders : `1843a8ea4f8fa7d7832904ada3976f96fc9a78f2`.
+- La règle de délai coopérative Q307–Q310 a été intégrée au README Orders : référence 12 h, plafond 24 h, dépassement sans refus automatique, intervention admin autorisée et auditée.
+- Les tests PHP/MySQL n'ont pas été exécutés dans cette session. La fondation Orders est donc en cours, pas validée.
