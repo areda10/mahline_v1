@@ -94,4 +94,3 @@ final class CooperativeSuperAdminsRelationshipTest extends TestCase
         ]);
     }
 }
-

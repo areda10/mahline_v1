@@ -120,7 +120,6 @@ return new class extends Migration
              */
             $table->char('created_by', 26)->nullable();
 
-
             /*
              * ============================================================
              * TIMESTAMPS
@@ -182,11 +181,11 @@ return new class extends Migration
 
         if (DB::getDriverName() === 'mysql') {
             DB::unprepared(
-                "CREATE TRIGGER login_histories_prevent_update BEFORE UPDATE ON login_histories "
+                'CREATE TRIGGER login_histories_prevent_update BEFORE UPDATE ON login_histories '
                 ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Login history is append-only'",
             );
             DB::unprepared(
-                "CREATE TRIGGER login_histories_prevent_delete BEFORE DELETE ON login_histories "
+                'CREATE TRIGGER login_histories_prevent_delete BEFORE DELETE ON login_histories '
                 ."FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Login history is append-only'",
             );
         }

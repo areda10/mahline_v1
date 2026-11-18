@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Catalog\Http\Controllers;
 
 use App\Domains\Catalog\Models\Catalog;
-use App\Domains\Catalog\Services\CatalogService;
 use App\Domains\Catalog\Services\CatalogPdfService;
+use App\Domains\Catalog\Services\CatalogService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -185,7 +185,6 @@ final class CatalogController
             ])
             ->with('success', 'Le catalogue a été supprimé.');
     }
-
 
     public function downloadPdf(string $cooperative, string $catalog, CatalogPdfService $pdf): Response
     {

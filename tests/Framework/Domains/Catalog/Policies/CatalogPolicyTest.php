@@ -137,7 +137,6 @@ final class CatalogPolicyTest extends TestCase
         $this->assertTrue($this->policy->update($admin, $catalog));
     }
 
-
     public function test_only_root_and_assigned_super_admin_can_download_a_catalog_pdf(): void
     {
         $cooperative = Cooperative::factory()->create();

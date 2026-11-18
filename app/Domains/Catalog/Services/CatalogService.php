@@ -280,8 +280,8 @@ final class CatalogService
     }
 
     /** @param array<string, mixed>|null $oldValues
-     *  @param array<string, mixed>|null $newValues
-     *  @param array<string, mixed>|null $metadata
+     * @param  array<string, mixed>|null  $newValues
+     * @param  array<string, mixed>|null  $metadata
      */
     private function record(
         ?User $actor,

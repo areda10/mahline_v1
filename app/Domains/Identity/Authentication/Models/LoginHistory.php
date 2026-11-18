@@ -7,9 +7,9 @@ namespace App\Domains\Identity\Authentication\Models;
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Identity\Users\Models\User;
 use Database\Factories\LoginHistoryFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 

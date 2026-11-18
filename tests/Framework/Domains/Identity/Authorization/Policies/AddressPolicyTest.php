@@ -178,8 +178,8 @@ final class AddressPolicyTest extends TestCase
     }
 
     /**
-     * @param list<string> $permissionSlugs
-     * @param array<string, mixed> $attributes
+     * @param  list<string>  $permissionSlugs
+     * @param  array<string, mixed>  $attributes
      */
     private function userWithRoleAndPermissions(
         string $roleSlug,

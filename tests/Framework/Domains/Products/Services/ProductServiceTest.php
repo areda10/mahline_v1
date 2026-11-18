@@ -128,10 +128,9 @@ final class ProductServiceTest extends TestCase
         ]);
     }
 
-
     public function test_restoring_product_without_an_active_category_keeps_it_inactive(): void
     {
-        $cooperative = \App\Domains\Cooperatives\Models\Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->create();
         $product = $this->service->create((string) $cooperative->getKey(), [
             'name' => 'Produit sans catégorie',
             'is_active' => true,

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Customer\Http\Requests;
 
-use App\Domains\Localization\Enums\MoroccanRegion;
-
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Enums\MoroccanRegion;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class UpdateCustomerProfileRequest extends FormRequest

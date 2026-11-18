@@ -28,6 +28,7 @@ final class CooperativeController
         $this->authorizeRoot($request);
         Gate::authorize('viewAny', Cooperative::class);
         $cooperatives = Cooperative::query()->visibleTo($request->user())->with('address')->orderBy('name')->paginate(15);
+
         return view('super-admin-root.cooperatives.index', compact('cooperatives'));
     }
 
@@ -35,6 +36,7 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         Gate::authorize('create', Cooperative::class);
+
         return view('super-admin-root.cooperatives.create', ['cooperative' => new Cooperative, 'regions' => MoroccanRegion::values()]);
     }
 
@@ -51,12 +53,14 @@ final class CooperativeController
         $addressData = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $cooperativeData = array_diff_key($data, $addressData);
         $cooperative = $this->cooperativeService->create($request->user(), $cooperativeData, $addressData);
+
         return redirect()->route('root.backoffice.cooperatives.show', $cooperative)->with('success', 'La coopérative a été créée.');
     }
 
     public function show(Request $request, string $cooperative): View
     {
         $this->authorizeRoot($request);
+
         return view('super-admin-root.cooperatives.show', ['cooperative' => $this->resolveCooperative($cooperative)->load('address.country')]);
     }
 
@@ -65,6 +69,7 @@ final class CooperativeController
         $this->authorizeRoot($request);
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
+
         return view('super-admin-root.cooperatives.edit', ['cooperative' => $model->load('address'), 'regions' => MoroccanRegion::values()]);
     }
 
@@ -116,30 +121,35 @@ final class CooperativeController
         } catch (\DomainException $exception) {
             return back()->withInput()->with('error', $exception->getMessage());
         }
+
         return redirect()->route('root.backoffice.cooperatives.show', $model)->with('success', 'La coopérative a été mise à jour.');
     }
 
     public function activate(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'activate');
     }
 
     public function deactivate(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'deactivate');
     }
 
     public function suspend(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'suspend');
     }
 
     public function archive(Request $request, string $cooperative): RedirectResponse
     {
         $this->authorizeRoot($request);
+
         return $this->changeStatus($request, $cooperative, 'archive');
     }
 
@@ -148,6 +158,7 @@ final class CooperativeController
         $this->authorizeRoot($request);
         $model = Cooperative::query()->withTrashed()->findOrFail($cooperative);
         $this->cooperativeService->delete($request->user(), $model);
+
         return redirect()->route('root.backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
 
@@ -166,12 +177,14 @@ final class CooperativeController
     {
         $model = $this->resolveCooperative($id);
         $this->cooperativeService->{$action}($request->user(), $model);
+
         return redirect()->route('root.backoffice.cooperatives.show', $model)->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
 
     private function addressRules(string $presence = ''): array
     {
         $p = $presence === '' ? [] : [$presence];
+
         return [
             'number' => [...$p, 'nullable', 'string', 'max:50'],
             'street' => [...$p, 'required', 'string', 'max:255'],
@@ -191,6 +204,7 @@ final class CooperativeController
     {
         $model = Cooperative::query()->findOrFail($id);
         Gate::authorize('view', $model);
+
         return $model;
     }
 }

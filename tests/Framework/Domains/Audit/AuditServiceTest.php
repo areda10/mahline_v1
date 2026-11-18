@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Audit;
 
-use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Domains\Audit\Services\AuditService;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -53,7 +52,7 @@ final class AuditServiceTest extends TestCase
 
         self::assertSame($first->event_hash, $second->previous_hash);
         self::assertNotSame($first->event_hash, $second->event_hash);
-        self::assertSame($second->event_hash, \Illuminate\Support\Facades\DB::table('audit_chain_heads')->where('id', 1)->value('last_hash'));
+        self::assertSame($second->event_hash, DB::table('audit_chain_heads')->where('id', 1)->value('last_hash'));
         self::assertTrue(app(AuditEventRepository::class)->verifyIntegrity());
     }
 

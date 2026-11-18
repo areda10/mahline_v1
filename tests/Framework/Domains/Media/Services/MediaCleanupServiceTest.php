@@ -48,7 +48,6 @@ final class MediaCleanupServiceTest extends TestCase
         Storage::disk('public')->assertExists('media/recent/original.jpg');
     }
 
-
     public function test_it_does_not_purge_soft_deleted_media_when_retention_is_not_configured(): void
     {
         Storage::fake('public');
@@ -84,7 +83,7 @@ final class MediaCleanupServiceTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      * @return array<string, mixed>
      */
     private function attributes(string $path, array $metadata, mixed $deletedAt): array

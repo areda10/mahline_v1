@@ -8,11 +8,11 @@ use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Services\LoginHistoryService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use LogicException;
-use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 final class LoginHistoryTest extends TestCase

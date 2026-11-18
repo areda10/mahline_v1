@@ -12,7 +12,6 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;

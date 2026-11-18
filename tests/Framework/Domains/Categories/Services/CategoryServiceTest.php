@@ -193,7 +193,6 @@ final class CategoryServiceTest extends TestCase
         ]);
     }
 
-
     public function test_deleting_global_branch_detaches_local_children_and_preserves_their_subtree(): void
     {
         $cooperative = Cooperative::factory()->create();

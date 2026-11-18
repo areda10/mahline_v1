@@ -9,8 +9,8 @@ use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerEmailChangeService;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Enums\MoroccanRegion;
+use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Services\AddressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -78,7 +78,6 @@ final class CustomerProfileController
             ->with('success', 'Votre profil a été mis à jour.');
     }
 
-
     public function storeAddress(Request $request): RedirectResponse
     {
         $customer = $request->user();
@@ -92,6 +91,7 @@ final class CustomerProfileController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
         $this->addresses->createForUser($customer, $customer, $data);
+
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse ajoutée à votre carnet.');
     }
 
@@ -100,6 +100,7 @@ final class CustomerProfileController
         $customer = $request->user();
         abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
         $this->addresses->setPrimaryForUser($customer, $customer, $address);
+
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse principale mise à jour.');
     }
 
@@ -108,6 +109,7 @@ final class CustomerProfileController
         $customer = $request->user();
         abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
         $this->addresses->deleteForUser($customer, $customer, $address);
+
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse supprimée de votre carnet.');
     }
 

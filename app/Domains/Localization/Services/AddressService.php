@@ -30,6 +30,7 @@ final class AddressService extends BaseService
     public function createForUser(User $actor, User $owner, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
+
         return DB::transaction(function () use ($actor, $owner, $attributes): Address {
             $locked = User::query()->lockForUpdate()->findOrFail($owner->getKey());
             Gate::forUser($actor)->authorize('updateUserAddress', $locked);
@@ -45,6 +46,7 @@ final class AddressService extends BaseService
             $address->created_by = (string) $actor->getKey();
             $address->save();
             $this->record($actor, $address, 'created', 'localization.address.created', newValues: $this->snapshot($address));
+
             return $address->load('country');
         });
     }
@@ -52,6 +54,7 @@ final class AddressService extends BaseService
     public function updateForUser(User $actor, User $owner, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
+
         return DB::transaction(function () use ($actor, $owner, $attributes): Address {
             $locked = User::query()->lockForUpdate()->findOrFail($owner->getKey());
             Gate::forUser($actor)->authorize('updateUserAddress', $locked);
@@ -60,6 +63,7 @@ final class AddressService extends BaseService
             if ($address === null) {
                 throw new RuntimeException('The user has no active address to update.');
             }
+
             return $this->updateAddress($actor, $address, $attributes);
         });
     }
@@ -67,6 +71,7 @@ final class AddressService extends BaseService
     public function setPrimaryForUser(User $actor, User $owner, Address $address): Address
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
+
         return DB::transaction(function () use ($actor, $owner, $address): Address {
             $lockedOwner = User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
             Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
@@ -84,6 +89,7 @@ final class AddressService extends BaseService
             $target->forceFill(['is_primary' => true, 'updated_by' => (string) $actor->getKey()])->save();
             $this->record($actor, $target, 'updated', 'localization.address.primary_changed',
                 oldValues: $before, newValues: $this->snapshot($target));
+
             return $target;
         });
     }
@@ -317,18 +323,23 @@ final class AddressService extends BaseService
     {
         $before = $this->snapshot($address);
         $address->fill($this->validatedAttributes($attributes));
-        if (! $address->isDirty()) return $address;
+        if (! $address->isDirty()) {
+            return $address;
+        }
         $address->updated_by = (string) $actor->getKey();
         $address->save();
         $this->record($actor, $address, 'updated', 'localization.address.updated',
             cooperativeId: $address->cooperative_id, oldValues: $before, newValues: $this->snapshot($address));
+
         return $address->load('country');
     }
 
     private function validatedAttributes(array $attributes): array
     {
         $unknown = array_diff(array_keys($attributes), self::WRITABLE_FIELDS);
-        if ($unknown !== []) throw new InvalidArgumentException('Unsupported address attributes: '.implode(', ', $unknown));
+        if ($unknown !== []) {
+            throw new InvalidArgumentException('Unsupported address attributes: '.implode(', ', $unknown));
+        }
         $data = Validator::make($attributes, [
             'number' => ['sometimes', 'nullable', 'string', 'max:50'],
             'street' => ['required', 'string', 'max:255'],
@@ -340,8 +351,11 @@ final class AddressService extends BaseService
             'longitude' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
         ])->validate();
         foreach (['number', 'street', 'floor', 'postal_code', 'city', 'region'] as $field) {
-            if (isset($data[$field])) $data[$field] = trim($data[$field]);
+            if (isset($data[$field])) {
+                $data[$field] = trim($data[$field]);
+            }
         }
+
         return $data;
     }
 
@@ -351,6 +365,7 @@ final class AddressService extends BaseService
         if ($country === null) {
             throw ValidationException::withMessages(['country' => 'Le Maroc doit être configuré et actif pour enregistrer une adresse en V1.']);
         }
+
         return $country;
     }
 

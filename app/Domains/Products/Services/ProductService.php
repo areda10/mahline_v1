@@ -489,5 +489,4 @@ final class ProductService
             newValues: $newValues,
         ));
     }
-
 }

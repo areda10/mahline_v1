@@ -12,10 +12,8 @@ use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationLockoutCo
 use App\Domains\Identity\Authentication\Http\Controllers\AuthenticationSessionController;
 use App\Domains\Identity\Authentication\Http\Controllers\DeviceTrustController;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerDashboardController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerProfileController;
-use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
 use App\Domains\Identity\Customer\Http\Controllers\CustomerRegistrationController;
 use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Password\Http\Controllers\ForcedPasswordChangeController;
@@ -32,6 +30,8 @@ use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementControlle
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
+use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
+use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -609,7 +609,6 @@ Route::prefix('back-office')
 //         ),
 //     ]);
 // });
-
 
 /*
 |--------------------------------------------------------------------------

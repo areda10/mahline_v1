@@ -625,5 +625,4 @@ final class CategoryService
             newValues: $newValues,
         ));
     }
-
 }

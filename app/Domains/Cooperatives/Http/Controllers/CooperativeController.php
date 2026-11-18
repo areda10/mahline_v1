@@ -26,12 +26,14 @@ final class CooperativeController
     {
         Gate::authorize('viewAny', Cooperative::class);
         $cooperatives = Cooperative::query()->visibleTo(request()->user())->with('address')->orderBy('name')->paginate(15);
+
         return view('backoffice.cooperatives.index', compact('cooperatives'));
     }
 
     public function create(): View
     {
         Gate::authorize('create', Cooperative::class);
+
         return view('backoffice.cooperatives.create', ['cooperative' => new Cooperative, 'regions' => MoroccanRegion::values()]);
     }
 
@@ -52,12 +54,14 @@ final class CooperativeController
         $address = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $attributes = array_diff_key($data, $address);
         $cooperative = $this->cooperativeService->create($request->user(), $attributes, $address);
+
         return redirect()->route('backoffice.cooperatives.show', $cooperative)->with('success', 'La coopérative a été créée.');
     }
 
     public function show(string $cooperative): View
     {
         $model = $this->resolveCooperative($cooperative);
+
         return view('backoffice.cooperatives.show', ['cooperative' => $model->load('address.country')]);
     }
 
@@ -65,6 +69,7 @@ final class CooperativeController
     {
         $model = $this->resolveCooperative($cooperative);
         Gate::authorize('update', $model);
+
         return view('backoffice.cooperatives.edit', ['cooperative' => $model->load('address'), 'regions' => MoroccanRegion::values()]);
     }
 
@@ -99,21 +104,42 @@ final class CooperativeController
         $address = array_intersect_key($data, array_flip($addressFields));
         $attributes = array_diff_key($data, $address);
         DB::transaction(function () use ($actor, $model, $attributes, $address): void {
-            if ($attributes !== []) $this->cooperativeService->update($actor, $model, $attributes);
-            if ($address !== []) $this->addresses->updateForCooperative($actor, $model, $address);
+            if ($attributes !== []) {
+                $this->cooperativeService->update($actor, $model, $attributes);
+            }
+            if ($address !== []) {
+                $this->addresses->updateForCooperative($actor, $model, $address);
+            }
         });
+
         return redirect()->route('backoffice.cooperatives.show', $model)->with('success', 'La coopérative a été mise à jour.');
     }
 
-    public function activate(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'activate'); }
-    public function deactivate(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'deactivate'); }
-    public function suspend(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'suspend'); }
-    public function archive(Request $request, string $cooperative): RedirectResponse { return $this->changeStatus($request, $cooperative, 'archive'); }
+    public function activate(Request $request, string $cooperative): RedirectResponse
+    {
+        return $this->changeStatus($request, $cooperative, 'activate');
+    }
+
+    public function deactivate(Request $request, string $cooperative): RedirectResponse
+    {
+        return $this->changeStatus($request, $cooperative, 'deactivate');
+    }
+
+    public function suspend(Request $request, string $cooperative): RedirectResponse
+    {
+        return $this->changeStatus($request, $cooperative, 'suspend');
+    }
+
+    public function archive(Request $request, string $cooperative): RedirectResponse
+    {
+        return $this->changeStatus($request, $cooperative, 'archive');
+    }
 
     public function destroy(Request $request, string $cooperative): RedirectResponse
     {
         $model = Cooperative::query()->withTrashed()->findOrFail($cooperative);
         $this->cooperativeService->delete($request->user(), $model);
+
         return redirect()->route('backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
 
@@ -121,6 +147,7 @@ final class CooperativeController
     {
         $model = $this->resolveCooperative($id);
         $this->cooperativeService->{$action}($request->user(), $model);
+
         return redirect()->route('backoffice.cooperatives.show', $model)->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
 
@@ -128,6 +155,7 @@ final class CooperativeController
     {
         $model = Cooperative::query()->findOrFail($id);
         Gate::authorize('view', $model);
+
         return $model;
     }
 }

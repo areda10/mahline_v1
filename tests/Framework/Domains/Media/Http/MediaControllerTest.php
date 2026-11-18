@@ -6,13 +6,14 @@ namespace Tests\Framework\Domains\Media\Http;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
 use App\Domains\Products\Models\Product;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -273,9 +274,9 @@ final class MediaControllerTest extends TestCase
                 ],
                 [],
                 [
-                    'file' => \Illuminate\Http\UploadedFile::fake()->createWithContent(
+                    'file' => UploadedFile::fake()->createWithContent(
                         'spoofed.jpg',
-                        "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                        '%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF',
                     ),
                 ],
                 [
@@ -311,9 +312,9 @@ final class MediaControllerTest extends TestCase
                 ],
                 [],
                 [
-                    'file' => \Illuminate\Http\UploadedFile::fake()->createWithContent(
+                    'file' => UploadedFile::fake()->createWithContent(
                         'not-an-image.pdf',
-                        "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                        '%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF',
                     ),
                 ],
                 [

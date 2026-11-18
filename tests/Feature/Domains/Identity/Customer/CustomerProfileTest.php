@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Customer;
 
+use App\Domains\Countries\Models\Country;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Countries\Models\Country;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -160,7 +160,6 @@ final class CustomerProfileTest extends TestCase
             ->get(route('customer.profile.edit'))
             ->assertForbidden();
     }
-
 
     public function test_customer_can_add_select_and_soft_delete_saved_addresses(): void
     {

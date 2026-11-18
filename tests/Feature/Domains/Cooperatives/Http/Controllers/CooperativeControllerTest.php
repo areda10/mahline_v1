@@ -11,7 +11,6 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Models\Address;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;

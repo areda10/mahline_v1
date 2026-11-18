@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Enums;
 
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Products\Models\Product;
+
 enum MediaCategory: string
 {
     case PRODUCT_IMAGE = 'product_image';
@@ -59,13 +63,13 @@ enum MediaCategory: string
     public function allowsOwner(string $ownerClass): bool
     {
         return match ($this) {
-            self::PRODUCT_IMAGE => $ownerClass === \App\Domains\Products\Models\Product::class,
-            self::COOPERATIVE_LOGO, self::COOPERATIVE_PHOTO => $ownerClass === \App\Domains\Cooperatives\Models\Cooperative::class,
-            self::PROFILE_IMAGE => $ownerClass === \App\Domains\Identity\Users\Models\User::class,
+            self::PRODUCT_IMAGE => $ownerClass === Product::class,
+            self::COOPERATIVE_LOGO, self::COOPERATIVE_PHOTO => $ownerClass === Cooperative::class,
+            self::PROFILE_IMAGE => $ownerClass === User::class,
             self::DOCUMENT => in_array($ownerClass, [
-                \App\Domains\Products\Models\Product::class,
-                \App\Domains\Cooperatives\Models\Cooperative::class,
-                \App\Domains\Identity\Users\Models\User::class,
+                Product::class,
+                Cooperative::class,
+                User::class,
             ], true),
         };
     }

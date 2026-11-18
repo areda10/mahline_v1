@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Countries\Models\Country;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -20,7 +23,7 @@ final class AddressFactory extends Factory
             'floor' => fake()->optional()->secondaryAddress(),
             'postal_code' => fake()->optional()->postcode(),
             'city' => fake()->city(),
-            'region' => fake()->optional()->randomElement(\App\Domains\Localization\Enums\MoroccanRegion::values()),
+            'region' => fake()->optional()->randomElement(MoroccanRegion::values()),
             'country_id' => Country::query()->firstOrCreate(
                 ['code' => 'MA'],
                 [
@@ -41,7 +44,7 @@ final class AddressFactory extends Factory
         ];
     }
 
-    public function forUser(\App\Domains\Identity\Users\Models\User $user): static
+    public function forUser(User $user): static
     {
         return $this->state(fn (): array => [
             'user_id' => $user->getKey(),
@@ -49,7 +52,7 @@ final class AddressFactory extends Factory
         ]);
     }
 
-    public function forCooperative(\App\Domains\Cooperatives\Models\Cooperative $cooperative): static
+    public function forCooperative(Cooperative $cooperative): static
     {
         return $this->state(fn (): array => [
             'user_id' => null,

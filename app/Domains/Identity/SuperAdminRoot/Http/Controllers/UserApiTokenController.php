@@ -145,6 +145,7 @@ final class UserApiTokenController
             'revoked_count' => $count,
         ]);
     }
+
     private function assertManageableTarget(User $user): void
     {
         abort_if($user->hasAnyRole(['super_admin_root', 'customer']), 404);

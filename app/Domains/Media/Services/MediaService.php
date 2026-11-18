@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domains\Media\Services;
 
 use App\Domains\Audit\Services\AuditService;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Models\Media;
+use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -273,8 +275,8 @@ final class MediaService
     {
         $owner = $media->mediable;
         $cooperativeId = match (true) {
-            $owner instanceof \App\Domains\Products\Models\Product => (string) $owner->cooperative_id,
-            $owner instanceof \App\Domains\Cooperatives\Models\Cooperative => (string) $owner->getKey(),
+            $owner instanceof Product => (string) $owner->cooperative_id,
+            $owner instanceof Cooperative => (string) $owner->getKey(),
             $owner instanceof User => $owner->cooperative_id === null ? null : (string) $owner->cooperative_id,
             default => null,
         };

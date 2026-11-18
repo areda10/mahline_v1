@@ -10,6 +10,7 @@ use App\Domains\Localization\Models\Address;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class AddressOwnershipIntegrityTest extends TestCase
@@ -65,7 +66,7 @@ final class AddressOwnershipIntegrityTest extends TestCase
         $countryId = Address::factory()->raw()['country_id'];
         $this->expectException(QueryException::class);
         DB::table('addresses')->insert([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'street' => 'Rue de Test',
             'city' => 'Casablanca',
             'country_id' => $countryId,
@@ -85,7 +86,7 @@ final class AddressOwnershipIntegrityTest extends TestCase
 
         $this->expectException(QueryException::class);
         DB::table('addresses')->insert([
-            'id' => (string) \Illuminate\Support\Str::ulid(),
+            'id' => (string) Str::ulid(),
             'street' => 'Rue de Test',
             'city' => 'Casablanca',
             'country_id' => $countryId,
@@ -96,7 +97,6 @@ final class AddressOwnershipIntegrityTest extends TestCase
             'updated_at' => now(),
         ]);
     }
-
 
     public function test_cooperative_can_have_only_one_active_address(): void
     {

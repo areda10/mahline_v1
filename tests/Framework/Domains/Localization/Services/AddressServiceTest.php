@@ -11,6 +11,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Services\AddressService;
+use Database\Seeders\CountrySeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -32,7 +33,7 @@ final class AddressServiceTest extends TestCase
             RoleSeeder::class,
             PermissionSeeder::class,
             RolePermissionSeeder::class,
-            \Database\Seeders\CountrySeeder::class,
+            CountrySeeder::class,
         ]);
     }
 
@@ -119,7 +120,6 @@ final class AddressServiceTest extends TestCase
             'latitude' => 95,
         ]);
     }
-
 
     public function test_customer_can_keep_five_active_addresses_but_not_a_sixth(): void
     {
