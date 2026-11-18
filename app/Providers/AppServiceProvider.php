@@ -7,9 +7,7 @@ namespace App\Providers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Media\Contracts\MediaAntivirusScanner as MediaAntivirusScannerContract;
 use App\Domains\Media\Observers\MediaOwnerObserver;
-use App\Domains\Media\Services\MediaAntivirusScanner;
 use App\Domains\Products\Models\Product;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
@@ -28,8 +26,6 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(MediaAntivirusScannerContract::class, MediaAntivirusScanner::class);
-
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
             UserManagementService::class,
