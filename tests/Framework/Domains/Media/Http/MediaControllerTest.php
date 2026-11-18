@@ -486,6 +486,85 @@ final class MediaControllerTest extends TestCase
         $this->get(route('media.show', $media))->assertNotFound();
     }
 
+
+    public function test_owner_history_http_route_resolves_media_for_all_linked_domains(): void
+    {
+        Notification::fake();
+
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $ownerUser = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+        $incidentReporter = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+        $incident = app(MediaIncidentService::class)->create(
+            $incidentReporter,
+            'Polymorphic history incident',
+            'Exercise MEDIA owner history across domain boundaries.',
+        );
+
+        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+
+        $owners = [
+            'product' => $product,
+            'cooperative' => $cooperative,
+            'user' => $ownerUser,
+            'incident' => $incident,
+        ];
+
+        foreach ($owners as $ownerType => $owner) {
+            $category = $ownerType === 'incident' ? 'incident_attachment' : 'document';
+            $attributes = $this->attributes(
+                'media/inter-domain/'.$ownerType.'/'.$owner->getKey().'.pdf',
+                $category,
+                'private',
+                'local',
+                'application/pdf',
+                'pdf',
+            );
+
+            if ($ownerType === 'incident') {
+                $attributes['collection'] = 'incident-attachments';
+            }
+
+            $media = $owner->media()->create($attributes);
+
+            $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+                ->actingAs($root)
+                ->getJson(route('media.owners.history', [
+                    'ownerType' => $ownerType,
+                    'ownerId' => (string) $owner->getKey(),
+                ]))
+                ->assertOk()
+                ->assertJsonCount(1, 'data')
+                ->assertJsonPath('data.0.id', (string) $media->getKey());
+        }
+    }
+
+    public function test_media_owner_observer_is_registered_for_product_cooperative_and_user_deletion(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $ownerUser = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
+
+        foreach ([$product, $cooperative, $ownerUser] as $owner) {
+            $owner->media()->create($this->attributes(
+                'media/observer/'.$owner::class.'/'.$owner->getKey().'.pdf',
+                'document',
+                'private',
+                'local',
+                'application/pdf',
+                'pdf',
+            ));
+
+            $owner->delete();
+
+            self::assertDatabaseHas('audit_events', [
+                'event_key' => 'media.owner_soft_deleted',
+                'subject_type' => $owner::class,
+                'subject_id' => $owner->getKey(),
+            ]);
+        }
+    }
+
     private function userWithPermission(string $roleSlug, string $permissionSlug, string $cooperativeId): User
     {
         $user = User::factory()->create(['cooperative_id' => $cooperativeId]);
