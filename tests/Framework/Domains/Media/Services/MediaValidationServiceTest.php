@@ -24,9 +24,9 @@ final class MediaValidationServiceTest extends TestCase
         self::assertGreaterThan(0, $result['size']);
     }
 
-    public function test_profile_image_rejects_a_file_over_two_megabytes(): void
+    public function test_profile_image_rejects_a_file_over_five_megabytes(): void
     {
-        $file = UploadedFile::fake()->create('profile.jpg', 2049, 'image/jpeg');
+        $file = UploadedFile::fake()->create('profile.jpg', 5121, 'image/jpeg');
 
         $this->expectException(ValidationException::class);
 
@@ -44,7 +44,7 @@ final class MediaValidationServiceTest extends TestCase
 
     public function test_document_rejects_a_non_pdf_extension(): void
     {
-        $file = UploadedFile::fake()->create('document.png', 10, 'image/png');
+        $file = UploadedFile::fake()->create('document.webp', 10, 'image/webp');
 
         $this->expectException(ValidationException::class);
 
@@ -79,9 +79,9 @@ final class MediaValidationServiceTest extends TestCase
         self::assertSame(5 * 1024 * 1024, MediaCategory::COOPERATIVE_PHOTO->maxBytes());
     }
 
-    public function test_document_size_limit_is_fifteen_megabytes(): void
+    public function test_document_size_limit_is_ten_megabytes(): void
     {
-        self::assertSame(15 * 1024 * 1024, MediaCategory::DOCUMENT->maxBytes());
+        self::assertSame(10 * 1024 * 1024, MediaCategory::DOCUMENT->maxBytes());
     }
 
     public function test_all_image_categories_allow_only_jpeg_png_and_webp(): void
