@@ -178,6 +178,44 @@ final class MediaController
         return response()->json(['message' => 'Le média a été supprimé.']);
     }
 
+    public function restore(Request $request, string $media): JsonResponse
+    {
+        $record = Media::withTrashed()->findOrFail($media);
+        $data = $request->validate([
+            'make_primary' => ['sometimes', 'boolean'],
+        ]);
+
+        $restored = $this->media->restore(
+            $request->user(),
+            $record,
+            (bool) ($data['make_primary'] ?? false),
+        );
+
+        return response()->json([
+            'data' => [
+                'id' => $restored->getKey(),
+                'restored' => true,
+                'is_primary' => $restored->is_primary,
+            ],
+        ]);
+    }
+
+    public function replacementHistory(Request $request, Media $media): JsonResponse
+    {
+        $history = $this->media->replacementHistory($request->user(), $media);
+
+        return response()->json([
+            'data' => $history->map(static fn (Media $item): array => [
+                'id' => $item->getKey(),
+                'original_name' => $item->original_name,
+                'mime_type' => $item->mime_type,
+                'size' => $item->size,
+                'deleted_at' => $item->deleted_at?->toIso8601String(),
+                'restorable' => true,
+            ])->values(),
+        ]);
+    }
+
     private function resolveOwner(string $type, string $id): Model
     {
         return match ($type) {
