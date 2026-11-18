@@ -16,10 +16,11 @@ final class ProductUnitSeeder extends Seeder
             ['code' => 'g', 'label' => 'Gramme (g)', 'dimension' => 'mass', 'sort_order' => 20],
             ['code' => 'l', 'label' => 'Litre (L)', 'dimension' => 'volume', 'sort_order' => 30],
             ['code' => 'ml', 'label' => 'Millilitre (ml)', 'dimension' => 'volume', 'sort_order' => 40],
+            ['code' => 'u', 'label' => 'Unité / pièce (u)', 'dimension' => 'count', 'sort_order' => 50],
         ];
 
         foreach ($units as $unit) {
-            ProductUnit::query()->firstOrCreate(
+            ProductUnit::query()->updateOrCreate(
                 ['code' => $unit['code']],
                 $unit + ['is_active' => true],
             );
