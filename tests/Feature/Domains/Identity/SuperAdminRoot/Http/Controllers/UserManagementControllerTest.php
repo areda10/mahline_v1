@@ -424,6 +424,43 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
+    public function test_root_status_cannot_be_changed_through_its_own_http_lifecycle_routes(): void
+    {
+        $root = $this->actor('super_admin_root', [
+            'users.activate',
+            'users.deactivate',
+            'users.suspend',
+            'users.archive',
+            'users.restore',
+        ]);
+
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.activate', $root))
+            ->assertForbidden();
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.deactivate', $root))
+            ->assertForbidden();
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.suspend', $root))
+            ->assertForbidden();
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.archive', $root))
+            ->assertForbidden();
+        $this->actingAs($root)
+            ->patch(route('root.backoffice.users.restore', $root))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $root->getKey(),
+            'status' => UserStatus::Active->value,
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.user.status_changed',
+            'subject_id' => $root->getKey(),
+        ]);
+    }
+
     public function test_super_admin_cannot_use_root_lifecycle_routes(): void
     {
         $superAdmin = $this->actor('super_admin', [
