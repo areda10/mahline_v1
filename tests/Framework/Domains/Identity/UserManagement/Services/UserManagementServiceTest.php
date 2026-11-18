@@ -400,7 +400,7 @@ final class UserManagementServiceTest extends TestCase
         try {
             $this->service->deleteUser($actor, $target);
             self::fail('An inactive super admin root account must remain permanent.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
         }
 
