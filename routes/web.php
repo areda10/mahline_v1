@@ -625,6 +625,12 @@ Route::get('/media/{media}', [MediaController::class, 'show'])
     ->whereUlid('media')
     ->name('media.show');
 
+Route::get('/media/{media}/{variant}', [MediaController::class, 'show'])
+    ->middleware(['media.enumeration', 'throttle:media-public'])
+    ->whereUlid('media')
+    ->whereIn('variant', ['original', 'thumbnail', 'small', 'medium', 'large'])
+    ->name('media.variant');
+
 Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
     ->prefix('media')
     ->name('media.')
