@@ -29,7 +29,7 @@ final class MediaOwnerLifecycleTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent(
                 'owner-document.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
             'document',
             'legal',
@@ -56,7 +56,7 @@ final class MediaOwnerLifecycleTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent(
                 'valid-owner.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
             'document',
             'legal',
@@ -66,7 +66,7 @@ final class MediaOwnerLifecycleTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent(
                 'corrupt-owner.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
             'document',
             'certification',
