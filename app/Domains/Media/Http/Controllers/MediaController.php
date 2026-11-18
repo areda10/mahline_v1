@@ -246,7 +246,8 @@ final class MediaController
                 'mime_type' => $item->mime_type,
                 'size' => $item->size,
                 'deleted_at' => $item->deleted_at?->toIso8601String(),
-                'restorable' => $this->media->isMediaIntegrityValid($item),
+                'restorable' => $this->media->isMediaIntegrityValid($item)
+                    && ! (method_exists($item->mediable, 'trashed') && $item->mediable->trashed()),
             ])->values(),
         ]);
     }
