@@ -79,6 +79,18 @@ final class ProductServiceTest extends TestCase
             ->firstOrFail());
     }
 
+    public function test_it_rejects_product_creation_without_a_registered_unit(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->create(
+            (string) $cooperative->getKey(),
+            ['name' => 'Produit sans unité'],
+        );
+    }
+
     public function test_it_does_not_return_another_cooperatives_product(): void
     {
         $firstCooperative = Cooperative::factory()->create();
