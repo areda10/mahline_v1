@@ -72,7 +72,7 @@ final class MediaIncidentControllerTest extends TestCase
 
         $genericUpload->assertForbidden();
 
-        $incidentUpload = $this->post(route('media.incidents.attachments.store', $incident), [
+        $incidentUpload = $this->postJson(route('media.incidents.attachments.store', $incident), [
             'file' => UploadedFile::fake()->createWithContent(
                 'incident-attachment.pdf',
                 "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
