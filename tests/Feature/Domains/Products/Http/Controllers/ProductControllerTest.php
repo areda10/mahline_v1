@@ -106,6 +106,47 @@ final class ProductControllerTest extends TestCase
         ]);
     }
 
+    public function test_product_creation_requires_an_active_registered_unit(): void
+    {
+        $response = $this->from(route(
+            'backoffice.products.create',
+            ['cooperative' => $this->cooperative->getKey()],
+        ))->post(route(
+            'backoffice.products.store',
+            ['cooperative' => $this->cooperative->getKey()],
+        ), [
+            'name' => 'Produit sans unité',
+            'price' => '20.00',
+            'category_ids' => [$this->category->getKey()],
+        ]);
+
+        $response->assertRedirect()->assertSessionHasErrors(['unit_id']);
+
+        $this->assertDatabaseMissing('products', [
+            'cooperative_id' => $this->cooperative->getKey(),
+            'name' => 'Produit sans unité',
+        ]);
+    }
+
+    public function test_product_creation_rejects_an_inactive_unit(): void
+    {
+        $unit = ProductUnit::query()->whereKey($this->unitId)->firstOrFail();
+        $unit->update(['is_active' => false]);
+
+        $this->from(route(
+            'backoffice.products.create',
+            ['cooperative' => $this->cooperative->getKey()],
+        ))->post(route(
+            'backoffice.products.store',
+            ['cooperative' => $this->cooperative->getKey()],
+        ), [
+            'name' => 'Produit unité inactive',
+            'price' => '20.00',
+            'unit_id' => $this->unitId,
+            'category_ids' => [$this->category->getKey()],
+        ])->assertRedirect()->assertSessionHasErrors(['unit_id']);
+    }
+
     public function test_product_creation_requires_a_name(): void
     {
         $response = $this->from(route(
