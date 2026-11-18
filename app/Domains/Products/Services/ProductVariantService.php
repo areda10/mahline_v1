@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Products\Services;
 
 use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Products\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
