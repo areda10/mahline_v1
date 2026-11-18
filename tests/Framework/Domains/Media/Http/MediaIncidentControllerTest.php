@@ -121,7 +121,7 @@ final class MediaIncidentControllerTest extends TestCase
         $this->post(route('media.incidents.attachments.store', $incident), [
             'file' => UploadedFile::fake()->createWithContent(
                 'forbidden.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
         ])->assertForbidden();
     }
@@ -206,7 +206,7 @@ final class MediaIncidentControllerTest extends TestCase
             ->post(route('media.incidents.attachments.store', $incident), [
                 'file' => UploadedFile::fake()->createWithContent(
                     'diagnostic.pdf',
-                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
             ])
             ->assertCreated()
