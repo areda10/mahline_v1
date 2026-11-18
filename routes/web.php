@@ -652,6 +652,7 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
                     ->whereUlid('incident')->name('attachments.store');
             });
         Route::get('{media}/private', [MediaController::class, 'showPrivate'])
+            ->middleware('throttle:media-public')
             ->whereUlid('media')
             ->name('private');
         Route::post('/', [MediaController::class, 'store'])
