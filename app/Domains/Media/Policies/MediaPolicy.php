@@ -30,12 +30,20 @@ final class MediaPolicy extends BasePolicy
             return false;
         }
 
-        if (
-            method_exists($owner, 'trashed')
-            && $owner->trashed()
-            && (! $user->hasRole('super_admin_root') || $media->category !== MediaCategory::DOCUMENT->value)
-        ) {
-            return false;
+        if (method_exists($owner, 'trashed') && $owner->trashed()) {
+            if (! $user->hasRole('super_admin_root') || $media->category !== MediaCategory::DOCUMENT->value) {
+                return false;
+            }
+
+            $retentionDays = filter_var(config('media.retention_days', 90), FILTER_VALIDATE_INT);
+            if (
+                $retentionDays !== false
+                && $retentionDays > 0
+                && $owner->deleted_at !== null
+                && $owner->deleted_at->lte(now()->subDays($retentionDays))
+            ) {
+                return false;
+            }
         }
 
         if ($owner instanceof MediaIncident) {
