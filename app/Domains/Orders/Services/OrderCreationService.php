@@ -15,8 +15,8 @@ use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final class OrderCreationService
 {
