@@ -488,6 +488,48 @@ final class MediaControllerTest extends TestCase
         $this->get(route('media.show', $media))->assertNotFound();
     }
 
+
+    public function test_generic_upload_http_route_resolves_product_cooperative_and_own_user_owners(): void
+    {
+        Storage::fake('local');
+
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+        $selfUser = $this->userWithRole('user', (string) $cooperative->getKey());
+
+        $owners = [
+            'product' => [$product, $root],
+            'cooperative' => [$cooperative, $root],
+            'user' => [$selfUser, $selfUser],
+        ];
+
+        foreach ($owners as $ownerType => [$owner, $actor]) {
+            $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+                ->actingAs($actor)
+                ->post(route('media.store'), [
+                    'owner_type' => $ownerType,
+                    'owner_id' => (string) $owner->getKey(),
+                    'category' => 'document',
+                    'document_category' => 'legal',
+                    'file' => UploadedFile::fake()->createWithContent(
+                        'proof.pdf',
+                        "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    ),
+                ])
+                ->assertCreated()
+                ->assertJsonPath('data.category', 'document')
+                ->assertJsonPath('data.visibility', 'private');
+
+            self::assertDatabaseHas('media', [
+                'mediable_type' => $owner::class,
+                'mediable_id' => $owner->getKey(),
+                'category' => 'document',
+                'document_category' => 'legal',
+            ]);
+        }
+    }
+
     public function test_owner_history_http_route_resolves_media_for_all_linked_domains(): void
     {
         Notification::fake();
