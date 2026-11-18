@@ -39,10 +39,30 @@ final class ResetRootPasswordTest extends TestCase
         $this->assertDatabaseCount('audit_events', 0);
     }
 
+    public function test_a_root_account_cannot_be_soft_deleted_directly(): void
+    {
+        $root = $this->createRoot();
+
+        try {
+            $root->delete();
+            self::fail('The super admin root account must not be deleted.');
+        } catch (\\DomainException $exception) {
+            self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('users', [
+            'id' => $root->getKey(),
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
     public function test_it_refuses_a_soft_deleted_root_account(): void
     {
         $root = $this->createRoot();
-        $root->delete();
+
+        // Simulate a legacy/corrupt soft-deleted record without invoking normal deletion.
+        $root->forceFill(['deleted_at' => now()])->saveQuietly();
 
         $this->artisan('mahline:reset-root-password')
             ->expectsQuestion('Adresse e-mail du compte Root', 'root@example.test')
