@@ -12,6 +12,8 @@ use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
+use App\Domains\Media\Services\MediaIncidentService;
+use Illuminate\Support\Facades\Notification;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -485,7 +487,6 @@ final class MediaControllerTest extends TestCase
 
         $this->get(route('media.show', $media))->assertNotFound();
     }
-
 
     public function test_owner_history_http_route_resolves_media_for_all_linked_domains(): void
     {
