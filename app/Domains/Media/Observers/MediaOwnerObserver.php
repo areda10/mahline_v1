@@ -28,7 +28,7 @@ final class MediaOwnerObserver
 
         DB::transaction(function () use ($owner, $actor, $actorId): void {
             $owner->media()->lockForUpdate()->get()->each(function ($media) use ($owner, $actor, $actorId): void {
-                if (app(\\App\\Domains\\Media\\Services\\MediaService::class)->isMediaIntegrityValid($media)) {
+                if (app(\App\Domains\Media\Services\MediaService::class)->isMediaIntegrityValid($media)) {
                     return;
                 }
 
