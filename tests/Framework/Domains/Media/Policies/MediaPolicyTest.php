@@ -158,6 +158,25 @@ final class MediaPolicyTest extends TestCase
         self::assertTrue(Gate::forUser($rootWithPermission->refresh())->allows('view', $document));
     }
 
+    public function test_only_root_can_view_private_documents_after_owner_soft_delete(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $document = $product->media()->create($this->documentAttributes('products/deleted-owner/proof.pdf'));
+        $product->delete();
+
+        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+        $cooperativeAdmin = $this->userWithPermission(
+            'cooperative_admin',
+            'products.view',
+            (string) $cooperative->getKey(),
+        );
+
+        self::assertTrue(Gate::forUser($root)->allows('view', $document));
+        self::assertFalse(Gate::forUser($cooperativeAdmin)->allows('view', $document));
+        self::assertFalse(Gate::forUser($cooperativeAdmin)->allows('update', $document));
+    }
+
     public function test_pending_archived_or_emergency_locked_users_cannot_view_private_media(): void
     {
         $cooperative = Cooperative::factory()->create();
