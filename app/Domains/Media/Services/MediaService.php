@@ -398,8 +398,6 @@ final class MediaService
             ]);
         }
 
-        $this->assertRetainedFilesAreValid($media);
-
         return DB::transaction(function () use ($actor, $media, $makePrimary): Media {
             $owner = $media->mediable;
             if (! $owner instanceof Model) {
@@ -414,6 +412,8 @@ final class MediaService
                     'media' => ['Ce média a déjà été restauré.'],
                 ]);
             }
+
+            $this->assertRetainedFilesAreValid($locked);
 
             $single = in_array($locked->category, [
                 MediaCategory::COOPERATIVE_LOGO->value,
