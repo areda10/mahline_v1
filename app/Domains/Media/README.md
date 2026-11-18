@@ -96,7 +96,8 @@ Les contrôles d’autorisation sont toujours exécutés côté serveur et ne so
 - La rétention commence à `deleted_at`.
 - La commande `php artisan media:purge-expired` est planifiée quotidiennement à 02:00 et sans chevauchement.
 - La purge ne supprime la ligne MEDIA qu’après suppression de l’original et de tous les dérivés ; les suppressions incomplètes sont reprises lors d’une exécution ultérieure.
-- `MEDIA_ORPHAN_SAFETY_HOURS` : délai de sécurité des fichiers orphelins, minimum 24 heures. **Le détecteur et le nettoyeur d’orphelins restent à implémenter.**
+- `MEDIA_ORPHAN_SAFETY_HOURS` : délai de sécurité des fichiers orphelins, minimum 24 heures même si la configuration est inférieure ou invalide. Les candidats sont persistés ; les fichiers sont rescannés sur les disques configurés et leurs références sont revérifiées avant suppression.
+- La commande `php artisan media:cleanup-orphans` est planifiée quotidiennement à 02:30, après la purge de rétention de 02:00, sans chevauchement.
 
 ## État des corrections techniques
 
