@@ -51,6 +51,64 @@ final class CooperativeOrderResponseService
         return $this->respond($cooperativeOrder, $actor, $accept, $reason, true);
     }
 
+    public function extendResponseDeadline(
+        CooperativeOrder $cooperativeOrder,
+        User $actor,
+        \\DateTimeInterface $newDeadline,
+        string $reason,
+    ): CooperativeOrder {
+        if (! $actor->hasRole('super_admin_root') && ! $this->isAssignedSuperAdmin($actor, $cooperativeOrder)) {
+            abort(403);
+        }
+
+        if (trim($reason) === '') {
+            throw ValidationException::withMessages([
+                'reason' => ['Le motif de la prolongation est obligatoire.'],
+            ]);
+        }
+
+        $deadline = \\Illuminate\\Support\\Carbon::instance($newDeadline);
+        if ($deadline->lessThanOrEqualTo(now()) || $deadline->greaterThan(now()->addHours(24))) {
+            throw ValidationException::withMessages([
+                'response_deadline_at' => ['La nouvelle échéance doit être future et ne peut pas dépasser 24 heures.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($cooperativeOrder, $actor, $deadline, $reason): CooperativeOrder {
+            $locked = CooperativeOrder::query()
+                ->whereKey($cooperativeOrder->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== CooperativeOrderStatus::AWAITING_COOPERATIVE) {
+                throw ValidationException::withMessages([
+                    'cooperative_order' => ['Seule une sous-commande en attente peut être prolongée.'],
+                ]);
+            }
+
+            $locked->response_deadline_at = $deadline;
+            $locked->response_overdue_at = null;
+            $locked->forceFill(['updated_by' => (string) $actor->getKey()])->save();
+
+            OrderStatusHistory::query()->create([
+                'subject_type' => 'cooperative_order',
+                'subject_id' => (string) $locked->getKey(),
+                'from_status' => $locked->status->value,
+                'to_status' => $locked->status->value,
+                'actor_id' => (string) $actor->getKey(),
+                'actor_role' => $actor->hasRole('super_admin_root') ? 'super_admin_root' : 'super_admin',
+                'reason' => trim($reason),
+                'metadata' => [
+                    'action' => 'response_deadline_extended',
+                    'new_deadline' => $deadline->toIso8601String(),
+                ],
+                'occurred_at' => now(),
+            ]);
+
+            return $locked->refresh();
+        }, 3);
+    }
+
     private function respond(
         CooperativeOrder $cooperativeOrder,
         User $actor,
