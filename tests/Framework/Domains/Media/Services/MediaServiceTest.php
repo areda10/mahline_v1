@@ -37,13 +37,13 @@ final class MediaServiceTest extends TestCase
             $product,
             $file,
             'document',
-            'proof_of_origin',
+            'legal',
         );
 
         self::assertInstanceOf(Media::class, $media);
         self::assertSame('private', $media->visibility);
         self::assertSame('local', $media->disk);
-        self::assertSame('proof_of_origin', $media->metadata['document_category']);
+        self::assertSame('legal', $media->metadata['document_category']);
         self::assertFalse($media->is_primary);
         Storage::disk('local')->assertExists($media->path);
         self::assertDatabaseHas('audit_events', [
@@ -81,7 +81,7 @@ final class MediaServiceTest extends TestCase
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
                 'document',
-                'proof_of_origin',
+                'legal',
             );
 
             self::fail('The simulated persistence failure should be rethrown.');
@@ -122,7 +122,7 @@ final class MediaServiceTest extends TestCase
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
                 'document',
-                'proof_of_origin',
+                'legal',
             );
 
             self::fail('The simulated storage failure should be rethrown.');
@@ -194,7 +194,7 @@ final class MediaServiceTest extends TestCase
             $product,
             $file,
             'document',
-            'proof_of_origin',
+            'legal',
         );
 
         app(MediaService::class)->delete($actor, $media);
@@ -331,7 +331,7 @@ final class MediaServiceTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent('first.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF"),
             'document',
-            'proof_one',
+            'legal',
         );
 
         $second = $service->upload(
@@ -339,7 +339,7 @@ final class MediaServiceTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent('second.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF"),
             'document',
-            'proof_two',
+            'certification',
         );
 
         self::assertSame(1, $first->sort_order);
