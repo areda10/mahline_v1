@@ -25,6 +25,7 @@
 </div>
 
 <div class="card">
+    <p><strong>Prix :</strong> {{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
     <p><strong>Slug :</strong> {{ $product->slug }}</p>
     <p>
         <strong>État :</strong>
