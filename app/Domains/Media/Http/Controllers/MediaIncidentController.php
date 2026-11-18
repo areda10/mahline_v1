@@ -17,8 +17,10 @@ final class MediaIncidentController
         private readonly MediaIncidentService $incidents,
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $this->incidents->recordListView($request->user());
+
         return response()->json([
             'data' => MediaIncident::query()
                 ->with(['reporter:id,first_name,last_name,email', 'assignee:id,first_name,last_name'])
@@ -40,8 +42,10 @@ final class MediaIncidentController
         return response()->json(['data' => $incident], 201);
     }
 
-    public function show(MediaIncident $incident): JsonResponse
+    public function show(Request $request, MediaIncident $incident): JsonResponse
     {
+        $this->incidents->recordView($request->user(), $incident);
+
         return response()->json([
             'data' => $incident->load(['reporter:id,first_name,last_name,email', 'assignee:id,first_name,last_name'])
                 ->loadCount('attachments'),
