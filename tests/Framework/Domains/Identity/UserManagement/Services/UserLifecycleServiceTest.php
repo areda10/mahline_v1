@@ -127,20 +127,35 @@ final class UserLifecycleServiceTest extends TestCase
         ]);
     }
 
-    public function test_root_can_change_own_status(): void
+    public function test_root_status_cannot_be_changed_through_lifecycle_services(): void
     {
         $root = $this->userWithRole('super_admin_root');
-        $session = $this->sessions->create($root, 'root-self-deactivation-session');
+        $session = $this->sessions->create($root, 'root-status-immutable-session');
 
-        $updated = $this->service->deactivateUser($root, $root);
+        $operations = [
+            fn () => $this->service->activateUser($root, $root),
+            fn () => $this->service->activateAndVerifyUser($root, $root),
+            fn () => $this->service->deactivateUser($root, $root),
+            fn () => $this->service->suspendUser($root, $root),
+            fn () => $this->service->archiveUser($root, $root),
+            fn () => $this->service->restoreArchivedUser($root, $root),
+        ];
 
-        self::assertSame(UserStatus::Inactive, $updated->status);
-        self::assertNotNull($session->fresh()->revoked_at);
-        $this->assertDatabaseHas('audit_events', [
-            'event_key' => 'identity.user.status_changed',
-            'actor_id' => $root->getKey(),
-            'subject_id' => $root->getKey(),
-        ]);
+        foreach ($operations as $operation) {
+            try {
+                $operation();
+                self::fail('A lifecycle service must not change the Root account status.');
+            } catch (\\DomainException $exception) {
+                self::assertSame(
+                    'The super admin root account status cannot be changed.',
+                    $exception->getMessage(),
+                );
+            }
+        }
+
+        self::assertSame(UserStatus::Active, $root->fresh()->status);
+        self::assertNull($session->fresh()->revoked_at);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     public function test_super_admin_cannot_activate_pending_user_in_assigned_cooperative(): void
