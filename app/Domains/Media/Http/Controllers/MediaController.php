@@ -7,6 +7,7 @@ namespace App\Domains\Media\Http\Controllers;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Models\Media;
 use App\Domains\Media\Services\MediaService;
 use App\Domains\Products\Models\Product;
@@ -75,6 +76,15 @@ final class MediaController
         );
 
         $owner = $media->mediable;
+        $mediaCategory = MediaCategory::tryFrom($media->category);
+
+        abort_unless(
+            $owner instanceof Model
+            && $mediaCategory?->isPublic()
+            && $mediaCategory->allowsOwner($owner::class),
+            404,
+        );
+
         $isPublished = match (true) {
             $owner instanceof Product => $owner->is_active
                 && $owner->cooperative?->status === CooperativeStatus::ACTIVE,
