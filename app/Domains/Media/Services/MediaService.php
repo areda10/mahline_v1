@@ -592,10 +592,16 @@ final class MediaService
             MediaCategory::DOCUMENT->value,
             MediaCategory::INCIDENT_ATTACHMENT->value,
         ], true)) {
+            $derivativeMimeTypes = $media->metadata['derivative_mime_types'] ?? [];
             foreach (['thumbnail', 'small', 'medium', 'large'] as $requiredVariant) {
-                if (! is_array($derivatives) || ! isset($derivatives[$requiredVariant])) {
+                if (
+                    ! is_array($derivatives)
+                    || ! is_string($derivatives[$requiredVariant] ?? null)
+                    || ! is_array($derivativeMimeTypes)
+                    || ! is_string($derivativeMimeTypes[$requiredVariant] ?? null)
+                ) {
                     throw ValidationException::withMessages([
-                        'media' => ['Restauration impossible : un dérivé obligatoire est manquant.'],
+                        'media' => ['Restauration impossible : un dérivé obligatoire est manquant ou invalide.'],
                     ]);
                 }
             }
