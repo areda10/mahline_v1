@@ -108,8 +108,8 @@ Les contrôles d’autorisation sont toujours exécutés côté serveur et ne so
 | EXIF et animation | Vague 1 testée localement : tests MEDIA verts |
 | Verrouillage et réorganisation atomique | Verrouillage applicatif enregistré ; tests de concurrence réels encore à compléter |
 | Rétention 90 jours, planification 02:00 et purge reprenable | Vague 1 testée localement : tests MEDIA verts ; couverture de reprise à approfondir |
-| Détection/nettoyage des fichiers orphelins | À implémenter |
-| Restauration des médias et cycle de vie des propriétaires | À implémenter ; accès root aux documents privés d’un propriétaire supprimé ajouté dans la vague 2, tests en attente |
+| Détection/nettoyage des fichiers orphelins | Implémentation enregistrée sur `feature/Marketplace` : candidats persistés, délai minimum 24 h, disques configurés uniquement, recontrôle des références avant suppression et logs ; tests locaux en attente |
+| Restauration des médias et cycle de vie des propriétaires | À implémenter ; accès root aux documents privés d’un propriétaire supprimé ajouté et testé dans la vague 2 |
 | Audit exhaustif, intégrité avant écriture et vérification quotidienne | À implémenter / compléter ; journalisation de l’accès root aux documents d’un propriétaire supprimé ajoutée, tests en attente |
 | Anti-énumération, incidents, notifications et pièces jointes | À implémenter |
 | Suite de tests complète et Pint | Vague 1 verte selon retour utilisateur ; à relancer après chaque nouvelle vague et sur la suite complète |
