@@ -639,6 +639,12 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
         Route::patch('{media}/order', [MediaController::class, 'reorder'])
             ->whereUlid('media')
             ->name('reorder');
+        Route::get('{media}/replacements', [MediaController::class, 'replacementHistory'])
+            ->whereUlid('media')
+            ->name('replacements');
+        Route::post('{media}/restore', [MediaController::class, 'restore'])
+            ->whereUlid('media')
+            ->name('restore');
         Route::delete('{media}', [MediaController::class, 'destroy'])
             ->whereUlid('media')
             ->name('destroy');
