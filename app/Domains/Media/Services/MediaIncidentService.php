@@ -141,6 +141,23 @@ final class MediaIncidentService
         return $updated;
     }
 
+    public function recordExport(User $actor): void
+    {
+        $this->assertRoot($actor);
+
+        if (! $this->auditEvents->verifyIntegrity()) {
+            throw new \RuntimeException('La chaîne d’audit est invalide ; export incident refusé.');
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: 'media.incidents_exported',
+            action: 'incidents_exported',
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            metadata: ['format' => 'csv'],
+        ));
+    }
+
     public function attach(User $actor, MediaIncident $incident, UploadedFile $file): \App\Domains\Media\Models\Media
     {
         $this->assertRoot($actor);
