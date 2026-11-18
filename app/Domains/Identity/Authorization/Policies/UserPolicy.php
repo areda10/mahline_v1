@@ -279,7 +279,6 @@ final class UserPolicy extends BasePolicy
                 self::ROLE_SUPER_ADMIN_ROOT,
                 'customer',
             ])
-            ->where('is_active', true)
             ->exists();
     }
 
