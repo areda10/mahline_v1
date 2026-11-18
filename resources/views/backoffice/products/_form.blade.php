@@ -26,8 +26,8 @@
                 </option>
             @endforeach
         </select>
-        @error('unit_id') <div class="error">{{ $message }}</div> @enderror
     @endif
+    @error('unit_id') <div class="error">{{ $message }}</div> @enderror
 </div>
 
 <div class="field">
