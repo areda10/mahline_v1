@@ -13,12 +13,13 @@ return new class extends Migration
         Schema::create('media_orphan_candidates', function (Blueprint $table): void {
             $table->id();
             $table->string('disk', 80);
-            $table->string('path', 1024);
+            $table->text('path');
+            $table->char('path_hash', 64);
             $table->timestamp('first_seen_at');
             $table->timestamp('last_seen_at');
             $table->timestamps();
 
-            $table->unique(['disk', 'path'], 'media_orphan_disk_path_unique');
+            $table->unique(['disk', 'path_hash'], 'media_orphan_disk_hash_unique');
             $table->index(['first_seen_at', 'last_seen_at'], 'media_orphan_age_index');
         });
     }
