@@ -42,6 +42,7 @@ final class ProductControllerTest extends TestCase
             ->assertSee('Kilogramme (kg)')
             ->assertSee('Gramme (g)')
             ->assertSee('Litre (L)')
+            ->assertSee('Unité / pièce (u)')
             ->assertDontSee('Millilitre (ml)')
             ->assertSee('name="unit_id"');
     }
