@@ -452,7 +452,7 @@ final class MediaServiceTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent(
                 'restore-proof.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
             'document',
             'legal',
@@ -480,7 +480,7 @@ final class MediaServiceTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent(
                 'missing-proof.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
             'document',
             'legal',
@@ -507,14 +507,14 @@ final class MediaServiceTest extends TestCase
             $product,
             UploadedFile::fake()->createWithContent(
                 'altered-proof.pdf',
-                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
             ),
             'document',
             'legal',
         );
 
         app(MediaService::class)->delete($actor, $media);
-        Storage::disk('local')->put($media->path, "%PDF-1.4\\nALTERED CONTENT\\n%%EOF");
+        Storage::disk('local')->put($media->path, "%PDF-1.4\nALTERED CONTENT\n%%EOF");
 
         try {
             app(MediaService::class)->restore($actor, $media->fresh(), false);
