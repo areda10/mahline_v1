@@ -331,9 +331,11 @@ final class UserPolicyTest extends TestCase
             ['users.archive', 'users.delete'],
         );
         $target = User::factory()->create();
+        $protectedRoot = $this->userWithRoleAndPermissions('super_admin_root', []);
 
         self::assertTrue(Gate::forUser($root)->allows('archive', $target));
         self::assertTrue(Gate::forUser($root)->allows('delete', $target));
+        self::assertFalse(Gate::forUser($root)->allows('delete', $protectedRoot));
         self::assertFalse(Gate::forUser($admin)->allows('archive', $target));
         self::assertFalse(Gate::forUser($admin)->allows('delete', $target));
     }
