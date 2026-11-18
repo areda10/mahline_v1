@@ -23,3 +23,8 @@ Schedule::command('media:purge-expired')
 Schedule::command('media:cleanup-orphans')
     ->dailyAt('02:30')
     ->withoutOverlapping();
+
+
+Schedule::command('media:verify-audit')
+    ->dailyAt('03:00')
+    ->withoutOverlapping();
