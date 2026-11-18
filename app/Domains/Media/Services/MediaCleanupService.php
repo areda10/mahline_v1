@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Services;
 
+use App\Domains\Audit\Repositories\AuditEventRepository;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Media\Models\Media;
+use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 final class MediaCleanupService
 {
+    public function __construct(
+        private readonly AuditService $audit,
+        private readonly AuditEventRepository $auditEvents,
+    ) {}
+
     public function purgeExpired(): int
     {
         $retentionDays = filter_var(config('media.retention_days', 90), FILTER_VALIDATE_INT);
@@ -38,6 +46,10 @@ final class MediaCleanupService
 
                             if (! $media instanceof Media) {
                                 return false;
+                            }
+
+                            if (! $this->auditEvents->verifyIntegrity()) {
+                                throw new \RuntimeException('La chaîne d’audit est invalide ; purge MEDIA refusée.');
                             }
 
                             $disk = Storage::disk($media->disk);
@@ -76,6 +88,17 @@ final class MediaCleanupService
 
                                 return false;
                             }
+
+                            $this->audit->record(new AuditEntryDTO(
+                                eventKey: 'media.purged',
+                                action: 'purged',
+                                subjectType: Media::class,
+                                subjectId: (string) $media->getKey(),
+                                metadata: [
+                                    'category' => $media->category,
+                                    'retention_days' => (int) config('media.retention_days', 90),
+                                ],
+                            ));
 
                             $media->forceDelete();
 
