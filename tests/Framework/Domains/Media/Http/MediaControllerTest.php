@@ -243,6 +243,73 @@ final class MediaControllerTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_root_can_stream_private_document_after_owner_soft_delete_and_access_is_audited(): void
+    {
+        Storage::fake('local');
+
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        Storage::disk('local')->put('media/private/deleted-owner-proof.pdf', 'retained-private-pdf');
+        $media = $product->media()->create($this->attributes(
+            'media/private/deleted-owner-proof.pdf',
+            'document',
+            'private',
+            'local',
+            'application/pdf',
+            'pdf',
+        ));
+        $product->delete();
+
+        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+        $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($root)
+            ->get(route('media.private', $media));
+
+        $response->assertOk();
+        self::assertSame('retained-private-pdf', $response->streamedContent());
+        self::assertDatabaseHas('audit_events', [
+            'event_key' => 'media.private_accessed_deleted_owner',
+            'subject_type' => Media::class,
+            'subject_id' => $media->getKey(),
+            'actor_id' => $root->getKey(),
+        ]);
+
+        $cooperativeAdmin = $this->userWithPermission(
+            'cooperative_admin',
+            'products.view',
+            (string) $cooperative->getKey(),
+        );
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($cooperativeAdmin)
+            ->get(route('media.private', $media))
+            ->assertForbidden();
+    }
+
+    public function test_public_product_image_is_hidden_after_product_soft_delete(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'is_active' => true,
+        ]);
+        $product->catalogs()->attach($catalog->getKey());
+        Storage::disk('public')->put('media/deleted-product/original.jpg', 'image-content');
+        $media = $product->media()->create($this->attributes(
+            'media/deleted-product/original.jpg',
+            'product_image',
+            'public',
+            'public',
+            'image/jpeg',
+            'jpg',
+        ));
+        $product->delete();
+
+        $this->get(route('media.show', $media))->assertNotFound();
+    }
+
     public function test_root_can_stream_private_product_pdf_inline_or_as_a_download(): void
     {
         Storage::fake('local');
