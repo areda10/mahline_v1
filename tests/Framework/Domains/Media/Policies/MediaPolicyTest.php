@@ -177,6 +177,20 @@ final class MediaPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($cooperativeAdmin)->allows('update', $document));
     }
 
+    public function test_root_cannot_view_private_documents_after_deleted_owner_retention_expires(): void
+    {
+        config(['media.retention_days' => 90]);
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $document = $product->media()->create($this->documentAttributes('products/expired-owner/proof.pdf'));
+        $product->delete();
+        $product->forceFill(['deleted_at' => now()->subDays(91)])->save();
+
+        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+
+        self::assertFalse(Gate::forUser($root)->allows('view', $document));
+    }
+
     public function test_pending_archived_or_emergency_locked_users_cannot_view_private_media(): void
     {
         $cooperative = Cooperative::factory()->create();
