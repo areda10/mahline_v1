@@ -29,6 +29,10 @@ final class MediaPolicy extends BasePolicy
             return false;
         }
 
+        if (method_exists($owner, 'trashed') && $owner->trashed() && ! $user->hasRole('super_admin_root')) {
+            return false;
+        }
+
         if ($owner instanceof User) {
             return $this->canViewUserMedia($user, $owner);
         }
@@ -67,7 +71,11 @@ final class MediaPolicy extends BasePolicy
 
         $owner = $media->mediable;
 
-        if (! $owner instanceof Model || ! $this->categoryMatchesOwner($media->category, $owner)) {
+        if (
+            ! $owner instanceof Model
+            || ! $this->categoryMatchesOwner($media->category, $owner)
+            || (method_exists($owner, 'trashed') && $owner->trashed())
+        ) {
             return false;
         }
 
