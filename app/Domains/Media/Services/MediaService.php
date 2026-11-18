@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Services;
 
+use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
@@ -28,6 +29,7 @@ final class MediaService
         private readonly MediaValidationService $validator,
         private readonly MediaImageProcessor $processor,
         private readonly AuditService $audit,
+        private readonly AuditEventRepository $auditEvents,
     ) {}
 
     public function upload(
@@ -532,23 +534,23 @@ final class MediaService
     public function recordPrivateAccess(User $actor, Media $media): void
     {
         $owner = $media->mediable;
-
-        if (
-            ! $actor->hasRole('super_admin_root')
-            || $media->category !== MediaCategory::DOCUMENT->value
-            || ! $owner instanceof Model
-            || ! method_exists($owner, 'trashed')
-            || ! $owner->trashed()
-        ) {
-            return;
-        }
+        $deletedOwnerDocument = $actor->hasRole('super_admin_root')
+            && $media->category === MediaCategory::DOCUMENT->value
+            && $owner instanceof Model
+            && method_exists($owner, 'trashed')
+            && $owner->trashed();
 
         $this->record(
             $actor,
             $media,
-            'media.private_accessed_deleted_owner',
-            'private_accessed_deleted_owner',
+            $deletedOwnerDocument ? 'media.private_accessed_deleted_owner' : 'media.private_accessed',
+            $deletedOwnerDocument ? 'private_accessed_deleted_owner' : 'private_accessed',
         );
+    }
+
+    public function recordDeniedAccess(User $actor, Media $media): void
+    {
+        $this->record($actor, $media, 'media.private_access_denied', 'private_access_denied');
     }
 
     private function positiveLimit(string $key, int $default): int
@@ -567,6 +569,10 @@ final class MediaService
 
     private function record(User $actor, Media $media, string $eventKey, string $action): void
     {
+        if (! $this->auditEvents->verifyIntegrity()) {
+            throw new RuntimeException('La chaîne d’audit est invalide ; opération MEDIA refusée.');
+        }
+
         $owner = $media->mediable;
         $cooperativeId = match (true) {
             $owner instanceof Product => (string) $owner->cooperative_id,
