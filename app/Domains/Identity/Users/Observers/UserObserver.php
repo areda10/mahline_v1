@@ -16,7 +16,7 @@ final class UserObserver
      */
     public function deleting(User $user): void
     {
-        if ($user->hasRole('super_admin_root')) {
+        if ($user->roles()->where('slug', 'super_admin_root')->exists()) {
             throw new DomainException('The super admin root account cannot be deleted.');
         }
     }
