@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Media\\Services;
+namespace App\Domains\Media\Services;
 
-use App\\Domains\\Media\\Contracts\\MediaAntivirusScanner as MediaAntivirusScannerContract;
-use Illuminate\\Http\\UploadedFile;
-use Illuminate\\Support\\Facades\\Process;
-use Illuminate\\Validation\\ValidationException;
+use App\Domains\Media\Contracts\MediaAntivirusScanner as MediaAntivirusScannerContract;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 final class MediaAntivirusScanner implements MediaAntivirusScannerContract
@@ -28,7 +28,7 @@ final class MediaAntivirusScanner implements MediaAntivirusScannerContract
 
         try {
             $result = Process::timeout(45)->run([$binary, '--no-summary', $file->getRealPath()]);
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             throw new RuntimeException('Le contrôle antivirus MEDIA est indisponible ; fichier refusé.', previous: $exception);
         }
 
