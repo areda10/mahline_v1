@@ -145,7 +145,7 @@ final class OrderCreationServiceTest extends TestCase
             'unit_id' => null,
         ]);
 
-        $this->expectException(\\Illuminate\\Validation\\ValidationException::class);
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
