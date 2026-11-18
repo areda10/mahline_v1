@@ -133,6 +133,46 @@ final class MediaServiceTest extends TestCase
         self::assertSame(0, Media::query()->count());
     }
 
+    public function test_it_removes_a_partially_written_image_derivative_when_storage_reports_failure(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $disk = Storage::disk('public');
+        $writeCount = 0;
+        $failingDisk = \\Mockery::mock($disk)->makePartial();
+        $failingDisk->shouldReceive('put')
+            ->twice()
+            ->andReturnUsing(static function (string $path, string $contents) use ($disk, &$writeCount): bool {
+                $writeCount++;
+                $disk->put($path, $contents);
+
+                return $writeCount !== 2;
+            });
+
+        Storage::set('public', $failingDisk);
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+
+        try {
+            app(MediaService::class)->upload(
+                $actor,
+                $product,
+                UploadedFile::fake()->image('partial-derivative.jpg', 160, 120),
+                'product_image',
+            );
+
+            self::fail('The simulated derivative storage failure should be rethrown.');
+        } catch (\\RuntimeException $exception) {
+            self::assertSame('Le stockage du média a échoué.', $exception->getMessage());
+        }
+
+        self::assertSame(2, $writeCount);
+        self::assertSame([], $disk->allFiles('media'));
+        self::assertSame(0, Media::query()->count());
+    }
+
     public function test_soft_deleting_a_media_record_keeps_its_file_for_the_retention_period(): void
     {
         Storage::fake('local');
