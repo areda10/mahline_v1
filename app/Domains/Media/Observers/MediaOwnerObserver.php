@@ -17,6 +17,41 @@ use RuntimeException;
 
 final class MediaOwnerObserver
 {
+    public function restored(Model $owner): void
+    {
+        if (! $owner instanceof Product && ! $owner instanceof Cooperative && ! $owner instanceof User) {
+            return;
+        }
+
+        $actor = Auth::user();
+        $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
+
+        DB::transaction(function () use ($owner, $actor, $actorId): void {
+            $owner->media()->lockForUpdate()->get()->each(function ($media) use ($owner, $actor, $actorId): void {
+                if (app(\\App\\Domains\\Media\\Services\\MediaService::class)->isMediaIntegrityValid($media)) {
+                    return;
+                }
+
+                $media->forceFill(['deleted_by' => $actorId])->save();
+                $media->delete();
+
+                app(AuditService::class)->record(new AuditEntryDTO(
+                    eventKey: 'media.owner_restore_skipped_invalid',
+                    action: 'owner_restore_skipped_invalid',
+                    actorType: $actor instanceof User ? User::class : null,
+                    actorId: $actorId,
+                    subjectType: $media::class,
+                    subjectId: (string) $media->getKey(),
+                    metadata: [
+                        'category' => $media->category,
+                        'owner_type' => $owner::class,
+                        'reason' => 'missing_or_corrupt_file',
+                    ],
+                ));
+            });
+        });
+    }
+
     public function deleting(Model $owner): void
     {
         if (! method_exists($owner, 'isForceDeleting') || ! $owner->isForceDeleting()) {
