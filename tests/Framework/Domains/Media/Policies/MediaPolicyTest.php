@@ -19,6 +19,28 @@ final class MediaPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_policy_rejects_media_category_that_does_not_match_its_owner(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $actor = $this->userWithPermission(
+            'cooperative_admin',
+            'products.view',
+            (string) $cooperative->getKey(),
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $media = $product->media()->create(array_replace(
+            $this->documentAttributes('products/private/invalid-profile.jpg'),
+            [
+                'category' => 'profile_image',
+                'mime_type' => 'image/jpeg',
+                'extension' => 'jpg',
+            ],
+        ));
+
+        self::assertFalse(Gate::forUser($actor)->allows('view', $media));
+        self::assertFalse(Gate::forUser($actor)->allows('update', $media));
+    }
+
     public function test_cooperative_admin_can_manage_media_for_its_own_products_only(): void
     {
         $ownCooperative = Cooperative::factory()->create();
