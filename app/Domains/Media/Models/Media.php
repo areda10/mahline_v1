@@ -27,6 +27,6 @@ final class Media extends BaseModel
 
     public function mediable(): MorphTo
     {
-        return $this->morphTo();
+        return $this->morphTo()->withTrashed();
     }
 }
