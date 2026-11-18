@@ -1,8 +1,8 @@
 # MAHLINE V7.0 — Cahier de décisions et plan de suivi
 ## Domaine Identity — User Management, Authentication, Security, API & Privacy
 
-- **Version :** 3.8
-- **Dernière mise à jour :** 17 novembre 2026
+- **Version :** 3.9
+- **Dernière mise à jour :** 18 novembre 2026
 - **Branche de travail auditée :** `feature/Marketplace`
 - **Dépôt :** `areda10/mahline_v1`
 - **Statut :** décisions fonctionnelles validées ; implémentation à auditer
@@ -2507,3 +2507,34 @@ Il s'agit d'une divergence entre code/tests et décision validée, à corriger d
 **Limites opérationnelles :** la promotion des appareils pending inactifs dépend du scheduler Laravel exécuté chaque minute. Si l'utilisateur efface le cookie de preuve ou réinitialise son profil navigateur, le navigateur sera considéré comme un nouvel appareil ; l'identification physique persistante nécessiterait une preuve liée au matériel, telle que WebAuthn/passkey.
 
 **Statut de clôture :** Device Trust est validé par les tests ciblés, Pint et la suite complète selon les résultats communiqués par l'utilisateur. Aucun merge n'a été effectué.
+
+
+## 20.73 — Protection permanente du compte `super_admin_root` (V1)
+
+**Branche :** `feature/Marketplace`  
+**Commit applicatif de référence :** `d855a5f0f38b3049b80b3775ab45d3f588a415ad`  
+**Statut :** suite complète confirmée VERT par l'utilisateur le 18 novembre 2026.
+
+### Règles V1 confirmées
+- La toute première création du compte `super_admin_root` lui attribue le statut `active`.
+- Après sa création, le compte Root reste obligatoirement `active` ; aucun workflow ne peut le faire passer à `pending`, `inactive`, `suspended` ou `archived`.
+- Le compte Root ne peut être supprimé, ni logiquement ni physiquement, y compris par les chemins directs Eloquent protégés par l'observer.
+- Le changement de mot de passe et le changement d'adresse e-mail du compte Root restent autorisés selon leurs workflows dédiés.
+- Cette protection ne doit pas être obtenue en élargissant les droits CRUD administratifs.
+- Le rôle V2 distinct `super_admin_root_conjoin` n'est pas introduit dans V1.
+
+### Contrôles et tests associés
+- `UserObserver` bloque les changements de statut d'un compte Root et les suppressions via les événements Eloquent.
+- `UserManagementService` refuse les transitions de cycle de vie visant un compte Root.
+- Les tests couvrent les transitions de statut via les services, les mises à jour Eloquent directes, les suppressions, les routes HTTP de gestion et la création initiale.
+- Les tests artificiels qui tentaient de construire un Root dans un état invalide ont été remplacés par des scénarios utilisant des comptes Root actifs valides.
+
+### Validation locale communiquée
+- `php artisan test` — **1 528 tests réussis, 4 727 assertions, aucun échec**, résultat communiqué par l'utilisateur le 18 novembre 2026.
+- Le HEAD distant de `feature/Marketplace` a été vérifié : `d855a5f0f38b3049b80b3775ab45d3f588a415ad`.
+- Cette validation confirme la suite complète sur l'environnement local de l'utilisateur. Aucun résultat Pint n'est enregistré pour cette étape.
+- La validation ne constitue pas une garantie contre les mises à jour SQL de masse qui contournent les événements Eloquent ; les chemins de mise à jour en masse doivent rester audités séparément.
+
+### Point restant distinct
+Le changement d'e-mail self-service de Root doit disposer de son propre workflow Identity (vérification de la nouvelle adresse, révocation des sessions Web et tokens API, audit). Le service de changement d'e-mail actuellement spécifique aux clients ne doit pas être réutilisé sans adaptation dédiée.
+
