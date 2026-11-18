@@ -19,3 +19,7 @@ Schedule::command('identity:devices:promote-pending')
 Schedule::command('media:purge-expired')
     ->dailyAt('02:00')
     ->withoutOverlapping();
+
+Schedule::command('media:cleanup-orphans')
+    ->dailyAt('02:30')
+    ->withoutOverlapping();
