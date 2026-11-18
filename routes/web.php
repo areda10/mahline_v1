@@ -657,6 +657,11 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
         Route::patch('{media}/order', [MediaController::class, 'reorder'])
             ->whereUlid('media')
             ->name('reorder');
+        Route::get('owners/{ownerType}/{ownerId}/history', [MediaController::class, 'ownerHistory'])
+            ->whereIn('ownerType', ['product', 'cooperative', 'user', 'incident'])
+            ->whereUlid('ownerId')
+            ->middleware('role:super_admin_root')
+            ->name('owners.history');
         Route::get('{media}/replacements', [MediaController::class, 'replacementHistory'])
             ->whereUlid('media')
             ->name('replacements');
