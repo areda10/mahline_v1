@@ -223,22 +223,31 @@ final class MediaService
                 ->lockForUpdate()
                 ->findOrFail($owner->getKey());
 
+            $lockedMedia = $owner->media()
+                ->where('category', MediaCategory::PRODUCT_IMAGE->value)
+                ->whereKey($media->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $owner->media()
                 ->where('category', MediaCategory::PRODUCT_IMAGE->value)
                 ->where('is_primary', true)
-                ->where($media->getKeyName(), '!=', $media->getKey())
-                ->update([
-                    'is_primary' => false,
-                    'updated_by' => (string) $actor->getKey(),
-                ]);
+                ->where($media->getKeyName(), '!=', $lockedMedia->getKey())
+                ->lockForUpdate()
+                ->get()
+                ->each(function (Media $previous) use ($actor): void {
+                    $previous->is_primary = false;
+                    $previous->updated_by = (string) $actor->getKey();
+                    $previous->save();
+                });
 
-            $media->is_primary = true;
-            $media->updated_by = (string) $actor->getKey();
-            $media->save();
+            $lockedMedia->is_primary = true;
+            $lockedMedia->updated_by = (string) $actor->getKey();
+            $lockedMedia->save();
 
-            $this->record($actor, $media, 'media.primary_changed', 'primary_changed');
+            $this->record($actor, $lockedMedia, 'media.primary_changed', 'primary_changed');
 
-            return $media->refresh();
+            return $lockedMedia->refresh();
         });
     }
 
@@ -252,13 +261,49 @@ final class MediaService
             ]);
         }
 
-        $media->sort_order = $sortOrder;
-        $media->updated_by = (string) $actor->getKey();
-        $media->save();
+        return DB::transaction(function () use ($actor, $media, $sortOrder): Media {
+            $owner = $media->mediable;
 
-        $this->record($actor, $media, 'media.reordered', 'reordered');
+            if (! $owner instanceof Model) {
+                throw new RuntimeException('Le propriétaire du média est introuvable.');
+            }
 
-        return $media->refresh();
+            $owner = $owner->newQuery()
+                ->lockForUpdate()
+                ->findOrFail($owner->getKey());
+
+            $items = $owner->media()
+                ->where('category', $media->category)
+                ->orderBy('sort_order')
+                ->orderBy('created_at')
+                ->lockForUpdate()
+                ->get();
+
+            $target = $items->firstWhere($media->getKeyName(), $media->getKey());
+
+            if (! $target instanceof Media) {
+                throw new RuntimeException('Le média ne fait plus partie de cette galerie active.');
+            }
+
+            $items = $items->reject(
+                fn (Media $item): bool => $item->is($target),
+            )->values();
+            $destination = min($sortOrder, $items->count());
+            $items->splice($destination, 0, [$target]);
+
+            foreach ($items as $position => $item) {
+                if ($item->sort_order === $position) {
+                    continue;
+                }
+
+                $item->sort_order = $position;
+                $item->updated_by = (string) $actor->getKey();
+                $item->save();
+                $this->record($actor, $item, 'media.reordered', 'reordered');
+            }
+
+            return $target->refresh();
+        });
     }
 
     public function delete(User $actor, Media $media): void
@@ -268,20 +313,27 @@ final class MediaService
         DB::transaction(function () use ($actor, $media): void {
             $owner = $media->mediable;
 
-            if ($owner instanceof Model) {
-                $owner = $owner->newQuery()
-                    ->lockForUpdate()
-                    ->findOrFail($owner->getKey());
+            if (! $owner instanceof Model) {
+                throw new RuntimeException('Le propriétaire du média est introuvable.');
             }
 
-            $wasPrimaryProductImage = $media->category === MediaCategory::PRODUCT_IMAGE->value
-                && $media->is_primary;
+            $owner = $owner->newQuery()
+                ->lockForUpdate()
+                ->findOrFail($owner->getKey());
 
-            $media->deleted_by = (string) $actor->getKey();
-            $media->save();
-            $media->delete();
+            $lockedMedia = $owner->media()
+                ->whereKey($media->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            $this->record($actor, $media, 'media.deleted', 'deleted');
+            $wasPrimaryProductImage = $lockedMedia->category === MediaCategory::PRODUCT_IMAGE->value
+                && $lockedMedia->is_primary;
+
+            $lockedMedia->deleted_by = (string) $actor->getKey();
+            $lockedMedia->save();
+            $lockedMedia->delete();
+
+            $this->record($actor, $lockedMedia, 'media.deleted', 'deleted');
 
             if ($wasPrimaryProductImage && $owner instanceof Model) {
                 $replacement = $owner->media()
