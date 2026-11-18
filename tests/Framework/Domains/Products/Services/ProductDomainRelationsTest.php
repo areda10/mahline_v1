@@ -10,6 +10,8 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Services\CategoryService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,6 +22,15 @@ use Tests\TestCase;
 final class ProductDomainRelationsTest extends TestCase
 {
     use RefreshDatabase;
+
+    private string $unitId;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(ProductUnitSeeder::class);
+        $this->unitId = (string) ProductUnit::query()->where('code', 'kg')->value('id');
+    }
 
     public function test_product_can_be_linked_to_global_and_local_categories_and_its_cooperative_catalog(): void
     {
@@ -44,6 +55,7 @@ final class ProductDomainRelationsTest extends TestCase
             (string) $cooperative->getKey(),
             [
                 'name' => 'Produit de test',
+                'unit_id' => $this->unitId,
                 'category_ids' => [
                     $globalCategory->getKey(),
                     $localCategory->getKey(),
