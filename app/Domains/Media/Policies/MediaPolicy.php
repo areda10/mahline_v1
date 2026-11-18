@@ -8,9 +8,9 @@ use App\Core\Foundation\Policies\BasePolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
+use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Media\Models\Media;
 use App\Domains\Media\Models\MediaIncident;
-use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 
