@@ -54,7 +54,7 @@ final class CooperativeOrderResponseService
     public function extendResponseDeadline(
         CooperativeOrder $cooperativeOrder,
         User $actor,
-        \\DateTimeInterface $newDeadline,
+        \DateTimeInterface $newDeadline,
         string $reason,
     ): CooperativeOrder {
         if (! $actor->hasRole('super_admin_root') && ! $this->isAssignedSuperAdmin($actor, $cooperativeOrder)) {
@@ -67,7 +67,7 @@ final class CooperativeOrderResponseService
             ]);
         }
 
-        $deadline = \\Illuminate\\Support\\Carbon::instance($newDeadline);
+        $deadline = \Illuminate\Support\Carbon::instance($newDeadline);
         if ($deadline->lessThanOrEqualTo(now()) || $deadline->greaterThan(now()->addHours(24))) {
             throw ValidationException::withMessages([
                 'response_deadline_at' => ['La nouvelle échéance doit être future et ne peut pas dépasser 24 heures.'],
