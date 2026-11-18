@@ -521,12 +521,13 @@ final class MediaControllerTest extends TestCase
                 ->assertJsonPath('data.category', 'document')
                 ->assertJsonPath('data.visibility', 'private');
 
-            self::assertDatabaseHas('media', [
-                'mediable_type' => $owner::class,
-                'mediable_id' => $owner->getKey(),
-                'category' => 'document',
-                'document_category' => 'legal',
-            ]);
+            $media = Media::query()
+                ->where('mediable_type', $owner::class)
+                ->where('mediable_id', $owner->getKey())
+                ->where('category', 'document')
+                ->firstOrFail();
+
+            self::assertSame('legal', $media->metadata['document_category']);
         }
     }
 
