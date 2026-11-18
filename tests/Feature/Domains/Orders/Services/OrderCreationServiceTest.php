@@ -19,6 +19,12 @@ final class OrderCreationServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(ProductUnitSeeder::class);
+    }
+
     public function test_checkout_creates_one_order_with_cooperative_segments_and_price_snapshots(): void
     {
         $customer = $this->customer();
@@ -33,6 +39,8 @@ final class OrderCreationServiceTest extends TestCase
             'price' => '10.00',
             'currency' => 'MAD',
         ]);
+        $productA->update(['unit_id' => ProductUnit::query()->where('code', 'u')->value('id')]);
+        $productB->update(['unit_id' => ProductUnit::query()->where('code', 'kg')->value('id')]);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => [
@@ -44,7 +52,7 @@ final class OrderCreationServiceTest extends TestCase
                 [
                     'product_id' => (string) $productA->getKey(),
                     'quantity' => '2.500',
-                    'unit' => 'piece',
+                    'unit' => 'kg', // Valeur falsifiée : Orders doit reprendre l'unité Products.
                     'unit_price' => '0.01',
                 ],
                 [
@@ -63,6 +71,7 @@ final class OrderCreationServiceTest extends TestCase
             'unit_price' => '20.00',
             'quantity' => '2.500',
             'line_total' => '50.00',
+            'unit' => 'u',
         ]);
         $this->assertDatabaseHas('order_items', [
             'product_id' => $productB->getKey(),
@@ -87,6 +96,7 @@ final class OrderCreationServiceTest extends TestCase
         $variant = ProductVariant::factory()->create([
             'product_id' => $product->getKey(),
             'price' => '92.50',
+            'unit_id' => ProductUnit::query()->where('code', 'ml')->value('id'),
         ]);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
@@ -99,9 +109,12 @@ final class OrderCreationServiceTest extends TestCase
         ]);
 
         $this->assertSame('92.50', $order->cooperativeOrders->first()->items->first()->unit_price);
+        $this->assertSame('ml', $order->cooperativeOrders->first()->items->first()->unit);
+        $this->assertSame('Millilitre (ml)', $order->cooperativeOrders->first()->items->first()->product_snapshot['unit_label']);
 
         $unpriced = Product::factory()->forCooperative($cooperative)->create([
             'price' => null,
+            'unit_id' => ProductUnit::query()->where('code', 'kg')->value('id'),
         ]);
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
