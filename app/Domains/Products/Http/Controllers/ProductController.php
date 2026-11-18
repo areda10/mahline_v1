@@ -145,6 +145,8 @@ final class ProductController
         return view('backoffice.products.edit', [
             'cooperative' => $cooperativeModel,
             'product' => $productModel,
+            'productUnits' => ProductUnit::query()->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
+            'hasVariants' => $productModel->variants()->exists(),
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()
