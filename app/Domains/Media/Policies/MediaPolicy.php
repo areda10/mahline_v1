@@ -22,7 +22,10 @@ final class MediaPolicy extends BasePolicy
 
         $owner = $media->mediable;
 
-        if (! $owner instanceof Model) {
+        if (
+            ! $owner instanceof Model
+            || ! $this->categoryMatchesOwner($media->category, $owner)
+        ) {
             return false;
         }
 
@@ -64,6 +67,10 @@ final class MediaPolicy extends BasePolicy
 
         $owner = $media->mediable;
 
+        if (! $owner instanceof Model || ! $this->categoryMatchesOwner($media->category, $owner)) {
+            return false;
+        }
+
         if ($owner instanceof User) {
             return $user->is($owner)
                 && in_array($media->category, [
@@ -78,6 +85,13 @@ final class MediaPolicy extends BasePolicy
     public function delete(User $user, Media $media): bool
     {
         return $this->update($user, $media);
+    }
+
+    private function categoryMatchesOwner(string $category, Model $owner): bool
+    {
+        $mediaCategory = MediaCategory::tryFrom($category);
+
+        return $mediaCategory !== null && $mediaCategory->allowsOwner($owner::class);
     }
 
     private function canViewUserMedia(User $actor, User $owner): bool
