@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Media\Services;
 
 use App\Domains\Media\Models\Media;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -25,55 +26,71 @@ final class MediaCleanupService
 
         Media::onlyTrashed()
             ->where('deleted_at', '<=', $cutoff)
+            ->orderBy('id')
             ->chunkById(100, function ($items) use (&$purged): void {
-                foreach ($items as $media) {
-                    $disk = Storage::disk($media->disk);
-                    $paths = $this->managedPaths($media);
-                    $remaining = [];
-
-                    foreach ($paths as $path) {
-                        if (! $this->isManagedPath($path)) {
-                            $remaining[] = $path;
-                            Log::error('MEDIA purge refused an unmanaged storage path.', [
-                                'media_id' => (string) $media->getKey(),
-                            ]);
-
-                            continue;
-                        }
-
-                        try {
-                            if ($disk->exists($path) && ! $disk->delete($path)) {
-                                $remaining[] = $path;
-                                Log::error('MEDIA purge could not delete a retained file; purge will resume.', [
-                                    'media_id' => (string) $media->getKey(),
-                                ]);
-                            }
-                        } catch (\Throwable $exception) {
-                            $remaining[] = $path;
-                            Log::error('MEDIA file deletion failed; purge will resume on the next run.', [
-                                'media_id' => (string) $media->getKey(),
-                                'exception' => $exception::class,
-                            ]);
-                        }
-                    }
-
-                    if ($remaining !== []) {
-                        $metadata = $media->metadata ?? [];
-                        $metadata['purge_remaining_paths'] = array_values(array_unique($remaining));
-                        $media->forceFill(['metadata' => $metadata])->save();
-
-                        continue;
-                    }
-
+                foreach ($items as $item) {
                     try {
-                        $media->forceDelete();
-                        $purged++;
-                        Log::info('MEDIA record and files purged.', [
-                            'media_id' => (string) $media->getKey(),
-                        ]);
+                        $wasPurged = DB::transaction(function () use ($item): bool {
+                            $media = Media::onlyTrashed()
+                                ->whereKey($item->getKey())
+                                ->lockForUpdate()
+                                ->first();
+
+                            if (! $media instanceof Media) {
+                                return false;
+                            }
+
+                            $disk = Storage::disk($media->disk);
+                            $remaining = [];
+
+                            foreach ($this->managedPaths($media) as $path) {
+                                if (! $this->isManagedPath($path)) {
+                                    $remaining[] = $path;
+                                    Log::error('MEDIA purge refused an unmanaged storage path.', [
+                                        'media_id' => (string) $media->getKey(),
+                                    ]);
+
+                                    continue;
+                                }
+
+                                try {
+                                    if ($disk->exists($path) && ! $disk->delete($path)) {
+                                        $remaining[] = $path;
+                                        Log::error('MEDIA purge could not delete a retained file; purge will resume.', [
+                                            'media_id' => (string) $media->getKey(),
+                                        ]);
+                                    }
+                                } catch (\Throwable $exception) {
+                                    $remaining[] = $path;
+                                    Log::error('MEDIA file deletion failed; purge will resume on the next run.', [
+                                        'media_id' => (string) $media->getKey(),
+                                        'exception' => $exception::class,
+                                    ]);
+                                }
+                            }
+
+                            if ($remaining !== []) {
+                                $metadata = $media->metadata ?? [];
+                                $metadata['purge_remaining_paths'] = array_values(array_unique($remaining));
+                                $media->forceFill(['metadata' => $metadata])->save();
+
+                                return false;
+                            }
+
+                            $media->forceDelete();
+
+                            return true;
+                        }, 3);
+
+                        if ($wasPurged) {
+                            $purged++;
+                            Log::info('MEDIA record and files purged.', [
+                                'media_id' => (string) $item->getKey(),
+                            ]);
+                        }
                     } catch (\Throwable $exception) {
-                        Log::error('MEDIA database purge failed after file cleanup.', [
-                            'media_id' => (string) $media->getKey(),
+                        Log::error('MEDIA database purge failed; purge will resume on the next run.', [
+                            'media_id' => (string) $item->getKey(),
                             'exception' => $exception::class,
                         ]);
                     }
@@ -99,8 +116,7 @@ final class MediaCleanupService
             }
         }
 
-        // Compatibility for records created before derivative paths were stored explicitly.
-        if ($media->category !== 'document' && $derivatives === []) {
+        if ($media->category !== 'document' && $media->category !== 'incident_attachment' && $derivatives === []) {
             foreach (['thumbnail', 'small', 'medium', 'large'] as $variant) {
                 $paths[] = dirname($media->path).'/'.$variant.'.'.$media->extension;
             }
