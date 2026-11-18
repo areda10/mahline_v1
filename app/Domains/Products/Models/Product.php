@@ -33,6 +33,7 @@ final class Product extends BaseModel
         'description',
         'price',
         'currency',
+        'unit_id',
         'is_active',
     ];
 
@@ -56,6 +57,11 @@ final class Product extends BaseModel
             Cooperative::class,
             'cooperative_id',
         );
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(ProductUnit::class, 'unit_id');
     }
 
     public function variants(): HasMany
