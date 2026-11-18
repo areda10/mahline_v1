@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domains\Audit\Http\Middleware\CorrelationIdMiddleware;
+use App\Domains\Media\Http\Middleware\MediaEnumerationGuard;
 use App\Domains\Identity\Authentication\Http\Middleware\ApplyDeviceTrustCookie;
 use App\Domains\Identity\Authentication\Http\Middleware\ApplyRoleBasedSessionCookiePolicy;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserHasRole::class,
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
+            'media.enumeration' => MediaEnumerationGuard::class,
         ]);
 
         /*
