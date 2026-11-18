@@ -17,7 +17,7 @@ use RuntimeException;
 
 final class MediaOwnerObserver
 {
-    public function restored(Model $owner): void
+    public function restoring(Model $owner): void
     {
         if (! $owner instanceof Product && ! $owner instanceof Cooperative && ! $owner instanceof User) {
             return;
