@@ -87,6 +87,12 @@ final class OrderCreationService
                     ]);
                 }
 
+                if ($variant !== null && $product->unit_id !== null) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.unit" => ['Un produit avec variantes ne peut pas conserver une unité parent.'],
+                    ]);
+                }
+
                 // L'unité de commande provient exclusivement de Products :
                 // produit simple ou variante sélectionnée. La valeur cliente est ignorée.
                 $stockUnit = $variant !== null ? $variant->unit : $product->unit;
