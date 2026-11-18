@@ -45,6 +45,46 @@ final class MediaOwnerLifecycleTest extends TestCase
         ]);
     }
 
+    public function test_owner_restore_keeps_valid_media_and_soft_deletes_corrupt_media(): void
+    {
+        Storage::fake('local');
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+
+        $valid = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent(
+                'valid-owner.pdf',
+                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+            ),
+            'document',
+            'legal',
+        );
+        $corrupt = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent(
+                'corrupt-owner.pdf',
+                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+            ),
+            'document',
+            'certification',
+        );
+
+        $product->delete();
+        Storage::disk('local')->put($corrupt->path, 'not-a-pdf');
+        $this->actingAs($actor);
+        $product->restore();
+
+        self::assertDatabaseHas('media', ['id' => $valid->getKey(), 'deleted_at' => null]);
+        self::assertSoftDeleted('media', ['id' => $corrupt->getKey()]);
+        self::assertDatabaseHas('audit_events', [
+            'event_key' => 'media.owner_restore_skipped_invalid',
+            'subject_id' => $corrupt->getKey(),
+        ]);
+    }
+
     private function rootUser(): User
     {
         $user = User::factory()->create();
