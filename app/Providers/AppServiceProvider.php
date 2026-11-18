@@ -10,6 +10,9 @@ use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationW
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Sanctum\Sanctum;
 
 final class AppServiceProvider extends ServiceProvider
@@ -36,6 +39,9 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        RateLimiter::for('media-public', static fn (Request $request) => Limit::perMinute(60)
+            ->by('media-public:'.($request->ip() ?? 'unknown')));
 
     }
 }
