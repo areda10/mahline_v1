@@ -262,7 +262,10 @@ final class MediaControllerTest extends TestCase
                         "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
                     ),
                 ],
-                [],
+                [
+                    'HTTP_ACCEPT' => 'application/json',
+                    'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+                ],
             );
 
         self::assertSame(422, $response->status());
@@ -297,7 +300,10 @@ final class MediaControllerTest extends TestCase
                         "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
                     ),
                 ],
-                [],
+                [
+                    'HTTP_ACCEPT' => 'application/json',
+                    'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+                ],
             );
 
         self::assertSame(422, $response->status());
