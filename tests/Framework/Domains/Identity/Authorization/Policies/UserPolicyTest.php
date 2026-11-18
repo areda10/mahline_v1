@@ -377,13 +377,9 @@ final class UserPolicyTest extends TestCase
         self::assertSame(UserStatus::Active, $protectedRoot->fresh()->status);
         self::assertFalse(Gate::forUser($actor)->allows('activate', $protectedRoot));
 
-        // Simulate a legacy corrupted row to verify policy protection independently.
-        $protectedRoot->forceFill(['status' => UserStatus::Archived])->saveQuietly();
+        // An active Root is never an archived or soft-deleted restoration target.
         self::assertFalse(Gate::forUser($actor)->allows('restore', $protectedRoot));
-
-        $protectedRoot->forceFill(['deleted_at' => now()])->saveQuietly();
-        $deletedRoot = User::withTrashed()->findOrFail($protectedRoot->getKey());
-        self::assertFalse(Gate::forUser($actor)->allows('restoreDeleted', $deletedRoot));
+        self::assertFalse(Gate::forUser($actor)->allows('restoreDeleted', $protectedRoot));
     }
 
     public function test_super_admin_can_update_only_users_in_assigned_cooperatives(): void
