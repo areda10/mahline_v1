@@ -429,7 +429,12 @@ final class MediaService
                 ]);
             }
 
-            $this->assertRetainedFilesAreValid($locked);
+            try {
+                $this->assertRetainedFilesAreValid($locked);
+            } catch (ValidationException $exception) {
+                $this->record($actor, $locked, 'media.restore_rejected', 'restore_rejected');
+                throw $exception;
+            }
 
             $single = in_array($locked->category, [
                 MediaCategory::COOPERATIVE_LOGO->value,
