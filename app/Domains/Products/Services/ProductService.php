@@ -184,7 +184,7 @@ final class ProductService
                 $changes['unit_id'] = $unitId;
             }
 
-            if (array_key_exists('description', $attributes))
+            if (array_key_exists('description', $attributes)) {
                 $changes['description'] = $attributes['description'];
             }
 
