@@ -167,10 +167,12 @@ final class ProductVariantService
         }
     }
 
-    private function validatedPrice(mixed $price): ?string
+    private function validatedPrice(mixed $price): string
     {
         if ($price === null || $price === '') {
-            return null;
+            throw ValidationException::withMessages([
+                'price' => ['Le prix de la variante est obligatoire.'],
+            ]);
         }
 
         $value = (string) $price;
