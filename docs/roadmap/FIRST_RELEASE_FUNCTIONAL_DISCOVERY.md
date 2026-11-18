@@ -1,8 +1,8 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.30
+- **Version :** 4.31
 - **Date d'ouverture :** 12 novembre 2026
-- **Dernière mise à jour :** 18 novembre 2026 — première vague MEDIA testée localement ; deuxième vague sur le cycle de vie des propriétaires enregistrée, tests en attente
+- **Dernière mise à jour :** 18 novembre 2026 — deuxième vague MEDIA testée localement ; implémentation du nettoyage des fichiers orphelins enregistrée, tests en attente
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
 - **Périmètre :** premier release de MAHLINE (SaaS de gestion coopérative + marketplace publique)
@@ -3621,6 +3621,17 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Le contrôleur maintient le 404 public pour les médias dont le propriétaire est supprimé.
 - Chaque consultation root d'un document privé rattaché à un propriétaire supprimé enregistre `media.private_accessed_deleted_owner`, sans journaliser le chemin physique.
 - Tests ajoutés pour l'accès root, le refus aux autres rôles, l'audit de consultation et le masquage public après suppression logique du produit.
+
+#### Vague 3 — détection et nettoyage des fichiers orphelins (tests en attente)
+
+- Ajout d'une table persistante de candidats orphelins avec première et dernière détection.
+- Scan limité aux disques public/privé configurés et au préfixe `media/`.
+- Toute référence active ou soft-deleted dans `media.path` ou `metadata.derivatives` protège le fichier.
+- Délai minimum forcé à 24 heures, même si la configuration indique une valeur inférieure ou invalide.
+- Recontrôle des références immédiatement avant suppression pour réduire les risques de course avec un upload.
+- Journalisation de la détection, de la suppression et des erreurs sans écrire les chemins complets dans les logs (empreinte SHA-256).
+- Commande `media:cleanup-orphans`, planifiée quotidiennement à 02:30 après la purge de rétention de 02:00, avec `withoutOverlapping()`.
+- Tests ajoutés : délai de sécurité, suppression après 24 heures, protection des fichiers référencés.
 
 #### Tests adaptés ou ajoutés — nouvelle exécution requise
 
