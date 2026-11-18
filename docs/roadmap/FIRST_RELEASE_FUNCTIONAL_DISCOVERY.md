@@ -3622,7 +3622,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Chaque consultation root d'un document privé rattaché à un propriétaire supprimé enregistre `media.private_accessed_deleted_owner`, sans journaliser le chemin physique.
 - Tests ajoutés pour l'accès root, le refus aux autres rôles, l'audit de consultation et le masquage public après suppression logique du produit.
 
-#### Vague 3 — détection et nettoyage des fichiers orphelins (tests en attente)
+#### Vague 3 — détection et nettoyage des fichiers orphelins (tests locaux déclarés verts par l'utilisateur)
 
 - Ajout d'une table persistante de candidats orphelins avec première et dernière détection.
 - Scan limité aux disques public/privé configurés et au préfixe `media/`.
@@ -3632,7 +3632,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Journalisation de la détection, de la suppression et des erreurs sans écrire les chemins complets dans les logs (empreinte SHA-256).
 - Commande `media:cleanup-orphans`, planifiée quotidiennement à 02:30 après la purge de rétention de 02:00, avec `withoutOverlapping()`.
 - Tests ajoutés : délai de sécurité, suppression après 24 heures, protection des fichiers référencés.
-- Ces nouveaux tests n'ont pas encore été exécutés localement ; migration et Pint doivent également être relancés après cette vague.
+- L'utilisateur confirme que la migration, les tests ciblés, la suite MEDIA et Pint sont verts après cette vague.
 
 #### Tests adaptés ou ajoutés — nouvelle exécution requise
 
