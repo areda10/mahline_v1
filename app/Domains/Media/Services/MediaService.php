@@ -362,6 +362,27 @@ final class MediaService
         });
     }
 
+    public function recordPrivateAccess(User $actor, Media $media): void
+    {
+        $owner = $media->mediable;
+
+        if (
+            ! $actor->hasRole('super_admin_root')
+            || ! $owner instanceof Model
+            || ! method_exists($owner, 'trashed')
+            || ! $owner->trashed()
+        ) {
+            return;
+        }
+
+        $this->record(
+            $actor,
+            $media,
+            'media.private_accessed_deleted_owner',
+            'private_accessed_deleted_owner',
+        );
+    }
+
     private function positiveLimit(string $key, int $default): int
     {
         $value = filter_var(config($key, $default), FILTER_VALIDATE_INT);
