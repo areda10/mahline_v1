@@ -215,7 +215,7 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Unités : registre normalisé à codes stables et libellés ; sélection obligatoire dans une liste déroulante, aucune saisie libre ni unité personnalisée en V1 (reportée à V2).
 - L'unité est définie sur le produit lorsqu'il n'a pas de variantes, ou sur chaque variante lorsqu'il en possède. Les soldes, réservations et mouvements utilisent l'unité de leur article.
 - Aucune conversion automatique entre unités en V1. Les quantités ne sont additionnées ou comparées qu'à unité identique.
-- Les options exactes du registre doivent être arrêtées avant le seeder définitif ; exemples de familles évoquées : masse, volume, longueur et unités de conditionnement.
+- Liste définitive du registre : `kg`, `g`, `L`, `ml` (détail et implémentation consignés en sections 15–16).
 - Les modifications de service et tests ci-dessus sont écrites sur `feature/Marketplace`. Tests non exécutés dans cet environnement ; aucune validation de suite n'est revendiquée.
 
 
@@ -225,7 +225,7 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Le choix de l'unité se fait par liste déroulante issue d'un registre normalisé ; pas de champ libre ni d'unité personnalisée en V1.
 - Produit sans variante : unité portée par le produit. Produit avec variantes : unité portée par chaque variante.
 - Aucun calcul ni conversion automatique entre unités en V1 ; toutes les opérations de stock conservent l'unité de l'article concerné.
-- Avant le seeder de référence, finaliser la liste exhaustive des unités autorisées et leurs libellés affichés.
+- Liste V1 arrêtée : `kg`, `g`, `L`, `ml` ; libellés et codes normalisés consignés en section 15.
 
 
 ## 15. Registre d'unités V1 — implémentation initiale (18 novembre 2026)
@@ -233,5 +233,17 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Liste validée : kilogramme (\`kg\`), gramme (\`g\`), litre (\`L\`) et millilitre (\`ml\`). Les codes stockés sont stables et normalisés (\`kg\`, \`g\`, \`l\`, \`ml\`) ; le libellé conserve l'affichage usuel (\`Litre (L)\`).
 - Migration additive \`2026_11_18_000005_create_product_units_and_attach_to_products.php\` : registre \`product_units\`, référence nullable \`unit_id\` sur \`products\` et \`product_variants\`, clés étrangères restrictives.
 - Modèle \`ProductUnit\`, relations \`unit()\` sur Product et ProductVariant, seeder idempotent \`ProductUnitSeeder\` enregistré dans \`DatabaseSeeder\`.
-- La nullabilité préserve les produits et variantes historiques. Le registre et les relations sont en place ; le raccordement des listes déroulantes et la validation obligatoire à la création/édition restent à réaliser avec les interfaces de produits et variantes.
+- La nullabilité préserve les produits et variantes historiques. Le registre et les relations sont en place. Le raccordement des formulaires et la validation serveur sont consignés en section 16.
 - Aucun mécanisme de conversion n'est ajouté. Les tests de registre et de relations sont ajoutés mais ne sont pas exécutés dans cette session.
+
+
+## 16. Formulaires produits — unités obligatoires (18 novembre 2026)
+
+- Formulaires de création et modification des produits raccordés au registre dans les espaces coopérative (`backoffice.products`) et root (`super-admin-root.cooperatives.products`).
+- Les listes n'affichent que les unités actives autorisées par la constante `ProductUnit::V1_CODES` : `kg`, `g`, `l`, `ml`. Aucune saisie libre ni création d'unité personnalisée.
+- Validation HTTP : `unit_id` obligatoire à la création et à la modification d'un produit simple ; la valeur doit référencer une unité active de la liste V1.
+- Validation métier également appliquée dans `ProductService::create()` ; le snapshot d'audit inclut désormais `unit_id`.
+- Pour un produit ayant des variantes, le formulaire parent affiche que l'unité se définit sur chaque variante et n'envoie pas `unit_id` parent ; la requête interdit explicitement ce champ.
+- `ProductVariantService::create()` exige une unité V1 active ; `update()` valide toute nouvelle unité. À la création de la première variante, l'unité portée par le parent est effacée dans la même transaction. Il n'existe pas encore d'interface de gestion des variantes à raccorder.
+- Tests ajoutés/complétés : validation coopérative (absence et unité inactive), rendu des formulaires coopératifs et root, obligation côté services, suppression de l'unité parent à la création d'une variante.
+- Tests PHPUnit, migration et Pint non exécutés dans cette session ; validation technique locale encore requise.
