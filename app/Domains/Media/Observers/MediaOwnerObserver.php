@@ -26,6 +26,10 @@ final class MediaOwnerObserver
         $actor = Auth::user();
         $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
 
+        if (! app(AuditEventRepository::class)->verifyIntegrity()) {
+            throw new RuntimeException('La chaîne d’audit est invalide ; restauration du propriétaire refusée.');
+        }
+
         DB::transaction(function () use ($owner, $actor, $actorId): void {
             $owner->media()->lockForUpdate()->get()->each(function ($media) use ($owner, $actor, $actorId): void {
                 if (app(\App\Domains\Media\Services\MediaService::class)->isMediaIntegrityValid($media)) {
