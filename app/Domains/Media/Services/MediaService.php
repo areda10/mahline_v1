@@ -13,6 +13,7 @@ use App\Domains\Media\Enums\MediaDocumentCategory;
 use App\Domains\Media\Models\Media;
 use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -48,7 +49,9 @@ final class MediaService
             ]);
         }
 
-        Gate::forUser($actor)->authorize('upload', [new Media, $owner, $category]);
+        $pendingMedia = new Media(['category' => $category]);
+        $pendingMedia->setRelation('mediable', $owner);
+        $this->authorize($actor, 'upload', [$pendingMedia, $owner, $category]);
 
         if ($mediaCategory === MediaCategory::DOCUMENT) {
             $documentCategoryEnum = MediaDocumentCategory::tryFrom(trim((string) $documentCategory));
@@ -227,7 +230,7 @@ final class MediaService
 
     public function setPrimary(User $actor, Media $media): Media
     {
-        Gate::forUser($actor)->authorize('update', $media);
+        $this->authorize($actor, 'update', [$media]);
 
         if ($media->category !== MediaCategory::PRODUCT_IMAGE->value) {
             throw ValidationException::withMessages([
@@ -331,7 +334,7 @@ final class MediaService
 
     public function delete(User $actor, Media $media): void
     {
-        Gate::forUser($actor)->authorize('delete', $media);
+        $this->authorize($actor, 'delete', [$media]);
 
         DB::transaction(function () use ($actor, $media): void {
             $owner = $media->mediable;
@@ -382,7 +385,7 @@ final class MediaService
      */
     public function restore(User $actor, Media $media, bool $makePrimary = false): Media
     {
-        Gate::forUser($actor)->authorize('restore', $media);
+        $this->authorize($actor, 'restore', [$media]);
 
         if (! $media->trashed()) {
             throw ValidationException::withMessages([
@@ -469,7 +472,10 @@ final class MediaService
      */
     public function replacementHistory(User $actor, Media $current): \Illuminate\Support\Collection
     {
-        abort_unless($actor->hasRole('super_admin_root') && $actor->isAuthorized(), 403);
+        if (! $actor->hasRole('super_admin_root') || ! $actor->isAuthorized()) {
+            $this->recordDeniedAccess($actor, $current);
+            abort(403);
+        }
 
         return Media::onlyTrashed()
             ->where('mediable_type', $current->mediable_type)
@@ -573,6 +579,21 @@ final class MediaService
         }
     }
 
+    private function authorize(User $actor, string $ability, array $arguments): void
+    {
+        try {
+            Gate::forUser($actor)->authorize($ability, $arguments);
+        } catch (AuthorizationException $exception) {
+            $media = $arguments[0] ?? null;
+
+            if ($media instanceof Media) {
+                $this->record($actor, $media, 'media.operation_denied', $ability.'_denied');
+            }
+
+            throw $exception;
+        }
+    }
+
     private function record(User $actor, Media $media, string $eventKey, string $action): void
     {
         if (! $this->auditEvents->verifyIntegrity()) {
@@ -594,7 +615,7 @@ final class MediaService
             actorId: (string) $actor->getKey(),
             cooperativeId: $cooperativeId,
             subjectType: Media::class,
-            subjectId: (string) $media->getKey(),
+            subjectId: $media->getKey() === null ? null : (string) $media->getKey(),
             metadata: [
                 'category' => $media->category,
                 'visibility' => $media->visibility,
