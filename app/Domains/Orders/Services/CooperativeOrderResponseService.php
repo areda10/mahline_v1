@@ -70,6 +70,12 @@ final class CooperativeOrderResponseService
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ($administrative && ($locked->response_deadline_at === null || $locked->response_deadline_at->isFuture())) {
+                throw ValidationException::withMessages([
+                    'cooperative_order' => ['Une intervention administrative est possible uniquement après l’échéance de réponse.'],
+                ]);
+            }
+
             if ($locked->status !== CooperativeOrderStatus::AWAITING_COOPERATIVE) {
                 throw ValidationException::withMessages([
                     'cooperative_order' => ['Cette sous-commande a déjà reçu une décision.'],
