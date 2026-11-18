@@ -78,6 +78,12 @@ final class ProductVariantService
 
             $product = $variant->product;
 
+            if ($product !== null && $product->unit_id !== null) {
+                throw ValidationException::withMessages([
+                    'unit_id' => ['Un produit avec variantes ne peut pas porter d’unité parent.'],
+                ]);
+            }
+
             if ($product === null || $product->trashed() || ! $product->is_active) {
                 throw ValidationException::withMessages([
                     'product' => [
@@ -114,9 +120,9 @@ final class ProductVariantService
                 $variant->sku = $attributes['sku'];
             }
 
-            if (array_key_exists('unit_id', $attributes)) {
-                $variant->unit_id = $this->validatedUnitId($attributes['unit_id']);
-            }
+            $variant->unit_id = $this->validatedUnitId(
+                $attributes['unit_id'] ?? $variant->unit_id,
+            );
 
             if (array_key_exists('price', $attributes)) {
                 $variant->price = $this->validatedPrice($attributes['price']);
