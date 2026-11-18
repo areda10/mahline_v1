@@ -100,7 +100,7 @@ final class MediaIncidentController
         ], 201);
     }
 
-    private function safeCsvCell(string $value): string
+    private static function safeCsvCell(string $value): string
     {
         return preg_match('/^\\s*[=+@-]/', $value) === 1 ? "'".$value : $value;
     }
@@ -116,7 +116,7 @@ final class MediaIncidentController
                 foreach ($incidents as $incident) {
                     fputcsv($output, [
                         $incident->reference,
-                        $this->safeCsvCell($incident->title),
+                        self::safeCsvCell($incident->title),
                         $incident->status->value,
                         $incident->reported_by,
                         $incident->created_at?->toIso8601String(),
