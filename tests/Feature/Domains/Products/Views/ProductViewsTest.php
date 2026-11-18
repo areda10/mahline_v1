@@ -82,6 +82,7 @@ final class ProductViewsTest extends TestCase
             ->assertSee('catalog_ids[]')
             ->assertSee('Unité de stock *')
             ->assertSee('Kilogramme (kg)')
+            ->assertSee('Unité / pièce (u)')
             ->assertSee('name="unit_id"');
     }
 
