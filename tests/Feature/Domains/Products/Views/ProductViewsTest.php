@@ -9,6 +9,8 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
 use Tests\TestCase;
@@ -27,6 +29,8 @@ final class ProductViewsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->seed(ProductUnitSeeder::class);
 
         $this->cooperative = Cooperative::factory()
             ->active()
@@ -76,7 +80,10 @@ final class ProductViewsTest extends TestCase
             ->assertSee('Catégorie de test')
             ->assertSee('Catalogue de test')
             ->assertSee('category_ids[]')
-            ->assertSee('catalog_ids[]');
+            ->assertSee('catalog_ids[]')
+            ->assertSee('Unité de stock *')
+            ->assertSee('Kilogramme (kg)')
+            ->assertSee('name="unit_id"');
     }
 
     public function test_product_edit_view_renders_existing_values(): void
@@ -97,7 +104,8 @@ final class ProductViewsTest extends TestCase
             ->assertSee('Produit à modifier')
             ->assertSee('Catégorie de test')
             ->assertSee('Catalogue de test')
-            ->assertSee('Enregistrer');
+            ->assertSee('Enregistrer')
+            ->assertSee('name="unit_id"');
     }
 
     public function test_product_show_view_renders_details_and_relations(): void
