@@ -9,6 +9,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Models\Media;
+use App\Domains\Media\Models\MediaIncident;
 use App\Domains\Media\Services\MediaService;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,7 @@ final class MediaController
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'owner_type' => ['required', 'string', Rule::in(['product', 'cooperative', 'user'])],
+            'owner_type' => ['required', 'string', Rule::in(['product', 'cooperative', 'user', 'incident'])],
             'owner_id' => ['required', 'string', 'size:26'],
             'category' => ['required', 'string', Rule::in([
                 'product_image',
@@ -36,6 +37,7 @@ final class MediaController
                 'cooperative_photo',
                 'profile_image',
                 'document',
+                'incident_attachment',
             ])],
             'document_category' => ['nullable', 'string', Rule::in(['identity', 'legal', 'administrative', 'certification', 'other'])],
             'file' => ['required', 'file'],
@@ -137,7 +139,7 @@ final class MediaController
 
         abort_unless(is_string($mimeType), 404);
 
-        $isDocument = $media->category === 'document';
+        $isDocument = in_array($media->category, ['document', 'incident_attachment'], true);
         $download = $isDocument && $request->boolean('download');
         $filename = preg_replace('/[^A-Za-z0-9._-]/', '_', $media->original_name) ?: 'media';
 
@@ -228,6 +230,7 @@ final class MediaController
             'product' => Product::query()->findOrFail($id),
             'cooperative' => Cooperative::query()->findOrFail($id),
             'user' => User::query()->findOrFail($id),
+            'incident' => MediaIncident::query()->findOrFail($id),
         };
     }
 }
