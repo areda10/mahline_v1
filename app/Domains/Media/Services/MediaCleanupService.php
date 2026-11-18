@@ -44,6 +44,9 @@ final class MediaCleanupService
                         try {
                             if ($disk->exists($path) && ! $disk->delete($path)) {
                                 $remaining[] = $path;
+                                Log::error('MEDIA purge could not delete a retained file; purge will resume.', [
+                                    'media_id' => (string) $media->getKey(),
+                                ]);
                             }
                         } catch (\Throwable $exception) {
                             $remaining[] = $path;
