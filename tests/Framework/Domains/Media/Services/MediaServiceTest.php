@@ -290,6 +290,7 @@ final class MediaServiceTest extends TestCase
 
         Storage::fake('local');
         Storage::fake('public');
+        config(['media.public_disk' => 'public']);
 
         $actor = $this->rootUser();
         $cooperative = Cooperative::factory()->create();
