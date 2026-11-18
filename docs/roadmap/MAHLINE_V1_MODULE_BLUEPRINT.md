@@ -247,3 +247,18 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - `ProductVariantService::create()` et `update()` exigent une unité V1 active. Si le produit simple porte encore son unité parent, la création de variante est bloquée tant que le transfert atomique de tout le stock parent vers les variantes n'est pas pris en charge par Inventory. Aucun effacement silencieux de l'unité parent n'est permis. Il n'existe pas encore d'interface de gestion des variantes à raccorder.
 - Tests ajoutés/complétés : validation coopérative (absence et unité inactive), rendu des formulaires coopératifs et root, obligation côté services, blocage de conversion tant que le transfert atomique du stock parent n'est pas disponible.
 - Tests PHPUnit, migration et Pint non exécutés dans cette session ; validation technique locale encore requise.
+
+
+## 17. Extension du registre d'unités — unité / pièce (18 novembre 2026)
+
+- Décision complémentaire : l'unité de comptage est ajoutée au registre V1, code stable `u`, libellé `Unité / pièce (u)`, dimension `count`.
+- Liste V1 désormais autorisée : `kg`, `g`, `l` (affiché `L`), `ml`, `u`.
+- L'unité `u` est sélectionnable sur un produit simple ou sur chaque variante, selon la règle de propriété de l'unité déjà définie.
+- La constante `ProductUnit::V1_CODES`, le seeder idempotent, les validations des contrôleurs et services utilisent la même liste. Le seeder conserve l'état actif/inactif d'une unité existante et ajoute seulement l'unité manquante.
+- Les formulaires produit des espaces coopératif et root présentent le libellé `Unité / pièce (u)`. Les validations serveur acceptent le code `u` uniquement si l'enregistrement correspondant est actif.
+- Le service de variantes accepte également `u` et vérifie l'unité via le même registre.
+- Audit de liaison : `Product` et `ProductVariant` possèdent chacun leur relation `unit()` vers `ProductUnit` ; `ProductUnit` expose les relations inverses `products()` et `variants()`. La migration additive existante fournit les deux clés étrangères vers `product_units`. Aucun nouveau schéma n'est nécessaire.
+- Limite confirmée : aucun contrôleur ni formulaire de gestion des variantes n'existe encore dans le dépôt. La validation métier du service est prête, mais le menu déroulant d'un formulaire de variante ne peut être raccordé avant la création de cette interface. Ne pas prétendre que l'interface de variante est livrée.
+- Aucun domaine Inventory ni mécanisme de transfert atomique du stock parent n'est présent. La création de variantes reste donc bloquée lorsqu'un produit parent porte encore son unité ; aucun effacement automatique de l'unité ou transfert fictif n'est ajouté.
+- La précision des quantités reste celle déjà décidée (`DECIMAL(15,3)`) ; cette extension ne change pas les règles de quantité et n'introduit aucune conversion automatique.
+- Tests ciblés ajoutés/complétés pour l'affichage de `u` dans les formulaires produit et l'acceptation de `u` par le service de variantes. Exécution PHPUnit, migrations et Pint laissée à la validation locale.
