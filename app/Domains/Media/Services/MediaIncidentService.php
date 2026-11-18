@@ -14,6 +14,7 @@ use App\Domains\Media\Notifications\MediaIncidentNotification;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -31,16 +32,21 @@ final class MediaIncidentService
     {
         $this->assertRoot($actor);
 
-        $incident = MediaIncident::query()->create([
-            'reference' => 'MI-'.Str::upper((string) Str::ulid()),
-            'title' => trim($title),
-            'description' => trim($description),
-            'status' => MediaIncidentStatus::OPEN,
-            'reported_by' => (string) $actor->getKey(),
-            'created_by' => (string) $actor->getKey(),
-        ]);
+        $incident = DB::transaction(function () use ($actor, $title, $description): MediaIncident {
+            $incident = MediaIncident::query()->create([
+                'reference' => 'MI-'.Str::upper((string) Str::ulid()),
+                'title' => trim($title),
+                'description' => trim($description),
+                'status' => MediaIncidentStatus::OPEN,
+                'reported_by' => (string) $actor->getKey(),
+                'created_by' => (string) $actor->getKey(),
+            ]);
 
-        $this->record($actor, $incident, 'media.incident_opened', 'opened');
+            $this->record($actor, $incident, 'media.incident_opened', 'opened');
+
+            return $incident;
+        });
+
         $this->notifyRoots($incident, 'nouvel incident ouvert');
 
         return $incident;
@@ -53,72 +59,86 @@ final class MediaIncidentService
         ?string $resolution = null,
     ): MediaIncident {
         $this->assertRoot($actor);
-        $current = $incident->status;
 
-        $allowed = match ($current) {
-            MediaIncidentStatus::OPEN => [MediaIncidentStatus::IN_PROGRESS],
-            MediaIncidentStatus::IN_PROGRESS => [MediaIncidentStatus::RESOLVED],
-            MediaIncidentStatus::RESOLVED => [MediaIncidentStatus::CLOSED],
-            MediaIncidentStatus::CLOSED => [],
-        };
+        $updated = DB::transaction(function () use ($actor, $incident, $target, $resolution): MediaIncident {
+            $locked = MediaIncident::query()->whereKey($incident->getKey())->lockForUpdate()->firstOrFail();
+            $current = $locked->status;
 
-        if (! in_array($target, $allowed, true)) {
-            throw ValidationException::withMessages([
-                'status' => ['Transition de statut MEDIA non autorisée.'],
-            ]);
-        }
+            $allowed = match ($current) {
+                MediaIncidentStatus::OPEN => [MediaIncidentStatus::IN_PROGRESS],
+                MediaIncidentStatus::IN_PROGRESS => [MediaIncidentStatus::RESOLVED],
+                MediaIncidentStatus::RESOLVED => [MediaIncidentStatus::CLOSED],
+                MediaIncidentStatus::CLOSED => [],
+            };
 
-        if ($target === MediaIncidentStatus::RESOLVED && trim((string) $resolution) === '') {
-            throw ValidationException::withMessages([
-                'resolution' => ['Une résolution motivée est obligatoire.'],
-            ]);
-        }
+            if (! in_array($target, $allowed, true)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Transition de statut MEDIA non autorisée.'],
+                ]);
+            }
 
-        $incident->forceFill([
-            'status' => $target,
-            'resolution' => $target === MediaIncidentStatus::RESOLVED
-                ? trim((string) $resolution)
-                : $incident->resolution,
-            'resolved_at' => $target === MediaIncidentStatus::RESOLVED ? now() : $incident->resolved_at,
-            'closed_at' => $target === MediaIncidentStatus::CLOSED ? now() : null,
-            'updated_by' => (string) $actor->getKey(),
-        ])->save();
+            if ($target === MediaIncidentStatus::RESOLVED && trim((string) $resolution) === '') {
+                throw ValidationException::withMessages([
+                    'resolution' => ['Une résolution motivée est obligatoire.'],
+                ]);
+            }
 
-        $this->record($actor, $incident, 'media.incident_status_changed', 'status_changed');
-        $this->notifyRoots($incident, 'statut mis à jour');
+            $locked->forceFill([
+                'status' => $target,
+                'resolution' => $target === MediaIncidentStatus::RESOLVED
+                    ? trim((string) $resolution)
+                    : $locked->resolution,
+                'resolved_at' => $target === MediaIncidentStatus::RESOLVED ? now() : $locked->resolved_at,
+                'closed_at' => $target === MediaIncidentStatus::CLOSED ? now() : null,
+                'updated_by' => (string) $actor->getKey(),
+            ])->save();
 
-        return $incident->refresh();
+            $this->record($actor, $locked, 'media.incident_status_changed', 'status_changed');
+
+            return $locked->refresh();
+        });
+
+        $this->notifyRoots($updated, 'statut mis à jour');
+
+        return $updated;
     }
 
     public function reopen(User $actor, MediaIncident $incident, string $reason): MediaIncident
     {
         $this->assertRoot($actor);
 
-        if (! in_array($incident->status, [MediaIncidentStatus::RESOLVED, MediaIncidentStatus::CLOSED], true)) {
-            throw ValidationException::withMessages([
-                'status' => ['Seul un incident résolu ou clôturé peut être rouvert.'],
-            ]);
-        }
+        $updated = DB::transaction(function () use ($actor, $incident, $reason): MediaIncident {
+            $locked = MediaIncident::query()->whereKey($incident->getKey())->lockForUpdate()->firstOrFail();
 
-        if (trim($reason) === '') {
-            throw ValidationException::withMessages([
-                'reason' => ['Le motif de réouverture est obligatoire.'],
-            ]);
-        }
+            if (! in_array($locked->status, [MediaIncidentStatus::RESOLVED, MediaIncidentStatus::CLOSED], true)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Seul un incident résolu ou clôturé peut être rouvert.'],
+                ]);
+            }
 
-        $incident->forceFill([
-            'status' => MediaIncidentStatus::OPEN,
-            'reopen_reason' => trim($reason),
-            'reopened_at' => now(),
-            'resolved_at' => null,
-            'closed_at' => null,
-            'updated_by' => (string) $actor->getKey(),
-        ])->save();
+            if (trim($reason) === '') {
+                throw ValidationException::withMessages([
+                    'reason' => ['Le motif de réouverture est obligatoire.'],
+                ]);
+            }
 
-        $this->record($actor, $incident, 'media.incident_reopened', 'reopened');
-        $this->notifyRoots($incident, 'incident rouvert');
+            $locked->forceFill([
+                'status' => MediaIncidentStatus::OPEN,
+                'reopen_reason' => trim($reason),
+                'reopened_at' => now(),
+                'resolved_at' => null,
+                'closed_at' => null,
+                'updated_by' => (string) $actor->getKey(),
+            ])->save();
 
-        return $incident->refresh();
+            $this->record($actor, $locked, 'media.incident_reopened', 'reopened');
+
+            return $locked->refresh();
+        });
+
+        $this->notifyRoots($updated, 'incident rouvert');
+
+        return $updated;
     }
 
     public function attach(User $actor, MediaIncident $incident, UploadedFile $file): \App\Domains\Media\Models\Media
