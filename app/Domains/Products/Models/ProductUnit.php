@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class ProductUnit extends BaseModel
 {
+    public const V1_CODES = ['kg', 'g', 'l', 'ml'];
+
     protected $table = 'product_units';
 
     protected $fillable = ['code', 'label', 'dimension', 'sort_order', 'is_active'];
