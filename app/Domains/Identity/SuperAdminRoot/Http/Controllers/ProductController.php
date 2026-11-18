@@ -77,7 +77,7 @@ final class ProductController
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
-            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)->whereIn('code', ProductUnit::V1_CODES)],
+            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
