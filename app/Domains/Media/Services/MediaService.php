@@ -466,9 +466,11 @@ final class MediaService
             $locked->forceFill([
                 'deleted_by' => null,
                 'updated_by' => (string) $actor->getKey(),
-                'is_primary' => $locked->category === MediaCategory::PRODUCT_IMAGE->value
-                    ? $makePrimary
-                    : $locked->is_primary,
+                'is_primary' => $single
+                    ? true
+                    : ($locked->category === MediaCategory::PRODUCT_IMAGE->value
+                        ? $makePrimary
+                        : $locked->is_primary),
             ])->save();
 
             $locked->restore();
