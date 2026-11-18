@@ -442,6 +442,91 @@ final class MediaServiceTest extends TestCase
         );
     }
 
+    public function test_root_can_restore_a_retained_document_when_every_file_is_valid(): void
+    {
+        Storage::fake('local');
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $media = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent(
+                'restore-proof.pdf',
+                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+            ),
+            'document',
+            'legal',
+        );
+
+        app(MediaService::class)->delete($actor, $media);
+        $restored = app(MediaService::class)->restore($actor, $media->fresh(), false);
+
+        self::assertFalse($restored->trashed());
+        self::assertDatabaseHas('media', ['id' => $media->getKey(), 'deleted_at' => null]);
+        Storage::disk('local')->assertExists($media->path);
+        self::assertDatabaseHas('audit_events', [
+            'event_key' => 'media.restored',
+            'subject_id' => $media->getKey(),
+        ]);
+    }
+
+    public function test_restore_is_refused_when_a_retained_file_is_missing(): void
+    {
+        Storage::fake('local');
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $media = app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent(
+                'missing-proof.pdf',
+                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+            ),
+            'document',
+            'legal',
+        );
+
+        app(MediaService::class)->delete($actor, $media);
+        Storage::disk('local')->delete($media->path);
+
+        try {
+            app(MediaService::class)->restore($actor, $media->fresh(), false);
+            self::fail('A missing retained file must prevent restoration.');
+        } catch (ValidationException) {
+            self::assertSoftDeleted('media', ['id' => $media->getKey()]);
+        }
+    }
+
+    public function test_replacement_history_is_linked_to_the_replacing_media_and_can_be_restored(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+        Storage::fake('local');
+        $actor = $this->rootUser();
+        $service = app(MediaService::class);
+
+        $previous = $service->upload(
+            $actor,
+            $actor,
+            UploadedFile::fake()->image('profile-old.jpg', 300, 300),
+            'profile_image',
+        );
+        $current = $service->upload(
+            $actor,
+            $actor,
+            UploadedFile::fake()->image('profile-new.jpg', 300, 300),
+            'profile_image',
+        );
+
+        $history = $service->replacementHistory($actor, $current);
+        self::assertTrue($history->contains(fn (Media $item): bool => $item->is($previous)));
+        self::assertTrue($previous->fresh()->trashed());
+
+        $restored = $service->restore($actor, $previous->fresh(), false);
+        self::assertFalse($restored->trashed());
+        self::assertSame($previous->getKey(), $actor->fresh()->profileImage->getKey());
+        self::assertSoftDeleted('media', ['id' => $current->getKey()]);
+    }
+
     private function rootUser(): User
     {
         $user = User::factory()->create();
