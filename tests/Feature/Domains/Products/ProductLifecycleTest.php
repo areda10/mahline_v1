@@ -84,7 +84,7 @@ final class ProductLifecycleTest extends TestCase
         $variant = ProductVariant::factory()->for($product)->create();
 
         try {
-            (new ProductVariantService())->update($variant, ['sku' => 'UPDATED-SKU']);
+            (new ProductVariantService)->update($variant, ['sku' => 'UPDATED-SKU']);
             $this->fail('Une variante d’un produit inactif ne doit pas être modifiable.');
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey('product', $exception->errors());
@@ -98,7 +98,7 @@ final class ProductLifecycleTest extends TestCase
         $product->delete();
 
         try {
-            (new ProductVariantService())->update($variant, ['sku' => 'UPDATED-SKU']);
+            (new ProductVariantService)->update($variant, ['sku' => 'UPDATED-SKU']);
             $this->fail('Une variante d’un produit supprimé ne doit pas être modifiable.');
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey('product', $exception->errors());
