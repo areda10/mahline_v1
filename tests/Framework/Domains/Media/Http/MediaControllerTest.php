@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Media\Http;
 
+use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -28,6 +28,11 @@ final class MediaControllerTest extends TestCase
 
         $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
         $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'is_active' => true,
+        ]);
+        $product->catalogs()->attach($catalog->getKey());
         Storage::disk('public')->put('media/test/original.jpg', 'image-content');
 
         $media = $product->media()->create($this->attributes('media/test/original.jpg', 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
