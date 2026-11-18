@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class ProductUnit extends BaseModel
 {
-    public const V1_CODES = ['kg', 'g', 'l', 'ml'];
+    public const V1_CODES = ['kg', 'g', 'l', 'ml', 'u'];
 
     protected $table = 'product_units';
 
