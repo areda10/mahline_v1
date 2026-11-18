@@ -226,8 +226,10 @@ final class MediaServiceTest extends TestCase
         self::assertSame('public', $media->disk);
         self::assertTrue($media->is_primary);
         Storage::disk('public')->assertExists($media->path);
-        Storage::disk('public')->assertExists($media->metadata['derivatives']['medium']);
-        Storage::disk('public')->assertExists($media->metadata['derivatives']['thumbnail']);
+        foreach (['thumbnail', 'small', 'medium', 'large'] as $variant) {
+            Storage::disk('public')->assertExists($media->metadata['derivatives'][$variant]);
+            self::assertSame('image/webp', $media->metadata['derivative_mime_types'][$variant]);
+        }
 
         $second = app(MediaService::class)->upload(
             $actor,
