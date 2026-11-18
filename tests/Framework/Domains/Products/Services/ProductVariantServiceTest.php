@@ -48,7 +48,6 @@ final class ProductVariantServiceTest extends TestCase
             'name' => 'Pot en verre 250 g',
             'unit_id' => $this->unitId,
             'price' => '12.50',
-            'unit_id' => $this->unitId,
             'sku' => 'MIEL-250',
             'attributes' => [
                 'weight' => '250 g',
@@ -80,7 +79,6 @@ final class ProductVariantServiceTest extends TestCase
             'name' => 'Pot 250 g',
             'unit_id' => $this->unitId,
             'price' => '12.5',
-            'unit_id' => $this->unitId,
             'is_active' => true,
         ]);
 
