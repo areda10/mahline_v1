@@ -17,5 +17,5 @@ Schedule::command('identity:devices:promote-pending')
     ->withoutOverlapping();
 
 Schedule::command('media:purge-expired')
-    ->daily()
+    ->dailyAt('02:00')
     ->withoutOverlapping();
