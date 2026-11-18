@@ -25,7 +25,7 @@ final class ProductVariantService
 
             // La conversion d'un produit simple avec unité/stock parent doit passer
             // par le transfert atomique du domaine Inventory avant toute variante.
-            if ($product->unit_id !== null && ! $product->variants()->exists()) {
+            if ($product->unit_id !== null) {
                 throw ValidationException::withMessages([
                     'unit_id' => ['La conversion vers des variantes doit d’abord répartir le stock parent via le processus Inventory.'],
                 ]);
