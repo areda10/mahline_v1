@@ -13,6 +13,7 @@ use App\Domains\Media\Notifications\MediaIncidentNotification;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -166,6 +167,13 @@ final class MediaIncidentService
             ->whereNotNull('email')
             ->get();
 
-        Notification::send($roots, new MediaIncidentNotification($incident, $event));
+        try {
+            Notification::send($roots, new MediaIncidentNotification($incident, $event));
+        } catch (\\Throwable $exception) {
+            Log::error('MEDIA incident notification delivery failed.', [
+                'incident_id' => (string) $incident->getKey(),
+                'exception' => $exception::class,
+            ]);
+        }
     }
 }
