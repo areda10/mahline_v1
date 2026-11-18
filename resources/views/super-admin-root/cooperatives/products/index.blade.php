@@ -20,12 +20,14 @@
     @else
         <div class="table-wrap">
             <table>
-                <thead><tr><th>Nom</th><th>Catégories</th><th>Catalogues</th><th>État</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Nom</th><th>Prix (MAD)</th>
+                        <th>Catégories</th><th>Catalogues</th><th>État</th><th>Actions</th></tr></thead>
                 <tbody>
                 @foreach($products as $product)
                     <tr>
                         <td><strong>{{ $product->name }}</strong>@if($product->description)<div class="muted">{{ $product->description }}</div>@endif</td>
-                        <td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
+                        <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td>
+                            <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td><td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
                         <td>{{ $product->catalogs->pluck('name')->join(', ') ?: '—' }}</td>
                         <td><span class="badge {{ $product->is_active ? '' : 'badge-inactive' }}">{{ $product->is_active ? 'Actif' : 'Inactif' }}</span></td>
                         <td><div class="actions">
