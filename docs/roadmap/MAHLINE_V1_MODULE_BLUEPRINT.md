@@ -195,3 +195,13 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Les prix restent nullable en base uniquement pour préserver les fiches historiques existantes ; les nouveaux formulaires exigent un prix. Le checkout devra refuser tout article historique sans prix exploitable.
 - La gestion d'interface des prix de variantes reste à raccorder : le dépôt ne contient pas encore de contrôleur ni de vues de gestion des variantes.
 - Migration et tests non exécutés dans cette session ; le module Products n'est pas déclaré terminé.
+
+## 12. Journal d'exécution — Orders et prix Products
+
+- Products : migration additive des prix du produit et de la surcharge facultative de variante ; prix MAD, stockage décimal, formulaires et affichages root/coopérative raccordés.
+- Products : tests ajoutés pour la conservation décimale et le calcul du prix effectif d'une variante.
+- Orders : OrderCreationService ajouté pour créer atomiquement commande globale, sous-commandes coopératives, lignes snapshotées et historique initial ; prix relus depuis Products, quantités/prix calculés en unités entières, articles sans prix refusés.
+- Orders : CooperativeOrderResponseService ajouté pour confirmer/refuser une sous-commande, recalculer le statut global, tracer l'acteur et permettre une substitution root/super_admin affecté uniquement après expiration de l'échéance et avec motif.
+- Tests Feature ajoutés pour la création multi-coopérative, les snapshots/prix, l'isolation de réponse et l'intervention root.
+- Limites restantes : interface de gestion des prix variantes absente ; Sales/panier/checkout absent ; configuration centralisée des échéances et extension d'échéance à compléter ; propositions de changement client, expiration, Inventory, livraison, notifications et routes/policies restent à faire.
+- Les tests PHP/MySQL et Pint ne sont pas exécutés dans cette session. Aucun module n'est déclaré terminé.
