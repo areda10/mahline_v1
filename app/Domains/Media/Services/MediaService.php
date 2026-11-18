@@ -75,15 +75,16 @@ final class MediaService
                 ? file_get_contents($sourcePath)
                 : false;
 
-            $this->putOrFail($disk, $path, $originalContents);
+            // Track the target before writing: a failed adapter may have partially written it.
             $storedPaths[] = $path;
+            $this->putOrFail($disk, $path, $originalContents);
 
             $derivativePaths = [];
 
             foreach ($derivatives as $name => $contents) {
                 $derivativePath = $directory.'/'.$name.'.'.$validated['extension'];
-                $this->putOrFail($disk, $derivativePath, $contents);
                 $storedPaths[] = $derivativePath;
+                $this->putOrFail($disk, $derivativePath, $contents);
                 $derivativePaths[$name] = $derivativePath;
             }
 
