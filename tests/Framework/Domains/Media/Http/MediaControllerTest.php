@@ -6,6 +6,7 @@ namespace Tests\Framework\Domains\Media\Http;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -327,6 +328,96 @@ final class MediaControllerTest extends TestCase
         $response->assertJsonValidationErrors('category');
         self::assertSame(0, Media::query()->count());
         self::assertSame([], Storage::disk('public')->allFiles('media'));
+    }
+
+    public function test_public_product_image_is_hidden_when_product_has_no_catalog(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $path = 'media/no-catalog/original.jpg';
+        Storage::disk('public')->put($path, 'image-content');
+        $media = $product->media()->create($this->attributes($path, 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
+
+        $this->get(route('media.show', $media))->assertNotFound();
+    }
+
+    public function test_public_product_image_is_hidden_when_its_only_catalog_is_inactive(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'is_active' => false,
+        ]);
+        $product->catalogs()->attach($catalog->getKey());
+        $path = 'media/inactive-catalog/original.jpg';
+        Storage::disk('public')->put($path, 'image-content');
+        $media = $product->media()->create($this->attributes($path, 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
+
+        $this->get(route('media.show', $media))->assertNotFound();
+    }
+
+    public function test_public_product_image_is_streamed_when_product_belongs_to_an_active_catalog_of_its_cooperative(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'is_active' => true,
+        ]);
+        $product->catalogs()->attach($catalog->getKey());
+        $path = 'media/active-catalog/original.jpg';
+        Storage::disk('public')->put($path, 'image-content');
+        $media = $product->media()->create($this->attributes($path, 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
+
+        $response = $this->get(route('media.show', $media));
+
+        $response->assertOk();
+        self::assertSame('image-content', $response->streamedContent());
+    }
+
+    public function test_public_product_image_is_hidden_when_its_catalog_belongs_to_another_cooperative(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $otherCooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $otherCooperative->getKey(),
+            'is_active' => true,
+        ]);
+        $product->catalogs()->attach($catalog->getKey());
+        $path = 'media/foreign-catalog/original.jpg';
+        Storage::disk('public')->put($path, 'image-content');
+        $media = $product->media()->create($this->attributes($path, 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
+
+        $this->get(route('media.show', $media))->assertNotFound();
+    }
+
+    public function test_public_product_image_is_hidden_when_its_catalog_is_soft_deleted(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $catalog = Catalog::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'is_active' => true,
+        ]);
+        $product->catalogs()->attach($catalog->getKey());
+        $catalog->delete();
+        $path = 'media/deleted-catalog/original.jpg';
+        Storage::disk('public')->put($path, 'image-content');
+        $media = $product->media()->create($this->attributes($path, 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
+
+        $this->get(route('media.show', $media))->assertNotFound();
     }
 
     private function userWithPermission(string $roleSlug, string $permissionSlug, string $cooperativeId): User
