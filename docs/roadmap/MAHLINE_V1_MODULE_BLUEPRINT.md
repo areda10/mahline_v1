@@ -188,8 +188,8 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 
 ## 11. Complément — prix du catalogue Products
 
-- Migration additive `2026_11_18_000004_add_prices_to_products_and_variants.php` : prix du produit en `DECIMAL(12,2)`, devise `MAD`, prix de variante facultatif pour surcharge.
-- Le prix effectif d'une variante est son prix propre lorsqu'il est renseigné, sinon le prix du produit parent.
+- Migration additive `2026_11_18_000004_add_prices_to_products_and_variants.php` : prix du produit en `DECIMAL(12,2)`, devise `MAD`, prix de variante enregistré nullable pour compatibilité historique.
+- Règle métier mise à jour : chaque nouvelle variante doit obligatoirement porter son propre prix MAD positif (maximum deux décimales) ; aucun héritage du prix parent pour les nouvelles variantes. Les valeurs historiques nulles restent à traiter lors de la reprise des données.
 - Formulaires coopérative et root : saisie du prix produit en MAD ; validation serveur positive et limitée à deux décimales.
 - Modèles, factories, service Product, audit snapshot, affichages et tests de modèle mis à jour.
 - Les prix restent nullable en base uniquement pour préserver les fiches historiques existantes ; les nouveaux formulaires exigent un prix. Le checkout devra refuser tout article historique sans prix exploitable.
@@ -205,3 +205,11 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Tests Feature ajoutés pour la création multi-coopérative, les snapshots/prix, l'isolation de réponse et l'intervention root.
 - Limites restantes : interface de gestion des prix variantes absente ; Sales/panier/checkout absent ; configuration centralisée des échéances à compléter (extension administrative bornée à 24 h ajoutée) ; propositions de changement client, expiration, Inventory, livraison, notifications et routes/policies restent à faire.
 - Les tests PHP/MySQL et Pint ne sont pas exécutés dans cette session. Aucun module n'est déclaré terminé.
+
+## 13. Décision et audit — stock produit / variantes (18 novembre 2026)
+
+- Décision validée : un produit simple possède un stock au niveau du produit ; dès qu'il utilise des variantes, chaque variante possède son propre stock et le parent ne porte plus de stock actif.
+- Conversion simple → variantes : la coopérative doit répartir la totalité du stock parent entre les variantes avant validation. Le transfert doit être atomique, verrouillé en base et tracé par des mouvements immuables ; le stock parent est soldé dans la même transaction. Aucun stock temporaire double n'est autorisé.
+- Audit Git à `8a33f5ca736e2a16b514832351e7c757beec1d11` : aucun domaine `app/Domains/Inventory`, aucune migration de stock et aucun contrôleur/vue de gestion des variantes détectés. Le service de variantes existe mais autorisait encore un prix nul ; sa validation métier est renforcée.
+- Point technique restant avant le schéma Inventory : préciser la précision des quantités (unités entières ou fractionnaires), car les produits coopératifs peuvent être vendus à l'unité, au poids ou au volume. Ne pas figer le type SQL avant cette règle.
+- Les modifications de service et tests ci-dessus sont écrites sur `feature/Marketplace`. Tests non exécutés dans cet environnement ; aucune validation de suite n'est revendiquée.
