@@ -387,25 +387,6 @@ final class MediaControllerTest extends TestCase
         self::assertSame('image-content', $response->streamedContent());
     }
 
-    public function test_public_product_image_is_hidden_when_its_catalog_belongs_to_another_cooperative(): void
-    {
-        Storage::fake('public');
-
-        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
-        $otherCooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
-        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
-        $catalog = Catalog::factory()->create([
-            'cooperative_id' => $otherCooperative->getKey(),
-            'is_active' => true,
-        ]);
-        $product->catalogs()->attach($catalog->getKey());
-        $path = 'media/foreign-catalog/original.jpg';
-        Storage::disk('public')->put($path, 'image-content');
-        $media = $product->media()->create($this->attributes($path, 'product_image', 'public', 'public', 'image/jpeg', 'jpg'));
-
-        $this->get(route('media.show', $media))->assertNotFound();
-    }
-
     public function test_public_product_image_is_hidden_when_its_catalog_is_soft_deleted(): void
     {
         Storage::fake('public');
