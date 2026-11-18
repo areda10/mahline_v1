@@ -46,6 +46,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => 'Pot en verre 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'unit_id' => $this->unitId,
             'sku' => 'MIEL-250',
@@ -77,6 +78,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.5',
             'unit_id' => $this->unitId,
             'is_active' => true,
@@ -108,6 +110,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot sans prix',
+            'unit_id' => $this->unitId,
             'is_active' => true,
         ]);
     }
@@ -120,6 +123,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot sans prix',
+            'unit_id' => $this->unitId,
             'price' => null,
             'is_active' => true,
         ]);
@@ -133,6 +137,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot gratuit',
+            'unit_id' => $this->unitId,
             'price' => '0.00',
             'is_active' => true,
         ]);
@@ -144,6 +149,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => '  Pot   en VERRE 250 g  ',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
@@ -165,6 +171,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot en verre 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
@@ -173,6 +180,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => '  POT EN VERRE 250 G  ',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
@@ -185,12 +193,14 @@ final class ProductVariantServiceTest extends TestCase
 
         $first = $this->service->create($firstProduct, [
             'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
 
         $second = $this->service->create($secondProduct, [
             'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
@@ -216,6 +226,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
@@ -227,6 +238,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
             'price' => '12.50',
             'is_active' => true,
         ]);
