@@ -18,11 +18,9 @@ enum MediaCategory: string
 
     public function maxBytes(): int
     {
-        return match ($this) {
-            self::PRODUCT_IMAGE, self::COOPERATIVE_LOGO, self::COOPERATIVE_PHOTO => 5 * 1024 * 1024,
-            self::PROFILE_IMAGE => 2 * 1024 * 1024,
-            self::DOCUMENT => 15 * 1024 * 1024,
-        };
+        return $this === self::DOCUMENT
+            ? 10 * 1024 * 1024
+            : 5 * 1024 * 1024;
     }
 
     public function isImage(): bool
@@ -57,7 +55,12 @@ enum MediaCategory: string
                 'png' => 'image/png',
                 'webp' => 'image/webp',
             ]
-            : ['pdf' => 'application/pdf'];
+            : [
+                'pdf' => 'application/pdf',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+            ];
     }
 
     public function allowsOwner(string $ownerClass): bool
