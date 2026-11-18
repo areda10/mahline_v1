@@ -9,7 +9,6 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductUnit;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
