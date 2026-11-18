@@ -118,6 +118,33 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertSame(OrderStatus::REFUSED, $order->fresh()->status);
     }
 
+    public function test_root_can_extend_cooperative_response_deadline_by_at_most_24_hours(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $root = $this->userWithRole('super_admin_root');
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+        ]);
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
+        ]);
+
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $newDeadline = now()->addHours(3);
+        $updated = app(CooperativeOrderResponseService::class)
+            ->extendResponseDeadline($suborder, $root, $newDeadline, 'Délai supplémentaire accordé');
+
+        $this->assertEquals($newDeadline->timestamp, $updated->response_deadline_at->timestamp);
+        $this->assertDatabaseHas('order_status_histories', [
+            'subject_type' => 'cooperative_order',
+            'subject_id' => $suborder->getKey(),
+            'to_status' => CooperativeOrderStatus::AWAITING_COOPERATIVE->value,
+        ]);
+    }
+
     private function userWithRole(string $roleSlug, array $attributes = []): User
     {
         $role = Role::query()->firstOrCreate(
