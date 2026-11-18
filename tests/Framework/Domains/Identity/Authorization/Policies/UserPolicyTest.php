@@ -363,12 +363,22 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($actor)->allows('archive', $protectedRoot));
         self::assertFalse(Gate::forUser($actor)->allows('delete', $protectedRoot));
 
-        $protectedRoot->status = UserStatus::Inactive;
-        $protectedRoot->save();
+        try {
+            $protectedRoot->status = UserStatus::Inactive;
+            $protectedRoot->save();
+            self::fail('A Root status must not be changed through Eloquent.');
+        } catch (\\DomainException $exception) {
+            self::assertSame(
+                'The super admin root account status cannot be changed.',
+                $exception->getMessage(),
+            );
+        }
+
+        self::assertSame(UserStatus::Active, $protectedRoot->fresh()->status);
         self::assertFalse(Gate::forUser($actor)->allows('activate', $protectedRoot));
 
-        $protectedRoot->status = UserStatus::Archived;
-        $protectedRoot->save();
+        // Simulate a legacy corrupted row to verify policy protection independently.
+        $protectedRoot->forceFill(['status' => UserStatus::Archived])->saveQuietly();
         self::assertFalse(Gate::forUser($actor)->allows('restore', $protectedRoot));
 
         $protectedRoot->forceFill(['deleted_at' => now()])->saveQuietly();
