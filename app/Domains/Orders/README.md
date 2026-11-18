@@ -95,7 +95,7 @@ Les échanges doivent être transactionnellement sûrs, idempotents, traçables 
 Aucune valeur par défaut ne doit être inventée pour ces points.
 
 ### Écarts techniques de dépendance relevés le 18 novembre 2026
-- La migration `products` ne contient pas de prix ; la migration `product_variants` ne contient pas non plus de prix. Le catalogue de prix/promotion attendu par Q260–Q269 doit donc être audité et complété avant de pouvoir garantir un checkout réel.
+- Écart prix initial traité le 18 novembre 2026 : migration additive `2026_11_18_000004_add_prices_to_products_and_variants.php` ; `products.price` en MAD et `product_variants.price` facultatif comme surcharge. Les nouveaux formulaires produit exigent un prix positif à deux décimales. Les anciennes fiches peuvent rester sans prix en base ; Sales/checkout devra les exclure tant qu'un prix exploitable n'est pas défini. Les promotions Q260–Q269 restent à auditer/implémenter.
 - Les migrations actuelles de `addresses` et le modèle `Address` existent ; le snapshot global de livraison doit néanmoins être persisté dans Orders et ne doit jamais dépendre de la ligne d'adresse après checkout.
 - Les routes actuelles exposent déjà l'espace client et les adresses, mais aucun flux de panier/commande n'a été repéré dans les fichiers Routes audités.
 - La convention `BaseModel` impose ULID, clé string, timestamps et `guarded = []`; les migrations utilisent `ulidPrimary()` et `auditActorColumns()`.
