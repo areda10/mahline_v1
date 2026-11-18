@@ -140,7 +140,7 @@ final class MediaServiceTest extends TestCase
 
         $disk = Storage::disk('public');
         $writeCount = 0;
-        $failingDisk = \\Mockery::mock($disk)->makePartial();
+        $failingDisk = \Mockery::mock($disk)->makePartial();
         $failingDisk->shouldReceive('put')
             ->twice()
             ->andReturnUsing(static function (string $path, string $contents) use ($disk, &$writeCount): bool {
@@ -164,7 +164,7 @@ final class MediaServiceTest extends TestCase
             );
 
             self::fail('The simulated derivative storage failure should be rethrown.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('Le stockage du média a échoué.', $exception->getMessage());
         }
 
