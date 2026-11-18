@@ -269,7 +269,7 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - L'audit a identifié que `OrderCreationService` acceptait auparavant `unit` depuis le checkout, sans vérifier qu'elle correspondait à l'unité réellement définie dans Products.
 - Correction : Orders lit désormais l'unité depuis `Product.unit` pour un produit simple ou depuis `ProductVariant.unit` pour une variante choisie. Toute valeur `unit` envoyée par le client est ignorée.
 - La ligne de commande conserve le code d'unité et le snapshot produit conserve aussi son libellé, afin que l'historique reste compréhensible si le registre évolue.
-- Un produit sans unité enregistrée est refusé au checkout. Un produit qui possède des variantes exige qu'une variante soit explicitement sélectionnée ; l'unité de la variante est alors obligatoire.
-- Les tests Orders couvrent la falsification de l'unité côté client, le snapshot `u` d'un produit simple, l'unité `ml` d'une variante et le rejet d'un produit sans unité.
+- Un produit sans unité enregistrée est refusé au checkout. Un produit qui possède des variantes exige qu'une variante soit explicitement sélectionnée ; l'unité de la variante est alors obligatoire. Le produit parent ne peut pas conserver simultanément sa propre unité.
+- Les tests Orders couvrent la falsification de l'unité côté client, le snapshot `u` d'un produit simple, l'unité `ml` d'une variante et le rejet d'un produit sans unité et d'une unité parent simultanée.
 - La frontière Products → Orders est donc raccordée pour l'identité de l'unité. La gestion du stock, les réservations et le transfert parent → variantes restent du ressort d'Inventory, domaine encore absent ; aucune écriture de stock n'est introduite dans Orders.
 - PHPUnit, migrations et Pint ne sont pas exécutés dans cette session ; les résultats restent à vérifier localement.
