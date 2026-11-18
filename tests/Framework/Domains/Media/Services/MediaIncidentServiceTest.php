@@ -8,13 +8,11 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Media\Models\MediaIncident;
-use App\Domains\Media\Contracts\MediaAntivirusScanner;
 use App\Domains\Media\Services\MediaIncidentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
-use Mockery;
 use Tests\TestCase;
 
 final class MediaIncidentServiceTest extends TestCase
@@ -50,14 +48,10 @@ final class MediaIncidentServiceTest extends TestCase
         self::assertNull($incident->closed_at);
     }
 
-    public function test_incident_attachment_is_private_and_scanned_before_storage(): void
+    public function test_incident_attachment_is_private_and_uploaded_without_antivirus_in_v1(): void
     {
         Notification::fake();
         Storage::fake('local');
-
-        $scanner = Mockery::mock(MediaAntivirusScanner::class);
-        $scanner->shouldReceive('scan')->once();
-        app()->instance(MediaAntivirusScanner::class, $scanner);
 
         $actor = $this->rootUser();
         $service = app(MediaIncidentService::class);
