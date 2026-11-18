@@ -6,6 +6,7 @@ namespace App\Domains\Media\Enums;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Models\MediaIncident;
 use App\Domains\Products\Models\Product;
 
 enum MediaCategory: string
@@ -15,17 +16,18 @@ enum MediaCategory: string
     case COOPERATIVE_PHOTO = 'cooperative_photo';
     case PROFILE_IMAGE = 'profile_image';
     case DOCUMENT = 'document';
+    case INCIDENT_ATTACHMENT = 'incident_attachment';
 
     public function maxBytes(): int
     {
-        return $this === self::DOCUMENT
+        return in_array($this, [self::DOCUMENT, self::INCIDENT_ATTACHMENT], true)
             ? 10 * 1024 * 1024
             : 5 * 1024 * 1024;
     }
 
     public function isImage(): bool
     {
-        return $this !== self::DOCUMENT;
+        return ! in_array($this, [self::DOCUMENT, self::INCIDENT_ATTACHMENT], true);
     }
 
     public function isPublic(): bool
@@ -74,6 +76,7 @@ enum MediaCategory: string
                 Cooperative::class,
                 User::class,
             ], true),
+            self::INCIDENT_ATTACHMENT => $ownerClass === MediaIncident::class,
         };
     }
 }
