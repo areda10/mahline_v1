@@ -12,15 +12,11 @@ use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 final class MediaOwnerObserver
 {
-    public function __construct(
-        private readonly AuditService $audit,
-        private readonly AuditEventRepository $events,
-    ) {}
-
     public function deleting(Model $owner): void
     {
         if (! method_exists($owner, 'isForceDeleting') || ! $owner->isForceDeleting()) {
@@ -34,11 +30,12 @@ final class MediaOwnerObserver
         $actor = Auth::user();
         $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
 
-        if (! $this->events->verifyIntegrity()) {
+        if (! app(AuditEventRepository::class)->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; suppression définitive du propriétaire refusée.');
         }
 
-        $owner->media()->whereNull('deleted_at')->lockForUpdate()->get()->each(
+        DB::transaction(function () use ($owner, $actorId): void {
+            $owner->media()->whereNull('deleted_at')->lockForUpdate()->get()->each(
             function ($media) use ($actorId, $owner): void {
                 $media->forceFill(['deleted_by' => $actorId])->save();
                 $media->delete();
@@ -50,7 +47,7 @@ final class MediaOwnerObserver
                     default => null,
                 };
 
-                $this->audit->record(new AuditEntryDTO(
+                app(AuditService::class)->record(new AuditEntryDTO(
                     eventKey: 'media.owner_force_deleted',
                     action: 'owner_force_deleted',
                     actorType: $actor instanceof User ? User::class : null,
@@ -64,6 +61,7 @@ final class MediaOwnerObserver
                     ],
                 ));
             },
-        );
+            );
+        });
     }
 }
