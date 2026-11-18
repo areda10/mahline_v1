@@ -99,6 +99,13 @@ final class MediaPolicy extends BasePolicy
         return $this->update($user, $media);
     }
 
+    public function restore(User $user, Media $media): bool
+    {
+        return $user->isAuthorized()
+            && $user->hasRole('super_admin_root')
+            && $media->trashed();
+    }
+
     private function categoryMatchesOwner(string $category, Model $owner): bool
     {
         $mediaCategory = MediaCategory::tryFrom($category);
