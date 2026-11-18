@@ -395,7 +395,8 @@ final class UserManagementServiceTest extends TestCase
     {
         $actor = $this->createUserWithRole('super_admin_root');
         $target = $this->createUserWithRole('super_admin_root');
-        $target->forceFill(['status' => UserStatus::Inactive])->save();
+        // Simulate a pre-existing corrupted database row without triggering current model guards.
+        $target->forceFill(['status' => UserStatus::Inactive])->saveQuietly();
 
         try {
             $this->service->deleteUser($actor, $target);
