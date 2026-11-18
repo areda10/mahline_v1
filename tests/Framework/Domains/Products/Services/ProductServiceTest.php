@@ -9,6 +9,8 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,10 +22,14 @@ final class ProductServiceTest extends TestCase
 
     private ProductService $service;
 
+    private string $unitId;
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->seed(ProductUnitSeeder::class);
+        $this->unitId = (string) ProductUnit::query()->where('code', 'kg')->value('id');
         $this->service = app(ProductService::class);
     }
 
@@ -39,6 +45,7 @@ final class ProductServiceTest extends TestCase
             (string) $cooperative->getKey(),
             [
                 'name' => 'Miel naturel',
+                'unit_id' => $this->unitId,
                 'slug' => 'miel-naturel',
                 'description' => 'Miel produit au Maroc.',
                 'is_active' => true,
@@ -114,6 +121,7 @@ final class ProductServiceTest extends TestCase
             (string) $cooperative->getKey(),
             [
                 'name' => 'Amlou traditionnel',
+                'unit_id' => $this->unitId,
                 'slug' => 'amlou-traditionnel',
                 'is_active' => true,
             ],
@@ -133,6 +141,7 @@ final class ProductServiceTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $product = $this->service->create((string) $cooperative->getKey(), [
             'name' => 'Produit sans catégorie',
+            'unit_id' => $this->unitId,
             'is_active' => true,
             'category_ids' => [],
         ]);
@@ -157,6 +166,7 @@ final class ProductServiceTest extends TestCase
             (string) $cooperative->getKey(),
             [
                 'name' => 'Huile d'.'argan',
+                'unit_id' => $this->unitId,
                 'slug' => 'huile-argan',
                 'is_active' => true,
             ],
