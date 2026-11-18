@@ -3591,7 +3591,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 
 ### Suivi de conformité technique MEDIA V1 — vague 1 (18 novembre 2026)
 
-**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. Les vagues 1 et 2 ont été déclarées vertes par l'utilisateur : 70 tests MEDIA (258 assertions) pour la vague 1, puis les suites ciblées Policy/Controller, la suite MEDIA, la migration et Pint pour la vague 2. La vague 3 ci-dessous est enregistrée sur `feature/Marketplace` et reste à tester localement.
+**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. Les vagues 1 et 2 ont été déclarées vertes par l'utilisateur : 70 tests MEDIA (258 assertions) pour la vague 1, puis les suites ciblées Policy/Controller, la suite MEDIA, la migration et Pint pour la vague 2. La vague 3 ci-dessous est déclarée verte par l'utilisateur après migration, tests ciblés, suite MEDIA et Pint.
 
 #### Corrections applicatives enregistrées
 
@@ -3644,7 +3644,6 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 
 #### Écarts V1 restant à traiter
 
-1. Détection et suppression sécurisée des fichiers orphelins après le délai de sécurité minimal de 24 heures.
 2. Restauration des médias supprimés logiquement, historique des remplacements et restauration secondaire des images produits.
 3. Cycle de vie des médias lié à la suppression/restauration d'un propriétaire (coopérative/utilisateur/produit), avec restauration partielle si un fichier manque ou est corrompu.
 4. Contrôle d'accès aux médias privés des propriétaires supprimés, réservé au `super_admin_root` pendant la rétention.
