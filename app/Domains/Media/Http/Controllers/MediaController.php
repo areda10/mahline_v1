@@ -37,7 +37,7 @@ final class MediaController
                 'profile_image',
                 'document',
             ])],
-            'document_category' => ['nullable', 'string', 'max:80'],
+            'document_category' => ['nullable', 'string', Rule::in(['identity', 'legal', 'administrative', 'certification', 'other'])],
             'file' => ['required', 'file'],
         ]);
 
@@ -112,18 +112,25 @@ final class MediaController
     private function stream(Request $request, Media $media): StreamedResponse
     {
         $variant = $request->query('variant', 'original');
-        abort_unless(in_array($variant, ['original', 'medium', 'thumbnail'], true), 404);
+        abort_unless(in_array($variant, ['original', 'thumbnail', 'small', 'medium', 'large'], true), 404);
 
         $path = $variant === 'original'
             ? $media->path
-            : dirname($media->path).'/'.$variant.'.'.$media->extension;
+            : ($media->metadata['derivatives'][$variant] ?? null);
 
-        abort_unless(Storage::disk($media->disk)->exists($path), 404);
+        abort_unless(is_string($path) && Storage::disk($media->disk)->exists($path), 404);
 
         $stream = Storage::disk($media->disk)->readStream($path);
         abort_unless(is_resource($stream), 404);
 
-        $isDocument = $media->mime_type === 'application/pdf';
+        $mimeType = $variant === 'original'
+            ? $media->mime_type
+            : ($media->metadata['derivative_mime_types'][$variant] ?? null);
+
+        abort_unless(is_string($mimeType), 404);
+
+        $isDocument = $media->category === 'document';
+        $download = $isDocument && $request->boolean('download');
         $filename = preg_replace('/[^A-Za-z0-9._-]/', '_', $media->original_name) ?: 'media';
 
         return response()->stream(function () use ($stream): void {
@@ -135,8 +142,8 @@ final class MediaController
                 }
             }
         }, 200, [
-            'Content-Type' => $media->mime_type,
-            'Content-Disposition' => ($isDocument ? 'attachment' : 'inline').'; filename="'.$filename.'"',
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => ($download ? 'attachment' : 'inline').'; filename="'.$filename.'"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => $media->visibility === 'public'
                 ? 'public, no-cache, must-revalidate'
