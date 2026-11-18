@@ -84,6 +84,156 @@ final class MediaIncidentControllerTest extends TestCase
         self::assertSame([], Storage::disk('local')->allFiles('media'));
     }
 
+
+    public function test_non_root_cannot_access_incident_http_endpoints(): void
+    {
+        Notification::fake();
+
+        $root = $this->rootUser();
+        $incident = app(MediaIncidentService::class)->create(
+            $root,
+            'Restricted incident',
+            'Only root may access incident operations.',
+        );
+
+        $actor = User::factory()->create();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $actor->roles()->attach($role->getKey());
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)->actingAs($actor);
+
+        $this->getJson(route('media.incidents.index'))->assertForbidden();
+        $this->postJson(route('media.incidents.store'), [
+            'title' => 'Unauthorized incident',
+            'description' => 'Must be rejected.',
+        ])->assertForbidden();
+        $this->getJson(route('media.incidents.export'))->assertForbidden();
+        $this->getJson(route('media.incidents.show', $incident))->assertForbidden();
+        $this->patchJson(route('media.incidents.status', $incident), [
+            'status' => 'IN_PROGRESS',
+        ])->assertForbidden();
+        $this->postJson(route('media.incidents.reopen', $incident), [
+            'reason' => 'Unauthorized reopen.',
+        ])->assertForbidden();
+        $this->post(route('media.incidents.attachments.store', $incident), [
+            'file' => UploadedFile::fake()->createWithContent(
+                'forbidden.pdf',
+                "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+            ),
+        ])->assertForbidden();
+    }
+
+    public function test_root_can_manage_incident_lifecycle_over_http_and_audit_each_action(): void
+    {
+        Notification::fake();
+
+        $actor = $this->rootUser();
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)->actingAs($actor);
+
+        $created = $this->postJson(route('media.incidents.store'), [
+            'title' => 'HTTP lifecycle incident',
+            'description' => 'Created and managed through the HTTP layer.',
+        ])->assertCreated()
+            ->assertJsonPath('data.status', MediaIncidentStatus::OPEN->value);
+
+        $incidentId = $created->json('data.id');
+
+        $this->getJson(route('media.incidents.index'))
+            ->assertOk()
+            ->assertJsonFragment(['title' => 'HTTP lifecycle incident']);
+
+        $this->getJson(route('media.incidents.show', $incidentId))
+            ->assertOk()
+            ->assertJsonPath('data.id', $incidentId);
+
+        $this->patchJson(route('media.incidents.status', $incidentId), [
+            'status' => MediaIncidentStatus::IN_PROGRESS->value,
+        ])->assertOk()
+            ->assertJsonPath('data.status', MediaIncidentStatus::IN_PROGRESS->value);
+
+        $this->patchJson(route('media.incidents.status', $incidentId), [
+            'status' => MediaIncidentStatus::RESOLVED->value,
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('resolution');
+
+        $this->patchJson(route('media.incidents.status', $incidentId), [
+            'status' => MediaIncidentStatus::RESOLVED->value,
+            'resolution' => 'The cause has been identified and corrected.',
+        ])->assertOk()
+            ->assertJsonPath('data.status', MediaIncidentStatus::RESOLVED->value);
+
+        $this->patchJson(route('media.incidents.status', $incidentId), [
+            'status' => MediaIncidentStatus::CLOSED->value,
+        ])->assertOk()
+            ->assertJsonPath('data.status', MediaIncidentStatus::CLOSED->value);
+
+        $this->postJson(route('media.incidents.reopen', $incidentId), [
+            'reason' => 'The issue recurred and requires a new investigation.',
+        ])->assertOk()
+            ->assertJsonPath('data.status', MediaIncidentStatus::OPEN->value);
+
+        foreach ([
+            'media.incident_opened',
+            'media.incident_viewed',
+            'media.incident_status_changed',
+            'media.incident_reopened',
+            'media.incidents_listed',
+        ] as $eventKey) {
+            self::assertDatabaseHas('audit_events', [
+                'event_key' => $eventKey,
+                'actor_id' => $actor->getKey(),
+            ]);
+        }
+    }
+
+    public function test_root_can_upload_private_incident_attachment_over_http_and_only_root_can_read_it(): void
+    {
+        Notification::fake();
+        Storage::fake('local');
+
+        $root = $this->rootUser();
+        $incident = app(MediaIncidentService::class)->create(
+            $root,
+            'Attachment access incident',
+            'Verify private attachment handling through HTTP.',
+        );
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($root)
+            ->post(route('media.incidents.attachments.store', $incident), [
+                'file' => UploadedFile::fake()->createWithContent(
+                    'diagnostic.pdf',
+                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                ),
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.visibility', 'private');
+
+        $media = Media::query()->where('mediable_id', $incident->getKey())->firstOrFail();
+
+        self::assertSame('incident_attachment', $media->category);
+        self::assertSame('private', $media->visibility);
+        Storage::disk('local')->assertExists($media->path);
+
+        $this->actingAs($root)
+            ->get(route('media.private', $media))
+            ->assertOk();
+
+        $nonRoot = User::factory()->create();
+        $userRole = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $nonRoot->roles()->attach($userRole->getKey());
+
+        $this->actingAs($nonRoot)
+            ->get(route('media.private', $media))
+            ->assertForbidden();
+    }
+
     private function rootUser(): User
     {
         $user = User::factory()->create();
