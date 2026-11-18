@@ -507,12 +507,28 @@ final class MediaService
             abort(403);
         }
 
-        return Media::withTrashed()
+        $history = Media::withTrashed()
             ->where('mediable_type', $owner->getMorphClass())
             ->where('mediable_id', (string) $owner->getKey())
             ->orderByDesc('created_at')
             ->orderByDesc('deleted_at')
             ->get();
+
+        if (! $this->auditEvents->verifyIntegrity()) {
+            throw new RuntimeException('La chaîne d’audit est invalide ; consultation de l’historique refusée.');
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: 'media.history_viewed',
+            action: 'history_viewed',
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            subjectType: $owner::class,
+            subjectId: (string) $owner->getKey(),
+            metadata: ['owner_type' => $owner::class, 'items_count' => $history->count()],
+        ));
+
+        return $history;
     }
 
     public function replacementHistory(User $actor, Media $current): \Illuminate\Support\Collection
@@ -522,13 +538,17 @@ final class MediaService
             abort(403);
         }
 
-        return Media::onlyTrashed()
+        $history = Media::onlyTrashed()
             ->where('mediable_type', $current->mediable_type)
             ->where('mediable_id', $current->mediable_id)
             ->where('category', $current->category)
             ->where('metadata->replacement_media_id', (string) $current->getKey())
             ->orderByDesc('deleted_at')
             ->get();
+
+        $this->record($actor, $current, 'media.replacement_history_viewed', 'replacement_history_viewed');
+
+        return $history;
     }
 
     /**
