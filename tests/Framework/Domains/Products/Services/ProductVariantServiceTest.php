@@ -6,6 +6,8 @@ namespace Tests\Framework\Domains\Products\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Services\ProductVariantService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -17,10 +19,14 @@ final class ProductVariantServiceTest extends TestCase
 
     private ProductVariantService $service;
 
+    private string $unitId;
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->seed(ProductUnitSeeder::class);
+        $this->unitId = (string) ProductUnit::query()->where('code', 'kg')->value('id');
         $this->service = app(ProductVariantService::class);
     }
 
@@ -41,6 +47,7 @@ final class ProductVariantServiceTest extends TestCase
         $variant = $this->service->create($product, [
             'name' => 'Pot en verre 250 g',
             'price' => '12.50',
+            'unit_id' => $this->unitId,
             'sku' => 'MIEL-250',
             'attributes' => [
                 'weight' => '250 g',
@@ -71,6 +78,7 @@ final class ProductVariantServiceTest extends TestCase
         $variant = $this->service->create($product, [
             'name' => 'Pot 250 g',
             'price' => '12.5',
+            'unit_id' => $this->unitId,
             'is_active' => true,
         ]);
 
@@ -78,6 +86,19 @@ final class ProductVariantServiceTest extends TestCase
         $this->assertSame('12.50', $variant->effectivePrice());
     }
 
+
+    public function test_it_requires_a_registered_unit_for_a_new_variant(): void
+    {
+        $product = $this->createProduct();
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->create($product, [
+            'name' => 'Pot sans unité',
+            'price' => '12.50',
+            'is_active' => true,
+        ]);
+    }
 
     public function test_it_rejects_a_missing_variant_price(): void
     {
