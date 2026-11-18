@@ -8,6 +8,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Notifications\MediaSecurityAlertNotification;
+use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpFoundation\Response;
 
 final class MediaEnumerationGuard
@@ -33,6 +36,23 @@ final class MediaEnumerationGuard
                 'requested_id_hash' => hash('sha256', $requestedId),
                 'not_found_attempts_10m' => $attempts,
             ]);
+
+            if ($attempts === 5 || $attempts % 10 === 0) {
+                $roots = User::query()
+                    ->whereHas('roles', static fn ($query) => $query->where('slug', 'super_admin_root'))
+                    ->whereNotNull('email')
+                    ->get();
+
+                Notification::send(
+                    $roots,
+                    new MediaSecurityAlertNotification(
+                        'media_identifier_enumeration',
+                        'unknown',
+                        $ipHash,
+                        $attempts,
+                    ),
+                );
+            }
         }
 
         return $response;
