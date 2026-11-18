@@ -127,15 +127,27 @@ final class ProductService
 
             $before = $this->snapshot($product);
 
-            if ($product->variants()->exists() && array_key_exists('unit_id', $attributes)) {
-                throw ValidationException::withMessages([
-                    'unit_id' => ['L’unité se définit sur chaque variante pour ce produit.'],
-                ]);
-            }
+            $hasVariants = $product->variants()->exists();
 
-            $unitId = array_key_exists('unit_id', $attributes)
-                ? $this->validatedUnitId($attributes['unit_id'])
-                : null;
+            if ($hasVariants) {
+                if ($product->unit_id !== null) {
+                    throw ValidationException::withMessages([
+                        'unit_id' => ['Un produit avec variantes ne peut pas porter d’unité parent.'],
+                    ]);
+                }
+
+                if (array_key_exists('unit_id', $attributes)) {
+                    throw ValidationException::withMessages([
+                        'unit_id' => ['L’unité se définit sur chaque variante pour ce produit.'],
+                    ]);
+                }
+
+                $unitId = null;
+            } else {
+                $unitId = $this->validatedUnitId(
+                    $attributes['unit_id'] ?? $product->unit_id,
+                );
+            }
 
             $categoryIds = array_key_exists('category_ids', $attributes)
                 ? $this->normalizeIds($attributes['category_ids'] ?? [])
@@ -161,7 +173,11 @@ final class ProductService
 
             $changes = [];
 
-            if (array_key_exists('name', $attributes)) {
+            if (! $hasVariants) {
+                $changes['unit_id'] = $unitId;
+            }
+
+            if (array_key_exists('name', $attributes))
                 $name = trim((string) $attributes['name']);
 
                 if ($name === '') {
@@ -178,10 +194,6 @@ final class ProductService
                     $name,
                     (string) $product->getKey(),
                 );
-            }
-
-            if (array_key_exists('unit_id', $attributes)) {
-                $changes['unit_id'] = $unitId;
             }
 
             if (array_key_exists('description', $attributes)) {
