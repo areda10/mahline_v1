@@ -573,8 +573,17 @@ final class MediaService
                 }
             } else {
                 $image = @getimagesizefromstring($contents);
+                $decoded = @imagecreatefromstring($contents);
                 $expectedMime = $media->metadata['derivative_mime_types'][array_search($path, $derivatives, true)] ?? null;
-                if (! is_array($image) || ! is_string($expectedMime) || ($image['mime'] ?? null) !== $expectedMime) {
+                $validDerivative = is_array($image)
+                    && is_string($expectedMime)
+                    && ($image['mime'] ?? null) === $expectedMime
+                    && $decoded instanceof \\GdImage;
+                if ($decoded instanceof \\GdImage) {
+                    imagedestroy($decoded);
+                }
+
+                if (! $validDerivative) {
                     throw ValidationException::withMessages([
                         'media' => ['Restauration impossible : un dérivé est corrompu ou invalide.'],
                     ]);
