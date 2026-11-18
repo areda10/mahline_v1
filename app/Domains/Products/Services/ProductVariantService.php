@@ -46,6 +46,7 @@ final class ProductVariantService
             $variant->label = $name;
             $variant->normalized_label = $normalizedLabel;
             $variant->sku = $attributes['sku'] ?? null;
+            $variant->price = $attributes['price'] ?? null;
             $variant->attributes = $attributes['attributes'] ?? null;
             $variant->is_active = $attributes['is_active'] ?? true;
 
@@ -101,6 +102,10 @@ final class ProductVariantService
 
             if (array_key_exists('sku', $attributes)) {
                 $variant->sku = $attributes['sku'];
+            }
+
+            if (array_key_exists('price', $attributes)) {
+                $variant->price = $attributes['price'];
             }
 
             if (array_key_exists('attributes', $attributes)) {
