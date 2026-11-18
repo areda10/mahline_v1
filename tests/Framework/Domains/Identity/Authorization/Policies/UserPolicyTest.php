@@ -340,6 +340,42 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($admin)->allows('delete', $target));
     }
 
+    public function test_root_account_is_excluded_from_all_managed_lifecycle_mutations(): void
+    {
+        $permissions = [
+            'users.update',
+            'users.invite',
+            'users.activate',
+            'users.deactivate',
+            'users.suspend',
+            'users.archive',
+            'users.restore',
+            'users.delete',
+            'users.restore_deleted',
+        ];
+        $actor = $this->userWithRoleAndPermissions('super_admin_root', $permissions);
+        $protectedRoot = $this->userWithRoleAndPermissions('super_admin_root', []);
+
+        self::assertFalse(Gate::forUser($actor)->allows('update', $protectedRoot));
+        self::assertFalse(Gate::forUser($actor)->allows('resendInvitation', $protectedRoot));
+        self::assertFalse(Gate::forUser($actor)->allows('deactivate', $protectedRoot));
+        self::assertFalse(Gate::forUser($actor)->allows('suspend', $protectedRoot));
+        self::assertFalse(Gate::forUser($actor)->allows('archive', $protectedRoot));
+        self::assertFalse(Gate::forUser($actor)->allows('delete', $protectedRoot));
+
+        $protectedRoot->status = UserStatus::Inactive;
+        $protectedRoot->save();
+        self::assertFalse(Gate::forUser($actor)->allows('activate', $protectedRoot));
+
+        $protectedRoot->status = UserStatus::Archived;
+        $protectedRoot->save();
+        self::assertFalse(Gate::forUser($actor)->allows('restore', $protectedRoot));
+
+        $protectedRoot->forceFill(['deleted_at' => now()])->saveQuietly();
+        $deletedRoot = User::withTrashed()->findOrFail($protectedRoot->getKey());
+        self::assertFalse(Gate::forUser($actor)->allows('restoreDeleted', $deletedRoot));
+    }
+
     public function test_super_admin_can_update_only_users_in_assigned_cooperatives(): void
     {
         $cooperative = $this->createCooperative();
