@@ -8,6 +8,7 @@ use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
+use App\Domains\Media\Enums\MediaDocumentCategory;
 use App\Domains\Media\Models\Media;
 use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -46,13 +47,15 @@ final class MediaService
         Gate::forUser($actor)->authorize('upload', [new Media, $owner, $category]);
 
         if ($mediaCategory === MediaCategory::DOCUMENT) {
-            $documentCategory = trim((string) $documentCategory);
+            $documentCategoryEnum = MediaDocumentCategory::tryFrom(trim((string) $documentCategory));
 
-            if ($documentCategory === '' || mb_strlen($documentCategory) > 80) {
+            if ($documentCategoryEnum === null) {
                 throw ValidationException::withMessages([
-                    'document_category' => ['La catégorie du document est obligatoire et limitée à 80 caractères.'],
+                    'document_category' => ['La catégorie du document doit être identity, legal, administrative, certification ou other.'],
                 ]);
             }
+
+            $documentCategory = $documentCategoryEnum->value;
         } else {
             $documentCategory = null;
         }
@@ -158,7 +161,11 @@ final class MediaService
             });
         } catch (\Throwable $exception) {
             foreach ($storedPaths as $storedPath) {
-                Storage::disk($disk)->delete($storedPath);
+                try {
+                    Storage::disk($disk)->delete($storedPath);
+                } catch (\Throwable) {
+                    // Preserve the original upload/persistence exception.
+                }
             }
 
             throw $exception;
