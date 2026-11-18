@@ -32,6 +32,7 @@ use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationControlle
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
 use App\Domains\Media\Http\Controllers\MediaController;
+use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -628,6 +629,22 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
     ->prefix('media')
     ->name('media.')
     ->group(function (): void {
+        Route::prefix('incidents')
+            ->name('incidents.')
+            ->middleware('role:super_admin_root')
+            ->group(function (): void {
+                Route::get('/', [MediaIncidentController::class, 'index'])->name('index');
+                Route::post('/', [MediaIncidentController::class, 'store'])->name('store');
+                Route::get('/export', [MediaIncidentController::class, 'export'])->name('export');
+                Route::get('/{incident}', [MediaIncidentController::class, 'show'])
+                    ->whereUlid('incident')->name('show');
+                Route::patch('/{incident}/status', [MediaIncidentController::class, 'transition'])
+                    ->whereUlid('incident')->name('status');
+                Route::post('/{incident}/reopen', [MediaIncidentController::class, 'reopen'])
+                    ->whereUlid('incident')->name('reopen');
+                Route::post('/{incident}/attachments', [MediaIncidentController::class, 'attach'])
+                    ->whereUlid('incident')->name('attachments.store');
+            });
         Route::get('{media}/private', [MediaController::class, 'showPrivate'])
             ->whereUlid('media')
             ->name('private');
