@@ -31,6 +31,8 @@ final class Product extends BaseModel
         'name',
         'slug',
         'description',
+        'price',
+        'currency',
         'is_active',
     ];
 
@@ -43,6 +45,7 @@ final class Product extends BaseModel
     {
         return [
             'is_active' => 'boolean',
+            'price' => 'decimal:2',
             'deleted_at' => 'datetime',
         ];
     }
