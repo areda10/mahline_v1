@@ -370,6 +370,27 @@ final class UserManagementServiceTest extends TestCase
         $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $history->password_hash));
     }
 
+    public function test_super_admin_root_account_cannot_be_deleted_through_user_management(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+
+        try {
+            $this->service->deleteUser($root, $root);
+            self::fail('The super admin root account must not be deleted.');
+        } catch (\\DomainException $exception) {
+            self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('users', [
+            'id' => $root->getKey(),
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.user.deleted',
+            'subject_id' => $root->getKey(),
+        ]);
+    }
+
     public function test_password_history_survives_soft_delete_and_cascades_on_force_delete(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
