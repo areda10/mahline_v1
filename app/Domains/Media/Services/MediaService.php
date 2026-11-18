@@ -11,14 +11,17 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Enums\MediaDocumentCategory;
 use App\Domains\Media\Models\Media;
+use App\Domains\Media\Notifications\MediaSecurityAlertNotification;
 use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -623,6 +626,36 @@ final class MediaService
     public function recordDeniedAccess(User $actor, Media $media): void
     {
         $this->record($actor, $media, 'media.private_access_denied', 'private_access_denied');
+
+        $actorHash = hash('sha256', (string) $actor->getKey());
+        $ip = app()->bound('request') ? (string) request()->ip() : 'unknown';
+        $ipHash = hash('sha256', $ip);
+        $actorKey = 'media:denied:actor:'.$actorHash;
+        $ipKey = 'media:denied:ip:'.$ipHash;
+
+        Cache::add($actorKey, 0, now()->addMinutes(15));
+        Cache::add($ipKey, 0, now()->addMinutes(15));
+        $actorAttempts = (int) Cache::increment($actorKey);
+        $ipAttempts = (int) Cache::increment($ipKey);
+        $attempts = max($actorAttempts, $ipAttempts);
+
+        if ($attempts >= 5 && ($attempts === 5 || $attempts % 10 === 0)) {
+            Log::warning('MEDIA repeated private access denials detected.', [
+                'actor_hash' => $actorHash,
+                'ip_hash' => $ipHash,
+                'attempts' => $attempts,
+            ]);
+
+            $roots = User::query()
+                ->whereHas('roles', static fn ($query) => $query->where('slug', 'super_admin_root'))
+                ->whereNotNull('email')
+                ->get();
+
+            Notification::send(
+                $roots,
+                new MediaSecurityAlertNotification('private_access_denied', $actorHash, $ipHash, $attempts),
+            );
+        }
     }
 
     private function isManagedPath(string $path): bool
