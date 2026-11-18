@@ -1,8 +1,8 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.29
+- **Version :** 4.30
 - **Date d'ouverture :** 12 novembre 2026
-- **Dernière mise à jour :** 18 novembre 2026 — clôture MEDIA V1 et première vague de corrections techniques (tests locaux en attente)
+- **Dernière mise à jour :** 18 novembre 2026 — première vague MEDIA testée localement ; deuxième vague sur le cycle de vie des propriétaires enregistrée, tests en attente
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
 - **Périmètre :** premier release de MAHLINE (SaaS de gestion coopérative + marketplace publique)
@@ -3591,7 +3591,7 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 
 ### Suivi de conformité technique MEDIA V1 — vague 1 (18 novembre 2026)
 
-**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. Les corrections ci-dessous sont enregistrées sur `feature/Marketplace`, mais les tests n'ont pas encore été exécutés localement.
+**Statut global : EN COURS — aucune conformité V1 complète n'est déclarée.** Les 74 décisions fonctionnelles restent la référence. La vague 1 a été déclarée verte par l'utilisateur : 70 tests MEDIA (258 assertions), le test de migration `MediaCategoryIndexMigrationTest` et Pint. La vague 2 ci-dessous vient d'être enregistrée sur `feature/Marketplace` et doit encore être testée localement.
 
 #### Corrections applicatives enregistrées
 
@@ -3608,13 +3608,27 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Purge : suppression fichier par fichier, vérification des chemins MEDIA gérés, conservation de la ligne tant qu'un fichier reste et reprise à l'exécution suivante ; erreurs de nettoyage journalisées.
 - README technique MEDIA actualisé pour refléter les règles V1 et distinguer les corrections enregistrées des travaux restants.
 
-#### Tests adaptés ou ajoutés — exécution encore requise
+#### Tests de la vague 1 — résultat local communiqué par l'utilisateur
+
+- 70 tests MEDIA réussis, 258 assertions.
+- `MediaCategoryIndexMigrationTest` réussi.
+- `vendor/bin/pint --test` déclaré vert par l'utilisateur.
+
+#### Corrections de la vague 2 — tests en attente
+
+- La relation polymorphe Media résout désormais les propriétaires supprimés logiquement afin d'appliquer la règle d'accès aux documents privés pendant la rétention.
+- La Policy réserve cet accès au `super_admin_root` et refuse les opérations de modification sur les médias d'un propriétaire supprimé.
+- Le contrôleur maintient le 404 public pour les médias dont le propriétaire est supprimé.
+- Chaque consultation root d'un document privé rattaché à un propriétaire supprimé enregistre `media.private_accessed_deleted_owner`, sans journaliser le chemin physique.
+- Tests ajoutés pour l'accès root, le refus aux autres rôles, l'audit de consultation et le masquage public après suppression logique du produit.
+
+#### Tests adaptés ou ajoutés — nouvelle exécution requise
 
 - Tests de validation des formats documentaires, des limites de taille et des dimensions.
 - Tests des quatre dérivés et de l'absence d'agrandissement.
 - Tests des quotas galerie et documents.
 - Tests de consultation PDF inline et de téléchargement explicite.
-- Les tests ciblés MEDIA, les tests globaux et Pint doivent être exécutés localement avant de valider cette vague.
+- Les tests ciblés MEDIA, les tests globaux et Pint doivent être réexécutés localement après la vague 2 avant de valider ces corrections.
 
 #### Écarts V1 restant à traiter
 
