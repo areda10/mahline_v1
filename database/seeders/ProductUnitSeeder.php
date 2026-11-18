@@ -20,7 +20,7 @@ final class ProductUnitSeeder extends Seeder
         ];
 
         foreach ($units as $unit) {
-            ProductUnit::query()->updateOrCreate(
+            ProductUnit::query()->firstOrCreate(
                 ['code' => $unit['code']],
                 $unit + ['is_active' => true],
             );
