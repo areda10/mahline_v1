@@ -69,7 +69,7 @@ final class MediaController
         ], 201);
     }
 
-    public function show(Request $request, Media $media): StreamedResponse
+    public function show(Request $request, Media $media, ?string $variant = null): StreamedResponse
     {
         abort_unless(
             $media->visibility === 'public'
@@ -101,7 +101,7 @@ final class MediaController
 
         abort_unless($isPublished, 404);
 
-        return $this->stream($request, $media);
+        return $this->stream($request, $media, $variant);
     }
 
     public function showPrivate(Request $request, Media $media): StreamedResponse
@@ -119,9 +119,9 @@ final class MediaController
         return $this->stream($request, $media);
     }
 
-    private function stream(Request $request, Media $media): StreamedResponse
+    private function stream(Request $request, Media $media, ?string $routeVariant = null): StreamedResponse
     {
-        $variant = $request->query('variant', 'original');
+        $variant = $routeVariant ?? $request->query('variant', 'original');
         abort_unless(in_array($variant, ['original', 'thumbnail', 'small', 'medium', 'large'], true), 404);
 
         $path = $variant === 'original'
