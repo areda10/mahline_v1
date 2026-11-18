@@ -145,7 +145,7 @@ final class UserLifecycleServiceTest extends TestCase
             try {
                 $operation();
                 self::fail('A lifecycle service must not change the Root account status.');
-            } catch (\\DomainException $exception) {
+            } catch (\DomainException $exception) {
                 self::assertSame(
                     'The super admin root account status cannot be changed.',
                     $exception->getMessage(),
