@@ -367,7 +367,7 @@ final class UserPolicyTest extends TestCase
             $protectedRoot->status = UserStatus::Inactive;
             $protectedRoot->save();
             self::fail('A Root status must not be changed through Eloquent.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             self::assertSame(
                 'The super admin root account status cannot be changed.',
                 $exception->getMessage(),
