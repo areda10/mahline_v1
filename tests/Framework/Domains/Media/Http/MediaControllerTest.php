@@ -246,17 +246,25 @@ final class MediaControllerTest extends TestCase
 
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
-            ->post(route('media.store'), [
-                'owner_type' => 'product',
-                'owner_id' => (string) $product->getKey(),
-                'category' => 'product_image',
-                'file' => \Illuminate\Http\UploadedFile::fake()->createWithContent(
-                    'spoofed.jpg',
-                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
-                ),
-            ], ['Accept' => 'application/json']);
+            ->call(
+                'POST',
+                route('media.store'),
+                [
+                    'owner_type' => 'product',
+                    'owner_id' => (string) $product->getKey(),
+                    'category' => 'product_image',
+                ],
+                [],
+                [
+                    'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
+                        'spoofed.jpg',
+                        "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    ),
+                ],
+                ['HTTP_ACCEPT' => 'application/json'],
+            );
 
-        $response->assertUnprocessable();
+        self::assertSame(422, $response->status());
         $response->assertJsonValidationErrors('file');
         self::assertSame(0, Media::query()->count());
         self::assertSame([], Storage::disk('public')->allFiles('media'));
@@ -272,17 +280,25 @@ final class MediaControllerTest extends TestCase
 
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
-            ->post(route('media.store'), [
-                'owner_type' => 'cooperative',
-                'owner_id' => (string) $cooperative->getKey(),
-                'category' => 'product_image',
-                'file' => \Illuminate\Http\UploadedFile::fake()->createWithContent(
-                    'not-an-image.pdf',
-                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
-                ),
-            ], ['Accept' => 'application/json']);
+            ->call(
+                'POST',
+                route('media.store'),
+                [
+                    'owner_type' => 'cooperative',
+                    'owner_id' => (string) $cooperative->getKey(),
+                    'category' => 'product_image',
+                ],
+                [],
+                [
+                    'file' => \\Illuminate\\Http\\UploadedFile::fake()->createWithContent(
+                        'not-an-image.pdf',
+                        "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    ),
+                ],
+                ['HTTP_ACCEPT' => 'application/json'],
+            );
 
-        $response->assertUnprocessable();
+        self::assertSame(422, $response->status());
         $response->assertJsonValidationErrors('category');
         self::assertSame(0, Media::query()->count());
         self::assertSame([], Storage::disk('public')->allFiles('media'));
