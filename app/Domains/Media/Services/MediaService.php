@@ -500,6 +500,17 @@ final class MediaService
      * Check every retained object before changing database visibility.
      * Missing or malformed objects prevent a partial restore.
      */
+    public function isMediaIntegrityValid(Media $media): bool
+    {
+        try {
+            $this->assertRetainedFilesAreValid($media);
+
+            return true;
+        } catch (\\Throwable) {
+            return false;
+        }
+    }
+
     private function assertRetainedFilesAreValid(Media $media): void
     {
         $disk = Storage::disk($media->disk);
