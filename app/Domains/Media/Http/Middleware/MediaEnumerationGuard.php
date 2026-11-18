@@ -8,7 +8,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Domains\Audit\Repositories\AuditEventRepository;
+use App\Domains\Audit\Services\AuditService;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Media\Notifications\MediaSecurityAlertNotification;
 use Illuminate\Support\Facades\Notification;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,6 +39,27 @@ final class MediaEnumerationGuard
                 'requested_id_hash' => hash('sha256', $requestedId),
                 'not_found_attempts_10m' => $attempts,
             ]);
+
+            try {
+                $events = app(AuditEventRepository::class);
+                if ($events->verifyIntegrity()) {
+                    app(AuditService::class)->record(new AuditEntryDTO(
+                        eventKey: 'media.enumeration_detected',
+                        action: 'enumeration_detected',
+                        metadata: [
+                            'ip_hash' => $ipHash,
+                            'requested_id_hash' => hash('sha256', $requestedId),
+                            'attempts_10m' => $attempts,
+                        ],
+                    ));
+                } else {
+                    Log::critical('MEDIA enumeration event could not be appended because the audit chain is invalid.');
+                }
+            } catch (\\Throwable $exception) {
+                Log::critical('MEDIA enumeration audit append failed.', [
+                    'exception' => $exception::class,
+                ]);
+            }
 
             if ($attempts === 5 || $attempts % 10 === 0) {
                 $roots = User::query()
