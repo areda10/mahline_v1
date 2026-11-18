@@ -483,6 +483,34 @@ final class MediaService
      *
      * @return \Illuminate\Support\Collection<int, Media>
      */
+    /**
+     * Root-only chronological history for every media item owned by an entity.
+     *
+     * @return \Illuminate\Support\Collection<int, Media>
+     */
+    public function ownerHistory(User $actor, Model $owner): \Illuminate\Support\Collection
+    {
+        if (! $actor->isAuthorized() || ! $actor->hasRole('super_admin_root')) {
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'media.history_access_denied',
+                action: 'history_access_denied',
+                actorType: User::class,
+                actorId: (string) $actor->getKey(),
+                subjectType: $owner::class,
+                subjectId: (string) $owner->getKey(),
+                metadata: ['owner_type' => $owner::class],
+            ));
+            abort(403);
+        }
+
+        return Media::withTrashed()
+            ->where('mediable_type', $owner->getMorphClass())
+            ->where('mediable_id', (string) $owner->getKey())
+            ->orderByDesc('created_at')
+            ->orderByDesc('deleted_at')
+            ->get();
+    }
+
     public function replacementHistory(User $actor, Media $current): \Illuminate\Support\Collection
     {
         if (! $actor->hasRole('super_admin_root') || ! $actor->isAuthorized()) {
