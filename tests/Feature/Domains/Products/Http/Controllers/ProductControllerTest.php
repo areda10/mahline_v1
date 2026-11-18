@@ -8,6 +8,8 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
 use Tests\TestCase;
@@ -21,9 +23,14 @@ final class ProductControllerTest extends TestCase
 
     private Category $category;
 
+    private string $unitId;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->seed(ProductUnitSeeder::class);
+        $this->unitId = (string) ProductUnit::query()->where('code', 'kg')->value('id');
 
         $this->cooperative = Cooperative::factory()
             ->active()
@@ -61,6 +68,7 @@ final class ProductControllerTest extends TestCase
             'name' => 'Miel de montagne',
             'description' => 'Miel naturel',
             'price' => '125.50',
+            'unit_id' => $this->unitId,
             'is_active' => true,
             'category_ids' => [
                 $this->category->getKey(),
@@ -108,6 +116,7 @@ final class ProductControllerTest extends TestCase
             ['cooperative' => $this->cooperative->getKey()],
         ), [
             'description' => 'Produit sans nom',
+            'unit_id' => $this->unitId,
             'category_ids' => [$this->category->getKey()],
         ]);
 
@@ -140,6 +149,7 @@ final class ProductControllerTest extends TestCase
             ],
         ), [
             'name' => 'Produit modifié',
+            'unit_id' => $this->unitId,
         ]);
 
         $response->assertRedirectToRoute(
