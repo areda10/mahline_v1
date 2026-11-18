@@ -37,6 +37,22 @@ final class MediaControllerTest extends TestCase
         self::assertStringNotContainsString('/storage/', $response->headers->get('Content-Disposition', ''));
     }
 
+    public function test_public_media_with_a_category_that_does_not_match_its_owner_is_hidden(): void
+    {
+        Storage::fake('public');
+
+        $cooperative = Cooperative::factory()->create(['status' => CooperativeStatus::ACTIVE]);
+        $product = Product::factory()->forCooperative($cooperative)->create(['is_active' => true]);
+        $path = 'media/category-mismatch/original.jpg';
+        Storage::disk('public')->put($path, 'image-content');
+
+        $media = $product->media()->create(
+            $this->attributes($path, 'cooperative_logo', 'public', 'public', 'image/jpeg', 'jpg'),
+        );
+
+        $this->get(route('media.show', $media))->assertNotFound();
+    }
+
     public function test_public_cooperative_logo_and_photos_are_streamed(): void
     {
         Storage::fake('public');
