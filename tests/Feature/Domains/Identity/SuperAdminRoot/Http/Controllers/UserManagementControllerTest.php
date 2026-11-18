@@ -610,6 +610,7 @@ final class UserManagementControllerTest extends TestCase
             $protectedRoot->fresh()->roles()->pluck('slug')->all(),
         );
     }
+
     public function test_root_cannot_assign_root_role_through_user_edit(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.update']);
