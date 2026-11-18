@@ -243,9 +243,12 @@ final class MediaControllerTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $actor = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
-
+        
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
+            ->withHeaders([
+                'Accept' => 'application/json',
+            ])
             ->post(route('media.store'), [
                 'owner_type' => 'product',
                 'owner_id' => (string) $product->getKey(),
@@ -254,9 +257,9 @@ final class MediaControllerTest extends TestCase
                     'spoofed.jpg',
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
-            ], ['Accept' => 'application/json']);
+            ]);
 
-        $response->assertUnprocessable();
+        self::assertSame(422, $response->status());
         $response->assertJsonValidationErrors('file');
         self::assertSame(0, Media::query()->count());
         self::assertSame([], Storage::disk('public')->allFiles('media'));
@@ -272,6 +275,9 @@ final class MediaControllerTest extends TestCase
 
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
+            ->withHeaders([
+                'Accept' => 'application/json',
+            ])
             ->post(route('media.store'), [
                 'owner_type' => 'cooperative',
                 'owner_id' => (string) $cooperative->getKey(),
@@ -280,9 +286,9 @@ final class MediaControllerTest extends TestCase
                     'not-an-image.pdf',
                     "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
-            ], ['Accept' => 'application/json']);
+            ]);
 
-        $response->assertUnprocessable();
+        self::assertSame(422, $response->status());
         $response->assertJsonValidationErrors('category');
         self::assertSame(0, Media::query()->count());
         self::assertSame([], Storage::disk('public')->allFiles('media'));
