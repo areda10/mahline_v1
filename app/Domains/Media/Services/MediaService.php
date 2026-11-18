@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -192,9 +193,18 @@ final class MediaService
         } catch (\Throwable $exception) {
             foreach ($storedPaths as $storedPath) {
                 try {
-                    Storage::disk($disk)->delete($storedPath);
-                } catch (\Throwable) {
-                    // Preserve the original upload/persistence exception.
+                    if (! Storage::disk($disk)->delete($storedPath)) {
+                        Log::error('MEDIA upload rollback could not remove a created file.', [
+                            'media_id' => $mediaId,
+                            'category' => $mediaCategory->value,
+                        ]);
+                    }
+                } catch (\Throwable $cleanupException) {
+                    Log::error('MEDIA upload rollback cleanup failed.', [
+                        'media_id' => $mediaId,
+                        'category' => $mediaCategory->value,
+                        'exception' => $cleanupException::class,
+                    ]);
                 }
             }
 
