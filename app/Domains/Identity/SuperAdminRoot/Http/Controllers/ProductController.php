@@ -127,8 +127,6 @@ final class ProductController
             'product' => $item,
             'productUnits' => ProductUnit::query()->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
             'hasVariants' => $item->variants()->exists(),
-            'productUnits' => ProductUnit::query()->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
-            'hasVariants' => $item->variants()->exists(),
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()
