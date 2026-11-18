@@ -34,7 +34,7 @@ final class MediaService
         private readonly MediaImageProcessor $processor,
         private readonly AuditService $audit,
         private readonly AuditEventRepository $auditEvents,
-        private readonly MediaAntivirusScanner $antivirus,
+        private readonly MediaAntivirusScannerContract $antivirus,
     ) {}
 
     public function upload(
