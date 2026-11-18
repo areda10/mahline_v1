@@ -64,7 +64,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request): bool => $request->is('api/*')
-                || ($request->is('authentication/*') && $request->expectsJson()),
+                || ($request->is('authentication/*') && $request->expectsJson())
+                || ($request->is('media/*') && $request->expectsJson()),
         );
 
     })
