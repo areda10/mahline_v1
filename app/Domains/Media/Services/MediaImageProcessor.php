@@ -72,8 +72,12 @@ final class MediaImageProcessor
         imagealphablending($source, false);
         imagesavealpha($source, true);
 
-        if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
+        if (! in_array($extension, ['jpg', 'jpeg'], true)) {
             return $source;
+        }
+
+        if (! function_exists('exif_read_data')) {
+            throw new RuntimeException('L’extension PHP EXIF est requise pour corriger l’orientation des JPEG.');
         }
 
         $exif = @exif_read_data($path);
