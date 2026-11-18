@@ -96,8 +96,9 @@ final class MediaIncidentController
         ], 201);
     }
 
-    public function export(): StreamedResponse
+    public function export(Request $request): StreamedResponse
     {
+        $this->incidents->recordExport($request->user());
         return response()->streamDownload(static function (): void {
             $output = fopen('php://output', 'wb');
             fputcsv($output, ['reference', 'title', 'status', 'reported_by', 'created_at', 'resolved_at', 'closed_at']);
