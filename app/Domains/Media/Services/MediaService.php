@@ -153,8 +153,13 @@ final class MediaService
                         ->where('category', $mediaCategory->value)
                         ->get()
                         ->each(function (Media $previous) use ($actor): void {
-                            $previous->deleted_by = (string) $actor->getKey();
-                            $previous->save();
+                            $metadata = $previous->metadata ?? [];
+                            $metadata['replacement_media_id'] = $mediaId;
+                            $metadata['replacement_recorded_at'] = now()->toIso8601String();
+                            $previous->forceFill([
+                                'metadata' => $metadata,
+                                'deleted_by' => (string) $actor->getKey(),
+                            ])->save();
                             $previous->delete();
                             $this->record($actor, $previous, 'media.replaced', 'replaced');
                         });
@@ -360,6 +365,169 @@ final class MediaService
                 }
             }
         });
+    }
+
+    /**
+     * Restore a retained media record after verifying its complete file set.
+     * Restoration is restricted to root because it can replace the current asset
+     * and expose retained historical content.
+     */
+    public function restore(User $actor, Media $media, bool $makePrimary = false): Media
+    {
+        Gate::forUser($actor)->authorize('restore', $media);
+
+        if (! $media->trashed()) {
+            throw ValidationException::withMessages([
+                'media' => ['Ce média n’est pas supprimé.'],
+            ]);
+        }
+
+        $owner = $media->mediable;
+
+        if (! $owner instanceof Model || (method_exists($owner, 'trashed') && $owner->trashed())) {
+            throw ValidationException::withMessages([
+                'media' => ['Le propriétaire doit être restauré avant le média.'],
+            ]);
+        }
+
+        $this->assertRetainedFilesAreValid($media);
+
+        return DB::transaction(function () use ($actor, $media, $makePrimary): Media {
+            $owner = $media->mediable;
+            if (! $owner instanceof Model) {
+                throw new RuntimeException('Le propriétaire du média est introuvable.');
+            }
+
+            $owner = $owner->newQuery()->lockForUpdate()->findOrFail($owner->getKey());
+            $locked = Media::withTrashed()->whereKey($media->getKey())->lockForUpdate()->firstOrFail();
+
+            if (! $locked->trashed()) {
+                throw ValidationException::withMessages([
+                    'media' => ['Ce média a déjà été restauré.'],
+                ]);
+            }
+
+            $single = in_array($locked->category, [
+                MediaCategory::COOPERATIVE_LOGO->value,
+                MediaCategory::PROFILE_IMAGE->value,
+            ], true);
+
+            if ($single) {
+                $owner->media()->where('category', $locked->category)->lockForUpdate()->get()
+                    ->each(function (Media $active) use ($actor, $locked): void {
+                        $metadata = $active->metadata ?? [];
+                        $metadata['replacement_media_id'] = (string) $locked->getKey();
+                        $active->forceFill([
+                            'metadata' => $metadata,
+                            'deleted_by' => (string) $actor->getKey(),
+                        ])->save();
+                        $active->delete();
+                        $this->record($actor, $active, 'media.replaced_by_restoration', 'replaced_by_restoration');
+                    });
+            }
+
+            if ($locked->category === MediaCategory::PRODUCT_IMAGE->value && $makePrimary) {
+                $owner->media()
+                    ->where('category', MediaCategory::PRODUCT_IMAGE->value)
+                    ->where('is_primary', true)
+                    ->lockForUpdate()
+                    ->get()
+                    ->each(function (Media $active) use ($actor): void {
+                        $active->is_primary = false;
+                        $active->updated_by = (string) $actor->getKey();
+                        $active->save();
+                    });
+            }
+
+            $locked->forceFill([
+                'deleted_at' => null,
+                'deleted_by' => null,
+                'updated_by' => (string) $actor->getKey(),
+                'is_primary' => $locked->category === MediaCategory::PRODUCT_IMAGE->value
+                    ? $makePrimary
+                    : $locked->is_primary,
+            ])->save();
+
+            $locked->restore();
+            $this->record($actor, $locked, 'media.restored', 'restored');
+
+            return $locked->refresh();
+        });
+    }
+
+    /**
+     * Return retained predecessors of a current media item.
+     *
+     * @return \Illuminate\Support\Collection<int, Media>
+     */
+    public function replacementHistory(User $actor, Media $current): \Illuminate\Support\Collection
+    {
+        abort_unless($actor->hasRole('super_admin_root') && $actor->isAuthorized(), 403);
+
+        return Media::onlyTrashed()
+            ->where('mediable_type', $current->mediable_type)
+            ->where('mediable_id', $current->mediable_id)
+            ->where('category', $current->category)
+            ->where('metadata->replacement_media_id', (string) $current->getKey())
+            ->orderByDesc('deleted_at')
+            ->get();
+    }
+
+    /**
+     * Check every retained object before changing database visibility.
+     * Missing or malformed objects prevent a partial restore.
+     */
+    private function assertRetainedFilesAreValid(Media $media): void
+    {
+        $disk = Storage::disk($media->disk);
+        $paths = [$media->path];
+        $derivatives = $media->metadata['derivatives'] ?? [];
+
+        if (is_array($derivatives)) {
+            foreach ($derivatives as $path) {
+                if (is_string($path)) {
+                    $paths[] = $path;
+                }
+            }
+        }
+
+        foreach (array_unique($paths) as $path) {
+            if (! is_string($path) || ! str_starts_with($path, 'media/') || ! $disk->exists($path)) {
+                throw ValidationException::withMessages([
+                    'media' => ['Restauration impossible : un ou plusieurs fichiers conservés sont absents.'],
+                ]);
+            }
+
+            $contents = $disk->get($path);
+            if (! is_string($contents) || $contents === '') {
+                throw ValidationException::withMessages([
+                    'media' => ['Restauration impossible : un ou plusieurs fichiers conservés sont illisibles.'],
+                ]);
+            }
+
+            if ($path === $media->path) {
+                if ($media->mime_type === 'application/pdf') {
+                    $valid = str_starts_with($contents, '%PDF-');
+                } else {
+                    $image = @getimagesizefromstring($contents);
+                    $valid = is_array($image) && ($image['mime'] ?? null) === $media->mime_type;
+                }
+
+                if (! $valid) {
+                    throw ValidationException::withMessages([
+                        'media' => ['Restauration impossible : le fichier original est corrompu ou invalide.'],
+                    ]);
+                }
+            } else {
+                $image = @getimagesizefromstring($contents);
+                $expectedMime = $media->metadata['derivative_mime_types'][array_search($path, $derivatives, true)] ?? null;
+                if (! is_array($image) || ! is_string($expectedMime) || ($image['mime'] ?? null) !== $expectedMime) {
+                    throw ValidationException::withMessages([
+                        'media' => ['Restauration impossible : un dérivé est corrompu ou invalide.'],
+                    ]);
+                }
+            }
+        }
     }
 
     public function recordPrivateAccess(User $actor, Media $media): void
