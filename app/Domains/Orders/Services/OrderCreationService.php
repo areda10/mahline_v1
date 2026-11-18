@@ -29,7 +29,7 @@ final class OrderCreationService
      *
      * @param array{
      *     delivery_address_snapshot: array<string, mixed>,
-     *     items: array<int, array{product_id: string, product_variant_id?: string|null, quantity: string|int|float, unit?: string|null}>
+     *     items: array<int, array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}>
      * } $checkout
      */
     public function createFromCheckout(User $customer, array $checkout): Order
