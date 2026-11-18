@@ -71,14 +71,14 @@ final class ResetRootPasswordTest extends TestCase
         try {
             $root->delete();
             self::fail('An inactive super admin root account must remain permanent.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
         }
 
         try {
             $root->forceDelete();
             self::fail('An inactive super admin root account must not be force-deleted.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
             self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
         }
 
@@ -87,6 +87,43 @@ final class ResetRootPasswordTest extends TestCase
             'deleted_at' => null,
         ]);
         $this->assertDatabaseCount('audit_events', 0);
+    }
+
+    public function test_root_status_cannot_be_changed_through_direct_eloquent_updates(): void
+    {
+        $root = $this->createRoot();
+
+        foreach ([
+            UserStatus::Pending,
+            UserStatus::Inactive,
+            UserStatus::Suspended,
+            UserStatus::Archived,
+        ] as $status) {
+            $root->status = $status;
+
+            try {
+                $root->save();
+                self::fail('The Root account status must remain active.');
+            } catch (\DomainException $exception) {
+                self::assertSame(
+                    'The super admin root account status cannot be changed.',
+                    $exception->getMessage(),
+                );
+            }
+
+            $root->refresh();
+            self::assertSame(UserStatus::Active, $root->status);
+        }
+
+        // The status guard must not block permitted profile credentials changes.
+        $root->email = 'root-updated@example.test';
+        $root->password = 'UpdatedRootPassword123!';
+        $root->save();
+
+        $root->refresh();
+        self::assertSame(UserStatus::Active, $root->status);
+        self::assertSame('root-updated@example.test', $root->email);
+        self::assertTrue(Hash::check('UpdatedRootPassword123!', $root->password));
     }
 
     public function test_it_refuses_a_soft_deleted_root_account(): void
@@ -135,7 +172,7 @@ final class ResetRootPasswordTest extends TestCase
 
     public function test_it_changes_only_the_password_and_records_an_audit_event(): void
     {
-        $root = $this->createRoot(['status' => UserStatus::Inactive]);
+        $root = $this->createRoot(['status' => UserStatus::Active]);
         $oldStatus = $root->status;
         $oldEmailVerifiedAt = $root->email_verified_at;
 
@@ -149,6 +186,7 @@ final class ResetRootPasswordTest extends TestCase
         $root->refresh();
 
         $this->assertTrue(Hash::check('NewRootPassword123!', $root->password));
+        $this->assertSame(UserStatus::Active, $root->status);
         $this->assertSame($oldStatus, $root->status);
         $this->assertEquals($oldEmailVerifiedAt, $root->email_verified_at);
         $this->assertTrue($root->roles()->where('slug', 'super_admin_root')->exists());
