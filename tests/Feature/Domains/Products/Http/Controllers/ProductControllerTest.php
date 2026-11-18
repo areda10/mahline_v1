@@ -170,6 +170,25 @@ final class ProductControllerTest extends TestCase
         ]);
     }
 
+    public function test_simple_product_update_requires_a_registered_unit(): void
+    {
+        $product = Product::factory()
+            ->forCooperative($this->cooperative)
+            ->create(['name' => 'Produit historique sans unité']);
+
+        $this->patch(route('backoffice.products.update', [
+            'cooperative' => $this->cooperative->getKey(),
+            'product' => $product->getKey(),
+        ]), [
+            'name' => 'Produit modifié sans unité',
+        ])->assertRedirect()->assertSessionHasErrors(['unit_id']);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->getKey(),
+            'name' => 'Produit historique sans unité',
+        ]);
+    }
+
     public function test_product_can_be_updated(): void
     {
         $product = Product::factory()
