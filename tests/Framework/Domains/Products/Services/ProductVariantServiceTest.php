@@ -40,6 +40,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => 'Pot en verre 250 g',
+            'price' => '12.50',
             'sku' => 'MIEL-250',
             'attributes' => [
                 'weight' => '250 g',
@@ -63,7 +64,7 @@ final class ProductVariantServiceTest extends TestCase
         );
     }
 
-    public function test_it_normalizes_an_optional_price_override_to_two_decimals(): void
+    public function test_it_requires_and_normalizes_a_variant_price_to_two_decimals(): void
     {
         $product = $this->createProduct();
 
@@ -75,6 +76,32 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->assertSame('12.50', $variant->fresh()->price);
         $this->assertSame('12.50', $variant->effectivePrice());
+    }
+
+
+    public function test_it_rejects_a_missing_variant_price(): void
+    {
+        $product = $this->createProduct();
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->create($product, [
+            'name' => 'Pot sans prix',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_it_rejects_a_null_variant_price(): void
+    {
+        $product = $this->createProduct();
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->create($product, [
+            'name' => 'Pot sans prix',
+            'price' => null,
+            'is_active' => true,
+        ]);
     }
 
     public function test_it_rejects_a_zero_variant_price_override(): void
@@ -96,6 +123,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => '  Pot   en VERRE 250 g  ',
+            'price' => '12.50',
             'is_active' => true,
         ]);
 
@@ -116,6 +144,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot en verre 250 g',
+            'price' => '12.50',
             'is_active' => true,
         ]);
 
@@ -123,6 +152,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => '  POT EN VERRE 250 G  ',
+            'price' => '12.50',
             'is_active' => true,
         ]);
     }
@@ -134,6 +164,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $first = $this->service->create($firstProduct, [
             'name' => 'Pot 250 g',
+            'price' => '12.50',
             'is_active' => true,
         ]);
 
