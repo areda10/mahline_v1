@@ -23,6 +23,14 @@ final class ProductVariantService
         ): ProductVariant {
             $this->assertProductIsAvailable($product);
 
+            // La conversion d'un produit simple avec unité/stock parent doit passer
+            // par le transfert atomique du domaine Inventory avant toute variante.
+            if ($product->unit_id !== null && ! $product->variants()->exists()) {
+                throw ValidationException::withMessages([
+                    'unit_id' => ['La conversion vers des variantes doit d’abord répartir le stock parent via le processus Inventory.'],
+                ]);
+            }
+
             $name = trim((string) ($attributes['name'] ?? ''));
             $normalizedLabel = $this->normalizeLabel($name);
 
@@ -53,12 +61,6 @@ final class ProductVariantService
             $variant->is_active = $attributes['is_active'] ?? true;
 
             $variant->save();
-
-            // Dès qu'une variante existe, l'unité n'est plus portée par le parent.
-            if ($product->unit_id !== null) {
-                $product->unit_id = null;
-                $product->save();
-            }
 
             return $variant;
         });
