@@ -22,6 +22,7 @@ final class ProductVariant extends BaseModel
         'label',
         'normalized_label',
         'sku',
+        'price',
         'attributes',
         'is_active',
     ];
@@ -30,6 +31,7 @@ final class ProductVariant extends BaseModel
     {
         return [
             'attributes' => 'array',
+            'price' => 'decimal:2',
             'is_active' => 'boolean',
             'deleted_at' => 'datetime',
         ];
