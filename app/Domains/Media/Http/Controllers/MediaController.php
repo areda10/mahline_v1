@@ -80,6 +80,7 @@ final class MediaController
 
         abort_unless(
             $owner instanceof Model
+            && ! (method_exists($owner, 'trashed') && $owner->trashed())
             && $mediaCategory?->isPublic()
             && $mediaCategory->allowsOwner($owner::class),
             404,
@@ -105,6 +106,7 @@ final class MediaController
     {
         abort_unless($media->visibility === 'private', 404);
         Gate::authorize('view', $media);
+        $this->media->recordPrivateAccess($request->user(), $media);
 
         return $this->stream($request, $media);
     }
