@@ -246,6 +246,7 @@ final class MediaControllerTest extends TestCase
 
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
+            ->withHeader('Accept', 'application/json')
             ->call(
                 'POST',
                 route('media.store'),
@@ -261,7 +262,7 @@ final class MediaControllerTest extends TestCase
                         "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
                     ),
                 ],
-                ['HTTP_ACCEPT' => 'application/json'],
+                [],
             );
 
         self::assertSame(422, $response->status());
@@ -280,6 +281,7 @@ final class MediaControllerTest extends TestCase
 
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
+            ->withHeader('Accept', 'application/json')
             ->call(
                 'POST',
                 route('media.store'),
@@ -295,7 +297,7 @@ final class MediaControllerTest extends TestCase
                         "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
                     ),
                 ],
-                ['HTTP_ACCEPT' => 'application/json'],
+                [],
             );
 
         self::assertSame(422, $response->status());
