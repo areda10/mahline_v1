@@ -81,6 +81,21 @@ final class OrderCreationService
                     }
                 }
 
+                if ($variant === null && $product->variants()->exists()) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_variant_id" => ['Une variante doit être sélectionnée pour ce produit.'],
+                    ]);
+                }
+
+                // L'unité de commande provient exclusivement de Products :
+                // produit simple ou variante sélectionnée. La valeur cliente est ignorée.
+                $stockUnit = $variant !== null ? $variant->unit : $product->unit;
+                if ($stockUnit === null) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.unit" => ['L’unité de stock du produit ou de sa variante doit être définie avant la commande.'],
+                    ]);
+                }
+
                 if ((string) $product->currency !== 'MAD') {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_id" => ['Seuls les produits en MAD sont commandables en V1.'],
@@ -118,7 +133,8 @@ final class OrderCreationService
                     'variant_id' => $variant ? (string) $variant->getKey() : null,
                     'variant_label' => $variant?->label,
                     'sku' => $variant?->sku,
-                    'unit' => $input['unit'] ?? null,
+                    'unit' => $stockUnit->code,
+                    'unit_label' => $stockUnit->label,
                     'quantity' => $this->formatQuantity($quantityMilli),
                     'unit_price' => $this->formatMoney($unitPriceCents),
                     'currency' => 'MAD',
@@ -130,7 +146,7 @@ final class OrderCreationService
                     'product_variant_id' => $variant ? (string) $variant->getKey() : null,
                     'snapshot' => $snapshot,
                     'quantity' => $this->formatQuantity($quantityMilli),
-                    'unit' => $input['unit'] ?? null,
+                    'unit' => $stockUnit->code,
                     'unit_price' => $this->formatMoney($unitPriceCents),
                     'line_cents' => $lineCents,
                 ];
