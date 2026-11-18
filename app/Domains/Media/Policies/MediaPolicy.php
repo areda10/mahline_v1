@@ -9,6 +9,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Models\Media;
+use App\Domains\Media\Models\MediaIncident;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 
@@ -37,6 +38,10 @@ final class MediaPolicy extends BasePolicy
             return false;
         }
 
+        if ($owner instanceof MediaIncident) {
+            return $user->hasRole('super_admin_root');
+        }
+
         if ($owner instanceof User) {
             return $this->canViewUserMedia($user, $owner);
         }
@@ -54,6 +59,11 @@ final class MediaPolicy extends BasePolicy
 
         if ($mediaCategory === null || ! $mediaCategory->allowsOwner($owner::class)) {
             return false;
+        }
+
+        if ($owner instanceof MediaIncident) {
+            return $user->hasRole('super_admin_root')
+                && $mediaCategory === MediaCategory::INCIDENT_ATTACHMENT;
         }
 
         if ($owner instanceof User) {
@@ -81,6 +91,10 @@ final class MediaPolicy extends BasePolicy
             || (method_exists($owner, 'trashed') && $owner->trashed())
         ) {
             return false;
+        }
+
+        if ($owner instanceof MediaIncident) {
+            return $user->hasRole('super_admin_root');
         }
 
         if ($owner instanceof User) {
