@@ -13,6 +13,28 @@ final class ProductVariantTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_variant_inherits_product_price_when_no_override_is_set(): void
+    {
+        $product = Product::factory()->create(['price' => '80.00']);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'price' => null,
+        ]);
+
+        $this->assertSame('80.00', $variant->effectivePrice());
+    }
+
+    public function test_variant_uses_its_own_price_override(): void
+    {
+        $product = Product::factory()->create(['price' => '80.00']);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'price' => '92.50',
+        ]);
+
+        $this->assertSame('92.50', $variant->effectivePrice());
+    }
+
     public function test_variant_belongs_to_a_product(): void
     {
         $product = Product::factory()->create();
