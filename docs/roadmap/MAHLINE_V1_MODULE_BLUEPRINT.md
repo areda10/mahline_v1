@@ -226,3 +226,12 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Produit sans variante : unité portée par le produit. Produit avec variantes : unité portée par chaque variante.
 - Aucun calcul ni conversion automatique entre unités en V1 ; toutes les opérations de stock conservent l'unité de l'article concerné.
 - Avant le seeder de référence, finaliser la liste exhaustive des unités autorisées et leurs libellés affichés.
+
+
+## 15. Registre d'unités V1 — implémentation initiale (18 novembre 2026)
+
+- Liste validée : kilogramme (\`kg\`), gramme (\`g\`), litre (\`L\`) et millilitre (\`ml\`). Les codes stockés sont stables et normalisés (\`kg\`, \`g\`, \`l\`, \`ml\`) ; le libellé conserve l'affichage usuel (\`Litre (L)\`).
+- Migration additive \`2026_11_18_000005_create_product_units_and_attach_to_products.php\` : registre \`product_units\`, référence nullable \`unit_id\` sur \`products\` et \`product_variants\`, clés étrangères restrictives.
+- Modèle \`ProductUnit\`, relations \`unit()\` sur Product et ProductVariant, seeder idempotent \`ProductUnitSeeder\` enregistré dans \`DatabaseSeeder\`.
+- La nullabilité préserve les produits et variantes historiques. Le registre et les relations sont en place ; le raccordement des listes déroulantes et la validation obligatoire à la création/édition restent à réaliser avec les interfaces de produits et variantes.
+- Aucun mécanisme de conversion n'est ajouté. Les tests de registre et de relations sont ajoutés mais ne sont pas exécutés dans cette session.
