@@ -43,15 +43,21 @@ final class MediaEnumerationGuard
                     ->whereNotNull('email')
                     ->get();
 
-                Notification::send(
-                    $roots,
-                    new MediaSecurityAlertNotification(
-                        'media_identifier_enumeration',
-                        'unknown',
-                        $ipHash,
-                        $attempts,
-                    ),
-                );
+                try {
+                    Notification::send(
+                        $roots,
+                        new MediaSecurityAlertNotification(
+                            'media_identifier_enumeration',
+                            'unknown',
+                            $ipHash,
+                            $attempts,
+                        ),
+                    );
+                } catch (\\Throwable $exception) {
+                    Log::error('MEDIA enumeration notification delivery failed.', [
+                        'exception' => $exception::class,
+                    ]);
+                }
             }
         }
 
