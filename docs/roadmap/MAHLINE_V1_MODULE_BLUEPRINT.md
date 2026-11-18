@@ -184,3 +184,14 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Commit de la fondation Orders : `1843a8ea4f8fa7d7832904ada3976f96fc9a78f2`.
 - La règle de délai coopérative Q307–Q310 a été intégrée au README Orders : référence 12 h, plafond 24 h, dépassement sans refus automatique, intervention admin autorisée et auditée.
 - Les tests PHP/MySQL n'ont pas été exécutés dans cette session. La fondation Orders est donc en cours, pas validée.
+
+
+## 11. Complément — prix du catalogue Products
+
+- Migration additive `2026_11_18_000004_add_prices_to_products_and_variants.php` : prix du produit en `DECIMAL(12,2)`, devise `MAD`, prix de variante facultatif pour surcharge.
+- Le prix effectif d'une variante est son prix propre lorsqu'il est renseigné, sinon le prix du produit parent.
+- Formulaires coopérative et root : saisie du prix produit en MAD ; validation serveur positive et limitée à deux décimales.
+- Modèles, factories, service Product, audit snapshot, affichages et tests de modèle mis à jour.
+- Les prix restent nullable en base uniquement pour préserver les fiches historiques existantes ; les nouveaux formulaires exigent un prix. Le checkout devra refuser tout article historique sans prix exploitable.
+- La gestion d'interface des prix de variantes reste à raccorder : le dépôt ne contient pas encore de contrôleur ni de vues de gestion des variantes.
+- Migration et tests non exécutés dans cette session ; le module Products n'est pas déclaré terminé.
