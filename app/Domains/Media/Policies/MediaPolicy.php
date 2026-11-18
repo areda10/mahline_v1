@@ -29,7 +29,11 @@ final class MediaPolicy extends BasePolicy
             return false;
         }
 
-        if (method_exists($owner, 'trashed') && $owner->trashed() && ! $user->hasRole('super_admin_root')) {
+        if (
+            method_exists($owner, 'trashed')
+            && $owner->trashed()
+            && (! $user->hasRole('super_admin_root') || $media->category !== MediaCategory::DOCUMENT->value)
+        ) {
             return false;
         }
 
