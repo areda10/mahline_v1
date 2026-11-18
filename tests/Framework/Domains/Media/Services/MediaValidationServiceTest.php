@@ -42,7 +42,17 @@ final class MediaValidationServiceTest extends TestCase
         app(MediaValidationService::class)->validate($file, MediaCategory::PRODUCT_IMAGE);
     }
 
-    public function test_document_rejects_a_non_pdf_extension(): void
+    public function test_image_rejects_dimensions_over_four_thousand_pixels(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+        $file = UploadedFile::fake()->image('oversized.jpg', 4001, 100);
+
+        $this->expectException(ValidationException::class);
+
+        app(MediaValidationService::class)->validate($file, MediaCategory::PRODUCT_IMAGE);
+    }
+
+    public function test_document_rejects_an_unsupported_webp_extension(): void
     {
         $file = UploadedFile::fake()->create('document.webp', 10, 'image/webp');
 
@@ -60,7 +70,7 @@ final class MediaValidationServiceTest extends TestCase
         app(MediaValidationService::class)->validate($file, MediaCategory::DOCUMENT);
     }
 
-    public function test_document_accepts_a_pdf_with_a_real_pdf_mime_type(): void
+    public function test_document_accepts_a_pdf_with_a_real_pdf_signature(): void
     {
         $file = UploadedFile::fake()->createWithContent(
             'proof.pdf',
@@ -73,14 +83,38 @@ final class MediaValidationServiceTest extends TestCase
         self::assertSame('application/pdf', $result['mime_type']);
     }
 
-    public function test_cooperative_image_size_limit_is_five_megabytes(): void
+    public function test_document_accepts_jpeg_and_png_images(): void
     {
-        self::assertSame(5 * 1024 * 1024, MediaCategory::COOPERATIVE_LOGO->maxBytes());
-        self::assertSame(5 * 1024 * 1024, MediaCategory::COOPERATIVE_PHOTO->maxBytes());
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+
+        foreach (['proof.jpg', 'proof.png'] as $name) {
+            $file = UploadedFile::fake()->image($name, 100, 100);
+            $result = app(MediaValidationService::class)->validate($file, MediaCategory::DOCUMENT);
+
+            self::assertContains($result['mime_type'], ['image/jpeg', 'image/png']);
+        }
     }
 
-    public function test_document_size_limit_is_ten_megabytes(): void
+    public function test_document_rejects_a_file_over_ten_megabytes(): void
     {
+        $file = UploadedFile::fake()->create('proof.pdf', 10241, 'application/pdf');
+
+        $this->expectException(ValidationException::class);
+
+        app(MediaValidationService::class)->validate($file, MediaCategory::DOCUMENT);
+    }
+
+    public function test_image_and_document_size_limits_match_v1(): void
+    {
+        foreach ([
+            MediaCategory::PRODUCT_IMAGE,
+            MediaCategory::COOPERATIVE_LOGO,
+            MediaCategory::COOPERATIVE_PHOTO,
+            MediaCategory::PROFILE_IMAGE,
+        ] as $category) {
+            self::assertSame(5 * 1024 * 1024, $category->maxBytes());
+        }
+
         self::assertSame(10 * 1024 * 1024, MediaCategory::DOCUMENT->maxBytes());
     }
 
