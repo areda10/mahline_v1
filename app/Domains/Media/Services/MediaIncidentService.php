@@ -149,7 +149,7 @@ final class MediaIncidentService
     private function record(User $actor, MediaIncident $incident, string $eventKey, string $action): void
     {
         if (! $this->auditEvents->verifyIntegrity()) {
-            throw new \\RuntimeException('La chaîne d’audit est invalide ; opération incident refusée.');
+            throw new \RuntimeException('La chaîne d’audit est invalide ; opération incident refusée.');
         }
 
         $this->audit->record(new AuditEntryDTO(
