@@ -406,6 +406,24 @@ final class UserManagementControllerTest extends TestCase
         Notification::assertNothingSent();
     }
 
+    public function test_root_cannot_delete_its_own_permanent_account_through_the_http_route(): void
+    {
+        $root = $this->actor('super_admin_root', ['users.delete']);
+
+        $this->actingAs($root)
+            ->delete(route('root.backoffice.users.destroy', $root))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', [
+            'id' => $root->getKey(),
+            'deleted_at' => null,
+        ]);
+        $this->assertDatabaseMissing('audit_events', [
+            'event_key' => 'identity.user.deleted',
+            'subject_id' => $root->getKey(),
+        ]);
+    }
+
     public function test_super_admin_cannot_use_root_lifecycle_routes(): void
     {
         $superAdmin = $this->actor('super_admin', [
