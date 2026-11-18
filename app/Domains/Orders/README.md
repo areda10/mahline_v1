@@ -111,4 +111,15 @@ Aucune valeur par défaut ne doit être inventée pour ces points.
 7. Ajouter routes, policies, contrôleurs et interfaces après validation des cas d'usage.
 8. Exécuter les tests ciblés, Pint et la suite complète ; enregistrer les résultats réels.
 
-**Aucun code métier ni migration Orders n'est déclaré implémenté ou testé à ce stade.**
+## 9. Montage technique initial — 18 novembre 2026
+
+Fichiers ajoutés sur `feature/Marketplace` :
+- Migration additive `2026_11_18_000003_create_marketplace_orders_tables.php` : `orders`, `cooperative_orders`, `order_items`, `order_change_proposals`, `order_status_histories`.
+- Enums : `OrderStatus`, `CooperativeOrderStatus`, `OrderItemStatus`, `OrderChangeProposalStatus`, `OrderChangeProposalType`.
+- Modèles : `Order`, `CooperativeOrder`, `OrderItem`, `OrderChangeProposal`, `OrderStatusHistory`.
+
+Ce premier lot établit la persistance des commandes globales, segments coopératifs, snapshots de lignes, propositions de modification et historique des transitions. Il ne constitue pas encore un parcours commandable : services transactionnels, validation métier, politiques d'accès, contrôleurs/routes, interfaces, notifications, intégrations Inventory/Sales/Finance/Delivery et tests restent à construire.
+
+La migration est additive ; aucune migration déjà exécutée n'a été modifiée. Les tests et migrations n'ont pas été exécutés dans un environnement PHP/MySQL par cette opération. Le schéma devra être vérifié contre les conventions DB réelles et les tests de migration avant d'être déclaré validé.
+
+**État : fondation Orders créée — module non terminé, non testé et non gelé.**
