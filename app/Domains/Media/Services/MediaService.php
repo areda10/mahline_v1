@@ -408,9 +408,13 @@ final class MediaService
 
         $owner = $media->mediable;
 
-        if (! $owner instanceof Model || (method_exists($owner, 'trashed') && $owner->trashed())) {
+        if (
+            ! $owner instanceof Model
+            || ! MediaCategory::tryFrom($media->category)?->allowsOwner($owner::class)
+            || (method_exists($owner, 'trashed') && $owner->trashed())
+        ) {
             throw ValidationException::withMessages([
-                'media' => ['Le propriétaire doit être restauré avant le média.'],
+                'media' => ['Le propriétaire doit être restauré et la catégorie du média doit lui correspondre.'],
             ]);
         }
 
