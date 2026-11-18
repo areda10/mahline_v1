@@ -66,6 +66,11 @@ final class OrderCreationServiceTest extends TestCase
         $this->assertSame('60.00', $order->items_subtotal);
         $this->assertSame('60.00', $order->grand_total);
         $this->assertSame('MAD', $order->currency);
+        $this->assertSame(
+            'Unité / pièce (u)',
+            $order->cooperativeOrders->firstWhere('cooperative_id', $cooperativeA->getKey())
+                ->items->first()->product_snapshot['unit_label'],
+        );
         $this->assertDatabaseHas('order_items', [
             'product_id' => $productA->getKey(),
             'unit_price' => '20.00',
@@ -124,6 +129,28 @@ final class OrderCreationServiceTest extends TestCase
             'items' => [[
                 'product_id' => (string) $unpriced->getKey(),
                 'quantity' => '1',
+            ]],
+        ]);
+    }
+
+    public function test_checkout_rejects_products_without_a_registered_stock_unit(): void
+    {
+        $customer = $this->customer();
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '15.00',
+            'currency' => 'MAD',
+            'unit_id' => null,
+        ]);
+
+        $this->expectException(\\Illuminate\\Validation\\ValidationException::class);
+
+        app(OrderCreationService::class)->createFromCheckout($customer, [
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [[
+                'product_id' => (string) $product->getKey(),
+                'quantity' => '1',
+                'unit' => 'u',
             ]],
         ]);
     }
