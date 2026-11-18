@@ -15,6 +15,8 @@
 
 <div class="card">
     <p><strong>Coopérative :</strong> {{ $cooperative->name }}</p>
+    <p><strong>Prix :</strong> {{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
+    <p><strong>Prix :</strong> {{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
     <p><strong>Slug :</strong> {{ $product->slug }}</p>
     <p><strong>État :</strong> <span class="badge {{ $product->is_active ? '' : 'badge-inactive' }}">{{ $product->is_active ? 'Actif' : 'Inactif' }}</span></p>
 
