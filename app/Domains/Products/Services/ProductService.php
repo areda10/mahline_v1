@@ -348,6 +348,7 @@ final class ProductService
         if (! is_string($unitId) || $unitId === '' || ! ProductUnit::query()
             ->whereKey($unitId)
             ->where('is_active', true)
+            ->whereIn('code', ProductUnit::V1_CODES)
             ->exists()) {
             throw ValidationException::withMessages([
                 'unit_id' => ['Sélectionnez une unité de stock active parmi les unités autorisées.'],
