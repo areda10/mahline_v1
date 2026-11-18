@@ -440,7 +440,6 @@ final class MediaService
             }
 
             $locked->forceFill([
-                'deleted_at' => null,
                 'deleted_by' => null,
                 'updated_by' => (string) $actor->getKey(),
                 'is_primary' => $locked->category === MediaCategory::PRODUCT_IMAGE->value
