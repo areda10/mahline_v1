@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Media\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
@@ -267,6 +268,9 @@ final class MediaServiceTest extends TestCase
             'profile_image',
         );
 
+        // Simulate a legacy/inconsistent active row that is not marked primary.
+        $first->forceFill(['is_primary' => false])->save();
+
         $second = $service->upload(
             $actor,
             $actor,
@@ -278,6 +282,39 @@ final class MediaServiceTest extends TestCase
         self::assertSame($second->getKey(), $actor->fresh()->profileImage->getKey());
         Storage::disk('local')->assertExists($first->path);
         Storage::disk('local')->assertExists($second->path);
+    }
+
+    public function test_replacing_a_cooperative_logo_soft_deletes_every_active_logo_even_if_not_primary(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $actor = $this->rootUser();
+        $cooperative = Cooperative::factory()->create();
+        $service = app(MediaService::class);
+
+        $first = $service->upload(
+            $actor,
+            $cooperative,
+            UploadedFile::fake()->image('logo-one.jpg', 300, 300),
+            'cooperative_logo',
+        );
+
+        $first->forceFill(['is_primary' => false])->save();
+
+        $second = $service->upload(
+            $actor,
+            $cooperative,
+            UploadedFile::fake()->image('logo-two.jpg', 300, 300),
+            'cooperative_logo',
+        );
+
+        self::assertSoftDeleted('media', ['id' => $first->getKey()]);
+        self::assertSame($second->getKey(), $cooperative->fresh()->logo->getKey());
+        Storage::disk('public')->assertExists($first->path);
+        Storage::disk('public')->assertExists($second->path);
     }
 
     public function test_it_can_reorder_media_within_an_entity_collection(): void
