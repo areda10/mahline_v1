@@ -53,7 +53,7 @@ final class MediaEnumerationGuard
                             $attempts,
                         ),
                     );
-                } catch (\\Throwable $exception) {
+                } catch (\Throwable $exception) {
                     Log::error('MEDIA enumeration notification delivery failed.', [
                         'exception' => $exception::class,
                     ]);
