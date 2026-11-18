@@ -68,6 +68,8 @@ final class ProductService
                     $name,
                 ),
                 'description' => $attributes['description'] ?? null,
+                'price' => $attributes['price'] ?? null,
+                'currency' => 'MAD',
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
             ]);
 
@@ -166,6 +168,10 @@ final class ProductService
 
             if (array_key_exists('description', $attributes)) {
                 $changes['description'] = $attributes['description'];
+            }
+
+            if (array_key_exists('price', $attributes)) {
+                $changes['price'] = $attributes['price'];
             }
 
             if (array_key_exists('is_active', $attributes)) {
@@ -459,6 +465,8 @@ final class ProductService
             'name' => $product->name,
             'slug' => $product->slug,
             'description' => $product->description,
+            'price' => $product->price,
+            'currency' => $product->currency,
             'is_active' => (bool) $product->is_active,
             'category_ids' => $product->categories()->orderBy('categories.id')->pluck('categories.id')->map(fn ($id): string => (string) $id)->all(),
             'catalog_ids' => $product->catalogs()->orderBy('catalogs.id')->pluck('catalogs.id')->map(fn ($id): string => (string) $id)->all(),
