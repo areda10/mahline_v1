@@ -87,7 +87,11 @@ final class MediaController
 
         $isPublished = match (true) {
             $owner instanceof Product => $owner->is_active
-                && $owner->cooperative?->status === CooperativeStatus::ACTIVE,
+                && $owner->cooperative?->status === CooperativeStatus::ACTIVE
+                && $owner->catalogs()
+                    ->where('catalogs.cooperative_id', $owner->cooperative_id)
+                    ->where('catalogs.is_active', true)
+                    ->exists(),
             $owner instanceof Cooperative => $owner->status === CooperativeStatus::ACTIVE,
             default => false,
         };
