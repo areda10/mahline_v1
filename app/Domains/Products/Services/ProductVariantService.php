@@ -6,6 +6,7 @@ namespace App\Domains\Products\Services;
 
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductVariant;
+use App\Domains\Products\Models\ProductUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -47,10 +48,17 @@ final class ProductVariantService
             $variant->normalized_label = $normalizedLabel;
             $variant->sku = $attributes['sku'] ?? null;
             $variant->price = $this->validatedPrice($attributes['price'] ?? null);
+            $variant->unit_id = $this->validatedUnitId($attributes['unit_id'] ?? null);
             $variant->attributes = $attributes['attributes'] ?? null;
             $variant->is_active = $attributes['is_active'] ?? true;
 
             $variant->save();
+
+            // Dès qu'une variante existe, l'unité n'est plus portée par le parent.
+            if ($product->unit_id !== null) {
+                $product->unit_id = null;
+                $product->save();
+            }
 
             return $variant;
         });
@@ -104,7 +112,11 @@ final class ProductVariantService
                 $variant->sku = $attributes['sku'];
             }
 
-            if (array_key_exists('price', $attributes)) {
+            if (array_key_exists('unit_id', $attributes)) {
+                $variant->unit_id = $this->validatedUnitId($attributes['unit_id']);
+            }
+
+            if (array_key_exists('price', $attributes))
                 $variant->price = $this->validatedPrice($attributes['price']);
             }
 
@@ -130,6 +142,20 @@ final class ProductVariantService
 
             return $variant->refresh();
         });
+    }
+
+    private function validatedUnitId(mixed $unitId): string
+    {
+        if (! is_string($unitId) || $unitId === '' || ! ProductUnit::query()
+            ->whereKey($unitId)
+            ->where('is_active', true)
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'unit_id' => ['Sélectionnez une unité de stock active parmi les unités autorisées.'],
+            ]);
+        }
+
+        return $unitId;
     }
 
     private function assertProductIsAvailable(
