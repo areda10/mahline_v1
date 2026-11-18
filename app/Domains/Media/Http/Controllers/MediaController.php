@@ -105,8 +105,14 @@ final class MediaController
     public function showPrivate(Request $request, Media $media): StreamedResponse
     {
         abort_unless($media->visibility === 'private', 404);
-        Gate::authorize('view', $media);
-        $this->media->recordPrivateAccess($request->user(), $media);
+        $actor = $request->user();
+
+        if (! Gate::forUser($actor)->allows('view', $media)) {
+            $this->media->recordDeniedAccess($actor, $media);
+            abort(403);
+        }
+
+        $this->media->recordPrivateAccess($actor, $media);
 
         return $this->stream($request, $media);
     }
