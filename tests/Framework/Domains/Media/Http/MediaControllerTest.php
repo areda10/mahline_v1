@@ -40,6 +40,7 @@ final class MediaControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'image/jpeg');
+        $response->assertHeader('Cache-Control', 'no-cache, must-revalidate');
         self::assertSame('image-content', $response->streamedContent());
         self::assertStringNotContainsString('/storage/', $response->headers->get('Content-Disposition', ''));
     }
