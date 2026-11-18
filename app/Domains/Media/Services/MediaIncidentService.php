@@ -169,7 +169,7 @@ final class MediaIncidentService
 
         try {
             Notification::send($roots, new MediaIncidentNotification($incident, $event));
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             Log::error('MEDIA incident notification delivery failed.', [
                 'incident_id' => (string) $incident->getKey(),
                 'exception' => $exception::class,
