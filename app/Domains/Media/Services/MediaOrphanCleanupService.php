@@ -48,10 +48,20 @@ final class MediaOrphanCleanupService
                     }
 
                     $now = now();
-                    DB::table('media_orphan_candidates')->updateOrInsert(
-                        ['disk' => $diskName, 'path' => $path],
-                        ['last_seen_at' => $now, 'updated_at' => $now, 'created_at' => $now],
-                    );
+                    $pathHash = hash('sha256', $path);
+                    DB::table('media_orphan_candidates')->insertOrIgnore([
+                        'disk' => $diskName,
+                        'path' => $path,
+                        'path_hash' => $pathHash,
+                        'first_seen_at' => $now,
+                        'last_seen_at' => $now,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                    DB::table('media_orphan_candidates')
+                        ->where('disk', $diskName)
+                        ->where('path_hash', $pathHash)
+                        ->update(['last_seen_at' => $now, 'updated_at' => $now]);
 
                     $candidate = DB::table('media_orphan_candidates')
                         ->where('disk', $diskName)
