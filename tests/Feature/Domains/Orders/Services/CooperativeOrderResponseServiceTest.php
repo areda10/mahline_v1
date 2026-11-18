@@ -108,6 +108,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
 
         $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill(['response_deadline_at' => now()->subMinute()])->save();
         $updated = app(CooperativeOrderResponseService::class)
             ->decideOnBehalf($suborder, $root, false, 'Absence de réponse coopérative');
 
