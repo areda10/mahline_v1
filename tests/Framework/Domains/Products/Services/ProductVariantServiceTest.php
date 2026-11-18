@@ -89,6 +89,22 @@ final class ProductVariantServiceTest extends TestCase
     }
 
 
+    public function test_creating_first_variant_clears_the_parent_unit(): void
+    {
+        $product = $this->createProduct();
+        $parentUnit = ProductUnit::query()->where('code', 'l')->firstOrFail();
+        $product->update(['unit_id' => $parentUnit->getKey()]);
+
+        $this->service->create($product, [
+            'name' => 'Bouteille 500 ml',
+            'price' => '12.50',
+            'unit_id' => $this->unitId,
+            'is_active' => true,
+        ]);
+
+        $this->assertNull($product->fresh()->unit_id);
+    }
+
     public function test_it_requires_a_registered_unit_for_a_new_variant(): void
     {
         $product = $this->createProduct();
