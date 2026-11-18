@@ -14,6 +14,17 @@ final class ProductTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_product_stores_a_two_decimal_mad_price(): void
+    {
+        $product = Product::factory()->create([
+            'price' => '125.50',
+            'currency' => 'MAD',
+        ]);
+
+        $this->assertSame('125.50', $product->fresh()->price);
+        $this->assertSame('MAD', $product->fresh()->currency);
+    }
+
     public function test_product_can_be_associated_with_a_global_category(): void
     {
         $category = Category::factory()->global()->create();
