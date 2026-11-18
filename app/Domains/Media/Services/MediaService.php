@@ -544,6 +544,19 @@ final class MediaService
 
     private function assertRetainedFilesAreValid(Media $media): void
     {
+        $retentionDays = filter_var(config('media.retention_days', 90), FILTER_VALIDATE_INT);
+        if (
+            $media->trashed()
+            && $retentionDays !== false
+            && $retentionDays > 0
+            && $media->deleted_at !== null
+            && $media->deleted_at->lte(now()->subDays($retentionDays))
+        ) {
+            throw ValidationException::withMessages([
+                'media' => ['La période de restauration de ce média est expirée.'],
+            ]);
+        }
+
         $disk = Storage::disk($media->disk);
         $paths = [$media->path];
         $derivatives = $media->metadata['derivatives'] ?? [];
