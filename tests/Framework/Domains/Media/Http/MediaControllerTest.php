@@ -243,7 +243,7 @@ final class MediaControllerTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $actor = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
-        
+
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
             ->call(
@@ -280,7 +280,6 @@ final class MediaControllerTest extends TestCase
 
         $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($actor)
-
             ->call(
                 'POST',
                 route('media.store'),
