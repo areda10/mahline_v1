@@ -11,7 +11,7 @@ final class PurgeExpiredMedia extends Command
 {
     protected $signature = 'media:purge-expired';
 
-    protected $description = 'Purge les fichiers Media supprimés depuis plus de 30 jours.';
+    protected $description = 'Purge progressivement les médias supprimés au-delà de la rétention configurée.';
 
     public function handle(MediaCleanupService $cleanup): int
     {
