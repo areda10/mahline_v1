@@ -230,9 +230,9 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 
 ## 15. Registre d'unités V1 — implémentation initiale (18 novembre 2026)
 
-- Liste validée : kilogramme (\`kg\`), gramme (\`g\`), litre (\`L\`) et millilitre (\`ml\`). Les codes stockés sont stables et normalisés (\`kg\`, \`g\`, \`l\`, \`ml\`) ; le libellé conserve l'affichage usuel (\`Litre (L)\`).
-- Migration additive \`2026_11_18_000005_create_product_units_and_attach_to_products.php\` : registre \`product_units\`, référence nullable \`unit_id\` sur \`products\` et \`product_variants\`, clés étrangères restrictives.
-- Modèle \`ProductUnit\`, relations \`unit()\` sur Product et ProductVariant, seeder idempotent \`ProductUnitSeeder\` enregistré dans \`DatabaseSeeder\`.
+- Liste validée : kilogramme (`kg`), gramme (`g`), litre (`L`) et millilitre (`ml`). Les codes stockés sont stables et normalisés (`kg`, `g`, `l`, `ml`) ; le libellé conserve l'affichage usuel (`Litre (L)`).
+- Migration additive `2026_11_18_000005_create_product_units_and_attach_to_products.php` : registre `product_units`, référence nullable `unit_id` sur `products` et `product_variants`, clés étrangères restrictives.
+- Modèle `ProductUnit`, relations `unit()` sur Product et ProductVariant, seeder idempotent `ProductUnitSeeder` enregistré dans `DatabaseSeeder`.
 - La nullabilité préserve les produits et variantes historiques. Le registre et les relations sont en place. Le raccordement des formulaires et la validation serveur sont consignés en section 16.
 - Aucun mécanisme de conversion n'est ajouté. Les tests de registre et de relations sont ajoutés mais ne sont pas exécutés dans cette session.
 
