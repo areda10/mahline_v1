@@ -177,7 +177,7 @@ final class ProductService
                 $changes['unit_id'] = $unitId;
             }
 
-            if (array_key_exists('name', $attributes))
+            if (array_key_exists('name', $attributes)) {
                 $name = trim((string) $attributes['name']);
 
                 if ($name === '') {
