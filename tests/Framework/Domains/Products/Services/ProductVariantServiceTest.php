@@ -113,6 +113,21 @@ final class ProductVariantServiceTest extends TestCase
         ]);
     }
 
+    public function test_it_accepts_piece_unit_for_a_variant(): void
+    {
+        $product = $this->createProduct();
+        $pieceUnit = ProductUnit::query()->where('code', 'u')->firstOrFail();
+
+        $variant = $this->service->create($product, [
+            'name' => 'Pièce individuelle',
+            'unit_id' => (string) $pieceUnit->getKey(),
+            'price' => '3.50',
+            'is_active' => true,
+        ]);
+
+        $this->assertSame('u', $variant->unit->code);
+    }
+
     public function test_it_requires_a_registered_unit_for_a_new_variant(): void
     {
         $product = $this->createProduct();
