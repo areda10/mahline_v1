@@ -98,7 +98,7 @@ final class MediaServiceTest extends TestCase
         Storage::fake('public');
 
         $disk = Storage::disk('local');
-        $failingDisk = \\Mockery::mock($disk)->makePartial();
+        $failingDisk = \Mockery::mock($disk)->makePartial();
         $failingDisk->shouldReceive('put')
             ->once()
             ->andReturnUsing(static function (string $path, string $contents) use ($disk): bool {
@@ -118,14 +118,14 @@ final class MediaServiceTest extends TestCase
                 $product,
                 UploadedFile::fake()->createWithContent(
                     'partial-write.pdf',
-                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
                 ),
                 'document',
                 'proof_of_origin',
             );
 
             self::fail('The simulated storage failure should be rethrown.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertSame('Le stockage du média a échoué.', $exception->getMessage());
         }
 
