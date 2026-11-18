@@ -26,6 +26,7 @@
                 <thead>
                     <tr>
                         <th>Nom</th>
+                        <th>Prix (MAD)</th>
                         <th>Catégories</th>
                         <th>Catalogues</th>
                         <th>État</th>
@@ -41,7 +42,8 @@
                                     <div class="muted">{{ $product->description }}</div>
                                 @endif
                             </td>
-                            <td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
+                            <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td>
+                            <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td><td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
                             <td>{{ $product->catalogs->pluck('name')->join(', ') ?: '—' }}</td>
                             <td>
                                 <span class="badge {{ $product->is_active ? '' : 'badge-inactive' }}">
