@@ -1,44 +1,60 @@
-# MAHLINE Media — Release V1
+# MAHLINE Media — Spécification technique V1
 
-## Périmètre
+**Statut d’implémentation : EN COURS — ne pas considérer le domaine comme conforme tant que les écarts listés ci-dessous ne sont pas fermés et testés.**
 
-- Galerie d’images produit avec une image principale.
+## Périmètre fonctionnel V1
+
+- Galerie de produits, une image principale au maximum et 10 images actives maximum par produit.
 - Logo et galerie de photos de coopérative.
-- Une image de profil active par utilisateur/client.
-- Documents PDF privés avec catégorie métier.
-- Validation de l’extension et du MIME réel.
-- Dérivés `medium` (largeur maximale 1 200 px) et `thumbnail` (400 px) pour les images.
-- Suppression logique immédiate. La purge physique est désactivée par défaut et ne peut être activée qu’après validation explicite d’une durée de rétention.
-- Journalisation des opérations sans contenu binaire, chemin de stockage ni URL privée.
+- Photo de profil privée.
+- Documents privés PDF, JPG, JPEG et PNG ; catégories contrôlées : `identity`, `legal`, `administrative`, `certification`, `other`.
+- Quota de 20 documents actifs maximum par propriétaire.
+- Stockage physique privé pour les originaux et dérivés ; accès public uniquement via le contrôleur qui revérifie la visibilité à chaque requête.
+- Suppression logique, rétention par défaut de 90 jours, purge physique progressive et reprenable.
+- Audit complet append-only, chaîne cryptographique, incidents de sécurité et workflow de traitement.
+- La documentation fonctionnelle de référence et les 74 décisions MEDIA V1 sont dans `docs/roadmap/FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md`.
 
-SVG, certifications de coopératives et certifications de produits sont hors périmètre V1 (Release V2).
+Les fonctionnalités non validées dans le cadrage V1 sont reportées à V2.
 
-## Formats et limites
+## Formats, limites et dimensions
 
 | Catégorie | Formats | Taille maximale |
 | --- | --- | ---: |
-| Image produit | JPEG, PNG, WebP | 5 Mo |
-| Logo coopérative | JPEG, PNG, WebP | 5 Mo |
-| Photo coopérative | JPEG, PNG, WebP | 5 Mo |
-| Profil utilisateur/client | JPEG, PNG, WebP | 2 Mo |
-| Document | PDF uniquement | 15 Mo |
+| Image produit | JPG, JPEG, PNG, WebP statique | 5 Mo |
+| Logo coopérative | JPG, JPEG, PNG, WebP statique | 5 Mo |
+| Photo coopérative | JPG, JPEG, PNG, WebP statique | 5 Mo |
+| Photo de profil | JPG, JPEG, PNG, WebP statique | 5 Mo |
+| Document privé | PDF, JPG, JPEG, PNG | 10 Mo |
 
-L’extension PHP GD doit être activée, avec prise en charge du format image envoyé, pour générer les dérivés. Configure aussi `upload_max_filesize` à au moins `15M` et `post_max_size` au-dessus de `15M` dans le PHP utilisé par le serveur web et le CLI.
+- Validation serveur du MIME réel, de l’extension et de la signature du contenu.
+- Dimensions maximales d’une image : 4000 × 4000 pixels ; limite de 16 millions de pixels.
+- Les GIF et images animées, y compris WebP animé, sont refusés en V1.
+- Orientation EXIF corrigée avant la génération des dérivés ; les métadonnées EXIF restantes, notamment GPS, ne sont pas réémises dans les dérivés.
+- Les originaux sont conservés sans recompression.
+- Dérivés obligatoires, sans agrandissement artificiel et avec conservation du ratio :
+  - `thumbnail` : 150 × 150 maximum ;
+  - `small` : 300 × 300 maximum ;
+  - `medium` : 600 × 600 maximum ;
+  - `large` : 1600 × 1600 maximum.
+- Format des dérivés : JPEG vers WebP ; PNG transparent vers PNG ; PNG opaque vers WebP ; WebP vers WebP.
+- Qualité cible des dérivés compressés : 85.
 
-## Stockage
+L’extension PHP GD avec WebP est requise ; l’extension EXIF est requise pour le traitement des JPEG orientés.
+
+## Stockage et diffusion
 
 Les disques sont configurables dans `config/media.php` :
 
-- `MEDIA_PUBLIC_DISK` : disque logique des images produit et coopérative (défaut `local`, non exposé directement par le serveur web).
-- `MEDIA_PRIVATE_DISK` : disque des profils et documents privés (défaut `local`).
+- `MEDIA_PUBLIC_DISK` : disque de stockage des images publiques logiques (défaut `local`, non exposé directement).
+- `MEDIA_PRIVATE_DISK` : disque des médias privés (défaut `local`).
 
-En production, les deux variables peuvent pointer vers un disque S3 configuré en privé. Ne configure jamais un bucket ou un disque web-accessible pour ces médias : la visibilité `public` est logique et les images sont transmises par l’application après vérification de l’état du propriétaire. Les contrôleurs ne retournent jamais d’URL directe du stockage. Les documents privés sont transmis uniquement par une route protégée par authentification et session active.
+Aucun original ni dérivé n’est servi par une URL physique du stockage. Les images publiques sont diffusées par `GET /media/{media}`, après vérification en base du média, du produit/catalogue/coopérative et de leur état. Les images publiques utilisent `public, no-cache, must-revalidate`; les médias privés utilisent `private, no-store`.
 
-## API web
+Les variantes disponibles sont `original`, `thumbnail`, `small`, `medium` et `large`. Les documents privés peuvent être affichés dans le navigateur ; `?download=1` demande le téléchargement.
 
-Toutes les opérations d’écriture utilisent une session authentifiée et active.
+## API web actuelle
 
-### Déposer un média
+Toutes les écritures et consultations privées nécessitent une session authentifiée active.
 
 ```http
 POST /media
@@ -47,55 +63,56 @@ Content-Type: multipart/form-data
 owner_type: product | cooperative | user
 owner_id: ULID
 category: product_image | cooperative_logo | cooperative_photo | profile_image | document
+document_category: identity | legal | administrative | certification | other (obligatoire pour document)
 file: fichier
-document_category: obligatoire pour category=document
 ```
 
-Le serveur choisit la collection, le disque, la visibilité, le nom de stockage et les dérivés. Le client ne peut pas fournir de chemin ou de visibilité.
-
-### Diffuser une image publique
+Le serveur détermine la collection, le disque, la visibilité, le chemin et les dérivés. Le client ne fournit jamais de chemin physique.
 
 ```http
-GET /media/{media}
-GET /media/{media}?variant=medium
-GET /media/{media}?variant=thumbnail
-```
-
-Seules les images produit et coopérative sont publiques. Le propriétaire doit être actif et non supprimé.
-
-### Consulter un média privé
-
-```http
-GET /media/{media}/private
-```
-
-La route exige une authentification, une session active et l’autorisation de consulter l’entité propriétaire. Les PDF sont servis en téléchargement avec `X-Content-Type-Options: nosniff`.
-
-### Gérer une galerie
-
-```http
+GET    /media/{media}
+GET    /media/{media}?variant=small
+GET    /media/{media}/private
+GET    /media/{media}/private?download=1
 PUT    /media/{media}/primary
 PATCH  /media/{media}/order
 DELETE /media/{media}
 ```
 
-La première image produit devient automatiquement l’image principale. Une suppression de l’image principale promeut la première image restante. Le logo coopérative et l’image de profil sont remplacés par upload : l’ancienne version est supprimée logiquement.
-
 ## Autorisations
 
-- `super_admin_root` : accès global aux médias produits et coopératives.
-- `super_admin` : médias des coopératives assignées uniquement.
-- `cooperative_admin` : médias de sa coopérative et de ses produits, sous réserve des permissions métier existantes.
-- `user` : lecture dans son périmètre et gestion de sa propre image de profil / ses propres documents.
-- `customer` : images publiques des produits et gestion de sa propre image de profil / ses propres documents.
+- `super_admin_root` : périmètre global.
+- `super_admin` : coopératives affectées uniquement.
+- `cooperative_admin` : sa coopérative uniquement.
+- `user` : consultation des images publiques uniquement pour les médias de produits ; aucun droit de gestion des images de produits.
+- Le propriétaire d’une photo de profil peut gérer sa propre photo ; les documents privés sont soumis aux Policies et au périmètre du propriétaire.
+- Les journaux d’audit complets sont réservés à `super_admin_root`.
 
-Les documents restent privés. La Policy Media contrôle l’entité propriétaire; elle ne remplace pas les autorisations métier des domaines.
+Les contrôles d’autorisation sont toujours exécutés côté serveur et ne sont jamais remplacés par les contrôles d’interface.
 
-## Purge
+## Rétention et purge
 
-La commande `php artisan media:purge-expired` ne purge aucun média lorsque `MEDIA_RETENTION_DAYS` est absent, nul, non numérique ou inférieur à 1. C’est le comportement par défaut de la Release V1 : aucune durée de conservation n’est présumée.
+- `MEDIA_RETENTION_DAYS` : valeur par défaut 90 jours ; une valeur absente/null, invalide ou négative désactive la purge.
+- La rétention commence à `deleted_at`.
+- La commande `php artisan media:purge-expired` est planifiée quotidiennement à 02:00 et sans chevauchement.
+- La purge ne supprime la ligne MEDIA qu’après suppression de l’original et de tous les dérivés ; les suppressions incomplètes sont reprises lors d’une exécution ultérieure.
+- `MEDIA_ORPHAN_SAFETY_HOURS` : délai de sécurité des fichiers orphelins, minimum 24 heures. **Le détecteur et le nettoyeur d’orphelins restent à implémenter.**
 
-Après validation explicite d’une durée de rétention, définir `MEDIA_RETENTION_DAYS` à un nombre entier positif. La commande supprime alors les fichiers et dérivés dont la suppression logique date d’au moins ce nombre de jours, puis supprime leur ligne. Elle est planifiée quotidiennement dans `routes/console.php`; le scheduler Laravel doit être exécuté en production.
+## État des corrections techniques
+
+| Domaine | État |
+| --- | --- |
+| Formats, tailles, catégories documentaires, dimensions | Correction initiale enregistrée ; tests locaux à exécuter |
+| Quotas galerie/documents | Correction initiale enregistrée ; tests locaux à exécuter |
+| Quatre dérivés et formats intelligents | Correction initiale enregistrée ; tests locaux à exécuter |
+| EXIF et animation | Correction initiale enregistrée ; tests locaux à exécuter |
+| Verrouillage et réorganisation atomique | Correction initiale enregistrée ; tests locaux à exécuter |
+| Rétention 90 jours, planification 02:00 et purge reprenable | Correction initiale enregistrée ; tests locaux à exécuter |
+| Détection/nettoyage des fichiers orphelins | À implémenter |
+| Restauration des médias et cycle de vie des propriétaires | À implémenter |
+| Audit exhaustif, intégrité avant écriture et vérification quotidienne | À implémenter / compléter |
+| Anti-énumération, incidents, notifications et pièces jointes | À implémenter |
+| Suite de tests complète et Pint | À exécuter et valider |
 
 ## Tests
 
@@ -105,6 +122,4 @@ php artisan test tests/Framework/Database/Migrations/MediaCategoryIndexMigration
 vendor/bin/pint --test
 ```
 
-## Rétention des médias supprimés
-
-La durée de conservation avant purge physique n'est pas une règle métier V1 validée. En conséquence, `MEDIA_RETENTION_DAYS` est non configurée par défaut et le nettoyage automatique ne purge aucun média tant qu'une durée positive n'est pas explicitement définie. La suppression applicative reste logique ; les fichiers et lignes sont conservés jusqu'à cette décision de rétention.
+Ne déclarer MEDIA V1 conforme qu’après exécution réussie des tests ciblés, de la suite complète et de Pint sur la branche de travail.
