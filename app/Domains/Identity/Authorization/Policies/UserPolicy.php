@@ -272,10 +272,15 @@ final class UserPolicy extends BasePolicy
 
     private function isInternalManagedTarget(User $target): bool
     {
-        return ! $target->hasAnyRole([
-            self::ROLE_SUPER_ADMIN_ROOT,
-            'customer',
-        ]);
+        // Role classification must remain independent from account status.
+        // hasAnyRole() returns false for inactive, suspended or archived users.
+        return ! $target->roles()
+            ->whereIn('slug', [
+                self::ROLE_SUPER_ADMIN_ROOT,
+                'customer',
+            ])
+            ->where('is_active', true)
+            ->exists();
     }
 
     private function targetHasActiveRole(User $target, string $roleSlug): bool
