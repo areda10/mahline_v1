@@ -73,6 +73,10 @@ final class MediaOwnerLifecycleTest extends TestCase
         );
 
         $product->delete();
+        self::assertDatabaseHas('audit_events', [
+            'event_key' => 'media.owner_soft_deleted',
+            'subject_id' => $product->getKey(),
+        ]);
         Storage::disk('local')->put($corrupt->path, 'not-a-pdf');
         $this->actingAs($actor);
         $product->restore();
