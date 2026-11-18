@@ -197,12 +197,16 @@ final class MediaIncidentService
                 ]);
             }
 
-            return $this->media->upload(
+            $media = $this->media->upload(
                 $actor,
                 $locked,
                 $file,
                 MediaCategory::INCIDENT_ATTACHMENT->value,
             );
+
+            $this->record($actor, $locked, 'media.incident_attachment_added', 'attachment_added');
+
+            return $media;
         });
     }
 
