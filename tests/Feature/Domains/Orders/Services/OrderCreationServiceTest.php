@@ -135,6 +135,32 @@ final class OrderCreationServiceTest extends TestCase
         ]);
     }
 
+    public function test_checkout_requires_a_variant_when_the_product_has_variants(): void
+    {
+        $customer = $this->customer();
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => null,
+        ]);
+        ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'price' => '22.00',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+
+        app(OrderCreationService::class)->createFromCheckout($customer, [
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [[
+                'product_id' => (string) $product->getKey(),
+                'quantity' => '1',
+            ]],
+        ]);
+    }
+
     public function test_checkout_rejects_parent_unit_when_a_variant_is_selected(): void
     {
         $customer = $this->customer();
