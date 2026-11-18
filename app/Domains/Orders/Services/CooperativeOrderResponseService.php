@@ -108,9 +108,9 @@ final class CooperativeOrderResponseService
                 'from_status' => $fromStatus,
                 'to_status' => $newStatus->value,
                 'actor_id' => (string) $actor->getKey(),
-                'actor_role' => $administrative
-                    ? ($actor->hasRole('super_admin_root') ? 'super_admin_root' : 'super_admin')
-                    : 'cooperative_admin',
+                'actor_role' => $actor->hasRole('super_admin_root')
+                    ? 'super_admin_root'
+                    : ($actor->hasRole('super_admin') ? 'super_admin' : 'cooperative_admin'),
                 'reason' => $reason,
                 'metadata' => $administrative ? ['administrative_substitution' => true] : null,
                 'occurred_at' => now(),
