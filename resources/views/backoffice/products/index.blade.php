@@ -43,7 +43,7 @@
                                 @endif
                             </td>
                             <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td>
-                            <td>{{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') : '—' }} MAD</td><td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
+                            <td>{{ $product->categories->pluck('name')->join(', ') ?: '—' }}</td>
                             <td>{{ $product->catalogs->pluck('name')->join(', ') ?: '—' }}</td>
                             <td>
                                 <span class="badge {{ $product->is_active ? '' : 'badge-inactive' }}">
