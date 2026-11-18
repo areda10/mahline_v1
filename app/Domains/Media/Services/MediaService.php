@@ -11,6 +11,8 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Enums\MediaDocumentCategory;
 use App\Domains\Media\Models\Media;
+use App\Domains\Media\Models\MediaIncident;
+use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Media\Notifications\MediaSecurityAlertNotification;
 use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -127,6 +129,18 @@ final class MediaService
                 $lockedOwner = $owner->newQuery()
                     ->lockForUpdate()
                     ->findOrFail($owner->getKey());
+
+                // Enforce the incident lifecycle under the same row lock used by
+                // every upload path, including the generic media.store endpoint.
+                if (
+                    $lockedOwner instanceof MediaIncident
+                    && $mediaCategory === MediaCategory::INCIDENT_ATTACHMENT
+                    && $lockedOwner->status === MediaIncidentStatus::CLOSED
+                ) {
+                    throw ValidationException::withMessages([
+                        'incident' => ['Aucune pièce jointe ne peut être ajoutée à un incident clôturé.'],
+                    ]);
+                }
 
                 if ($mediaCategory === MediaCategory::PRODUCT_IMAGE) {
                     $limit = $this->positiveLimit('media.limits.product_gallery', 10);
