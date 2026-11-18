@@ -72,7 +72,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             ->confirmByCooperative($order->cooperativeOrders->firstOrFail(), $adminA);
     }
 
-    public function test_root_substitution_requires_reason_and_records_admin_attribution(): void
+    public function test_root_substitution_requires_reason(): void
     {
         $customer = $this->userWithRole('customer');
         $root = $this->userWithRole('super_admin_root');
@@ -91,6 +91,30 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         app(CooperativeOrderResponseService::class)
             ->decideOnBehalf($suborder, $root, true, '   ');
+    }
+
+    public function test_root_can_record_a_reasoned_administrative_decision(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $root = $this->userWithRole('super_admin_root');
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+        ]);
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
+        ]);
+
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $updated = app(CooperativeOrderResponseService::class)
+            ->decideOnBehalf($suborder, $root, false, 'Absence de réponse coopérative');
+
+        $this->assertSame(CooperativeOrderStatus::REFUSED, $updated->status);
+        $this->assertSame((string) $root->getKey(), (string) $updated->substituted_by_admin_id);
+        $this->assertSame('Absence de réponse coopérative', $updated->substitution_reason);
+        $this->assertSame(OrderStatus::REFUSED, $order->fresh()->status);
     }
 
     private function userWithRole(string $roleSlug, array $attributes = []): User
