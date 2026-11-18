@@ -170,6 +170,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $second = $this->service->create($secondProduct, [
             'name' => 'Pot 250 g',
+            'price' => '12.50',
             'is_active' => true,
         ]);
 
@@ -194,6 +195,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $this->service->create($product, [
             'name' => 'Pot 250 g',
+            'price' => '12.50',
             'is_active' => true,
         ]);
     }
