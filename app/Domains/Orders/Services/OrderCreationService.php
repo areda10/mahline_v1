@@ -59,7 +59,7 @@ final class OrderCreationService
                     ->lockForUpdate()
                     ->first();
 
-                if ($product === null || ! $product->is_active || $product->price === null) {
+                if ($product === null || ! $product->is_active) {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_id" => ['Ce produit est indisponible ou son prix doit être défini.'],
                     ]);
@@ -89,6 +89,11 @@ final class OrderCreationService
 
                 $quantityMilli = $this->quantityToMilli($input['quantity'] ?? null, $index);
                 $unitPrice = $variant?->price ?? $product->price;
+                if ($unitPrice === null) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_id" => ['Le prix du produit ou de sa variante doit être défini.'],
+                    ]);
+                }
                 $unitPriceCents = $this->moneyToCents((string) $unitPrice);
 
                 if ($unitPriceCents <= 0 || $quantityMilli <= 0) {
