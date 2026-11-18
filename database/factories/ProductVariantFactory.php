@@ -24,6 +24,7 @@ final class ProductVariantFactory extends Factory
             'product_id' => Product::factory(),
             'label' => Str::title($label),
             'normalized_label' => Str::lower(trim($label)),
+            'price' => fake()->boolean(50) ? fake()->randomFloat(2, 1, 5000) : null,
             'sku' => fake()->boolean(70)
                 ? fake()->unique()->bothify('SKU-####-????')
                 : null,
