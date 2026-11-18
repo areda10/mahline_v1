@@ -352,6 +352,95 @@ final class MediaServiceTest extends TestCase
         self::assertSame(0, $second->fresh()->sort_order);
     }
 
+    public function test_product_gallery_quota_is_enforced_inside_the_owner_transaction(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+        Storage::fake('local');
+        Storage::fake('public');
+        config(['media.public_disk' => 'public', 'media.limits.product_gallery' => 1]);
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $service = app(MediaService::class);
+
+        $first = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->image('first.jpg', 120, 80),
+            'product_image',
+        );
+
+        try {
+            $service->upload(
+                $actor,
+                $product,
+                UploadedFile::fake()->image('second.jpg', 120, 80),
+                'product_image',
+            );
+            self::fail('The product gallery quota should reject a second active image.');
+        } catch (ValidationException) {
+            self::assertSame(1, $product->media()->where('category', 'product_image')->count());
+        }
+
+        self::assertSame(5, count(Storage::disk('public')->allFiles('media')));
+        self::assertTrue(Storage::disk('public')->exists($first->path));
+    }
+
+    public function test_private_document_quota_is_enforced_per_owner(): void
+    {
+        Storage::fake('local');
+        config(['media.limits.documents_per_owner' => 1]);
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $service = app(MediaService::class);
+        $first = UploadedFile::fake()->createWithContent(
+            'first.pdf',
+            "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+        );
+
+        $service->upload($actor, $product, $first, 'document', 'legal');
+
+        try {
+            $service->upload(
+                $actor,
+                $product,
+                UploadedFile::fake()->createWithContent(
+                    'second.pdf',
+                    "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+                ),
+                'document',
+                'certification',
+            );
+            self::fail('The document quota should reject a second active document.');
+        } catch (ValidationException) {
+            self::assertSame(1, $product->media()->where('category', 'document')->count());
+        }
+
+        self::assertSame(1, count(Storage::disk('local')->allFiles('media')));
+    }
+
+    public function test_private_document_rejects_custom_document_categories(): void
+    {
+        Storage::fake('local');
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+
+        $this->expectException(ValidationException::class);
+
+        app(MediaService::class)->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->createWithContent(
+                'proof.pdf',
+                "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF",
+            ),
+            'document',
+            'proof_of_origin',
+        );
+    }
+
     private function rootUser(): User
     {
         $user = User::factory()->create();
