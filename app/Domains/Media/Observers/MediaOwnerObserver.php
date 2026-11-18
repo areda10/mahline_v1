@@ -102,7 +102,7 @@ final class MediaOwnerObserver
 
         DB::transaction(function () use ($owner, $actorId, $actor): void {
             $owner->media()->whereNull('deleted_at')->lockForUpdate()->get()->each(
-            function ($media) use ($actorId, $owner): void {
+            function ($media) use ($actorId, $owner, $actor): void {
                 $media->forceFill(['deleted_by' => $actorId])->save();
                 $media->delete();
 
