@@ -620,6 +620,7 @@ Route::prefix('back-office')
 // their physical storage location. Private media requires an authenticated
 // owner/administrator and is authorized by MediaPolicy.
 Route::get('/media/{media}', [MediaController::class, 'show'])
+    ->middleware('media.enumeration')
     ->whereUlid('media')
     ->name('media.show');
 
