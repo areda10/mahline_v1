@@ -491,6 +491,10 @@ final class MediaService
     public function ownerHistory(User $actor, Model $owner): \Illuminate\Support\Collection
     {
         if (! $actor->isAuthorized() || ! $actor->hasRole('super_admin_root')) {
+            if (! $this->auditEvents->verifyIntegrity()) {
+                throw new RuntimeException('La chaîne d’audit est invalide ; consultation de l’historique refusée.');
+            }
+
             $this->audit->record(new AuditEntryDTO(
                 eventKey: 'media.history_access_denied',
                 action: 'history_access_denied',
