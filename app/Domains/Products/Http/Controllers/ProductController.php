@@ -50,7 +50,7 @@ final class ProductController
 
         return view('backoffice.products.create', [
             'cooperative' => $cooperativeModel,
-            'product' => new Product,
+            'product' => new Product,\n            'productUnits' => ProductUnit::query()->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),\n            'hasVariants' => false,
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()
@@ -80,7 +80,7 @@ final class ProductController
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
+            'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],\n            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
@@ -170,7 +170,7 @@ final class ProductController
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string'],
-            'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
+            'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],\n            'unit_id' => $productModel->variants()->exists()\n                ? ['prohibited']\n                : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
