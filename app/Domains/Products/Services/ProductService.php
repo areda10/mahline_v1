@@ -9,6 +9,7 @@ use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,8 @@ final class ProductService
                 $cooperativeId,
             );
 
+            $unitId = $this->validatedUnitId($attributes['unit_id'] ?? null);
+
             $name = trim((string) ($attributes['name'] ?? ''));
 
             if ($name === '') {
@@ -70,6 +73,7 @@ final class ProductService
                 'description' => $attributes['description'] ?? null,
                 'price' => $attributes['price'] ?? null,
                 'currency' => 'MAD',
+                'unit_id' => $unitId,
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
             ]);
 
@@ -123,6 +127,16 @@ final class ProductService
 
             $before = $this->snapshot($product);
 
+            if ($product->variants()->exists() && array_key_exists('unit_id', $attributes)) {
+                throw ValidationException::withMessages([
+                    'unit_id' => ['L’unité se définit sur chaque variante pour ce produit.'],
+                ]);
+            }
+
+            $unitId = array_key_exists('unit_id', $attributes)
+                ? $this->validatedUnitId($attributes['unit_id'])
+                : null;
+
             $categoryIds = array_key_exists('category_ids', $attributes)
                 ? $this->normalizeIds($attributes['category_ids'] ?? [])
                 : null;
@@ -166,7 +180,11 @@ final class ProductService
                 );
             }
 
-            if (array_key_exists('description', $attributes)) {
+            if (array_key_exists('unit_id', $attributes)) {
+                $changes['unit_id'] = $unitId;
+            }
+
+            if (array_key_exists('description', $attributes))
                 $changes['description'] = $attributes['description'];
             }
 
@@ -325,6 +343,20 @@ final class ProductService
         });
     }
 
+    private function validatedUnitId(mixed $unitId): string
+    {
+        if (! is_string($unitId) || $unitId === '' || ! ProductUnit::query()
+            ->whereKey($unitId)
+            ->where('is_active', true)
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'unit_id' => ['Sélectionnez une unité de stock active parmi les unités autorisées.'],
+            ]);
+        }
+
+        return $unitId;
+    }
+
     private function assertCategoriesAvailable(
         array $categoryIds,
         string $cooperativeId,
@@ -467,6 +499,7 @@ final class ProductService
             'description' => $product->description,
             'price' => $product->price,
             'currency' => $product->currency,
+            'unit_id' => $product->unit_id,
             'is_active' => (bool) $product->is_active,
             'category_ids' => $product->categories()->orderBy('categories.id')->pluck('categories.id')->map(fn ($id): string => (string) $id)->all(),
             'catalog_ids' => $product->catalogs()->orderBy('catalogs.id')->pluck('catalogs.id')->map(fn ($id): string => (string) $id)->all(),
