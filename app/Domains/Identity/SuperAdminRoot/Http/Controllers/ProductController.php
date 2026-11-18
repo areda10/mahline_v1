@@ -72,6 +72,7 @@ final class ProductController
         $data = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
+            'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
@@ -144,6 +145,7 @@ final class ProductController
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string'],
+            'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
