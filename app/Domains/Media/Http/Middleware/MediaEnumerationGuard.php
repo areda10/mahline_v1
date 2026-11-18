@@ -55,7 +55,7 @@ final class MediaEnumerationGuard
                 } else {
                     Log::critical('MEDIA enumeration event could not be appended because the audit chain is invalid.');
                 }
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 Log::critical('MEDIA enumeration audit append failed.', [
                     'exception' => $exception::class,
                 ]);
