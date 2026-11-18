@@ -42,6 +42,19 @@ final class ProductVariant extends BaseModel
         return ProductVariantFactory::new();
     }
 
+    /**
+     * Prix applicable : prix propre à la variante, sinon prix du produit parent.
+     * Les valeurs décimales restent des chaînes afin d'éviter les flottants.
+     */
+    public function effectivePrice(): ?string
+    {
+        if ($this->price !== null) {
+            return $this->price;
+        }
+
+        return $this->product?->price;
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
