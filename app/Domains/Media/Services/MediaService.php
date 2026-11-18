@@ -160,7 +160,7 @@ final class MediaService
                     $lockedOwner->media()
                         ->where('category', $mediaCategory->value)
                         ->get()
-                        ->each(function (Media $previous) use ($actor): void {
+                        ->each(function (Media $previous) use ($actor, $mediaId): void {
                             $metadata = $previous->metadata ?? [];
                             $metadata['replacement_media_id'] = $mediaId;
                             $metadata['replacement_recorded_at'] = now()->toIso8601String();
