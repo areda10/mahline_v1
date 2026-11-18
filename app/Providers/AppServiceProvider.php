@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Users\Observers\UserObserver;
 use App\Domains\Media\Observers\MediaOwnerObserver;
 use App\Domains\Products\Models\Product;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
@@ -46,6 +47,7 @@ final class AppServiceProvider extends ServiceProvider
 
         Product::observe(MediaOwnerObserver::class);
         Cooperative::observe(MediaOwnerObserver::class);
+        User::observe(UserObserver::class);
         User::observe(MediaOwnerObserver::class);
 
         RateLimiter::for('media-public', static fn (Request $request) => Limit::perMinute(60)
