@@ -211,5 +211,18 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Décision validée : un produit simple possède un stock au niveau du produit ; dès qu'il utilise des variantes, chaque variante possède son propre stock et le parent ne porte plus de stock actif.
 - Conversion simple → variantes : la coopérative doit répartir la totalité du stock parent entre les variantes avant validation. Le transfert doit être atomique, verrouillé en base et tracé par des mouvements immuables ; le stock parent est soldé dans la même transaction. Aucun stock temporaire double n'est autorisé.
 - Audit Git à `8a33f5ca736e2a16b514832351e7c757beec1d11` : aucun domaine `app/Domains/Inventory`, aucune migration de stock et aucun contrôleur/vue de gestion des variantes détectés. Le service de variantes existe mais autorisait encore un prix nul ; sa validation métier est renforcée.
-- Point technique restant avant le schéma Inventory : préciser la précision des quantités (unités entières ou fractionnaires), car les produits coopératifs peuvent être vendus à l'unité, au poids ou au volume. Ne pas figer le type SQL avant cette règle.
+- Quantités fractionnaires validées : précision fixe de trois décimales, stockage SQL `DECIMAL(15,3)` (ex. `1,250 kg`, `0,750 L`, `12,000 unités`).
+- Unités : registre normalisé à codes stables et libellés ; sélection obligatoire dans une liste déroulante, aucune saisie libre ni unité personnalisée en V1 (reportée à V2).
+- L'unité est définie sur le produit lorsqu'il n'a pas de variantes, ou sur chaque variante lorsqu'il en possède. Les soldes, réservations et mouvements utilisent l'unité de leur article.
+- Aucune conversion automatique entre unités en V1. Les quantités ne sont additionnées ou comparées qu'à unité identique.
+- Les options exactes du registre doivent être arrêtées avant le seeder définitif ; exemples de familles évoquées : masse, volume, longueur et unités de conditionnement.
 - Les modifications de service et tests ci-dessus sont écrites sur `feature/Marketplace`. Tests non exécutés dans cet environnement ; aucune validation de suite n'est revendiquée.
+
+
+## 14. Complément — unités de stock normalisées (18 novembre 2026)
+
+- Décision confirmée : quantités fractionnaires avec trois décimales et colonne `DECIMAL(15,3)`.
+- Le choix de l'unité se fait par liste déroulante issue d'un registre normalisé ; pas de champ libre ni d'unité personnalisée en V1.
+- Produit sans variante : unité portée par le produit. Produit avec variantes : unité portée par chaque variante.
+- Aucun calcul ni conversion automatique entre unités en V1 ; toutes les opérations de stock conservent l'unité de l'article concerné.
+- Avant le seeder de référence, finaliser la liste exhaustive des unités autorisées et leurs libellés affichés.
