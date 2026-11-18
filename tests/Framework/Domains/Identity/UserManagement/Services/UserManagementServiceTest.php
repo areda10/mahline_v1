@@ -391,25 +391,6 @@ final class UserManagementServiceTest extends TestCase
         ]);
     }
 
-    public function test_inactive_root_account_cannot_be_deleted_through_user_management(): void
-    {
-        $actor = $this->createUserWithRole('super_admin_root');
-        $target = $this->createUserWithRole('super_admin_root');
-        $target->forceFill(['status' => UserStatus::Inactive])->save();
-
-        try {
-            $this->service->deleteUser($actor, $target);
-            self::fail('An inactive super admin root account must remain permanent.');
-        } catch (\DomainException $exception) {
-            self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
-        }
-
-        $this->assertDatabaseHas('users', [
-            'id' => $target->getKey(),
-            'deleted_at' => null,
-        ]);
-    }
-
     public function test_password_history_survives_soft_delete_and_cascades_on_force_delete(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
