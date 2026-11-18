@@ -145,18 +145,22 @@ final class MediaIncidentService
     {
         $this->assertRoot($actor);
 
-        if ($incident->status === MediaIncidentStatus::CLOSED) {
-            throw ValidationException::withMessages([
-                'incident' => ['Aucune pièce jointe ne peut être ajoutée à un incident clôturé.'],
-            ]);
-        }
+        return DB::transaction(function () use ($actor, $incident, $file): \App\Domains\Media\Models\Media {
+            $locked = MediaIncident::query()->whereKey($incident->getKey())->lockForUpdate()->firstOrFail();
 
-        return $this->media->upload(
-            $actor,
-            $incident,
-            $file,
-            MediaCategory::INCIDENT_ATTACHMENT->value,
-        );
+            if ($locked->status === MediaIncidentStatus::CLOSED) {
+                throw ValidationException::withMessages([
+                    'incident' => ['Aucune pièce jointe ne peut être ajoutée à un incident clôturé.'],
+                ]);
+            }
+
+            return $this->media->upload(
+                $actor,
+                $locked,
+                $file,
+                MediaCategory::INCIDENT_ATTACHMENT->value,
+            );
+        });
     }
 
     private function assertRoot(User $actor): void
