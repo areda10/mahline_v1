@@ -66,7 +66,9 @@ final class ResetRootPasswordTest extends TestCase
 
     public function test_inactive_root_account_cannot_be_soft_deleted_or_force_deleted(): void
     {
-        $root = $this->createRoot(['status' => UserStatus::Inactive]);
+        $root = $this->createRoot();
+        // Simulate a legacy corrupted row; new Root accounts are always bootstrapped active.
+        $root->forceFill(['status' => UserStatus::Inactive])->saveQuietly();
 
         try {
             $root->delete();
@@ -172,8 +174,7 @@ final class ResetRootPasswordTest extends TestCase
 
     public function test_it_changes_only_the_password_and_records_an_audit_event(): void
     {
-        $root = $this->createRoot(['status' => UserStatus::Active]);
-        $oldStatus = $root->status;
+        $root = $this->createRoot();
         $oldEmailVerifiedAt = $root->email_verified_at;
 
         $this->artisan('mahline:reset-root-password')
@@ -187,7 +188,6 @@ final class ResetRootPasswordTest extends TestCase
 
         $this->assertTrue(Hash::check('NewRootPassword123!', $root->password));
         $this->assertSame(UserStatus::Active, $root->status);
-        $this->assertSame($oldStatus, $root->status);
         $this->assertEquals($oldEmailVerifiedAt, $root->email_verified_at);
         $this->assertTrue($root->roles()->where('slug', 'super_admin_root')->exists());
         $this->assertDatabaseHas('audit_events', [
