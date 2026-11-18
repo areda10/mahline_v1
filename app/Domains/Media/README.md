@@ -1,6 +1,6 @@
 # MAHLINE Media — Spécification technique V1
 
-**Statut d’implémentation : EN COURS — la vague 1 est testée localement (70 tests / 258 assertions, test de migration et Pint verts selon le retour utilisateur) ; la vague 2 reste à tester. Ne pas déclarer le domaine conforme tant que les écarts V1 ne sont pas fermés.**
+**Statut d’implémentation : EN COURS — les vagues 1 et 2 sont déclarées vertes par l’utilisateur ; la vague 3 (nettoyage des orphelins) est implémentée et reste à tester. Ne pas déclarer le domaine conforme tant que les écarts V1 ne sont pas fermés.**
 
 ## Périmètre fonctionnel V1
 
