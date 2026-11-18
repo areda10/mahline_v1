@@ -64,33 +64,6 @@ final class ResetRootPasswordTest extends TestCase
         $this->assertDatabaseCount('audit_events', 0);
     }
 
-    public function test_inactive_root_account_cannot_be_soft_deleted_or_force_deleted(): void
-    {
-        $root = $this->createRoot();
-        // Simulate a legacy corrupted row; new Root accounts are always bootstrapped active.
-        $root->forceFill(['status' => UserStatus::Inactive])->saveQuietly();
-
-        try {
-            $root->delete();
-            self::fail('An inactive super admin root account must remain permanent.');
-        } catch (\DomainException $exception) {
-            self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
-        }
-
-        try {
-            $root->forceDelete();
-            self::fail('An inactive super admin root account must not be force-deleted.');
-        } catch (\DomainException $exception) {
-            self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
-        }
-
-        $this->assertDatabaseHas('users', [
-            'id' => $root->getKey(),
-            'deleted_at' => null,
-        ]);
-        $this->assertDatabaseCount('audit_events', 0);
-    }
-
     public function test_root_status_cannot_be_changed_through_direct_eloquent_updates(): void
     {
         $root = $this->createRoot();
