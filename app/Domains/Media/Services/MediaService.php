@@ -414,7 +414,8 @@ final class MediaService
             ]);
         }
 
-        return DB::transaction(function () use ($actor, $media, $makePrimary): Media {
+        try {
+            return DB::transaction(function () use ($actor, $media, $makePrimary): Media {
             $owner = $media->mediable;
             if (! $owner instanceof Model) {
                 throw new RuntimeException('Le propriétaire du média est introuvable.');
@@ -429,12 +430,7 @@ final class MediaService
                 ]);
             }
 
-            try {
-                $this->assertRetainedFilesAreValid($locked);
-            } catch (ValidationException $exception) {
-                $this->record($actor, $locked, 'media.restore_rejected', 'restore_rejected');
-                throw $exception;
-            }
+            $this->assertRetainedFilesAreValid($locked);
 
             $single = in_array($locked->category, [
                 MediaCategory::COOPERATIVE_LOGO->value,
@@ -490,7 +486,11 @@ final class MediaService
             $this->record($actor, $locked, 'media.restored', 'restored');
 
             return $locked->refresh();
-        });
+            });
+        } catch (ValidationException $exception) {
+            $this->record($actor, $media, 'media.restore_rejected', 'restore_rejected');
+            throw $exception;
+        }
     }
 
     /**
