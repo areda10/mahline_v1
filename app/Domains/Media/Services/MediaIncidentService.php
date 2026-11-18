@@ -141,6 +141,32 @@ final class MediaIncidentService
         return $updated;
     }
 
+    public function recordListView(User $actor): void
+    {
+        $this->assertRoot($actor);
+        $this->recordCollectionEvent($actor, 'media.incidents_listed', 'incidents_listed');
+    }
+
+    public function recordView(User $actor, MediaIncident $incident): void
+    {
+        $this->assertRoot($actor);
+        $this->record($actor, $incident, 'media.incident_viewed', 'viewed');
+    }
+
+    private function recordCollectionEvent(User $actor, string $eventKey, string $action): void
+    {
+        if (! $this->auditEvents->verifyIntegrity()) {
+            throw new \RuntimeException('La chaîne d’audit est invalide ; consultation incident refusée.');
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+        ));
+    }
+
     public function recordExport(User $actor): void
     {
         $this->assertRoot($actor);
