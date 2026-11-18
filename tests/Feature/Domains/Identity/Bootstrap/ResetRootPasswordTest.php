@@ -46,7 +46,14 @@ final class ResetRootPasswordTest extends TestCase
         try {
             $root->delete();
             self::fail('The super admin root account must not be deleted.');
-        } catch (\\DomainException $exception) {
+        } catch (\DomainException $exception) {
+            self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
+        }
+
+        try {
+            $root->forceDelete();
+            self::fail('The super admin root account must not be force-deleted.');
+        } catch (\DomainException $exception) {
             self::assertSame('The super admin root account cannot be deleted.', $exception->getMessage());
         }
 
