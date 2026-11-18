@@ -206,6 +206,7 @@ final class ProductVariantServiceTest extends TestCase
 
         $variant = $this->service->create($product, [
             'name' => 'Pot 250 g',
+            'price' => '12.50',
             'is_active' => true,
         ]);
 
