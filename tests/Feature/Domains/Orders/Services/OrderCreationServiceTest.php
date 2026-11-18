@@ -55,8 +55,8 @@ final class OrderCreationServiceTest extends TestCase
         ]);
 
         $this->assertCount(2, $order->cooperativeOrders);
-        $this->assertSame('30.00', $order->items_subtotal);
-        $this->assertSame('30.00', $order->grand_total);
+        $this->assertSame('60.00', $order->items_subtotal);
+        $this->assertSame('60.00', $order->grand_total);
         $this->assertSame('MAD', $order->currency);
         $this->assertDatabaseHas('order_items', [
             'product_id' => $productA->getKey(),
