@@ -151,7 +151,18 @@ final class MediaServiceTest extends TestCase
                 return $writeCount !== 2;
             });
 
-        Storage::set('public', $failingDisk);
+        $processor = \Mockery::mock(\App\Domains\Media\Services\MediaImageProcessor::class);
+        $processor->shouldReceive('derivatives')
+            ->once()
+            ->andReturn([
+                'medium' => 'medium derivative',
+                'thumbnail' => 'thumbnail derivative',
+            ]);
+        $this->app->instance(\App\Domains\Media\Services\MediaImageProcessor::class, $processor);
+
+        Storage::shouldReceive('disk')
+            ->with('public')
+            ->andReturn($failingDisk);
 
         $actor = $this->rootUser();
         $product = Product::factory()->create();
