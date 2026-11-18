@@ -1,6 +1,6 @@
 # MAHLINE Media — Spécification technique V1
 
-**Statut d’implémentation : EN COURS — ne pas considérer le domaine comme conforme tant que les écarts listés ci-dessous ne sont pas fermés et testés.**
+**Statut d’implémentation : EN COURS — la vague 1 est testée localement (70 tests / 258 assertions, test de migration et Pint verts selon le retour utilisateur) ; la vague 2 reste à tester. Ne pas déclarer le domaine conforme tant que les écarts V1 ne sont pas fermés.**
 
 ## Périmètre fonctionnel V1
 
@@ -102,17 +102,17 @@ Les contrôles d’autorisation sont toujours exécutés côté serveur et ne so
 
 | Domaine | État |
 | --- | --- |
-| Formats, tailles, catégories documentaires, dimensions | Correction initiale enregistrée ; tests locaux à exécuter |
-| Quotas galerie/documents | Correction initiale enregistrée ; tests locaux à exécuter |
-| Quatre dérivés et formats intelligents | Correction initiale enregistrée ; tests locaux à exécuter |
-| EXIF et animation | Correction initiale enregistrée ; tests locaux à exécuter |
-| Verrouillage et réorganisation atomique | Correction initiale enregistrée ; tests locaux à exécuter |
-| Rétention 90 jours, planification 02:00 et purge reprenable | Correction initiale enregistrée ; tests locaux à exécuter |
+| Formats, tailles, catégories documentaires, dimensions | Vague 1 testée localement : tests MEDIA verts ; nouvelle exécution globale à prévoir après les corrections suivantes |
+| Quotas galerie/documents | Vague 1 testée localement : tests MEDIA verts |
+| Quatre dérivés et formats intelligents | Vague 1 testée localement : tests MEDIA verts |
+| EXIF et animation | Vague 1 testée localement : tests MEDIA verts |
+| Verrouillage et réorganisation atomique | Verrouillage applicatif enregistré ; tests de concurrence réels encore à compléter |
+| Rétention 90 jours, planification 02:00 et purge reprenable | Vague 1 testée localement : tests MEDIA verts ; couverture de reprise à approfondir |
 | Détection/nettoyage des fichiers orphelins | À implémenter |
-| Restauration des médias et cycle de vie des propriétaires | À implémenter |
-| Audit exhaustif, intégrité avant écriture et vérification quotidienne | À implémenter / compléter |
+| Restauration des médias et cycle de vie des propriétaires | À implémenter ; accès root aux documents privés d’un propriétaire supprimé ajouté dans la vague 2, tests en attente |
+| Audit exhaustif, intégrité avant écriture et vérification quotidienne | À implémenter / compléter ; journalisation de l’accès root aux documents d’un propriétaire supprimé ajoutée, tests en attente |
 | Anti-énumération, incidents, notifications et pièces jointes | À implémenter |
-| Suite de tests complète et Pint | À exécuter et valider |
+| Suite de tests complète et Pint | Vague 1 verte selon retour utilisateur ; à relancer après chaque nouvelle vague et sur la suite complète |
 
 ## Tests
 
