@@ -63,6 +63,33 @@ final class ProductVariantServiceTest extends TestCase
         );
     }
 
+    public function test_it_normalizes_an_optional_price_override_to_two_decimals(): void
+    {
+        $product = $this->createProduct();
+
+        $variant = $this->service->create($product, [
+            'name' => 'Pot 250 g',
+            'price' => '12.5',
+            'is_active' => true,
+        ]);
+
+        $this->assertSame('12.50', $variant->fresh()->price);
+        $this->assertSame('12.50', $variant->effectivePrice());
+    }
+
+    public function test_it_rejects_a_zero_variant_price_override(): void
+    {
+        $product = $this->createProduct();
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->create($product, [
+            'name' => 'Pot gratuit',
+            'price' => '0.00',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_it_normalizes_variant_labels(): void
     {
         $product = $this->createProduct();
