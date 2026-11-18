@@ -368,6 +368,7 @@ final class MediaService
 
         if (
             ! $actor->hasRole('super_admin_root')
+            || $media->category !== MediaCategory::DOCUMENT->value
             || ! $owner instanceof Model
             || ! method_exists($owner, 'trashed')
             || ! $owner->trashed()
