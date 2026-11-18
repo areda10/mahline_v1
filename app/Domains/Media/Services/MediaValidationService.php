@@ -40,7 +40,7 @@ final class MediaValidationService
 
         $path = $file->getRealPath();
 
-        if ($path === false) {
+        if (! is_string($path)) {
             throw ValidationException::withMessages([
                 'file' => ['Le fichier temporaire est inaccessible.'],
             ]);
@@ -55,22 +55,14 @@ final class MediaValidationService
             ]);
         }
 
-        if ($category->isImage()) {
-            $image = @getimagesize($path);
-
-            if (
-                ! is_array($image)
-                || ! isset($image['mime'])
-                || $image['mime'] !== $mime
-                || ($image[0] * $image[1]) > 25_000_000
-            ) {
-                throw ValidationException::withMessages([
-                    'file' => ['L’image est invalide ou ses dimensions sont excessives.'],
-                ]);
-            }
-        } elseif ($mime !== 'application/pdf') {
+        if ($category->isImage() || str_starts_with($mime, 'image/')) {
+            $this->validateImageContent($path, $mime, $extension);
+        } elseif (
+            $mime !== 'application/pdf'
+            || ! str_starts_with((string) file_get_contents($path, false, null, 0, 8), '%PDF-')
+        ) {
             throw ValidationException::withMessages([
-                'file' => ['Seuls les documents PDF sont autorisés.'],
+                'file' => ['Le document PDF est invalide.'],
             ]);
         }
 
@@ -80,5 +72,75 @@ final class MediaValidationService
             'size' => $size,
             'original_name' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
         ];
+    }
+
+    private function validateImageContent(string $path, string $mime, string $extension): void
+    {
+        $image = @getimagesize($path);
+
+        if (
+            ! is_array($image)
+            || ! isset($image['mime'], $image[0], $image[1])
+            || $image['mime'] !== $mime
+            || $image[0] < 1
+            || $image[1] < 1
+            || $image[0] > 4000
+            || $image[1] > 4000
+            || ($image[0] * $image[1]) > 16_000_000
+        ) {
+            throw ValidationException::withMessages([
+                'file' => ['L’image est invalide ou dépasse les dimensions maximales de 4000 × 4000 pixels.'],
+            ]);
+        }
+
+        if ($extension === 'webp' && $this->isAnimatedWebp($path)) {
+            throw ValidationException::withMessages([
+                'file' => ['Les images animées ne sont pas autorisées en V1.'],
+            ]);
+        }
+    }
+
+    private function isAnimatedWebp(string $path): bool
+    {
+        $contents = file_get_contents($path);
+
+        if (
+            ! is_string($contents)
+            || strlen($contents) < 12
+            || substr($contents, 0, 4) !== 'RIFF'
+            || substr($contents, 8, 4) !== 'WEBP'
+        ) {
+            return false;
+        }
+
+        $length = strlen($contents);
+        $offset = 12;
+
+        while ($offset + 8 <= $length) {
+            $chunk = substr($contents, $offset, 4);
+            $chunkSizeData = unpack('Vsize', substr($contents, $offset + 4, 4));
+            $chunkSize = (int) ($chunkSizeData['size'] ?? 0);
+            $dataOffset = $offset + 8;
+
+            if ($dataOffset + $chunkSize > $length) {
+                return false;
+            }
+
+            if ($chunk === 'ANIM' || $chunk === 'ANMF') {
+                return true;
+            }
+
+            if ($chunk === 'VP8X' && $chunkSize >= 1) {
+                $flags = ord($contents[$dataOffset]);
+
+                if (($flags & 0x02) !== 0) {
+                    return true;
+                }
+            }
+
+            $offset = $dataOffset + $chunkSize + ($chunkSize % 2);
+        }
+
+        return false;
     }
 }
