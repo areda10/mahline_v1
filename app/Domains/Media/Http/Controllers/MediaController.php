@@ -130,14 +130,14 @@ final class MediaController
 
         abort_unless(is_string($path) && $this->isManagedPath($path) && Storage::disk($media->disk)->exists($path), 404);
 
-        $stream = Storage::disk($media->disk)->readStream($path);
-        abort_unless(is_resource($stream), 404);
-
         $mimeType = $variant === 'original'
             ? $media->mime_type
             : ($media->metadata['derivative_mime_types'][$variant] ?? null);
 
         abort_unless(is_string($mimeType), 404);
+
+        $stream = Storage::disk($media->disk)->readStream($path);
+        abort_unless(is_resource($stream), 404);
 
         $isDocument = in_array($media->category, ['document', 'incident_attachment'], true);
         $download = $isDocument && $request->boolean('download');
