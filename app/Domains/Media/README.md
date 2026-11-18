@@ -8,7 +8,7 @@
 - Documents PDF privés avec catégorie métier.
 - Validation de l’extension et du MIME réel.
 - Dérivés `medium` (largeur maximale 1 200 px) et `thumbnail` (400 px) pour les images.
-- Suppression logique immédiate et purge physique après 30 jours.
+- Suppression logique immédiate. La purge physique est désactivée par défaut et ne peut être activée qu’après validation explicite d’une durée de rétention.
 - Journalisation des opérations sans contenu binaire, chemin de stockage ni URL privée.
 
 SVG, certifications de coopératives et certifications de produits sont hors périmètre V1 (Release V2).
@@ -93,7 +93,9 @@ Les documents restent privés. La Policy Media contrôle l’entité propriétai
 
 ## Purge
 
-La commande `php artisan media:purge-expired` supprime les fichiers et dérivés dont la suppression logique date d’au moins 30 jours, puis supprime leur ligne. Elle est planifiée quotidiennement dans `routes/console.php`. Le scheduler Laravel doit être exécuté en production.
+La commande `php artisan media:purge-expired` ne purge aucun média lorsque `MEDIA_RETENTION_DAYS` est absent, nul, non numérique ou inférieur à 1. C’est le comportement par défaut de la Release V1 : aucune durée de conservation n’est présumée.
+
+Après validation explicite d’une durée de rétention, définir `MEDIA_RETENTION_DAYS` à un nombre entier positif. La commande supprime alors les fichiers et dérivés dont la suppression logique date d’au moins ce nombre de jours, puis supprime leur ligne. Elle est planifiée quotidiennement dans `routes/console.php`; le scheduler Laravel doit être exécuté en production.
 
 ## Tests
 
@@ -102,7 +104,6 @@ php artisan test tests/Framework/Domains/Media
 php artisan test tests/Framework/Database/Migrations/MediaCategoryIndexMigrationTest.php
 vendor/bin/pint --test
 ```
-
 
 ## Rétention des médias supprimés
 
