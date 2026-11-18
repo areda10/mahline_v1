@@ -144,8 +144,8 @@ final class OrderCreationService
                 'grand_total' => $this->formatMoney($itemsTotalCents),
                 'delivery_address_snapshot' => $address,
                 'placed_at' => now(),
-                'created_by' => (string) $customer->getKey(),
             ]);
+            $order->forceFill(['created_by' => (string) $customer->getKey()])->save();
 
             $this->recordHistory(
                 'order',
@@ -166,8 +166,8 @@ final class OrderCreationService
                     'items_subtotal' => $this->formatMoney($subtotalCents),
                     'delivery_fee' => '0.00',
                     'grand_total' => $this->formatMoney($subtotalCents),
-                    'created_by' => (string) $customer->getKey(),
                 ]);
+                $cooperativeOrder->forceFill(['created_by' => (string) $customer->getKey()])->save();
 
                 $cooperativeOrders[$cooperativeId] = $cooperativeOrder;
                 $this->recordHistory(
@@ -181,7 +181,7 @@ final class OrderCreationService
             }
 
             foreach ($prepared as $line) {
-                OrderItem::query()->create([
+                $orderItem = OrderItem::query()->create([
                     'cooperative_order_id' => (string) $cooperativeOrders[$line['cooperative_id']]->getKey(),
                     'product_id' => $line['product_id'],
                     'product_variant_id' => $line['product_variant_id'],
@@ -194,8 +194,8 @@ final class OrderCreationService
                     'line_subtotal' => $this->formatMoney($line['line_cents']),
                     'line_total' => $this->formatMoney($line['line_cents']),
                     'status' => OrderItemStatus::ACTIVE,
-                    'created_by' => (string) $customer->getKey(),
                 ]);
+                $orderItem->forceFill(['created_by' => (string) $customer->getKey()])->save();
             }
 
             return $order->load(['cooperativeOrders.items']);
