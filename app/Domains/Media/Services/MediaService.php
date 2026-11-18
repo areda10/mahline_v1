@@ -509,7 +509,7 @@ final class MediaService
             $this->assertRetainedFilesAreValid($media);
 
             return true;
-        } catch (\\Throwable) {
+        } catch (\Throwable) {
             return false;
         }
     }
@@ -574,8 +574,8 @@ final class MediaService
                     $decoded = @imagecreatefromstring($contents);
                     $valid = is_array($image)
                         && ($image['mime'] ?? null) === $media->mime_type
-                        && $decoded instanceof \\GdImage;
-                    if ($decoded instanceof \\GdImage) {
+                        && $decoded instanceof \GdImage;
+                    if ($decoded instanceof \GdImage) {
                         imagedestroy($decoded);
                     }
                 }
@@ -592,8 +592,8 @@ final class MediaService
                 $validDerivative = is_array($image)
                     && is_string($expectedMime)
                     && ($image['mime'] ?? null) === $expectedMime
-                    && $decoded instanceof \\GdImage;
-                if ($decoded instanceof \\GdImage) {
+                    && $decoded instanceof \GdImage;
+                if ($decoded instanceof \GdImage) {
                     imagedestroy($decoded);
                 }
 
@@ -656,7 +656,7 @@ final class MediaService
                     $roots,
                     new MediaSecurityAlertNotification('private_access_denied', $actorHash, $ipHash, $attempts),
                 );
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 Log::error('MEDIA security notification delivery failed.', [
                     'exception' => $exception::class,
                 ]);
