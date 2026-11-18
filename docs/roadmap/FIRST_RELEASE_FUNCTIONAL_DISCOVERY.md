@@ -1,7 +1,8 @@
 # MAHLINE — Cadrage fonctionnel du premier release SaaS + marketplace
 
-- **Version :** 4.27
+- **Version :** 4.28
 - **Date d'ouverture :** 12 novembre 2026
+- **Dernière mise à jour :** 18 novembre 2026 — clôture du cadrage fonctionnel MEDIA V1 (74 décisions complémentaires validées)
 - **Branche :** `feature/Marketplace`
 - **Statut :** EN COURS — décisions fonctionnelles recueillies progressivement
 - **Périmètre :** premier release de MAHLINE (SaaS de gestion coopérative + marketplace publique)
@@ -3460,6 +3461,134 @@ Le phasage ne permet jamais de reporter les contrôles essentiels de sécurité,
 ### Complément à la matrice Media — question 96
 - **Q96 — Limite de téléchargement groupé de PDF : A.** 50 PDF maximum par opération, regroupés dans une archive ZIP.
 - **Conséquences / contraintes :** la limite s'applique à chaque opération de téléchargement groupé réservée à root (Q95). Chaque document est contrôlé individuellement avant inclusion ; les documents non autorisés, en attente de validation antivirus, en quarantaine ou bloqués sont exclus. La génération de l'archive doit être contrôlée côté serveur et l'opération journalisée.
+
+
+## Complément final — Spécification fonctionnelle MEDIA V1 (session de validation Q/R 1 à 74 — 18 novembre 2026)
+
+- **Statut :** les 74 décisions de cette session sont validées. La phase de questions-réponses MEDIA V1 est close.
+- **Portée :** ce complément précise et, lorsqu'il y a contradiction, remplace les décisions MEDIA antérieures sur les mêmes sujets. Il ne réécrit pas les décisions d'autres domaines.
+- **Règle de lecture :** les numéros 1 à 74 ci-dessous sont ceux de la session de validation finale du 18 novembre 2026 ; ils ne renumérotent pas les anciennes questions Media Q1 à Q96.
+- **V2 :** toute nouvelle capacité ou extension non couverte par les décisions V1 ci-dessous est reportée à MEDIA V2. Les décisions V1 restent le périmètre de référence pour l'audit technique et les écrans.
+- **Dépendances :** les contrôles métier de visibilité et de propriété restent sous la responsabilité des domaines propriétaires (Products/Catalog, Cooperatives, Identity, etc.). Media fournit le stockage, le traitement et l'exposition sécurisée ; il ne contourne jamais les Policies/Gates ni les permissions du domaine consommateur.
+
+### A. Transactions, concurrence et intégrité des opérations (décisions 1 à 5)
+
+1. **Image principale concurrente :** le remplacement ou la désignation de l'image principale est sérialisé par transaction et verrouillage de la ressource concernée (lockForUpdate ou mécanisme équivalent). Une seule image principale active est permise. Une opération concurrente attend ou est retentée ; elle ne crée jamais deux images principales.
+2. **Suppressions concurrentes :** la suppression simultanée d'une même image est protégée par transaction et verrouillage. La seconde opération attend ou est retentée et ne provoque ni double suppression incohérente ni corruption des références.
+3. **Réorganisation concurrente :** la réorganisation d'une galerie est atomique et verrouille la galerie concernée. Avant écriture, vérifier que toutes les images appartiennent au même produit/galerie et au bon propriétaire. Aucun ordre partiel ne doit être enregistré ; une opération concurrente attend ou est retentée.
+4. **Échec d'upload :** l'échec d'un upload entraîne le rollback de la transaction de base de données et une tentative de nettoyage de tous les fichiers créés pendant l'opération. Un échec de nettoyage est journalisé sans masquer l'erreur initiale. Aucun média incomplet ne devient utilisable ; la détection des fichiers orphelins complète ce mécanisme.
+5. **Dérivés obligatoires :** l'original et chacun des quatre dérivés requis doivent être générés avec succès. Si un seul dérivé échoue, l'upload entier est rejeté, la transaction est annulée et les fichiers créés sont nettoyés. Aucun fallback silencieux vers un jeu incomplet de dérivés n'est autorisé.
+
+### B. Rétention, purge et fichiers orphelins (décisions 6 à 9)
+
+6. **Rétention configurable :** la durée par défaut est de 90 jours à compter du deleted_at (suppression logique). La restauration est possible avant expiration, sous réserve de l'intégrité des fichiers et des règles métier. Après expiration, le média devient éligible à la purge physique. Une configuration absente, invalide, nulle ou négative désactive la purge automatique ; elle ne doit jamais être interprétée comme une durée nulle.
+7. **Purge progressive et reprenable :** conserver l'enregistrement en base tant que l'original ou au moins un dérivé existe. Enregistrer les fichiers déjà supprimés et ceux restant à supprimer. En cas d'échec partiel, une exécution ultérieure reprend uniquement les éléments restants ; ne pas déclarer la purge terminée tant que tous les fichiers attendus ne sont pas supprimés.
+8. **Planification de purge :** exécuter media:purge-expired une fois par jour à 02:00, heure du serveur, avec prévention des chevauchements. Reprendre les purges incomplètes. Ne pas exécuter la purge si la configuration de rétention est invalide ou désactivée. Journaliser les réussites et les échecs.
+9. **Fichiers orphelins :** détecter automatiquement les fichiers Media sans référence en base. Attendre une période de sécurité configurable d'au moins 24 heures avant suppression. Limiter strictement l'analyse et la suppression aux chemins gérés par Media ; vérifier les chemins avant toute suppression et journaliser détection, suppression et échec.
+
+### C. Cycle de vie du propriétaire et médias associés (décisions 10 à 15)
+
+10. **Propriétaire supprimé logiquement :** conserver les lignes Media et les fichiers. Les médias publics deviennent immédiatement inaccessibles tant que les conditions de visibilité ne sont pas réunies. La restauration du propriétaire peut rétablir leur visibilité si toutes les autres conditions sont satisfaites ; elle ne déclenche pas une suppression logique générale des médias.
+11. **Propriétaire supprimé physiquement :** les médias associés sont supprimés logiquement et entrent dans le cycle de rétention normal de 90 jours avant purge physique.
+12. **Documents privés après suppression du propriétaire :** pendant la rétention, seul super_admin_root peut consulter les documents privés du propriétaire supprimé ; tous les autres rôles perdent immédiatement l'accès. Chaque consultation root est auditée. Après restauration du propriétaire, les permissions ordinaires sont réévaluées à chaque accès.
+13. **Remplacement du logo ou de la photo de profil :** valider et stocker complètement le nouveau média avant son activation. Une fois le nouveau média prêt, l'ancien est supprimé logiquement et conservé 90 jours par défaut. Si le nouvel upload échoue, l'ancien média reste actif et inchangé.
+14. **Historique des logos/photos de profil :** super_admin_root peut consulter l'historique des anciennes versions, notamment date/heure, auteur, statut et date prévue de purge ; il peut demander leur restauration avant purge.
+15. **Restauration d'un ancien logo/photo de profil :** l'opération est atomique et verrouillée. L'ancien média restauré redevient actif/principal et le média actuellement actif est supprimé logiquement dans la même opération. Vérifier la présence et l'intégrité de l'original et de tous les dérivés requis. Un média physiquement purgé ne peut pas être restauré.
+
+### D. Galerie produit et restauration des images (décisions 16 à 18 et 47 à 52)
+
+16. **Suppression de l'image principale :** promouvoir automatiquement la première image active restante selon sort_order, dans la même transaction verrouillée. Si aucune image ne reste, le produit peut ne plus avoir d'image principale.
+17. **Suppression de la dernière image :** autorisée. Le produit reste valide et peut rester actif sans image ; l'interface présente un placeholder. Toute obligation d'image au moment de publier un produit relève de Products/Catalog, pas de Media.
+18. **Taille maximale de galerie :** maximum configurable de 10 images actives par produit par défaut. Les images supprimées logiquement ne comptent pas dans cette limite.
+47. **Ancienne image après remplacement :** l'image produit remplacée est supprimée logiquement et conservée 90 jours par défaut. Pendant cette période, seul super_admin_root peut la consulter dans l'historique et demander sa restauration.
+48. **Mode de restauration d'une ancienne image produit :** l'image restaurée revient comme image secondaire ; l'image principale actuelle n'est pas remplacée.
+49. **Position après restauration :** ajouter l'image restaurée en dernière position de la galerie. Ne pas modifier l'ordre des images déjà actives.
+50. **Galerie pleine lors d'une restauration :** si 10 images sont déjà actives, refuser la restauration. Aucun dépassement temporaire ni remplacement automatique d'une autre image.
+51. **Suppression d'une image secondaire :** suppression logique immédiate, disparition immédiate de la galerie publique, rétention de 90 jours ; consultation historique et restauration réservées à super_admin_root, sous réserve de la limite de galerie et de l'intégrité des fichiers.
+52. **Suppression de l'image principale :** confirmer la règle de promotion automatique de la première image restante selon sort_order, dans la même transaction verrouillée ; si aucune image ne reste, le produit peut rester sans image principale.
+
+### E. Validation, traitement et dérivés d'images (décisions 19 à 27)
+
+19. **Taille d'une image :** maximum strict de 5 Mo par image en V1, contrôlé côté serveur avant stockage. La valeur pourra être configurable en V2.
+20. **Formats d'image :** JPG, JPEG, PNG et WebP. Vérifier l'extension, le MIME réel et la signature/contenu du fichier ; rejeter toute incohérence. AVIF est reporté à V2.
+21. **Dimensions :** maximum 4000 × 4000 pixels. Ajouter une limite de nombre total de pixels pour prévenir l'épuisement mémoire ; rejeter toute image dépassant les limites même si sa taille compressée est inférieure à 5 Mo.
+22. **EXIF :** appliquer l'orientation EXIF avant génération des dérivés, puis retirer les métadonnées EXIF restantes, notamment les coordonnées GPS, des dérivés.
+23. **Images animées :** GIF et autres images animées sont refusés en V1. Seules les images statiques JPG/JPEG/PNG/WebP sont acceptées. La prise en charge de l'animation est reportée à V2. Cette règle ne modifie pas à elle seule les décisions antérieures relatives aux fichiers vidéo.
+24. **Transparence :** préserver l'alpha des PNG et WebP dans l'original et les dérivés ; ne pas aplatir sur fond blanc. JPEG/JPG n'ont naturellement pas de transparence.
+25. **Dérivés obligatoires :** générer quatre tailles, sans déformation et sans agrandissement artificiel : thumbnail 150 × 150 max, small 300 × 300 max, medium 600 × 600 max, large 1600 × 1600 max. Respecter le ratio. Conserver l'original séparément. Les quatre dérivés sont obligatoires.
+26. **Qualité :** qualité de dérivés configurable, valeur par défaut 85. Ne pas recomprimer destructivement ni modifier les octets/le format de l'original conservé.
+27. **Format de dérivé :** JPG/JPEG vers WebP ; PNG avec transparence vers PNG ; PNG sans transparence vers WebP ; WebP vers WebP. L'original conserve ses octets et son format d'origine.
+
+### F. Stockage, exposition publique, visibilité et cache (décisions 28 à 32 et 43 à 46)
+
+28. **Stockage privé et exposition contrôlée :** originaux et dérivés sont physiquement stockés en privé. Aucune URL physique ni aucun chemin interne ne sont exposés. Les images publiques passent par un contrôleur qui vérifie leur visibilité ; les documents privés exigent une authentification et une autorisation.
+29. **Cache HTTP :** pour les images publiques, utiliser public, no-cache, must-revalidate. Pour les documents privés, utiliser private, no-store. La politique publique a déjà été intégrée dans le contrôleur et son test dédié ; cela ne constitue pas une validation de toute la conformité MEDIA.
+30. **Ressource publique invisible :** répondre uniformément HTTP 404 lorsque le média est supprimé logiquement ou lorsque le produit, le catalogue ou la coopérative ne satisfait plus les conditions de visibilité (notamment inactif ou supprimé logiquement). Ne pas révéler si la ressource existe.
+31. **URL publique stable :** utiliser un identifiant ULID, par exemple /media/{ulid}/medium. L'URL reste stable tant que le média existe, mais la visibilité est contrôlée à chaque requête ; un média supprimé ou invisible répond 404.
+32. **Anti-énumération :** appliquer une limitation de débit par IP, détecter les séquences suspectes et journaliser les abus sans données sensibles inutiles. Utiliser la même réponse 404 pour média inexistant et média non visible.
+43. **Logo et photos de coopérative :** publics uniquement si la coopérative est active et non supprimée logiquement. Logo et photos suivent la même règle. Le stockage physique reste privé et l'accès public passe par le contrôleur Media.
+44. **Produit présent dans plusieurs catalogues :** l'image est publique dès qu'au moins un catalogue actif de la même coopérative contient le produit, sous réserve que le produit et la coopérative soient actifs et non supprimés logiquement.
+45. **Perte de visibilité catalogue :** si un catalogue devient inactif/supprimé et qu'aucun autre catalogue actif ne contient le produit, l'image devient immédiatement inaccessible (404). Le média n'est pas supprimé logiquement ; il peut redevenir accessible si les conditions sont rétablies.
+46. **Revalidation à chaque requête :** vérifier en base, à chaque demande d'image publique, les conditions média/produit/catalogue/coopérative. Aucun cache applicatif de visibilité ni cache partagé ne peut servir l'image sans revalidation. Conserver la politique HTTP publique public, no-cache, must-revalidate.
+
+### G. Documents privés et photos de profil (décisions 33 à 42)
+
+33. **Accès aux documents privés :** route authentifiée et Policies ; à chaque requête, vérifier rôle, propriétaire, périmètre coopératif, permissions, statut du compte et statut du média. Chaque accès est audité.
+34. **Consultation et téléchargement :** autoriser l'affichage dans le navigateur lorsque le format le permet ainsi que le téléchargement. Assainir le nom de fichier d'origine et utiliser des en-têtes sûrs (Content-Disposition, X-Content-Type-Options: nosniff). Refaire les contrôles d'accès à chaque consultation/téléchargement.
+35. **Formats de documents privés :** PDF, JPG, JPEG et PNG uniquement, avec vérification extension/MIME/signature. DOCX et XLSX sont reportés à V2.
+36. **Taille d'un document privé :** maximum strict de 10 Mo par fichier, contrôlé côté serveur, indépendamment de la limite des images.
+37. **Quota de documents privés :** maximum configurable de 20 documents actifs par propriétaire par défaut. Les documents supprimés logiquement ne comptent pas dans le quota.
+38. **Catégories :** catégories obligatoires et fermées : identity, legal, administrative, certification, other. Utiliser un Enum ; pas de catégorie personnalisée en V1.
+39. **Remplacement d'un document :** valider et stocker entièrement le nouveau document avant de supprimer logiquement l'ancien. L'ancien est conservé 90 jours par défaut et son historique reste consultable par super_admin_root. En cas d'échec du nouveau fichier, l'ancien reste actif.
+40. **Pluralité par catégorie :** plusieurs documents actifs peuvent appartenir à la même catégorie. Chaque document conserve son ULID, sa date, son auteur et son statut. Le remplacement est une opération d'archivage distincte ; le quota global de 20 documents actifs par propriétaire s'applique.
+41. **Permissions par catégorie :** aucune catégorie ne bénéficie d'une politique d'accès spéciale. Les permissions sont déterminées par le rôle, le propriétaire, le périmètre coopératif et les autorisations applicables ; les règles sont centralisées.
+42. **Photo de profil :** toujours privée, stockée en privé et accessible uniquement aux utilisateurs authentifiés et autorisés selon rôle et périmètre. Elle ne suit pas les règles d'exposition publique des images de produits.
+
+### H. Autorisations et périmètres de gestion (décisions 53 et 54)
+
+53. **Gestion des images de produits :** cooperative_admin gère les images de sa coopérative ; super_admin gère les images des coopératives qui lui sont affectées ; super_admin_root dispose du périmètre global. Ces rôles peuvent ajouter, remplacer, réorganiser et supprimer dans leur périmètre.
+54. **Rôle user :** consultation uniquement des images publiquement accessibles. Aucun ajout, remplacement, réorganisation ou suppression d'image produit.
+
+### I. Cycle de vie des coopératives et restauration des médias privés (décisions 55 à 57)
+
+55. **Suppression logique d'une coopérative :** supprimer logiquement immédiatement tous ses médias privés ; la rétention de 90 jours commence à cette date. Pendant la rétention, seul super_admin_root peut consulter les documents supprimés, avec audit ; les autres rôles perdent immédiatement l'accès.
+56. **Restauration de la coopérative :** avant expiration des 90 jours, restaurer automatiquement les médias privés supprimés par conséquence de la suppression de la coopérative, si leurs originaux et dérivés requis sont présents et intègres. Ne pas restaurer les médias qui avaient été supprimés indépendamment avant la suppression de la coopérative.
+57. **Restauration partielle :** restaurer les médias dont tous les fichiers requis sont présents et intègres. Les médias incomplets ou corrompus restent supprimés logiquement et inaccessibles ; journaliser chaque anomalie sans bloquer la restauration des autres médias valides.
+
+### J. Audit, incidents de sécurité et réponse aux compromissions (décisions 58 à 74)
+
+58. **Notification des anomalies techniques :** notifier uniquement super_admin_root dans son espace d'administration pour les anomalies Media (fichier manquant/corrompu, dérivé défectueux, purge échouée, orphelin, etc.) et les journaliser. Ne pas exposer les détails techniques aux autres rôles.
+59. **Historique complet :** journaliser toutes les opérations Media, notamment upload, remplacement, suppression, restauration, réorganisation, consultation/téléchargement de documents privés et purge. Enregistrer au minimum acteur (ou système), date/heure, action, média, propriétaire et résultat. Les journaux sont append-only et ne contiennent ni mots de passe, ni tokens, ni données binaires ou données sensibles inutiles.
+60. **Consultation de l'audit :** seul super_admin_root consulte l'historique d'audit Media, avec portée globale.
+61. **Export d'audit :** super_admin_root peut exporter en CSV et PDF, avec filtres par période, utilisateur, coopérative, média et type d'opération. Exclure secrets et contenus binaires.
+62. **Conservation de l'audit :** conservation illimitée, sans purge automatique, indépendamment de la rétention de 90 jours des fichiers.
+63. **Intégrité cryptographique :** utiliser une chaîne de hachage où chaque événement est lié au précédent ; toute altération, suppression ou rupture de séquence doit être détectable. Réutiliser le mécanisme d'audit MAHLINE existant, sans créer une chaîne parallèle incompatible.
+64. **Vérification de la chaîne :** vérifier le dernier événement avant chaque nouvelle écriture et effectuer une vérification complète quotidienne. En cas d'anomalie, alerter root et enregistrer l'incident via un mécanisme indépendant de la chaîne compromise ; ne pas poursuivre silencieusement.
+65. **Mode de protection après compromission :** bloquer les opérations qui modifient l'état Media (upload, remplacement, suppression, restauration, réorganisation et purge). Maintenir les consultations autrement autorisées. Alerter root et signaler l'incident par un mécanisme indépendant ; ne pas écrire silencieusement dans la chaîne compromise.
+66. **Réactivation après compromission :** seul super_admin_root peut autoriser la reprise, après correction de la cause, vérification complète positive de la chaîne et enregistrement auditable de sa décision. Aucune reprise automatique.
+67. **Tentatives refusées :** journaliser toutes les opérations Media refusées avec acteur, date/heure, opération, ressource, résultat et motif approprié, sans secrets ni données sensibles inutiles.
+68. **Détection des abus répétés :** compteurs par IP et acteur, rate limiting, journalisation et alerte root. Aucun verrouillage automatique de compte ni changement automatique de statut. Les seuils sont configurables et seront déterminés pendant l'audit technique.
+69. **Canaux d'alerte sécurité :** notifier root dans MAHLINE et par email. La notification interne donne la gravité et les informations utiles ; l'email ne contient aucun secret ni donnée sensible inutile.
+70. **Niveaux de gravité :** LOW = anomalie isolée/refus ponctuel ; MEDIUM = répétition de refus ou comportement inhabituel ; CRITICAL = compromission d'audit, accès massif suspect ou attaque confirmée.
+71. **Conservation des incidents :** conserver les incidents de sécurité Media sans limite de durée et sans purge automatique.
+72. **Workflow des incidents :** statuts OPEN, IN_PROGRESS, RESOLVED, CLOSED. Conserver responsable, commentaires, dates et historique append-only de chaque transition.
+73. **Réouverture :** seul root peut rouvrir un incident CLOSED. Le même incident commence un nouveau cycle ; l'historique précédent reste intégralement conservé et append-only.
+74. **Pièces jointes d'incident :** autoriser les captures d'écran, rapports techniques et diagnostics en pièces jointes privées, accessibles uniquement à root. Appliquer validation du type de fichier, limites de taille, analyse antivirus et audit des consultations.
+
+### Arbitrages de priorité par rapport aux décisions Media antérieures
+
+En cas de contradiction sur le même sujet, les décisions finales ci-dessus prévalent notamment sur les anciennes règles génériques suivantes : formats d'image (WebP désormais admis), limite image (5 Mo), limite de document privé (10 Mo), suppression définitive sans rétention (désormais suppression logique/rétention 90 jours pour les catégories décrites), absence de restauration ordinaire (restauration root encadrée avant purge), nombre et tailles des dérivés (quatre dérivés obligatoires), et comportement de repli après échec de génération (upload complet rejeté si un dérivé obligatoire échoue).
+
+Les décisions antérieures non contredites restent applicables, notamment les règles vidéo précédemment validées. La règle V1 d'interdiction des images animées ne signifie pas que les vidéos sont supprimées du périmètre V1. Toute extension non couverte ou nouvelle capacité est reportée à MEDIA V2.
+
+### Clôture du cadrage fonctionnel MEDIA V1 — 18 novembre 2026
+
+- Questions-réponses de validation finale terminées : 74 décisions validées.
+- Aucun écran ni changement de code n'est autorisé par cette clôture documentaire seule.
+- Étape suivante : audit technique du domaine app/Domains/Media, comparaison exigence par exigence avec les implémentations, routes, Policies, migrations, stockage et tests ; établir la liste des écarts avant toute correction.
+- Les écrans MEDIA seront préparés après l'audit technique et la validation de la conformité V1.
+- Les développements non couverts par ce périmètre sont reportés à MEDIA V2.
+
 
 ### Question 269 — Affichage des promotions dans la marketplace
 
