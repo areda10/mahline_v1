@@ -240,15 +240,20 @@ final class MediaController
         $history = $this->media->replacementHistory($request->user(), $media);
 
         return response()->json([
-            'data' => $history->map(static fn (Media $item): array => [
-                'id' => $item->getKey(),
-                'original_name' => $item->original_name,
-                'mime_type' => $item->mime_type,
-                'size' => $item->size,
-                'deleted_at' => $item->deleted_at?->toIso8601String(),
-                'restorable' => $this->media->isMediaIntegrityValid($item)
-                    && ! (method_exists($item->mediable, 'trashed') && $item->mediable->trashed()),
-            ])->values(),
+            'data' => $history->map(function (Media $item): array {
+                $owner = $item->mediable;
+
+                return [
+                    'id' => $item->getKey(),
+                    'original_name' => $item->original_name,
+                    'mime_type' => $item->mime_type,
+                    'size' => $item->size,
+                    'deleted_at' => $item->deleted_at?->toIso8601String(),
+                    'restorable' => $owner instanceof Model
+                        && (! method_exists($owner, 'trashed') || ! $owner->trashed())
+                        && $this->media->isMediaIntegrityValid($item),
+                ];
+            })->values(),
         ]);
     }
 
