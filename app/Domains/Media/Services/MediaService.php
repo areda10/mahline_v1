@@ -8,7 +8,6 @@ use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Media\Contracts\MediaAntivirusScanner as MediaAntivirusScannerContract;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Enums\MediaDocumentCategory;
 use App\Domains\Media\Models\Media;
@@ -35,7 +34,6 @@ final class MediaService
         private readonly MediaImageProcessor $processor,
         private readonly AuditService $audit,
         private readonly AuditEventRepository $auditEvents,
-        private readonly MediaAntivirusScannerContract $antivirus,
     ) {}
 
     public function upload(
@@ -72,10 +70,6 @@ final class MediaService
         }
 
         $validated = $this->validator->validate($file, $mediaCategory);
-
-        if ($mediaCategory === MediaCategory::INCIDENT_ATTACHMENT) {
-            $this->antivirus->scan($file);
-        }
 
         $mediaId = (string) Str::ulid();
         $visibility = $mediaCategory->isPublic() ? 'public' : 'private';
