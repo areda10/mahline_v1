@@ -69,6 +69,9 @@ final class MediaImageProcessor
 
     private function applyExifOrientation(\GdImage $source, string $path, string $extension): \GdImage
     {
+        imagealphablending($source, false);
+        imagesavealpha($source, true);
+
         if (! in_array($extension, ['jpg', 'jpeg'], true) || ! function_exists('exif_read_data')) {
             return $source;
         }
