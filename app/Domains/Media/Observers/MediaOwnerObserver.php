@@ -17,31 +17,6 @@ use RuntimeException;
 
 final class MediaOwnerObserver
 {
-    public function trashed(Model $owner): void
-    {
-        if (! $owner instanceof Product && ! $owner instanceof Cooperative && ! $owner instanceof User) {
-            return;
-        }
-
-        $actor = Auth::user();
-        if (! app(AuditEventRepository::class)->verifyIntegrity()) {
-            throw new RuntimeException('La chaîne d’audit est invalide ; visibilité MEDIA non journalisée.');
-        }
-
-        app(AuditService::class)->record(new AuditEntryDTO(
-            eventKey: 'media.owner_soft_deleted',
-            action: 'owner_soft_deleted',
-            actorType: $actor instanceof User ? User::class : null,
-            actorId: $actor instanceof User ? (string) $actor->getKey() : null,
-            subjectType: $owner::class,
-            subjectId: (string) $owner->getKey(),
-            metadata: [
-                'owner_type' => $owner::class,
-                'media_count' => $owner->media()->count(),
-            ],
-        ));
-    }
-
     public function restoring(Model $owner): void
     {
         if (! $owner instanceof Product && ! $owner instanceof Cooperative && ! $owner instanceof User) {
@@ -93,10 +68,6 @@ final class MediaOwnerObserver
 
     public function deleting(Model $owner): void
     {
-        if (! method_exists($owner, 'isForceDeleting') || ! $owner->isForceDeleting()) {
-            return;
-        }
-
         if (! $owner instanceof Product && ! $owner instanceof Cooperative && ! $owner instanceof User) {
             return;
         }
@@ -104,11 +75,32 @@ final class MediaOwnerObserver
         $actor = Auth::user();
         $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
 
+        if (! method_exists($owner, 'isForceDeleting') || ! $owner->isForceDeleting()) {
+            if (! app(AuditEventRepository::class)->verifyIntegrity()) {
+                throw new RuntimeException('La chaîne d’audit est invalide ; suppression logique du propriétaire refusée.');
+            }
+
+            app(AuditService::class)->record(new AuditEntryDTO(
+                eventKey: 'media.owner_soft_deleted',
+                action: 'owner_soft_deleted',
+                actorType: $actor instanceof User ? User::class : null,
+                actorId: $actorId,
+                subjectType: $owner::class,
+                subjectId: (string) $owner->getKey(),
+                metadata: [
+                    'owner_type' => $owner::class,
+                    'media_count' => $owner->media()->count(),
+                ],
+            ));
+
+            return;
+        }
+
         if (! app(AuditEventRepository::class)->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; suppression définitive du propriétaire refusée.');
         }
 
-        DB::transaction(function () use ($owner, $actorId): void {
+        DB::transaction(function () use ($owner, $actorId, $actor): void {
             $owner->media()->whereNull('deleted_at')->lockForUpdate()->get()->each(
             function ($media) use ($actorId, $owner): void {
                 $media->forceFill(['deleted_by' => $actorId])->save();
