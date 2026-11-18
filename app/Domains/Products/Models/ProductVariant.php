@@ -23,6 +23,7 @@ final class ProductVariant extends BaseModel
         'normalized_label',
         'sku',
         'price',
+        'unit_id',
         'attributes',
         'is_active',
     ];
@@ -53,6 +54,11 @@ final class ProductVariant extends BaseModel
         }
 
         return $this->product?->price;
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(ProductUnit::class, 'unit_id');
     }
 
     public function product(): BelongsTo
