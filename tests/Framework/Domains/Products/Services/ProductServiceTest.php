@@ -63,6 +63,7 @@ final class ProductServiceTest extends TestCase
             'id' => $product->getKey(),
             'cooperative_id' => $cooperative->getKey(),
             'name' => 'Miel naturel',
+                'unit_id' => $this->unitId,
             'is_active' => true,
         ]);
 
@@ -87,6 +88,7 @@ final class ProductServiceTest extends TestCase
             (string) $firstCooperative->getKey(),
             [
                 'name' => 'Miel naturel',
+                'unit_id' => $this->unitId,
                 'slug' => 'miel-naturel',
                 'is_active' => true,
             ],
