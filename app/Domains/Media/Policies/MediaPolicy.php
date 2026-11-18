@@ -10,6 +10,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Models\Media;
 use App\Domains\Media\Models\MediaIncident;
+use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 
@@ -71,7 +72,8 @@ final class MediaPolicy extends BasePolicy
 
         if ($owner instanceof MediaIncident) {
             return $user->hasRole('super_admin_root')
-                && $mediaCategory === MediaCategory::INCIDENT_ATTACHMENT;
+                && $mediaCategory === MediaCategory::INCIDENT_ATTACHMENT
+                && $owner->status !== MediaIncidentStatus::CLOSED;
         }
 
         if ($owner instanceof User) {
