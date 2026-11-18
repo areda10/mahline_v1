@@ -92,6 +92,47 @@ final class MediaServiceTest extends TestCase
         self::assertSame([], Storage::disk('local')->allFiles('media'));
     }
 
+    public function test_it_removes_a_partially_written_file_when_storage_reports_failure(): void
+    {
+        Storage::fake('local');
+        Storage::fake('public');
+
+        $disk = Storage::disk('local');
+        $failingDisk = \\Mockery::mock($disk)->makePartial();
+        $failingDisk->shouldReceive('put')
+            ->once()
+            ->andReturnUsing(static function (string $path, string $contents) use ($disk): bool {
+                $disk->put($path, $contents);
+
+                return false;
+            });
+
+        Storage::set('local', $failingDisk);
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+
+        try {
+            app(MediaService::class)->upload(
+                $actor,
+                $product,
+                UploadedFile::fake()->createWithContent(
+                    'partial-write.pdf',
+                    "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                ),
+                'document',
+                'proof_of_origin',
+            );
+
+            self::fail('The simulated storage failure should be rethrown.');
+        } catch (\\RuntimeException $exception) {
+            self::assertSame('Le stockage du média a échoué.', $exception->getMessage());
+        }
+
+        self::assertSame([], $disk->allFiles('media'));
+        self::assertSame(0, Media::query()->count());
+    }
+
     public function test_soft_deleting_a_media_record_keeps_its_file_for_the_retention_period(): void
     {
         Storage::fake('local');
