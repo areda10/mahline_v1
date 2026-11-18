@@ -262,3 +262,14 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Aucun domaine Inventory ni mécanisme de transfert atomique du stock parent n'est présent. La création de variantes reste donc bloquée lorsqu'un produit parent porte encore son unité ; aucun effacement automatique de l'unité ou transfert fictif n'est ajouté.
 - La précision des quantités reste celle déjà décidée (`DECIMAL(15,3)`) ; cette extension ne change pas les règles de quantité et n'introduit aucune conversion automatique.
 - Tests ciblés ajoutés/complétés pour l'affichage de `u` dans les formulaires produit et l'acceptation de `u` par le service de variantes. Exécution PHPUnit, migrations et Pint laissée à la validation locale.
+
+
+## 18. Contrat inter-domaines Products → Orders — unité de commande
+
+- L'audit a identifié que `OrderCreationService` acceptait auparavant `unit` depuis le checkout, sans vérifier qu'elle correspondait à l'unité réellement définie dans Products.
+- Correction : Orders lit désormais l'unité depuis `Product.unit` pour un produit simple ou depuis `ProductVariant.unit` pour une variante choisie. Toute valeur `unit` envoyée par le client est ignorée.
+- La ligne de commande conserve le code d'unité et le snapshot produit conserve aussi son libellé, afin que l'historique reste compréhensible si le registre évolue.
+- Un produit sans unité enregistrée est refusé au checkout. Un produit qui possède des variantes exige qu'une variante soit explicitement sélectionnée ; l'unité de la variante est alors obligatoire.
+- Les tests Orders couvrent la falsification de l'unité côté client, le snapshot `u` d'un produit simple, l'unité `ml` d'une variante et le rejet d'un produit sans unité.
+- La frontière Products → Orders est donc raccordée pour l'identité de l'unité. La gestion du stock, les réservations et le transfert parent → variantes restent du ressort d'Inventory, domaine encore absent ; aucune écriture de stock n'est introduite dans Orders.
+- PHPUnit, migrations et Pint ne sont pas exécutés dans cette session ; les résultats restent à vérifier localement.
