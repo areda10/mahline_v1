@@ -81,6 +81,8 @@ final class MediaService
         $directory = 'media/'.$mediaCategory->value.'/'.$owner->getKey().'/'.$mediaId;
         $path = $directory.'/original.'.$validated['extension'];
         $storedPaths = [];
+        $originalChecksum = null;
+        $derivativeChecksums = [];
 
         $derivatives = $mediaCategory->isImage()
             ? $this->processor->derivatives($file, $validated['extension'])
@@ -95,6 +97,7 @@ final class MediaService
             // Track the target before writing: a failed adapter may have partially written it.
             $storedPaths[] = $path;
             $this->putOrFail($disk, $path, $originalContents);
+            $originalChecksum = hash('sha256', $originalContents);
 
             $derivativePaths = [];
             $derivativeMimeTypes = [];
@@ -105,6 +108,7 @@ final class MediaService
                 $this->putOrFail($disk, $derivativePath, $derivative['contents']);
                 $derivativePaths[$name] = $derivativePath;
                 $derivativeMimeTypes[$name] = $derivative['mime_type'];
+                $derivativeChecksums[$name] = hash('sha256', $derivative['contents']);
             }
 
             return DB::transaction(function () use (
@@ -118,6 +122,8 @@ final class MediaService
                 $path,
                 $derivativePaths,
                 $derivativeMimeTypes,
+                $originalChecksum,
+                $derivativeChecksums,
                 $mediaId,
             ): Media {
                 $lockedOwner = $owner->newQuery()
@@ -197,6 +203,10 @@ final class MediaService
                     'metadata' => array_filter([
                         'derivatives' => $derivativePaths,
                         'derivative_mime_types' => $derivativeMimeTypes,
+                        'checksums' => [
+                            'original' => $originalChecksum,
+                            'derivatives' => $derivativeChecksums,
+                        ],
                         'document_category' => $documentCategory,
                     ], static fn (mixed $value): bool => $value !== null),
                     'created_by' => (string) $actor->getKey(),
@@ -495,6 +505,20 @@ final class MediaService
         $disk = Storage::disk($media->disk);
         $paths = [$media->path];
         $derivatives = $media->metadata['derivatives'] ?? [];
+        $checksums = $media->metadata['checksums'] ?? [];
+
+        if (! in_array($media->category, [
+            MediaCategory::DOCUMENT->value,
+            MediaCategory::INCIDENT_ATTACHMENT->value,
+        ], true)) {
+            foreach (['thumbnail', 'small', 'medium', 'large'] as $requiredVariant) {
+                if (! is_array($derivatives) || ! isset($derivatives[$requiredVariant])) {
+                    throw ValidationException::withMessages([
+                        'media' => ['Restauration impossible : un dérivé obligatoire est manquant.'],
+                    ]);
+                }
+            }
+        }
 
         if (is_array($derivatives)) {
             foreach ($derivatives as $path) {
@@ -505,7 +529,7 @@ final class MediaService
         }
 
         foreach (array_unique($paths) as $path) {
-            if (! is_string($path) || ! str_starts_with($path, 'media/') || ! $disk->exists($path)) {
+            if (! is_string($path) || ! $this->isManagedPath($path) || ! $disk->exists($path)) {
                 throw ValidationException::withMessages([
                     'media' => ['Restauration impossible : un ou plusieurs fichiers conservés sont absents.'],
                 ]);
@@ -518,12 +542,28 @@ final class MediaService
                 ]);
             }
 
+            $expectedChecksum = $path === $media->path
+                ? ($checksums['original'] ?? null)
+                : ($checksums['derivatives'][array_search($path, $derivatives, true)] ?? null);
+
+            if (is_string($expectedChecksum) && ! hash_equals($expectedChecksum, hash('sha256', $contents))) {
+                throw ValidationException::withMessages([
+                    'media' => ['Restauration impossible : le contenu d’un fichier conservé a été altéré.'],
+                ]);
+            }
+
             if ($path === $media->path) {
                 if ($media->mime_type === 'application/pdf') {
-                    $valid = str_starts_with($contents, '%PDF-');
+                    $valid = str_starts_with($contents, '%PDF-') && str_contains($contents, '%%EOF');
                 } else {
                     $image = @getimagesizefromstring($contents);
-                    $valid = is_array($image) && ($image['mime'] ?? null) === $media->mime_type;
+                    $decoded = @imagecreatefromstring($contents);
+                    $valid = is_array($image)
+                        && ($image['mime'] ?? null) === $media->mime_type
+                        && $decoded instanceof \\GdImage;
+                    if ($decoded instanceof \\GdImage) {
+                        imagedestroy($decoded);
+                    }
                 }
 
                 if (! $valid) {
@@ -563,6 +603,21 @@ final class MediaService
     public function recordDeniedAccess(User $actor, Media $media): void
     {
         $this->record($actor, $media, 'media.private_access_denied', 'private_access_denied');
+    }
+
+    private function isManagedPath(string $path): bool
+    {
+        if (! str_starts_with($path, 'media/')) {
+            return false;
+        }
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function positiveLimit(string $key, int $default): int
