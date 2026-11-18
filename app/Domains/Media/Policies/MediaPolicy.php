@@ -123,9 +123,14 @@ final class MediaPolicy extends BasePolicy
 
     public function restore(User $user, Media $media): bool
     {
+        $owner = $media->mediable;
+
         return $user->isAuthorized()
             && $user->hasRole('super_admin_root')
-            && $media->trashed();
+            && $media->trashed()
+            && $owner instanceof Model
+            && $this->categoryMatchesOwner($media->category, $owner)
+            && (! method_exists($owner, 'trashed') || ! $owner->trashed());
     }
 
     private function categoryMatchesOwner(string $category, Model $owner): bool
