@@ -6,6 +6,7 @@ namespace App\Domains\Localization\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
+use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
@@ -21,7 +22,7 @@ use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use RuntimeException;
 
-final class AddressService extends BaseService
+final class AddressService extends BaseService implements CooperativeAddressManager
 {
     private const WRITABLE_FIELDS = ['number', 'street', 'floor', 'postal_code', 'city', 'region', 'latitude', 'longitude'];
 
@@ -128,6 +129,25 @@ final class AddressService extends BaseService
             $this->record($actor, $target, 'deleted', 'localization.address.deleted', oldValues: $before,
                 newValues: ['deleted' => true, 'deletion_source' => 'voluntary']);
         });
+    }
+
+    public function createAddressForCooperative(User $actor, string $cooperativeId, array $attributes): void
+    {
+        $cooperative = Cooperative::query()->findOrFail($cooperativeId);
+        $this->createForCooperative($actor, $cooperative, $attributes);
+    }
+
+    public function softDeleteCooperativeAddressesById(string $cooperativeId, string $actorId): string
+    {
+        $cooperative = Cooperative::query()->findOrFail($cooperativeId);
+
+        return $this->softDeleteCooperativeAddresses($cooperative, $actorId);
+    }
+
+    public function restoreLatestCooperativeAddressesById(string $cooperativeId, string $actorId): void
+    {
+        $cooperative = Cooperative::withTrashed()->findOrFail($cooperativeId);
+        $this->restoreLatestCooperativeAddresses($cooperative, $actorId);
     }
 
     public function createForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
