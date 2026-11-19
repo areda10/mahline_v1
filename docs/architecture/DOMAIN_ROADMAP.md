@@ -724,3 +724,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-014 : vider le panier retire logiquement toutes ses lignes actives, tout en conservant les lignes retirées dans un historique interne de traçabilité. L'opération ne crée aucune commande et ne modifie ni commandes, ni factures, ni stock. La rétention du panier invité (30 jours) et celle du panier authentifié (sans expiration automatique) restent inchangées. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-015 : une ligne supprimée du panier ne peut pas être restaurée depuis l'historique. Le client doit rechercher à nouveau le produit dans le catalogue et l'ajouter comme un nouvel article, soumis aux prix, statuts et contrôles de disponibilité actuels. L'historique reste disponible uniquement pour la traçabilité. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
