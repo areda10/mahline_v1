@@ -193,50 +193,12 @@ final class UserManagementControllerTest extends TestCase
         ]);
     }
 
-    public function test_root_can_activate_and_verify_immediately_with_a_forced_password_change(): void
+    public function test_root_cannot_use_the_removed_direct_activation_shortcut(): void
     {
-        Notification::fake();
-
-        $root = $this->actor('super_admin_root', ['users.activate']);
-        $target = User::factory()->create([
-            'status' => UserStatus::Suspended,
-            'email_verified_at' => null,
-        ]);
-        $target->roles()->attach($this->ensureRole('user')->getKey());
-        [$session, $token] = $this->createAccessCredentials($target);
-
-        $this->actingAs($root)
-            ->patch(route('root.backoffice.users.activate-and-verify', $target))
-            ->assertRedirect(route('root.backoffice.users.show', $target))
-            ->assertSessionHas('success');
-
-        $target->refresh();
-        $this->assertSame(UserStatus::Active, $target->status);
-        $this->assertNotNull($target->email_verified_at);
-        $this->assertTrue($target->must_change_password);
-        $this->assertTrue(Hash::check('MahlineMahline', $target->password));
-        $this->assertNotNull($session->fresh()->revoked_at);
-        $this->assertNotNull($token->fresh()->revoked_at);
-        Notification::assertNothingSent();
-
-        $this->actingAs($target)
-            ->get(route('password.force-change.edit'))
-            ->assertOk()
-            ->assertSee('Changer votre mot de passe');
-
-        $this->actingAs($target)
-            ->put(route('password.force-change.update'), [
-                'password' => 'NewSecurePassword2026!',
-                'password_confirmation' => 'NewSecurePassword2026!',
-            ])
-            ->assertRedirect(route('user.dashboard'));
-
-        $target->refresh();
-        $this->assertFalse($target->must_change_password);
-        $this->assertTrue(Hash::check('NewSecurePassword2026!', $target->password));
+        self::assertFalse(\\Illuminate\\Support\\Facades\\Route::has('root.backoffice.users.activate-and-verify'));
     }
 
-    public function test_archived_user_must_be_restored_before_either_root_activation_flow(): void
+    public function test_archived_user_must_be_restored_before_root_activation(): void
     {
         $root = $this->actor('super_admin_root', ['users.activate']);
         $target = User::factory()->create([
@@ -246,10 +208,6 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.activate', $target))
-            ->assertForbidden();
-
-        $this->actingAs($root)
-            ->patch(route('root.backoffice.users.activate-and-verify', $target))
             ->assertForbidden();
 
         $this->assertSame(UserStatus::Archived, $target->fresh()->status);
