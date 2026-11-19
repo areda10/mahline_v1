@@ -11,7 +11,7 @@ use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
-use App\Domains\Localization\Services\AddressService;
+use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +22,7 @@ final class CustomerProfileController
     public function __construct(
         private readonly CustomerProfileService $profiles,
         private readonly CustomerEmailChangeService $emailChanges,
-        private readonly AddressService $addresses,
+        private readonly UserAddressLifecycleManager $addresses,
     ) {}
 
     public function edit(Request $request): View
