@@ -7,7 +7,7 @@ namespace App\Domains\Cooperatives\Services;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
-use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
+use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Cooperatives\DTOs\CooperativeStatusData;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
@@ -15,6 +15,7 @@ use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
 final class CooperativeService implements CooperativeStatusReader
@@ -35,7 +36,6 @@ final class CooperativeService implements CooperativeStatusReader
     public function __construct(
         private readonly AuditWriter $audit,
         private readonly CooperativeAddressManager $cooperativeAddresses,
-        private readonly SuperAdminCooperativeAssignmentService $assignments,
     ) {}
 
     public function findStatus(string $cooperativeId): ?CooperativeStatusData
@@ -68,12 +68,12 @@ final class CooperativeService implements CooperativeStatusReader
             $cooperative->created_by = (string) $actor->getKey();
             $cooperative->save();
 
-            // Identity owns the super_admin_cooperative pivot, audit event and token revocation.
+            // Identity consumes this versioned event and owns its assignment pivot.
             if ($actor->hasRole('super_admin') && ! $actor->hasRole('super_admin_root')) {
-                $this->assignments->assignCreatorToNewCooperative(
-                    (string) $actor->getKey(),
-                    (string) $cooperative->getKey(),
-                );
+                Event::dispatch(new CooperativeCreatedV1(
+                    cooperativeId: (string) $cooperative->getKey(),
+                    creatorUserId: (string) $actor->getKey(),
+                ));
             }
 
             // The cooperative and its unique address are created atomically.
