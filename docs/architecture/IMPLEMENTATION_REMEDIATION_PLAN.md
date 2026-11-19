@@ -327,3 +327,9 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - **Intégré :** tests de policies déplacés et namespaces mis à jour.
 - **À faire :** déplacer les autres enregistrements de policies vers leurs domaines (Audit, Catalog, Categories, Media, Products) après audit de tous les usages ; ajouter les tests d'architecture qui empêchent une régression.
 - **Non exécuté :** PHPUnit/Pint.
+
+
+### Mise à jour — enregistrement des policies par domaine
+- **Intégré :** providers propriétaires pour Audit, Catalog, Categories, Cooperatives, Localization, Media et Products.
+- **Intégré :** Identity ne centralise plus l'enregistrement des policies des ressources des autres domaines.
+- **À valider :** tests d'autorisation, boot providers et tests d'architecture en local ; aucun test n'a été exécuté dans cette session.
