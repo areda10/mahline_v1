@@ -623,3 +623,16 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Durcissement complémentaire : le contrat refuse désormais d'affecter une coopérative si `created_by` ne correspond pas au super_admin demandeur. Commit : `6681226662f1c4132a29a8b3393ccf4d07de55a7`.
 
 - Test complémentaire ajouté : un super_admin ne peut pas recevoir l'affectation initiale d'une coopérative créée par un autre compte. Commit : `1c81c41593d45a0337e1af9d5707ff28ec48a950`.
+
+#### Révision A7 — remplacement de l'appel direct par événement versionné
+
+La première version du lot A7 faisait appeler le contrat Identity directement par `CooperativeService`, ce qui créait une dépendance de service retour vers Identity alors que Identity connaît déjà Cooperative pour gérer les affectations. Cette forme a été remplacée par un événement unidirectionnel :
+- Cooperatives émet `CooperativeCreatedV1(cooperativeId, creatorUserId)` dans la transaction de création.
+- Identity s'abonne via `IdentityServiceProvider` et un listener dédié.
+- Identity réalise l'affectation, l'audit et la révocation du token dans la transaction courante.
+- Cooperatives ne dépend plus du service/contrat Identity pour cette opération.
+- Le service Identity ne relit plus le modèle Cooperative pour cette affectation événementielle ; la clé étrangère du pivot garantit l'existence du propriétaire.
+
+Commits de révision : `66b43737c883d8d58f8551a6bd93585f95638362`, `6053e561491a6ed8e67fb1cb73a7214cf42010a5`, `d5f902559410761e3468299837b75b26c5990d42`, `41ea2010c9b043e8766c37097a902733b38a05e8`, `a2a8cbdd3f739af1a0caa232d62023a94234c407`, `262b9c7dd533eb055e087eaf1e601590a9638e3f`.
+
+Le test de refus d'affectation a été adapté pour vérifier le rôle super_admin requis. Tests non exécutés.
