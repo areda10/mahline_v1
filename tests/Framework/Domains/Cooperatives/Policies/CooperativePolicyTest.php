@@ -9,6 +9,7 @@ use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -295,7 +296,10 @@ final class CooperativePolicyTest extends TestCase
         );
         self::assertSame(
             [$first->id],
-            Cooperative::query()->visibleTo($superAdmin)->pluck('id')->all(),
+            Cooperative::query()->visibleTo(
+                $superAdmin,
+                app(SuperAdminCooperativeAssignmentReader::class)->cooperativeIdsFor((string) $superAdmin->getKey()),
+            )->pluck('id')->all(),
         );
         self::assertSame(
             [$first->id],
