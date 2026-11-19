@@ -673,3 +673,5 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Les opérations de lecture/écriture/suppression du pivot `super_admin_cooperative` dans `UserManagementService` passent désormais par le modèle Identity `SuperAdminCooperative`, et non par la relation Eloquent `User::cooperatives()` qui traverse le domaine Cooperatives.
 - Le service Identity ne contient plus aucune occurrence de `cooperatives()` ni d'import du modèle Cooperative ; les contrôleurs gardent le route binding pour les Policies et transmettent un identifiant au service.
 - Commits complémentaires : `841b85efe176ea610733468ab4d7c24894dd6e5e`, `31f70f13ce3bfd47ac7e5446659586f7d5461a11`, `50f4f05ec1de6d20bfcdcdae6907789f1372e3fb`, `bdb0d9ae253dae2b5580ffd7edae62f732b457d4`, `d2f364532e918bce3c5d954f7e328588ece480d4`.
+
+- Contrôle statique complémentaire des tests : une référence FQCN avec séparateur doublé dans le test d'affectation a été corrigée. Commit : `472a8a5766ddfadb01658dc718a6206873c3e613`.
