@@ -6,7 +6,7 @@ namespace Tests\Feature\Domains\Cooperatives\Http\Controllers;
 
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
