@@ -144,12 +144,14 @@ Traitement requis :
 Fichiers inspectés :
 - `bootstrap/providers.php` enregistre les providers Audit, Catalog, Categories, Cooperatives, Localization, Media, Products et Identity.
 - Aucun provider Orders ou Sales n'est déclaré.
-- `AppServiceProvider` contient des bindings de contrats appartenant à plusieurs domaines, dont `AuditWriter`, `CheckoutCatalog` et `CooperativeAddressManager`.
+- À l'audit initial, `AppServiceProvider` contenait les bindings `AuditWriter`, `CheckoutCatalog` et `CooperativeAddressManager`.
+- Correction effectuée sur `feature/Marketplace` : ces trois bindings sont maintenant enregistrés respectivement dans `AuditServiceProvider`, `ProductsServiceProvider` et `LocalizationServiceProvider`.
+- `AppServiceProvider` ne conserve plus ces trois bindings ; il garde encore les bindings Identity globaux et des observers transverses à auditer.
 
-Écart ADR-021 :
+Écart ADR-021 restant :
+- Examiner les observers Media actuellement enregistrés dans `AppServiceProvider` et déterminer leur propriétaire/composition correcte sans casser les événements de cycle de vie.
 - Les providers de domaine doivent enregistrer les bindings, policies, observers et listeners qui leur appartiennent.
-- AppServiceProvider doit rester global et ne pas devenir le registre de tous les contrats métier.
-- Le déplacement des bindings doit être fait avec tests de résolution du conteneur et tests de boot, sans double binding ni changement d'implémentation.
+- Ajouter/exécuter les tests de résolution du conteneur et de boot des providers ; aucune validation runtime n'est revendiquée dans cette session.
 
 ## 5. Matrice des dépendances et séquence de traitement
 
@@ -183,3 +185,14 @@ Fichiers inspectés :
 - Les migrations historiques n'ont pas été modifiées.
 - Aucun code métier n'a été modifié dans le cadre de cet audit.
 - Les points non lus ou non vérifiés ne sont pas déclarés conformes.
+
+
+## 8. Corrections d'architecture effectuées pendant l'audit
+
+- Déplacement du binding `AuditWriter → AuditWriterService` dans `AuditServiceProvider::register()`.
+- Déplacement du binding `CheckoutCatalog → ProductService` dans `ProductsServiceProvider::register()`.
+- Déplacement du binding `CooperativeAddressManager → AddressService` dans `LocalizationServiceProvider::register()`.
+- Suppression de ces trois bindings et imports correspondants de `AppServiceProvider`.
+- Aucun changement d'interface, de règle métier, de migration ou de table.
+- Vérification statique après écriture : les trois providers contiennent leurs bindings et AppServiceProvider ne les contient plus.
+- **À exécuter localement :** tests de boot/providers, résolution du conteneur pour les trois contrats, tests ciblés Audit/Products/Localization, Pint et suite complète.
