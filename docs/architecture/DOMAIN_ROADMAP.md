@@ -907,3 +907,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Commits : `6b6086d`, `491e211`, `96f59bd`, `0cbd481`, `25af509`.
 - Restent à traiter : contrat d'acteur pour supprimer les imports User Eloquent et intégration des consommateurs Orders/Sales à venir.
 - Tests non exécutés.
+
+### 16. Lot A7 — Ownership du pivot Identity / Cooperatives (19 novembre 2026)
+
+- L'affectation du super_admin créateur n'est plus écrite directement par Cooperatives dans le pivot Identity.
+- Identity possède désormais l'opération, le verrouillage, la révocation des tokens et l'audit.
+- Test étendu pour vérifier affectation, révocation et événement d'audit.
+- Commits : `5d9f046`, `6bc5332`, `2394de8`, `1a0fe1d`.
+- Tests non exécutés.
