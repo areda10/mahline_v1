@@ -357,3 +357,18 @@ Règles d'application :
 - Les règles s'appliquent également à la fusion des paniers (SALES-003) et aux modifications concurrentes (SALES-017) ; aucune de ces opérations ne peut contourner les limites.
 
 Restent à préciser avant implémentation : les valeurs numériques minimale et maximale de la limite technique, le comportement lorsqu'aucune limite commerciale n'est configurée, les droits de modification de la limite par la coopérative, ainsi que le traitement d'une limite abaissée alors qu'une quantité supérieure se trouve déjà dans un panier.
+
+### SALES-020 — Réduction d'une limite commerciale avec une quantité déjà au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative abaisse la limite commerciale d'un produit ou d'une variante alors qu'une quantité supérieure figure déjà dans le panier d'un client :
+
+- Sales conserve la quantité déjà demandée ; aucune réduction automatique n'est effectuée.
+- La ligne est signalée comme dépassant désormais la limite commerciale applicable.
+- Le checkout est bloqué tant que la quantité de la ligne dépasse la nouvelle limite.
+- Le client doit réduire lui-même la quantité à une valeur autorisée ou retirer la ligne.
+- La modification de la limite par la coopérative ne supprime pas la ligne et ne modifie pas silencieusement le choix du client.
+- La nouvelle limite est vérifiée lors des modifications du panier et à nouveau au checkout auprès des données du domaine propriétaire.
+
+Cette règle complète SALES-019 : les limites commerciales courantes s'appliquent aux lignes déjà présentes dans les paniers, sans altération automatique de leur quantité.
