@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Categories\Services;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Categories\Repositories\CategoryRepository;
 use App\Domains\Identity\Users\Models\User;
@@ -19,7 +19,7 @@ final class CategoryService
 {
     public function __construct(
         private readonly CategoryRepository $repository,
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
     ) {}
 
     public function create(array $attributes, ?User $actor = null): Category
