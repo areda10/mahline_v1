@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domains\Audit\Services;
 
-use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -12,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
-final class AuditService implements AuditWriter
+final class AuditService
 {
     public function __construct(
         private readonly AuditEventRepository $events,
