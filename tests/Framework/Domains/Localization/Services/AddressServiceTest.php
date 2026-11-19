@@ -38,6 +38,31 @@ final class AddressServiceTest extends TestCase
         ]);
     }
 
+    public function test_primary_user_address_can_be_created_or_updated_through_the_contract(): void
+    {
+        $user = $this->userWithRole('user');
+        $addresses = app(UserAddressLifecycleManager::class);
+
+        $addresses->savePrimaryAddressForUser($user, (string) $user->getKey(), [
+            'street' => 'Rue initiale',
+            'city' => 'Casablanca',
+        ]);
+
+        $addresses->savePrimaryAddressForUser($user, (string) $user->getKey(), [
+            'street' => 'Rue modifiée',
+            'city' => 'Rabat',
+        ]);
+
+        self::assertSame(1, $user->addresses()->count());
+        self::assertDatabaseHas('addresses', [
+            'user_id' => $user->getKey(),
+            'street' => 'Rue modifiée',
+            'city' => 'Rabat',
+            'is_primary' => true,
+            'deleted_at' => null,
+        ]);
+    }
+
     public function test_identity_can_use_the_public_user_address_lifecycle_contract(): void
     {
         $user = $this->userWithRole('user');
