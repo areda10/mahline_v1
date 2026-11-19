@@ -7,9 +7,12 @@ namespace App\Domains\Cooperatives\Policies;
 use App\Core\Foundation\Policies\BasePolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
 
 final class CooperativePolicy extends BasePolicy
 {
+    public function __construct(private readonly SuperAdminCooperativeAssignmentReader $assignments) {}
+
     private const ROLE_SUPER_ADMIN_ROOT = 'super_admin_root';
 
     private const ROLE_SUPER_ADMIN = 'super_admin';
@@ -70,9 +73,10 @@ final class CooperativePolicy extends BasePolicy
         }
 
         if ($user->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $user->cooperatives()
-                ->whereKey($cooperative->getKey())
-                ->exists();
+            return $this->assignments->isAssigned(
+                (string) $user->getKey(),
+                (string) $cooperative->getKey(),
+            );
         }
 
         if ($user->hasAnyRole([
