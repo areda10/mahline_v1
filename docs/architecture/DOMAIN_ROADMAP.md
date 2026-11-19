@@ -251,3 +251,22 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-010 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+## 12. Décision architecturale — répartition de la responsabilité des autorisations (19 novembre 2026)
+
+**Décision 11 validée :** adopter une approche hybride séparant les habilitations générales des autorisations métier.
+
+- Identity reste propriétaire des comptes, de l'authentification, des rôles, de leurs affectations et des permissions générales.
+- Chaque domaine métier reste propriétaire des autorisations portant sur ses ressources, leur propriété, leur périmètre, les restrictions coopératives et les opérations ou transitions métier.
+- Les contrôles peuvent combiner une permission générale issue d'Identity et une règle métier du domaine propriétaire de la ressource.
+- Les Policies, Gates et services d'application coordonnent les vérifications sans transférer à Identity la propriété des règles métier.
+- Les refus sont appliqués par défaut lorsque l'autorisation ou le contexte ne peut pas être établi.
+- Les règles inter-domaines suivent les contrats publics et les frontières définies dans l'ADR-009.
+
+**Document de décision :** [ADR-011 — Répartition de la responsabilité des autorisations](decisions/ADR-011-authorization-ownership.md).
+
+**État :** décision d'architecture acceptée ; inventaire et classification des rôles, permissions, Gates, Policies, middleware et contrôles existants restent à réaliser. Aucune conformité du code actuel n'est présumée. Aucun code, rôle, permission, table ou migration n'a été modifié dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-011 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif et aucun test exécuté.
