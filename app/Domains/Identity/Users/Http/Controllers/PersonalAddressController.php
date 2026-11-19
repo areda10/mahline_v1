@@ -42,7 +42,7 @@ final class PersonalAddressController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $addresses->savePrimaryAddressForUser($user, (string) $user->getKey(), $data);
+        $addresses->savePrimaryAddressForUser((string) $user->getKey(), (string) $user->getKey(), $data);
 
         return redirect()
             ->route($user->hasRole('super_admin_root') ? 'root.backoffice.profile.address.edit' : 'backoffice.profile.address.edit')
@@ -63,7 +63,7 @@ final class PersonalAddressController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $addresses->savePrimaryAddressForUser($actor, (string) $user->getKey(), $data);
+        $addresses->savePrimaryAddressForUser((string) $actor->getKey(), (string) $user->getKey(), $data);
 
         return back()->with('success', 'L’adresse personnelle de cet utilisateur a été mise à jour.');
     }
