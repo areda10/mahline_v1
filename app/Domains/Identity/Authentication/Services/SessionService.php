@@ -66,6 +66,12 @@ final class SessionService extends BaseService
                 );
             }
 
+            if ($lockedUser->emergency_locked_at !== null) {
+                throw new \RuntimeException(
+                    'The user account is emergency locked. A new session cannot be created.',
+                );
+            }
+
             $session = AuthenticationSession::query()->create([
                 'user_id' => $user->getKey(),
                 'known_device_id' => $knownDeviceId,
