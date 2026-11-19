@@ -734,3 +734,5 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-017 : les modifications simultanées du panier authentifié sont protégées par versionnement. Une opération basée sur une version obsolète est refusée et l'appareil doit recharger le panier avant de réessayer ; aucun écrasement silencieux. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+- SALES-018 : après création réussie d'une commande par Orders, Sales retire logiquement du panier uniquement les lignes effectivement incluses dans cette commande ; les lignes non commandées restent dans le panier. En cas d'échec ou de résultat incertain, aucune consommation ne doit être présumée. L'atomicité, les reprises et l'idempotence restent à définir à l'audit technique. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
