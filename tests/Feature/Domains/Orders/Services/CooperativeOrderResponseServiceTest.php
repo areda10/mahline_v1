@@ -14,6 +14,7 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Services\CooperativeOrderResponseService;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -21,6 +22,21 @@ use Tests\TestCase;
 final class CooperativeOrderResponseServiceTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        ProductUnit::query()->firstOrCreate(
+            ['code' => 'u'],
+            [
+                'label' => 'Unité / pièce (u)',
+                'dimension' => 'count',
+                'sort_order' => 50,
+                'is_active' => true,
+            ],
+        );
+    }
 
     public function test_cooperative_admin_can_confirm_own_suborder_and_global_status_is_recalculated(): void
     {
@@ -32,6 +48,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '35.00',
             'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
@@ -59,6 +76,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $productB = Product::factory()->forCooperative($cooperativeB)->create([
             'price' => '20.00',
             'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
@@ -80,6 +98,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
@@ -101,6 +120,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
@@ -126,6 +146,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
