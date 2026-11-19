@@ -38,7 +38,7 @@ final class UserPolicy extends BasePolicy
             && $this->canAccessUser($actor, $target)
             && ! (
                 $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)
-                && $target->hasRole(self::ROLE_COOPERATIVE_ADMIN)
+                && $this->targetHasActiveRole($target, self::ROLE_COOPERATIVE_ADMIN)
             )
             && $this->hasPermission($actor, 'users.view');
     }
@@ -77,7 +77,7 @@ final class UserPolicy extends BasePolicy
             && $this->hasPermission($actor, 'users.assign_super_admin')
             && ! $target->trashed()
             && $this->targetHasActiveRole($target, self::ROLE_SUPER_ADMIN)
-            && $target->status === UserStatus::Active
+            && $target->isAuthorized()
             && $this->cooperatives->existsNotDeleted($cooperativeId);
     }
 
@@ -102,22 +102,18 @@ final class UserPolicy extends BasePolicy
     public function update(User $actor, User $target): bool
     {
         if ($target->trashed()
-            || $target->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+            || $this->targetHasActiveRole($target, self::ROLE_SUPER_ADMIN_ROOT)
             || ! $this->hasPermission($actor, 'users.update')
             || ! $this->canAccessUser($actor, $target)) {
             return false;
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
-            return $target->hasAnyRole([
-                self::ROLE_SUPER_ADMIN,
-                self::ROLE_COOPERATIVE_ADMIN,
-                'user',
-            ]);
+            return $this->targetHasAnyActiveRole($target, [self::ROLE_SUPER_ADMIN, self::ROLE_COOPERATIVE_ADMIN, 'user']);
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $target->hasRole('user');
+            return $this->targetHasActiveRole($target, 'user');
         }
 
         if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
@@ -150,8 +146,10 @@ final class UserPolicy extends BasePolicy
         }
 
         if ($target->status === UserStatus::Active) {
-            // Only the root may re-verify an already-active account.
-            return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+            return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
+                || ($this->targetHasActiveRole($target, 'user')
+                    && $this->canAccessUser($actor, $target)
+                    && ($actor->hasRole(self::ROLE_SUPER_ADMIN) || $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)));
         }
 
         if ($target->status !== UserStatus::Pending) {
@@ -159,10 +157,9 @@ final class UserPolicy extends BasePolicy
         }
 
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
-            || (
-                $actor->hasRole(self::ROLE_SUPER_ADMIN)
+            || ($this->targetHasActiveRole($target, 'user')
                 && $this->canAccessUser($actor, $target)
-            );
+                && ($actor->hasRole(self::ROLE_SUPER_ADMIN) || $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)));
     }
 
     public function activate(User $actor, User $target): bool
@@ -279,6 +276,7 @@ final class UserPolicy extends BasePolicy
         // Role classification must remain independent from account status.
         // hasAnyRole() returns false for inactive, suspended or archived users.
         return ! $target->roles()
+            ->where('roles.is_active', true)
             ->whereIn('slug', [
                 self::ROLE_SUPER_ADMIN_ROOT,
                 'customer',
@@ -291,6 +289,15 @@ final class UserPolicy extends BasePolicy
         return $target->roles()
             ->where('slug', $roleSlug)
             ->where('is_active', true)
+            ->exists();
+    }
+
+    /** @param array<int, string> $roleSlugs */
+    private function targetHasAnyActiveRole(User $target, array $roleSlugs): bool
+    {
+        return $target->roles()
+            ->whereIn('slug', $roleSlugs)
+            ->where('roles.is_active', true)
             ->exists();
     }
 
