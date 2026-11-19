@@ -52,12 +52,12 @@ Les dossiers Countries ont été supprimés de l'arborescence applicative après
 
 ### Media / domaines propriétaires / Audit
 - `AppServiceProvider` enregistre `MediaOwnerObserver` sur Product, Cooperative et User.
-- `MediaOwnerObserver` dépend des modèles Product/Cooperative/User, du `AuditEventRepository` et de `AuditService`.
+- `MediaOwnerObserver` dépend encore des modèles Product/Cooperative/User ; sa dépendance Audit a été remplacée par `AuditWriter`.
 - `MediaService` manipule des propriétaires Eloquent de plusieurs domaines.
 - **Solution :** contrat de propriétaire média fourni par chaque domaine consommateur ; contrat public `AuditWriter` fourni par Audit ; Media conserve le stockage, les catégories, la validation et l'intégrité. Le point de composition branche les adaptateurs sans imports privés dans Media.
 
 ### Orders / Products / Identity / Cooperatives
-- `OrderCreationService` charge directement Product et ProductVariant, verrouille les modèles et lit variantes/unités.
+- `OrderCreationService` chargeait initialement directement Product et ProductVariant ; cette dépendance est désormais remplacée par `CheckoutCatalog` et `CheckoutProductData`.
 - Les modèles Orders référencent User et Cooperative.
 - **Solution :** Products expose un contrat de validation de panier/devis qui retourne un DTO immuable (produit, variante, unité, prix, statut et coopérative). Orders possède le snapshot et le cycle de commande. Les IDs de client/coopérative sont conservés comme références logiques sauf exception SQL prouvée.
 
@@ -91,8 +91,8 @@ Les triggers MySQL de cohérence coopérative et de propriété des adresses son
 |---|---|---|
 | P0 | Finaliser le registre des relations SQL, cascades, triggers et ownership | `database/migrations/**`, modèles concernés |
 | P0 | Déplacer policies vers les domaines propriétaires et providers locaux | `Identity/Authorization/**`, `Cooperatives/**`, `Localization/**`, providers |
-| P0 | Contrat public AuditWriter | `Audit/**`, `Shared/**`, `Media/**`, autres services |
-| P1 | Contrat Products checkout/quote pour Orders | `Products/**`, `Orders/Services/OrderCreationService.php` |
+| P0 | Contrat public AuditWriter | `Audit/**`, `Shared/**`, `Media/**`, autres services | **Intégré**
+| P1 | Contrat Products checkout/quote pour Orders | `Products/**`, `Orders/Services/OrderCreationService.php` | **Intégré**
 | P1 | Contrats de propriétaires médias | `Media/**`, `Products/**`, `Cooperatives/**`, `Identity/**` |
 | P1 | Contrat d'adresses pour Identity/Cooperatives | `Localization/**`, `Identity/UserManagement/**`, `Cooperatives/**` |
 | P1 | Définir ownership des pivots Catalog/Categories/Products | migrations pivots, services, modèles |
@@ -148,3 +148,47 @@ Référence du code après intégration : `f8f7535b1ae98879738c6aad0b0eef614b97a
 4. Définir le contrat d'adresse utilisé par Identity/Cooperatives.
 5. Finaliser le registre des FK, cascades et triggers à partir des migrations réelles ; ne supprimer aucune FK sans migration additive et tests d'intégrité.
 6. Ajouter tests de frontières, tests de contrat et CI progressive.
+
+
+## 9. Registre relationnel SQL — vérifications ciblées des migrations
+
+Les règles ci-dessous ont été relues dans les migrations existantes. Elles décrivent les contraintes réellement déclarées, pas une cible théorique. Elles ne doivent pas être modifiées sans migration additive, vérification des données et tests sur MySQL.
+
+| Relation | Règle physique observée | Conséquence / traitement |
+|---|---|---|
+| `addresses.country_id → countries.id` | `RESTRICT ON DELETE`, `CASCADE ON UPDATE` | La suppression d'un pays référencé est bloquée ; propriété désormais interne à Localization. |
+| `addresses.user_id → users.id` | `RESTRICT ON DELETE`, `RESTRICT ON UPDATE` | Un compte référencé ne peut pas être physiquement supprimé tant que l'adresse existe. |
+| `addresses.cooperative_id → cooperatives.id` | FK ajoutée avec `RESTRICT ON DELETE/UPDATE` | Même protection pour les adresses de coopérative. |
+| `categories.cooperative_id → cooperatives.id` | `RESTRICT ON DELETE` | Une coopérative référencée ne peut pas être physiquement supprimée. |
+| `categories.parent_id → categories.id` | `RESTRICT ON DELETE` | Une catégorie parent ne peut pas être physiquement supprimée si des enfants la référencent. |
+| `products.cooperative_id → cooperatives.id` | `RESTRICT ON DELETE` | Préserve la référence coopérative ; le soft delete reste distinct. |
+| `catalogs.cooperative_id → cooperatives.id` | `RESTRICT ON DELETE` | Même protection pour les catalogues. |
+| `category_product.category_id/product_id` | `CASCADE ON DELETE` des deux côtés | La suppression physique d'une catégorie ou d'un produit supprime les lignes de pivot ; un soft delete ne déclenche pas cette cascade. |
+| `catalog_product.catalog_id/product_id` | `CASCADE ON DELETE` des deux côtés | Même comportement pour les associations de catalogue. |
+| `super_admin_cooperative.super_admin_id/cooperative_id` | `CASCADE ON UPDATE`, pas de cascade delete déclarée | Suppression physique protégée par le comportement restrictif par défaut. |
+| `orders.customer_id → users.id` | `RESTRICT ON DELETE` | Préserve l'identité du client liée à la commande. |
+| `cooperative_orders.order_id/cooperative_id` | `RESTRICT ON DELETE` | Préserve commande et coopérative référencées. |
+| `order_items.cooperative_order_id` | `RESTRICT ON DELETE` | Préserve les lignes de commande historiques. |
+| `order_items.product_id/product_variant_id` | nullable + `RESTRICT ON DELETE` | La référence peut être nulle à la création, mais une ressource référencée ne peut pas être physiquement supprimée ; le snapshot JSON conserve les données commerciales. |
+| `order_change_proposals` → lignes, utilisateurs, produits/variantes | `RESTRICT ON DELETE` | Les propositions et leur contexte sont protégés. |
+| `order_status_histories.actor_id → users.id` | `NULL ON DELETE` | L'historique est conservé si l'acteur est physiquement supprimé. `subject_id` est polymorphe et sans FK. |
+
+### Triggers et invariants vérifiés
+
+- `2026_10_27_033514_enforce_cooperative_relation_ownership` : empêche les associations catalogue/produit de coopératives différentes ; autorise une catégorie globale mais interdit une catégorie locale sur un produit d'une autre coopérative ; bloque les changements de propriétaire qui invalideraient les associations existantes.
+- `2026_10_04_224228_add_cooperative_owner_to_addresses` : impose exactement un propriétaire (user OU cooperative), et utilise des colonnes générées/index uniques pour les adresses actives et principales.
+- `2026_11_17_000001_replace_address_owner_check_with_triggers` : maintient l'invariant du propriétaire exact via triggers MySQL et documente son caractère irréversible.
+- Ces triggers ne sont pas des remplacements de FKs : ils protègent des invariants métier complémentaires.
+
+### Ownership des pivots — décision de travail à appliquer dans les lots suivants
+
+- `category_product` : propriétaire fonctionnel proposé = Categories (gestion de l'affectation d'une catégorie à un produit).
+- `catalog_product` : propriétaire fonctionnel proposé = Catalog (gestion de l'appartenance à un catalogue).
+- Les pivots restent des tables d'intégration ; aucun des deux domaines ne doit être modifié directement par ProductService à terme. ProductService devra appeler des contrats d'association Categories/Catalog, avec validation des droits dans le domaine propriétaire.
+- Cette attribution est une décision d'architecture proposée par l'audit, pas encore une migration de propriété ni une refonte des relations Eloquent.
+
+### Limites restantes de l'audit SQL
+
+- Le registre ci-dessus couvre les migrations explicitement relues pour les relations clés ; les autres FKs des migrations Identity, Media et des tables de sécurité doivent encore être ajoutées au registre exhaustif.
+- Aucun schéma MySQL réel n'a été interrogé dans cette session ; les règles ont été lues dans les fichiers de migration.
+- Aucun trigger n'a été exécuté ni testé dans une base MySQL locale.
