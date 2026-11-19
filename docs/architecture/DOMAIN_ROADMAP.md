@@ -931,3 +931,12 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Le contrat de lecture de statut est maintenant fourni par un service dédié, séparé du service d'écriture. Commits : `2be30cb`, `20bfbb7`, `42af72a`.
 
 - Test A4 du contrôleur root aligné sur le middleware désactivé utilisé par les tests du même périmètre. Commit : `9ce03e8`.
+
+### 17. Lot A8 — Contrat Identity / Cooperatives
+
+- Identity ne dépend plus directement du modèle Cooperative dans UserManagementService ; validation et verrouillage passent par `CooperativeIdentityReference`.
+- Les méthodes d'affectation reçoivent des IDs coopérative, le contrôleur garde Gate/route binding.
+- Verrouillage dans l'ordre User puis Cooperative.
+- Test du contrat : coopérative inactive mais non supprimée acceptée ; soft-deleted refusée.
+- Commits : `4266034`, `521b8e6`, `692cf78`, `70e7c60`, `599ac39`, `d2f3645`, `50f4f05`, `bdb0d9a`, `75b79f2`, `a5b8820`, `65dd84e`, `6e6fff1`, `d9e75e7`.
+- Tests non exécutés.
