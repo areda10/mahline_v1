@@ -38,13 +38,7 @@ final class PasswordResetService extends BaseService
                 throw new InvalidPasswordResetTokenException('This account cannot reset its password.');
             }
 
-            $isCustomer = $lockedUser->hasRole('customer')
-                && ! $lockedUser->hasAnyRole([
-                    'super_admin_root',
-                    'super_admin',
-                    'cooperative_admin',
-                    'user',
-                ]);
+            $isCustomer = $this->isCustomerAccount($lockedUser);
 
             if (($customerOnly && ! $isCustomer) || (! $customerOnly && $isCustomer)) {
                 throw new InvalidPasswordResetTokenException('This account cannot use this password reset flow.');
@@ -138,16 +132,8 @@ final class PasswordResetService extends BaseService
             if (
                 $user === null
                 || $user->status->value !== 'active'
-                || ($customerOnly && (
-                    ! $user->hasRole('customer')
-                    || $user->hasAnyRole([
-                        'super_admin_root',
-                        'super_admin',
-                        'cooperative_admin',
-                        'user',
-                    ])
-                ))
-                || (! $customerOnly && $user->hasRole('customer'))
+                || ($customerOnly && ! $this->isCustomerAccount($user))
+                || (! $customerOnly && $this->isCustomerAccount($user))
             ) {
                 throw new InvalidPasswordResetTokenException('Invalid password reset token.');
             }
@@ -203,5 +189,19 @@ final class PasswordResetService extends BaseService
                 metadata: ['reason' => 'password_reset_token'],
             ));
         });
+    }
+
+    private function isCustomerAccount(User $user): bool
+    {
+        $roles = $user->roles()
+            ->where('roles.is_active', true)
+            ->pluck('roles.slug')
+            ->all();
+
+        return in_array('customer', $roles, true)
+            && array_intersect(
+                ['super_admin_root', 'super_admin', 'cooperative_admin', 'user'],
+                $roles,
+            ) === [];
     }
 }
