@@ -13,17 +13,18 @@ final readonly class UserAddressOwnerData
         public string $id,
         public ?string $cooperativeId,
         public bool $isCustomer,
+        public bool $authorized,
         public array $roles,
     ) {}
 
     public function hasRole(string $role): bool
     {
-        return in_array($role, $this->roles, true);
+        return $this->authorized && in_array($role, $this->roles, true);
     }
 
     /** @param list<string> $roles */
     public function hasAnyRole(array $roles): bool
     {
-        return array_intersect($roles, $this->roles) !== [];
+        return $this->authorized && array_intersect($roles, $this->roles) !== [];
     }
 }
