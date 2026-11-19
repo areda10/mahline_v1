@@ -534,3 +534,9 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - Enregistrements des policies Audit, Catalog, Categories, Cooperatives, Localization, Media et Products déplacés dans leurs providers locaux.
 - Identity conserve l'enregistrement de UserPolicy et le mécanisme générique d'autorisations.
 - Vérification d'exécution du boot et des policies à effectuer localement.
+
+
+### 19 novembre 2026 — contrat Cooperatives / Localization
+- Cooperatives utilise désormais `CooperativeAddressManager` pour créer, supprimer logiquement et restaurer les adresses.
+- AddressService reste propriétaire de l'implémentation et est exposé via un contrat public.
+- Les transactions existantes et les invariants d'adresse restent inchangés ; tests locaux requis.
