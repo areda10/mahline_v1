@@ -338,16 +338,22 @@ Cette règle est particulièrement importante pour un panier multi-coopératives
 
 L'atomicité entre la création Orders et la consommation des lignes Sales, ainsi que le traitement des réponses perdues, reprises et idempotence, seront définis lors de l'audit technique des contrats avant implémentation.
 
-### SALES-019 — Limite maximale de quantité par produit ou variante
+### SALES-019 — Limite maximale de quantité par ligne de panier
 
-**Statut : VALIDÉ — 19 novembre 2026 (option C)**
+**Statut : VALIDÉ — 19 novembre 2026 (option D)**
 
-La quantité maximale commandable dans une ligne de panier est configurable au niveau du produit ou de la variante par la coopérative propriétaire.
+La quantité d'une ligne de panier est encadrée par deux niveaux complémentaires :
 
-- La limite est définie pour le produit ou la variante concerné(e), et non imposée comme une valeur métier identique à l'ensemble du catalogue.
-- Lorsqu'une limite est définie, Sales refuse l'ajout ou la modification qui ferait dépasser cette limite et explique au client la quantité maximale autorisée.
-- Cette limite commerciale est indépendante du stock disponible : autoriser une quantité dans la limite ne réserve pas le stock et ne garantit pas sa disponibilité.
-- Les contrôles de disponibilité et de stock restent ceux définis par SALES-009 et SALES-013 et par le domaine Inventory.
-- Pour une ligne avec variante, la règle de quantité doit être déterminée au niveau de la variante ; pour un produit sans variante, elle est déterminée au niveau du produit.
+1. **Limite technique globale de la plateforme :** une borne maximale absolue protège MAHLINE contre les quantités aberrantes, les abus et les valeurs hors capacité technique. Elle s'applique à toutes les lignes, quels que soient le produit et la coopérative.
+2. **Limite commerciale configurable :** la coopérative propriétaire peut définir une quantité maximale propre à chaque produit ou variante, adaptée à ses conditions de vente.
 
-Restent à préciser avant implémentation : le comportement lorsqu'aucune limite n'est configurée, les valeurs minimales/maximales techniques autorisées, les droits de modification de cette limite, ainsi que le traitement d'une limite abaissée alors qu'une quantité supérieure se trouve déjà dans un panier. La limite ne doit pas être contournée par la fusion des paniers (SALES-003) ou par des modifications concurrentes (SALES-017).
+Règles d'application :
+
+- La quantité demandée ne peut dépasser ni la limite technique globale ni, lorsqu'elle est configurée, la limite commerciale du produit ou de la variante.
+- Sales refuse tout ajout, fusion ou modification qui ferait dépasser l'une de ces limites et indique au client la quantité maximale applicable.
+- Pour un produit avec variantes, la limite commerciale est déterminée au niveau de la variante ; pour un produit sans variante, elle est déterminée au niveau du produit.
+- La limite commerciale ne peut jamais permettre de dépasser la limite technique globale.
+- Ces limites sont indépendantes du stock : une quantité autorisée dans le panier ne réserve pas le stock et ne garantit pas sa disponibilité. Les contrôles de disponibilité restent ceux de SALES-009, SALES-013 et du domaine Inventory.
+- Les règles s'appliquent également à la fusion des paniers (SALES-003) et aux modifications concurrentes (SALES-017) ; aucune de ces opérations ne peut contourner les limites.
+
+Restent à préciser avant implémentation : les valeurs numériques minimale et maximale de la limite technique, le comportement lorsqu'aucune limite commerciale n'est configurée, les droits de modification de la limite par la coopérative, ainsi que le traitement d'une limite abaissée alors qu'une quantité supérieure se trouve déjà dans un panier.
