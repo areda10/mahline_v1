@@ -378,7 +378,8 @@ final class AddressService extends BaseService implements CooperativeAddressMana
             $rows = Address::withTrashed()->where('user_id', $owner->getKey())
                 ->where('deletion_source', 'owner')->where('owner_deletion_batch_id', $batch)
                 ->orderBy('created_at')->lockForUpdate()->get();
-            $limit = $owner->hasRole('customer') ? 5 : 1;
+            $isCustomer = $owner->roles()->where('slug', 'customer')->where('is_active', true)->exists();
+            $limit = $isCustomer ? 5 : 1;
             $active = Address::query()->where('user_id', $owner->getKey())->count();
             if ($active + $rows->count() > $limit) {
                 throw ValidationException::withMessages(['address' => 'La restauration dépasserait la limite d’adresses actives.']);
