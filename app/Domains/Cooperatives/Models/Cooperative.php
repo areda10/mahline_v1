@@ -8,6 +8,7 @@ use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\Contracts\IdentityActor;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Media\Models\Media;
 use App\Domains\Products\Models\Product;
@@ -41,7 +42,7 @@ final class Cooperative extends BaseModel
         return CooperativeFactory::new();
     }
 
-    public function scopeVisibleTo(Builder $query, User $user): Builder
+    public function scopeVisibleTo(Builder $query, IdentityActor $user, array $assignedCooperativeIds = []): Builder
     {
         if (! $user->isAuthorized()) {
             return $query->whereRaw('1 = 0');
@@ -50,10 +51,10 @@ final class Cooperative extends BaseModel
             return $query;
         }
         if ($user->hasRole('super_admin')) {
-            return $query->whereIn($this->getQualifiedKeyName(), $user->cooperatives()->select('cooperatives.id'));
+            return $query->whereIn($this->getQualifiedKeyName(), $assignedCooperativeIds);
         }
-        if ($user->hasAnyRole(['cooperative_admin', 'user']) && $user->cooperative_id !== null) {
-            return $query->where($this->getQualifiedKeyName(), $user->cooperative_id);
+        if ($user->hasAnyRole(['cooperative_admin', 'user']) && $user->cooperativeId() !== null) {
+            return $query->where($this->getQualifiedKeyName(), $user->cooperativeId());
         }
 
         return $query->whereRaw('1 = 0');
