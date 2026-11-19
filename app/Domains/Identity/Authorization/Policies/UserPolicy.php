@@ -162,6 +162,29 @@ final class UserPolicy extends BasePolicy
                 && ($actor->hasRole(self::ROLE_SUPER_ADMIN) || $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)));
     }
 
+    /**
+     * Send a password-reset link to an account managed by this actor.
+     * Delegated administrators are restricted to ordinary users in scope.
+     */
+    public function sendPasswordReset(User $actor, User $target): bool
+    {
+        if (! $this->hasPermission($actor, 'users.invite')
+            || $target->trashed()
+            || $target->status !== UserStatus::Active
+            || ! $this->isInternalManagedTarget($target)) {
+            return false;
+        }
+
+        if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
+            return true;
+        }
+
+        return $this->targetHasActiveRole($target, 'user')
+            && $this->canAccessUser($actor, $target)
+            && ($actor->hasRole(self::ROLE_SUPER_ADMIN)
+                || $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN));
+    }
+
     public function activate(User $actor, User $target): bool
     {
         if (! $this->hasPermission($actor, 'users.activate') || $target->trashed() || ! $this->isInternalManagedTarget($target)) {
