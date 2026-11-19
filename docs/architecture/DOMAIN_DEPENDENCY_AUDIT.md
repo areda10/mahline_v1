@@ -779,3 +779,24 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - `SuperAdminCooperativeAssignmentController` transmet des IDs aux Policies et au service ; la désaffectation ne transmet plus un modèle Eloquent au contrat Identity.
 - Test d'architecture `UserPolicyBoundaryTest` ajouté ; tests de Policies adaptés.
 - Les contrôleurs conservent le route binding Cooperative à la frontière HTTP pour l'affichage et la validation de route.
+
+### 11.20 Lot A13 — durcissement complémentaire Identity (sessions et reset)
+
+**Session**
+- `SessionService::create` vérifiait le statut actif et l'e-mail vérifié, mais n'appliquait pas le verrou d'urgence si le service était appelé directement, en dehors du workflow HTTP.
+- Ajout d'un refus explicite si `emergency_locked_at` est renseigné, après relecture et verrouillage du compte.
+- Test ajouté pour prouver qu'un compte actif mais verrouillé d'urgence ne peut pas créer de session.
+
+**Password reset**
+- Le paramètre `customerOnly` de `PasswordResetService::createToken` était utilisé pour choisir l'URL, mais pas pour vérifier le type de compte avant l'émission du token.
+- La classification du compte client est maintenant basée sur les rôles actifs en base, indépendamment de l'état de vérification de l'e-mail (la méthode `User::hasRole` inclut un contrôle d'autorisation et n'est pas adaptée à cette classification).
+- Ajout de `canRequestReset` dans le service ; le contrôleur centralise l'éligibilité et le service la revalide transactionnellement avant d'émettre le token.
+- `resetPassword` réapplique la même séparation de flux au moment de consommer le token.
+- Tests ajoutés pour refuser un token client à un compte non client, refuser le flux général à un compte client non vérifié, et valider l'éligibilité des deux flux.
+
+**Revue statique associée**
+- `ApiTokenService` : expiration 90 jours, abilities issues des permissions actives, refus de `*`, quotas par rôle, secrets/hash exclus des métadonnées et de l'audit.
+- `UserInvitationService` : token aléatoire 32 octets, hash SHA-256, durée 60 minutes, invalidation des invitations précédentes, revalidation et verrouillage User→Invitation à l'acceptation.
+- `CustomerEmailChangeService` : confirmation par token hashé 30 minutes, maintien de l'ancienne adresse jusqu'à vérification, révocation des sessions/tokens après changement.
+
+**Validation :** tests ajoutés, non exécutés. Les domaines restent `AUDIT_IN_PROGRESS`.
