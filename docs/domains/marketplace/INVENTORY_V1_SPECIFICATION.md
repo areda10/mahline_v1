@@ -240,3 +240,94 @@ Un test est marqué réussi uniquement après exécution réelle sur l'environne
 - Consolidation des décisions déjà validées sur stock, mouvements, réservations, disponibilité, quarantaine et transfert parent/variantes.
 - Enregistrement de l'audit initial et des écarts d'intégration Orders.
 - Aucun code Inventory n'est déclaré réalisé à cette date.
+
+## 11. Audit technique complémentaire après audit global — 19 novembre 2026
+
+**HEAD audité :** `ad3de3395a794e965973493716fbae1e0ca358bb`.  
+**Rapport relationnel global :** `docs/architecture/DOMAIN_DEPENDENCY_AUDIT.md`, sections 9 et 10.  
+**Statut :** audit statique Orders/Products effectué sur les fichiers et migrations indiqués ; schéma Inventory non encore gelé.
+
+### 11.1 Products — source autoritative du stockable
+
+Fichiers contrôlés :
+- `app/Domains/Products/Models/Product.php`
+- `app/Domains/Products/Models/ProductVariant.php`
+- `app/Domains/Products/Models/ProductUnit.php`
+- `app/Domains/Products/Contracts/CheckoutCatalog.php`
+- `app/Domains/Products/DTOs/CheckoutProductData.php`
+- `app/Domains/Products/Services/ProductService.php`
+- `database/migrations/2026_11_18_000004_add_prices_to_products_and_variants.php`
+- `database/migrations/2026_11_18_000005_create_product_units_and_attach_to_products.php`
+
+Constats confirmés :
+- Product possède `cooperative_id`, prix, devise, unité parent et relation vers ses variantes.
+- ProductVariant appartient à un Product et possède prix/unité propres.
+- Les cinq codes V1 sont `kg`, `g`, `l`, `ml`, `u`; aucune conversion automatique n'est prévue.
+- Product avec variantes : stock à porter sur chaque variante ; le parent ne doit pas simultanément porter un stock.
+- Le contrat CheckoutCatalog retourne actuellement produit, coopérative, prix, unité, état variantes et identifiants stables ; il ne fournit ni solde, ni quantité disponible, ni réservation.
+- `resolveForCheckout()` verrouille le produit et la variante dans la transaction appelante. Ce verrou protège les données Products pendant la lecture checkout, pas le stock.
+
+**Conséquence :** Inventory ne doit importer ni Product, ProductVariant, ProductUnit ni ProductService. Il stocke des références logiques au stockable et reçoit les informations nécessaires par un contrat Products public. Le code unité doit être conservé avec les mouvements/réservations pour interpréter les quantités historiques.
+
+### 11.2 Orders — orchestration et point de réservation
+
+Fichiers contrôlés :
+- `app/Domains/Orders/Models/Order.php`
+- `app/Domains/Orders/Models/CooperativeOrder.php`
+- `app/Domains/Orders/Models/OrderItem.php`
+- `app/Domains/Orders/Services/OrderCreationService.php`
+- `app/Domains/Orders/Services/CooperativeOrderResponseService.php`
+- `app/Domains/Orders/Enums/CooperativeOrderStatus.php`
+- `database/migrations/2026_11_18_000003_create_marketplace_orders_tables.php`
+
+Constats confirmés :
+- OrderCreationService crée la commande, les sous-commandes et les lignes dans une transaction ; il ne réserve pas le stock au checkout.
+- Les lignes conservent un snapshot JSON, la quantité à trois décimales, l'unité, le prix, la TVA et les totaux.
+- Chaque sous-commande porte une coopérative, un statut et une échéance de réponse.
+- CooperativeOrderResponseService verrouille la sous-commande puis la commande globale dans sa transaction ; il met actuellement la sous-commande en CONFIRMED sans appeler Inventory.
+- Les statuts de commande sont possédés par Orders ; Inventory ne doit pas modifier directement les statuts commerciaux.
+- Les lignes actives d'une sous-commande sont la portée de la réservation, conformément aux décisions V1.
+
+**Point d'intégration obligatoire :** la confirmation doit appeler le contrat public Inventory dans la transaction de confirmation existante, après verrouillage/relecture des lignes actives et avant que la décision ne puisse être commitée. Si une seule ligne échoue, la transaction entière doit être annulée et le statut rester inchangé. Une confirmation d'une autre sous-commande de la même commande globale demeure indépendante.
+
+### 11.3 Contraintes SQL et historique
+
+- Les migrations Orders actuelles déclarent des FK physiques vers Users, Cooperatives, Products et ProductVariants, avec RESTRICT pour préserver les commandes historiques.
+- Ces FK existantes ne seront ni réécrites ni supprimées dans ce lot.
+- Pour les nouvelles tables Inventory, les références vers Orders, Products et Cooperatives seront logiques par défaut, conformément à ADR-021 ; toute exception physique doit être justifiée par un invariant, documentée et non destructive.
+- Les mouvements de stock doivent être append-only. L'état courant ne peut être corrigé qu'au moyen d'un mouvement compensatoire.
+- Le solde net reste `on_hand - reserved - quarantined`; aucune mutation ne peut produire une quantité physique, réservée ou en quarantaine négative, ni une disponibilité négative.
+- Les lignes de réservation doivent permettre de prouver la correspondance avec la sous-commande et chaque ligne de commande, sans prendre possession des statuts Orders.
+- Les opérations répétées, réessayées ou rejouées doivent être idempotentes ; la clé d'idempotence et la stratégie de re-confirmation après libération doivent être définies avant le gel du schéma.
+
+### 11.4 Autorisations et intégration
+
+- Identity demeure propriétaire des comptes, rôles, permissions générales et affectations de super-admin.
+- Cooperatives demeure propriétaire des coopératives et de leurs règles d'organisation.
+- Inventory doit posséder ses Policies et vérifier l'acteur, la permission générale et le périmètre coopératif à chaque opération.
+- Root agit sur toutes les coopératives ; super_admin uniquement sur ses coopératives affectées ; cooperative_admin uniquement sur sa propre coopérative ; user sans droit de mutation.
+- Le contrat d'acteur/périmètre ne doit pas exposer le modèle Eloquent User à Inventory.
+- Les écritures critiques doivent utiliser AuditWriter dans la transaction lorsque l'atomicité est exigée ; les mouvements eux-mêmes constituent l'historique métier immuable.
+
+### 11.5 Points à régler avant schéma final
+
+1. Stratégie de ré-confirmation : une sous-commande refusée/annulée peut-elle être réouverte et réservée une seconde fois ? Si oui, règles exactes de libération puis nouvelle réservation.
+2. Moment exact de consommation du stock : le statut `SHIPPED`, la remise au transporteur ou un autre fait de sortie ; le domaine Delivery n'existe pas encore.
+3. Annulation après confirmation : conditions et acteur autorisé selon chaque statut Orders, notamment après préparation ou expédition.
+4. Retours : contrat Orders/Delivery qui distingue retour demandé, retour reçu, contrôle qualité et acceptation du retour ; seule la quantité acceptée réintègre le stock, la quantité refusée va en quarantaine.
+5. Passage produit simple vers variantes : point d'orchestration exact entre Products et Inventory, validation d'égalité des quantités et activation des variantes.
+6. Garantie d'idempotence des réservations et opérations de mouvements, y compris les tentatives concurrentes et les reprises après incident.
+7. Définition du contrat d'indicateur pour Orders et Catalog, y compris recalcul/invalidation après mouvement ou changement de réservation.
+
+Ces points ne changent pas les règles déjà validées ; ils précisent les transitions et identifiants techniques qui ne sont pas encore complètement définis dans les documents disponibles. Aucun choix silencieux ne sera introduit.
+
+### 11.6 Conclusion de l'audit technique
+
+- Audit global des dépendances : réalisé statiquement au HEAD indiqué.
+- Audit Products/unités/prix/variantes : réalisé sur les fichiers listés.
+- Audit Orders/confirmation/snapshots : réalisé sur les fichiers listés.
+- Audit complet des permissions et des migrations MySQL : à compléter avant gel du schéma.
+- Schéma et contrats Inventory : non gelés.
+- Implémentation Inventory : non commencée.
+- Tests PHPUnit/Pint et tests de concurrence MySQL : non exécutés.
+
