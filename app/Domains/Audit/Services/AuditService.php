@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Audit\Services;
 
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Repositories\AuditEventRepository;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -11,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
-final class AuditService
+final class AuditService implements AuditWriter
 {
     public function __construct(
         private readonly AuditEventRepository $events,
@@ -54,6 +55,11 @@ final class AuditService
             'correlation_id' => $entry->correlationId ?? $request?->attributes->get('correlation_id'),
             'occurred_at' => $entry->occurredAt ?? now(),
         ]);
+    }
+
+    public function verifyIntegrity(): bool
+    {
+        return $this->events->verifyIntegrity();
     }
 
     private function sanitize(?array $values): ?array
