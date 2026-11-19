@@ -915,3 +915,5 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test étendu pour vérifier affectation, révocation et événement d'audit.
 - Commits : `5d9f046`, `6bc5332`, `2394de8`, `1a0fe1d`.
 - Tests non exécutés.
+
+- Garde ajoutée : l'affectation initiale ne peut concerner que la coopérative dont le super_admin est le créateur. Commit : `6681226`.
