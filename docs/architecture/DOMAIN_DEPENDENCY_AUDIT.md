@@ -482,3 +482,53 @@ La dépendance `PasswordHistoryService` devenue inutilisée dans `UserManagement
 - Nettoyage dépendance : `4789744e9ef9b8663202e1ce776a50da982a2c76`
 
 **Validation :** code et test modifiés sur `feature/Marketplace`. PHPUnit, Pint, tests de routes et parcours invitation non exécutés ici. Le lot A2 reste en attente de validation runtime.
+
+
+### 11.9 Lot A3 — Localization : contrats d'intégration pour le cycle de vie des adresses (19 novembre 2026)
+
+**Fichiers audités :**
+- `app/Domains/Localization/Services/AddressService.php`
+- `app/Domains/Localization/Models/Address.php`
+- `app/Domains/Localization/Models/Country.php`
+- `app/Domains/Localization/Policies/AddressPolicy.php`
+- `app/Domains/Localization/Contracts/CooperativeAddressManager.php`
+- `app/Domains/Localization/Providers/LocalizationServiceProvider.php`
+- `app/Domains/Identity/UserManagement/Services/UserManagementService.php`
+- `app/Domains/Identity/Users/Http/Controllers/PersonalAddressController.php`
+- `app/Domains/Cooperatives/Http/Controllers/CooperativeController.php`
+- migrations d'ownership d'adresses et tests de relations/intégrité.
+
+**Corrections du lot :**
+- Ajout de `UserAddressLifecycleManager`, contrat public à identifiants, lié à `AddressService` par Localization.
+- `UserManagementService` ne dépend plus directement de `AddressService` pour supprimer/restaurer les adresses lors du cycle de vie d'un compte.
+- `CooperativeAddressManager` expose maintenant une opération de mise à jour d'adresse par identifiant de coopérative.
+- `CooperativeController` dépend du contrat `CooperativeAddressManager`, et non plus de la classe concrète `AddressService`.
+- Le provider Localization lie les deux contrats à `AddressService`.
+- Test ajouté : suppression logique puis restauration d'une adresse utilisateur via le contrat public.
+
+**Invariants confirmés par lecture du code/migrations :**
+- Un enregistrement Address doit appartenir exactement à un User ou à une Cooperative.
+- Une coopérative possède au plus une adresse active et une seule adresse principale.
+- Un utilisateur possède au plus une adresse principale active ; les limites métier (5 clients, 1 compte interne) sont contrôlées dans le service.
+- Le pays est imposé au Maroc (`MA`) pour la V1.
+- Les adresses supprimées volontairement sont en soft delete ; les suppressions liées au propriétaire sont groupées par batch pour restauration.
+- Les contraintes d'ownership, les colonnes générées et les index uniques de l'adresse sont spécifiques à MySQL dans les migrations actuelles ; ils exigent des tests réels sur MySQL.
+
+**Écarts Localization encore ouverts :**
+- `PersonalAddressController` dépend toujours directement de `AddressService`.
+- `AddressService`, `Address` et `AddressPolicy` importent directement les modèles Eloquent User/Cooperative ; la séparation de l'autorisation et du verrouillage des propriétaires nécessite des contrats fournisseurs et DTO.
+- `CooperativeAddressManager` expose encore le modèle Eloquent User comme acteur.
+- Aucun contrat public de lecture d'adresse client et de snapshot immuable pour Orders/Sales n'est présent.
+- Vérifier les courses concurrence sur les limites d'adresses, restauration/suppression, l'unicité des principales et l'historique d'adresse des commandes.
+- Le sous-module Countries est bien situé dans Localization ; aucun domaine Countries autonome ne doit être créé.
+
+**Commits du lot :**
+- Contrat UserAddressLifecycleManager : `f5caab7ffbd6352744454443257f3a184fdeab58`
+- Extension CooperativeAddressManager : `40a28946027d77babb4e433f25fdee8f3f49a9cf`
+- Implémentation AddressService : `f4776b66673d86426c52425e167f38b5914ff6cc`
+- Bindings Localization : `da11f75bb4315f0951e5a80b7e6a24cab3e27af7`
+- UserManagementService : `2377fcd4d942725d89cdc80391d2c5fe4ca7fe48`
+- CooperativeController : `73b41c2cdc01be34a2dcf8332d1557dd732c007c`
+- Test contrat : `3b769200afd2c8b96f18d4c98b50c04f3fb4fe04`
+
+**Validation :** fichiers et test ajoutés/modifiés sur `feature/Marketplace`. PHPUnit, Pint et scénarios MySQL non exécutés ici. Le lot A3 reste en attente de validation runtime.
