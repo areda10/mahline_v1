@@ -8,8 +8,6 @@ use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
-use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
-use App\Domains\Localization\Contracts\CooperativeAddressOwnerGateway;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
@@ -29,20 +27,16 @@ final class AddressService extends BaseService implements CooperativeAddressMana
 {
     private const WRITABLE_FIELDS = ['number', 'street', 'floor', 'postal_code', 'city', 'region', 'latitude', 'longitude'];
 
-    public function __construct(
-        private readonly AuditWriter $audit,
-        private readonly UserAddressOwnerGateway $userOwners,
-        private readonly CooperativeAddressOwnerGateway $cooperativeOwners,
-    ) {}
+    public function __construct(private readonly AuditWriter $audit) {}
 
     public function savePrimaryAddressForUser(User $actor, string $ownerId, array $attributes): void
     {
         DB::transaction(function () use ($actor, $ownerId, $attributes): void {
-            $owner = $this->userOwners->lock($ownerId);
-            $this->userOwners->authorize((string) $actor->getKey(), 'updateUserAddress', $ownerId);
+            $owner = User::query()->whereKey($ownerId)->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('updateUserAddress', $owner);
 
             $address = Address::query()
-                ->where('user_id', $owner->id)
+                ->where('user_id', $owner->getKey())
                 ->where('is_primary', true)
                 ->lockForUpdate()
                 ->first()
@@ -59,7 +53,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
             }
 
             $address = new Address($this->validatedAttributes($attributes));
-            $address->user_id = $owner->id;
+            $address->user_id = $owner->getKey();
             $address->country_id = $this->moroccoCountry()->getKey();
             $address->is_primary = true;
             $address->created_by = (string) $actor->getKey();
@@ -77,18 +71,18 @@ final class AddressService extends BaseService implements CooperativeAddressMana
 
     public function createForUser(User $actor, User $owner, array $attributes): Address
     {
-        $this->userOwners->authorize((string) $actor->getKey(), 'updateUserAddress', (string) $owner->getKey());
+        Gate::forUser($actor)->authorize('updateUserAddress', $owner);
 
         return DB::transaction(function () use ($actor, $owner, $attributes): Address {
-            $locked = $this->userOwners->lock((string) $owner->getKey());
-            $this->userOwners->authorize((string) $actor->getKey(), 'updateUserAddress', (string) $owner->getKey());
-            $limit = $locked->isCustomer ? 5 : 1;
-            $count = Address::query()->where('user_id', $locked->id)->count();
+            $locked = User::query()->lockForUpdate()->findOrFail($owner->getKey());
+            Gate::forUser($actor)->authorize('updateUserAddress', $locked);
+            $limit = $locked->hasRole('customer') ? 5 : 1;
+            $count = Address::query()->where('user_id', $locked->getKey())->count();
             if ($count >= $limit) {
                 throw ValidationException::withMessages(['address' => "La limite de {$limit} adresse(s) active(s) est atteinte."]);
             }
             $address = new Address($this->validatedAttributes($attributes));
-            $address->user_id = $locked->id;
+            $address->user_id = $locked->getKey();
             $address->country_id = $this->moroccoCountry()->getKey();
             $address->is_primary = $count === 0;
             $address->created_by = (string) $actor->getKey();
@@ -104,8 +98,8 @@ final class AddressService extends BaseService implements CooperativeAddressMana
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
 
         return DB::transaction(function () use ($actor, $owner, $attributes): Address {
-            $locked = $this->userOwners->lock((string) $owner->getKey());
-            $this->userOwners->authorize((string) $actor->getKey(), 'updateUserAddress', (string) $owner->getKey());
+            $locked = User::query()->lockForUpdate()->findOrFail($owner->getKey());
+            Gate::forUser($actor)->authorize('updateUserAddress', $locked);
             $address = Address::query()->where('user_id', $locked->getKey())->where('is_primary', true)->lockForUpdate()->first()
                 ?? Address::query()->where('user_id', $locked->getKey())->oldest()->lockForUpdate()->first();
             if ($address === null) {
@@ -121,9 +115,9 @@ final class AddressService extends BaseService implements CooperativeAddressMana
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
 
         return DB::transaction(function () use ($actor, $owner, $address): Address {
-            $lockedOwner = $this->userOwners->lock((string) $owner->getKey());
-            $this->userOwners->authorize((string) $actor->getKey(), 'updateUserAddress', (string) $owner->getKey());
-            $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->id)->lockForUpdate()->firstOrFail();
+            $lockedOwner = User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
+            $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->getKey())->lockForUpdate()->firstOrFail();
             $previous = Address::query()->where('user_id', $owner->getKey())
                 ->where('is_primary', true)->where('id', '<>', $target->getKey())
                 ->lockForUpdate()->get();
@@ -146,7 +140,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
         DB::transaction(function () use ($actor, $owner, $address): void {
-            $lockedOwner = $this->userOwners->lock((string) $owner->getKey());
+            $lockedOwner = User::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
             Gate::forUser($actor)->authorize('updateUserAddress', $lockedOwner);
             $target = Address::query()->whereKey($address->getKey())->where('user_id', $lockedOwner->getKey())->lockForUpdate()->firstOrFail();
             $wasPrimary = $target->is_primary;
@@ -220,41 +214,41 @@ final class AddressService extends BaseService implements CooperativeAddressMana
 
     public function createForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
     {
-        $this->cooperativeOwners->authorize((string) $actor->getKey(), 'createCooperativeAddress', (string) $cooperative->getKey());
+        Gate::forUser($actor)->authorize('createCooperativeAddress', $cooperative);
 
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
-            $locked = $this->cooperativeOwners->lock((string) $cooperative->getKey());
-            $this->cooperativeOwners->authorize((string) $actor->getKey(), 'createCooperativeAddress', $locked->id);
+            $locked = Cooperative::query()->lockForUpdate()->findOrFail($cooperative->getKey());
+            Gate::forUser($actor)->authorize('createCooperativeAddress', $locked);
 
-            return $this->persistCooperativeAddress($actor, $locked->id, $attributes);
+            return $this->persistCooperativeAddress($actor, $locked, $attributes);
         });
     }
 
     public function updateForCooperative(User $actor, Cooperative $cooperative, array $attributes): Address
     {
-        $this->cooperativeOwners->authorize((string) $actor->getKey(), 'updateCooperativeAddress', (string) $cooperative->getKey());
+        Gate::forUser($actor)->authorize('updateCooperativeAddress', $cooperative);
 
         return DB::transaction(function () use ($actor, $cooperative, $attributes): Address {
-            $locked = $this->cooperativeOwners->lock((string) $cooperative->getKey());
-            $this->cooperativeOwners->authorize((string) $actor->getKey(), 'updateCooperativeAddress', $locked->id);
-            $address = Address::query()->where('cooperative_id', $locked->id)->lockForUpdate()->first();
+            $locked = Cooperative::query()->lockForUpdate()->findOrFail($cooperative->getKey());
+            Gate::forUser($actor)->authorize('updateCooperativeAddress', $locked);
+            $address = Address::query()->where('cooperative_id', $locked->getKey())->lockForUpdate()->first();
 
             return $address === null
-                ? $this->persistCooperativeAddress($actor, $locked->id, $attributes)
+                ? $this->persistCooperativeAddress($actor, $locked, $attributes)
                 : $this->updateAddress($actor, $address, $attributes);
         });
     }
 
-    private function persistCooperativeAddress(User $actor, string $cooperativeId, array $attributes): Address
+    private function persistCooperativeAddress(User $actor, Cooperative $cooperative, array $attributes): Address
     {
-        if (Address::query()->where('cooperative_id', $cooperativeId)->exists()) {
+        if (Address::query()->where('cooperative_id', $cooperative->getKey())->exists()) {
             throw ValidationException::withMessages([
                 'address' => 'Cette coopérative possède déjà une adresse active.',
             ]);
         }
 
         $address = new Address($this->validatedAttributes($attributes));
-        $address->cooperative_id = $cooperativeId;
+        $address->cooperative_id = $cooperative->getKey();
         $address->country_id = $this->moroccoCountry()->getKey();
         $address->is_primary = true;
         $address->created_by = (string) $actor->getKey();
@@ -265,7 +259,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
             $address,
             'created',
             'localization.address.created',
-            cooperativeId: $cooperativeId,
+            cooperativeId: (string) $cooperative->getKey(),
             newValues: $this->snapshot($address),
         );
 
@@ -286,8 +280,8 @@ final class AddressService extends BaseService implements CooperativeAddressMana
     {
         return DB::transaction(function () use ($ownerColumn, $ownerId, $actorId): string {
             match ($ownerColumn) {
-                'user_id' => $this->userOwners->lock($ownerId),
-                'cooperative_id' => $this->cooperativeOwners->lock($ownerId),
+                'user_id' => User::query()->whereKey($ownerId)->lockForUpdate()->firstOrFail(),
+                'cooperative_id' => Cooperative::query()->whereKey($ownerId)->lockForUpdate()->firstOrFail(),
                 default => throw new InvalidArgumentException('Unsupported address owner column.'),
             };
 
@@ -324,7 +318,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
     public function restoreLatestCooperativeAddresses(Cooperative $owner, string $actorId): void
     {
         DB::transaction(function () use ($owner, $actorId): void {
-            $this->cooperativeOwners->lock((string) $owner->getKey());
+            Cooperative::query()->whereKey($owner->getKey())->lockForUpdate()->firstOrFail();
 
             $batch = Address::withTrashed()->where('cooperative_id', $owner->getKey())
                 ->where('deletion_source', 'owner')->whereNotNull('owner_deletion_batch_id')
@@ -386,8 +380,8 @@ final class AddressService extends BaseService implements CooperativeAddressMana
             $rows = Address::withTrashed()->where('user_id', $owner->getKey())
                 ->where('deletion_source', 'owner')->where('owner_deletion_batch_id', $batch)
                 ->orderBy('created_at')->lockForUpdate()->get();
-            $ownerData = $this->userOwners->lock((string) $owner->getKey());
-            $limit = $ownerData->isCustomer ? 5 : 1;
+            $isCustomer = $owner->roles()->where('slug', 'customer')->where('is_active', true)->exists();
+            $limit = $isCustomer ? 5 : 1;
             $active = Address::query()->where('user_id', $owner->getKey())->count();
             if ($active + $rows->count() > $limit) {
                 throw ValidationException::withMessages(['address' => 'La restauration dépasserait la limite d’adresses actives.']);
