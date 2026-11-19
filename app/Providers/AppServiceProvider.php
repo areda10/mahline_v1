@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Domains\Audit\Contracts\AuditWriter;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Services\AuditWriterService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Users\Models\User;
@@ -31,7 +31,7 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(AuditWriter::class, AuditService::class);
+        $this->app->bind(AuditWriter::class, AuditWriterService::class);
         $this->app->bind(CheckoutCatalog::class, ProductService::class);
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
