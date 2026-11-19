@@ -216,3 +216,19 @@ Lorsqu'un produit est supprimé du catalogue par sa coopérative alors qu'il fig
 - La conservation de ces informations dans le panier ne ressuscite pas le produit et ne crée aucun droit à l'achat.
 
 Les champs exacts du snapshot descriptif et la durée de conservation d'une ligne historique dans le panier restent à préciser lors de la conception technique.
+
+
+### SALES-011 — Modification des informations produit après ajout au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option C)**
+
+Lorsqu'une coopérative modifie un produit déjà présent dans un panier :
+
+- Sales actualise automatiquement les informations descriptives non tarifaires à partir des données actuelles du domaine propriétaire, notamment le nom, la description et l'image.
+- Sales conserve les informations initiales utiles à l'identification et à la traçabilité de la ligne au moment de son ajout.
+- Les caractéristiques qui modifient les conditions commerciales (notamment variante, unité de vente, conditionnement ou toute caractéristique ayant un effet sur le prix ou les modalités de vente) ne sont pas assimilées à de simples mises à jour descriptives.
+- Toute modification commerciale doit être détectée et traitée selon les règles de validation explicite déjà définies pour les hausses de prix et selon les règles à définir pour les autres changements commerciaux.
+- Une mise à jour descriptive ne doit jamais entraîner silencieusement une modification de la quantité, du prix accepté ou des conditions commerciales de la ligne.
+- Au checkout, Sales vérifie à nouveau les données et l'état commercial auprès du domaine propriétaire.
+
+Le détail des champs du snapshot initial, la classification exhaustive des attributs descriptifs/commerciaux et le traitement de chaque type de changement commercial restent à formaliser avant implémentation.
