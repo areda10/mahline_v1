@@ -83,7 +83,7 @@ final class ProductViewsTest extends TestCase
             ->assertSee('Unité de stock *')
             ->assertSee('Kilogramme (kg)')
             ->assertSee('Unité / pièce (u)')
-            ->assertSee('name="unit_id"');
+            ->assertSee('name="unit_id"', false);
     }
 
     public function test_product_edit_view_renders_existing_values(): void
@@ -105,7 +105,7 @@ final class ProductViewsTest extends TestCase
             ->assertSee('Catégorie de test')
             ->assertSee('Catalogue de test')
             ->assertSee('Enregistrer')
-            ->assertSee('name="unit_id"');
+            ->assertSee('name="unit_id"', false);
     }
 
     public function test_product_show_view_renders_details_and_relations(): void
