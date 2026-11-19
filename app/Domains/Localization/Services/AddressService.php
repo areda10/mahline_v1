@@ -288,6 +288,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
                 ->where('deletion_source', 'owner')
                 ->whereNotNull('owner_deletion_batch_id')
                 ->orderByDesc('deleted_at')
+                ->orderByDesc('owner_deletion_batch_id')
                 ->lockForUpdate()
                 ->value('owner_deletion_batch_id');
 
@@ -313,6 +314,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
                 ->where('deletion_source', 'owner')
                 ->whereNotNull('owner_deletion_batch_id')
                 ->orderByDesc('deleted_at')
+                ->orderByDesc('owner_deletion_batch_id')
                 ->value('owner_deletion_batch_id');
 
             if ($batch === null) {
