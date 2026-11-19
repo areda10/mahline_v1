@@ -919,7 +919,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     private function assertSuperAdminRoleTarget(User $superAdmin): void
     {
         $hasSuperAdminRole = $superAdmin->roles()
-            ->where('slug', self::ROLE_SUPER_ADMIN)
+            ->where('roles.slug', self::ROLE_SUPER_ADMIN)
+            ->where('roles.is_active', true)
             ->exists();
 
         if (! $hasSuperAdminRole) {
