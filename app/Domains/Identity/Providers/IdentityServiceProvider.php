@@ -6,6 +6,8 @@ namespace App\Domains\Identity\Providers;
 
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
+use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
 use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
@@ -25,6 +27,7 @@ final class IdentityServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(SuperAdminCooperativeAssignmentReader::class, SuperAdminCooperativeAssignmentReaderService::class);
         $this->app->bind(ActorContextProvider::class, IdentityActorContextProvider::class);
         $this->app->bind(ActorAuthorizer::class, IdentityActorAuthorizer::class);
 
