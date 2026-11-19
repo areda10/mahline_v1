@@ -8,8 +8,6 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 interface IdentityActor extends Authenticatable
 {
-    public function getKey(): mixed;
-
     public function isAuthorized(): bool;
 
     public function hasRole(string $role): bool;
