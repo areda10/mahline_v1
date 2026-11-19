@@ -276,30 +276,25 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $this->assertSuperAdminTarget($superAdmin);
 
-            $cooperative = Cooperative::query()
-                ->whereKey($cooperativeId)
-                ->lockForUpdate()
-                ->first();
+            $alreadyAssigned = DB::table('super_admin_cooperative')
+                ->where('super_admin_id', $superAdmin->getKey())
+                ->where('cooperative_id', $cooperativeId)
+                ->exists();
 
-            if ($cooperative === null) {
-                throw new DomainException('The new cooperative does not exist or is deleted.');
-            }
-
-            if ((string) $cooperative->created_by !== (string) $superAdmin->getKey()) {
-                throw new DomainException('Only the cooperative creator can receive its initial super admin assignment.');
-            }
-
-            if ($superAdmin->cooperatives()->whereKey($cooperative->getKey())->exists()) {
+            if ($alreadyAssigned) {
                 return;
             }
 
-            if ($cooperative->superAdmins()
-                ->where('users.id', '<>', $superAdmin->getKey())
-                ->exists()) {
+            $assignedToAnotherSuperAdmin = DB::table('super_admin_cooperative')
+                ->where('cooperative_id', $cooperativeId)
+                ->where('super_admin_id', '<>', $superAdmin->getKey())
+                ->exists();
+
+            if ($assignedToAnotherSuperAdmin) {
                 throw new DomainException('A cooperative can be assigned to only one super admin.');
             }
 
-            $superAdmin->cooperatives()->attach($cooperative->getKey());
+            $superAdmin->cooperatives()->attach($cooperativeId);
 
             $this->apiTokens->revokeForUser(
                 user: $superAdmin,
@@ -314,11 +309,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 action: 'assigned',
                 actorType: User::class,
                 actorId: (string) $superAdmin->getKey(),
-                cooperativeId: (string) $cooperative->getKey(),
+                cooperativeId: $cooperativeId,
                 subjectType: User::class,
                 subjectId: (string) $superAdmin->getKey(),
                 newValues: [
-                    'cooperative_id' => (string) $cooperative->getKey(),
+                    'cooperative_id' => $cooperativeId,
                     'assignment_source' => 'cooperative_creation',
                 ],
             ));
