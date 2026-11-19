@@ -209,3 +209,12 @@ Les règles ci-dessous ont été relues dans les migrations existantes. Elles d�
 - Les providers Audit, Catalog, Categories, Cooperatives, Localization, Media et Products sont tous listés dans `bootstrap/providers.php`.
 - Les policies et Gates Address/Cooperative conservent leurs règles et noms d'actions ; les tests de ces deux policies ont été déplacés avec les classes.
 - À valider localement : ordre de boot Laravel, résolution des policies, tests d'autorisation existants et absence de références résiduelles aux anciens namespaces.
+
+
+### Cooperatives / Localization — contrat d'adresse intégré
+- Création de `Localization\\Contracts\\CooperativeAddressManager`.
+- `AddressService` implémente le contrat avec des méthodes d'entrée par identifiant de coopérative.
+- `CooperativeService` dépend désormais du contrat public, plus directement de `AddressService`.
+- Le binding est réalisé dans `AppServiceProvider`. Les opérations restent dans la même transaction SQL du cas d'usage Cooperatives ; la création, suppression logique et restauration d'adresse conservent leurs comportements.
+- Localization reste propriétaire des adresses et de leur cycle de vie ; Cooperatives orchestre son propre cycle de vie sans appeler un service concret d'un autre domaine.
+- La validation locale devra couvrir création coopérative + adresse, suppression/restauration et toutes les règles de permissions.
