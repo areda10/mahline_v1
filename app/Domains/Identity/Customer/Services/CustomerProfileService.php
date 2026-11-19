@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Customer\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 final class CustomerProfileService extends BaseService
 {
     public function __construct(
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
     ) {}
 
     /**
