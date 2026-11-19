@@ -33,7 +33,7 @@ final class MediaService
     public function __construct(
         private readonly MediaValidationService $validator,
         private readonly MediaImageProcessor $processor,
-        private readonly AuditWriter $audit
+        private readonly AuditWriter $audit,
     ) {}
 
     public function upload(
