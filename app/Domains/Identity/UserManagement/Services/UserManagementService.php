@@ -99,9 +99,13 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                     ? null
                     : ($attributes['cooperative_id'] ?? null);
 
-                if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
-                    $this->assertCooperativeExists($cooperativeId);
-                }
+            }
+
+            if (
+                $cooperativeId !== null
+                && ! $this->cooperatives->lockActive((string) $cooperativeId)
+            ) {
+                throw new DomainException('The cooperative does not exist or is no longer available.');
             }
 
             $emailChanged = $lockedTarget->email !== $attributes['email'];
