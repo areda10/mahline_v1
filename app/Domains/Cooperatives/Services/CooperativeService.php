@@ -7,6 +7,7 @@ namespace App\Domains\Cooperatives\Services;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
+use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Cooperatives\DTOs\CooperativeStatusData;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
@@ -34,6 +35,7 @@ final class CooperativeService implements CooperativeStatusReader
     public function __construct(
         private readonly AuditWriter $audit,
         private readonly CooperativeAddressManager $cooperativeAddresses,
+        private readonly SuperAdminCooperativeAssignmentService $assignments,
     ) {}
 
     public function findStatus(string $cooperativeId): ?CooperativeStatusData
@@ -66,12 +68,12 @@ final class CooperativeService implements CooperativeStatusReader
             $cooperative->created_by = (string) $actor->getKey();
             $cooperative->save();
 
-            // A super_admin owns the cooperative assignment from creation.
-            // Root administrators retain global access and need no pivot row.
+            // Identity owns the super_admin_cooperative pivot, audit event and token revocation.
             if ($actor->hasRole('super_admin') && ! $actor->hasRole('super_admin_root')) {
-                $actor->cooperatives()->syncWithoutDetaching([
-                    $cooperative->getKey(),
-                ]);
+                $this->assignments->assignCreatorToNewCooperative(
+                    (string) $actor->getKey(),
+                    (string) $cooperative->getKey(),
+                );
             }
 
             // The cooperative and its unique address are created atomically.
