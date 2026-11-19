@@ -7,8 +7,8 @@ namespace Tests\Framework\Domains\Localization\Policies;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Localization\Policies\AddressPolicy;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Policies\AddressPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
