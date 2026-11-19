@@ -19,11 +19,33 @@ use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Shared\Contracts\ActorAuthorizer;
 use App\Shared\Contracts\ActorContextProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 final class IdentityServiceProviderTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_shared_actor_authorizer_delegates_to_laravel_gate(): void
+    {
+        $user = User::factory()->create();
+
+        Gate::define('identity.actor-context-test', static fn (User $actor): bool => $actor->isAuthorized());
+
+        app(ActorAuthorizer::class)->authorize(
+            (string) $user->getKey(),
+            'identity.actor-context-test',
+        );
+
+        $user->forceFill(['emergency_locked_at' => now()])->save();
+
+        $this->expectException(\\Illuminate\\Auth\\Access\\AuthorizationException::class);
+
+        app(ActorAuthorizer::class)->authorize(
+            (string) $user->getKey(),
+            'identity.actor-context-test',
+        );
+    }
 
     public function test_actor_context_contains_only_active_roles_and_permissions(): void
     {
