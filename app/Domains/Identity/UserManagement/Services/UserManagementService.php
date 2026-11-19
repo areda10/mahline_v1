@@ -74,7 +74,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('Root accounts cannot be modified through ordinary user management.');
             }
 
-            $currentRoleSlugs = $lockedTarget->roles()->pluck('slug')->all();
+            $currentRoleSlugs = $lockedTarget->roles()
+                ->where('roles.is_active', true)
+                ->pluck('roles.slug')
+                ->all();
             if (count($currentRoleSlugs) !== 1) {
                 throw new DomainException('The target account must have exactly one operational role.');
             }
