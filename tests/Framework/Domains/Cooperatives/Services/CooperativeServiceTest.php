@@ -55,7 +55,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('A cooperative address must be created through AddressService.');
+        $this->expectExceptionMessage('A cooperative address must be created through the Localization address contract.');
 
         $this->service->create(
             $actor,
