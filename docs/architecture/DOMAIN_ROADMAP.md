@@ -270,3 +270,23 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-011 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif et aucun test exécuté.
+
+## 13. Décision architecturale — fiabilité et cycle de vie des événements métier (19 novembre 2026)
+
+**Décision 12 validée :** adopter une approche hybride, avec un niveau de fiabilité adapté à la criticité de chaque événement.
+
+- Les événements inter-domaines sont des contrats publics documentés et versionnés ; ils représentent des faits métier, pas des commandes.
+- Les événements annonçant une écriture métier sont publiés après le commit ; un rollback ne doit jamais annoncer un fait annulé.
+- Le Transactional Outbox est utilisé lorsque la perte d'un événement est inacceptable ou qu'une livraison durable et reprenable est nécessaire ; il n'est pas imposé à tous les événements.
+- Les consommateurs sont idempotents et reconnaissent les doublons à l'aide d'un identifiant d'événement stable.
+- Les tentatives, erreurs, délais, reprises et échecs à traiter sont observables et contrôlés.
+- La rétention et les payloads sont minimisés selon les besoins métier, opérationnels, légaux et d'audit.
+- Les événements internes restent distincts des contrats publics inter-domaines.
+
+**Document de décision :** [ADR-012 — Fiabilité et cycle de vie des événements métier](decisions/ADR-012-domain-events-reliability.md).
+
+**État :** stratégie acceptée ; inventaire et catalogue des événements, classification de criticité, mécanismes Outbox éventuels, idempotence et procédures de reprise restent à auditer et concevoir. Aucun événement existant n'est déclaré conforme. Aucun code, table, migration, worker ou configuration de queue n'a été modifié.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-012 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif et aucun test exécuté.
