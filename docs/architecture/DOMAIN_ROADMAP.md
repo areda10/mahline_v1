@@ -528,3 +528,9 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - `AddressPolicy` est maintenant sous Localization ; `CooperativePolicy` sous Cooperatives.
 - Chaque domaine enregistre ses policies et Gates par son provider, chargé depuis `bootstrap/providers.php`.
 - Tests de policies déplacés dans les dossiers de leurs domaines. Validation PHPUnit locale encore requise.
+
+
+### 19 novembre 2026 — providers d'autorisation propriétaires
+- Enregistrements des policies Audit, Catalog, Categories, Cooperatives, Localization, Media et Products déplacés dans leurs providers locaux.
+- Identity conserve l'enregistrement de UserPolicy et le mécanisme générique d'autorisations.
+- Vérification d'exécution du boot et des policies à effectuer localement.
