@@ -345,3 +345,14 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - Dernier HEAD du code intégré : `3d1c91db28362a38919d7fa1e5084dc862001d69` sur `feature/Marketplace`.
 - Contrats intégrés : AuditWriter, CheckoutCatalog, CooperativeAddressManager ; providers d'autorisation locaux actifs par déclaration bootstrap.
 - Tests non exécutés : valider ce snapshot dans l'environnement local avant de poursuivre les lots restants.
+
+
+### Mise à jour — 19 novembre 2026 : audit des dépendances Sales
+
+- **Décision fonctionnelle :** SALES-001 à SALES-037 validées ; le périmètre Sales pré-commande est confirmé, Orders restant propriétaire de la commande créée.
+- **Constat :** aucun code Sales, provider, route, modèle, migration ou test Sales n'est présent à la référence examinée.
+- **Dépendances identifiées :** Products (lecture commerciale/version des produits et variantes), Cooperatives (statut propriétaire), Localization (lecture et snapshot d'adresse client), Identity (contexte d'acteur sans import de User privé), Orders (contrat public de création idempotente), Inventory (lecture de disponibilité sans réservation au checkout), Delivery (devis/frais).
+- **Écarts d'architecture observés :** ProductService importe directement des modèles Catalog/Categories et le modèle User d'Identity ; OrderCreationService accepte directement User d'Identity et un tableau libre ; AddressService et Address conservent des dépendances directes vers User/Cooperative ; AppServiceProvider porte plusieurs bindings de contrats de domaines. Ces constats sont à traiter selon ADR-021, sans refactor global ni changement de comportement non testé.
+- **Correction documentaire :** la section « Décisions encore ouvertes » de la spécification Sales a été réécrite pour ne plus reclasser comme ouvertes les décisions SALES-001 à SALES-037.
+- **À faire avant checkout :** concevoir et tester les contrats Products, Cooperatives, Localization, Orders, Inventory et Delivery ; établir les DTO/versionnements/idempotence ; définir les limites techniques et règles monétaires non encore arbitrées.
+- **Non exécuté :** PHPUnit, Pint, tests MySQL, tests de contrat, CI. Aucun résultat vert n'est revendiqué.
