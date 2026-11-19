@@ -551,3 +551,10 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Test ajouté : création puis mise à jour via le contrat, avec vérification qu'une seule adresse est conservée.
 - Commits complémentaires : `bf01e8496a7420a07696a9d0a21bde0afa4929c8`, `4266eda1b56a0cc3339368ed1d9ee1526baf350a`, `9b328e793ba8eef894e48a7e6c98f1dd7dc9319a`, `6d8c7edec8e184936780ee6fdb20bb59d4304463`, `a18166ce5f207f6c6f0c1efe9552217e287e3330`.
 - PHPUnit/Pint/MySQL non exécutés ; lot A3 toujours en attente de validation runtime.
+
+
+#### Complément A1 — test de service pour suppression coopérative
+
+- Ajout d'un test de service couvrant le scénario complet : un `super_admin` affecté supprime la coopérative et son adresse en soft delete ; le même acteur est refusé sur une coopérative non affectée, sans événement d'audit de suppression.
+- Commit : `735de59e622ba63cacd248b46d5541add56ff29b`.
+- Exécution PHPUnit toujours en attente.
