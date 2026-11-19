@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Observers;
 
-use App\Domains\Audit\Repositories\AuditEventRepository;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
@@ -26,7 +25,7 @@ final class MediaOwnerObserver
         $actor = Auth::user();
         $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
 
-        if (! app(AuditEventRepository::class)->verifyIntegrity()) {
+        if (! app(AuditWriter::class)->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; restauration du propriétaire refusée.');
         }
 
@@ -39,7 +38,7 @@ final class MediaOwnerObserver
                 $media->forceFill(['deleted_by' => $actorId])->save();
                 $media->delete();
 
-                app(AuditService::class)->record(new AuditEntryDTO(
+                app(AuditWriter::class)->record(new AuditEntryDTO(
                     eventKey: 'media.owner_restore_skipped_invalid',
                     action: 'owner_restore_skipped_invalid',
                     actorType: $actor instanceof User ? User::class : null,
