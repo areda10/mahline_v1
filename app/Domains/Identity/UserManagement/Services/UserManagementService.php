@@ -285,6 +285,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('The new cooperative does not exist or is deleted.');
             }
 
+            if ((string) $cooperative->created_by !== (string) $superAdmin->getKey()) {
+                throw new DomainException('Only the cooperative creator can receive its initial super admin assignment.');
+            }
+
             if ($superAdmin->cooperatives()->whereKey($cooperative->getKey())->exists()) {
                 return;
             }
