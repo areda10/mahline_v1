@@ -1286,3 +1286,18 @@ Coordonnées de livraison (Q289) :** chaque adresse enregistrée possède son pr
 - Création de l'inventaire global des 9 domaines présents et des 6 domaines absents au commit audité.
 - Ajout d'une liste de suivi par domaine, de l'ordre recommandé et des décisions architecturales à arbitrer.
 - Aucun fichier applicatif, migration ou test applicatif modifié dans le cadre de cet inventaire.
+
+
+## 22. Inventory V1 — démarrage du cadrage et suivi (19 novembre 2026)
+
+La spécification détaillée et le registre fonctionnel sont créés dans [`docs/domains/marketplace/INVENTORY_V1_SPECIFICATION.md`](../domains/marketplace/INVENTORY_V1_SPECIFICATION.md).
+
+- **Référence de code initiale :** `feature/Marketplace`, commit `72e27c4b32aefd09c2118e631f2aec0433627e84`.
+- **Constat initial :** aucun domaine Inventory dans `app/Domains/`, aucune migration de stock, aucun service de réservation et aucune liaison de confirmation entre Orders et Inventory.
+- **Fonctions Inventory :** INV-001 à INV-016, identifiants stables et critères de clôture détaillés dans la spécification.
+- **Règles validées :** stock par coopérative et produit/variante ; quantité à trois décimales ; unités autorisées ; mouvements immuables ; réservations uniquement à la confirmation coopérative ; confirmation complète ou échec total ; disponibilité verte/rouge par ligne et sous-commande ; quarantaine décidée par cooperative_admin ; transfert atomique du stock parent vers les variantes.
+- **Contrats :** Products fournit les références produit/variante et unités ; Orders conserve les statuts commerciaux ; Inventory est propriétaire des soldes, mouvements et réservations ; Catalog consomme l'indicateur ; Audit journalise les opérations ; Delivery devra définir le moment de consommation du stock et le traitement des retours.
+- **Étape suivante :** compléter l'audit des conventions techniques et des liaisons réelles, valider le schéma et les contrats transactionnels, puis implémenter fichier par fichier.
+- **État :** cadrage initial documenté ; implémentation non commencée ; audit post-codage non réalisé ; tests non exécutés.
+
+Aucune fonction Inventory ne doit être considérée comme réalisée sur la seule base de cette documentation. Les statuts doivent être actualisés avec les fichiers, migrations, tests et preuves de validation au fil du développement.
