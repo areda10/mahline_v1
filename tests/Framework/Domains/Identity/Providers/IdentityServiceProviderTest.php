@@ -7,7 +7,6 @@ namespace Tests\Framework\Domains\Identity\Providers;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
 use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
-use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
@@ -17,6 +16,7 @@ use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationW
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Shared\Contracts\ActorAuthorizer;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\Contracts\ActorContextProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
