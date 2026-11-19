@@ -212,17 +212,18 @@ final class UserPolicyTest extends TestCase
             ['users.invite'],
         );
 
-        $target = User::factory()->create([
+        $target = $this->userWithRoleAndPermissions('user', [], [
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
-        self::assertFalse(
+        self::assertTrue(
             Gate::forUser($admin)->allows('resendInvitation', $target),
         );
     }
 
-    public function test_cooperative_admin_cannot_resend_invitation(): void
+    public function test_cooperative_admin_can_resend_invitation_to_user_in_own_cooperative(): void
     {
         $cooperative = $this->createCooperative();
 
@@ -240,6 +241,82 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(
             Gate::forUser($admin)->allows('resendInvitation', $target),
         );
+    }
+
+    public function test_cooperative_admin_cannot_resend_invitation_outside_own_cooperative(): void
+    {
+        $own = $this->createCooperative();
+        $other = $this->createCooperative();
+        $admin = $this->userWithRoleAndPermissions('cooperative_admin', ['users.invite'], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+        $target = $this->userWithRoleAndPermissions('user', [], [
+            'cooperative_id' => $other->getKey(),
+            'status' => UserStatus::Pending,
+            'email_verified_at' => null,
+        ]);
+
+        self::assertFalse(Gate::forUser($admin)->allows('resendInvitation', $target));
+    }
+
+    public function test_root_can_update_inactive_account_using_its_active_database_role(): void
+    {
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.update']);
+        $target = $this->userWithRoleAndPermissions('user', [], [
+            'status' => UserStatus::Inactive,
+        ]);
+
+        self::assertTrue(Gate::forUser($root)->allows('update', $target));
+    }
+
+    public function test_cooperative_admin_still_recognizes_inactive_peer_admin_role(): void
+    {
+        $cooperative = $this->createCooperative();
+        $actor = $this->userWithRoleAndPermissions('cooperative_admin', ['users.view'], [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $peer = $this->userWithRoleAndPermissions('cooperative_admin', [], [
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Inactive,
+        ]);
+
+        self::assertFalse(Gate::forUser($actor)->allows('view', $peer));
+    }
+
+    public function test_assignment_policy_requires_authorized_email_verified_super_admin(): void
+    {
+        $cooperative = $this->createCooperative();
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.assign_super_admin']);
+        $unverified = $this->userWithRoleAndPermissions('super_admin', [], [
+            'email_verified_at' => null,
+        ]);
+
+        self::assertFalse(Gate::forUser($root)->allows(
+            'assignCooperative',
+            [$unverified, (string) $cooperative->getKey()],
+        ));
+    }
+
+    public function test_scoped_administrators_can_send_password_reset_only_to_users_in_scope(): void
+    {
+        $own = $this->createCooperative();
+        $other = $this->createCooperative();
+        $superAdmin = $this->userWithRoleAndPermissions('super_admin', ['users.invite']);
+        $superAdmin->cooperatives()->attach($own->getKey());
+        $cooperativeAdmin = $this->userWithRoleAndPermissions('cooperative_admin', ['users.invite'], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+        $ownUser = $this->userWithRoleAndPermissions('user', [], [
+            'cooperative_id' => $own->getKey(),
+        ]);
+        $otherUser = $this->userWithRoleAndPermissions('user', [], [
+            'cooperative_id' => $other->getKey(),
+        ]);
+
+        self::assertTrue(Gate::forUser($superAdmin)->allows('sendPasswordReset', $ownUser));
+        self::assertTrue(Gate::forUser($cooperativeAdmin)->allows('sendPasswordReset', $ownUser));
+        self::assertFalse(Gate::forUser($superAdmin)->allows('sendPasswordReset', $otherUser));
+        self::assertFalse(Gate::forUser($cooperativeAdmin)->allows('sendPasswordReset', $otherUser));
     }
 
     public function test_user_cannot_resend_invitation(): void
