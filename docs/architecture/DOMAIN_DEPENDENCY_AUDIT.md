@@ -695,3 +695,31 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 **Validation runtime :** aucune exécution PHPUnit/Pint/MySQL n'a été réalisée dans cette séquence. Aucun workflow GitHub Actions n'est remonté pour la branche pendant le contrôle ; aucun statut CI n'est donc disponible.
 
 **Règle de clôture :** conserver les trois domaines en audit jusqu'à résolution des écarts, exécution des tests et audit final du diff.
+
+### 11.16 Lot A9 — acteur partagé et propriété des affectations (19 novembre 2026)
+
+**Cooperatives — correction appliquée**
+- `CooperativeService` ne reçoit plus le modèle Eloquent `Identity\Users\User` : ses opérations publiques prennent un `actorId`.
+- Il récupère un `ActorContext` via le contrat partagé `ActorContextProvider` et demande l'autorisation au contrat `ActorAuthorizer`.
+- `IdentityActorAuthorizer` délègue explicitement à Laravel Gate avec le vrai User authentifiable : aucune règle de Policy n'est contournée.
+- L'audit utilise l'identifiant et le type d'acteur du DTO.
+- Le contrat `CooperativeAddressManager` reçoit également l'identifiant acteur ; Localization résout encore l'acteur en interne à ce stade.
+
+**Identity — affectations super_admin**
+- Ajout de `SuperAdminCooperativeAssignmentReader`, contrat et implémentation détenus par Identity.
+- `CooperativePolicy` et `AddressPolicy` n'interrogent plus `User::cooperatives()` directement ; elles consultent le lecteur public Identity.
+- Les écritures du pivot restent dans Identity ; la lecture du périmètre passe par le contrat dédié.
+
+**Tests ajoutés/modifiés**
+- Résolution ActorContext : seuls rôles et permissions actifs sont exposés ; état actif/vérifié/verrou d'urgence repris.
+- Authorizer : délégation à Gate et refus d'un compte verrouillé d'urgence.
+- Binding des contrats partagés et lecteur du pivot Identity.
+- Les tests de Policies existants couvrent l'accès super_admin affecté/non affecté pour Cooperatives et Localization.
+- Les tests de CooperativeService appellent désormais le service avec des identifiants acteur.
+
+**Limites restantes — Localization**
+- `AddressService` dépend encore directement des modèles User et Cooperative pour charger/verrouiller les propriétaires et utilise Gate directement.
+- `AddressPolicy` garde des types User/Cooperative en bordure de l'autorisation ; les affectations super_admin sont maintenant lues via le contrat Identity.
+- La prochaine correction doit remplacer les accès owner par deux ports de propriétaire, implémentés par Identity et Cooperatives, et faire passer les commandes d'adresse par IDs/DTOs. Une tentative intermédiaire de gateways a été retirée avant livraison afin de ne pas laisser de code incomplet.
+
+**État des domaines :** Identity, Localization et Cooperatives restent `AUDIT_IN_PROGRESS`, pas `FROZEN`. Les tests ajoutés ne sont pas exécutés. Aucun workflow CI n'est configuré dans `.github/workflows` sur cette branche.
