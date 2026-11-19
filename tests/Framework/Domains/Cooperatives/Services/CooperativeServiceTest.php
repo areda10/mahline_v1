@@ -392,6 +392,35 @@ final class CooperativeServiceTest extends TestCase
         $this->assertDatabaseMissing('audit_events', ['event_key' => 'cooperatives.created']);
     }
 
+    public function test_assigned_super_admin_can_delete_only_its_assigned_cooperative(): void
+    {
+        $actor = $this->superAdminActor();
+        $assigned = Cooperative::factory()->create();
+        $unassigned = Cooperative::factory()->create();
+        $actor->cooperatives()->attach($assigned->getKey());
+        $assignedAddress = $assigned->address;
+
+        $this->service->delete($actor, $assigned);
+
+        $this->assertSoftDeleted('cooperatives', ['id' => $assigned->getKey()]);
+        $this->assertSoftDeleted('addresses', ['id' => $assignedAddress->getKey()]);
+        $this->assertAuditEvent('cooperatives.deleted', 'deleted', $actor, $assigned);
+
+        try {
+            $this->service->delete($actor, $unassigned);
+            $this->fail('A super admin cannot delete a cooperative outside its assignments.');
+        } catch (AuthorizationException) {
+            $this->assertDatabaseHas('cooperatives', [
+                'id' => $unassigned->getKey(),
+                'deleted_at' => null,
+            ]);
+            $this->assertDatabaseMissing('audit_events', [
+                'event_key' => 'cooperatives.deleted',
+                'subject_id' => $unassigned->getKey(),
+            ]);
+        }
+    }
+
     public function test_ordinary_actor_cannot_delete_cooperative(): void
     {
         $actor = User::factory()->create();
