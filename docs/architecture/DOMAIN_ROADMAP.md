@@ -712,3 +712,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-010 : si un produit est supprimé du catalogue alors qu'il figure au panier, Sales conserve une ligne historique non achetable (nom, prix de référence et informations descriptives disponibles à l'ajout), la signale comme indisponible et bloque le checkout jusqu'à son retrait manuel par le client. Aucune suppression automatique ni possibilité d'achat ne subsiste. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-011 : les informations descriptives non tarifaires d'un produit au panier sont actualisées automatiquement, tout en conservant les données initiales utiles à l'identification et à la traçabilité. Les changements de caractéristiques commerciales sont détectés et traités explicitement ; aucune modification silencieuse du prix accepté ou des conditions de vente n'est permise. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
