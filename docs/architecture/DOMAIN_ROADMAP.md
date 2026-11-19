@@ -685,9 +685,16 @@ Décisions validées :
 - fusion des lignes uniquement lorsque toutes les caractéristiques commerciales sont identiques (SALES-003) ;
 - conservation du panier invité pendant 30 jours sans activité (SALES-004) ;
 - conservation du panier authentifié sans expiration automatique, jusqu'à suppression volontaire ou création réussie d'une commande (SALES-005) ;
+- conservation et signalement des lignes devenues indisponibles ; checkout bloqué jusqu'au retrait volontaire par le client, sans suppression automatique (SALES-006) ;
 - Sales, Orders, Inventory, Delivery, Finance et Communication sont autonomes dans le monolithe modulaire, chacun propriétaire de ses modèles, tables, règles, contrats et tests (SALES-002) ;
 - Sales possède le parcours précommande ; Orders possède la commande après création ; Finance possède les opérations financières.
 
 Le cadrage détaillé reste ouvert : limites de quantité lors des fusions, règles de suppression des lignes et nettoyage après commande, prix, promotions, coupons, devis, idempotence et validations du checkout. Aucun code Sales ni migration Sales n'est déclaré réalisé.
 
 Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders → Delivery → Finance → Communication. Pour chaque domaine : cadrage métier, audit technique des contrats et fichiers réels, validation, puis implémentation et tests. L'ordre de travail ne modifie pas les frontières de propriété ni les dépendances nécessaires entre domaines.
+
+
+### Journal Sales — 19 novembre 2026
+- SALES-006 : lorsqu'un produit ou une variante du panier devient inactif(ve) ou non vendable, la ligne est conservée et signalée ; le checkout est bloqué jusqu'à son retrait volontaire par le client. Aucune suppression automatique.
+- Spécification détaillée : [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+- Mise à jour documentaire uniquement : aucun code, migration ou test modifié/exécuté.
