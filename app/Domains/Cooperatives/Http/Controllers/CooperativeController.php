@@ -53,7 +53,7 @@ final class CooperativeController
         ]);
         $address = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $attributes = array_diff_key($data, $address);
-        $cooperative = $this->cooperativeService->create($request->user(), $attributes, $address);
+        $cooperative = $this->cooperativeService->create((string) $request->user()->getKey(), $attributes, $address);
 
         return redirect()->route('backoffice.cooperatives.show', $cooperative)->with('success', 'La coopérative a été créée.');
     }
@@ -105,10 +105,10 @@ final class CooperativeController
         $attributes = array_diff_key($data, $address);
         DB::transaction(function () use ($actor, $model, $attributes, $address): void {
             if ($attributes !== []) {
-                $this->cooperativeService->update($actor, $model, $attributes);
+                $this->cooperativeService->update((string) $actor->getKey(), $model, $attributes);
             }
             if ($address !== []) {
-                $this->addresses->updateAddressForCooperative($actor, (string) $model->getKey(), $address);
+                $this->addresses->updateAddressForCooperative((string) $actor->getKey(), (string) $model->getKey(), $address);
             }
         });
 
@@ -138,7 +138,7 @@ final class CooperativeController
     public function destroy(Request $request, string $cooperative): RedirectResponse
     {
         $model = Cooperative::query()->withTrashed()->findOrFail($cooperative);
-        $this->cooperativeService->delete($request->user(), $model);
+        $this->cooperativeService->delete((string) $request->user()->getKey(), $model);
 
         return redirect()->route('backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
@@ -146,7 +146,7 @@ final class CooperativeController
     private function changeStatus(Request $request, string $id, string $action): RedirectResponse
     {
         $model = $this->resolveCooperative($id);
-        $this->cooperativeService->{$action}($request->user(), $model);
+        $this->cooperativeService->{$action}((string) $request->user()->getKey(), $model);
 
         return redirect()->route('backoffice.cooperatives.show', $model)->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
