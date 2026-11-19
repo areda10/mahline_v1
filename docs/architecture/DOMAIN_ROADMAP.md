@@ -948,3 +948,5 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Commits : `841b85e`, `31f70f1`.
 
 - Contrôle statique des tests : correction d'un séparateur de namespace doublé dans un test Identity. Commit : `472a8a5`.
+
+- Timestamps du pivot Identity explicitement activés et vérifiés dans le test de création. Commits : `7059760`, `f87bd65`.
