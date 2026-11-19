@@ -75,7 +75,7 @@ final class MediaOwnerObserver
         $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
 
         if (! method_exists($owner, 'isForceDeleting') || ! $owner->isForceDeleting()) {
-            if (! app(AuditEventRepository::class)->verifyIntegrity()) {
+            if (! app(AuditWriter::class)->verifyIntegrity()) {
                 throw new RuntimeException('La chaîne d’audit est invalide ; suppression logique du propriétaire refusée.');
             }
 
@@ -95,7 +95,7 @@ final class MediaOwnerObserver
             return;
         }
 
-        if (! app(AuditEventRepository::class)->verifyIntegrity()) {
+        if (! app(AuditWriter::class)->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; suppression définitive du propriétaire refusée.');
         }
 
