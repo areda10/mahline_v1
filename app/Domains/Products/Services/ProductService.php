@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Services;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
@@ -20,7 +20,7 @@ final class ProductService
 {
     public function __construct(
         private readonly ProductRepository $repository,
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
     ) {}
 
     public function create(
