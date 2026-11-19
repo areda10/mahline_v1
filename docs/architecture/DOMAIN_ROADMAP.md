@@ -427,3 +427,24 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-018 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 20. Décision de gouvernance — applicabilité des décisions d'architecture à V1 (19 novembre 2026)
+
+**Décision 19 validée :** les décisions d'architecture 1 à 18 (ADR-001 à ADR-018) constituent le cadre de référence de **MAHLINE V1**.
+
+- Elles doivent être prises en compte dans les audits, spécifications, contrats inter-domaines, données, autorisations, tests, environnements et choix d'exploitation de V1.
+- Toute nouvelle décision, précision ou modification validée doit être consignée dans un ADR et référencée dans cette feuille de route ; une validation en conversation seule ne suffit pas.
+- Toute révision doit conserver la traçabilité de la décision précédente et expliquer le motif du changement.
+- Les décisions acceptées définissent une cible et ne prouvent pas que le code actuel est conforme ou que la fonctionnalité est implémentée.
+- Les choix qui n'ont pas encore été arbitrés restent ouverts. En particulier, la stratégie détaillée de déploiement et de promotion en production (question 19) n'est pas décidée par cet ADR.
+- Les documents restent sur `feature/Marketplace` ; aucun merge vers `main` sans instruction explicite.
+
+**Document de décision :** [ADR-019 — Applicabilité des décisions d'architecture à MAHLINE V1](decisions/ADR-019-v1-architecture-decision-scope.md).
+
+**État :** règle de gouvernance acceptée pour V1 ; les audits, implémentations et validations techniques restent à réaliser domaine par domaine. Aucun code applicatif, migration, configuration, pipeline ou test n'a été modifié ou exécuté dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-019 et référencement dans la feuille de route centrale.
+- Confirmation que les ADR-001 à ADR-018 s'appliquent à MAHLINE V1.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
