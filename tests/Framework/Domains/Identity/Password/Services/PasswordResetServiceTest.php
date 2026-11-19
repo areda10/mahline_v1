@@ -66,7 +66,7 @@ final class PasswordResetServiceTest extends TestCase
 
     public function test_general_reset_flow_rejects_customer_accounts_before_issuing_token(): void
     {
-        $customer = User::factory()->create();
+        $customer = User::factory()->create(['email_verified_at' => null]);
         $role = Role::query()->firstOrCreate(
             ['slug' => 'customer'],
             ['name' => 'customer', 'is_active' => true],
