@@ -32,6 +32,14 @@
             </form>
         @endcan
 
+        @can('sendPasswordReset', $user)
+            <form method="POST" action="{{ route('backoffice.users.send-password-reset', $user) }}"
+                  onsubmit="return confirm('Envoyer un lien sécurisé de réinitialisation du mot de passe ?');">
+                @csrf
+                <button class="button button-secondary" type="submit">Envoyer un lien de réinitialisation</button>
+            </form>
+        @endcan
+
         @can('activate', $user)
             <form method="POST" action="{{ route('backoffice.users.activate', $user) }}"
                   onsubmit="return confirm('Confirmer l’activation de ce compte ?');">
