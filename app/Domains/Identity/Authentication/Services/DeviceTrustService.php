@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authentication\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Authentication\DTOs\DeviceTrustResolution;
 use App\Domains\Identity\Authentication\Enums\KnownDeviceStatus;
 use App\Domains\Identity\Authentication\Exceptions\DeviceTrustException;
@@ -29,7 +29,7 @@ final class DeviceTrustService extends BaseService
 
     public function __construct(
         private readonly SessionService $sessions,
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
     ) {}
 
     public function resolveForAuthentication(
