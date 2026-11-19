@@ -439,3 +439,10 @@ Lorsqu'une coopérative supprime la limite commerciale configurée pour un produ
 - La limite effective est relue auprès du domaine propriétaire lors des opérations concernées et au checkout.
 
 Cette règle complète SALES-021, SALES-023 et SALES-024 : en l'absence de limite commerciale configurée, seule la limite technique globale s'applique ; les modifications et suppressions de limite prennent effet immédiatement sur les paniers existants.
+
+
+### Précision de périmètre — transfert de produit entre coopératives
+
+**Décision confirmée — 19 novembre 2026**
+
+Aucun transfert de produit d'une coopérative vers une autre n'est prévu dans MAHLINE V1. Un produit reste rattaché à sa coopérative propriétaire ; il n'existe donc pas de scénario de changement de propriétaire entre coopératives à traiter par Sales. La question SALES-026 relative au transfert de produit est sans objet et n'introduit aucune règle de transfert ou de migration de limite commerciale.
