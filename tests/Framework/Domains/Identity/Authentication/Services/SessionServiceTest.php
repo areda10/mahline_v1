@@ -86,7 +86,7 @@ final class SessionServiceTest extends TestCase
             'emergency_locked_at' => now(),
         ]);
 
-        $this->expectException(\\RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage(
             'The user account is emergency locked. A new session cannot be created.',
         );
