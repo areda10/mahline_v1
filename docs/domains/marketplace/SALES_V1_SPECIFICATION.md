@@ -537,3 +537,19 @@ Lorsqu'une coopérative précédemment inactive redevient active :
 - Aucune ligne n'est supprimée ni modifiée silencieusement lors de la réactivation.
 
 Cette règle complète SALES-030 et SALES-031 et suit le principe de réactivation défini par SALES-029 pour un produit temporairement désactivé.
+
+
+### SALES-033 — Changement de prix pendant l'indisponibilité d'une coopérative
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'un produit présent dans un panier devient indisponible parce que sa coopérative est inactive, puis que la coopérative redevient active avec un prix supérieur au prix de référence enregistré lors de l'ajout au panier :
+
+- La ligne redevient disponible à la suite de la réactivation de la coopérative, sous réserve des autres contrôles applicables.
+- L'augmentation de prix est détectée et présentée clairement au client.
+- Le checkout de la ligne reste bloqué jusqu'à l'acceptation explicite du nouveau prix par le client.
+- Aucune hausse ne peut être appliquée silencieusement.
+- En cas de refus, le client peut retirer la ligne ou quitter le checkout ; l'ancien prix ne constitue pas un prix garanti.
+- Le prix accepté et les informations nécessaires à la traçabilité doivent être transmis à Orders pour le snapshot de commande, conformément à SALES-007.
+
+Cette règle s'applique même si la hausse est intervenue pendant la période d'inactivité de la coopérative. La réactivation ne remet pas à zéro l'obligation d'acceptation explicite d'une hausse.
