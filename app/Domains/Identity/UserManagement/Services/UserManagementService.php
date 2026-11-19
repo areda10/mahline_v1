@@ -333,9 +333,6 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $superAdmin,
             $cooperativeId,
         ): void {
-            if (! $this->cooperatives->lockActive($cooperativeId)) {
-                throw new DomainException('The cooperative does not exist or is deleted.');
-            }
             $lockedSuperAdmin = User::query()
                 ->whereKey($superAdmin->getKey())
                 ->lockForUpdate()
@@ -349,6 +346,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             // Revalidation après acquisition du verrou.
             $this->assertSuperAdminTarget($lockedSuperAdmin);
+
+            if (! $this->cooperatives->lockActive($cooperativeId)) {
+                throw new DomainException('The cooperative does not exist or is deleted.');
+            }
 
             // Lock the cooperative so concurrent assignment attempts cannot
             // attach two different super administrators to the same cooperative.
@@ -408,9 +409,6 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $superAdmin,
             $cooperativeId,
         ): void {
-            if (! $this->cooperatives->lockActive($cooperativeId)) {
-                throw new DomainException('The cooperative does not exist or is deleted.');
-            }
             $lockedSuperAdmin = User::query()
                 ->whereKey($superAdmin->getKey())
                 ->lockForUpdate()
@@ -425,6 +423,10 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             // Le rôle est obligatoire, mais le compte peut être inactif
             // ou suspendu : la désaffectation reste autorisée.
             $this->assertSuperAdminRoleTarget($lockedSuperAdmin);
+
+            if (! $this->cooperatives->lockActive($cooperativeId)) {
+                throw new DomainException('The cooperative does not exist or is deleted.');
+            }
 
             $isAssigned = $lockedSuperAdmin->cooperatives()
                 ->whereKey($cooperativeId)
