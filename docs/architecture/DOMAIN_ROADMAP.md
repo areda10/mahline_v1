@@ -55,7 +55,7 @@ Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient act
 
 Cet inventaire décrit uniquement la présence de dossiers dans le dépôt au moment de cette mise à jour. Il ne constitue pas une validation fonctionnelle ou technique de ces domaines.
 
-**Référence vérifiée pour cette révision :** branche `feature/Marketplace`, HEAD `c5981e490f3f15f8f1672b589a1c962a1c51abc2`, arbre Git récursif. Dix dossiers sont présents. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d`) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
+**Référence historique remplacée par le contrôle du 19 novembre 2026 :** branche `feature/Marketplace`, HEAD `befe78ab89cf7b2ab8dc4433c5a4c1ee6ff46930`, arbre Git récursif. Dix dossiers sont présents (186 fichiers applicatifs). Voir la section 9 pour les comptes par domaine et les écarts confirmés. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d`) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
 
 Les documents d'architecture décrivent également des domaines ou périmètres prévus qui ne figurent pas dans cet inventaire, notamment `Inventory`, `Sales`, `Finance`, `Media`, `Communication` et `CMS`. Cette différence devra être traitée progressivement, sans créer de dossiers ni déplacer du code avant validation de leur périmètre.
 
@@ -758,3 +758,68 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 - SALES-037 : lorsqu'une caractéristique commerciale d'une variante existante est modifiée pendant l'inactivité de sa coopérative, la ligne de panier conserve sa configuration initiale et le checkout reste bloqué jusqu'à acceptation explicite de la nouvelle configuration ou retrait manuel. Aucun changement commercial silencieux ; la configuration acceptée doit être transmise à Orders pour le snapshot. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
 
 - Audit Sales V1 du 19 novembre 2026 : périmètre pré-commande confirmé après validation SALES-001 à SALES-037. Le domaine Sales reste à créer ; les contrats Products, Cooperatives, Localization, Identity, Orders, Inventory et Delivery sont à traiter selon le rapport [SALES_DEPENDENCY_AUDIT.md](../domains/marketplace/SALES_DEPENDENCY_AUDIT.md). Aucun checkout complet ne doit être déclaré avant contrats Orders idempotent, Inventory availability et Delivery quote.
+
+
+## 9. Ré-audit de clôture — 19 novembre 2026
+
+- **HEAD contrôlé :** `befe78ab89cf7b2ab8dc4433c5a4c1ee6ff46930`
+- **Branche :** `feature/Marketplace`
+- **Méthode :** arbre Git récursif complet ; inventaire des 186 fichiers de domaines, tests, migrations et providers ; lecture ciblée des services Products, Cooperatives, Localization et Orders.
+- **Résultat :** aucun domaine ne peut être déclaré `FROZEN` sur la seule base de cet audit statique. Les tests n'ont pas été exécutés dans l'environnement Laravel local.
+
+### 9.1 Inventaire applicatif actuel
+
+| Domaine | Fichiers | Statut de clôture |
+|---|---:|---|
+| Identity | 99 | Écarts à corriger / audit de sécurité et tests finaux |
+| Media | 21 | Écarts V1 documentés ; contrats propriétaires et tests finaux à terminer |
+| Orders | 13 | Écarts P0 : contrat public, idempotence, Inventory, Delivery, exposition HTTP |
+| Products | 12 | Écarts P0 : dépendances Catalog/Categories/Identity et contrat commercial versionné |
+| Audit | 11 | Contrat public présent ; intégrité, accès, tests et dépendances à revalider |
+| Catalog | 8 | Écarts de frontière avec Products/Categories et ownership du pivot |
+| Cooperatives | 7 | Contrat public de statut absent ; découplage de l'acteur à traiter |
+| Localization | 7 | Contrat d'adresse client/snapshot absent ; dépendances directes Identity/Cooperatives |
+| Categories | 6 | Ownership du pivot et contrat d'association à finaliser |
+| Dashboard | 2 | Projection et dépendance Statistics à cadrer |
+| Sales | 0 | Spécification SALES-001 à SALES-037 validée ; domaine à implémenter après stabilisation des contrats |
+| Inventory | 0 | Spécification initiale présente ; audit technique, schéma, code et tests à réaliser |
+| Delivery | 0 | Domaine à cadrer et implémenter |
+| Finance / Facturation | 0 | Domaine à cadrer et implémenter selon les règles financières validées |
+| Communication | 0 | Domaine à cadrer et implémenter |
+| Statistics | 0 | Autonomie validée ; spécification à produire |
+| CMS | 0 | Domaine à cadrer et implémenter |
+
+### 9.2 Bloqueurs de clôture transversaux
+
+1. ProductService dépend directement de Catalog, Categories et du modèle User Identity.
+2. AddressService dépend directement des modèles User et Cooperative ; aucun contrat public de lecture d'adresse client avec snapshot n'est présent.
+3. CooperativeService reçoit le modèle User et aucun lecteur public de statut de coopérative n'est présent.
+4. OrderCreationService accepte User et un tableau libre, sans idempotence visible.
+5. La confirmation Orders ne déclenche pas de réservation Inventory.
+6. Les frais Delivery sont initialisés à zéro sans contrat de devis.
+7. AppServiceProvider enregistre encore MediaOwnerObserver sur Product, Cooperative et User.
+8. Orders n'a pas de provider/contrôleurs/routes propres recensés dans l'arbre actuel.
+9. Aucun test d'architecture de frontières n'a été recensé.
+10. Les tests, Pint, migrations MySQL, triggers et scénarios de concurrence n'ont pas été exécutés sur ce HEAD.
+
+Le détail technique et les corrections attendues sont consignés dans `docs/architecture/DOMAIN_DEPENDENCY_AUDIT.md`, section 11.
+
+### 9.3 Vagues de clôture
+
+- **Vague A — Identité et propriétaires :** Identity, Localization, Cooperatives.
+- **Vague B — Catalogue :** Catalog, Categories, Products.
+- **Vague C — Transversal :** Media, Audit.
+- **Vague D — Commande et stock :** Orders, Inventory.
+- **Vague E — Opérations :** Delivery, Finance, Communication.
+- **Vague F — Restitution :** Statistics, Dashboard, CMS.
+- **Vague G — Parcours client :** Sales et intégration finale.
+
+Chaque vague se termine par audit des dépendances, tests ciblés, tests de frontières, Pint et suite complète. Les domaines dépendants ne sont pas déclarés gelés tant que leurs contrats fournisseurs ne sont pas stabilisés.
+
+### 9.4 Journal de contrôle
+
+- Référence précédente de roadmap remplacée : HEAD `c5981e490f3f15f8f1672b589a1c962a1c51abc2`.
+- Nouvelle photographie : HEAD `befe78ab89cf7b2ab8dc4433c5a4c1ee6ff46930`.
+- Audit détaillé : commit `629d88fb2049e28f9307fd38410a20e432bebcb0`.
+- PHPUnit/Pint/MySQL/CI : non exécutés dans cette session.
+- Merge vers `main) : non effectué.
