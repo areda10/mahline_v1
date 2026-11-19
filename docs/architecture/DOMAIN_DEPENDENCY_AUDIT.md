@@ -723,3 +723,27 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - La prochaine correction doit remplacer les accès owner par deux ports de propriétaire, implémentés par Identity et Cooperatives, et faire passer les commandes d'adresse par IDs/DTOs. Une tentative intermédiaire de gateways a été retirée avant livraison afin de ne pas laisser de code incomplet.
 
 **État des domaines :** Identity, Localization et Cooperatives restent `AUDIT_IN_PROGRESS`, pas `FROZEN`. Les tests ajoutés ne sont pas exécutés. Aucun workflow CI n'est configuré dans `.github/workflows` sur cette branche.
+
+### 11.17 Lot A10 — découplage complet du service d'adresses
+
+**Correction appliquée**
+- `AddressService` n'importe plus les modèles Eloquent `Identity\Users\User` ni `Cooperatives\Cooperative`.
+- Toutes les opérations publiques d'adresse reçoivent des identifiants (`actorId`, `ownerId`, `addressId`) et échangent des DTO/Address.
+- Ajout des ports Localization `UserAddressOwnerGateway` et `CooperativeAddressOwnerGateway`, avec DTOs de propriétaire.
+- Identity implémente le port utilisateur : verrouillage du compte, rôle customer, périmètre coopérative et autorisation via Gate.
+- Cooperatives implémente le port coopérative : verrouillage du propriétaire et autorisation via Gate.
+- Localization orchestre les opérations d'adresses et leurs transactions ; elle ne charge plus directement les modèles des domaines propriétaires.
+- `ActorContextProvider` fournit le contexte d'audit ; `AddressService` ne manipule plus le modèle User comme acteur.
+- Les contrôleurs Customer et Personal Address utilisent maintenant `UserAddressLifecycleManager`; les contrôleurs Cooperative et Root utilisent `CooperativeAddressManager`.
+- Les restaurations des adresses utilisateur et coopérative conservent le verrouillage du propriétaire dans la transaction ; le batch utilisateur le plus récent est choisi sous verrou.
+
+**Tests**
+- Adaptation de `AddressServiceTest` aux APIs par identifiants.
+- Test d'architecture `AddressServiceBoundaryTest` : aucune signature publique ne doit exposer User/Cooperative ; vérification des ports injectés.
+- Test des bindings des gateways Identity et Cooperatives.
+- Tests Feature existants couvrent les formulaires personnels, le profil client et les permissions d'accès.
+
+**Frontière résiduelle**
+- `AddressPolicy` et les adapters Identity/Cooperatives conservent les modèles User/Cooperative uniquement au bord de Gate, où Laravel Policies exige les sujets Eloquent. Le service métier Localization n'y est plus couplé.
+- Les relations Eloquent User↔Cooperative et Cooperative↔User restent des relations de lecture/composition pour l'interface et les scopes ; les écritures du pivot restent dans Identity.
+- Tests non exécutés dans cet environnement.
