@@ -310,3 +310,12 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - `Countries` intégré dans `Localization` ; aucune migration historique modifiée.
 - Voir `DOMAIN_DEPENDENCY_AUDIT.md` pour les relations, les écarts et la matrice de correction.
 - Les changements applicatifs réalisés sont limités à l'intégration de Country ; le découplage des autres domaines reste progressif et nécessite tests ciblés puis suite complète.
+
+
+### Mise à jour — 19 novembre 2026 : premier lot de contrats appliqué
+- **Intégré :** contrat public `AuditWriter` avec vérification d'intégrité ; AuditService reste l'implémentation interne.
+- **Intégré :** contrat `CheckoutCatalog` et DTO immuable ; Orders ne dépend plus des modèles Eloquent Product/ProductVariant.
+- **Intégré :** bindings dans AppServiceProvider ; aucune migration existante modifiée.
+- **À faire :** contrats MediaOwner, contrats Address, ownership des pivots, policies/providers locaux, audit exhaustif FK/cascades/triggers, tests d'architecture et CI.
+- **Non exécuté :** PHPUnit/Pint/tests MySQL. Le lot est intégré statiquement mais reste à valider dans l'environnement local.
+- Référence de code après intégration : `f8f7535b1ae98879738c6aad0b0eef614b97a29f`.
