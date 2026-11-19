@@ -7,6 +7,7 @@ namespace App\Domains\Identity\SuperAdminRoot\Http\Controllers;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +28,10 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         Gate::authorize('viewAny', Cooperative::class);
-        $cooperatives = Cooperative::query()->visibleTo($request->user())->with('address')->orderBy('name')->paginate(15);
+        $cooperatives = Cooperative::query()->visibleTo(
+            $request->user(),
+            app(SuperAdminCooperativeAssignmentReader::class)->cooperativeIdsFor((string) $request->user()->getKey()),
+        )->with('address')->orderBy('name')->paginate(15);
 
         return view('super-admin-root.cooperatives.index', compact('cooperatives'));
     }
