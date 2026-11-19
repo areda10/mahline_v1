@@ -62,7 +62,7 @@ final class AddressPolicyTest extends TestCase
         $admin = $this->userWithRoleAndPermissions('super_admin', ['users.update']);
         $target = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
 
-        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($admin, $target));
+        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($this->actorContext($admin), $this->userOwner($target)));
     }
 
     public function test_cooperative_admin_can_update_personal_address_of_user_in_own_cooperative(): void
@@ -79,7 +79,7 @@ final class AddressPolicyTest extends TestCase
             ['cooperative_id' => $cooperative->getKey()],
         );
 
-        self::assertTrue(app(AddressPolicy::class)->updateUserAddress($admin, $target));
+        self::assertTrue(app(AddressPolicy::class)->updateUserAddress($this->actorContext($admin), $this->userOwner($target)));
     }
 
     public function test_cooperative_admin_cannot_update_personal_address_outside_own_cooperative(): void
@@ -97,7 +97,7 @@ final class AddressPolicyTest extends TestCase
             ['cooperative_id' => $otherCooperative->getKey()],
         );
 
-        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($admin, $target));
+        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($this->actorContext($admin), $this->userOwner($target)));
     }
 
     public function test_user_and_customer_cannot_update_another_users_personal_address(): void
@@ -106,7 +106,7 @@ final class AddressPolicyTest extends TestCase
             $actor = $this->userWithRoleAndPermissions($role, ['users.update']);
             $target = User::factory()->create();
 
-            self::assertFalse(app(AddressPolicy::class)->updateUserAddress($actor, $target));
+            self::assertFalse(app(AddressPolicy::class)->updateUserAddress($this->actorContext($actor), $this->userOwner($target)));
         }
     }
 
