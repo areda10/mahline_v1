@@ -248,3 +248,19 @@ Lorsqu'une variante ajoutée au panier est désactivée par la coopérative alor
 - La variante et les informations initiales nécessaires à l'identification de la ligne sont conservées pour expliquer au client ce qui est devenu indisponible.
 
 Cette règle complète SALES-006 et SALES-011 : la disponibilité est vérifiée au niveau de la variante lorsque le produit en possède.
+
+
+### SALES-013 — Réduction du stock disponible après ajout au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Lorsqu'une coopérative réduit le stock disponible après qu'un client a ajouté une quantité supérieure au nouveau stock :
+
+- Sales conserve la quantité demandée par le client ; aucune réduction automatique n'est effectuée.
+- La ligne est signalée comme insuffisamment disponible au regard du stock courant.
+- Le checkout est bloqué tant que la quantité demandée dépasse la disponibilité vérifiée.
+- Le client doit lui-même réduire la quantité à un niveau disponible ou retirer la ligne.
+- Sales ne réserve pas le stock et ne garantit pas qu'il restera disponible entre l'affichage et la validation.
+- La disponibilité doit être revérifiée auprès d'Inventory au checkout, puis selon le processus de confirmation défini par Inventory.
+
+Cette règle préserve le choix du client tout en empêchant une validation silencieuse d'une quantité actuellement indisponible.
