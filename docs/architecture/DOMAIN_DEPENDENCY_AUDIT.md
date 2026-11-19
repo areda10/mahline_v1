@@ -558,3 +558,10 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Ajout d'un test de service couvrant le scénario complet : un `super_admin` affecté supprime la coopérative et son adresse en soft delete ; le même acteur est refusé sur une coopérative non affectée, sans événement d'audit de suppression.
 - Commit : `735de59e622ba63cacd248b46d5541add56ff29b`.
 - Exécution PHPUnit toujours en attente.
+
+#### Complément A3 — restauration des adresses d'un compte client archivé
+
+- Défaut corrigé : la limite de restauration (5 adresses client contre 1 adresse interne) était déterminée par `hasRole('customer')`, qui retourne faux lorsque le compte est inactif/archivé car cette méthode exige un compte autorisé. Le service utilise maintenant l'appartenance au rôle actif directement, indépendamment du statut du compte.
+- Test ajouté : 5 adresses client sont restaurées après archivage et soft delete du compte ; une seule redevient principale.
+- Commits : `c0ee1beae3598802f328e23caf8e15c999365209`, `5a2aa1ac3cb0ef0563d4b545e2ce985766560d58`.
+- PHPUnit non exécuté.
