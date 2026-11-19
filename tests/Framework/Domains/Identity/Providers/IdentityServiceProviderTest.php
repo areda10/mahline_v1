@@ -7,6 +7,9 @@ namespace Tests\Framework\Domains\Identity\Providers;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
 use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
+use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
+use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
@@ -57,6 +60,26 @@ final class IdentityServiceProviderTest extends TestCase
         self::assertFalse($context->hasRole('inactive_context_role'));
         self::assertTrue($context->hasPermission('context.permission'));
         self::assertFalse($context->hasPermission('context.inactive'));
+    }
+
+    public function test_assignment_reader_uses_identity_owned_pivot(): void
+    {
+        $superAdmin = User::factory()->create();
+        $cooperative = Cooperative::factory()->create();
+        $reader = app(SuperAdminCooperativeAssignmentReader::class);
+
+        self::assertFalse($reader->isAssigned(
+            (string) $superAdmin->getKey(),
+            (string) $cooperative->getKey(),
+        ));
+
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+
+        self::assertTrue($reader->isAssigned(
+            (string) $superAdmin->getKey(),
+            (string) $cooperative->getKey(),
+        ));
+        self::assertInstanceOf(SuperAdminCooperativeAssignmentReaderService::class, $reader);
     }
 
     public function test_shared_actor_contracts_are_bound_to_identity_adapters(): void
