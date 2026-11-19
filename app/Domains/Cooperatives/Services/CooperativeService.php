@@ -291,7 +291,7 @@ final class CooperativeService
     private function filterCreateAttributes(array $attributes): array
     {
         if (array_key_exists('address_id', $attributes)) {
-            throw new \InvalidArgumentException('A cooperative address must be created through AddressService.');
+            throw new \InvalidArgumentException('A cooperative address must be created through the Localization address contract.');
         }
 
         return $this->filterWritableAttributes($attributes);
