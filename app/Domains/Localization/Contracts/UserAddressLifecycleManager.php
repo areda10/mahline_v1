@@ -12,12 +12,12 @@ interface UserAddressLifecycleManager
     public function savePrimaryAddressForUser(string $actorId, string $ownerId, array $attributes): void;
 
     /** @param array<string, mixed> $attributes */
-    public function createForUser(string $actorId, string $ownerId, array $attributes): \App\Domains\Localization\Models\Address;
+    public function createForUser(string $actorId, string $ownerId, array $attributes): Address;
 
     /** @param array<string, mixed> $attributes */
-    public function updateForUser(string $actorId, string $ownerId, array $attributes): \App\Domains\Localization\Models\Address;
+    public function updateForUser(string $actorId, string $ownerId, array $attributes): Address;
 
-    public function setPrimaryForUser(string $actorId, string $ownerId, string $addressId): \App\Domains\Localization\Models\Address;
+    public function setPrimaryForUser(string $actorId, string $ownerId, string $addressId): Address;
 
     public function deleteForUser(string $actorId, string $ownerId, string $addressId): void;
 
