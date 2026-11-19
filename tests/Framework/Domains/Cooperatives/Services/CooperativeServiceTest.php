@@ -34,7 +34,7 @@ final class CooperativeServiceTest extends TestCase
     public function test_create_persists_cooperative_and_audit_event(): void
     {
         $actor = $this->rootActor();
-        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+        $cooperative = $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseHas('cooperatives', [
             'id' => $cooperative->id,
@@ -69,7 +69,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->superAdminActor();
         $existingToken = $actor->createToken('before-cooperative-creation');
 
-        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+        $cooperative = $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseHas('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
@@ -100,7 +100,7 @@ final class CooperativeServiceTest extends TestCase
     {
         $actor = $this->rootActor();
 
-        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+        $cooperative = $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseMissing('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
@@ -112,8 +112,8 @@ final class CooperativeServiceTest extends TestCase
     {
         $actor = $this->superAdminActor();
 
-        $first = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
-        $second = $this->service->create($actor, [
+        $first = $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
+        $second = $this->service->create((string) $actor->getKey(), [
             ...$this->attributes(),
             'name' => 'Deuxième coopérative',
             'email' => 'second-coop@example.test',
@@ -153,7 +153,7 @@ final class CooperativeServiceTest extends TestCase
         );
 
         try {
-            $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+            $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
             $this->fail('The failed assignment must abort cooperative creation.');
         } catch (\RuntimeException $exception) {
             $this->assertSame('Simulated assignment insert failure.', $exception->getMessage());
@@ -172,7 +172,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
 
         try {
-            $this->service->create($actor, $this->attributes(), [
+            $this->service->create((string) $actor->getKey(), $this->attributes(), [
                 'street' => '10 Avenue Hassan II',
                 'city' => 'Casablanca',
                 'region' => 'Casablanca-Settat',
@@ -194,7 +194,7 @@ final class CooperativeServiceTest extends TestCase
     public function test_create_excludes_confidential_fields_from_audit(): void
     {
         $actor = $this->rootActor();
-        $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+        $cooperative = $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
 
         $event = AuditEvent::query()
             ->where('event_key', 'cooperatives.created')
@@ -211,7 +211,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['name' => 'Ancien nom']);
 
-        $this->service->update($actor, $cooperative, [
+        $this->service->update((string) $actor->getKey(), $cooperative, [
             'name' => 'Nouveau nom',
             'rib' => '987654321098765432109876',
         ]);
@@ -242,7 +242,7 @@ final class CooperativeServiceTest extends TestCase
         ]);
         $actor = $this->cooperativeAdminActor($cooperative);
 
-        $updated = $this->service->update($actor, $cooperative, [
+        $updated = $this->service->update((string) $actor->getKey(), $cooperative, [
             'phone' => '+212611111111',
             'email' => 'new@example.test',
         ]);
@@ -252,7 +252,7 @@ final class CooperativeServiceTest extends TestCase
         $this->assertSame('Nom protégé', $updated->name);
 
         try {
-            $this->service->update($actor, $cooperative, ['name' => 'Nom modifié']);
+            $this->service->update((string) $actor->getKey(), $cooperative, ['name' => 'Nom modifié']);
             $this->fail('A cooperative_admin must not change the cooperative name.');
         } catch (AuthorizationException) {
             $this->assertSame('Nom protégé', $cooperative->fresh()->name);
@@ -264,7 +264,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['name' => 'Identique']);
 
-        $this->service->update($actor, $cooperative, ['name' => 'Identique']);
+        $this->service->update((string) $actor->getKey(), $cooperative, ['name' => 'Identique']);
 
         $this->assertDatabaseMissing('audit_events', [
             'event_key' => 'cooperatives.updated',
@@ -278,7 +278,7 @@ final class CooperativeServiceTest extends TestCase
         $cooperative = Cooperative::factory()->create();
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->service->update($actor, $cooperative, [
+        $this->service->update((string) $actor->getKey(), $cooperative, [
             'status' => CooperativeStatus::ACTIVE,
         ]);
     }
@@ -312,7 +312,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->active()->create();
 
-        $this->service->activate($actor, $cooperative);
+        $this->service->activate((string) $actor->getKey(), $cooperative);
 
         $this->assertDatabaseMissing('audit_events', [
             'event_key' => 'cooperatives.activated',
@@ -325,7 +325,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create();
 
-        $this->service->delete($actor, $cooperative);
+        $this->service->delete((string) $actor->getKey(), $cooperative);
 
         $this->assertSoftDeleted('cooperatives', ['id' => $cooperative->id]);
         $this->assertDatabaseHas('cooperatives', [
@@ -341,7 +341,7 @@ final class CooperativeServiceTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $cooperative->delete();
 
-        $this->service->delete($actor, $cooperative);
+        $this->service->delete((string) $actor->getKey(), $cooperative);
 
         $this->assertDatabaseMissing('audit_events', [
             'event_key' => 'cooperatives.deleted',
@@ -371,7 +371,7 @@ final class CooperativeServiceTest extends TestCase
         );
 
         try {
-            $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+            $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
             $this->fail('The audit insert failure should abort cooperative creation.');
         } catch (\RuntimeException $exception) {
             $this->assertSame(
@@ -395,7 +395,7 @@ final class CooperativeServiceTest extends TestCase
 
         try {
             DB::transaction(function () use ($actor): void {
-                $this->service->create($actor, $this->attributes(), $this->addressAttributes());
+                $this->service->create((string) $actor->getKey(), $this->attributes(), $this->addressAttributes());
                 throw new \RuntimeException('Rollback requested by test.');
             });
         } catch (\RuntimeException $exception) {
@@ -414,14 +414,14 @@ final class CooperativeServiceTest extends TestCase
         $actor->cooperatives()->attach($assigned->getKey());
         $assignedAddress = $assigned->address;
 
-        $this->service->delete($actor, $assigned);
+        $this->service->delete((string) $actor->getKey(), $assigned);
 
         $this->assertSoftDeleted('cooperatives', ['id' => $assigned->getKey()]);
         $this->assertSoftDeleted('addresses', ['id' => $assignedAddress->getKey()]);
         $this->assertAuditEvent('cooperatives.deleted', 'deleted', $actor, $assigned);
 
         try {
-            $this->service->delete($actor, $unassigned);
+            $this->service->delete((string) $actor->getKey(), $unassigned);
             $this->fail('A super admin cannot delete a cooperative outside its assignments.');
         } catch (AuthorizationException) {
             $this->assertDatabaseHas('cooperatives', [
@@ -441,7 +441,7 @@ final class CooperativeServiceTest extends TestCase
         $cooperative = Cooperative::factory()->create();
 
         try {
-            $this->service->delete($actor, $cooperative);
+            $this->service->delete((string) $actor->getKey(), $cooperative);
             $this->fail('Only super_admin_root may delete a cooperative.');
         } catch (AuthorizationException) {
             $this->assertDatabaseHas('cooperatives', [
@@ -476,7 +476,7 @@ final class CooperativeServiceTest extends TestCase
 
         $superAdmin = $this->superAdminActor();
         $superAdmin->cooperatives()->attach($cooperative->id);
-        $this->service->deactivate($superAdmin, $cooperative);
+        $this->service->deactivate((string) $superAdmin->getKey(), $cooperative);
         $this->assertSame(CooperativeStatus::INACTIVE, $cooperative->fresh()->status);
     }
 
@@ -501,7 +501,7 @@ final class CooperativeServiceTest extends TestCase
         ]);
 
         try {
-            $this->service->suspend($actor, $cooperative);
+            $this->service->suspend((string) $actor->getKey(), $cooperative);
             $this->fail('PENDING to SUSPENDED is not allowed.');
         } catch (\DomainException) {
             $this->assertSame(CooperativeStatus::PENDING, $cooperative->fresh()->status);
@@ -518,11 +518,11 @@ final class CooperativeServiceTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $address = $cooperative->address;
 
-        $this->service->delete($actor, $cooperative);
+        $this->service->delete((string) $actor->getKey(), $cooperative);
         $this->assertSoftDeleted('cooperatives', ['id' => $cooperative->getKey()]);
         $this->assertSoftDeleted('addresses', ['id' => $address->getKey()]);
 
-        $restored = $this->service->restore($actor, $cooperative);
+        $restored = $this->service->restore((string) $actor->getKey(), $cooperative);
 
         self::assertFalse($restored->trashed());
         $this->assertDatabaseHas('addresses', [
@@ -605,7 +605,7 @@ final class CooperativeServiceTest extends TestCase
         $actor = $this->rootActor();
         $cooperative = Cooperative::factory()->create(['status' => $from]);
 
-        $updated = $this->service->{$method}($actor, $cooperative);
+        $updated = $this->service->{$method}((string) $actor->getKey(), $cooperative);
 
         $this->assertSame($to, $updated->status);
         $this->assertDatabaseHas('cooperatives', [
