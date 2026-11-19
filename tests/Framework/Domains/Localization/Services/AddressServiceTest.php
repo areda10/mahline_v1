@@ -8,6 +8,7 @@ use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
@@ -175,6 +176,33 @@ final class AddressServiceTest extends TestCase
             'city' => 'Casablanca',
             'latitude' => 95,
         ]);
+    }
+
+    public function test_customer_address_limit_is_preserved_when_restoring_an_archived_account(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $root = $this->userWithRole('super_admin_root');
+        $service = app(AddressService::class);
+
+        for ($index = 1; $index <= 5; $index++) {
+            $service->createForUser($customer, $customer, [
+                'street' => "Rue client {$index}",
+                'city' => 'Casablanca',
+            ]);
+        }
+
+        $service->softDeleteUserAddresses($customer, (string) $root->getKey());
+        $customer->forceFill([
+            'status' => UserStatus::Archived,
+            'email_verified_at' => null,
+        ])->save();
+        $customer->delete();
+        $customer->restore();
+
+        $service->restoreLatestUserAddresses($customer, (string) $root->getKey());
+
+        self::assertSame(5, $customer->addresses()->count());
+        self::assertSame(1, $customer->addresses()->where('is_primary', true)->count());
     }
 
     public function test_customer_can_keep_five_active_addresses_but_not_a_sixth(): void
