@@ -869,3 +869,10 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test ajouté pour création/mise à jour via contrat.
 - Commits complémentaires : `bf01e84`, `4266eda`, `9b328e7`, `6d8c7ed`, `a18166c`.
 - Validation runtime en attente.
+
+
+#### Complément A1 — test de service
+
+- Test de bout en bout service ajouté : suppression permise sur coopérative affectée, soft delete de son adresse, refus hors affectation et absence d'audit de suppression hors périmètre.
+- Commit : `735de59`.
+- PHPUnit non exécuté.
