@@ -192,7 +192,7 @@ final class UserPolicyTest extends TestCase
         );
         $admin->cooperatives()->attach($cooperative->getKey());
 
-        $target = User::factory()->create([
+        $target = $this->userWithRoleAndPermissions('user', [], [
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -218,7 +218,7 @@ final class UserPolicyTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        self::assertTrue(
+        self::assertFalse(
             Gate::forUser($admin)->allows('resendInvitation', $target),
         );
     }
@@ -233,12 +233,13 @@ final class UserPolicyTest extends TestCase
             ['cooperative_id' => $cooperative->getKey()],
         );
 
-        $target = User::factory()->create([
+        $target = $this->userWithRoleAndPermissions('user', [], [
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
+            'email_verified_at' => null,
         ]);
 
-        self::assertFalse(
+        self::assertTrue(
             Gate::forUser($admin)->allows('resendInvitation', $target),
         );
     }
