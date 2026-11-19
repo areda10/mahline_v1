@@ -290,3 +290,27 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-012 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif et aucun test exécuté.
+
+
+## 14. Décision architecturale — traitements asynchrones et files d'attente (19 novembre 2026)
+
+**Décision 13 validée :** adopter une architecture hybride avec infrastructure de queue commune au départ et isolation logique des traitements selon leur domaine, leur catégorie et leur criticité.
+
+- Les files sont séparées logiquement lorsque cela est utile, sans multiplier prématurément les infrastructures indépendantes.
+- Les traitements lourds ne doivent pas bloquer les tâches critiques ; les priorités et pools de workers sont adaptés aux besoins mesurés.
+- Chaque job appartient à un domaine et les traitements inter-domaines utilisent exclusivement les contrats publics ou événements autorisés.
+- Les jobs transportent des identifiants et des données minimales sérialisables ; les données et états métier nécessaires sont rechargés et revérifiés à l'exécution.
+- Les retries sont bornés et définis par traitement : backoff, timeout, tentatives maximales et gestion des échecs définitifs.
+- L'idempotence et la déduplication protègent contre les exécutions répétées ; aucune garantie d'exécution exactement une fois n'est présumée.
+- L'ordre d'exécution n'est pas garanti par défaut ; tout besoin d'ordre strict doit être explicite.
+- Le dispatch respecte les commits transactionnels ; les événements critiques suivent les règles de l'ADR-012 et peuvent nécessiter un Transactional Outbox.
+- La supervision doit rendre visibles les files d'attente, l'ancienneté, les durées, les erreurs, les reprises et l'état des workers.
+- L'architecture permet d'extraire ultérieurement des workers ou files sur des ressources dédiées lorsque des besoins mesurés le justifient.
+
+**Document de décision :** [ADR-013 — Traitements asynchrones et architecture des files d'attente](decisions/ADR-013-async-processing-and-queues.md).
+
+**État :** architecture cible acceptée ; inventaire des jobs et tâches planifiées, classification de criticité, choix du backend, dimensionnement des workers, politiques de reprise, observabilité et tests restent à définir ou auditer. Aucun job, worker, queue, table, migration, configuration ou code applicatif n'a été créé ou modifié dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-013 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
