@@ -747,3 +747,26 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - `AddressPolicy` et les adapters Identity/Cooperatives conservent les modèles User/Cooperative uniquement au bord de Gate, où Laravel Policies exige les sujets Eloquent. Le service métier Localization n'y est plus couplé.
 - Les relations Eloquent User↔Cooperative et Cooperative↔User restent des relations de lecture/composition pour l'interface et les scopes ; les écritures du pivot restent dans Identity.
 - Tests non exécutés dans cet environnement.
+
+### 11.18 Lot A11 — suppression des dépendances croisées dans les Policies et les adapters
+
+**Correction appliquée**
+- Déplacement de `SuperAdminCooperativeAssignmentReader` dans `App\Shared\Contracts` : Identity l'implémente, Cooperatives et Localization consomment le contrat partagé. Le cycle Identity↔Cooperatives créé par un contrat Identity consommé par Cooperatives est ainsi supprimé.
+- Ajout de `IdentityActor` dans Shared ; le modèle User l'implémente. Les Policies Cooperatives et les scopes de visibilité utilisent cette abstraction plutôt que le modèle User.
+- `Cooperative::scopeVisibleTo` reçoit explicitement les IDs affectés par le lecteur Identity ; il ne lit plus la relation `User::cooperatives()` directement.
+- `AddressPolicy` utilise `ActorContext`, `UserAddressOwnerData` et `CooperativeAddressOwnerData`, sans importer les modèles User ou Cooperative.
+- Les adapters Identity/Cooperatives convertissent leurs modèles propriétaires en DTO et appellent la Policy Localization ; ils n'exposent pas leurs modèles au service d'adresses.
+- `LocalizationServiceProvider` ne définit plus de Gate closures dépendant des modèles Identity/Cooperatives. L'autorisation est centralisée dans `AddressPolicy` et appelée par les adapters propriétaires.
+- `CooperativeAddressOwnerGatewayService` utilise `ActorContextProvider` et la Policy Localization, sans importer le modèle User.
+
+**Tests ajoutés/adaptés**
+- `CooperativeServiceBoundaryTest` : service coopératives reçoit des IDs et dépend des contrats d'acteur Shared.
+- `AddressServiceBoundaryTest` : APIs d'adresse sans modèles Eloquent propriétaires.
+- `AddressPolicyTest` : règles de périmètre exécutées avec ActorContext et DTOs propriétaires.
+- `IdentityServiceProviderTest` : User implémente IdentityActor ; acteur partagé, reader d'affectation et autorisateur.
+- Les tests existants CooperativePolicy et AddressService vérifient les affectations et les permissions.
+
+**Dépendances résiduelles explicitement acceptées**
+- Les modèles User et Cooperative conservent des relations Eloquent réciproques pour le mapping relationnel et les écrans existants. Elles sont des relations de lecture/composition ; les écritures du pivot `super_admin_cooperative` restent dans Identity.
+- Identity consomme l'événement public `CooperativeCreatedV1` pour l'affectation initiale. Cooperatives ne dépend pas d'un service Identity.
+- Les tests restent non exécutés ; pas de CI GitHub configurée dans cette branche.
