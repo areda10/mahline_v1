@@ -372,3 +372,16 @@ Lorsqu'une coopérative abaisse la limite commerciale d'un produit ou d'une vari
 - La nouvelle limite est vérifiée lors des modifications du panier et à nouveau au checkout auprès des données du domaine propriétaire.
 
 Cette règle complète SALES-019 : les limites commerciales courantes s'appliquent aux lignes déjà présentes dans les paniers, sans altération automatique de leur quantité.
+
+### SALES-021 — Absence de limite commerciale configurée
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'aucune limite commerciale n'est configurée par la coopérative pour un produit ou une variante :
+
+- Aucune limite commerciale spécifique n'est appliquée à cette ligne.
+- La limite technique globale de MAHLINE définie par SALES-019 reste obligatoire et constitue la borne maximale absolue.
+- L'ajout, la modification et la fusion de lignes restent soumis à cette limite technique ainsi qu'aux autres règles applicables au panier.
+- L'absence de configuration commerciale ne bloque donc pas, à elle seule, l'ajout au panier ou le checkout.
+
+Cette règle n'affecte pas les contrôles de disponibilité, de statut vendable ou de prix, qui restent indépendants des limites de quantité.
