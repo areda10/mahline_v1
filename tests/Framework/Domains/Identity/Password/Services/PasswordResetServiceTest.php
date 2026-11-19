@@ -10,6 +10,7 @@ use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordResetService;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -46,6 +47,37 @@ final class PasswordResetServiceTest extends TestCase
         $this->assertDatabaseCount(
             'password_reset_tokens',
             1,
+        );
+    }
+
+    public function test_customer_only_reset_flow_rejects_non_customer_accounts_before_issuing_token(): void
+    {
+        $user = User::factory()->create();
+
+        $this->expectException(\\App\\Domains\\Identity\\Password\\Exceptions\\InvalidPasswordResetTokenException::class);
+
+        $this->passwordResetService->createToken(
+            user: $user,
+            customerOnly: true,
+        );
+
+        $this->assertDatabaseCount('password_reset_tokens', 0);
+    }
+
+    public function test_general_reset_flow_rejects_customer_accounts_before_issuing_token(): void
+    {
+        $customer = User::factory()->create();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'customer'],
+            ['name' => 'customer', 'is_active' => true],
+        );
+        $customer->roles()->attach($role->getKey());
+
+        $this->expectException(\\App\\Domains\\Identity\\Password\\Exceptions\\InvalidPasswordResetTokenException::class);
+
+        $this->passwordResetService->createToken(
+            user: $customer,
+            customerOnly: false,
         );
     }
 
