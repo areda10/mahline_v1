@@ -461,3 +461,18 @@ Lorsqu'une coopérative supprime un produit présent dans plusieurs paniers clie
 - Les informations descriptives conservées selon SALES-010 restent disponibles pour identifier l'article.
 
 Cette règle s'applique indépendamment du nombre de paniers concernés et complète SALES-010. La suppression du produit par la coopérative ne doit jamais modifier silencieusement les paniers des clients.
+
+
+### SALES-028 — Variante supprimée alors qu'elle figure dans plusieurs paniers
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative supprime une variante présente dans plusieurs paniers clients :
+
+- Chaque panier conserve la ligne correspondant à la variante supprimée comme ligne historique non achetable.
+- La ligne est signalée comme supprimée/indisponible ; le checkout du panier concerné est bloqué tant qu'elle y demeure.
+- Chaque client doit retirer lui-même la ligne pour poursuivre son checkout.
+- Aucune substitution automatique par une autre variante, même active, n'est autorisée.
+- Les informations initiales utiles à l'identification de la variante restent conservées conformément à SALES-012.
+
+Cette règle complète SALES-012 et SALES-027. La suppression d'une variante ne doit jamais modifier silencieusement les paniers des clients.
