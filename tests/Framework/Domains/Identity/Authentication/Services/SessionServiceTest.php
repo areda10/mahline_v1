@@ -79,6 +79,24 @@ final class SessionServiceTest extends TestCase
         );
     }
 
+    public function test_session_creation_rejects_emergency_locked_user(): void
+    {
+        $user = User::factory()->create([
+            'status' => UserStatus::Active,
+            'emergency_locked_at' => now(),
+        ]);
+
+        $this->expectException(\\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'The user account is emergency locked. A new session cannot be created.',
+        );
+
+        $this->sessionService->create(
+            user: $user,
+            sessionId: 'emergency-locked-user-session',
+        );
+    }
+
     public function test_session_creation_rechecks_status_in_database_instead_of_trusting_stale_user_model(): void
     {
         $user = User::factory()->create([
