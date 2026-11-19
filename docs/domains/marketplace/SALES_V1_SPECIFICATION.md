@@ -412,3 +412,16 @@ Lorsqu'une coopérative diminue la limite commerciale d'un produit ou d'une vari
 - La nouvelle limite est vérifiée lors des modifications du panier et à nouveau au checkout auprès du domaine propriétaire.
 
 Cette règle s'applique immédiatement à tous les clients concernés, indépendamment de la date à laquelle ils ont ajouté le produit au panier.
+
+### SALES-024 — Application immédiate d'une augmentation de limite commerciale
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative augmente la limite commerciale d'un produit ou d'une variante, la nouvelle limite s'applique immédiatement à tous les paniers existants concernés.
+
+- Les clients peuvent bénéficier immédiatement de la limite augmentée, y compris lorsque leur quantité était auparavant bloquée par l'ancienne limite.
+- Aucune modification artificielle du panier n'est exigée pour bénéficier de cette augmentation.
+- Les autres règles du panier restent applicables, notamment la limite technique globale MAHLINE, les contrôles de statut vendable, de prix et de disponibilité.
+- La limite applicable est relue auprès du domaine propriétaire lors des opérations concernées et au checkout.
+
+Cette règle complète SALES-020 et SALES-023 : une diminution s'applique immédiatement et peut bloquer une ligne excédentaire sans la réduire ; une augmentation s'applique immédiatement et peut lever ce blocage lié à l'ancienne limite.
