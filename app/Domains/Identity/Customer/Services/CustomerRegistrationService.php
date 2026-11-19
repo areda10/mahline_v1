@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Customer\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Customer\Exceptions\CustomerVerificationDeliveryException;
 use App\Domains\Identity\Customer\Models\CustomerEmailVerification;
@@ -32,7 +32,7 @@ final class CustomerRegistrationService extends BaseService
     private const RESEND_WINDOW_SECONDS = 3600;
 
     public function __construct(
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
     ) {}
 
     /**
