@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\UserManagement\Services;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Password\Rules\PasswordPolicy;
@@ -28,7 +28,7 @@ final class UserInvitationService
     private const EXPIRATION_MINUTES = 60;
 
     public function __construct(
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
         private readonly PasswordHistoryService $passwordHistory,
         private readonly ApiTokenService $apiTokens,
     ) {}
