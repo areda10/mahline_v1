@@ -67,11 +67,19 @@ final class CooperativeServiceTest extends TestCase
     public function test_super_admin_creator_is_automatically_assigned_to_created_cooperative(): void
     {
         $actor = $this->superAdminActor();
+        $existingToken = $actor->createToken('before-cooperative-creation');
 
         $cooperative = $this->service->create($actor, $this->attributes(), $this->addressAttributes());
 
         $this->assertDatabaseHas('super_admin_cooperative', [
             'super_admin_id' => $actor->getKey(),
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $this->assertNotNull($existingToken->accessToken->fresh()->revoked_at);
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'identity.super_admin.cooperative_assigned',
+            'actor_id' => $actor->getKey(),
+            'subject_id' => $actor->getKey(),
             'cooperative_id' => $cooperative->getKey(),
         ]);
         $this->assertTrue(
