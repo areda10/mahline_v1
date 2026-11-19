@@ -264,3 +264,18 @@ Lorsqu'une coopérative réduit le stock disponible après qu'un client a ajout�
 - La disponibilité doit être revérifiée auprès d'Inventory au checkout, puis selon le processus de confirmation défini par Inventory.
 
 Cette règle préserve le choix du client tout en empêchant une validation silencieuse d'une quantité actuellement indisponible.
+
+
+### SALES-014 — Vidage complet du panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Lorsqu'un client choisit de vider entièrement son panier :
+
+- Sales retire logiquement toutes les lignes actives du panier ; elles ne sont plus présentées comme des articles à acheter.
+- Les lignes supprimées sont conservées dans un historique interne à des fins de traçabilité et d'audit.
+- Le vidage ne crée aucune commande et n'entraîne aucune réservation ou libération de stock, puisque le panier ne réserve pas le stock.
+- Cette opération ne supprime ni les commandes, ni les snapshots de commandes, ni les factures.
+- Les règles de rétention du panier invité (30 jours depuis la dernière activité) et de conservation du panier authentifié (sans expiration automatique) restent distinctes de cet historique interne.
+
+La durée de conservation de l'historique, ses droits d'accès et sa purge éventuelle restent à définir dans la conception technique et les règles de gouvernance des données.
