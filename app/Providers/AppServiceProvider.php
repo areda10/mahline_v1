@@ -4,18 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Domains\Audit\Contracts\AuditWriter;
-use App\Domains\Audit\Services\AuditWriterService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
-use App\Domains\Localization\Contracts\CooperativeAddressManager;
-use App\Domains\Localization\Services\AddressService;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\Users\Observers\UserObserver;
 use App\Domains\Media\Observers\MediaOwnerObserver;
-use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\Models\Product;
-use App\Domains\Products\Services\ProductService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
@@ -33,9 +27,6 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(AuditWriter::class, AuditWriterService::class);
-        $this->app->bind(CheckoutCatalog::class, ProductService::class);
-        $this->app->bind(CooperativeAddressManager::class, AddressService::class);
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
             UserManagementService::class,
