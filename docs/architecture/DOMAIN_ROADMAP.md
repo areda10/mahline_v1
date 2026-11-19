@@ -917,3 +917,5 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Tests non exécutés.
 
 - Garde ajoutée : l'affectation initiale ne peut concerner que la coopérative dont le super_admin est le créateur. Commit : `6681226`.
+
+- Test ajouté pour refuser l'affectation initiale lorsque `created_by` ne correspond pas au super_admin. Commit : `1c81c415`.
