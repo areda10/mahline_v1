@@ -109,6 +109,7 @@ return [
 
             'users.view',
             'users.update',
+            'users.invite',
 
             'catalogs.view',
             'catalogs.create',
