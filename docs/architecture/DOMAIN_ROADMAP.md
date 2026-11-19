@@ -823,3 +823,12 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Audit détaillé : commit `629d88fb2049e28f9307fd38410a20e432bebcb0`.
 - PHPUnit/Pint/MySQL/CI : non exécutés dans cette session.
 - Merge vers `main) : non effectué.
+
+
+### 10. Lot A1 — Cooperatives (19 novembre 2026)
+
+- Règle de suppression corrigée : root peut supprimer globalement ; super_admin peut supprimer uniquement une coopérative affectée ; cooperative_admin et user ne peuvent pas supprimer.
+- Test de Policy mis à jour pour vérifier simultanément l'accès à la coopérative affectée et le refus hors affectation.
+- Commits : `048f47736203c2b1c5d08208bd68b1fc195c411c` (Policy), `6cc88ab802b18c947668ca4f9149710f040526ae` (test).
+- Restent à traiter : dépendance directe User dans CooperativeService, dépendance directe AddressService dans CooperativeController, relations Eloquent transversales du modèle Cooperative et contrat public de statut.
+- Tests non exécutés ; statut du lot : **correction écrite, validation runtime en attente**.
