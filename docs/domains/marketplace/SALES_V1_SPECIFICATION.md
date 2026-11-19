@@ -398,3 +398,17 @@ La définition et la modification des limites commerciales de quantité sont aut
 - **`user`** : ne peut ni définir ni modifier ces limites.
 
 Toute opération doit vérifier côté serveur le rôle et le périmètre d'accès à la coopérative concernée. Cette autorisation ne permet pas de dépasser la limite technique globale de MAHLINE définie par SALES-019.
+
+### SALES-023 — Application immédiate d'une diminution de limite commerciale
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative diminue la limite commerciale d'un produit ou d'une variante, la nouvelle limite s'applique immédiatement à tous les paniers existants concernés, et pas uniquement aux nouveaux ajouts.
+
+- Les lignes dont la quantité demandée dépasse la nouvelle limite sont signalées comme non conformes.
+- Le checkout est bloqué pour toute ligne concernée tant que la quantité n'a pas été ramenée à la limite ou en dessous, ou que la ligne n'a pas été retirée.
+- La quantité déjà demandée est conservée : aucune réduction automatique ni suppression de ligne n'est effectuée.
+- La règle complète SALES-020 s'applique : le client conserve le choix de réduire ou retirer la ligne.
+- La nouvelle limite est vérifiée lors des modifications du panier et à nouveau au checkout auprès du domaine propriétaire.
+
+Cette règle s'applique immédiatement à tous les clients concernés, indépendamment de la date à laquelle ils ont ajouté le produit au panier.
