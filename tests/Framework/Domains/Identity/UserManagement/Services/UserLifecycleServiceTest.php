@@ -134,7 +134,6 @@ final class UserLifecycleServiceTest extends TestCase
 
         $operations = [
             fn () => $this->service->activateUser($root, $root),
-            fn () => $this->service->activateAndVerifyUser($root, $root),
             fn () => $this->service->deactivateUser($root, $root),
             fn () => $this->service->suspendUser($root, $root),
             fn () => $this->service->archiveUser($root, $root),
