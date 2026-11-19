@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Services;
 
-use App\Domains\Audit\Repositories\AuditEventRepository;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Media\Models\Media;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +14,7 @@ use Illuminate\Support\Facades\Storage;
 final class MediaCleanupService
 {
     public function __construct(
-        private readonly AuditService $audit,
-        private readonly AuditEventRepository $auditEvents,
+        private readonly AuditWriter $audit
     ) {}
 
     public function purgeExpired(): int
@@ -48,7 +46,7 @@ final class MediaCleanupService
                                 return false;
                             }
 
-                            if (! $this->auditEvents->verifyIntegrity()) {
+                            if (! $this->audit->verifyIntegrity()) {
                                 throw new \RuntimeException('La chaîne d’audit est invalide ; purge MEDIA refusée.');
                             }
 
