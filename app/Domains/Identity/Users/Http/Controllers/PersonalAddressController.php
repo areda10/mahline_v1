@@ -6,7 +6,7 @@ namespace App\Domains\Identity\Users\Http\Controllers;
 
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Enums\MoroccanRegion;
-use App\Domains\Localization\Services\AddressService;
+use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -28,7 +28,7 @@ final class PersonalAddressController
         ]);
     }
 
-    public function update(Request $request, AddressService $addresses): RedirectResponse
+    public function update(Request $request, UserAddressLifecycleManager $addresses): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 403);
@@ -42,18 +42,14 @@ final class PersonalAddressController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        if ($user->addresses()->exists()) {
-            $addresses->updateForUser($user, $user, $data);
-        } else {
-            $addresses->createForUser($user, $user, $data);
-        }
+        $addresses->savePrimaryAddressForUser($user, (string) $user->getKey(), $data);
 
         return redirect()
             ->route($user->hasRole('super_admin_root') ? 'root.backoffice.profile.address.edit' : 'backoffice.profile.address.edit')
             ->with('success', 'Votre adresse personnelle a été mise à jour.');
     }
 
-    public function updateUser(Request $request, User $user, AddressService $addresses): RedirectResponse
+    public function updateUser(Request $request, User $user, UserAddressLifecycleManager $addresses): RedirectResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 403);
@@ -67,11 +63,7 @@ final class PersonalAddressController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
 
-        if ($user->addresses()->exists()) {
-            $addresses->updateForUser($actor, $user, $data);
-        } else {
-            $addresses->createForUser($actor, $user, $data);
-        }
+        $addresses->savePrimaryAddressForUser($actor, (string) $user->getKey(), $data);
 
         return back()->with('success', 'L’adresse personnelle de cet utilisateur a été mise à jour.');
     }
