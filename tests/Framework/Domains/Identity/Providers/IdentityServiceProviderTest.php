@@ -39,7 +39,7 @@ final class IdentityServiceProviderTest extends TestCase
 
         $user->forceFill(['emergency_locked_at' => now()])->save();
 
-        $this->expectException(\\Illuminate\\Auth\\Access\\AuthorizationException::class);
+        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
 
         app(ActorAuthorizer::class)->authorize(
             (string) $user->getKey(),
