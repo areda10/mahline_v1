@@ -342,6 +342,8 @@ Route::prefix('root/back-office')
             ->name('users.restore-deleted');
         Route::post('users/{user}/resend-invitation', [SuperAdminRootUserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
+        Route::post('users/{user}/send-password-reset', [SuperAdminRootUserManagementController::class, 'sendPasswordReset'])
+            ->name('users.send-password-reset');
 
         Route::get('users/{superAdmin}/cooperatives', [SuperAdminCooperativeAssignmentController::class, 'index'])
             ->name('users.cooperatives.index');
@@ -516,6 +518,8 @@ Route::prefix('back-office')
 
         Route::post('users/{user}/resend-invitation', [UserManagementController::class, 'resendInvitation'])
             ->name('users.resend-invitation');
+        Route::post('users/{user}/send-password-reset', [UserManagementController::class, 'sendPasswordReset'])
+            ->name('users.send-password-reset');
 
         Route::prefix('super-admins/{superAdmin}')
             ->name('super-admins.')
