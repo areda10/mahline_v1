@@ -800,3 +800,12 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - `CustomerEmailChangeService` : confirmation par token hashé 30 minutes, maintien de l'ancienne adresse jusqu'à vérification, révocation des sessions/tokens après changement.
 
 **Validation :** tests ajoutés, non exécutés. Les domaines restent `AUDIT_IN_PROGRESS`.
+
+### 11.21 Lot A14 — vérification statique du schéma Localization
+
+- Le propriétaire d'une adresse est garanti par les triggers MySQL : exactement un `user_id` ou un `cooperative_id`, jamais zéro ou deux.
+- Les index générés garantissent une seule adresse primaire active par utilisateur, une seule adresse primaire active par coopérative et une seule adresse active par coopérative.
+- Les clés étrangères pays/utilisateur/coopérative sont restrictives ; la suppression logique des adresses conserve les historiques.
+- Le plafond de cinq adresses actives client reste appliqué dans `AddressService` sous verrou du propriétaire ; il ne s'agit pas d'un index SQL de comptage.
+- Les tests `AddressesTest` et `AddressOwnershipIntegrityTest` couvrent les triggers, index uniques et clés étrangères. Leur exécution sur MySQL reste obligatoire ; aucune exécution n'a eu lieu ici.
+- `Country` est un sous-module de Localization ; aucun domaine Countries autonome n'est présent.
