@@ -8,7 +8,7 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Services\AddressService;
+use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +31,7 @@ final class CooperativeService
 
     public function __construct(
         private readonly AuditWriter $audit,
-        private readonly AddressService $addressService,
+        private readonly CooperativeAddressManager $cooperativeAddresses,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -58,7 +58,7 @@ final class CooperativeService
             // The cooperative and its unique address are created atomically.
             // The super_admin assignment is established first so address authorization
             // and audit context observe the final cooperative ownership scope.
-            $this->addressService->createForCooperative($actor, $cooperative, $addressAttributes);
+            $this->cooperativeAddresses->createAddressForCooperative($actor, (string) $cooperative->getKey(), $addressAttributes);
 
             $this->record(
                 actor: $actor,
@@ -159,7 +159,7 @@ final class CooperativeService
             }
 
             $before = $this->auditSnapshot($cooperative);
-            $this->addressService->softDeleteCooperativeAddresses($cooperative, (string) $actor->getKey());
+            $this->cooperativeAddresses->softDeleteCooperativeAddressesById((string) $cooperative->getKey(), (string) $actor->getKey());
             $cooperative->deleted_by = (string) $actor->getKey();
             $cooperative->save();
             $cooperative->delete();
@@ -195,7 +195,7 @@ final class CooperativeService
 
             $oldDeletedAt = $locked->deleted_at?->toISOString();
             $locked->restore();
-            $this->addressService->restoreLatestCooperativeAddresses($locked, (string) $actor->getKey());
+            $this->cooperativeAddresses->restoreLatestCooperativeAddressesById((string) $locked->getKey(), (string) $actor->getKey());
 
             $this->record(
                 actor: $actor,
