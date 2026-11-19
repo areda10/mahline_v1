@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Password\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException;
 use App\Domains\Identity\Password\Notifications\PasswordResetLinkNotification;
@@ -23,7 +23,7 @@ final class PasswordResetService extends BaseService
 
     public function __construct(
         private readonly SessionService $sessionService,
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
         private readonly PasswordHistoryService $passwordHistory,
     ) {}
 
