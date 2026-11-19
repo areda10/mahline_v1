@@ -49,7 +49,7 @@ final class ProductService implements CheckoutCatalog
                 ->first();
         }
 
-        $hasVariants = ! $variantRequested && $product->variants()->exists();
+        $hasVariants = $product->variants()->exists();
         $unit = $variant !== null ? $variant->unit : ($variantRequested ? null : $product->unit);
 
         return new CheckoutProductData(
