@@ -170,7 +170,7 @@ final class MediaIncidentService
     {
         $this->assertRoot($actor);
 
-        if (! $this->auditEvents->verifyIntegrity()) {
+        if (! $this->audit->verifyIntegrity()) {
             throw new \RuntimeException('La chaîne d’audit est invalide ; export incident refusé.');
         }
 
@@ -218,7 +218,7 @@ final class MediaIncidentService
 
     private function record(User $actor, MediaIncident $incident, string $eventKey, string $action): void
     {
-        if (! $this->auditEvents->verifyIntegrity()) {
+        if (! $this->audit->verifyIntegrity()) {
             throw new \RuntimeException('La chaîne d’audit est invalide ; opération incident refusée.');
         }
 
