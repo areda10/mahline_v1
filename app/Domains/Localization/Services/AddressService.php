@@ -281,16 +281,20 @@ final class AddressService extends BaseService implements CooperativeAddressMana
 
     public function restoreLatestUserAddressesById(string $userId, string $actorId): void
     {
-        $batch = Address::withTrashed()
-            ->where('user_id', $userId)
-            ->where('deletion_source', 'owner')
-            ->whereNotNull('owner_deletion_batch_id')
-            ->orderByDesc('deleted_at')
-            ->value('owner_deletion_batch_id');
+        DB::transaction(function () use ($userId, $actorId): void {
+            $owner = $this->userOwners->lock($userId);
+            $batch = Address::withTrashed()
+                ->where('user_id', $owner->id)
+                ->where('deletion_source', 'owner')
+                ->whereNotNull('owner_deletion_batch_id')
+                ->orderByDesc('deleted_at')
+                ->lockForUpdate()
+                ->value('owner_deletion_batch_id');
 
-        if ($batch !== null) {
-            $this->restoreUserAddresses($userId, (string) $batch, $actorId);
-        }
+            if ($batch !== null) {
+                $this->restoreUserAddresses($userId, (string) $batch, $actorId);
+            }
+        });
     }
 
     public function softDeleteCooperativeAddressesById(string $cooperativeId, string $actorId): string
