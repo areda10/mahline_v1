@@ -507,3 +507,18 @@ Lorsqu'une coopérative devient inactive ou ferme son compte alors que ses produ
 - Aucun transfert de propriété vers une autre coopérative n'est effectué, conformément à la règle V1 d'absence de transfert de produits entre coopératives.
 
 Cette règle s'applique à l'indisponibilité de la coopérative propriétaire ; elle ne transforme pas une fermeture en transfert de produits ni en autorisation de vente résiduelle.
+
+
+### SALES-031 — Panier multi-coopératives lorsqu'une coopérative devient inactive
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'un panier contient des produits de plusieurs coopératives et que l'une d'elles devient inactive ou ferme son compte :
+
+- Les lignes appartenant à cette coopérative sont conservées et signalées comme indisponibles, conformément à SALES-030.
+- Le checkout de l'intégralité du panier est bloqué tant que ces lignes indisponibles y demeurent, même si les produits des autres coopératives restent achetables.
+- Le client doit retirer manuellement toutes les lignes indisponibles concernées.
+- Après leur retrait, le client peut reprendre le checkout avec les lignes restantes, sous réserve des validations habituelles.
+- Sales ne doit ni exclure automatiquement les lignes concernées, ni créer automatiquement un checkout ou une commande partielle.
+
+Cette règle préserve le contenu choisi par le client et évite toute modification implicite d'un panier multi-coopératives.
