@@ -318,7 +318,7 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - **Intégré :** bindings dans AppServiceProvider ; aucune migration existante modifiée.
 - **À faire :** contrats MediaOwner, contrats Address, ownership des pivots, policies/providers locaux, audit exhaustif FK/cascades/triggers, tests d'architecture et CI.
 - **Non exécuté :** PHPUnit/Pint/tests MySQL. Le lot est intégré statiquement mais reste à valider dans l'environnement local.
-- Référence de code après intégration : `4c2d4fecc288b37b164f3b9b941fe5caadc278d9`.
+- Référence de code après intégration : `3d1c91db28362a38919d7fa1e5084dc862001d69`.
 
 
 ### Mise à jour — policies propriétaires intégrées
@@ -342,6 +342,6 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 
 
 ### Référence technique actualisée
-- Dernier HEAD du code intégré : `4c2d4fecc288b37b164f3b9b941fe5caadc278d9` sur `feature/Marketplace`.
+- Dernier HEAD du code intégré : `3d1c91db28362a38919d7fa1e5084dc862001d69` sur `feature/Marketplace`.
 - Contrats intégrés : AuditWriter, CheckoutCatalog, CooperativeAddressManager ; providers d'autorisation locaux actifs par déclaration bootstrap.
 - Tests non exécutés : valider ce snapshot dans l'environnement local avant de poursuivre les lots restants.
