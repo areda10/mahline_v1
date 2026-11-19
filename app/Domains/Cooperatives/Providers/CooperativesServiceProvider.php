@@ -6,7 +6,7 @@ namespace App\Domains\Cooperatives\Providers;
 
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Cooperatives\Services\CooperativeService;
+use App\Domains\Cooperatives\Services\CooperativeStatusReaderService;
 use App\Domains\Cooperatives\Policies\CooperativePolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -15,7 +15,7 @@ final class CooperativesServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(CooperativeStatusReader::class, CooperativeService::class);
+        $this->app->bind(CooperativeStatusReader::class, CooperativeStatusReaderService::class);
     }
 
     public function boot(): void
