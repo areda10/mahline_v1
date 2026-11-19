@@ -369,7 +369,7 @@ final class UserManagementServiceTest extends TestCase
         $ordinaryUser = $this->createUserWithRole('user');
         $cooperative = Cooperative::factory()->create();
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('The target user must have the super_admin role.');
 
         $this->service->assignCreatorToNewCooperative(
