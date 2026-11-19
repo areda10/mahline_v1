@@ -883,3 +883,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test ajouté pour restaurer cinq adresses après archivage et soft delete, avec une seule adresse principale.
 - Commits : `c0ee1be`, `5a2aa1a`.
 - PHPUnit non exécuté.
+
+### 13. Lot A4 — Identity (19 novembre 2026)
+
+- Révocation globale des sessions : verrouillage User puis sessions, sérialisé avec la création de session pour éviter une nouvelle session qui échapperait à la révocation.
+- Gestion root des tokens : les rôles interdits (root/customer) sont maintenant identifiés même si le compte est suspendu/inactif.
+- Tests ajoutés : ordre des verrous et refus d'un customer suspendu dans le workflow root API tokens.
+- Commits : `737d3f0`, `cf70857`, `fec7d87`, `8378e8a`.
+- Tests non exécutés ; validation runtime et test de concurrence MySQL en attente.
