@@ -584,3 +584,17 @@ Lorsqu'une ligne de panier référence une variante qui est supprimée par sa co
 - Les autres lignes du panier suivent leurs propres règles de disponibilité et de validation.
 
 Cette règle complète SALES-012 et SALES-028. La réactivation de la coopérative ne réactive pas une variante supprimée et ne modifie pas le choix initial du client.
+
+### SALES-036 — Nouvelle variante créée pendant l'indisponibilité de la coopérative
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative inactive crée une nouvelle variante pour un produit existant dans des paniers clients, puis redevient active :
+
+- La nouvelle variante devient disponible dans le catalogue, sous réserve des contrôles habituels de disponibilité et de commercialisation.
+- Elle n'est jamais ajoutée automatiquement aux paniers qui contiennent déjà ce produit.
+- Elle ne remplace jamais automatiquement une ancienne variante référencée dans une ligne de panier, même si cette ancienne variante a été supprimée.
+- Le client doit choisir volontairement la nouvelle variante et l'ajouter lui-même à son panier.
+- Les lignes de panier existantes restent soumises à leurs propres règles de disponibilité ; la création d'une nouvelle variante ne réactive pas une variante supprimée et ne contourne pas SALES-035.
+
+Cette règle garantit que l'ajout d'une variante par la coopérative ne vaut jamais choix ou consentement du client.
