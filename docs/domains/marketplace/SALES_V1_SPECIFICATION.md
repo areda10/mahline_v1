@@ -86,7 +86,8 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le schéma :
 - fusion des paniers invité et client : limites de quantité et arbitrage des conflits concurrents ;
 - durée de vie du panier invité et du panier authentifié ;
-- règles de suppression/expiration des paniers et de leurs lignes ;
+- durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
+- durée de conservation du panier authentifié et règles de suppression/expiration de ses lignes : à définir ;
 - comportement lorsque le produit ou la variante devient inactive ou n'est plus vendable ;
 - traitement d'une modification du prix catalogue entre ajout au panier et checkout ;
 - moment et durée de validité du prix affiché ;
@@ -122,4 +123,13 @@ Lors de la fusion d'un panier invité avec le panier du compte authentifié :
 - la fusion doit être atomique et résistante aux connexions ou requêtes concurrentes ; les détails techniques seront établis à l'audit avant implémentation.
 
 Le panier invité et le panier du compte ne doivent pas être fusionnés sur la seule base de l'identifiant du produit.
+
+
+### SALES-004 — Expiration du panier invité
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Un panier invité est conservé pendant 30 jours à compter de sa dernière activité. Toute activité pertinente sur le panier réinitialise cette période de conservation.
+
+Cette règle concerne uniquement le panier invité. La durée de conservation du panier associé à un compte authentifié est indépendante et reste à définir. L'expiration du panier invité ne doit pas entraîner la suppression d'une commande déjà créée ni de ses instantanés commerciaux.
 
