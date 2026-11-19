@@ -124,8 +124,8 @@ Référence du code après intégration : `f8f7535b1ae98879738c6aad0b0eef614b97a
 
 ### Audit — contrat public effectif
 - Création de `App\\Domains\\Audit\\Contracts\\AuditWriter`, surface publique pour `record(AuditEntryDTO)` et `verifyIntegrity()`.
-- `AuditService` implémente ce contrat ; le repository et la chaîne SHA-256 restent internes à Audit.
-- Binding du contrat dans le composition root Laravel (`AppServiceProvider`).
+- `AuditWriterService` adapte ce contrat vers `AuditService` ; le contrat ne retourne pas le modèle AuditEvent. Le repository et la chaîne SHA-256 restent internes à Audit.
+- Binding du contrat vers `AuditWriterService` dans le composition root Laravel (`AppServiceProvider`).
 - Les services consommateurs de Catalog, Categories, Cooperatives, Identity, Localization, Products et Media injectent désormais `AuditWriter`, pas `AuditService`.
 - Media ne référence plus `AuditEventRepository` pour vérifier l'intégrité ; les contrôles passent par le contrat public.
 - Le DTO partagé reste une dépendance explicite. Son ownership et son emplacement seront consolidés dans une étape dédiée ; aucune duplication de DTO n'a été introduite.
