@@ -21,16 +21,16 @@ final class CooperativeStatusReaderTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $reference = app(CooperativeIdentityReference::class);
 
-        self::assertTrue($reference->existsActive((string) $cooperative->getKey()));
+        self::assertTrue($reference->existsNotDeleted((string) $cooperative->getKey()));
 
         DB::transaction(function () use ($reference, $cooperative): void {
-            self::assertTrue($reference->lockActive((string) $cooperative->getKey()));
+            self::assertTrue($reference->lockNotDeleted((string) $cooperative->getKey()));
         });
 
         $cooperative->delete();
 
-        self::assertFalse($reference->existsActive((string) $cooperative->getKey()));
-        self::assertFalse($reference->lockActive((string) $cooperative->getKey()));
+        self::assertFalse($reference->existsNotDeleted((string) $cooperative->getKey()));
+        self::assertFalse($reference->lockNotDeleted((string) $cooperative->getKey()));
     }
 
     public function test_public_reader_distinguishes_active_deleted_and_missing_cooperatives(): void
