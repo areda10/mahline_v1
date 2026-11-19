@@ -862,3 +862,10 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test Feature ajouté pour confirmer que la route directe `activate-and-verify` n'est plus enregistrée ; le test d'utilisateur archivé ne teste plus que le parcours d'invitation.
 - Commits : `5a879c8`, `5cbf413`.
 - Validation runtime toujours en attente.
+
+#### Complément A3 — carnet d'adresse personnel
+
+- Le contrôleur de profil Identity utilise désormais le contrat Localization pour enregistrer l'adresse principale ; l'opération est transactionnelle et verrouille l'utilisateur avant de choisir création ou mise à jour.
+- Test ajouté pour création/mise à jour via contrat.
+- Commits complémentaires : `bf01e84`, `4266eda`, `9b328e7`, `6d8c7ed`, `a18166c`.
+- Validation runtime en attente.
