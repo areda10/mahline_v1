@@ -721,3 +721,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-013 : si le stock disponible diminue après l'ajout au panier et devient inférieur à la quantité demandée, Sales conserve cette quantité sans la corriger automatiquement, signale l'insuffisance et bloque le checkout jusqu'à ce que le client réduise ou retire la ligne. La disponibilité reste revérifiée auprès d'Inventory ; le panier ne réserve pas le stock. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-014 : vider le panier retire logiquement toutes ses lignes actives, tout en conservant les lignes retirées dans un historique interne de traçabilité. L'opération ne crée aucune commande et ne modifie ni commandes, ni factures, ni stock. La rétention du panier invité (30 jours) et celle du panier authentifié (sans expiration automatique) restent inchangées. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
