@@ -3,7 +3,7 @@
 - **Date :** 19 novembre 2026
 - **Dépôt :** `areda10/mahline_v1`
 - **Branche cible :** `feature/Marketplace`
-- **Commit de référence de l'audit :** `c83614660b601bb1768223f67202e3d1f85d3c0e`
+- **Commit de référence de l'audit :** `8eaf654cb315b032ea7c12f370ba14a86993ed50`
 - **Statut :** plan établi à partir de constats partiels vérifiés ; exécution applicative non commencée
 - **Portée :** architecture, domaines, données, dépendances, documentation, tests et CI
 
@@ -67,7 +67,7 @@
 ### Lot 1 — Inventaire exhaustif du code et des frontières (P0)
 
 **Éléments déjà identifiés**
-- 11 dossiers présents dans `app/Domains` : Audit, Catalog, Categories, Cooperatives, Countries, Dashboard, Identity, Localization, Media, Orders, Products.
+- 10 dossiers présents dans `app/Domains` : Audit, Catalog, Categories, Cooperatives, Dashboard, Identity, Localization, Media, Orders, Products. Countries est désormais intégré à Localization.
 - `app/Core` contient les fondations et composants transverses ; `app/Shared` contient actuellement `DTOs/AuditEntryDTO.php`.
 - Les dépendances directes observées sur l'échantillon incluent Products → Catalog/Categories/Audit, Catalog → Products, Orders → Product/ProductVariant/User, Media → Audit et modèles Product/Cooperative/User, Cooperatives → Localization.
 - Cet échantillon n'est pas encore un inventaire exhaustif.
@@ -303,3 +303,10 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - Création du plan concret de correction transversal.
 - Correction du registre de domaines : Orders est présent.
 - Référence de travail : `feature/Marketplace` à `c83614660b601bb1768223f67202e3d1f85d3c0e`.
+
+
+### Mise à jour du 19 novembre 2026 — architecture hybride
+- ADR-021 accepté : monolithe modulaire hybride, contrats publics synchrones, événements après commit et Outbox pour événements critiques.
+- `Countries` intégré dans `Localization` ; aucune migration historique modifiée.
+- Voir `DOMAIN_DEPENDENCY_AUDIT.md` pour les relations, les écarts et la matrice de correction.
+- Les changements applicatifs réalisés sont limités à l'intégration de Country ; le découplage des autres domaines reste progressif et nécessite tests ciblés puis suite complète.
