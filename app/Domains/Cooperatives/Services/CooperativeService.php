@@ -8,13 +8,14 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Users\Models\User;
+use App\Shared\Contracts\ActorAuthorizer;
+use App\Shared\Contracts\ActorContextProvider;
+use App\Shared\DTOs\ActorContext;
 use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Gate;
 
 final class CooperativeService
 {
@@ -34,19 +35,22 @@ final class CooperativeService
     public function __construct(
         private readonly AuditWriter $audit,
         private readonly CooperativeAddressManager $cooperativeAddresses,
+        private readonly ActorContextProvider $actors,
+        private readonly ActorAuthorizer $authorizer,
     ) {}
 
     /** @param array<string, mixed> $attributes */
-    public function create(User $actor, array $attributes, array $addressAttributes): Cooperative
+    public function create(string $actorId, array $attributes, array $addressAttributes): Cooperative
     {
-        Gate::forUser($actor)->authorize('create', Cooperative::class);
+        $actor = $this->actors->forUserId($actorId);
+        $this->authorizer->authorize($actor->id, 'create', Cooperative::class);
         $attributes = $this->filterCreateAttributes($attributes);
 
         return DB::transaction(function () use ($actor, $attributes, $addressAttributes): Cooperative {
             $cooperative = new Cooperative;
             $cooperative->fill($attributes);
             $cooperative->status ??= CooperativeStatus::PENDING;
-            $cooperative->created_by = (string) $actor->getKey();
+            $cooperative->created_by = (string) $actor->id;
             $cooperative->save();
 
             // Identity consumes this versioned event and owns its assignment pivot.
@@ -60,7 +64,7 @@ final class CooperativeService
             // The cooperative and its unique address are created atomically.
             // The super_admin assignment is established first so address authorization
             // and audit context observe the final cooperative ownership scope.
-            $this->cooperativeAddresses->createAddressForCooperative($actor, (string) $cooperative->getKey(), $addressAttributes);
+            $this->cooperativeAddresses->createAddressForCooperative($actor->id, (string) $cooperative->getKey(), $addressAttributes);
 
             $this->record(
                 actor: $actor,
@@ -76,11 +80,12 @@ final class CooperativeService
 
     /** @param array<string, mixed> $attributes */
     public function update(
-        User $actor,
+        string $actorId,
         Cooperative $cooperative,
         array $attributes,
     ): Cooperative {
         $attributes = $this->filterWritableAttributes($attributes);
+        $actor = $this->actors->forUserId($actorId);
 
         return DB::transaction(function () use (
             $actor,
@@ -91,7 +96,7 @@ final class CooperativeService
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
 
-            Gate::forUser($actor)->authorize('update', $cooperative);
+            $this->authorizer->authorize($actor->id, 'update', $cooperative);
 
             if ($actor->hasRole('cooperative_admin')
                 && array_diff(array_keys($attributes), self::COOPERATIVE_ADMIN_WRITABLE_FIELDS) !== []) {
@@ -123,38 +128,38 @@ final class CooperativeService
         });
     }
 
-    public function activate(User $actor, Cooperative $cooperative): Cooperative
+    public function activate(string $actorId, Cooperative $cooperative): Cooperative
     {
         return $this->changeStatus($actor, $cooperative, CooperativeStatus::ACTIVE,
             'cooperatives.activated', 'activated');
     }
 
-    public function deactivate(User $actor, Cooperative $cooperative): Cooperative
+    public function deactivate(string $actorId, Cooperative $cooperative): Cooperative
     {
         return $this->changeStatus($actor, $cooperative, CooperativeStatus::INACTIVE,
             'cooperatives.deactivated', 'deactivated');
     }
 
-    public function suspend(User $actor, Cooperative $cooperative): Cooperative
+    public function suspend(string $actorId, Cooperative $cooperative): Cooperative
     {
         return $this->changeStatus($actor, $cooperative, CooperativeStatus::SUSPENDED,
             'cooperatives.suspended', 'suspended');
     }
 
-    public function archive(User $actor, Cooperative $cooperative): Cooperative
+    public function archive(string $actorId, Cooperative $cooperative): Cooperative
     {
         return $this->changeStatus($actor, $cooperative, CooperativeStatus::ARCHIVED,
             'cooperatives.archived', 'archived');
     }
 
-    public function delete(User $actor, Cooperative $cooperative): void
+    public function delete(string $actorId, Cooperative $cooperative): void
     {
         DB::transaction(function () use ($actor, $cooperative): void {
             $cooperative = Cooperative::withTrashed()
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
 
-            Gate::forUser($actor)->authorize('delete', $cooperative);
+            $this->authorizer->authorize($actor->id, 'delete', $cooperative);
 
             if ($cooperative->trashed()) {
                 return;
@@ -177,9 +182,10 @@ final class CooperativeService
         });
     }
 
-    public function restore(User $actor, Cooperative $cooperative): Cooperative
+    public function restore(string $actorId, Cooperative $cooperative): Cooperative
     {
-        if (! $actor->hasRole('super_admin_root')) {
+        $actor = $this->actors->forUserId($actorId);
+        if (! $actor->hasRole('super_admin_root') || ! $actor->authorized) {
             throw new AuthorizationException('Only super_admin_root may restore a deleted cooperative.');
         }
 
@@ -189,7 +195,7 @@ final class CooperativeService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            Gate::forUser($actor)->authorize('delete', $locked);
+            $this->authorizer->authorize($actor->id, 'delete', $locked);
 
             if (! $locked->trashed()) {
                 return $locked;
@@ -213,12 +219,14 @@ final class CooperativeService
     }
 
     private function changeStatus(
-        User $actor,
+        string $actorId,
         Cooperative $cooperative,
         CooperativeStatus $status,
         string $eventKey,
         string $action,
     ): Cooperative {
+        $actor = $this->actors->forUserId($actorId);
+
         return DB::transaction(function () use (
             $actor, $cooperative, $status, $eventKey, $action,
         ): Cooperative {
@@ -226,7 +234,7 @@ final class CooperativeService
                 ->lockForUpdate()
                 ->findOrFail($cooperative->getKey());
 
-            Gate::forUser($actor)->authorize('update', $cooperative);
+            $this->authorizer->authorize($actor->id, 'update', $cooperative);
 
             if (! $actor->hasAnyRole(['super_admin_root', 'super_admin'])) {
                 throw new AuthorizationException('Only super_admin_root or an assigned super_admin may change cooperative status.');
@@ -258,7 +266,7 @@ final class CooperativeService
     }
 
     private function assertAllowedStatusTransition(
-        User $actor,
+        ActorContext $actor,
         CooperativeStatus $current,
         CooperativeStatus $target,
     ): void {
@@ -334,7 +342,7 @@ final class CooperativeService
      * @param  array<string, mixed>|null  $metadata
      */
     private function record(
-        User $actor,
+        ActorContext $actor,
         Cooperative $cooperative,
         string $eventKey,
         string $action,
@@ -345,7 +353,7 @@ final class CooperativeService
         $this->audit->record(new AuditEntryDTO(
             eventKey: $eventKey,
             action: $action,
-            actorType: User::class,
+            actorType: $actor->actorType,
             actorId: (string) $actor->getKey(),
             cooperativeId: (string) $cooperative->getKey(),
             subjectType: Cooperative::class,
