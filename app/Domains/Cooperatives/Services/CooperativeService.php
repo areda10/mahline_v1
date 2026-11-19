@@ -57,7 +57,7 @@ final class CooperativeService
             if ($actor->hasRole('super_admin') && ! $actor->hasRole('super_admin_root')) {
                 Event::dispatch(new CooperativeCreatedV1(
                     cooperativeId: (string) $cooperative->getKey(),
-                    creatorUserId: (string) $actor->getKey(),
+                    creatorUserId: (string) $actor->id,
                 ));
             }
 
@@ -111,7 +111,7 @@ final class CooperativeService
             }
 
             $changedFields = array_keys($cooperative->getDirty());
-            $cooperative->updated_by = (string) $actor->getKey();
+            $cooperative->updated_by = (string) $actor->id;
             $cooperative->save();
 
             $this->record(
@@ -130,30 +130,32 @@ final class CooperativeService
 
     public function activate(string $actorId, Cooperative $cooperative): Cooperative
     {
-        return $this->changeStatus($actor, $cooperative, CooperativeStatus::ACTIVE,
+        return $this->changeStatus($actorId, $cooperative, CooperativeStatus::ACTIVE,
             'cooperatives.activated', 'activated');
     }
 
     public function deactivate(string $actorId, Cooperative $cooperative): Cooperative
     {
-        return $this->changeStatus($actor, $cooperative, CooperativeStatus::INACTIVE,
+        return $this->changeStatus($actorId, $cooperative, CooperativeStatus::INACTIVE,
             'cooperatives.deactivated', 'deactivated');
     }
 
     public function suspend(string $actorId, Cooperative $cooperative): Cooperative
     {
-        return $this->changeStatus($actor, $cooperative, CooperativeStatus::SUSPENDED,
+        return $this->changeStatus($actorId, $cooperative, CooperativeStatus::SUSPENDED,
             'cooperatives.suspended', 'suspended');
     }
 
     public function archive(string $actorId, Cooperative $cooperative): Cooperative
     {
-        return $this->changeStatus($actor, $cooperative, CooperativeStatus::ARCHIVED,
+        return $this->changeStatus($actorId, $cooperative, CooperativeStatus::ARCHIVED,
             'cooperatives.archived', 'archived');
     }
 
     public function delete(string $actorId, Cooperative $cooperative): void
     {
+        $actor = $this->actors->forUserId($actorId);
+
         DB::transaction(function () use ($actor, $cooperative): void {
             $cooperative = Cooperative::withTrashed()
                 ->lockForUpdate()
@@ -166,8 +168,8 @@ final class CooperativeService
             }
 
             $before = $this->auditSnapshot($cooperative);
-            $this->cooperativeAddresses->softDeleteCooperativeAddressesById((string) $cooperative->getKey(), (string) $actor->getKey());
-            $cooperative->deleted_by = (string) $actor->getKey();
+            $this->cooperativeAddresses->softDeleteCooperativeAddressesById((string) $cooperative->getKey(), $actor->id);
+            $cooperative->deleted_by = (string) $actor->id;
             $cooperative->save();
             $cooperative->delete();
 
@@ -203,7 +205,7 @@ final class CooperativeService
 
             $oldDeletedAt = $locked->deleted_at?->toISOString();
             $locked->restore();
-            $this->cooperativeAddresses->restoreLatestCooperativeAddressesById((string) $locked->getKey(), (string) $actor->getKey());
+            $this->cooperativeAddresses->restoreLatestCooperativeAddressesById((string) $locked->getKey(), $actor->id);
 
             $this->record(
                 actor: $actor,
@@ -249,7 +251,7 @@ final class CooperativeService
             $this->assertAllowedStatusTransition($actor, $cooperative->status, $status);
 
             $cooperative->status = $status;
-            $cooperative->updated_by = (string) $actor->getKey();
+            $cooperative->updated_by = (string) $actor->id;
             $cooperative->save();
 
             $this->record(
@@ -354,7 +356,7 @@ final class CooperativeService
             eventKey: $eventKey,
             action: $action,
             actorType: $actor->actorType,
-            actorId: (string) $actor->getKey(),
+            actorId: (string) $actor->id,
             cooperativeId: (string) $cooperative->getKey(),
             subjectType: Cooperative::class,
             subjectId: (string) $cooperative->getKey(),
