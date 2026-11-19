@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Customer\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Customer\Models\CustomerEmailChangeRequest;
 use App\Domains\Identity\Customer\Notifications\CustomerEmailChangedNotification;
@@ -25,7 +25,7 @@ final class CustomerEmailChangeService extends BaseService
     private const EXPIRATION_MINUTES = 30;
 
     public function __construct(
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
         private readonly SessionService $sessions,
     ) {}
 
