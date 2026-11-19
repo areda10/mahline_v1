@@ -382,3 +382,26 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-016 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 18. Décision architecturale — versionnement et compatibilité des contrats inter-domaines (19 novembre 2026)
+
+**Décision 17 validée :** adopter un versionnement raisonné des contrats publics, en privilégiant la rétrocompatibilité et en créant une nouvelle version lorsqu'une évolution casse le contrat existant.
+
+- Le cadre couvre les contrats synchrones, DTO publics, événements métier, API et messages asynchrones consommés hors du domaine producteur.
+- Les composants purement internes ne sont pas soumis à un versionnement public artificiel.
+- Les ajouts ne sont rétrocompatibles que si les champs, valeurs, unités, sémantiques et invariants existants restent valides pour les consommateurs.
+- Toute rupture (suppression/renommage, changement de type, nullabilité, unité, sémantique ou garantie comportementale) impose une version distincte et une période de coexistence adaptée.
+- La dépréciation est annoncée et documentée ; le retrait attend la migration des consommateurs et le traitement des messages historiques encore en circulation.
+- Les événements et messages asynchrones identifient explicitement leur version ; les versions inconnues ou non prises en charge suivent une stratégie observable et sûre, sans interprétation silencieuse.
+- Les tests de contrats couvrent producteurs, consommateurs, compatibilité, coexistence et déploiements progressifs.
+- Chaque contrat public possède un producteur propriétaire, une finalité, une version et des consommateurs identifiés.
+- La convention précise de numérotation, les formats et les outils seront définis après inventaire du patrimoine existant.
+
+**Document de décision :** [ADR-017 — Versionnement et compatibilité des contrats inter-domaines](decisions/ADR-017-contract-versioning-and-compatibility.md).
+
+**État :** stratégie acceptée ; inventaire des contrats et consommateurs, convention de versionnement, catalogue, tests de compatibilité et procédures de dépréciation/retrait restent à définir ou auditer. Aucun contrat, événement, job, API, code, configuration ou pipeline n'a été modifié dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-017 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
