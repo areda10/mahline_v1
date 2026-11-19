@@ -843,3 +843,14 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Commits : `acc9518`, `1b6041b`, `9730d4c`, `2d2f761`, `cfc950e`, `4789744`.
 - Restent à traiter : frontières Eloquent Identity↔Cooperatives/Localization/Media, provider Identity, vérification complète API token/expiration, reset/invitation/email change et scénarios de concurrence.
 - Tests non exécutés ; statut du lot : **correction écrite, validation runtime en attente**.
+
+
+### 12. Lot A3 — Localization (19 novembre 2026)
+
+- Création du contrat `UserAddressLifecycleManager` à identifiants ; Identity l'utilise pour le soft delete/restauration des adresses utilisateur.
+- Extension de `CooperativeAddressManager` avec la mise à jour d'adresse par identifiant ; le contrôleur Cooperatives ne dépend plus de la classe concrète AddressService.
+- Bindings enregistrés dans Localization ; test ajouté pour le cycle suppression logique/restauration via contrat.
+- Invariants relevés : propriétaire exclusif User ou Cooperative, unicité adresse active coopérative, adresse principale unique, Maroc `MA`, soft delete et batch de restauration.
+- Commits : `f5caab7`, `40a2894`, `f4776b6`, `da11f75`, `2377fcd`, `73b41c2`, `3b76920`.
+- Restent à traiter : PersonalAddressController dépend encore du service concret ; modèles et Policy Localization importent directement User/Cooperative ; contrat snapshot d'adresse pour Orders/Sales absent ; tests MySQL concurrence/trigger obligatoires.
+- Tests non exécutés ; statut du lot : **correction écrite, validation runtime en attente**.
