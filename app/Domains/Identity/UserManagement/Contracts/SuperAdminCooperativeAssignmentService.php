@@ -9,6 +9,8 @@ use App\Domains\Identity\Users\Models\User;
 
 interface SuperAdminCooperativeAssignmentService
 {
+    public function assignCreatorToNewCooperative(string $superAdminId, string $cooperativeId): void;
+
     public function assignSuperAdminToCooperative(
         User $actor,
         User $superAdmin,
