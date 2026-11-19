@@ -23,7 +23,6 @@ final class MediaIncidentService
 {
     public function __construct(
         private readonly AuditWriter $audit,
-        
         private readonly MediaService $media,
     ) {}
 
