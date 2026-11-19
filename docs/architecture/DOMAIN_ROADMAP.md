@@ -929,3 +929,5 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Tests non exécutés.
 
 - Le contrat de lecture de statut est maintenant fourni par un service dédié, séparé du service d'écriture. Commits : `2be30cb`, `20bfbb7`, `42af72a`.
+
+- Test A4 du contrôleur root aligné sur le middleware désactivé utilisé par les tests du même périmètre. Commit : `9ce03e8`.
