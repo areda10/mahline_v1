@@ -1,4 +1,6 @@
-# ADR — Architecture Decision Records
+# ARCHIVE HISTORIQUE — ADR du MAHLINE Framework
+
+> **Statut documentaire :** archive historique du framework, distincte du registre canonique des décisions MAHLINE V1. Les identifiants ADR-001 à ADR-015 de ce fichier ne sont pas les identifiants de la série V1 et ne doivent pas être fusionnés avec elle. Voir [le registre canonique V1](../architecture/decisions/README.md).
 
 ## MAHLINE Framework
 
@@ -343,4 +345,4 @@ Toute nouvelle décision d'architecture devra être ajoutée à ce document sous
 
 Les ADR existants ne doivent pas être modifiés sans justification technique et validation de l'architecture.
 
-Ce registre constitue la référence officielle des choix d'architecture du framework MAHLINE.
+Ce document conserve l'historique des choix d'architecture du framework MAHLINE. Il n'est pas le registre canonique des ADR MAHLINE V1 ; toute nouvelle décision V1 doit être enregistrée dans `docs/architecture/decisions/` et indexée dans son `README.md`.
