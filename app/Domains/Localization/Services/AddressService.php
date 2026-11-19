@@ -402,7 +402,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
         });
     }
 
-    private function updateAddress(ActorContext $actor, Address $address, array $attributes): Address
+    private function updateAddress(User $actor, Address $address, array $attributes): Address
     {
         $before = $this->snapshot($address);
         $address->fill($this->validatedAttributes($attributes));
