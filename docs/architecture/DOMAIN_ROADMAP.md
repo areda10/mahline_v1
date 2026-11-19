@@ -958,3 +958,12 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Restent : ActorContext pour CooperativeService ; contrats d'owner/DTO pour AddressService et AddressPolicy ; audit des relations Eloquent inter-domaines ; intégration MediaOwnerObserver ; audit Identity complet ; tests PHPUnit/Pint/MySQL.
 - Aucun test runtime n'a été exécuté ici ; aucun statut CI disponible sur la branche lors du contrôle.
 - Prochain lot : A9 — contrats d'acteur et d'owner, puis audit exhaustif des fichiers restants de ces trois domaines.
+
+### 19. Lot A9 — acteur partagé et affectations Identity
+
+- `CooperativeService` utilise désormais `ActorContextProvider` + `ActorAuthorizer` et ne dépend plus du modèle User.
+- Le vrai contrôle d'accès reste exécuté par Laravel Gate/Policies dans l'adaptateur Identity.
+- Les Policies Cooperatives et Localization lisent les affectations via `SuperAdminCooperativeAssignmentReader`, contrat détenu par Identity.
+- Tests ajoutés pour ActorContext, verrou d'urgence, lecteur de pivot et bindings ; tests non exécutés.
+- Localization reste à découpler de User/Cooperative dans `AddressService` : ports owner User et owner Cooperative à définir et implémenter sans dépendance circulaire.
+- Les trois domaines restent `AUDIT_IN_PROGRESS`.
