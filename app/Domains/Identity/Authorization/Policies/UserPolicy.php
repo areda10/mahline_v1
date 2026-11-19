@@ -90,13 +90,13 @@ final class UserPolicy extends BasePolicy
     public function unassignCooperative(
         User $actor,
         User $target,
-        Cooperative $cooperative,
+        string $cooperativeId,
     ): bool {
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.unassign_super_admin')
             && ! $target->trashed()
             && $this->targetHasActiveRole($target, self::ROLE_SUPER_ADMIN)
-            && ! $cooperative->trashed();
+            && $this->cooperatives->existsNotDeleted($cooperativeId);
     }
 
     public function update(User $actor, User $target): bool
