@@ -232,3 +232,19 @@ Lorsqu'une coopérative modifie un produit déjà présent dans un panier :
 - Au checkout, Sales vérifie à nouveau les données et l'état commercial auprès du domaine propriétaire.
 
 Le détail des champs du snapshot initial, la classification exhaustive des attributs descriptifs/commerciaux et le traitement de chaque type de changement commercial restent à formaliser avant implémentation.
+
+
+### SALES-012 — Désactivation d'une variante présente au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Lorsqu'une variante ajoutée au panier est désactivée par la coopérative alors que le produit parent reste actif et que d'autres variantes demeurent disponibles :
+
+- La ligne correspondant à la variante initialement choisie est conservée dans le panier et signalée comme indisponible.
+- Cette ligne ne peut plus être commandée ; le checkout est bloqué tant qu'elle demeure dans le panier.
+- Le client doit retirer lui-même cette ligne et choisir explicitement une autre variante s'il le souhaite.
+- Sales ne remplace jamais automatiquement la variante sélectionnée par une autre variante, même si celle-ci est disponible.
+- L'activité du produit parent ne rend pas achetable une variante désactivée.
+- La variante et les informations initiales nécessaires à l'identification de la ligne sont conservées pour expliquer au client ce qui est devenu indisponible.
+
+Cette règle complète SALES-006 et SALES-011 : la disponibilité est vérifiée au niveau de la variante lorsque le produit en possède.
