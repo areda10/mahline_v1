@@ -186,3 +186,28 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Inspection du journal d'audit, des événements de sécurité, des consultations de fiches et de la gestion des sessions.
 - Constats détaillés : section 20.8 de `docs/identity/USER_MANAGEMENT_DECISIONS_AND_TRACKING.md`.
 - Les composants existants sont distingués des exigences non couvertes ; aucun code applicatif modifié.
+
+
+## 9. Suivi détaillé — Inventory V1 (19 novembre 2026)
+
+**Spécification de référence :** [`docs/domains/marketplace/INVENTORY_V1_SPECIFICATION.md`](../domains/marketplace/INVENTORY_V1_SPECIFICATION.md).
+
+- **Présence du domaine :** absent de `app/Domains/` au commit de référence `72e27c4b32aefd09c2118e631f2aec0433627e84`.
+- **État fonctionnel :** règles métier initiales consolidées à partir des décisions validées ; identifiants INV-001 à INV-016 attribués.
+- **État technique :** audit initial ciblé effectué ; aucun code Inventory, aucune migration Inventory, aucun service de réservation et aucune intégration Orders–Inventory à cette référence.
+- **Priorité immédiate :** compléter l'audit technique des migrations, modèles Products/ProductVariant, unités, permissions, policies, Audit et transactions Orders avant de figer le schéma.
+- **Dépendances :** Products, Orders, Cooperatives/Identity, Catalog, Delivery, Audit et Media.
+- **Statut du domaine :** **En audit / spécification initiale créée** — ne pas déclarer implémenté ou validé.
+
+### Règles de pilotage Inventory
+
+1. Aucun codage avant validation du schéma et des contrats transactionnels.
+2. La confirmation d'une sous-commande doit réserver toutes ses lignes actives ou échouer intégralement ; aucune réservation partielle.
+3. Le checkout et le délai d'attente coopérative de 12 heures ne réservent aucun stock.
+4. Les mouvements sont immuables ; toute correction passe par un mouvement compensatoire.
+5. Les fonctions sont suivies par identifiants INV-001 à INV-016 dans la spécification dédiée.
+6. Après codage : audit complet des fonctions, sécurité, tests, permissions et liaisons inter-domaines ; les tests locaux restent « À exécuter » tant qu'aucun résultat vérifiable n'est fourni.
+
+### Journal
+
+- **19 novembre 2026 :** création de la spécification et du suivi Inventory V1. Aucun fichier applicatif modifié, aucune migration créée, aucun test exécuté.
