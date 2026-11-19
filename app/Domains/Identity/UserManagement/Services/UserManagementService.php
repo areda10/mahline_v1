@@ -465,57 +465,6 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         });
     }
 
-    public function activateAndVerifyUser(User $actor, User $target): User
-    {
-        $this->assertActorIsActive($actor);
-        $this->assertSuperAdminRoot($actor);
-
-        return DB::transaction(function () use ($actor, $target): User {
-            $lockedTarget = User::query()->whereKey($target->getKey())->lockForUpdate()->first();
-
-            if ($lockedTarget === null) {
-                throw new DomainException('The user does not exist or is deleted.');
-            }
-
-            $this->assertTargetIsNotRoot($lockedTarget);
-
-            if (! in_array($lockedTarget->status, [
-                UserStatus::Pending, UserStatus::Inactive, UserStatus::Suspended,
-            ], true)) {
-                throw new DomainException('This account cannot be activated from its current status.');
-            }
-
-            $oldStatus = $lockedTarget->status;
-            $oldVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
-
-            // Preserve the existing credential before replacing it with the
-            // temporary root-activation password. The forced change must not
-            // allow the user to immediately reuse the pre-activation password.
-            $this->passwordHistory->archiveCurrentPassword($lockedTarget);
-
-            $lockedTarget->status = UserStatus::Active;
-            $lockedTarget->email_verified_at = now();
-            $lockedTarget->password = 'MahlineMahline';
-            $lockedTarget->must_change_password = true;
-            $lockedTarget->save();
-
-            $this->recordLifecycleAudit(
-                actor: $actor,
-                target: $lockedTarget,
-                eventKey: 'identity.user.activated_with_temporary_password',
-                action: 'activated_with_temporary_password',
-                oldValues: ['status' => $oldStatus->value, 'email_verified_at' => $oldVerifiedAt],
-                newValues: ['status' => UserStatus::Active->value, 'email_verified_at' => $lockedTarget->email_verified_at->toISOString()],
-                metadata: ['must_change_password' => true],
-            );
-
-            $this->revokePendingInvitations($lockedTarget);
-            $this->revokeAccessCredentials($actor, $lockedTarget, 'user_reactivated_with_temporary_password');
-
-            return $lockedTarget->fresh();
-        });
-    }
-
     public function deactivateUser(User $actor, User $target): User
     {
         $this->assertActorIsActive($actor);
