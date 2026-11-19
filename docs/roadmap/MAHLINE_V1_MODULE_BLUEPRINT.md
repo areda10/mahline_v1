@@ -273,3 +273,42 @@ Ces points peuvent être isolés par cas d'usage. Ils ne doivent pas bloquer le 
 - Les tests Orders couvrent la falsification de l'unité côté client, le snapshot `u` d'un produit simple, l'unité `ml` d'une variante et le rejet d'un produit sans unité et d'une unité parent simultanée.
 - La frontière Products → Orders est donc raccordée pour l'identité de l'unité. La gestion du stock, les réservations et le transfert parent → variantes restent du ressort d'Inventory, domaine encore absent ; aucune écriture de stock n'est introduite dans Orders.
 - PHPUnit, migrations et Pint ne sont pas exécutés dans cette session ; les résultats restent à vérifier localement.
+
+
+## 19. Mise à jour d'état — Orders documenté (19 novembre 2026)
+
+Cette section remplace les constats historiques des sections 2, 3, 9 et 10 lorsqu'ils décrivent Orders comme un simple README ou une fondation sans services. À la référence actuelle `d23907b2f033d23ea2023a5eb52b5a751c94eed7`, le domaine Orders possède déjà une migration, cinq modèles, cinq Enums, deux services métier et deux suites de tests Feature.
+
+Fonctions effectivement présentes :
+- création transactionnelle d'une commande globale et de ses sous-commandes par coopérative ;
+- relecture des produits, variantes, unités et prix depuis Products, sans confiance dans les valeurs sensibles envoyées par le client ;
+- snapshots commerciaux des lignes, calcul MAD et quantité à trois décimales ;
+- confirmation/refus d'une sous-commande par la coopérative dans une transaction verrouillée ;
+- décision administrative motivée après échéance par root ou super_admin affecté ;
+- prolongation motivée d'une échéance dans la limite de 24 heures ;
+- historique des décisions et agrégation du statut global à partir des sous-commandes.
+
+Fichiers de référence :
+- `app/Domains/Orders/README.md` — documentation fonctionnelle et technique détaillée, fonctions réalisées, limites et contrat Inventory ;
+- `app/Domains/Orders/Services/OrderCreationService.php` ;
+- `app/Domains/Orders/Services/CooperativeOrderResponseService.php` ;
+- `database/migrations/2026_11_18_000003_create_marketplace_orders_tables.php` ;
+- `tests/Feature/Domains/Orders/Services/OrderCreationServiceTest.php` ;
+- `tests/Feature/Domains/Orders/Services/CooperativeOrderResponseServiceTest.php`.
+
+Limites : pas encore de routes/contrôleurs/vues de commande repérés, pas de parcours complet des propositions client, pas de voyants de disponibilité et pas de réservation Inventory. Le service de confirmation actuel change le statut sans contrôler ni réserver le stock ; ce raccordement est un prérequis avant de considérer la confirmation prête pour la production.
+
+Les tests sont présents mais n'ont pas été exécutés dans cette session. Aucune validation PHPUnit, migration ou Pint n'est revendiquée.
+
+## 20. Décisions validées — disponibilité Orders / Inventory (19 novembre 2026)
+
+- En COD V1, aucune quantité n'est réservée au checkout ni pendant l'attente de réponse de la coopérative.
+- La réservation intervient uniquement au moment où la coopérative confirme sa sous-commande.
+- Aucune confirmation partielle de quantité : la coopérative doit confirmer la quantité intégrale demandée pour chaque ligne active.
+- Si le disponible est inférieur à la quantité demandée, la confirmation est bloquée. Le `cooperative_admin` doit actualiser/corriger le stock par les opérations Inventory autorisées et traçables ; le système recalcule ensuite la disponibilité.
+- Commande multi-coopératives : un voyant par sous-commande, chaque voyant étant indépendant et rattaché à la coopérative concernée.
+- Commande mono-coopérative : un voyant global pour la commande et un voyant pour chaque ligne.
+- Vert = le disponible couvre intégralement la quantité demandée ; rouge = le disponible est insuffisant.
+- Le voyant global d'une commande mono-coopérative est vert uniquement si toutes ses lignes actives sont vertes.
+- Le voyant est informatif et ne réserve pas le stock. La confirmation refait obligatoirement le contrôle sous verrou transactionnel ; une réservation échouée ne doit laisser ni confirmation ni réservation partielle.
+- Ces voyants et ce contrôle seront alimentés exclusivement par Inventory, qui reste propriétaire des soldes, mouvements et réservations. Orders reste propriétaire des statuts commerciaux.
