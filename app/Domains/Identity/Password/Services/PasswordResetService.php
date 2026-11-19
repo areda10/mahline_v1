@@ -27,6 +27,17 @@ final class PasswordResetService extends BaseService
         private readonly PasswordHistoryService $passwordHistory,
     ) {}
 
+    public function canRequestReset(User $user, bool $customerOnly = false): bool
+    {
+        if ($user->status->value !== 'active') {
+            return false;
+        }
+
+        $isCustomer = $this->isCustomerAccount($user);
+
+        return $customerOnly ? $isCustomer : ! $isCustomer;
+    }
+
     public function createToken(User $user, bool $customerOnly = false): string
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
