@@ -6,12 +6,16 @@ namespace App\Domains\Identity\Providers;
 
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
+use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Listeners\AssignCreatorToNewCooperative;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\Contracts\ActorAuthorizer;
+use App\Shared\Contracts\ActorContextProvider;
 use App\Domains\Identity\Users\Observers\UserObserver;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -21,6 +25,9 @@ final class IdentityServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(ActorContextProvider::class, IdentityActorContextProvider::class);
+        $this->app->bind(ActorAuthorizer::class, IdentityActorAuthorizer::class);
+
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
             UserManagementService::class,
