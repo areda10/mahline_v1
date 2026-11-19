@@ -89,7 +89,7 @@ Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le sché
 - durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
 - panier authentifié conservé sans expiration automatique, jusqu'à suppression volontaire ou transformation en commande (SALES-005) ;
 - traitement d'une ligne dont le produit ou la variante devient inactive ou n'est plus vendable : règle validée par SALES-006 ;
-- traitement d'une modification du prix catalogue entre ajout au panier et checkout ;
+- traitement d'une modification du prix catalogue entre ajout au panier et checkout : acceptation explicite du nouveau prix exigée (SALES-007) ;
 - moment et durée de validité du prix affiché ;
 - règles d'arrondi et de calcul des totaux, taxes et éventuels frais ;
 - promotions : périmètre global ou par coopérative, cumul, priorité, plafonds, période, éligibilité et limites d'utilisation ;
@@ -156,3 +156,18 @@ Lorsqu'un produit ou une variante présent(e) dans le panier devient inactif(ve)
 - Sales ne supprime pas automatiquement la ligne et ne transmet pas une ligne invalide à Orders.
 
 La vérification de l'état vendable doit être refaite au checkout auprès du domaine propriétaire du produit. Le signalement dans le panier est informatif et ne remplace pas cette validation finale.
+
+
+### SALES-007 — Modification du prix après ajout au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option D)**
+
+Si le prix de référence d'un produit ou d'une variante change après son ajout au panier et avant la validation du checkout :
+- Sales détecte l'écart en relisant le prix auprès du domaine propriétaire ;
+- le checkout est bloqué pour la ligne concernée tant que le client n'a pas accepté explicitement le nouveau prix ;
+- le nouveau prix et son impact sur le total doivent être présentés clairement avant l'acceptation ;
+- aucun nouveau prix ne peut être appliqué silencieusement ;
+- en cas de refus, le client peut retirer la ligne ou quitter le checkout ;
+- la demande transmise à Orders contient le prix accepté et les informations nécessaires à son snapshot commercial.
+
+Le mécanisme d'acceptation doit être lié à une version/valeur de prix vérifiée au checkout afin d'éviter qu'une nouvelle modification concurrente soit considérée comme acceptée par erreur. Les détails de versionnement, de concurrence et de preuve d'acceptation seront définis à l'audit technique.
