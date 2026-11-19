@@ -18,6 +18,7 @@ use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Shared\Contracts\ActorAuthorizer;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\Contracts\ActorContextProvider;
+use App\Shared\Contracts\IdentityActor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -45,6 +46,11 @@ final class IdentityServiceProviderTest extends TestCase
             (string) $user->getKey(),
             'identity.actor-context-test',
         );
+    }
+
+    public function test_user_model_implements_shared_identity_actor_contract(): void
+    {
+        self::assertInstanceOf(IdentityActor::class, User::factory()->create());
     }
 
     public function test_actor_context_contains_only_active_roles_and_permissions(): void
