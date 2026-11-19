@@ -8,7 +8,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Localization\Enums\MoroccanRegion;
-use App\Domains\Localization\Services\AddressService;
+use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +20,7 @@ final class CooperativeController
 {
     public function __construct(
         private readonly CooperativeService $cooperativeService,
-        private readonly AddressService $addresses,
+        private readonly CooperativeAddressManager $addresses,
     ) {}
 
     public function index(Request $request): View
@@ -52,7 +52,7 @@ final class CooperativeController
         ]);
         $addressData = array_intersect_key($data, array_flip(['number', 'street', 'floor', 'postal_code', 'city', 'region']));
         $cooperativeData = array_diff_key($data, $addressData);
-        $cooperative = $this->cooperativeService->create($request->user(), $cooperativeData, $addressData);
+        $cooperative = $this->cooperativeService->create((string) $request->user()->getKey(), $cooperativeData, $addressData);
 
         return redirect()->route('root.backoffice.cooperatives.show', $cooperative)->with('success', 'La coopérative a été créée.');
     }
@@ -104,16 +104,16 @@ final class CooperativeController
         $cooperativeData = array_diff_key($data, array_flip($addressFields));
         try {
             DB::transaction(function () use ($request, $model, $addressData, $cooperativeData, $status): void {
-                $this->cooperativeService->update($request->user(), $model, $cooperativeData);
+                $this->cooperativeService->update((string) $request->user()->getKey(), $model, $cooperativeData);
                 if ($addressData !== []) {
-                    $this->addresses->updateForCooperative($request->user(), $model, $addressData);
+                    $this->addresses->updateAddressForCooperative((string) $request->user()->getKey(), (string) $model->getKey(), $addressData);
                 }
                 if ($status !== null && $status !== $model->fresh()->status) {
                     match ($status) {
-                        CooperativeStatus::ACTIVE => $this->cooperativeService->activate($request->user(), $model),
-                        CooperativeStatus::INACTIVE => $this->cooperativeService->deactivate($request->user(), $model),
-                        CooperativeStatus::SUSPENDED => $this->cooperativeService->suspend($request->user(), $model),
-                        CooperativeStatus::ARCHIVED => $this->cooperativeService->archive($request->user(), $model),
+                        CooperativeStatus::ACTIVE => $this->cooperativeService->activate((string) $request->user()->getKey(), $model),
+                        CooperativeStatus::INACTIVE => $this->cooperativeService->deactivate((string) $request->user()->getKey(), $model),
+                        CooperativeStatus::SUSPENDED => $this->cooperativeService->suspend((string) $request->user()->getKey(), $model),
+                        CooperativeStatus::ARCHIVED => $this->cooperativeService->archive((string) $request->user()->getKey(), $model),
                         CooperativeStatus::PENDING => throw new \DomainException('Une coopérative ne peut pas revenir au statut en attente.'),
                     };
                 }
@@ -157,7 +157,7 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         $model = Cooperative::query()->withTrashed()->findOrFail($cooperative);
-        $this->cooperativeService->delete($request->user(), $model);
+        $this->cooperativeService->delete((string) $request->user()->getKey(), $model);
 
         return redirect()->route('root.backoffice.cooperatives.index')->with('success', 'La coopérative a été supprimée.');
     }
@@ -166,7 +166,7 @@ final class CooperativeController
     {
         $this->authorizeRoot($request);
         $model = Cooperative::withTrashed()->findOrFail($cooperative);
-        $this->cooperativeService->restore($request->user(), $model);
+        $this->cooperativeService->restore((string) $request->user()->getKey(), $model);
 
         return redirect()
             ->route('root.backoffice.cooperatives.index')
@@ -176,7 +176,7 @@ final class CooperativeController
     private function changeStatus(Request $request, string $id, string $action): RedirectResponse
     {
         $model = $this->resolveCooperative($id);
-        $this->cooperativeService->{$action}($request->user(), $model);
+        $this->cooperativeService->{$action}((string) $request->user()->getKey(), $model);
 
         return redirect()->route('root.backoffice.cooperatives.show', $model)->with('success', 'Le statut de la coopérative a été mis à jour.');
     }
