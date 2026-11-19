@@ -715,3 +715,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-011 : les informations descriptives non tarifaires d'un produit au panier sont actualisées automatiquement, tout en conservant les données initiales utiles à l'identification et à la traçabilité. Les changements de caractéristiques commerciales sont détectés et traités explicitement ; aucune modification silencieuse du prix accepté ou des conditions de vente n'est permise. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-012 : si une variante du panier est désactivée alors que le produit parent ou d'autres variantes restent actifs, la ligne de la variante choisie est conservée comme indisponible et bloque le checkout jusqu'à son retrait manuel. Aucune substitution automatique par une autre variante n'est permise. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
