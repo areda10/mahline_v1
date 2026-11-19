@@ -41,7 +41,7 @@ final class PasswordResetLinkNotification extends Notification
                 $this->resetUrl,
             )
             ->line(
-                'Ce lien est valable pendant 60 minutes.'
+                'Ce lien est valable pendant 30 minutes.'
             )
             ->line(
                 'Si vous n’êtes pas à l’origine de cette demande, ignorez ce courriel.'
