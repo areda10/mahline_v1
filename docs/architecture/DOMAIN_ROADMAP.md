@@ -519,7 +519,7 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 ### 19 novembre 2026 — contrats inter-domaines intégrés
 - Audit expose désormais `AuditWriter` ; les services des domaines consommateurs n'injectent plus son service concret ni son repository.
 - Products expose `CheckoutCatalog` ; Orders consomme un DTO checkout et ne lit plus directement les modèles Product/ProductVariant.
-- Référence du code intégré : `f8f7535b1ae98879738c6aad0b0eef614b97a29f` sur `feature/Marketplace`.
+- Référence du code intégré : `4c2d4fecc288b37b164f3b9b941fe5caadc278d9` sur `feature/Marketplace`.
 - Tests PHP/Pint non exécutés ; validation locale requise avant clôture.
 - Prochain lot : contrats de propriétaires Media, pivots Catalog/Categories/Products, policies/providers propriétaires, contrat Address, puis registre FK/triggers et tests d'architecture.
 
@@ -540,3 +540,9 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - Cooperatives utilise désormais `CooperativeAddressManager` pour créer, supprimer logiquement et restaurer les adresses.
 - AddressService reste propriétaire de l'implémentation et est exposé via un contrat public.
 - Les transactions existantes et les invariants d'adresse restent inchangés ; tests locaux requis.
+
+
+### Référence du lot du 19 novembre 2026
+- Code intégré sur `feature/Marketplace` : `4c2d4fecc288b37b164f3b9b941fe5caadc278d9`.
+- Contrats intégrés : AuditWriter, CheckoutCatalog, CooperativeAddressManager.
+- Providers de policies locaux enregistrés pour Audit, Catalog, Categories, Cooperatives, Localization, Media et Products.
