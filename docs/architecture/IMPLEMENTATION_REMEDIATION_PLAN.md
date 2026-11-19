@@ -356,3 +356,13 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - **Correction documentaire :** la section « Décisions encore ouvertes » de la spécification Sales a été réécrite pour ne plus reclasser comme ouvertes les décisions SALES-001 à SALES-037.
 - **À faire avant checkout :** concevoir et tester les contrats Products, Cooperatives, Localization, Orders, Inventory et Delivery ; établir les DTO/versionnements/idempotence ; définir les limites techniques et règles monétaires non encore arbitrées.
 - **Non exécuté :** PHPUnit, Pint, tests MySQL, tests de contrat, CI. Aucun résultat vert n'est revendiqué.
+
+
+### Mise à jour — 19 novembre 2026 : bindings de contrats déplacés vers les providers propriétaires
+
+- **Corrigé :** `AuditWriter` enregistré dans `AuditServiceProvider`.
+- **Corrigé :** `CheckoutCatalog` enregistré dans `ProductsServiceProvider`.
+- **Corrigé :** `CooperativeAddressManager` enregistré dans `LocalizationServiceProvider`.
+- **Corrigé :** suppression de ces bindings du `AppServiceProvider`, qui ne porte plus ces contrats métier.
+- **À valider :** résolution du conteneur, boot Laravel, tests Audit/Products/Localization, Pint et suite complète.
+- **Non exécuté :** aucun test PHP/PHPUnit/Pint/MySQL dans cette session.
