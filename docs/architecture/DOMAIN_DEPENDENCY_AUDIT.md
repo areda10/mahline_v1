@@ -581,3 +581,13 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Test cible customer suspendu : `8378e8a304c8e80c8b64d19aa1177b33f842cc6d`
 
 **Validation :** tests écrits mais non exécutés. Tests de concurrence réels et suite Identity restent à exécuter sur MySQL.
+
+### 11.11 Lot A5 — Identity : provider autonome
+
+- Ajout de `IdentityServiceProvider` pour enregistrer les bindings `SuperAdminCooperativeAssignmentService` et `AuthenticationWorkflowHook`, l'observer User et le modèle Sanctum `PersonalAccessToken`.
+- `bootstrap/providers.php` enregistre le provider Identity.
+- `AppServiceProvider` ne porte plus ces bindings ni l'observer User ; il conserve uniquement la composition transversale de `MediaOwnerObserver` sur Product/Cooperative/User et le rate limiter Media.
+- Test ajouté pour vérifier les bindings publics du provider Identity.
+- Commits : `89862fdae7bab6b6dac6eb952a7dd1d515e15f68`, `aa12e27b7eb8cad7d25d476a9c35c4fa399e7669`, `5247c8300bf832e437791d7e5f3f0d1807d47a9d`, `8e4b307566e20dfe566f737083fa1f81f7f84726`.
+- Reste à traiter : `MediaOwnerObserver` et les relations User/Cooperative vers Media restent une composition inter-domaines à formaliser.
+- Tests non exécutés.
