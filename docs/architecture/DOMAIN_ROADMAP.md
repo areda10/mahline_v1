@@ -687,6 +687,7 @@ Décisions validées :
 - conservation du panier authentifié sans expiration automatique, jusqu'à suppression volontaire ou création réussie d'une commande (SALES-005) ;
 - conservation et signalement des lignes devenues indisponibles ; checkout bloqué jusqu'au retrait volontaire par le client, sans suppression automatique (SALES-006) ;
 - si le prix augmente après ajout au panier, acceptation explicite obligatoire ; si le prix baisse, application automatique avec information du client (SALES-007 et SALES-008) ;
+- le panier peut contenir une quantité supérieure au stock disponible ; il ne réserve jamais le stock et la disponibilité est contrôlée aux étapes Inventory prévues (SALES-009) ;
 - Sales, Orders, Inventory, Delivery, Finance et Communication sont autonomes dans le monolithe modulaire, chacun propriétaire de ses modèles, tables, règles, contrats et tests (SALES-002) ;
 - Sales possède le parcours précommande ; Orders possède la commande après création ; Finance possède les opérations financières.
 
@@ -705,3 +706,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-008 : toute baisse de prix entre l'ajout au panier et le checkout est appliquée automatiquement et signalée au client ; aucune acceptation n'est requise. Les hausses restent soumises à acceptation explicite (SALES-007). Détail dans [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-009 : le panier accepte une quantité supérieure au stock actuellement disponible. Le panier ne constitue pas une réservation ; les contrôles de disponibilité relèvent d'Inventory aux étapes métier prévues. Les limites absolues de quantité restent ouvertes. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
