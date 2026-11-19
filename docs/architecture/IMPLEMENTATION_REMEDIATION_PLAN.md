@@ -333,3 +333,9 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - **Intégré :** providers propriétaires pour Audit, Catalog, Categories, Cooperatives, Localization, Media et Products.
 - **Intégré :** Identity ne centralise plus l'enregistrement des policies des ressources des autres domaines.
 - **À valider :** tests d'autorisation, boot providers et tests d'architecture en local ; aucun test n'a été exécuté dans cette session.
+
+
+### Mise à jour — contrat d'adresse Cooperatives
+- **Intégré :** contrat public Localization `CooperativeAddressManager`, implémenté par AddressService.
+- **Intégré :** CooperativeService ne dépend plus directement du service concret AddressService.
+- **À valider :** scénarios transactionnels et permissions des adresses en tests locaux.
