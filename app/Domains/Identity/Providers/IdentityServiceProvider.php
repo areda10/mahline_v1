@@ -16,8 +16,6 @@ use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmen
 use App\Domains\Identity\UserManagement\Listeners\AssignCreatorToNewCooperative;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Identity\Users\Services\IdentityUserAddressOwnerGateway;
-use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
 use App\Shared\Contracts\ActorAuthorizer;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Domains\Identity\Users\Observers\UserObserver;
@@ -30,7 +28,6 @@ final class IdentityServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(SuperAdminCooperativeAssignmentReader::class, SuperAdminCooperativeAssignmentReaderService::class);
-        $this->app->bind(UserAddressOwnerGateway::class, IdentityUserAddressOwnerGateway::class);
         $this->app->bind(ActorContextProvider::class, IdentityActorContextProvider::class);
         $this->app->bind(ActorAuthorizer::class, IdentityActorAuthorizer::class);
 
