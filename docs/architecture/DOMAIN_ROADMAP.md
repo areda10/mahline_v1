@@ -976,3 +976,13 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Les contrôleurs consomment les contrats `UserAddressLifecycleManager` et `CooperativeAddressManager`.
 - Tests de service adaptés, test de frontière ajouté, tests de bindings ajoutés ; non exécutés.
 - Identity / Localization / Cooperatives restent `AUDIT_IN_PROGRESS` jusqu'à exécution des suites et audit final.
+
+### 21. Lot A11 — contrats partagés et Policies sans modèles croisés
+
+- Contrat de lecture des affectations déplacé vers Shared ; Identity implémente, les domaines consommateurs ne dépendent plus d'une interface privée Identity.
+- `IdentityActor` abstrait le principal authentifié ; User l'implémente ; CooperativePolicy et le scope de visibilité utilisent cette abstraction.
+- Scope de visibilité coopérative reçoit les IDs d'affectation depuis le lecteur Identity.
+- AddressPolicy utilise ActorContext et DTOs d'owner ; les adapters Identity/Cooperatives traduisent leurs modèles en DTOs et délèguent à la Policy.
+- LocalizationServiceProvider ne contient plus de Gate closures couplées aux modèles User/Cooperative.
+- Tests d'architecture et tests de Policies ajoutés/adaptés, non exécutés.
+- Relations Eloquent réciproques conservées uniquement comme mapping relationnel/lecture ; toutes les écritures de pivot restent dans Identity.
