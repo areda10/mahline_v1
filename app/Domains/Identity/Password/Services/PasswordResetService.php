@@ -31,11 +31,23 @@ final class PasswordResetService extends BaseService
     {
         $token = bin2hex(random_bytes(self::TOKEN_BYTES));
 
-        DB::transaction(function () use ($user, $token): void {
+        DB::transaction(function () use ($user, $token, $customerOnly): void {
             $lockedUser = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
             if ($lockedUser->status->value !== 'active') {
                 throw new InvalidPasswordResetTokenException('This account cannot reset its password.');
+            }
+
+            $isCustomer = $lockedUser->hasRole('customer')
+                && ! $lockedUser->hasAnyRole([
+                    'super_admin_root',
+                    'super_admin',
+                    'cooperative_admin',
+                    'user',
+                ]);
+
+            if (($customerOnly && ! $isCustomer) || (! $customerOnly && $isCustomer)) {
+                throw new InvalidPasswordResetTokenException('This account cannot use this password reset flow.');
             }
 
             DB::table('password_reset_tokens')
