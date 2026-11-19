@@ -636,3 +636,5 @@ La première version du lot A7 faisait appeler le contrat Identity directement p
 Commits de révision : `66b43737c883d8d58f8551a6bd93585f95638362`, `6053e561491a6ed8e67fb1cb73a7214cf42010a5`, `d5f902559410761e3468299837b75b26c5990d42`, `41ea2010c9b043e8766c37097a902733b38a05e8`, `a2a8cbdd3f739af1a0caa232d62023a94234c407`, `262b9c7dd533eb055e087eaf1e601590a9638e3f`.
 
 Le test de refus d'affectation a été adapté pour vérifier le rôle super_admin requis. Tests non exécutés.
+
+- Séparation complémentaire : `CooperativeStatusReader` est maintenant implémenté par `CooperativeStatusReaderService`, dédié à la lecture, plutôt que par `CooperativeService` qui porte les écritures et dépend de Localization. Commits : `2be30cbd725bcf4938abb94556ba0c0e1203b383`, `20bfbb7c1d6fbf19d42296dc3417b7b1864c2bd1`, `42af72ab6eaa9bb888facd38edfce8b2d4cbf9e0`.
