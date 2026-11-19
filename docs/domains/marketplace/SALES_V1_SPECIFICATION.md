@@ -425,3 +425,17 @@ Lorsqu'une coopérative augmente la limite commerciale d'un produit ou d'une var
 - La limite applicable est relue auprès du domaine propriétaire lors des opérations concernées et au checkout.
 
 Cette règle complète SALES-020 et SALES-023 : une diminution s'applique immédiatement et peut bloquer une ligne excédentaire sans la réduire ; une augmentation s'applique immédiatement et peut lever ce blocage lié à l'ancienne limite.
+
+### SALES-025 — Suppression d'une limite commerciale configurée
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative supprime la limite commerciale configurée pour un produit ou une variante, cette suppression prend effet immédiatement pour tous les paniers existants concernés.
+
+- La limite commerciale spécifique cesse de s'appliquer immédiatement.
+- Seule la limite technique globale de MAHLINE définie par SALES-019 demeure applicable au titre des limites de quantité.
+- Les clients peuvent bénéficier immédiatement de la suppression, sans devoir modifier artificiellement leur panier.
+- Les autres règles restent applicables : statut vendable, contrôle du prix, disponibilité et validations de checkout.
+- La limite effective est relue auprès du domaine propriétaire lors des opérations concernées et au checkout.
+
+Cette règle complète SALES-021, SALES-023 et SALES-024 : en l'absence de limite commerciale configurée, seule la limite technique globale s'applique ; les modifications et suppressions de limite prennent effet immédiatement sur les paniers existants.
