@@ -8,6 +8,8 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Products\Contracts\CheckoutCatalog;
+use App\Domains\Products\DTOs\CheckoutProductData;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Repositories\ProductRepository;
@@ -16,12 +18,57 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-final class ProductService
+final class ProductService implements CheckoutCatalog
 {
     public function __construct(
         private readonly ProductRepository $repository,
         private readonly AuditWriter $audit,
     ) {}
+
+    public function resolveForCheckout(string $productId, ?string $variantId): ?CheckoutProductData
+    {
+        $product = Product::query()
+            ->whereKey($productId)
+            ->lockForUpdate()
+            ->first();
+
+        if ($product === null || ! $product->is_active) {
+            return null;
+        }
+
+        $variantRequested = $variantId !== null && $variantId !== '';
+        $variant = null;
+
+        if ($variantRequested) {
+            $variant = ProductVariant::query()
+                ->whereKey($variantId)
+                ->where('product_id', $product->getKey())
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->first();
+        }
+
+        $hasVariants = ! $variantRequested && $product->variants()->exists();
+        $unit = $variant !== null ? $variant->unit : ($variantRequested ? null : $product->unit);
+
+        return new CheckoutProductData(
+            productId: (string) $product->getKey(),
+            cooperativeId: (string) $product->cooperative_id,
+            productName: (string) $product->name,
+            productSlug: (string) $product->slug,
+            currency: (string) $product->currency,
+            effectivePrice: $variant?->price ?? $product->price,
+            hasVariants: $hasVariants,
+            hasParentUnit: $product->unit_id !== null,
+            variantRequested: $variantRequested,
+            variantFound: ! $variantRequested || $variant !== null,
+            variantId: $variant === null ? null : (string) $variant->getKey(),
+            variantLabel: $variant?->label,
+            variantSku: $variant?->sku,
+            unitCode: $unit?->code,
+            unitLabel: $unit?->label,
+        );
+    }
 
     public function create(
         string $cooperativeId,
