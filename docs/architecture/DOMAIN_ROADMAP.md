@@ -359,3 +359,26 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-015 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 17. Décision architecturale — environnements et promotion des versions (19 novembre 2026)
+
+**Décision 16 validée :** adopter quatre environnements de référence — `local`, `testing`, `staging` et `production` — avec séparation stricte à l'échelle de la plateforme.
+
+- Chaque environnement dispose de configurations, secrets, bases de données, stockages et ressources externes séparés selon les besoins ; aucun environnement inférieur ne partage directement les ressources modifiables de production.
+- Les secrets et comptes de production ne sont jamais copiés vers les environnements non productifs.
+- Testing utilise des données synthétiques ; staging privilégie également des données synthétiques représentatives. Toute exception impliquant des données dérivées de production exige autorisation, minimisation et anonymisation ou pseudonymisation vérifiée.
+- Les intégrations non productives utilisent des sandboxes ou doubles de test ; aucun paiement, envoi, expédition ou autre effet réel ne doit être déclenché par défaut.
+- La CI exécute des contrôles reproductibles et traçables ; staging valide les parcours transversaux, intégrations, migrations et configurations avant promotion.
+- La promotion vers production est contrôlée et associée à un artefact/version, un commit, un environnement et un responsable.
+- Les migrations doivent être compatibles avec des déploiements progressifs lorsque nécessaire ; rollback applicatif et restauration des données sont traités comme deux opérations distinctes.
+- Les accès production sont limités, journalisés et accordés selon le moindre privilège.
+- Les sauvegardes et restaurations suivent l'ADR-015 ; les procédures de déploiement et de reprise sont testées avant d'être considérées fiables.
+
+**Document de décision :** [ADR-016 — Stratégie des environnements et promotion des versions](decisions/ADR-016-environments-and-release-promotion.md).
+
+**État :** architecture cible acceptée ; inventaire des environnements et ressources existants, séparation des secrets et données, données synthétiques, CI/CD, contrôles de promotion, stratégie de migrations et procédures de rollback restent à définir ou auditer. Aucun environnement, pipeline, compte, secret, configuration, migration ou code applicatif n'a été créé ou modifié dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-016 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
