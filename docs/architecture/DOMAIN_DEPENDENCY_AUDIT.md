@@ -640,3 +640,30 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Séparation complémentaire : `CooperativeStatusReader` est maintenant implémenté par `CooperativeStatusReaderService`, dédié à la lecture, plutôt que par `CooperativeService` qui porte les écritures et dépend de Localization. Commits : `2be30cbd725bcf4938abb94556ba0c0e1203b383`, `20bfbb7c1d6fbf19d42296dc3417b7b1864c2bd1`, `42af72ab6eaa9bb888facd38edfce8b2d4cbf9e0`.
 
 - Ajustement du test Feature A4 : désactivation du middleware de session active dans ce test isolé, comme dans les autres tests du contrôleur root, afin que l'assertion cible réellement le refus de rôle. Commit : `9ce03e84e36cc60362cb26caa1521094ddc0e9ed`.
+
+### 11.14 Lot A8 — Identity / Cooperatives : contrat de référence coopérative
+
+**Écart corrigé :** `UserManagementService` importait directement le modèle Eloquent Cooperative pour valider les coopératives, verrouiller les lignes et gérer les affectations de super_admin. Les méthodes du contrat d'affectation exposaient également le modèle Cooperative.
+
+**Correction :**
+- Ajout de `CooperativeIdentityReference`, contrat public propriétaire Cooperatives, avec `existsNotDeleted` et `lockNotDeleted`.
+- Implémentation dans `CooperativeIdentityReferenceService`, seul composant qui interroge directement le modèle Cooperative pour cette intégration.
+- `UserManagementService` utilise ce contrat pour la création/mise à jour des comptes et les affectations/désaffectations super_admin ; il n'importe plus le modèle Cooperative.
+- Le contrat Identity `SuperAdminCooperativeAssignmentService` reçoit désormais l'identifiant coopérative, pas son modèle Eloquent.
+- Le contrôleur d'affectation garde le modèle route-bound pour Gate/Policy, puis transmet l'identifiant au service.
+- Les verrous sont acquis dans l'ordre User puis Cooperative pour les affectations/désaffectations, afin de préserver l'ordre de verrouillage déjà appliqué aux comptes.
+- Test ajouté pour le contrat de référence, incluant une coopérative inactive mais non supprimée (elle reste référencée) et une coopérative soft-deleted (elle n'est plus référencée).
+
+**Commits :**
+- Contrat : `42660342dda178d7b5556ea98e10d5811ba5007f`
+- Service : `521b8e6f9d964084abc9debfae003727b4dad324`
+- Binding : `692cf7885333f5ee4f01db695a9bbc992d82748d`
+- Contrat Identity : `70e7c60db93b223a3c05a6018e2c8c3329e72a61`
+- UserManagementService : `599ac39dc158dd218179d514973ced4d7ef82f10`
+- Ordre des verrous : `d2f364532e918bce3c5d954f7e328588ece480d4`
+- Contrôleur : `50f4f05ec1de6d20bfcdcdae6907789f1372e3fb`
+- Tests Identity : `bdb0d9ae253dae2b5580ffd7edae62f732b457d4`
+- Tests contrat : `75b79f2fb9a2f45804d56b66a2acd05274b21d4e`, `a5b8820f387683c028618e0327d685bb8bc2bc18`, `65dd84e25d93f046384d2f960f15ebead986dba0`
+- Signatures finales/commentaire : `6e6fff1e085c8301bd2c295694d56af766702d95`, `d9e75e7d147603615c5832a95b964f97198f9b52`
+
+**Validation :** modifications et tests écrits, non exécutés. Identity conserve encore des relations Eloquent vers Cooperative dans User et dans les Policies/contrôleurs ; l'objectif de ce lot était de supprimer l'import modèle du service métier.
