@@ -7,4 +7,7 @@ namespace App\Shared\Contracts;
 interface SuperAdminCooperativeAssignmentReader
 {
     public function isAssigned(string $superAdminId, string $cooperativeId): bool;
+
+    /** @return list<string> */
+    public function cooperativeIdsFor(string $superAdminId): array;
 }
