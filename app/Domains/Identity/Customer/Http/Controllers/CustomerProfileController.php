@@ -67,9 +67,9 @@ final class CustomerProfileController
             $this->profiles->update($customer, $profileAttributes);
 
             if ($customer->addresses()->exists()) {
-                $this->addresses->updateForUser($customer, $customer, $addressAttributes);
+                $this->addresses->updateForUser((string) $customer->getKey(), (string) $customer->getKey(), $addressAttributes);
             } else {
-                $this->addresses->createForUser($customer, $customer, $addressAttributes);
+                $this->addresses->createForUser((string) $customer->getKey(), (string) $customer->getKey(), $addressAttributes);
             }
         });
 
@@ -90,7 +90,7 @@ final class CustomerProfileController
             'region' => ['nullable', 'string', 'in:'.implode(',', MoroccanRegion::values())],
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
-        $this->addresses->createForUser($customer, $customer, $data);
+        $this->addresses->createForUser((string) $customer->getKey(), (string) $customer->getKey(), $data);
 
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse ajoutée à votre carnet.');
     }
@@ -99,7 +99,7 @@ final class CustomerProfileController
     {
         $customer = $request->user();
         abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
-        $this->addresses->setPrimaryForUser($customer, $customer, $address);
+        $this->addresses->setPrimaryForUser((string) $customer->getKey(), (string) $customer->getKey(), (string) $address->getKey());
 
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse principale mise à jour.');
     }
@@ -108,7 +108,7 @@ final class CustomerProfileController
     {
         $customer = $request->user();
         abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
-        $this->addresses->deleteForUser($customer, $customer, $address);
+        $this->addresses->deleteForUser((string) $customer->getKey(), (string) $customer->getKey(), (string) $address->getKey());
 
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse supprimée de votre carnet.');
     }
