@@ -44,12 +44,12 @@ final class AddressServiceTest extends TestCase
         $user = $this->userWithRole('user');
         $addresses = app(UserAddressLifecycleManager::class);
 
-        $addresses->savePrimaryAddressForUser($user, (string) $user->getKey(), [
+        $addresses->savePrimaryAddressForUser((string) $user->getKey(), (string) $user->getKey(), [
             'street' => 'Rue initiale',
             'city' => 'Casablanca',
         ]);
 
-        $addresses->savePrimaryAddressForUser($user, (string) $user->getKey(), [
+        $addresses->savePrimaryAddressForUser((string) $user->getKey(), (string) $user->getKey(), [
             'street' => 'Rue modifiée',
             'city' => 'Rabat',
         ]);
@@ -67,7 +67,7 @@ final class AddressServiceTest extends TestCase
     public function test_identity_can_use_the_public_user_address_lifecycle_contract(): void
     {
         $user = $this->userWithRole('user');
-        $address = app(AddressService::class)->createForUser($user, $user, [
+        $address = app(AddressService::class)->createForUser((string) $user->getKey(), (string) $user->getKey(), [
             'street' => 'Rue du Contrat',
             'city' => 'Casablanca',
         ]);
@@ -99,7 +99,7 @@ final class AddressServiceTest extends TestCase
         $user = $this->userWithRole('user');
         $service = app(AddressService::class);
 
-        $address = $service->createForUser($user, $user, [
+        $address = $service->createForUser((string) $user->getKey(), (string) $user->getKey(), [
             'number' => '12',
             'street' => 'Rue des Fleurs',
             'city' => 'Casablanca',
@@ -112,7 +112,7 @@ final class AddressServiceTest extends TestCase
         self::assertSame('MA', $address->country->code);
         self::assertSame($user->getKey(), $address->created_by);
 
-        $updated = $service->updateForUser($user, $user, [
+        $updated = $service->updateForUser((string) $user->getKey(), (string) $user->getKey(), [
             'number' => '14',
             'street' => 'Rue des Jardins',
             'city' => 'Rabat',
@@ -142,7 +142,7 @@ final class AddressServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        app(AddressService::class)->createForUser($user, $user, [
+        app(AddressService::class)->createForUser((string) $user->getKey(), (string) $user->getKey(), [
             'street' => 'Rue de Test',
             'city' => 'Casablanca',
             'country_id' => '01J00000000000000000000000',
@@ -159,7 +159,7 @@ final class AddressServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(AddressService::class)->createForUser($user, $user, [
+        app(AddressService::class)->createForUser((string) $user->getKey(), (string) $user->getKey(), [
             'street' => 'Rue de Test',
             'city' => 'Casablanca',
         ]);
@@ -171,7 +171,7 @@ final class AddressServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(AddressService::class)->createForUser($user, $user, [
+        app(AddressService::class)->createForUser((string) $user->getKey(), (string) $user->getKey(), [
             'street' => 'Rue de Test',
             'city' => 'Casablanca',
             'latitude' => 95,
@@ -185,13 +185,13 @@ final class AddressServiceTest extends TestCase
         $service = app(AddressService::class);
 
         for ($index = 1; $index <= 5; $index++) {
-            $service->createForUser($customer, $customer, [
+            $service->createForUser((string) $customer->getKey(), (string) $customer->getKey(), [
                 'street' => "Rue client {$index}",
                 'city' => 'Casablanca',
             ]);
         }
 
-        $service->softDeleteUserAddresses($customer, (string) $root->getKey());
+        $service->softDeleteUserAddressesById((string) $customer->getKey(), (string) $root->getKey());
         $customer->forceFill([
             'status' => UserStatus::Archived,
             'email_verified_at' => null,
@@ -199,7 +199,7 @@ final class AddressServiceTest extends TestCase
         $customer->delete();
         $customer->restore();
 
-        $service->restoreLatestUserAddresses($customer, (string) $root->getKey());
+        $service->restoreLatestUserAddressesById((string) $customer->getKey(), (string) $root->getKey());
 
         self::assertSame(5, $customer->addresses()->count());
         self::assertSame(1, $customer->addresses()->where('is_primary', true)->count());
@@ -210,13 +210,13 @@ final class AddressServiceTest extends TestCase
         $customer = $this->userWithRole('customer');
         $service = app(AddressService::class);
         for ($i = 1; $i <= 5; $i++) {
-            $service->createForUser($customer, $customer, [
+            $service->createForUser((string) $customer->getKey(), (string) $customer->getKey(), [
                 'street' => "Rue {$i}", 'city' => 'Casablanca',
             ]);
         }
         self::assertSame(5, $customer->addresses()->count());
         $this->expectException(ValidationException::class);
-        $service->createForUser($customer, $customer, [
+        $service->createForUser((string) $customer->getKey(), (string) $customer->getKey(), [
             'street' => 'Rue supplémentaire', 'city' => 'Casablanca',
         ]);
     }
@@ -225,12 +225,12 @@ final class AddressServiceTest extends TestCase
     {
         $customer = $this->userWithRole('customer');
         $service = app(AddressService::class);
-        $first = $service->createForUser($customer, $customer, ['street' => 'Rue 1', 'city' => 'Casablanca']);
-        $second = $service->createForUser($customer, $customer, ['street' => 'Rue 2', 'city' => 'Rabat']);
-        $service->deleteForUser($customer, $customer, $first);
+        $first = $service->createForUser((string) $customer->getKey(), (string) $customer->getKey(), ['street' => 'Rue 1', 'city' => 'Casablanca']);
+        $second = $service->createForUser((string) $customer->getKey(), (string) $customer->getKey(), ['street' => 'Rue 2', 'city' => 'Rabat']);
+        $service->deleteForUser((string) $customer->getKey(), (string) $customer->getKey(), (string) $first->getKey());
         self::assertSoftDeleted('addresses', ['id' => $first->getKey()]);
         self::assertTrue($second->fresh()->is_primary);
-        $replacement = $service->createForUser($customer, $customer, ['street' => 'Rue 3', 'city' => 'Fès']);
+        $replacement = $service->createForUser((string) $customer->getKey(), (string) $customer->getKey(), ['street' => 'Rue 3', 'city' => 'Fès']);
         self::assertSame($customer->getKey(), $replacement->user_id);
         self::assertFalse($replacement->is_primary);
     }
@@ -239,10 +239,10 @@ final class AddressServiceTest extends TestCase
     {
         $user = $this->userWithRole('user');
         $service = app(AddressService::class);
-        $service->createForUser($user, $user, ['street' => 'Rue 1', 'city' => 'Casablanca']);
+        $service->createForUser((string) $user->getKey(), (string) $user->getKey(), ['street' => 'Rue 1', 'city' => 'Casablanca']);
 
         $this->expectException(ValidationException::class);
-        $service->createForUser($user, $user, ['street' => 'Rue 2', 'city' => 'Rabat']);
+        $service->createForUser((string) $user->getKey(), (string) $user->getKey(), ['street' => 'Rue 2', 'city' => 'Rabat']);
     }
 
     public function test_cooperative_admin_can_create_a_missing_cooperative_address_without_create_permission(): void
@@ -253,7 +253,7 @@ final class AddressServiceTest extends TestCase
 
         $cooperative->address()->firstOrFail()->delete();
 
-        $address = app(AddressService::class)->updateForCooperative($admin, $cooperative, [
+        $address = app(AddressService::class)->updateForCooperative((string) $admin->getKey(), (string) $cooperative->getKey(), [
             'street' => 'Nouvelle adresse',
             'city' => 'Casablanca',
         ]);
@@ -270,7 +270,7 @@ final class AddressServiceTest extends TestCase
 
         $this->expectException(AuthorizationException::class);
 
-        app(AddressService::class)->createForCooperative($superAdmin, $cooperative, [
+        app(AddressService::class)->createForCooperative((string) $superAdmin->getKey(), (string) $cooperative->getKey(), [
             'street' => 'Rue non autorisée',
             'city' => 'Casablanca',
         ]);
@@ -283,12 +283,12 @@ final class AddressServiceTest extends TestCase
         $address = $cooperative->address;
         $service = app(AddressService::class);
 
-        $service->softDeleteCooperativeAddresses($cooperative, (string) $actor->getKey());
+        $service->softDeleteCooperativeAddressesById((string) $cooperative->getKey(), (string) $actor->getKey());
         $cooperative->delete();
         self::assertSoftDeleted('addresses', ['id' => $address->getKey()]);
 
         $cooperative->restore();
-        $service->restoreLatestCooperativeAddresses($cooperative, (string) $actor->getKey());
+        $service->restoreLatestCooperativeAddressesById((string) $cooperative->getKey(), (string) $actor->getKey());
 
         self::assertDatabaseHas('addresses', [
             'id' => $address->getKey(),
