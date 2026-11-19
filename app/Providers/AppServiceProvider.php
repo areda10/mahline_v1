@@ -8,6 +8,8 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Audit\Services\AuditWriterService;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Localization\Contracts\CooperativeAddressManager;
+use App\Domains\Localization\Services\AddressService;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\Users\Observers\UserObserver;
 use App\Domains\Media\Observers\MediaOwnerObserver;
@@ -33,6 +35,7 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(AuditWriter::class, AuditWriterService::class);
         $this->app->bind(CheckoutCatalog::class, ProductService::class);
+        $this->app->bind(CooperativeAddressManager::class, AddressService::class);
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
             UserManagementService::class,
