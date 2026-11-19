@@ -16,12 +16,12 @@ final class ProductUnitRegistryTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_seeds_only_the_four_approved_v1_units(): void
+    public function test_it_seeds_all_five_approved_v1_units(): void
     {
         $this->seed(ProductUnitSeeder::class);
 
         $this->assertSame(
-            ['g', 'kg', 'l', 'ml'],
+            ['g', 'kg', 'l', 'ml', 'u'],
             ProductUnit::query()->orderBy('code')->pluck('code')->all(),
         );
     }
