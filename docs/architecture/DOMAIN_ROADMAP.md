@@ -46,7 +46,6 @@ Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient act
 - `Catalog`
 - `Categories`
 - `Cooperatives`
-- `Countries`
 - `Dashboard`
 - `Identity`
 - `Localization`
@@ -56,7 +55,7 @@ Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient act
 
 Cet inventaire décrit uniquement la présence de dossiers dans le dépôt au moment de cette mise à jour. Il ne constitue pas une validation fonctionnelle ou technique de ces domaines.
 
-**Référence vérifiée pour cette révision :** branche `feature/Marketplace`, HEAD `c83614660b601bb1768223f67202e3d1f85d3c0e`, arbre Git récursif. Onze dossiers sont présents. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d`) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
+**Référence vérifiée pour cette révision :** branche `feature/Marketplace`, HEAD `c83614660b601bb1768223f67202e3d1f85d3c0e`, arbre Git récursif. Dix dossiers sont présents. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d`) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
 
 Les documents d'architecture décrivent également des domaines ou périmètres prévus qui ne figurent pas dans cet inventaire, notamment `Inventory`, `Sales`, `Finance`, `Media`, `Communication` et `CMS`. Cette différence devra être traitée progressivement, sans créer de dossiers ni déplacer du code avant validation de leur périmètre.
 
@@ -69,8 +68,8 @@ Les documents d'architecture décrivent également des domaines ou périmètres 
 | Catalog | Catalogue commercial et règles de présentation des produits | Oui | À auditer après consolidation des frontières avec Products et Categories |
 | Categories | Arborescence et règles de catégories globales et coopératives | Oui | Décisions et tests déjà travaillés ; conserver le suivi dédié |
 | Products | Données et cycle de vie des produits | Oui | À auditer selon les frontières Catalog / Products |
-| Countries | Référentiel des pays | Oui | À inventorier et auditer |
-| Localization | Adresses, langues, devises, fuseaux horaires et données géographiques selon spécification | Oui | V1 implémentée pour le carnet d'adresses ; à tester et à auditer sur les références restantes |
+| Localization | Adresses, référentiel des pays, régions et données géographiques | Oui | Countries intégré dans Localization ; relations et contrats inter-domaines à finaliser |
+| Localization | Adresses, référentiel des pays, langues, devises, fuseaux horaires et données géographiques selon spécification | Oui | Countries intégré dans Localization ; V1 carnet d'adresses à tester et frontières inter-domaines à finaliser |
 | Audit | Journalisation métier, traçabilité et consultation sécurisée | Oui | À auditer indépendamment des simples colonnes techniques |
 | Dashboard | Présentation des indicateurs et vues de pilotage | Oui | À cadrer avec Statistics |
 | Media | Fichiers et ressources média transversales consommés par plusieurs domaines | Oui | Présent dans le dépôt ; audit V1 et tests à poursuivre |
@@ -146,7 +145,7 @@ L'ordre ci-dessous est une proposition de pilotage, pas une validation de dépen
 7. Spécifier Finance / Facturation, notamment les documents client et coopérative.
 8. Définir Media comme service métier transversal.
 9. Spécifier Statistics autonome et ses contrats de lecture avec les domaines sources.
-10. Auditer les autres domaines présents ou prévus : Audit, Localization, Countries, Dashboard, Communication et CMS.
+10. Auditer les autres domaines présents ou prévus : Audit, Localization, Dashboard, Communication et CMS.
 
 L'ordre pourra être ajusté selon les dépendances confirmées pendant les audits.
 
@@ -507,3 +506,12 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - Clarification du statut historique de `docs/framework/ADR.md`, sans suppression ni renumérotation de ses décisions.
 - ADR V1 001 à 008 classés « sources à retrouver » ; aucune équivalence avec les anciens ADR du framework n'est supposée.
 - Correction de la date de mise à jour et d'une parenthèse erronée dans la référence de l'ancien commit d'audit.
+
+
+## 10. Architecture hybride et audit des dépendances (19 novembre 2026)
+
+- Architecture cible confirmée : monolithe modulaire hybride, base SQL partagée, contrats publics synchrones, événements après commit, Outbox réservée aux faits critiques.
+- Décision détaillée : [ADR-021](decisions/ADR-021-hybrid-modular-monolith.md).
+- Cartographie et corrections proposées : [DOMAIN_DEPENDENCY_AUDIT.md](DOMAIN_DEPENDENCY_AUDIT.md).
+- `Countries` a été absorbé dans `Localization` sur `feature/Marketplace` ; il ne constitue plus un domaine autonome.
+- La consolidation du modèle Country et de ses références est intégrée ; tests d'exécution encore à réaliser.
