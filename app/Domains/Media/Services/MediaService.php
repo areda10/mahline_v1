@@ -540,7 +540,7 @@ final class MediaService
             ->orderByDesc('deleted_at')
             ->get();
 
-        if (! $this->auditEvents->verifyIntegrity()) {
+        if (! $this->audit->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; consultation de l’historique refusée.');
         }
 
@@ -807,7 +807,7 @@ final class MediaService
 
     private function record(User $actor, Media $media, string $eventKey, string $action): void
     {
-        if (! $this->auditEvents->verifyIntegrity()) {
+        if (! $this->audit->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; opération MEDIA refusée.');
         }
 
