@@ -476,3 +476,18 @@ Lorsqu'une coopérative supprime une variante présente dans plusieurs paniers c
 - Les informations initiales utiles à l'identification de la variante restent conservées conformément à SALES-012.
 
 Cette règle complète SALES-012 et SALES-027. La suppression d'une variante ne doit jamais modifier silencieusement les paniers des clients.
+
+
+### SALES-029 — Réactivation d'un produit temporairement désactivé
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'un produit est temporairement désactivé par sa coopérative alors qu'il figure dans des paniers clients :
+
+- Les lignes concernées sont conservées dans chaque panier et signalées comme indisponibles pendant la désactivation.
+- Le checkout de chaque panier concerné reste bloqué tant qu'une ligne indisponible y demeure.
+- Si le produit est ensuite réactivé, les lignes correspondantes redeviennent automatiquement achetables, sans que le client ait à les supprimer puis à les ajouter de nouveau.
+- La réactivation ne garantit pas à elle seule l'achat : les autres contrôles applicables restent obligatoires, notamment variante active, prix, limite commerciale, quantité et disponibilité du stock.
+- Aucune ligne n'est supprimée ou modifiée silencieusement du seul fait de la désactivation ou de la réactivation.
+
+Cette règle concerne une désactivation temporaire, et non la suppression définitive du produit traitée par SALES-010 et SALES-027.
