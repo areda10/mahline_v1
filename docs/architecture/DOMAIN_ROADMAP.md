@@ -1,12 +1,22 @@
 # MAHLINE V7.0 — Feuille de route centrale des domaines
 
 - **Version :** 1.0
-- **Mise à jour :** 17 novembre 2026
+- **Mise à jour :** 19 novembre 2026
 - **Dépôt :** `areda10/mahline_v1`
 - **Branche de référence :** `feature/Marketplace`
 - **Statut :** registre de suivi — périmètres à auditer et décisions à consolider
 
 > Ce document est le point d'entrée central du suivi des domaines MAHLINE. Il complète les cahiers de décisions propres à chaque domaine. Il ne remplace pas les spécifications détaillées et ne signifie pas qu'un domaine est déjà implémenté, audité ou validé.
+
+## 0. Registre canonique des ADR V1
+
+Le registre canonique des décisions d'architecture applicables à MAHLINE V1 est désormais [docs/architecture/decisions/README.md](decisions/README.md).
+
+- La série ADR-001 à ADR-020 de MAHLINE V1 est distincte des anciens ADR du framework.
+- `docs/framework/ADR.md` est conservé comme historique du framework ; ses numéros ne doivent pas être confondus avec ceux de V1.
+- Les sources des ADR V1 001 à 008 n'ont pas été retrouvées dans l'arbre Git vérifié. Leur contenu ne sera pas reconstitué par supposition.
+- Les ADR V1 009 à 020 sont indexés dans le registre canonique.
+- La déclaration de portée de l'ADR-019 reste enregistrée ; la complétude documentaire des ADR 001 à 008 demeure à régulariser.
 
 ## 1. Règles de suivi
 
@@ -46,7 +56,7 @@ Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient act
 
 Cet inventaire décrit uniquement la présence de dossiers dans le dépôt au moment de cette mise à jour. Il ne constitue pas une validation fonctionnelle ou technique de ces domaines.
 
-**Référence vérifiée pour cette révision :** branche `feature/Marketplace`, HEAD `c83614660b601bb1768223f67202e3d1f85d3c0e`, arbre Git récursif. Onze dossiers sont présents. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d)) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
+**Référence vérifiée pour cette révision :** branche `feature/Marketplace`, HEAD `c83614660b601bb1768223f67202e3d1f85d3c0e`, arbre Git récursif. Onze dossiers sont présents. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d`) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
 
 Les documents d'architecture décrivent également des domaines ou périmètres prévus qui ne figurent pas dans cet inventaire, notamment `Inventory`, `Sales`, `Finance`, `Media`, `Communication` et `CMS`. Cette différence devra être traitée progressivement, sans créer de dossiers ni déplacer du code avant validation de leur périmètre.
 
@@ -490,3 +500,10 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - Correction de la présence du domaine Orders dans l'inventaire courant.
 - Aucun code métier, aucune migration, configuration ou test applicatif modifié/exécuté dans cette mise à jour documentaire.
 - Aucun merge vers `main`.
+
+
+### 19 novembre 2026 — Correction du registre ADR
+- Création de `docs/architecture/decisions/README.md` comme index canonique de la série V1.
+- Clarification du statut historique de `docs/framework/ADR.md`, sans suppression ni renumérotation de ses décisions.
+- ADR V1 001 à 008 classés « sources à retrouver » ; aucune équivalence avec les anciens ADR du framework n'est supposée.
+- Correction de la date de mise à jour et d'une parenthèse erronée dans la référence de l'ancien commit d'audit.
