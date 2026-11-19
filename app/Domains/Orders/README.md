@@ -1,125 +1,133 @@
 # MAHLINE V1 — Domaine Orders
 
-- **Branche de référence :** `feature/Marketplace`
-- **État :** AUDIT INITIAL EFFECTUÉ — MONTAGE ARCHITECTURAL EN COURS
-- **Référence de dépôt auditée :** `a24ef6e32bb6e7cc603a413620445bda943a848a`
-- **Date :** 18 novembre 2026
+- **Branche :** `feature/Marketplace`
+- **Commit audité :** `d23907b2f033d23ea2023a5eb52b5a751c94eed7`
+- **Date de documentation :** 19 novembre 2026
+- **État :** fondation métier et premiers services implémentés ; domaine incomplet, non validé par exécution locale des tests.
 
-## 1. Objectif
+## 1. Responsabilité et frontières
 
-Orders porte le cycle de vie métier des commandes acceptées par la marketplace, depuis leur création persistée après le checkout jusqu'à leur clôture ou annulation. Il garantit l'historique, la segmentation par coopérative et la cohérence des transitions.
+Orders possède la commande globale, les sous-commandes affectées aux coopératives, les lignes et snapshots de commande, les statuts commerciaux et l'historique des décisions.
 
-Ce document ne vaut pas validation des détails de schéma SQL. Les migrations et modèles seront ajoutés après inventaire complet des règles et validation des contrats inter-domaines.
+Orders ne possède pas :
+- les définitions produits, variantes, prix courants ou unités (Products) ;
+- le stock physique, les mouvements, les réservations ou la quarantaine (Inventory) ;
+- le panier et l'orchestration précommande (Sales) ;
+- les expéditions et transporteurs (Delivery) ;
+- les paiements, commissions, transferts et reversements (Finance).
 
-## 2. Frontières de responsabilité
+Les références vers les identifiants des autres domaines ne donnent pas à Orders le droit d'écrire dans leurs tables.
 
-| Domaine | Responsabilité |
+## 2. Modèle persistant actuellement présent
+
+Migration additive : `database/migrations/2026_11_18_000003_create_marketplace_orders_tables.php`.
+
+| Table | Fonction |
 |---|---|
-| Sales | Panier, lignes de panier, checkout, orchestration commerciale et demande de création de commande |
-| Orders | Commande globale, lignes figées, sous-commandes coopératives, statuts et transitions, propositions de modification de lignes, historique des décisions |
-| Products / Catalog | Identité et données descriptives des produits/variantes, prix publiés et présentation du catalogue |
-| Inventory | Stock physique, disponibilité nette, mouvements, réservations et libérations |
-| Delivery | Transporteurs, missions, expéditions, suivi, preuve de remise et événements de livraison/encaissement |
-| Finance | Montants financiers, commissions, encaissements, transferts, reversements et rapprochements |
-| Invoicing | À rattacher à Finance selon le registre d'architecture ; aucune duplication de factures dans Orders |
-| Identity | Identité du client et des acteurs, rôles et authentification |
+| `orders` | Commande globale client, référence, statut, devise, totaux, adresse de livraison snapshotée, dates de cycle de vie |
+| `cooperative_orders` | Segment de commande affecté à une coopérative, statut, totaux, échéance et décision |
+| `order_items` | Lignes rattachées à une sous-commande, références produit/variante, snapshot, quantité, unité et montants |
+| `order_change_proposals` | Proposition de réduction ou remplacement liée à une ligne et réponse du client |
+| `order_status_histories` | Historique des transitions et décisions, acteur, rôle, motif, métadonnées et date |
 
-Orders ne possède ni stock, ni paiement, ni facture, ni expédition, ni définition de produit. Les références vers ces données ne transfèrent pas leur propriété à Orders.
+Les modèles Eloquent présents sont `Order`, `CooperativeOrder`, `OrderItem`, `OrderChangeProposal` et `OrderStatusHistory`. Les statuts métier sont représentés par les Enums du domaine. Les modèles utilisent la convention `BaseModel` (ULID, clé string, timestamps) ; les modèles concernés utilisent également la suppression logique.
 
-## 3. Agrégat marketplace multi-coopératives
+Les clés étrangères des produits, variantes, coopératives et utilisateurs préservent les références historiques selon les règles restrictives de la migration. Les snapshots sont indépendants des libellés et données courantes du catalogue.
 
-Une commande client peut regrouper des lignes de plusieurs coopératives. Le modèle cible doit distinguer :
-- la commande globale du client ;
-- les segments / sous-commandes propres à chaque coopérative ;
-- les lignes de commande rattachées à leur segment ;
-- les instantanés commerciaux nécessaires à l'historique (désignation, variante, unité, quantité, prix et données fiscales applicables).
+## 3. Fonctions effectivement implémentées
 
-Le nom technique final du segment coopératif et la structure exacte des instantanés restent à confirmer dans la spécification Orders/Sales avant migration.
+### 3.1 Création depuis le checkout — `OrderCreationService::createFromCheckout()`
 
-## 4. Règles fonctionnelles déjà enregistrées
+- Vérifie la présence d'une adresse de livraison snapshotée et d'au moins une ligne.
+- Recharge chaque produit depuis la base et verrouille les enregistrements pendant la transaction.
+- Refuse un produit absent ou inactif.
+- Recharge et vérifie la variante sélectionnée, son rattachement au produit et son état actif.
+- Exige une variante lorsqu'un produit possède des variantes.
+- Empêche l'utilisation simultanée de l'unité parent et d'une variante.
+- Lit l'unité exclusivement depuis Products : unité du produit simple ou unité de la variante. Une unité envoyée par le client est ignorée.
+- Refuse un article sans unité enregistrée et une devise autre que MAD.
+- Recharge les prix depuis Products ; aucun prix fourni par le client n'est utilisé.
+- Calcule les quantités à trois décimales et les montants en unités monétaires mineures entières, sans calcul flottant de prix.
+- Crée une commande globale et regroupe les lignes par coopérative pour créer une sous-commande par coopérative.
+- Persiste les lignes, les snapshots commerciaux et l'historique initial dans une transaction avec tentatives de reprise configurées.
 
-- Une commande validée et son historique ne doivent pas être réécrits pour refléter ultérieurement un changement du catalogue.
-- La coopérative peut proposer une réduction de quantité ou un produit de remplacement ; la ligne ne change qu'après acceptation explicite du client (Q253).
-- Une proposition porte sur la sous-commande concernée.
-- Inventory revalide la disponibilité et effectue la réservation après confirmation.
-- Si le client refuse, seule la ligne concernée est annulée ; les autres lignes continuent (Q254).
-- Sans réponse du client à l'échéance configurable d'une proposition de modification, celle-ci expire et seule la ligne concernée est annulée automatiquement (Q255). Cette règle concerne la réponse du client à une proposition de ligne, pas le délai de réponse initial de la coopérative.
-- Expiration côté serveur, notifications préalables, idempotence et arbitrage des réponses concurrentes sont requis.
-- En paiement à la livraison V1, le stock est réservé à la confirmation de la sous-commande par la coopérative ; la réservation à la validation de commande concerne le futur paiement en ligne (FR-007).
-- Une commande multi-coopératives possède une adresse de livraison commune, snapshotée sur la commande globale et immuable après confirmation (Q299–Q302). Toutes les commandes V1 exigent une adresse ; aucun retrait coopérative.
-- Une seule expédition/un seul colis par sous-commande en V1 (Q304). Les frais sont calculés par expédition puis additionnés ; ils sont recalculés sur les expéditions restantes (Q303). Si une sous-commande est refusée entièrement avant expédition, ses frais sont retirés (Q305). Si toutes les sous-commandes sont refusées, la commande globale passe à Refusée, frais de livraison nuls et notification client (Q306).
-- Le délai de réponse initial d'une coopérative est centralisé, avec référence de 12 h et plafond absolu de 24 h (Q307). À expiration sans réponse, la sous-commande reste en attente ; un administrateur est alerté, sans refus ni annulation automatique (Q308).
-- Un administrateur habilité peut relancer avec un nouveau délai (maximum 24 h), ou accepter/refuser au nom de la coopérative ; toute intervention est attribuée, motivée et auditée (Q309). Intervention réservée à `super_admin_root` ou au `super_admin` affecté ; `cooperative_admin` ne peut pas prendre cette décision de substitution (Q310).
-- Le client peut annuler une commande COD jusqu'à la confirmation par la coopérative ; après remise au transporteur, l'annulation n'est plus possible et un refus à la livraison ouvre un retour. Une demande d'annulation client sur un panier multi-coopératives vise seulement la sous-commande sélectionnée.
-- Au retour, le transporteur photographie le colis à la prise en charge et la coopérative photographie/contrôle à réception. La remise en stock n'est jamais automatique : la coopérative décide après contrôle (FR-009/Q25–Q27).
-- La modification d'une commande déjà facturée ne doit pas réécrire la commande ou la facture historique : appliquer la procédure d'annulation motivée et nouvelle commande prévue par les règles de facturation.
+### 3.2 Réponse d'une coopérative — `CooperativeOrderResponseService`
 
-Références : `docs/roadmap/FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md`, `docs/roadmap/DOMAIN_DEVELOPMENT_ROADMAP.md`, `docs/domains/marketplace/ORDER_INVOICING_PAYMENTS_DELIVERY_FUNCTIONAL_RULES.md`.
+Fonctions actuellement présentes :
+- `confirmByCooperative()` : demande de confirmation d'une sous-commande par un acteur autorisé.
+- `refuseByCooperative()` : refus avec motif.
+- `decideOnBehalf()` : décision administrative root ou super_admin affecté, avec motif obligatoire et uniquement après échéance.
+- `extendResponseDeadline()` : prolongation motivée, réservée à root ou au super_admin affecté, avec échéance future et plafond de 24 heures.
+- `refreshGlobalOrderStatus()` : agrégation du statut de la commande globale à partir des décisions des sous-commandes.
 
-## 5. Audit initial du dépôt
+La réponse verrouille la sous-commande dans une transaction, vérifie son statut en attente, contrôle le périmètre de l'acteur, enregistre la décision et l'historique, puis verrouille la commande globale pour recalculer son statut. Une réponse concurrente ne peut donc pas décider deux fois la même sous-commande.
 
-Sur le commit de référence :
-- aucun dossier `app/Domains/Orders/` ;
-- aucune migration Orders identifiée ;
-- aucun test `tests/**/Orders/` identifié ;
-- aucun contrôleur ou route de commande identifié dans les domaines existants ;
-- Products expose les produits et variantes, et Cooperative expose la relation vers ses produits ;
-- les migrations Products utilisent des ULID, colonnes d'audit, timestamps, suppression logique et clés étrangères restrictives/cascadées selon la relation ;
-- `BaseModel` fournit les ULID, clé string non auto-incrémentée et `guarded = []` ; `BaseService` reste volontairement vide.
+**Limite fonctionnelle majeure à traiter dans l'intégration Inventory :** la confirmation actuelle passe la sous-commande à `confirmed` sans vérifier ni réserver le stock. Ne pas considérer ce chemin comme prêt pour la production avant raccordement transactionnel à Inventory.
 
-L'audit est limité à l'inventaire Git du commit indiqué. Il ne prétend pas prouver l'absence de tout concept de commande dans les fichiers non encore inspectés.
+## 4. Règles métier validées à préserver
 
-## 6. Contrats inter-domaines à définir avant implémentation métier
+- Une commande peut regrouper plusieurs coopératives ; chaque sous-commande appartient à une seule coopérative.
+- Une commande mono-coopérative possède une sous-commande ; une commande multi-coopératives possède un segment par coopérative.
+- Les snapshots de ligne conservent notamment produit, variante, unité, libellé d'unité, quantité, prix et devise.
+- V1 : MAD, paiement à la livraison ; aucune réservation au checkout.
+- Le stock sera réservé uniquement au moment où la coopérative confirme sa sous-commande.
+- Une confirmation doit porter sur la quantité intégrale demandée pour chaque ligne active. Aucune confirmation partielle de quantité n'est permise.
+- Si le stock disponible est inférieur à une quantité demandée, la coopérative ne confirme pas. Le `cooperative_admin` actualise/corrige le stock au moyen des opérations Inventory autorisées ; la disponibilité est ensuite recalculée.
+- Pour une commande multi-coopératives, le voyant de disponibilité est porté par chaque sous-commande, indépendamment des autres coopératives.
+- Pour une commande mono-coopérative, il y a un voyant global de commande et un voyant par ligne. Le global est vert uniquement si toutes les lignes actives sont entièrement disponibles.
+- Vert signifie disponible intégralement ; rouge signifie stock insuffisant. Le voyant est informatif et ne réserve rien.
+- La disponibilité est contrôlée à nouveau au moment de confirmer. Seule une confirmation validée déclenche la réservation, dans une transaction avec verrouillage.
+- Une proposition de réduction ou remplacement doit être acceptée explicitement par le client avant modification de la ligne. Une confirmation ne peut pas réduire silencieusement la quantité.
+- Le refus d'une proposition ou son expiration concerne la ligne concernée selon les règles fonctionnelles Orders ; les autres lignes continuent.
+- Le délai de réponse coopérative de référence est de 12 heures, avec plafond absolu de 24 heures. Une échéance dépassée ne provoque pas de refus automatique.
+- Une intervention administrative après échéance est attribuée et motivée ; elle est réservée à `super_admin_root` ou au `super_admin` affecté.
+- L'annulation client COD est permise jusqu'à confirmation de la sous-commande, selon le périmètre prévu ; après remise au transporteur, le parcours passe par le retour.
+- Le retour ne remet jamais automatiquement le produit en stock : la coopérative contrôle et décide via Inventory.
 
-1. Sales → Orders : commande de création, validation du panier et transmission des instantanés.
-2. Orders → Inventory : vérification/réservation après confirmation, libération ciblée des quantités annulées.
-3. Orders ↔ Sales : proposition coopérative, demande de décision client, acceptation/refus/expiration et recalcul commercial.
-4. Orders → Finance : notification des montants définitifs et des changements qui affectent le montant dû.
-5. Orders → Delivery : commande prête à expédier et référence des segments à prendre en charge.
-6. Orders → Communication : notifications des événements client et coopérative.
+## 5. Contrat de disponibilité et d'intégration Inventory
 
-Les échanges doivent être transactionnellement sûrs, idempotents, traçables et ne pas permettre à un domaine consommateur d'écrire directement dans les tables propriétaires d'un autre domaine.
+Inventory est la source de vérité pour le disponible. Pour chaque ligne active, la disponibilité doit être évaluée avec le produit ou la variante concernée, la coopérative propriétaire, l'unité et la quantité demandée.
 
-## 7. Points métier encore ouverts — bloquants pour les branches concernées
+Contrat attendu :
+1. Orders fournit à Inventory l'identifiant de sous-commande et les lignes actives avec produit/variante, quantité et unité.
+2. Inventory calcule le disponible sans mutation et retourne un résultat par ligne ainsi qu'un résultat agrégé de sous-commande.
+3. Orders présente les voyants selon le mode mono/multi-coopérative défini ci-dessus.
+4. Lors de la confirmation, Orders appelle l'opération de réservation d'Inventory dans la même frontière transactionnelle convenue ; Inventory verrouille les soldes, revalide chaque quantité et réserve toutes les lignes de la sous-commande ou échoue intégralement.
+5. En cas d'échec, aucun statut `confirmed` n'est enregistré et aucune réservation partielle ne subsiste.
+6. Les changements de stock recalculent les indicateurs affichés ; le voyant ne constitue jamais une garantie de réservation.
 
-- Délai exact et configuration de réponse du client à une proposition de modification.
-- Matrice complète des états et du moment de confirmation définitive de la commande globale et de chaque sous-commande.
-- Règles de traitement partiel si une proposition concerne plusieurs unités/lignes.
-- Frais de livraison en cas d'annulation partielle de lignes dans une sous-commande (les règles de refus total Q305–Q306 et de calcul par expédition Q303 sont déjà enregistrées).
-- Annulation totale, rupture de stock après checkout et échec de réservation.
-- Matrice de transitions complète, acteurs autorisés et motifs obligatoires.
-- Politique de conservation des snapshots et des références après suppression logique d'un produit ou d'un compte.
-- Critères d'alerte et d'escalade opérationnelle après expiration du délai de réponse coopérative, au-delà de l'intervention admin prévue par Q308–Q310.
-- Les règles de gestion du profil/suppression du compte client Q311–Q312 sont portées par Identity ; Orders conserve ses snapshots et références historiques.
+La stratégie d'atomicité inter-domaines (transaction DB commune ou orchestration/outbox si les domaines ne partagent pas la même connexion transactionnelle) devra être confirmée à l'audit technique Inventory avant implémentation.
 
-Aucune valeur par défaut ne doit être inventée pour ces points.
+## 6. Fonctions non encore livrées / limites constatées
 
-### Écarts techniques de dépendance relevés le 18 novembre 2026
-- Écart prix initial traité le 18 novembre 2026 : migration additive `2026_11_18_000004_add_prices_to_products_and_variants.php` ; `products.price` en MAD et `product_variants.price` facultatif comme surcharge. Les nouveaux formulaires produit exigent un prix positif à deux décimales. Les anciennes fiches peuvent rester sans prix en base ; Sales/checkout devra les exclure tant qu'un prix exploitable n'est pas défini. Les promotions Q260–Q269 restent à auditer/implémenter.
-- Les migrations actuelles de `addresses` et le modèle `Address` existent ; le snapshot global de livraison doit néanmoins être persisté dans Orders et ne doit jamais dépendre de la ligne d'adresse après checkout.
-- Les routes actuelles exposent déjà l'espace client et les adresses, mais aucun flux de panier/commande n'a été repéré dans les fichiers Routes audités.
-- La convention `BaseModel` impose ULID, clé string, timestamps et `guarded = []`; les migrations utilisent `ulidPrimary()` et `auditActorColumns()`.
+- Pas encore de contrôle ni de réservation Inventory à la confirmation.
+- Pas de calcul des voyants de disponibilité ni de présentation UI associée.
+- Pas de contrôleurs, routes ou vues de gestion des commandes repérés dans le périmètre audité.
+- Pas de parcours client complet pour consulter les commandes, annuler, accepter/refuser une proposition ou suivre les sous-commandes.
+- Les propositions de modification sont modélisées, mais leur cycle complet (création, réponse client, expiration, notifications et concurrence) reste à implémenter.
+- Pas de jobs d'expiration/relance ni de système complet de notifications raccordé.
+- Pas de gestion complète des annulations, retours et événements de livraison.
+- Les frais de livraison restent à intégrer avec Delivery.
+- Pas de facture ou de logique financière dans Orders, conformément aux frontières de domaine.
+- Les tests de service existent, mais n'ont pas été exécutés dans cette session ; aucune validation PHPUnit, migration ou Pint n'est revendiquée.
 
-## 8. Prochaines étapes techniques
+## 7. Fichiers principaux vérifiés
 
-1. Terminer le relevé des règles Orders dans le registre fonctionnel et vérifier les éventuels concepts existants hors de `app/Domains`.
-2. Faire valider la frontière Sales / Orders et le nom du segment coopératif.
-3. Établir le diagramme d'états et la matrice des permissions par rôle.
-4. Concevoir les migrations additives, contraintes d'intégrité et index.
-5. Implémenter modèles/relations/Enums/services puis tests de domaine.
-6. Ajouter les contrats d'intégration Inventory, Sales, Finance et Communication.
-7. Ajouter routes, policies, contrôleurs et interfaces après validation des cas d'usage.
-8. Exécuter les tests ciblés, Pint et la suite complète ; enregistrer les résultats réels.
+| Fichier | Responsabilité |
+|---|---|
+| `database/migrations/2026_11_18_000003_create_marketplace_orders_tables.php` | Schéma Orders |
+| `app/Domains/Orders/Services/OrderCreationService.php` | Création transactionnelle depuis checkout |
+| `app/Domains/Orders/Services/CooperativeOrderResponseService.php` | Réponse, décision administrative, échéance, agrégation |
+| `app/Domains/Orders/Models/Order.php` | Commande globale |
+| `app/Domains/Orders/Models/CooperativeOrder.php` | Sous-commande coopérative |
+| `app/Domains/Orders/Models/OrderItem.php` | Ligne snapshotée |
+| `app/Domains/Orders/Models/OrderChangeProposal.php` | Proposition de changement |
+| `app/Domains/Orders/Models/OrderStatusHistory.php` | Historique |
+| `tests/Feature/Domains/Orders/Services/OrderCreationServiceTest.php` | Tests de création et contrat Products |
+| `tests/Feature/Domains/Orders/Services/CooperativeOrderResponseServiceTest.php` | Tests de réponse coopérative et intervention admin |
 
-## 9. Montage technique — 18 novembre 2026
+## 8. Prochaine étape du projet
 
-Fichiers ajoutés sur `feature/Marketplace` :
-- Migration additive `2026_11_18_000003_create_marketplace_orders_tables.php` : `orders`, `cooperative_orders`, `order_items`, `order_change_proposals`, `order_status_histories`.
-- Enums : `OrderStatus`, `CooperativeOrderStatus`, `OrderItemStatus`, `OrderChangeProposalStatus`, `OrderChangeProposalType`.
-- Modèles : `Order`, `CooperativeOrder`, `OrderItem`, `OrderChangeProposal`, `OrderStatusHistory`.
+Le cadrage Orders documente désormais les fonctions effectivement présentes et les fonctions restant à livrer. La prochaine étape est le domaine Inventory : audit des conventions de données et autorisations, validation du modèle de stock, puis migrations, modèles, services, policies, tests et raccordement contrôlé à Orders.
 
-La fondation persistante est complétée par OrderCreationService : création transactionnelle d'une commande globale et de ses sous-commandes, regroupement par coopérative, relecture des produits/prix depuis la base (aucun prix client n'est fiable), snapshots commerciaux, montants MAD calculés en unités mineures entières et historique initial. CooperativeOrderResponseService gère la réponse de la coopérative, l'intervention administrative après échéance et l'agrégation du statut global. Les tests Feature correspondants ont été ajoutés mais ne sont pas exécutés.
-
-La migration est additive ; aucune migration déjà exécutée n'a été modifiée. Les tests et migrations n'ont pas été exécutés dans un environnement PHP/MySQL par cette opération. Le schéma devra être vérifié contre les conventions DB réelles et les tests de migration avant d'être déclaré validé.
-
-**État : création et première réponse coopérative implémentées — module toujours incomplet, tests non exécutés et aucun gel.**
+**Orders n'est pas déclaré terminé.** Le domaine ne sera clos qu'après livraison des parcours requis, intégration Inventory, exécution des tests ciblés et de la suite de non-régression.
