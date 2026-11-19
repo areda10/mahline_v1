@@ -405,3 +405,25 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-017 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 19. Décision architecturale — gouvernance automatisée des frontières entre domaines (19 novembre 2026)
+
+**Décision 18 validée :** mettre en place une gouvernance architecturale automatisée, progressive et obligatoire dans la CI, avant toute promotion vers staging puis production.
+
+- Les contrôles vérifient les imports interdits vers les composants internes des autres domaines et l'utilisation exclusive des contrats publics ou événements autorisés.
+- Les dépendances inter-domaines doivent être déclarées, orientées et justifiées ; les cycles sont interdits.
+- La propriété des migrations et des données est contrôlée afin qu'un domaine ne modifie pas les tables internes d'un autre domaine.
+- Les contrats publics, événements et messages sont vérifiés selon les règles de versionnement et de compatibilité de l'ADR-017.
+- Les exceptions sont explicites, limitées, motivées, attribuées et documentées ; aucune dérogation implicite n'est admise.
+- Les rapports identifient la règle, les domaines concernés et le fichier ou symbole à corriger.
+- Les contrôles complètent les tests applicatifs et de contrats ; ils ne les remplacent pas.
+- Un audit initial du patrimoine et des violations existantes précède l'activation de tous les contrôles bloquants ; la trajectoire de correction ne doit pas autoriser de nouvelles violations.
+
+**Document de décision :** [ADR-018 — Gouvernance automatisée de l'architecture et des frontières entre domaines](decisions/ADR-018-automated-architecture-governance.md).
+
+**État :** stratégie acceptée ; inventaire des dépendances, définition des règles exécutables, registre des exceptions, choix des outils et intégration CI restent à réaliser. Aucun code applicatif, migration, configuration, pipeline CI/CD ou test n'a été modifié ou exécuté dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-018 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
