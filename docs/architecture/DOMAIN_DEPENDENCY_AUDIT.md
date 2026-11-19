@@ -621,3 +621,5 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 **Validation :** tests écrits mais non exécutés. Ce lot supprime une écriture inter-domaines privée et restaure l'audit/révocation cohérents.
 
 - Durcissement complémentaire : le contrat refuse désormais d'affecter une coopérative si `created_by` ne correspond pas au super_admin demandeur. Commit : `6681226662f1c4132a29a8b3393ccf4d07de55a7`.
+
+- Test complémentaire ajouté : un super_admin ne peut pas recevoir l'affectation initiale d'une coopérative créée par un autre compte. Commit : `1c81c41593d45a0337e1af9d5707ff28ec48a950`.
