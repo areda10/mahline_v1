@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Cooperatives\Services;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
@@ -30,7 +30,7 @@ final class CooperativeService
     ];
 
     public function __construct(
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
         private readonly AddressService $addressService,
     ) {}
 
