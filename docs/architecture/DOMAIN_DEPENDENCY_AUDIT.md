@@ -532,3 +532,14 @@ La dépendance `PasswordHistoryService` devenue inutilisée dans `UserManagement
 - Test contrat : `3b769200afd2c8b96f18d4c98b50c04f3fb4fe04`
 
 **Validation :** fichiers et test ajoutés/modifiés sur `feature/Marketplace`. PHPUnit, Pint et scénarios MySQL non exécutés ici. Le lot A3 reste en attente de validation runtime.
+
+
+#### Complément de vérification A2 — références de tests nettoyées
+
+Après suppression de l'ancienne méthode, deux références de tests ont également été corrigées :
+- `tests/Framework/Domains/Identity/UserManagement/Services/UserLifecycleServiceTest.php` : le contrôle d'immutabilité root ne tente plus d'appeler la méthode supprimée.
+- `tests/Feature/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementControllerTest.php` : le test de l'ancienne voie est remplacé par une assertion que la route `root.backoffice.users.activate-and-verify` n'est plus enregistrée ; le test d'activation d'un compte archivé vérifie désormais uniquement la voie d'invitation conservée.
+
+Commits complémentaires : `5a879c85b604afac68c22c82d15f2e92dcd6a76a`, `5cbf41359197e547e6094fa17977c4e45c513e79`.
+
+Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'ancien nom de route ni le secret partagé. Cela ne remplace pas l'exécution de la suite Feature/Framework.
