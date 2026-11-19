@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
