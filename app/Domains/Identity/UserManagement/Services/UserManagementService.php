@@ -13,7 +13,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Services\AddressService;
+use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Shared\DTOs\AuditEntryDTO;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +32,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         private readonly AuditWriter $audit,
         private readonly SessionService $sessions,
         private readonly ApiTokenService $apiTokens,
-        private readonly AddressService $addresses,
+        private readonly UserAddressLifecycleManager $addresses,
     ) {}
 
     /**
@@ -566,7 +566,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             );
 
             $this->revokePendingInvitations($lockedTarget);
-            $this->addresses->softDeleteUserAddresses($lockedTarget, (string) $actor->getKey());
+            $this->addresses->softDeleteUserAddressesById((string) $lockedTarget->getKey(), (string) $actor->getKey());
 
             $this->revokeAccessCredentials(
                 actor: $actor,
@@ -604,7 +604,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $oldEmailVerifiedAt = $lockedTarget->email_verified_at?->toISOString();
 
             $lockedTarget->restore();
-            $this->addresses->restoreLatestUserAddresses($lockedTarget, (string) $actor->getKey());
+            $this->addresses->restoreLatestUserAddressesById((string) $lockedTarget->getKey(), (string) $actor->getKey());
             $lockedTarget->status = UserStatus::Pending;
             $lockedTarget->email_verified_at = null;
             $lockedTarget->must_change_password = false;
