@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authorization\Services;
 
-use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 
 final class SuperAdminCooperativeAssignmentReaderService implements SuperAdminCooperativeAssignmentReader
