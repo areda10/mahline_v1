@@ -16,7 +16,7 @@ Les décisions d'architecture prises au cours de la revue doivent constituer le 
 3. Toute décision nouvelle, précision ou modification validée doit être documentée dans un ADR dédié et référencée dans `docs/architecture/DOMAIN_ROADMAP.md`. Une réponse en conversation ne remplace pas son enregistrement dans le dépôt.
 4. Avant de modifier un ADR accepté, conserver la traçabilité de la décision précédente, expliquer le motif et enregistrer explicitement la nouvelle décision ou révision.
 5. Les décisions architecturales ne constituent pas une preuve d'implémentation. Chaque exigence reste à auditer, concevoir, implémenter et tester selon le suivi du domaine concerné. Aucun élément ne doit être déclaré conforme sans preuve vérifiable.
-6. Les choix encore ouverts ne sont pas réputés décidés par cette règle. En particulier, la stratégie détaillée de déploiement et de promotion en production reste à arbitrer séparément ; la présente décision ne sélectionne pas une option pour la question 19.
+6. À la date de cette décision, la stratégie détaillée de déploiement et de promotion en production restait ouverte. Elle a depuis été arbitrée par l'ADR-020 : CI/CD automatisée avec approbations humaines aux étapes critiques.
 
 ## Règle de documentation obligatoire
 
