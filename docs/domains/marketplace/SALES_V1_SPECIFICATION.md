@@ -321,3 +321,19 @@ Lorsqu'un même panier authentifié est modifié presque simultanément depuis p
 - Les détails techniques du versionnement, de l'atomicité et de la réponse applicative seront définis lors de l'audit avant implémentation.
 
 Cette règle précise SALES-016 : le panier reste unique et synchronisé entre les appareils, mais les conflits sont traités par contrôle optimiste de version plutôt que par écrasement automatique ou fusion arbitraire.
+
+### SALES-018 — Retrait des lignes après création réussie d'une commande
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Lorsqu'Orders confirme la création réussie d'une commande à partir du checkout :
+
+- Sales retire logiquement du panier uniquement les lignes effectivement incluses dans la commande créée.
+- Les autres lignes du panier, qui n'ont pas été incluses dans cette commande, restent actives et disponibles dans le panier.
+- Le retrait des lignes consommées ne doit intervenir qu'après confirmation du succès de création par le contrat public d'Orders ; un échec ou un résultat incertain ne doit pas vider le panier.
+- Les lignes retirées restent soumises aux règles d'historique et de traçabilité définies par SALES-014 et SALES-015.
+- Les snapshots de commande et les données détenues par Orders ne sont ni supprimés ni modifiés par cette opération.
+
+Cette règle est particulièrement importante pour un panier multi-coopératives : seules les lignes réellement consommées par la commande créée sont retirées, sans supprimer les articles restants.
+
+L'atomicité entre la création Orders et la consommation des lignes Sales, ainsi que le traitement des réponses perdues, reprises et idempotence, seront définis lors de l'audit technique des contrats avant implémentation.
