@@ -337,3 +337,25 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-014 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 16. Décision architecturale — sauvegardes et reprise après incident (19 novembre 2026)
+
+**Décision 15 validée :** adopter une stratégie centralisée de sauvegarde et de reprise cohérente à l'échelle de la plateforme.
+
+- La couverture inclut la base de données, les fichiers et objets Media, les documents à conserver, ainsi que les éléments techniques et secrets indispensables à la reconstruction, avec des mécanismes de protection adaptés.
+- Les sauvegardes sont automatisées, chiffrées et stockées hors de l'environnement principal ; elles bénéficient d'une protection contre l'altération ou la suppression malveillante.
+- La restauration doit préserver la cohérence entre les données et les fichiers référencés, avec contrôles d'intégrité et détection des objets manquants ou orphelins.
+- Les événements durables et traitements asynchrones sont réconciliés selon les règles d'idempotence ; les intégrations externes sont vérifiées avant toute répétition d'une opération à effet externe.
+- Les objectifs RPO (perte temporelle maximale acceptable) et RTO (durée cible de reprise) sont définis par criticité métier ; aucune valeur chiffrée n'est fixée à ce stade.
+- Des procédures de restauration documentées, autorisées et journalisées couvrent les scénarios de panne, corruption, erreur humaine et compromission.
+- Des tests périodiques de restauration complète et partielle sont nécessaires ; l'existence d'une sauvegarde ne constitue pas une preuve de restaurabilité.
+- Les fournisseurs, fréquences, rétentions, mécanismes précis et objectifs chiffrés restent à déterminer après inventaire de l'hébergement et analyse d'impact.
+
+**Document de décision :** [ADR-015 — Sauvegardes et reprise après incident](decisions/ADR-015-backup-and-disaster-recovery.md).
+
+**État :** stratégie cible acceptée ; inventaire de l'infrastructure et du stockage, classification des données, RPO/RTO, choix des mécanismes, cohérence base/fichiers, runbooks et exercices de restauration restent à définir. Aucun système de sauvegarde, script, stockage, compte, configuration, table, migration ou code applicatif n'a été créé ou modifié dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-015 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
