@@ -48,7 +48,7 @@ Le panier est accessible :
 
 Après authentification d'un visiteur possédant un panier invité, Sales fusionne ce panier avec le panier du compte client.
 
-La règle de fusion des lignes est définie par SALES-003. Les contrôles de quantités maximales, articles devenus indisponibles ou inactifs, prix modifiés et conflits concurrents restent à spécifier avant implémentation.
+La fusion des lignes est définie par SALES-003. Les quantités maximales, l'indisponibilité, les changements de prix et de caractéristiques commerciales, les conflits concurrents et les cas de réactivation sont précisés par SALES-006 à SALES-037. Les paramètres techniques encore ouverts sont listés à la section 6.
 
 ### SALES-002 — Séparation des domaines
 
@@ -81,28 +81,38 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 - Orders crée une sous-commande par coopérative et conserve les snapshots commerciaux des lignes.
 - Une modification d'une ligne de commande après création relève du workflow Orders et ne peut pas être effectuée silencieusement par Sales.
 
-## 6. Décisions encore ouvertes
+## 6. Points restant à définir avant le gel technique
 
-Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le schéma :
-- fusion des paniers invité et client : limites de quantité maximale et arbitrage des conflits concurrents ;
-- dépassement du stock disponible dans le panier : autorisé ; contrôle de disponibilité à effectuer au checkout selon SALES-009 ;
-- durée de vie du panier invité et du panier authentifié ;
-- durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
-- panier authentifié conservé sans expiration automatique, jusqu'à suppression volontaire ou transformation en commande (SALES-005) ;
-- traitement d'une ligne dont le produit ou la variante devient inactive ou n'est plus vendable : règle validée par SALES-006 ;
-- traitement d'une modification du prix catalogue entre ajout au panier et checkout : hausse soumise à acceptation explicite et baisse appliquée automatiquement (SALES-007 et SALES-008) ;
-- moment et durée de validité du prix affiché ;
-- règles d'arrondi et de calcul des totaux, taxes et éventuels frais ;
-- promotions : périmètre global ou par coopérative, cumul, priorité, plafonds, période, éligibilité et limites d'utilisation ;
-- coupons : unicité, attribution, limites d'utilisation et contrôle contre les abus ;
-- devis : acteurs, durée de validité, acceptation, expiration et conversion en commande ;
-- checkout : validations, idempotence, double soumission, concurrence et gestion des erreurs partielles ;
-- suppression du panier après création réussie de la commande et conservation de la preuve de checkout ;
-- droits de consultation et de gestion des paniers pour les rôles MAHLINE.
+Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Elles ne doivent plus être présentées comme des questions métier ouvertes. Les éléments ci-dessous sont des paramètres techniques ou des périmètres fonctionnels qui nécessitent encore un arbitrage explicite avant le gel du schéma ou du checkout :
+
+### 6.1 Paramètres et invariants techniques
+- Valeur numérique de la limite technique globale de quantité par ligne (SALES-019) ; la limite commerciale par produit/variante est configurable par la coopérative et reste plafonnée par cette limite globale.
+- Format/version du panier, stratégie exacte de verrouillage optimiste, réponse API en cas de version périmée et politique de retry (SALES-016/017).
+- Clé d'idempotence, empreinte de requête, conservation du résultat et reprise après timeout/réponse incertaine du contrat Orders (SALES-018).
+- Durée de validité d'un prix/devis affiché et mécanisme de preuve d'acceptation d'une hausse ou d'une modification commerciale (SALES-007/008/033/034/037).
+- Champs exacts et version des snapshots de panier et de commande, notamment pour les produits/variantes supprimés ou modifiés (SALES-010/011/012/028/035/037).
+- Règles d'arrondi monétaire, précision des quantités, calculs des sous-totaux, taxes et frais. Les paramètres fiscaux ne doivent pas être inventés.
+- Durée de conservation et accès à l'historique des lignes retirées/supprimées (SALES-014/015).
+
+### 6.2 Périmètres fonctionnels non encore arbitrés
+- Promotions : périmètre global ou par coopérative, cumul, priorité, plafonds, périodes, éligibilité et limites d'utilisation.
+- Coupons : attribution, unicité, limites d'utilisation, cumul et prévention des abus.
+- Devis : acteurs autorisés, validité, acceptation, expiration, révision et conversion en commande.
+- Droits exacts de consultation et d'administration des paniers par rôle MAHLINE, au-delà de la propriété du panier client.
+- Règles tarifaires de livraison, frais, partage éventuel et contrat de calcul avec Delivery.
+- Comportement de récupération si Orders confirme la création mais que Sales ne reçoit pas la réponse ; aucun panier ne doit être consommé sans confirmation vérifiable.
+
+### 6.3 Dépendances bloquantes pour le checkout complet
+- Contrat Products de lecture commerciale du panier : distinguer produit/variante actifs, désactivés, supprimés, variantes inconnues, changements de prix et changements de caractéristiques.
+- Contrat Cooperatives de consultation du statut de la coopérative propriétaire.
+- Contrat Localization de lecture autorisée et de snapshot d'une adresse client active.
+- Contrat public Orders de création idempotente depuis un DTO de checkout, sans exposer User ou les modèles privés Orders.
+- Contrat Inventory de disponibilité au checkout ; aucune réservation ne doit être effectuée à cette étape.
+- Contrat Delivery de calcul/confirmation des frais lorsque le tarif de livraison entre dans le total présenté au client.
 
 ## 7. Suivi d'implémentation
 
-Aucun modèle, migration, route, contrôleur ou service Sales n'est déclaré implémenté par ce document. Le développement commencera après validation des règles métier essentielles et audit des contrats réels de Catalog, Products, Localization et Orders.
+Aucun modèle, migration, route, contrôleur ou service Sales n'est déclaré implémenté par ce document. Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Le développement du panier peut commencer après audit et stabilisation des contrats Products, Cooperatives, Localization et Identity ; le checkout complet reste conditionné aux contrats publics Orders, Inventory et Delivery.
 
 Les tests requis devront couvrir au minimum : panier invité, panier connecté, fusion et conflits, multi-coopératives, prix obsolètes, promotions, devis, checkout idempotent, sécurité des accès, et non-régression Orders / Inventory.
 
