@@ -1005,3 +1005,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Audit statique des contraintes d'ownership, index uniques et foreign keys terminé.
 - Tests MySQL existants identifiés pour les triggers et index ; exécution runtime encore en attente.
 - Countries reste intégré à Localization.
+
+### 25. Lot A15 — périmètre Identity depuis la fiche utilisateur
+
+- CRUD et transitions de statut des comptes internes réservés au super_admin_root, avec classification du rôle fondée sur les rôles actifs en base et indépendante du statut utilisateur.
+- Renvoi d'invitation d'activation autorisé au root globalement, au super_admin pour les comptes user des coopératives affectées et au cooperative_admin pour les comptes user de sa coopérative.
+- Envoi d'un lien de réinitialisation du mot de passe selon le même périmètre ; routes, contrôleurs, Policy et formulaires ajoutés. Token de reset valable 30 minutes.
+- L'affectation d'un super_admin exige un compte actif, vérifié et non verrouillé dans les deux couches Policy et service.
+- Tests ciblés ajoutés mais non exécutés. Identity reste AUDIT_IN_PROGRESS jusqu'à validation locale, tests de routes et suite complète.
