@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Localization\Services;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
@@ -25,7 +25,7 @@ final class AddressService extends BaseService
 {
     private const WRITABLE_FIELDS = ['number', 'street', 'floor', 'postal_code', 'city', 'region', 'latitude', 'longitude'];
 
-    public function __construct(private readonly AuditService $audit) {}
+    public function __construct(private readonly AuditWriter $audit) {}
 
     public function createForUser(User $actor, User $owner, array $attributes): Address
     {
