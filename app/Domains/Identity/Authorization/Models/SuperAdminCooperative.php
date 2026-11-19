@@ -15,6 +15,8 @@ final class SuperAdminCooperative extends Pivot
 
     public $incrementing = false;
 
+    public $timestamps = true;
+
     protected $keyType = 'string';
 
     protected $fillable = [
