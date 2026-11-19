@@ -133,7 +133,7 @@ final class UserManagementController
 
         try {
             $passwordResetService->createToken($user);
-        } catch (\\Throwable) {
+        } catch (\Throwable) {
             return redirect()
                 ->route('backoffice.users.show', $user)
                 ->with('error', 'Le lien de réinitialisation n’a pas pu être envoyé. Vous pourrez réessayer.');
