@@ -992,3 +992,10 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - UserPolicy utilise les contrats CooperativeIdentityReference et SuperAdminCooperativeAssignmentReader, pas le modèle Cooperative ni la relation User::cooperatives().
 - Contrôleur d'affectation transmet les identifiants pour Gate et les opérations de service.
 - Test de frontière UserPolicy ajouté ; tests non exécutés.
+
+### 23. Lot A13 — sécurité Identity
+
+- SessionService bloque désormais la création directe d'une session pour un compte verrouillé d'urgence.
+- PasswordResetService valide la séparation client / non-client dès la demande, à l'émission du token et à sa consommation ; classification par rôles actifs, même si l'e-mail n'est pas vérifié.
+- Tests de session et de reset ajoutés ; non exécutés.
+- Revue statique des tokens, invitations et changement d'e-mail documentée ; aucun gel Identity tant que la suite complète n'a pas été exécutée.
