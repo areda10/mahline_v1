@@ -9,6 +9,12 @@ use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Policies\AddressPolicy;
+use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
+use App\Domains\Localization\Contracts\CooperativeAddressOwnerGateway;
+use App\Shared\Contracts\ActorContextProvider;
+use App\Shared\DTOs\ActorContext;
+use App\Domains\Localization\DTOs\UserAddressOwnerData;
+use App\Domains\Localization\DTOs\CooperativeAddressOwnerData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,7 +28,7 @@ final class AddressPolicyTest extends TestCase
             $actor = $this->userWithRoleAndPermissions($role, []);
 
             self::assertTrue(
-                app(AddressPolicy::class)->updateUserAddress($actor, $actor),
+                app(AddressPolicy::class)->updateUserAddress($this->actorContext($actor), $this->userOwner($actor)),
                 sprintf('Le rôle %s doit pouvoir modifier sa propre adresse.', $role),
             );
         }
@@ -33,7 +39,7 @@ final class AddressPolicyTest extends TestCase
         $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.update']);
         $target = User::factory()->create();
 
-        self::assertTrue(app(AddressPolicy::class)->updateUserAddress($root, $target));
+        self::assertTrue(app(AddressPolicy::class)->updateUserAddress($this->actorContext($root), $this->userOwner($target)));
     }
 
     public function test_super_admin_can_update_personal_address_of_user_in_assigned_cooperative(): void
@@ -47,7 +53,7 @@ final class AddressPolicyTest extends TestCase
             ['cooperative_id' => $cooperative->getKey()],
         );
 
-        self::assertTrue(app(AddressPolicy::class)->updateUserAddress($admin, $target));
+        self::assertTrue(app(AddressPolicy::class)->updateUserAddress($this->actorContext($admin), $this->userOwner($target)));
     }
 
     public function test_super_admin_cannot_update_personal_address_outside_assigned_cooperatives(): void
@@ -109,7 +115,7 @@ final class AddressPolicyTest extends TestCase
         $admin = $this->userWithRoleAndPermissions('super_admin', ['users.update']);
         $customer = $this->userWithRoleAndPermissions('customer', []);
 
-        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($admin, $customer));
+        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($this->actorContext($admin), $this->userOwner($customer)));
     }
 
     public function test_personal_address_update_requires_users_update_permission_for_other_users(): void
@@ -117,7 +123,7 @@ final class AddressPolicyTest extends TestCase
         $root = $this->userWithRoleAndPermissions('super_admin_root', []);
         $target = User::factory()->create();
 
-        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($root, $target));
+        self::assertFalse(app(AddressPolicy::class)->updateUserAddress($this->actorContext($root), $this->userOwner($target)));
     }
 
     public function test_root_can_update_any_cooperative_address(): void
@@ -125,7 +131,7 @@ final class AddressPolicyTest extends TestCase
         $root = $this->userWithRoleAndPermissions('super_admin_root', ['cooperatives.update']);
         $cooperative = $this->createCooperative();
 
-        self::assertTrue(app(AddressPolicy::class)->updateCooperativeAddress($root, $cooperative));
+        self::assertTrue(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($root), $this->cooperativeOwner($cooperative)));
     }
 
     public function test_super_admin_can_update_only_assigned_cooperative_address(): void
@@ -135,8 +141,8 @@ final class AddressPolicyTest extends TestCase
         $admin = $this->userWithRoleAndPermissions('super_admin', ['cooperatives.update']);
         $admin->cooperatives()->attach($assigned->getKey());
 
-        self::assertTrue(app(AddressPolicy::class)->updateCooperativeAddress($admin, $assigned));
-        self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($admin, $unassigned));
+        self::assertTrue(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($admin), $this->cooperativeOwner($assigned)));
+        self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($admin), $this->cooperativeOwner($unassigned)));
     }
 
     public function test_cooperative_admin_can_update_only_own_cooperative_address(): void
@@ -149,8 +155,8 @@ final class AddressPolicyTest extends TestCase
             ['cooperative_id' => $own->getKey()],
         );
 
-        self::assertTrue(app(AddressPolicy::class)->updateCooperativeAddress($admin, $own));
-        self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($admin, $other));
+        self::assertTrue(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($admin), $this->cooperativeOwner($own)));
+        self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($admin), $this->cooperativeOwner($other)));
     }
 
     public function test_user_and_customer_cannot_update_cooperative_addresses(): void
@@ -160,7 +166,7 @@ final class AddressPolicyTest extends TestCase
         foreach (['user', 'customer'] as $role) {
             $actor = $this->userWithRoleAndPermissions($role, ['cooperatives.update']);
 
-            self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($actor, $cooperative));
+            self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($actor), $this->cooperativeOwner($cooperative)));
         }
     }
 
@@ -169,7 +175,23 @@ final class AddressPolicyTest extends TestCase
         $cooperative = $this->createCooperative();
         $root = $this->userWithRoleAndPermissions('super_admin_root', []);
 
-        self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($root, $cooperative));
+        self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($root), $this->cooperativeOwner($cooperative)));
+    }
+
+
+    private function actorContext(User $user): ActorContext
+    {
+        return app(ActorContextProvider::class)->forUserId((string) $user->getKey());
+    }
+
+    private function userOwner(User $user): UserAddressOwnerData
+    {
+        return app(UserAddressOwnerGateway::class)->lock((string) $user->getKey());
+    }
+
+    private function cooperativeOwner(Cooperative $cooperative): CooperativeAddressOwnerData
+    {
+        return app(CooperativeAddressOwnerGateway::class)->lock((string) $cooperative->getKey());
     }
 
     private function createCooperative(): Cooperative
