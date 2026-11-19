@@ -6,9 +6,7 @@ namespace App\Domains\Cooperatives\Services;
 
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
-use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
-use App\Domains\Cooperatives\DTOs\CooperativeStatusData;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Contracts\CooperativeAddressManager;
@@ -18,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
-final class CooperativeService implements CooperativeStatusReader
+final class CooperativeService
 {
     /** @var list<string> */
     private const WRITABLE_FIELDS = [
@@ -37,23 +35,6 @@ final class CooperativeService implements CooperativeStatusReader
         private readonly AuditWriter $audit,
         private readonly CooperativeAddressManager $cooperativeAddresses,
     ) {}
-
-    public function findStatus(string $cooperativeId): ?CooperativeStatusData
-    {
-        $cooperative = Cooperative::withTrashed()->find($cooperativeId);
-
-        if ($cooperative === null) {
-            return null;
-        }
-
-        return new CooperativeStatusData(
-            cooperativeId: (string) $cooperative->getKey(),
-            status: $cooperative->status->value,
-            isActive: ! $cooperative->trashed()
-                && $cooperative->status === CooperativeStatus::ACTIVE,
-            isDeleted: $cooperative->trashed(),
-        );
-    }
 
     /** @param array<string, mixed> $attributes */
     public function create(User $actor, array $attributes, array $addressAttributes): Cooperative
