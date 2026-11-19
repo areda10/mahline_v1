@@ -619,3 +619,5 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Test : `1a0fe1db28bd8dde6eed215b7970b48c040b14cc`
 
 **Validation :** tests écrits mais non exécutés. Ce lot supprime une écriture inter-domaines privée et restaure l'audit/révocation cohérents.
+
+- Durcissement complémentaire : le contrat refuse désormais d'affecter une coopérative si `created_by` ne correspond pas au super_admin demandeur. Commit : `6681226662f1c4132a29a8b3393ccf4d07de55a7`.
