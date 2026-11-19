@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Domains\Cooperatives\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Contracts\CooperativeAddressOwnerGateway;
 use App\Domains\Localization\DTOs\CooperativeAddressOwnerData;
-use Illuminate\Support\Facades\Gate;
+use App\Shared\Contracts\ActorAuthorizer;
 
 final class CooperativeAddressOwnerGatewayService implements CooperativeAddressOwnerGateway
 {
+    public function __construct(private readonly ActorAuthorizer $authorizer) {}
+
     public function lock(string $cooperativeId, bool $withTrashed = false): CooperativeAddressOwnerData
     {
         $query = $withTrashed ? Cooperative::withTrashed() : Cooperative::query();
@@ -22,9 +23,8 @@ final class CooperativeAddressOwnerGatewayService implements CooperativeAddressO
 
     public function authorize(string $actorId, string $ability, string $cooperativeId): void
     {
-        $actor = User::query()->findOrFail($actorId);
         $cooperative = Cooperative::query()->findOrFail($cooperativeId);
 
-        Gate::forUser($actor)->authorize($ability, $cooperative);
+        $this->authorizer->authorize($actorId, $ability, $cooperative);
     }
 }
