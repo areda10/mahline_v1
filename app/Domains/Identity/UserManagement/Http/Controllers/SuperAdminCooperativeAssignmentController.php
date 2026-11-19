@@ -74,7 +74,7 @@ final class SuperAdminCooperativeAssignmentController
             $this->userManagementService->assignSuperAdminToCooperative(
                 $request->user(),
                 $superAdmin,
-                $cooperative,
+                (string) $cooperative->getKey(),
             );
         } catch (\DomainException) {
             return redirect()
