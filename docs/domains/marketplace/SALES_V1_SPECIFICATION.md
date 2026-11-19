@@ -87,7 +87,7 @@ Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le sché
 - fusion des paniers invité et client : limites de quantité et arbitrage des conflits concurrents ;
 - durée de vie du panier invité et du panier authentifié ;
 - durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
-- durée de conservation du panier authentifié et règles de suppression/expiration de ses lignes : à définir ;
+- panier authentifié conservé sans expiration automatique, jusqu'à suppression volontaire ou transformation en commande (SALES-005) ;
 - comportement lorsque le produit ou la variante devient inactive ou n'est plus vendable ;
 - traitement d'une modification du prix catalogue entre ajout au panier et checkout ;
 - moment et durée de validité du prix affiché ;
@@ -132,4 +132,13 @@ Le panier invité et le panier du compte ne doivent pas être fusionnés sur la 
 Un panier invité est conservé pendant 30 jours à compter de sa dernière activité. Toute activité pertinente sur le panier réinitialise cette période de conservation.
 
 Cette règle concerne uniquement le panier invité. La durée de conservation du panier associé à un compte authentifié est indépendante et reste à définir. L'expiration du panier invité ne doit pas entraîner la suppression d'une commande déjà créée ni de ses instantanés commerciaux.
+
+
+### SALES-005 — Conservation du panier authentifié
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Le panier associé à un compte client authentifié est conservé sans expiration automatique. Il reste disponible jusqu'à sa suppression volontaire par le client ou sa transformation à la suite d'une création de commande réussie.
+
+Cette conservation est indépendante de la durée de vie du panier invité, fixée à 30 jours sans activité. Les règles de nettoyage des paniers abandonnés ne doivent donc pas supprimer automatiquement les paniers authentifiés.
 
