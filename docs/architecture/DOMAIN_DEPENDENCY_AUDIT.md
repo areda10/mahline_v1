@@ -638,3 +638,5 @@ Commits de révision : `66b43737c883d8d58f8551a6bd93585f95638362`, `6053e561491a
 Le test de refus d'affectation a été adapté pour vérifier le rôle super_admin requis. Tests non exécutés.
 
 - Séparation complémentaire : `CooperativeStatusReader` est maintenant implémenté par `CooperativeStatusReaderService`, dédié à la lecture, plutôt que par `CooperativeService` qui porte les écritures et dépend de Localization. Commits : `2be30cbd725bcf4938abb94556ba0c0e1203b383`, `20bfbb7c1d6fbf19d42296dc3417b7b1864c2bd1`, `42af72ab6eaa9bb888facd38edfce8b2d4cbf9e0`.
+
+- Ajustement du test Feature A4 : désactivation du middleware de session active dans ce test isolé, comme dans les autres tests du contrôleur root, afin que l'assertion cible réellement le refus de rôle. Commit : `9ce03e84e36cc60362cb26caa1521094ddc0e9ed`.
