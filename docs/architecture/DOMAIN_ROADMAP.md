@@ -946,3 +946,5 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - `UserManagementService` ne manipule plus le pivot via la relation `User::cooperatives()` ; il utilise le modèle Identity `SuperAdminCooperative`.
 - Aucun import du modèle Cooperative ni appel `cooperatives()` ne subsiste dans ce service.
 - Commits : `841b85e`, `31f70f1`.
+
+- Contrôle statique des tests : correction d'un séparateur de namespace doublé dans un test Identity. Commit : `472a8a5`.
