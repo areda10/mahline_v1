@@ -172,14 +172,16 @@ final class AddressService extends BaseService implements CooperativeAddressMana
         });
     }
 
-    public function createAddressForCooperative(User $actor, string $cooperativeId, array $attributes): void
+    public function createAddressForCooperative(string $actorId, string $cooperativeId, array $attributes): void
     {
+        $actor = User::query()->findOrFail($actorId);
         $cooperative = Cooperative::query()->findOrFail($cooperativeId);
         $this->createForCooperative($actor, $cooperative, $attributes);
     }
 
-    public function updateAddressForCooperative(User $actor, string $cooperativeId, array $attributes): void
+    public function updateAddressForCooperative(string $actorId, string $cooperativeId, array $attributes): void
     {
+        $actor = User::query()->findOrFail($actorId);
         $cooperative = Cooperative::query()->findOrFail($cooperativeId);
         $this->updateForCooperative($actor, $cooperative, $attributes);
     }
