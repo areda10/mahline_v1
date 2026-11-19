@@ -568,3 +568,19 @@ Lorsqu'un produit présent dans un panier devient indisponible parce que sa coop
 - Les autres validations restent obligatoires ; cette baisse ne contourne notamment pas les contrôles de statut, de limite commerciale, de quantité ou de disponibilité du stock.
 
 Cette règle complète SALES-008 et s'applique même si la baisse est intervenue pendant la période d'inactivité de la coopérative.
+
+
+### SALES-035 — Variante supprimée pendant l'indisponibilité de la coopérative
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une ligne de panier référence une variante qui est supprimée par sa coopérative pendant une période d'inactivité, puis que la coopérative redevient active :
+
+- La ligne conserve la référence et les informations historiques permettant d'identifier la variante initialement choisie.
+- La ligne reste signalée comme variante supprimée/indisponible après la réactivation de la coopérative.
+- Le checkout du panier reste bloqué tant que le client n'a pas retiré manuellement cette ligne.
+- Aucune substitution automatique par une autre variante active du même produit n'est autorisée, même si elle paraît équivalente.
+- Aucune suppression automatique de la ligne n'est effectuée.
+- Les autres lignes du panier suivent leurs propres règles de disponibilité et de validation.
+
+Cette règle complète SALES-012 et SALES-028. La réactivation de la coopérative ne réactive pas une variante supprimée et ne modifie pas le choix initial du client.
