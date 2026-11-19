@@ -7,7 +7,7 @@ namespace App\Domains\Localization\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Services\AuditService;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
