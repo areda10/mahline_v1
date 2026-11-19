@@ -314,3 +314,26 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-013 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 15. Décision architecturale — observabilité technique et traçabilité transversale (19 novembre 2026)
+
+**Décision 14 validée :** adopter une observabilité hybride, avec infrastructure technique commune et responsabilité métier conservée par chaque domaine.
+
+- Les logs techniques, l'audit métier, les événements de sécurité, les métriques et les traces distribuées sont des catégories distinctes ; aucune ne remplace les autres.
+- Les logs techniques et métriques peuvent être centralisés, mais cette centralisation ne confère pas un accès général aux journaux d'audit ou de sécurité.
+- Chaque domaine reste propriétaire de ses événements métier et de leur interprétation.
+- Un `correlation_id` suit un workflow métier ; un `trace_id` et des identifiants de span permettent de suivre son exécution technique à travers les appels et jobs.
+- Les identifiants sont propagés dans les appels synchrones, événements et traitements asynchrones lorsque le contexte est disponible.
+- Les secrets, mots de passe, tokens, codes OTP et données sensibles inutiles sont exclus des logs ; les données personnelles et financières sont minimisées, masquées ou pseudonymisées.
+- Les métriques couvrent notamment latence, erreurs, disponibilité, files, jobs, retries, événements et santé des workers.
+- Les accès, durées de conservation, exports, alertes et procédures d'investigation sont définis par catégorie de données.
+- Les conventions restent indépendantes d'un fournisseur afin de préparer le tracing distribué et l'extraction future de domaines ou workers.
+
+**Document de décision :** [ADR-014 — Observabilité technique et traçabilité transversale](decisions/ADR-014-observability-and-tracing.md).
+
+**État :** architecture cible acceptée ; inventaire des mécanismes existants, conventions de logs, propagation des identifiants, règles de masquage, accès, rétentions, métriques, alertes et tests restent à définir ou auditer. Aucun outil, infrastructure, configuration, table, migration ou code applicatif n'a été créé ou modifié dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-014 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
