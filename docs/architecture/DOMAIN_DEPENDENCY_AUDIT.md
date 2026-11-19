@@ -446,3 +446,39 @@ Un domaine absent du code reste `À implémenter`, pas `FROZEN`. Un domaine part
 - Test : `6cc88ab802b18c947668ca4f9149710f040526ae`
 
 **Validation :** modifications poussées sur `feature/Marketplace`. PHPUnit, Pint et tests MySQL non exécutés ici. Le lot A1 n'est donc pas déclaré validé par exécution.
+
+
+### 11.8 Lot A2 — Identity : suppression de l'activation par mot de passe partagé (19 novembre 2026)
+
+**Fichiers audités :**
+- `app/Domains/Identity/UserManagement/Services/UserManagementService.php`
+- `app/Domains/Identity/SuperAdminRoot/Http/Controllers/UserManagementController.php`
+- `routes/web.php`
+- `resources/views/super-admin-root/users/show.blade.php`
+- `tests/Framework/Domains/Identity/UserManagement/Services/UserManagementServiceTest.php`
+- `app/Domains/Identity/Authentication/Services/AuthenticationService.php`
+- `app/Domains/Identity/Authentication/Services/SessionService.php`
+- `app/Domains/Identity/Authentication/Services/ApiTokenService.php`
+- `app/Domains/Identity/Authentication/Http/Middleware/EnsureActiveAuthenticationSession.php`
+- `app/Domains/Identity/Authorization/Policies/UserPolicy.php`
+
+**Écart P0 corrigé :** l'action root `activate-and-verify` validait directement l'adresse e-mail et attribuait le mot de passe partagé `MahlineMahline`, lequel était ensuite affiché dans l'interface. Cette voie contournait la vérification par invitation et exposait un secret commun. La route, l'action du contrôleur, la méthode de service et le formulaire correspondant ont été supprimés. Le test de service vérifie maintenant que l'activation root conserve l'adresse non vérifiée et le mot de passe existant ; le parcours restant envoie une invitation de vérification.
+
+La dépendance `PasswordHistoryService` devenue inutilisée dans `UserManagementService` a également été retirée.
+
+**Écarts Identity encore ouverts :**
+- `User` expose des relations Eloquent directes vers Cooperatives, Localization et Media ; plusieurs services Identity importent également Cooperative ou AddressService. La frontière de domaine n'est pas encore propre.
+- Les bindings `SuperAdminCooperativeAssignmentService` et `AuthenticationWorkflowHook` sont encore enregistrés dans `AppServiceProvider` au lieu d'un provider de composition Identity clairement identifié.
+- La gestion de token reste centrée sur le modèle Eloquent User à travers son service ; vérifier toutes les routes/middlewares API pour prouver que les abilities Sanctum ne remplacent jamais les Policies/Gates et que l'expiration 90 jours est appliquée à l'authentification.
+- Les sessions multiples sont bien explicitées dans le service et couvertes par des tests existants ; vérifier l'ensemble des parcours de révocation, les courses login/révocation et les tests MySQL.
+- Vérifier les flows d'invitation, reset 30 minutes, changement d'e-mail, verrouillage d'urgence, historique de mots de passe et absence de secrets dans les logs/audits.
+
+**Commits du lot :**
+- Service : `acc951883cd65f5d9f79f3997668ae88e34397d1`
+- Contrôleur : `1b6041b9616c6747db632a89ac3e43c7a4ffc313`
+- Route : `9730d4c0ee4463f18cafb2fe389051766f94abbe`
+- Vue : `2d2f761243b55789c03f5fdf4fc250245e9302ba`
+- Test : `cfc950e5c8f2ba3509a13b2dd2e7b809ad93aae5`
+- Nettoyage dépendance : `4789744e9ef9b8663202e1ce776a50da982a2c76`
+
+**Validation :** code et test modifiés sur `feature/Marketplace`. PHPUnit, Pint, tests de routes et parcours invitation non exécutés ici. Le lot A2 reste en attente de validation runtime.
