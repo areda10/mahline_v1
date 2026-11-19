@@ -103,7 +103,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             if (
                 $cooperativeId !== null
-                && ! $this->cooperatives->lockActive((string) $cooperativeId)
+                && ! $this->cooperatives->lockNotDeleted((string) $cooperativeId)
             ) {
                 throw new DomainException('The cooperative does not exist or is no longer available.');
             }
@@ -223,7 +223,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $initialStatus,
         ): User {
             if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
-                if (! $this->cooperatives->lockActive((string) $attributes['cooperative_id'])) {
+                if (! $this->cooperatives->lockNotDeleted((string) $attributes['cooperative_id'])) {
                     throw new DomainException('The cooperative does not exist or is no longer available.');
                 }
             }
@@ -351,7 +351,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             // Revalidation après acquisition du verrou.
             $this->assertSuperAdminTarget($lockedSuperAdmin);
 
-            if (! $this->cooperatives->lockActive($cooperativeId)) {
+            if (! $this->cooperatives->lockNotDeleted($cooperativeId)) {
                 throw new DomainException('The cooperative does not exist or is deleted.');
             }
 
@@ -428,7 +428,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             // ou suspendu : la désaffectation reste autorisée.
             $this->assertSuperAdminRoleTarget($lockedSuperAdmin);
 
-            if (! $this->cooperatives->lockActive($cooperativeId)) {
+            if (! $this->cooperatives->lockNotDeleted($cooperativeId)) {
                 throw new DomainException('The cooperative does not exist or is deleted.');
             }
 
@@ -939,7 +939,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     ): void {
         $this->assertCooperativeIdProvided($cooperativeId);
 
-        $exists = $this->cooperatives->existsActive((string) $cooperativeId);
+        $exists = $this->cooperatives->existsNotDeleted((string) $cooperativeId);
 
         if (! $exists) {
             throw new DomainException(
