@@ -950,3 +950,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Contrôle statique des tests : correction d'un séparateur de namespace doublé dans un test Identity. Commit : `472a8a5`.
 
 - Timestamps du pivot Identity explicitement activés et vérifiés dans le test de création. Commits : `7059760`, `f87bd65`.
+
+### 18. État de la séquence A1–A8
+
+- Lots de corrections et tests écrits : Cooperatives, Identity, Localization, événements versionnés, contrats publics, ownership du pivot, révocation de sessions et adresses.
+- Identity / Localization / Cooperatives restent **AUDIT_IN_PROGRESS**, non `FROZEN`.
+- Restent : ActorContext pour CooperativeService ; contrats d'owner/DTO pour AddressService et AddressPolicy ; audit des relations Eloquent inter-domaines ; intégration MediaOwnerObserver ; audit Identity complet ; tests PHPUnit/Pint/MySQL.
+- Aucun test runtime n'a été exécuté ici ; aucun statut CI disponible sur la branche lors du contrôle.
+- Prochain lot : A9 — contrats d'acteur et d'owner, puis audit exhaustif des fichiers restants de ces trois domaines.
