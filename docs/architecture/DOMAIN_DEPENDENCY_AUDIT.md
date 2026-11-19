@@ -418,3 +418,31 @@ Un domaine ne peut passer à `FROZEN` que si toutes les conditions suivantes son
 8. audit final des fichiers et du diff, documentation et roadmap mises à jour avec SHA/commit de preuve.
 
 Un domaine absent du code reste `À implémenter`, pas `FROZEN`. Un domaine partiellement présent reste `Écarts à corriger` ou `À tester`. Aucun résultat de test non exécuté n'est réputé vert.
+
+
+### 11.7 Lot A1 — Cooperatives : politique de suppression corrigée (19 novembre 2026)
+
+**Fichiers audités :**
+- `app/Domains/Cooperatives/Policies/CooperativePolicy.php`
+- `app/Domains/Cooperatives/Services/CooperativeService.php`
+- `app/Domains/Cooperatives/Models/Cooperative.php`
+- `app/Domains/Cooperatives/Http/Controllers/CooperativeController.php`
+- `app/Domains/Cooperatives/Providers/CooperativesServiceProvider.php`
+- `tests/Framework/Domains/Cooperatives/Policies/CooperativePolicyTest.php`
+
+**Écart corrigé :** la méthode `delete` refusait auparavant toute suppression par un `super_admin`, même affecté à la coopérative. Elle autorise maintenant `super_admin_root` globalement et `super_admin` uniquement si la coopérative lui est affectée, avec la permission `cooperatives.delete`. Les rôles `cooperative_admin` et `user` restent exclus.
+
+**Test ajouté/modifié :** un `super_admin` peut supprimer une coopérative affectée et ne peut pas supprimer une coopérative non affectée.
+
+**Écarts encore ouverts dans Cooperatives :**
+- `CooperativeService` dépend directement du modèle Eloquent Identity `User` pour l'acteur et les affectations.
+- `CooperativeController` dépend directement de `Localization\\Services\\AddressService` pour modifier l'adresse, alors qu'il doit dépendre d'un contrat public Localization ; le contrat actuel `CooperativeAddressManager` ne couvre pas encore l'opération de mise à jour.
+- `Cooperative` expose des relations Eloquent directes vers Identity, Localization, Media et Products ; à classifier et remplacer/encapsuler selon les contrats de lecture et de composition retenus.
+- Aucun contrat public `CooperativeStatusReader`/DTO de statut n'est encore présent pour les consommateurs métier.
+- Les règles de restauration restent root-only dans le service ; à couvrir explicitement par tests et à confirmer contre la spécification V1 consolidée.
+
+**Commits du lot :**
+- Policy : `048f47736203c2b1c5d08208bd68b1fc195c411c`
+- Test : `6cc88ab802b18c947668ca4f9149710f040526ae`
+
+**Validation :** modifications poussées sur `feature/Marketplace`. PHPUnit, Pint et tests MySQL non exécutés ici. Le lot A1 n'est donc pas déclaré validé par exécution.
