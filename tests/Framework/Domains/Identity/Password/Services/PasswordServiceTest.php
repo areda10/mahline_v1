@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
@@ -386,7 +386,7 @@ final class PasswordServiceTest extends TestCase
 
         $service = new PasswordService(
             app(SessionService::class),
-            app(AuditService::class),
+            app(AuditWriter::class),
             app(PasswordHistoryService::class),
         );
 
