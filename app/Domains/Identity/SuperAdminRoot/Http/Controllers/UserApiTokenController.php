@@ -148,6 +148,6 @@ final class UserApiTokenController
 
     private function assertManageableTarget(User $user): void
     {
-        abort_if($user->hasAnyRole(['super_admin_root', 'customer']), 404);
+        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
     }
 }
