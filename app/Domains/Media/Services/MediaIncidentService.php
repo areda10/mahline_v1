@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Services;
 
-use App\Domains\Audit\Repositories\AuditEventRepository;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Enums\MediaIncidentStatus;
@@ -23,8 +22,8 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 final class MediaIncidentService
 {
     public function __construct(
-        private readonly AuditService $audit,
-        private readonly AuditEventRepository $auditEvents,
+        private readonly AuditWriter $audit,
+        
         private readonly MediaService $media,
     ) {}
 
@@ -155,7 +154,7 @@ final class MediaIncidentService
 
     private function recordCollectionEvent(User $actor, string $eventKey, string $action): void
     {
-        if (! $this->auditEvents->verifyIntegrity()) {
+        if (! $this->audit->verifyIntegrity()) {
             throw new \RuntimeException('La chaîne d’audit est invalide ; consultation incident refusée.');
         }
 
