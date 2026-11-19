@@ -84,7 +84,8 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 ## 6. Décisions encore ouvertes
 
 Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le schéma :
-- fusion des paniers invité et client : limites de quantité et arbitrage des conflits concurrents ;
+- fusion des paniers invité et client : limites de quantité maximale et arbitrage des conflits concurrents ;
+- dépassement du stock disponible dans le panier : autorisé ; contrôle de disponibilité à effectuer au checkout selon SALES-009 ;
 - durée de vie du panier invité et du panier authentifié ;
 - durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
 - panier authentifié conservé sans expiration automatique, jusqu'à suppression volontaire ou transformation en commande (SALES-005) ;
@@ -183,3 +184,18 @@ Si le prix de référence d'un produit ou d'une variante baisse après son ajout
 - aucune acceptation supplémentaire n'est requise pour bénéficier de cette baisse.
 
 La règle SALES-007 reste applicable aux hausses : toute augmentation doit être présentée au client et acceptée explicitement avant de poursuivre le checkout. Une baisse ultérieure doit toujours bénéficier au client. Le prix final transmis à Orders est le prix de référence courant vérifié au moment de la validation, avec les informations nécessaires au snapshot commercial.
+
+
+### SALES-009 — Quantité du panier et stock disponible
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Le client peut ajouter au panier une quantité supérieure au stock actuellement disponible.
+
+- Le panier est une intention d'achat et ne constitue jamais une réservation de stock.
+- Sales ne bloque pas l'ajout ou la modification d'une quantité au seul motif que le stock courant est inférieur à cette quantité.
+- La disponibilité est vérifiée aux étapes métier définies par Inventory, notamment lors du checkout et de la confirmation de la sous-commande selon les règles Inventory applicables.
+- Une quantité supérieure au stock ne garantit ni la disponibilité ni la confirmation de la commande.
+- Sales doit présenter les informations de disponibilité disponibles sans les transformer en promesse de stock réservé.
+
+Les limites absolues de quantité par ligne, les règles anti-abus et les contrôles de dépassement indépendants du stock restent à définir.
