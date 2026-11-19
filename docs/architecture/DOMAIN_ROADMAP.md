@@ -876,3 +876,10 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test de bout en bout service ajouté : suppression permise sur coopérative affectée, soft delete de son adresse, refus hors affectation et absence d'audit de suppression hors périmètre.
 - Commit : `735de59`.
 - PHPUnit non exécuté.
+
+#### Complément A3 — restauration des adresses client
+
+- Correction du calcul de limite de restauration : le type de compte client est désormais déterminé par le rôle actif, même si le compte est archivé/inactif.
+- Test ajouté pour restaurer cinq adresses après archivage et soft delete, avec une seule adresse principale.
+- Commits : `c0ee1be`, `5a2aa1a`.
+- PHPUnit non exécuté.
