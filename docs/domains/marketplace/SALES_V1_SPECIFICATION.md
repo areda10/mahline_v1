@@ -88,7 +88,7 @@ Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le sché
 - durée de vie du panier invité et du panier authentifié ;
 - durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
 - panier authentifié conservé sans expiration automatique, jusqu'à suppression volontaire ou transformation en commande (SALES-005) ;
-- comportement lorsque le produit ou la variante devient inactive ou n'est plus vendable ;
+- traitement d'une ligne dont le produit ou la variante devient inactive ou n'est plus vendable : règle validée par SALES-006 ;
 - traitement d'une modification du prix catalogue entre ajout au panier et checkout ;
 - moment et durée de validité du prix affiché ;
 - règles d'arrondi et de calcul des totaux, taxes et éventuels frais ;
@@ -142,3 +142,17 @@ Le panier associé à un compte client authentifié est conservé sans expiratio
 
 Cette conservation est indépendante de la durée de vie du panier invité, fixée à 30 jours sans activité. Les règles de nettoyage des paniers abandonnés ne doivent donc pas supprimer automatiquement les paniers authentifiés.
 
+
+
+### SALES-006 — Produit devenu indisponible dans le panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option D)**
+
+Lorsqu'un produit ou une variante présent(e) dans le panier devient inactif(ve), désactivé(e) ou n'est plus vendable :
+- Sales conserve la ligne dans le panier ;
+- la ligne est signalée clairement comme indisponible ;
+- le checkout est bloqué tant qu'une ligne indisponible subsiste ;
+- le client peut retirer lui-même la ligne pour poursuivre son checkout ;
+- Sales ne supprime pas automatiquement la ligne et ne transmet pas une ligne invalide à Orders.
+
+La vérification de l'état vendable doit être refaite au checkout auprès du domaine propriétaire du produit. Le signalement dans le panier est informatif et ne remplace pas cette validation finale.
