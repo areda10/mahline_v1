@@ -6,7 +6,7 @@ namespace App\Domains\Localization\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use Database\Factories\AddressFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
