@@ -553,3 +553,18 @@ Lorsqu'un produit présent dans un panier devient indisponible parce que sa coop
 - Le prix accepté et les informations nécessaires à la traçabilité doivent être transmis à Orders pour le snapshot de commande, conformément à SALES-007.
 
 Cette règle s'applique même si la hausse est intervenue pendant la période d'inactivité de la coopérative. La réactivation ne remet pas à zéro l'obligation d'acceptation explicite d'une hausse.
+
+
+### SALES-034 — Baisse de prix pendant l'indisponibilité d'une coopérative
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'un produit présent dans un panier devient indisponible parce que sa coopérative est inactive, puis que la coopérative redevient active avec un prix inférieur au prix de référence enregistré avant l'inactivité :
+
+- La ligne redevient disponible après la réactivation, sous réserve des autres contrôles applicables.
+- Le nouveau prix inférieur est automatiquement appliqué à la ligne et communiqué clairement au client.
+- Aucune acceptation supplémentaire du client n'est nécessaire pour bénéficier de cette baisse.
+- Le prix courant vérifié est transmis à Orders pour le snapshot de commande.
+- Les autres validations restent obligatoires ; cette baisse ne contourne notamment pas les contrôles de statut, de limite commerciale, de quantité ou de disponibilité du stock.
+
+Cette règle complète SALES-008 et s'applique même si la baisse est intervenue pendant la période d'inactivité de la coopérative.
