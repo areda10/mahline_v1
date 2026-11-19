@@ -292,3 +292,17 @@ Une ligne supprimée du panier, individuellement ou lors du vidage complet, ne p
 - Les contrôles actuels de statut, de prix et de disponibilité s'appliquent comme pour tout nouvel ajout.
 - L'historique interne des lignes supprimées reste conservé à des fins de traçabilité, mais ne constitue pas une fonction de restauration.
 - Aucune ancienne quantité, aucun ancien prix accepté et aucune ancienne condition commerciale ne sont réactivés.
+
+
+### SALES-016 — Panier synchronisé entre les appareils
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Pour un client authentifié, le panier est unique au niveau du compte et synchronisé entre ses appareils (ordinateur, téléphone, tablette).
+
+- Les lignes et quantités du panier du compte sont communes à toutes ses sessions et tous ses appareils.
+- Une modification effectuée sur un appareil doit être répercutée sur les autres appareils.
+- La synchronisation doit prévenir les pertes de données et les écrasements silencieux en cas de modifications concurrentes.
+- Les mécanismes techniques de concurrence, de versionnement et de résolution des conflits seront définis lors de l'audit technique avant implémentation.
+- Cette règle concerne le panier authentifié ; elle ne transforme pas le panier invité en panier multi-appareils.
+
