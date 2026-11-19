@@ -385,3 +385,16 @@ Lorsqu'aucune limite commerciale n'est configurée par la coopérative pour un p
 - L'absence de configuration commerciale ne bloque donc pas, à elle seule, l'ajout au panier ou le checkout.
 
 Cette règle n'affecte pas les contrôles de disponibilité, de statut vendable ou de prix, qui restent indépendants des limites de quantité.
+
+### SALES-022 — Autorisation de gestion des limites commerciales
+
+**Statut : VALIDÉ — 19 novembre 2026**
+
+La définition et la modification des limites commerciales de quantité sont autorisées selon le périmètre coopératif du rôle :
+
+- **`cooperative_admin`** : peut définir et modifier les limites des produits et variantes de sa propre coopérative.
+- **`super_admin`** : peut définir et modifier les limites des produits et variantes des coopératives qui lui sont affectées.
+- **`super_admin_root`** : peut définir et modifier les limites pour toutes les coopératives.
+- **`user`** : ne peut ni définir ni modifier ces limites.
+
+Toute opération doit vérifier côté serveur le rôle et le périmètre d'accès à la coopérative concernée. Cette autorisation ne permet pas de dépasser la limite technique globale de MAHLINE définie par SALES-019.
