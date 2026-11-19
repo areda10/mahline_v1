@@ -12,6 +12,10 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
+use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
+use App\Domains\Localization\Contracts\CooperativeAddressOwnerGateway;
+use App\Domains\Identity\Users\Services\IdentityUserAddressOwnerGateway;
+use App\Domains\Cooperatives\Services\CooperativeAddressOwnerGatewayService;
 use App\Domains\Localization\Services\AddressService;
 use Database\Seeders\CountrySeeder;
 use Database\Seeders\PermissionSeeder;
@@ -37,6 +41,18 @@ final class AddressServiceTest extends TestCase
             RolePermissionSeeder::class,
             CountrySeeder::class,
         ]);
+    }
+
+    public function test_address_owner_gateway_ports_are_bound_by_their_owning_domains(): void
+    {
+        self::assertInstanceOf(
+            IdentityUserAddressOwnerGateway::class,
+            app(UserAddressOwnerGateway::class),
+        );
+        self::assertInstanceOf(
+            CooperativeAddressOwnerGatewayService::class,
+            app(CooperativeAddressOwnerGateway::class),
+        );
     }
 
     public function test_primary_user_address_can_be_created_or_updated_through_the_contract(): void
