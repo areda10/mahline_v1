@@ -18,7 +18,9 @@ final class CooperativeStatusReaderTest extends TestCase
 
     public function test_identity_reference_contract_checks_and_locks_active_cooperatives(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->create([
+            'status' => CooperativeStatus::INACTIVE,
+        ]);
         $reference = app(CooperativeIdentityReference::class);
 
         self::assertTrue($reference->existsNotDeleted((string) $cooperative->getKey()));
