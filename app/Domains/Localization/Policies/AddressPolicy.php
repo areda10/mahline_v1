@@ -7,9 +7,12 @@ namespace App\Domains\Localization\Policies;
 use App\Core\Foundation\Policies\BasePolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
 
 final class AddressPolicy extends BasePolicy
 {
+    public function __construct(private readonly SuperAdminCooperativeAssignmentReader $assignments) {}
+
     private const ROLE_SUPER_ADMIN_ROOT = 'super_admin_root';
 
     private const ROLE_SUPER_ADMIN = 'super_admin';
@@ -56,9 +59,10 @@ final class AddressPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $actor->cooperatives()
-                ->whereKey($target->cooperative_id)
-                ->exists();
+            return $this->assignments->isAssigned(
+                (string) $actor->getKey(),
+                (string) $target->cooperative_id,
+            );
         }
 
         if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
@@ -84,7 +88,7 @@ final class AddressPolicy extends BasePolicy
         }
 
         return $actor->hasRole(self::ROLE_SUPER_ADMIN)
-            && $actor->cooperatives()->whereKey($cooperative->getKey())->exists();
+            && $this->assignments->isAssigned((string) $actor->getKey(), (string) $cooperative->getKey());
     }
 
     /**
@@ -101,9 +105,10 @@ final class AddressPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $actor->cooperatives()
-                ->whereKey($cooperative->getKey())
-                ->exists();
+            return $this->assignments->isAssigned(
+                (string) $actor->getKey(),
+                (string) $cooperative->getKey(),
+            );
         }
 
         if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
