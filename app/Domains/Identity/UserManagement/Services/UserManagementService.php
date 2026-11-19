@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Contracts\AuditWriter;
-use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Cooperatives\Contracts\CooperativeIdentityReference;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -33,6 +33,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         private readonly SessionService $sessions,
         private readonly ApiTokenService $apiTokens,
         private readonly UserAddressLifecycleManager $addresses,
+        private readonly CooperativeIdentityReference $cooperatives,
     ) {}
 
     /**
@@ -218,10 +219,9 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $initialStatus,
         ): User {
             if ($roleSlug !== self::ROLE_SUPER_ADMIN) {
-                Cooperative::query()
-                    ->whereKey($attributes['cooperative_id'])
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                if (! $this->cooperatives->lockActive((string) $attributes['cooperative_id'])) {
+                    throw new DomainException('The cooperative does not exist or is no longer available.');
+                }
             }
 
             $userAttributes = array_merge($attributes, [
@@ -323,18 +323,19 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function assignSuperAdminToCooperative(
         User $actor,
         User $superAdmin,
-        Cooperative $cooperative,
+        string $cooperativeId,
     ): void {
         $this->assertActorIsActive($actor);
         $this->assertSuperAdminRoot($actor);
         $this->assertSuperAdminTarget($superAdmin);
-        $this->assertCooperativeExists($cooperative->getKey());
-
         DB::transaction(function () use (
             $actor,
             $superAdmin,
-            $cooperative,
+            $cooperativeId,
         ): void {
+            if (! $this->cooperatives->lockActive($cooperativeId)) {
+                throw new DomainException('The cooperative does not exist or is deleted.');
+            }
             $lockedSuperAdmin = User::query()
                 ->whereKey($superAdmin->getKey())
                 ->lockForUpdate()
@@ -351,34 +352,24 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             // Lock the cooperative so concurrent assignment attempts cannot
             // attach two different super administrators to the same cooperative.
-            $lockedCooperative = Cooperative::query()
-                ->whereKey($cooperative->getKey())
-                ->lockForUpdate()
-                ->first();
-
-            if ($lockedCooperative === null) {
-                throw new DomainException('The cooperative does not exist or is deleted.');
-            }
-
             $alreadyAssigned = $lockedSuperAdmin->cooperatives()
-                ->whereKey($lockedCooperative->getKey())
+                ->whereKey($cooperativeId)
                 ->exists();
 
             if ($alreadyAssigned) {
                 return;
             }
 
-            $assignedToAnotherSuperAdmin = $lockedCooperative->superAdmins()
-                ->where('users.id', '<>', $lockedSuperAdmin->getKey())
+            $assignedToAnotherSuperAdmin = DB::table('super_admin_cooperative')
+                ->where('cooperative_id', $cooperativeId)
+                ->where('super_admin_id', '<>', $lockedSuperAdmin->getKey())
                 ->exists();
 
             if ($assignedToAnotherSuperAdmin) {
                 throw new DomainException('A cooperative can be assigned to only one super admin.');
             }
 
-            $lockedSuperAdmin->cooperatives()->attach(
-                $cooperative->getKey(),
-            );
+            $lockedSuperAdmin->cooperatives()->attach($cooperativeId);
 
             // L'événement d'audit appartient à la même transaction.
             $this->apiTokens->revokeForUser(
@@ -394,11 +385,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 action: 'assigned',
                 actorType: User::class,
                 actorId: (string) $actor->getKey(),
-                cooperativeId: (string) $cooperative->getKey(),
+                cooperativeId: $cooperativeId,
                 subjectType: User::class,
                 subjectId: (string) $lockedSuperAdmin->getKey(),
                 newValues: [
-                    'cooperative_id' => (string) $cooperative->getKey(),
+                    'cooperative_id' => $cooperativeId,
                 ],
             ));
         });
@@ -407,18 +398,19 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     public function removeSuperAdminFromCooperative(
         User $actor,
         User $superAdmin,
-        Cooperative $cooperative,
+        string $cooperativeId,
     ): void {
         $this->assertActorIsActive($actor);
         $this->assertSuperAdminRoot($actor);
         $this->assertSuperAdminRoleTarget($superAdmin);
-        $this->assertCooperativeExists($cooperative->getKey());
-
         DB::transaction(function () use (
             $actor,
             $superAdmin,
-            $cooperative,
+            $cooperativeId,
         ): void {
+            if (! $this->cooperatives->lockActive($cooperativeId)) {
+                throw new DomainException('The cooperative does not exist or is deleted.');
+            }
             $lockedSuperAdmin = User::query()
                 ->whereKey($superAdmin->getKey())
                 ->lockForUpdate()
@@ -435,7 +427,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             $this->assertSuperAdminRoleTarget($lockedSuperAdmin);
 
             $isAssigned = $lockedSuperAdmin->cooperatives()
-                ->whereKey($cooperative->getKey())
+                ->whereKey($cooperativeId)
                 ->exists();
 
             if (! $isAssigned) {
@@ -443,7 +435,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
             }
 
             $lockedSuperAdmin->cooperatives()->detach(
-                $cooperative->getKey(),
+                $cooperativeId,
             );
 
             // L'événement d'audit appartient à la même transaction.
@@ -460,11 +452,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 action: 'unassigned',
                 actorType: User::class,
                 actorId: (string) $actor->getKey(),
-                cooperativeId: (string) $cooperative->getKey(),
+                cooperativeId: $cooperativeId,
                 subjectType: User::class,
                 subjectId: (string) $lockedSuperAdmin->getKey(),
                 oldValues: [
-                    'cooperative_id' => (string) $cooperative->getKey(),
+                    'cooperative_id' => $cooperativeId,
                 ],
             ));
         });
@@ -941,9 +933,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     ): void {
         $this->assertCooperativeIdProvided($cooperativeId);
 
-        $exists = Cooperative::query()
-            ->whereKey($cooperativeId)
-            ->exists();
+        $exists = $this->cooperatives->existsActive((string) $cooperativeId);
 
         if (! $exists) {
             throw new DomainException(
