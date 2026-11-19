@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 final class MediaCleanupService
 {
     public function __construct(
-        private readonly AuditWriter $audit
+        private readonly AuditWriter $audit,
     ) {}
 
     public function purgeExpired(): int
