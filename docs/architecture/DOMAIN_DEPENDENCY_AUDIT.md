@@ -677,3 +677,21 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Contrôle statique complémentaire des tests : une référence FQCN avec séparateur doublé dans le test d'affectation a été corrigée. Commit : `472a8a5766ddfadb01658dc718a6206873c3e613`.
 
 - Précision pivot : le modèle Identity `SuperAdminCooperative` active explicitement les timestamps pour ses écritures directes ; le test de création vérifie `created_at` et `updated_at`. Commits : `7059760746f54a0bc3c11f74f38a3527ccb8783e`, `f87bd65a82bbd7730d72cf75401d71dde729c22d`.
+
+### 11.15 État de la première séquence détaillée (19 novembre 2026)
+
+**Lots écrits :** A1 Cooperatives delete scope ; A2 Identity activation security ; A3 Localization address contracts ; A4 Identity session/token safeguards ; A5 Identity provider ; A6 Cooperative status reader ; A7 CooperativeCreatedV1 / affectation Identity ; A8 CooperativeIdentityReference / pivot Identity.
+
+**Domaines :** Identity, Localization et Cooperatives restent **AUDIT_IN_PROGRESS**. Aucun n'est déclaré `FROZEN`.
+
+**Écarts restants à traiter avant clôture :**
+1. `CooperativeService` dépend encore du modèle User comme acteur ; définir un contrat/DTO ActorContext Identity sans contourner Gate/Policies.
+2. `AddressService` et `AddressPolicy` dépendent encore directement des modèles Eloquent User/Cooperative pour l'ownership, les verrous et les autorisations ; formaliser les contrats d'owner et le DTO d'adresse.
+3. Les modèles User et Cooperative exposent encore des relations Eloquent inter-domaines ; classer chaque relation en lecture/composition et remplacer les écritures privées par contrats.
+4. `AppServiceProvider` attache encore `MediaOwnerObserver` à Product, Cooperative et User ; formaliser l'intégration Media/owners avant de déplacer l'observer.
+5. Compléter l'audit Identity restant : invitation/reset/email change, token expiry/abilities, session/device trust, verrouillage d'urgence, logs sans secrets, politiques et tests de sécurité.
+6. Exécuter les tests Framework/Feature, Pint et tests MySQL réels pour triggers, index, verrous et concurrence.
+
+**Validation runtime :** aucune exécution PHPUnit/Pint/MySQL n'a été réalisée dans cette séquence. Aucun workflow GitHub Actions n'est remonté pour la branche pendant le contrôle ; aucun statut CI n'est donc disponible.
+
+**Règle de clôture :** conserver les trois domaines en audit jusqu'à résolution des écarts, exécution des tests et audit final du diff.
