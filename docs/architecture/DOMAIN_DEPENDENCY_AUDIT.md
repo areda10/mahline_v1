@@ -3,7 +3,7 @@
 - **Date :** 19 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **HEAD de départ :** `23cc0ebaa4f1099e77282bbdf050ec6448a896ea`
-- **HEAD code après intégration des contrats AuditWriter et CheckoutCatalog :** `4c2d4fecc288b37b164f3b9b941fe5caadc278d9`
+- **HEAD code après intégration des contrats AuditWriter et CheckoutCatalog :** `3d1c91db28362a38919d7fa1e5084dc862001d69`
 - **Portée :** inspection statique des imports, modèles, services, policies, providers, routes et migrations.
 - **Limite :** aucune suite PHP/PHPUnit/Pint n'a été exécutée dans cet audit ; l'inventaire statique ne prouve pas le comportement à l'exécution.
 
@@ -120,7 +120,7 @@ Les triggers MySQL de cohérence coopérative et de propriété des adresses son
 
 ## 8. Corrections de frontières intégrées — 19 novembre 2026
 
-Référence du code après intégration : `4c2d4fecc288b37b164f3b9b941fe5caadc278d9` sur `feature/Marketplace`.
+Référence du code après intégration : `3d1c91db28362a38919d7fa1e5084dc862001d69` sur `feature/Marketplace`.
 
 ### Audit — contrat public effectif
 - Création de `App\\Domains\\Audit\\Contracts\\AuditWriter`, surface publique pour `record(AuditEntryDTO)` et `verifyIntegrity()`.
@@ -221,6 +221,6 @@ Les règles ci-dessous ont été relues dans les migrations existantes. Elles d�
 
 
 ### Référence finale du lot intégré
-- HEAD du code après contrats AuditWriter, CheckoutCatalog, CooperativeAddressManager et providers propriétaires : `4c2d4fecc288b37b164f3b9b941fe5caadc278d9`.
+- HEAD du code après contrats AuditWriter, CheckoutCatalog, CooperativeAddressManager et providers propriétaires : `3d1c91db28362a38919d7fa1e5084dc862001d69`.
 - `CooperativeService` n'injecte plus `AddressService` directement ; il consomme `CooperativeAddressManager`.
 - Le scan de l'arborescence confirme que les anciens fichiers AddressPolicy/CooperativePolicy sous Identity et les anciens dossiers Countries n'existent plus.
