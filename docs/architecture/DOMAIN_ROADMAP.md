@@ -546,3 +546,61 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - Code intégré sur `feature/Marketplace` : `3d1c91db28362a38919d7fa1e5084dc862001d69`.
 - Contrats intégrés : AuditWriter, CheckoutCatalog, CooperativeAddressManager.
 - Providers de policies locaux enregistrés pour Audit, Catalog, Categories, Cooperatives, Localization, Media et Products.
+
+## 14. Reprise d'exécution — état réel au 19 novembre 2026
+
+**Référence vérifiée :** HEAD `2945c62a34d928f277cc02a57a0e22d0b6f62a51` sur `feature/Marketplace`.
+
+La feuille de route est maintenue comme registre de pilotage. Les commits récents ont principalement corrigé des attentes de tests et des namespaces ; ils ne constituent pas une validation globale des domaines. Les tests PHPUnit/Pint n'ont pas été exécutés par l'assistant.
+
+### 14.1 Lots d'architecture déjà intégrés
+
+- Countries absorbé par Localization ; aucun domaine Countries autonome.
+- Contrat public `AuditWriter` et adaptateur d'implémentation intégrés.
+- Contrat Products `CheckoutCatalog` / DTO `CheckoutProductData` utilisé par Orders pour le checkout.
+- Policies et providers redistribués vers les domaines propriétaires pour les domaines déjà traités.
+- Contrat `CooperativeAddressManager` exposé par Localization et consommé par Cooperatives.
+- ADR-021 enregistré comme architecture de référence.
+
+Ces éléments sont **intégrés dans le code**, mais ne valent pas validation de toutes les dépendances, tests ou règles de chaque domaine.
+
+### 14.2 Premier audit de frontière restant — Media
+
+L'inspection du HEAD courant confirme que Media n'est pas encore découplé de ses propriétaires :
+- `MediaCategory` importe directement `Product`, `Cooperative` et `User` pour déterminer les propriétaires admis.
+- `MediaService` importe directement les trois modèles et utilise le modèle User comme acteur.
+- `MediaOwnerObserver` importe les trois modèles pour gérer restauration, suppression logique et suppression définitive.
+- `MediaPolicy` connaît directement les types Product, Cooperative et User et leurs règles d'accès.
+- `AppServiceProvider` enregistre l'observer Media sur les modèles Product, Cooperative et User, au lieu de laisser chaque provider propriétaire déclarer son adaptateur.
+- Les modèles propriétaires exposent des relations Eloquent vers le modèle Media. Ces relations doivent être traitées comme une dépendance d'intégration explicite ; elles ne seront pas retirées sans remplacement compatible avec les écrans et services existants.
+
+**Décision d'exécution :** avant tout refactor, définir les contrats publics d'identification/propriété média dans les domaines fournisseurs, les DTO de contexte d'acteur nécessaires, les adaptateurs d'intégration et le point d'assemblage. Conserver le comportement V1 : catégories, visibilité, quotas, autorisations, verrous concurrents, nettoyage des fichiers, restauration, rétention et audit. Aucun changement métier ou migration ne doit être introduit au seul motif du découplage.
+
+**Statut :** audit statique ciblé réalisé ; contrats et tests de caractérisation à définir ; implémentation non commencée dans ce lot.
+
+### 14.3 Ordre d'exécution restant
+
+1. Media — contrats propriétaires et découplage sans régression, puis tests ciblés et tests de concurrence.
+2. Catalog / Categories / Products — ownership des pivots `catalog_product` et `category_product`, contrats de lecture/commande, suppression des imports privés et tests.
+3. Identity / Cooperatives — finaliser le contrat d'affectation des super-admins et clarifier l'ownership de `super_admin_cooperative`.
+4. Inventory — terminer l'audit des tables, migrations, états, réservations et transactions Orders avant création du domaine et de ses migrations métier.
+5. Orders — compléter l'audit du cycle de vie, des snapshots, des sous-commandes multi-coopératives et des contrats Inventory/Delivery/Finance.
+6. Delivery — cadrer le périmètre autonome, les expéditions, tarifs, transporteurs, suivi et documents ; aucune table avant spécification validée.
+7. Finance / Facturation — cadrer factures immuables, paiements, remboursements, commissions, reversements et rapprochement ; conserver Finance comme propriétaire.
+8. Statistics — définir projections et agrégations consommant des contrats/événements sans devenir propriétaire des données sources.
+9. Audit, Localization, Dashboard, Communication et CMS — terminer les audits de périmètre, sécurité, dépendances et tests.
+10. Architecture transversale — registre exhaustif FK/triggers/pivots, événements versionnés et Outbox critique, tests d'architecture et CI bloquante progressive.
+
+Cet ordre est un plan d'exécution progressif, pas une déclaration que les domaines suivants sont déjà spécifiés ou validés. Les domaines Inventory, Delivery, Finance, Statistics, Communication et CMS ne seront créés qu'après audit et gel de leur périmètre, de leurs contrats et de leurs tables propriétaires.
+
+### 14.4 Règles de clôture
+
+Un lot ne peut être marqué « Validé » qu'après :
+- implémentation et revue des contrats/public APIs ;
+- tests unitaires, intégration, Feature, sécurité et régression adaptés ;
+- exécution locale confirmée par l'utilisateur ou preuve CI consultable ;
+- Pint et contrôles statiques applicables ;
+- mise à jour du cahier du domaine, de ce registre et du commit de référence.
+
+Aucune fusion vers `main` n'est autorisée sans instruction explicite.
+
