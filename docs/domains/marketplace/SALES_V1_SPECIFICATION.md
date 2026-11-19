@@ -279,3 +279,16 @@ Lorsqu'un client choisit de vider entièrement son panier :
 - Les règles de rétention du panier invité (30 jours depuis la dernière activité) et de conservation du panier authentifié (sans expiration automatique) restent distinctes de cet historique interne.
 
 La durée de conservation de l'historique, ses droits d'accès et sa purge éventuelle restent à définir dans la conception technique et les règles de gouvernance des données.
+
+
+### SALES-015 — Restauration d'une ligne supprimée du panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Une ligne supprimée du panier, individuellement ou lors du vidage complet, ne peut pas être restaurée depuis l'historique du panier.
+
+- Le client doit rechercher à nouveau le produit dans le catalogue et l'ajouter comme un nouvel article.
+- La nouvelle ligne est créée à partir des informations commerciales actuelles du produit et de sa variante.
+- Les contrôles actuels de statut, de prix et de disponibilité s'appliquent comme pour tout nouvel ajout.
+- L'historique interne des lignes supprimées reste conservé à des fins de traçabilité, mais ne constitue pas une fonction de restauration.
+- Aucune ancienne quantité, aucun ancien prix accepté et aucune ancienne condition commerciale ne sont réactivés.
