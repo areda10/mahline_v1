@@ -770,3 +770,12 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Les modèles User et Cooperative conservent des relations Eloquent réciproques pour le mapping relationnel et les écrans existants. Elles sont des relations de lecture/composition ; les écritures du pivot `super_admin_cooperative` restent dans Identity.
 - Identity consomme l'événement public `CooperativeCreatedV1` pour l'affectation initiale. Cooperatives ne dépend pas d'un service Identity.
 - Les tests restent non exécutés ; pas de CI GitHub configurée dans cette branche.
+
+### 11.19 Lot A12 — UserPolicy découplée de Cooperative
+
+- `UserPolicy` n'importe plus le modèle Cooperative et n'utilise plus `User::cooperatives()` pour vérifier les périmètres.
+- La vérification d'accès d'un super_admin utilise `SuperAdminCooperativeAssignmentReader` (Shared, implémenté par Identity).
+- Les capacités d'affectation/désaffectation reçoivent un identifiant coopérative et utilisent `CooperativeIdentityReference` pour vérifier l'existence non supprimée.
+- `SuperAdminCooperativeAssignmentController` transmet des IDs aux Policies et au service ; la désaffectation ne transmet plus un modèle Eloquent au contrat Identity.
+- Test d'architecture `UserPolicyBoundaryTest` ajouté ; tests de Policies adaptés.
+- Les contrôleurs conservent le route binding Cooperative à la frontière HTTP pour l'affichage et la validation de route.
