@@ -84,9 +84,9 @@ final class UserManagementPermissionMatrixTest extends TestCase
 
         self::assertContains('users.view', $permissions);
         self::assertContains('users.update', $permissions);
+        self::assertContains('users.invite', $permissions);
         foreach ([
             'users.create',
-            'users.invite',
             'users.activate',
             'users.deactivate',
             'users.suspend',
