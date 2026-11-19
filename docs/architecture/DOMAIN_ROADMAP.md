@@ -654,3 +654,23 @@ Aucune fusion vers `main` n'est autorisée sans instruction explicite.
 
 **Statut global :** l'inventaire et l'audit statique des principales relations sont mis à jour ; les domaines ne sont pas déclarés terminés. La validation MySQL, l'audit exhaustif des FK/triggers, les tests d'architecture et les suites PHPUnit/Pint restent à réaliser.
 
+## 16. Audit technique Inventory — complément réalisé le 19 novembre 2026
+
+- **Rapport global préalable :** `docs/architecture/DOMAIN_DEPENDENCY_AUDIT.md`, section 10.
+- **Rapport Inventory :** `docs/domains/marketplace/INVENTORY_V1_SPECIFICATION.md`, section 11.
+- **Commit de l'audit global :** `10756fe898e0513c2a409ecf2c575d53a403aee1`.
+- **Commit du complément Inventory :** `08d5093304fbd4adbe643c344d952e2ee8d367af`.
+
+L'audit technique ciblé a vérifié les modèles et contrats Products, les unités V1, les migrations de prix/unités, les modèles et services Orders, ainsi que la migration marketplace Orders.
+
+Constats structurants :
+- Products est propriétaire du produit, de la variante, de l'unité et du prix de référence.
+- Orders est propriétaire des commandes, sous-commandes, lignes, snapshots et statuts commerciaux.
+- Le checkout n'écrit aucune réservation Inventory.
+- Le service de réponse coopérative verrouille la sous-commande et la commande globale ; la confirmation ne déclenche actuellement aucun appel Inventory.
+- Le contrat de checkout Products ne fournit pas encore de disponibilité.
+- Les nouvelles tables Inventory devront référencer logiquement les IDs des domaines voisins par défaut ; les FK historiques Orders ne sont pas modifiées.
+- Le schéma Inventory n'est pas encore gelé ; les règles d'idempotence et quelques transitions doivent être raccordées explicitement avant création des tables.
+
+**Statut :** audit global préalable effectué ; audit technique Products/Orders initial effectué ; conception détaillée du schéma et des contrats Inventory reste à finaliser. Aucun code Inventory, aucune migration Inventory et aucun test n'ont été créés ou exécutés dans ce lot.
+
