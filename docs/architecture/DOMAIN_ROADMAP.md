@@ -927,3 +927,5 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test d'exigence du rôle super_admin adapté.
 - Commits : `66b4373`, `6053e56`, `d5f9025`, `41ea201`, `a2a8cbd`, `262b9c7`.
 - Tests non exécutés.
+
+- Le contrat de lecture de statut est maintenant fourni par un service dédié, séparé du service d'écriture. Commits : `2be30cb`, `20bfbb7`, `42af72a`.
