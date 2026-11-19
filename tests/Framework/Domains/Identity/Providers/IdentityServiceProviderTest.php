@@ -7,6 +7,9 @@ namespace Tests\Framework\Domains\Identity\Providers;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
 use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
@@ -18,6 +21,43 @@ use Tests\TestCase;
 final class IdentityServiceProviderTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_actor_context_contains_only_active_roles_and_permissions(): void
+    {
+        $user = User::factory()->create();
+        $activeRole = Role::query()->create([
+            'name' => 'Context role',
+            'slug' => 'context_role',
+            'is_active' => true,
+        ]);
+        $inactiveRole = Role::query()->create([
+            'name' => 'Inactive context role',
+            'slug' => 'inactive_context_role',
+            'is_active' => false,
+        ]);
+        $activePermission = Permission::query()->create([
+            'name' => 'Context permission',
+            'slug' => 'context.permission',
+            'is_active' => true,
+        ]);
+        $inactivePermission = Permission::query()->create([
+            'name' => 'Inactive context permission',
+            'slug' => 'context.inactive',
+            'is_active' => false,
+        ]);
+
+        $user->roles()->attach([$activeRole->getKey(), $inactiveRole->getKey()]);
+        $activeRole->permissions()->attach([$activePermission->getKey(), $inactivePermission->getKey()]);
+
+        $context = app(ActorContextProvider::class)->forUserId((string) $user->getKey());
+
+        self::assertSame((string) $user->getKey(), $context->id);
+        self::assertTrue($context->authorized);
+        self::assertTrue($context->hasRole('context_role'));
+        self::assertFalse($context->hasRole('inactive_context_role'));
+        self::assertTrue($context->hasPermission('context.permission'));
+        self::assertFalse($context->hasPermission('context.inactive'));
+    }
 
     public function test_shared_actor_contracts_are_bound_to_identity_adapters(): void
     {
