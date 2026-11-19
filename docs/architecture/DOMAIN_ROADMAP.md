@@ -919,3 +919,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Garde ajoutée : l'affectation initiale ne peut concerner que la coopérative dont le super_admin est le créateur. Commit : `6681226`.
 
 - Test ajouté pour refuser l'affectation initiale lorsque `created_by` ne correspond pas au super_admin. Commit : `1c81c415`.
+
+#### Révision A7 — événement de domaine
+
+- Le couplage direct CooperativeService → contrat Identity a été remplacé par `CooperativeCreatedV1`, consommé par un listener Identity ; la dépendance est désormais unidirectionnelle par événement.
+- L'affectation, l'audit et la révocation restent dans la transaction de création.
+- Test d'exigence du rôle super_admin adapté.
+- Commits : `66b4373`, `6053e56`, `d5f9025`, `41ea201`, `a2a8cbd`, `262b9c7`.
+- Tests non exécutés.
