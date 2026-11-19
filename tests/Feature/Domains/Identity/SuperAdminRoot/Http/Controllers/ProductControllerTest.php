@@ -44,7 +44,7 @@ final class ProductControllerTest extends TestCase
             ->assertSee('Litre (L)')
             ->assertSee('Unité / pièce (u)')
             ->assertDontSee('Millilitre (ml)')
-            ->assertSee('name="unit_id"');
+            ->assertSee('name="unit_id"', false);
     }
 
     public function test_root_product_creation_rejects_a_missing_unit(): void
