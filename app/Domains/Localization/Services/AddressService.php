@@ -29,6 +29,46 @@ final class AddressService extends BaseService implements CooperativeAddressMana
 
     public function __construct(private readonly AuditWriter $audit) {}
 
+    public function savePrimaryAddressForUser(User $actor, string $ownerId, array $attributes): void
+    {
+        DB::transaction(function () use ($actor, $ownerId, $attributes): void {
+            $owner = User::query()->whereKey($ownerId)->lockForUpdate()->firstOrFail();
+            Gate::forUser($actor)->authorize('updateUserAddress', $owner);
+
+            $address = Address::query()
+                ->where('user_id', $owner->getKey())
+                ->where('is_primary', true)
+                ->lockForUpdate()
+                ->first()
+                ?? Address::query()
+                    ->where('user_id', $owner->getKey())
+                    ->oldest()
+                    ->lockForUpdate()
+                    ->first();
+
+            if ($address !== null) {
+                $this->updateAddress($actor, $address, $attributes);
+
+                return;
+            }
+
+            $address = new Address($this->validatedAttributes($attributes));
+            $address->user_id = $owner->getKey();
+            $address->country_id = $this->moroccoCountry()->getKey();
+            $address->is_primary = true;
+            $address->created_by = (string) $actor->getKey();
+            $address->save();
+
+            $this->record(
+                $actor,
+                $address,
+                'created',
+                'localization.address.created',
+                newValues: $this->snapshot($address),
+            );
+        });
+    }
+
     public function createForUser(User $actor, User $owner, array $attributes): Address
     {
         Gate::forUser($actor)->authorize('updateUserAddress', $owner);
