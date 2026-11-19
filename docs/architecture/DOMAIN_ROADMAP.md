@@ -718,3 +718,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-012 : si une variante du panier est désactivée alors que le produit parent ou d'autres variantes restent actifs, la ligne de la variante choisie est conservée comme indisponible et bloque le checkout jusqu'à son retrait manuel. Aucune substitution automatique par une autre variante n'est permise. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-013 : si le stock disponible diminue après l'ajout au panier et devient inférieur à la quantité demandée, Sales conserve cette quantité sans la corriger automatiquement, signale l'insuffisance et bloque le checkout jusqu'à ce que le client réduise ou retire la ligne. La disponibilité reste revérifiée auprès d'Inventory ; le panier ne réserve pas le stock. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
