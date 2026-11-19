@@ -591,3 +591,13 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Commits : `89862fdae7bab6b6dac6eb952a7dd1d515e15f68`, `aa12e27b7eb8cad7d25d476a9c35c4fa399e7669`, `5247c8300bf832e437791d7e5f3f0d1807d47a9d`, `8e4b307566e20dfe566f737083fa1f81f7f84726`.
 - Reste à traiter : `MediaOwnerObserver` et les relations User/Cooperative vers Media restent une composition inter-domaines à formaliser.
 - Tests non exécutés.
+
+### 11.12 Lot A6 — Cooperatives : contrat public de statut
+
+- Création de `CooperativeStatusReader` et du DTO `CooperativeStatusData`.
+- `CooperativeService` implémente le contrat et expose `findStatus(id)`, qui distingue un statut actif, une coopérative supprimée logiquement et un identifiant absent sans exposer le modèle Eloquent.
+- Le provider Cooperatives enregistre le binding public.
+- Test ajouté pour les trois états : active, soft-deleted et missing.
+- Commits : `6b6086d1f5d7c475631191cbd72d14ecb34bb7f2`, `491e211a904ee9cd971258a22a1d6de75403cea8`, `96f59bd0d4977095c525921c9ab93ab2aa623b82`, `0cbd481d79805889fbe1ec12812e94b2a7e10357`, `25af5094f747c17011f437c18cdfca7f526c588e`.
+- Reste à traiter : tests des consommateurs quand la coopérative est inactive/supprimée ; contrat d'acteur et découplage User Eloquent dans CooperativeService.
+- Tests non exécutés.
