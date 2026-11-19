@@ -277,25 +277,6 @@ final class UserManagementController
             ->with('success', 'Le compte est actif, mais la connexion reste bloquée jusqu’à la vérification de l’adresse e-mail. Une invitation a été envoyée.');
     }
 
-    public function activateAndVerify(
-        Request $request,
-        User $user,
-        UserManagementService $userManagementService,
-    ): RedirectResponse {
-        $this->authorizeRoot($request);
-        Gate::authorize('activate', $user);
-
-        try {
-            $userManagementService->activateAndVerifyUser($request->user(), $user);
-        } catch (\DomainException $exception) {
-            return redirect()->route('root.backoffice.users.show', $user)
-                ->with('error', $exception->getMessage());
-        }
-
-        return redirect()->route('root.backoffice.users.show', $user)
-            ->with('success', 'Le compte est actif et l’e-mail est vérifié. Le mot de passe provisoire est MahlineMahline ; son remplacement sera obligatoire à la première connexion.');
-    }
-
     public function deactivate(
         Request $request,
         User $user,
