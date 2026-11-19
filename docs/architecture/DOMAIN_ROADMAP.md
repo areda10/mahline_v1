@@ -709,3 +709,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 
 - SALES-009 : le panier accepte une quantité supérieure au stock actuellement disponible. Le panier ne constitue pas une réservation ; les contrôles de disponibilité relèvent d'Inventory aux étapes métier prévues. Les limites absolues de quantité restent ouvertes. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
+
+
+- SALES-010 : si un produit est supprimé du catalogue alors qu'il figure au panier, Sales conserve une ligne historique non achetable (nom, prix de référence et informations descriptives disponibles à l'ajout), la signale comme indisponible et bloque le checkout jusqu'à son retrait manuel par le client. Aucune suppression automatique ni possibilité d'achat ne subsiste. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
