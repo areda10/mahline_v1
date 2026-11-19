@@ -809,3 +809,15 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Le plafond de cinq adresses actives client reste appliqué dans `AddressService` sous verrou du propriétaire ; il ne s'agit pas d'un index SQL de comptage.
 - Les tests `AddressesTest` et `AddressOwnershipIntegrityTest` couvrent les triggers, index uniques et clés étrangères. Leur exécution sur MySQL reste obligatoire ; aucune exécution n'a eu lieu ici.
 - `Country` est un sous-module de Localization ; aucun domaine Countries autonome n'est présent.
+
+### 11.22 Lot A15 — périmètre CRUD Identity et e-mails de compte
+
+- La classification des rôles cibles dans UserPolicy est indépendante du statut d'authentification : elle consulte les rôles actifs réellement associés au compte. Les contrôles d'accès de l'acteur continuent d'exiger un compte autorisé.
+- Le root peut consulter/modifier et gérer le cycle de vie des comptes internes (super_admin, cooperative_admin, user) depuis leur fiche, y compris les transitions de statut. Les comptes root et customer restent hors de ce CRUD interne.
+- Les super-admins peuvent renvoyer une invitation d'activation et envoyer un lien de réinitialisation uniquement aux comptes user de leurs coopératives affectées.
+- Les cooperative_admins disposent désormais de users.invite pour ces deux opérations, limitées aux comptes user de leur propre coopérative. Ils ne peuvent ni activer manuellement, ni désactiver, suspendre, archiver ou supprimer ces comptes.
+- Ajout de l'action Policy sendPasswordReset, de ses routes root/backoffice, des actions de contrôleur et des formulaires dans les fiches utilisateur.
+- Le lien de réinitialisation utilise le service existant, avec durée réelle de 30 minutes ; le texte de notification est aligné sur cette durée.
+- L'affectation d'un super-admin exige désormais dans la Policy le même état isAuthorized() que le service (actif, e-mail vérifié, non verrouillé). Le service vérifie aussi que le rôle super_admin est actif.
+- Tests de Policy ajoutés pour la classification indépendante du statut, les invitations dans le périmètre, les liens de reset et le refus d'affectation d'un super-admin non vérifié. Tests non exécutés.
+- Les suites PHPUnit, Pint, les tests MySQL et le contrôle route:list restent à exécuter localement ; aucune fermeture de domaine n'est prononcée.
