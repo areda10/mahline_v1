@@ -48,7 +48,7 @@ Le panier est accessible :
 
 Après authentification d'un visiteur possédant un panier invité, Sales fusionne ce panier avec le panier du compte client.
 
-Le détail de la stratégie de fusion (doublons, quantités maximales, articles devenus indisponibles ou inactifs, prix modifiés et conflits concurrents) reste à spécifier avant implémentation.
+La règle de fusion des lignes est définie par SALES-003. Les contrôles de quantités maximales, articles devenus indisponibles ou inactifs, prix modifiés et conflits concurrents restent à spécifier avant implémentation.
 
 ### SALES-002 — Séparation des domaines
 
@@ -84,7 +84,7 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 ## 6. Décisions encore ouvertes
 
 Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le schéma :
-- fusion des paniers invité et client : traitement des lignes identiques, quantités, limites et conflits ;
+- fusion des paniers invité et client : limites de quantité et arbitrage des conflits concurrents ;
 - durée de vie du panier invité et du panier authentifié ;
 - règles de suppression/expiration des paniers et de leurs lignes ;
 - comportement lorsque le produit ou la variante devient inactive ou n'est plus vendable ;
@@ -109,3 +109,17 @@ Les tests requis devront couvrir au minimum : panier invité, panier connecté, 
 ### 19 novembre 2026
 - SALES-001 : panier invité et authentifié avec fusion à la connexion — validé (option B).
 - SALES-002 : autonomie des domaines Sales, Orders, Inventory, Delivery, Finance et Communication dans le monolithe modulaire — validé.
+
+### SALES-003 — Fusion des lignes de panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option C)**
+
+Lors de la fusion d'un panier invité avec le panier du compte authentifié :
+- deux lignes ne sont fusionnées que si toutes leurs caractéristiques commerciales sont identiques ;
+- l'identité minimale à comparer comprend le produit, la variante éventuelle, la coopérative propriétaire et les caractéristiques commerciales qui influencent le prix ou les conditions de vente ;
+- si une caractéristique diffère, les lignes restent distinctes ;
+- lorsque les lignes sont strictement identiques, leurs quantités sont additionnées sous réserve des limites de quantité qui restent à définir ;
+- la fusion doit être atomique et résistante aux connexions ou requêtes concurrentes ; les détails techniques seront établis à l'audit avant implémentation.
+
+Le panier invité et le panier du compte ne doivent pas être fusionnés sur la seule base de l'identifiant du produit.
+
