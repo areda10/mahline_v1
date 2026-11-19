@@ -19,6 +19,6 @@ interface SuperAdminCooperativeAssignmentService
     public function removeSuperAdminFromCooperative(
         User $actor,
         User $superAdmin,
-        Cooperative $cooperative,
+        string $cooperativeId,
     ): void;
 }
