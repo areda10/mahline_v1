@@ -68,7 +68,7 @@ final class SuperAdminCooperativeAssignmentController
         User $superAdmin,
         Cooperative $cooperative,
     ): RedirectResponse {
-        Gate::authorize('assignCooperative', [$superAdmin, $cooperative]);
+        Gate::authorize('assignCooperative', [$superAdmin, (string) $cooperative->getKey()]);
 
         try {
             $this->userManagementService->assignSuperAdminToCooperative(
@@ -98,13 +98,13 @@ final class SuperAdminCooperativeAssignmentController
         User $superAdmin,
         Cooperative $cooperative,
     ): RedirectResponse {
-        Gate::authorize('unassignCooperative', [$superAdmin, $cooperative]);
+        Gate::authorize('unassignCooperative', [$superAdmin, (string) $cooperative->getKey()]);
 
         try {
             $this->userManagementService->removeSuperAdminFromCooperative(
                 $request->user(),
                 $superAdmin,
-                $cooperative,
+                (string) $cooperative->getKey(),
             );
         } catch (\DomainException) {
             return redirect()
