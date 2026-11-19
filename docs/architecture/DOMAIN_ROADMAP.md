@@ -891,3 +891,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Tests ajoutés : ordre des verrous et refus d'un customer suspendu dans le workflow root API tokens.
 - Commits : `737d3f0`, `cf70857`, `fec7d87`, `8378e8a`.
 - Tests non exécutés ; validation runtime et test de concurrence MySQL en attente.
+
+### 14. Lot A5 — Provider Identity (19 novembre 2026)
+
+- Création et enregistrement d'un provider propre à Identity ; bindings de contrats, UserObserver et modèle Sanctum déplacés hors d'AppServiceProvider.
+- Test de résolution des contrats ajouté.
+- AppServiceProvider conserve la composition MediaOwnerObserver sur trois domaines ; ce couplage reste un écart Media/architecture à traiter.
+- Commits : `89862fd`, `aa12e27`, `5247c83`, `8e4b307`.
+- Tests non exécutés.
