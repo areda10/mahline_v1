@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Authorization\Policies;
 
 use App\Core\Foundation\Policies\BasePolicy;
-use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Cooperatives\Contracts\CooperativeIdentityReference;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 
 final class UserPolicy extends BasePolicy
 {
+    public function __construct(
+        private readonly CooperativeIdentityReference $cooperatives,
+        private readonly SuperAdminCooperativeAssignmentReader $assignments,
+    ) {}
+
     private const ROLE_SUPER_ADMIN_ROOT = 'super_admin_root';
 
     private const ROLE_SUPER_ADMIN = 'super_admin';
@@ -65,14 +71,14 @@ final class UserPolicy extends BasePolicy
     public function assignCooperative(
         User $actor,
         User $target,
-        Cooperative $cooperative,
+        string $cooperativeId,
     ): bool {
         return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
             && $this->hasPermission($actor, 'users.assign_super_admin')
             && ! $target->trashed()
             && $this->targetHasActiveRole($target, self::ROLE_SUPER_ADMIN)
             && $target->status === UserStatus::Active
-            && ! $cooperative->trashed();
+            && $this->cooperatives->existsNotDeleted($cooperativeId);
     }
 
     /**
@@ -256,9 +262,7 @@ final class UserPolicy extends BasePolicy
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
             return $target->cooperative_id !== null
-                && $actor->cooperatives()
-                    ->whereKey($target->cooperative_id)
-                    ->exists();
+                && $this->assignments->isAssigned((string) $actor->getKey(), (string) $target->cooperative_id);
         }
 
         if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
