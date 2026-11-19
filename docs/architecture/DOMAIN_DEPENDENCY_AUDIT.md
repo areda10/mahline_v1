@@ -201,3 +201,11 @@ Les règles ci-dessous ont été relues dans les migrations existantes. Elles d�
 - Les Gates `updateUserAddress`, `createCooperativeAddress` et `updateCooperativeAddress` restent disponibles avec leurs mêmes noms et délèguent désormais à Localization.
 - Le provider Identity ne référence plus les modèles/policies Address et Cooperative.
 - Les tests des deux policies ont été déplacés sous les domaines propriétaires et leurs namespaces/imports mis à jour. Tests non exécutés.
+
+
+### Suite de l'ownership des autorisations — providers locaux
+- Les enregistrements de policies Audit, Catalog, Categories, Media et Products ont également été déplacés dans leurs providers de domaine.
+- `Identity/Authorization/AuthorizationServiceProvider` ne conserve que l'enregistrement de `UserPolicy` ; les policies de ressources métier sont enregistrées par leur domaine propriétaire.
+- Les providers Audit, Catalog, Categories, Cooperatives, Localization, Media et Products sont tous listés dans `bootstrap/providers.php`.
+- Les policies et Gates Address/Cooperative conservent leurs règles et noms d'actions ; les tests de ces deux policies ont été déplacés avec les classes.
+- À valider localement : ordre de boot Laravel, résolution des policies, tests d'autorisation existants et absence de références résiduelles aux anciens namespaces.
