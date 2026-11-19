@@ -899,3 +899,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - AppServiceProvider conserve la composition MediaOwnerObserver sur trois domaines ; ce couplage reste un écart Media/architecture à traiter.
 - Commits : `89862fd`, `aa12e27`, `5247c83`, `8e4b307`.
 - Tests non exécutés.
+
+### 15. Lot A6 — Contrat de statut Cooperatives (19 novembre 2026)
+
+- Contrat public `CooperativeStatusReader` + DTO créés ; résultat distingue active, deleted et missing.
+- Binding dans CooperativesServiceProvider et test du contrat ajoutés.
+- Commits : `6b6086d`, `491e211`, `96f59bd`, `0cbd481`, `25af509`.
+- Restent à traiter : contrat d'acteur pour supprimer les imports User Eloquent et intégration des consommateurs Orders/Sales à venir.
+- Tests non exécutés.
