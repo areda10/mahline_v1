@@ -231,3 +231,23 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal — 19 novembre 2026
 - Ajout de l'ADR-009 et référencement dans la feuille de route centrale.
 - Aucun changement applicatif, aucune migration et aucune modification de configuration CI.
+
+## 11. Décision architecturale — propriété des configurations des domaines (19 novembre 2026)
+
+**Décision 10 validée :** adopter une approche hybride avec propriété stricte des configurations.
+
+- Les paramètres techniques et environnementaux restent dans la configuration Laravel (fichiers config/ et variables d'environnement).
+- Chaque paramètre métier appartient à un seul domaine.
+- Les paramètres métier modifiables à l'exécution sont stockés dans des tables détenues par leur domaine propriétaire.
+- Les valeurs par défaut statiques métier peuvent être définies dans le code ou dans une configuration propre au domaine lorsque cela est utile.
+- Les domaines consommateurs accèdent aux paramètres métier par les contrats publics du domaine propriétaire ; aucun accès direct à ses modèles, repositories ou tables internes n'est autorisé.
+- Les règles de validation, portées, permissions, traçabilité et invalidation/versionnement du cache doivent être explicites.
+- Les secrets restent gérés par les mécanismes techniques adaptés et ne sont pas enregistrés comme paramètres métier ordinaires.
+
+**Document de décision :** [ADR-010 — Propriété et gestion des configurations des domaines](decisions/ADR-010-domain-configuration-ownership.md).
+
+**État :** décision d'architecture acceptée ; inventaire et classification des configurations existantes, définition des contrats et éventuelle migration restent à réaliser. Aucun changement de code, de configuration Laravel, de table ou de migration n'a été effectué dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-010 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucun test exécuté.
