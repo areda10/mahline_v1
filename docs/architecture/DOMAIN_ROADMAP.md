@@ -731,3 +731,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 
 - SALES-016 : le panier d'un client authentifié est unique au niveau du compte et synchronisé entre ses appareils. Les modifications doivent être répercutées sans perte ni écrasement silencieux en cas de concurrence ; les mécanismes techniques restent à définir à l'audit. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
 
+
+
+- SALES-017 : les modifications simultanées du panier authentifié sont protégées par versionnement. Une opération basée sur une version obsolète est refusée et l'appareil doit recharger le panier avant de réessayer ; aucun écrasement silencieux. Voir [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
