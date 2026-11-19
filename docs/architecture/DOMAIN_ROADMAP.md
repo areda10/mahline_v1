@@ -522,3 +522,9 @@ Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_
 - Référence du code intégré : `f8f7535b1ae98879738c6aad0b0eef614b97a29f` sur `feature/Marketplace`.
 - Tests PHP/Pint non exécutés ; validation locale requise avant clôture.
 - Prochain lot : contrats de propriétaires Media, pivots Catalog/Categories/Products, policies/providers propriétaires, contrat Address, puis registre FK/triggers et tests d'architecture.
+
+
+### 19 novembre 2026 — autorisations par domaine
+- `AddressPolicy` est maintenant sous Localization ; `CooperativePolicy` sous Cooperatives.
+- Chaque domaine enregistre ses policies et Gates par son provider, chargé depuis `bootstrap/providers.php`.
+- Tests de policies déplacés dans les dossiers de leurs domaines. Validation PHPUnit locale encore requise.
