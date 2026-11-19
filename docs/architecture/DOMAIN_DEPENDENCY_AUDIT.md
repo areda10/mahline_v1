@@ -293,7 +293,7 @@ Constats :
 | Communication | Absent | Notification in-app et email validées pour événements de commande ; SMS hors V1. Le domaine doit posséder modèles, préférences éventuelles, orchestration d'envoi et journal de livraison, sans prendre possession des événements sources. |
 | Statistics | Absent | Autonomie du domaine validée ; définir indicateurs, projections, fraîcheur, fuseau, devise et contrats de lecture. |
 | CMS | Absent | Domaine prévu dans la roadmap mais aucune spécification fonctionnelle V1 détaillée n'a été trouvée ; ne pas inventer pages, workflow ou permissions. |
-| Sales | Absent | Les documents historiques sont contradictoires : Sales englobait Order/Delivery dans DOMAIN_BOUNDARIES, tandis que la décision ADR-021 actuelle attribue explicitement les commandes à Orders et Delivery est suivi séparément. Ne pas créer Sales avant arbitrage de son éventuel rôle (panier/checkout uniquement ou absence de domaine distinct). |
+| Sales | Absent du code ; spécification fonctionnelle SALES V1 validée (SALES-001 à SALES-037) | Périmètre désormais confirmé : parcours commercial pré-commande, paniers invité/authentifié, fusion, validation commerciale et orchestration du checkout. Orders reste propriétaire des commandes ; Sales n'écrit pas dans ses tables. Créer le domaine Sales après stabilisation des contrats Products, Cooperatives, Localization et Identity ; le checkout complet dépend aussi des contrats publics Orders, Inventory et Delivery. |
 | Incidents | Aucun domaine autonome | Les incidents Media sont déjà possédés par Media. Aucun périmètre général d'incidents plateforme n'est spécifié ; ne pas créer un domaine Incidents sur la seule base des anciennes roadmaps. |
 
 ### 10.6 Séquence autorisée après l'audit global
@@ -315,3 +315,12 @@ Constats :
 - Audit détaillé Inventory : prochaine étape, non réalisé par ce rapport.
 - Tests PHPUnit/Pint : non exécutés ; aucun domaine n'est déclaré globalement validé.
 
+
+
+### 10.8 Mise à jour — périmètre Sales confirmé (19 novembre 2026)
+
+Les décisions SALES-001 à SALES-037 ont été validées par l'utilisateur. Le doute historique sur l'existence d'un domaine Sales distinct est donc levé : Sales est le propriétaire du parcours commercial pré-commande, des paniers, de la fusion, des validations de panier et de l'orchestration checkout. Orders reste propriétaire des commandes, sous-commandes, statuts et snapshots après création ; Inventory reste propriétaire de la disponibilité/réservation ; Delivery reste propriétaire des tarifs et opérations de livraison ; Finance reste propriétaire des factures et opérations financières.
+
+Le code Sales n'est pas encore créé. Les dépendances à traiter en priorité sont consignées dans le rapport dédié `docs/domains/marketplace/SALES_DEPENDENCY_AUDIT.md`. Cette mise à jour remplace la conclusion de la ligne Sales de la section 10.5, sans modifier les autres conclusions de l'audit global.
+
+Limites : cet audit de dépendances est statique. Les suites PHP/PHPUnit/Pint, les contrôles MySQL et les tests de contrats n'ont pas été exécutés dans cette session.
