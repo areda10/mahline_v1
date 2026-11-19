@@ -84,11 +84,11 @@ final class UserPolicyTest extends TestCase
 
         self::assertTrue(Gate::forUser($root)->allows(
             'assignCooperative',
-            [$superAdmin, $cooperative],
+            [$superAdmin, (string) $cooperative->getKey()],
         ));
         self::assertFalse(Gate::forUser($otherAdmin)->allows(
             'assignCooperative',
-            [$superAdmin, $cooperative],
+            [$superAdmin, (string) $cooperative->getKey()],
         ));
 
         $superAdmin->status = UserStatus::Suspended;
@@ -96,7 +96,7 @@ final class UserPolicyTest extends TestCase
 
         self::assertFalse(Gate::forUser($root)->allows(
             'assignCooperative',
-            [$superAdmin, $cooperative],
+            [$superAdmin, (string) $cooperative->getKey()],
         ));
     }
 
@@ -117,11 +117,11 @@ final class UserPolicyTest extends TestCase
 
         self::assertTrue(Gate::forUser($root)->allows(
             'unassignCooperative',
-            [$superAdmin, $cooperative],
+            [$superAdmin, (string) $cooperative->getKey()],
         ));
         self::assertFalse(Gate::forUser($otherAdmin)->allows(
             'unassignCooperative',
-            [$superAdmin, $cooperative],
+            [$superAdmin, (string) $cooperative->getKey()],
         ));
     }
 
