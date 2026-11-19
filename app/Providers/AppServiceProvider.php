@@ -11,7 +11,9 @@ use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\Users\Observers\UserObserver;
 use App\Domains\Media\Observers\MediaOwnerObserver;
+use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Services\ProductService;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
 use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
@@ -30,6 +32,7 @@ final class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AuditWriter::class, AuditService::class);
+        $this->app->bind(CheckoutCatalog::class, ProductService::class);
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
             UserManagementService::class,
