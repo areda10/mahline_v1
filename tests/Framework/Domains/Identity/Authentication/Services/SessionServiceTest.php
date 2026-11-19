@@ -11,6 +11,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use ReflectionClass;
 use ReflectionNamedType;
 use Tests\TestCase;
@@ -323,6 +324,43 @@ final class SessionServiceTest extends TestCase
     /**
      * A specific authentication session can be revoked independently.
      */
+    public function test_global_session_revocation_locks_the_user_before_selecting_sessions(): void
+    {
+        $user = User::factory()->create();
+        $this->sessionService->create($user, 'lock-order-session-a');
+        $this->sessionService->create($user, 'lock-order-session-b');
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+
+        try {
+            $this->assertTrue($this->sessionService->revokeForUser($user, 'logout'));
+            $queries = DB::getQueryLog();
+        } finally {
+            DB::disableQueryLog();
+        }
+
+        $userLockIndex = null;
+        $sessionLockIndex = null;
+
+        foreach ($queries as $index => $query) {
+            $sql = strtolower($query['query']);
+
+            if ($userLockIndex === null && str_contains($sql, 'users') && str_contains($sql, 'for update')) {
+                $userLockIndex = $index;
+            }
+
+            if ($sessionLockIndex === null && str_contains($sql, 'authentication_sessions') && str_contains($sql, 'for update')) {
+                $sessionLockIndex = $index;
+            }
+        }
+
+        self::assertNotNull($userLockIndex, 'Global revocation must lock the user row.');
+        self::assertNotNull($sessionLockIndex, 'Global revocation must lock active session rows.');
+        self::assertLessThan($sessionLockIndex, $userLockIndex);
+        self::assertSame(0, $this->sessionService->activeSessionsFor($user)->count());
+    }
+
     public function test_revoke_specific_session(): void
     {
         $user = User::factory()->create();
