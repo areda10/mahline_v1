@@ -686,6 +686,7 @@ Décisions validées :
 - conservation du panier invité pendant 30 jours sans activité (SALES-004) ;
 - conservation du panier authentifié sans expiration automatique, jusqu'à suppression volontaire ou création réussie d'une commande (SALES-005) ;
 - conservation et signalement des lignes devenues indisponibles ; checkout bloqué jusqu'au retrait volontaire par le client, sans suppression automatique (SALES-006) ;
+- si le prix change après ajout au panier, checkout bloqué jusqu'à acceptation explicite du nouveau prix par le client ; aucune hausse silencieuse (SALES-007) ;
 - Sales, Orders, Inventory, Delivery, Finance et Communication sont autonomes dans le monolithe modulaire, chacun propriétaire de ses modèles, tables, règles, contrats et tests (SALES-002) ;
 - Sales possède le parcours précommande ; Orders possède la commande après création ; Finance possède les opérations financières.
 
@@ -698,3 +699,6 @@ Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders �
 - SALES-006 : lorsqu'un produit ou une variante du panier devient inactif(ve) ou non vendable, la ligne est conservée et signalée ; le checkout est bloqué jusqu'à son retrait volontaire par le client. Aucune suppression automatique.
 - Spécification détaillée : [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
 - Mise à jour documentaire uniquement : aucun code, migration ou test modifié/exécuté.
+
+
+- SALES-007 : tout changement de prix entre l'ajout au panier et le checkout doit être présenté au client et accepté explicitement ; aucun nouveau prix ne peut être appliqué silencieusement. Détail dans [SALES V1](../domains/marketplace/SALES_V1_SPECIFICATION.md).
