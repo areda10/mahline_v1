@@ -75,6 +75,12 @@ final class CooperativeServiceTest extends TestCase
             'super_admin_id' => $actor->getKey(),
             'cooperative_id' => $cooperative->getKey(),
         ]);
+        $assignment = DB::table('super_admin_cooperative')
+            ->where('super_admin_id', $actor->getKey())
+            ->where('cooperative_id', $cooperative->getKey())
+            ->first();
+        self::assertNotNull($assignment?->created_at);
+        self::assertNotNull($assignment?->updated_at);
         $this->assertNotNull($existingToken->accessToken->fresh()->revoked_at);
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.super_admin.cooperative_assigned',
