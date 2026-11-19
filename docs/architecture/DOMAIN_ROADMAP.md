@@ -854,3 +854,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Commits : `f5caab7`, `40a2894`, `f4776b6`, `da11f75`, `2377fcd`, `73b41c2`, `3b76920`.
 - Restent à traiter : PersonalAddressController dépend encore du service concret ; modèles et Policy Localization importent directement User/Cooperative ; contrat snapshot d'adresse pour Orders/Sales absent ; tests MySQL concurrence/trigger obligatoires.
 - Tests non exécutés ; statut du lot : **correction écrite, validation runtime en attente**.
+
+
+#### Complément A2 — nettoyage des tests
+
+- Références à la méthode supprimée retirées du test de cycle de vie root.
+- Test Feature ajouté pour confirmer que la route directe `activate-and-verify` n'est plus enregistrée ; le test d'utilisateur archivé ne teste plus que le parcours d'invitation.
+- Commits : `5a879c8`, `5cbf413`.
+- Validation runtime toujours en attente.
