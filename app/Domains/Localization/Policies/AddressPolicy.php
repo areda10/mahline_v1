@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domains\Localization\Policies;
 
-use App\Core\Foundation\Policies\BasePolicy;
-use App\Domains\Cooperatives\Models\Cooperative;
-use App\Shared\Contracts\IdentityActor;
+use App\Domains\Localization\DTOs\CooperativeAddressOwnerData;
+use App\Domains\Localization\DTOs\UserAddressOwnerData;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
+use App\Shared\DTOs\ActorContext;
 
-final class AddressPolicy extends BasePolicy
+final class AddressPolicy
 {
-    public function __construct(private readonly SuperAdminCooperativeAssignmentReader $assignments) {}
-
     private const ROLE_SUPER_ADMIN_ROOT = 'super_admin_root';
 
     private const ROLE_SUPER_ADMIN = 'super_admin';
@@ -23,20 +21,19 @@ final class AddressPolicy extends BasePolicy
 
     private const ROLE_CUSTOMER = 'customer';
 
+    public function __construct(private readonly SuperAdminCooperativeAssignmentReader $assignments) {}
+
     /**
-     * Determine whether an actor may update a user's personal address.
-     *
-     * Every active, verified supported account may update its own address.
-     * Updating another user's address additionally requires users.update
-     * and an administrative role with access to the target's cooperative.
+     * Every active supported account may update its own personal address.
+     * Updating another account additionally requires users.update and a permitted perimeter.
      */
-    public function updateUserAddress(IdentityActor $actor, IdentityActor $target): bool
+    public function updateUserAddress(ActorContext $actor, UserAddressOwnerData $target): bool
     {
-        if (! $actor->isAuthorized()) {
+        if (! $actor->authorized) {
             return false;
         }
 
-        if ((string) $actor->getKey() === (string) $target->getKey()) {
+        if ($actor->id === $target->id) {
             return $actor->hasAnyRole([
                 self::ROLE_SUPER_ADMIN_ROOT,
                 self::ROLE_SUPER_ADMIN,
@@ -51,35 +48,31 @@ final class AddressPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)) {
-            return ! $target->hasAnyRole(['super_admin_root', 'customer']);
+            return ! $target->hasAnyRole([self::ROLE_SUPER_ADMIN_ROOT, self::ROLE_CUSTOMER]);
         }
 
-        if ($target->cooperativeId() === null) {
+        if ($target->cooperativeId === null) {
             return false;
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $this->assignments->isAssigned(
-                (string) $actor->getKey(),
-                (string) $target->cooperative_id,
-            );
+            return $this->assignments->isAssigned($actor->id, $target->cooperativeId);
         }
 
         if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
             return $target->hasRole(self::ROLE_USER)
-                && $actor->cooperativeId() !== null
-                && (string) $actor->cooperative_id === (string) $target->cooperative_id;
+                && $actor->cooperativeId !== null
+                && $actor->cooperativeId === $target->cooperativeId;
         }
 
         return false;
     }
 
-    /**
-     * Determine whether an actor may create the address as part of cooperative creation.
-     */
-    public function createCooperativeAddress(IdentityActor $actor, Cooperative $cooperative): bool
-    {
-        if (! $actor->isAuthorized() || ! $actor->hasPermission('cooperatives.create')) {
+    public function createCooperativeAddress(
+        ActorContext $actor,
+        CooperativeAddressOwnerData $cooperative,
+    ): bool {
+        if (! $actor->authorized || ! $actor->hasPermission('cooperatives.create')) {
             return false;
         }
 
@@ -88,15 +81,14 @@ final class AddressPolicy extends BasePolicy
         }
 
         return $actor->hasRole(self::ROLE_SUPER_ADMIN)
-            && $this->assignments->isAssigned((string) $actor->getKey(), (string) $cooperative->getKey());
+            && $this->assignments->isAssigned($actor->id, $cooperative->id);
     }
 
-    /**
-     * Determine whether an actor may update a cooperative's address.
-     */
-    public function updateCooperativeAddress(IdentityActor $actor, Cooperative $cooperative): bool
-    {
-        if (! $actor->isAuthorized() || ! $actor->hasPermission('cooperatives.update')) {
+    public function updateCooperativeAddress(
+        ActorContext $actor,
+        CooperativeAddressOwnerData $cooperative,
+    ): bool {
+        if (! $actor->authorized || ! $actor->hasPermission('cooperatives.update')) {
             return false;
         }
 
@@ -105,17 +97,11 @@ final class AddressPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $this->assignments->isAssigned(
-                (string) $actor->getKey(),
-                (string) $cooperative->getKey(),
-            );
+            return $this->assignments->isAssigned($actor->id, $cooperative->id);
         }
 
-        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
-            return $actor->cooperative_id !== null
-                && (string) $actor->cooperative_id === (string) $cooperative->getKey();
-        }
-
-        return false;
+        return $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)
+            && $actor->cooperativeId !== null
+            && $actor->cooperativeId === $cooperative->id;
     }
 }
