@@ -522,3 +522,18 @@ Lorsqu'un panier contient des produits de plusieurs coopératives et que l'une d
 - Sales ne doit ni exclure automatiquement les lignes concernées, ni créer automatiquement un checkout ou une commande partielle.
 
 Cette règle préserve le contenu choisi par le client et évite toute modification implicite d'un panier multi-coopératives.
+
+
+### SALES-032 — Réactivation d'une coopérative et lignes de panier conservées
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative précédemment inactive redevient active :
+
+- Les lignes de ses produits qui ont été conservées dans les paniers conformément à SALES-030 et SALES-031 redeviennent automatiquement achetables.
+- Le client n'a pas à supprimer puis à ajouter de nouveau ces produits.
+- Le checkout n'est débloqué que si toutes les autres lignes du panier satisfont également les validations habituelles.
+- La réactivation de la coopérative ne contourne aucun contrôle relatif au statut du produit ou de sa variante, au prix, aux limites commerciales, aux quantités ou à la disponibilité du stock.
+- Aucune ligne n'est supprimée ni modifiée silencieusement lors de la réactivation.
+
+Cette règle complète SALES-030 et SALES-031 et suit le principe de réactivation défini par SALES-029 pour un produit temporairement désactivé.
