@@ -306,3 +306,18 @@ Pour un client authentifié, le panier est unique au niveau du compte et synchro
 - Les mécanismes techniques de concurrence, de versionnement et de résolution des conflits seront définis lors de l'audit technique avant implémentation.
 - Cette règle concerne le panier authentifié ; elle ne transforme pas le panier invité en panier multi-appareils.
 
+
+
+### SALES-017 — Conflits de modifications simultanées du panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option B)**
+
+Lorsqu'un même panier authentifié est modifié presque simultanément depuis plusieurs appareils :
+
+- Le panier utilise un mécanisme de versionnement permettant d'identifier la version sur laquelle repose chaque modification.
+- Toute modification soumise avec une version devenue obsolète est refusée ; elle ne remplace pas automatiquement l'état plus récent du panier.
+- L'appareil à l'origine de la modification refusée doit recharger l'état courant du panier avant de permettre une nouvelle tentative.
+- Aucune modification concurrente ne doit être perdue ou écrasée silencieusement.
+- Les détails techniques du versionnement, de l'atomicité et de la réponse applicative seront définis lors de l'audit avant implémentation.
+
+Cette règle précise SALES-016 : le panier reste unique et synchronisé entre les appareils, mais les conflits sont traités par contrôle optimiste de version plutôt que par écrasement automatique ou fusion arbitraire.
