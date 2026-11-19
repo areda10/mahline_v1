@@ -224,3 +224,94 @@ Les règles ci-dessous ont été relues dans les migrations existantes. Elles d�
 - HEAD du code après contrats AuditWriter, CheckoutCatalog, CooperativeAddressManager et providers propriétaires : `3d1c91db28362a38919d7fa1e5084dc862001d69`.
 - `CooperativeService` n'injecte plus `AddressService` directement ; il consomme `CooperativeAddressManager`.
 - Le scan de l'arborescence confirme que les anciens fichiers AddressPolicy/CooperativePolicy sous Identity et les anciens dossiers Countries n'existent plus.
+
+## 10. Ré-audit global de l'arborescence et des points d'entrée — 19 novembre 2026
+
+- **HEAD contrôlé :** `ad3de3395a794e965973493716fbae1e0ca358bb`
+- **Méthode :** arbre Git récursif complet, inventaire des fichiers par domaine, lecture des migrations, routes, providers, contrats et services d'orchestration.
+- **Limite :** audit statique du dépôt Git ; aucune connexion à la base MySQL, aucun test PHP/PHPUnit/Pint et aucune exécution des triggers dans cette passe.
+
+### 10.1 Inventaire réel du code
+
+| Domaine | Fichiers sous app/Domains | État structurel observé |
+|---|---:|---|
+| Identity | 99 | Domaine le plus développé ; plusieurs sous-domaines (Authentication, Customer, Password, UserManagement, Users, SuperAdminRoot, etc.). Audit fonctionnel et architectural encore ouvert. |
+| Media | 21 | Services d'upload, validation, traitement, incidents, nettoyage et policies présents ; contrats de propriétaires manquants. |
+| Orders | 13 | Modèles, enums et deux services de création/réponse présents ; aucun contrôleur HTTP Orders dans le domaine et aucun provider Orders dans bootstrap/providers.php. |
+| Products | 12 | Produits, variantes, unités, service et contrat checkout présents ; dépendances de catalogue/catégories et Media à découpler. |
+| Audit | 11 | Journal, repository, service, writer public et policy présents. |
+| Catalog | 8 | Modèles, services, contrôleurs et policy présents ; PDF et pivots à contrôler. |
+| Cooperatives | 7 | Modèles, service, policy et contrôleur présents ; contrat d'affectation inter-domaines à finaliser. |
+| Localization | 7 | Address, Country, service, policy et contrat d'adresse coopérative présents. |
+| Categories | 6 | Modèle, service, contrôleur et policy présents ; pivot à encapsuler. |
+| Dashboard | 2 | Deux contrôleurs seulement ; pas de couche de projection/lecture autonome constatée. |
+
+Les dossiers Countries ont disparu ; Country appartient à Localization. Aucun code applicatif Inventory, Delivery, Finance, Communication, Statistics, CMS ou Sales n'existe dans `app/Domains` au HEAD contrôlé.
+
+### 10.2 Points d'entrée et composition
+
+- Les routes web déclarent des points d'entrée Identity, Cooperatives, Catalog, Categories, Products, Media et Dashboard. Aucun contrôleur de commande Orders n'est importé dans `routes/web.php`.
+- Les routes API exposent Identity et Audit ; aucune API métier Orders/Inventory/Delivery/Finance n'est actuellement déclarée.
+- `Orders` possède des services et modèles, mais n'est pas encore un parcours HTTP complet.
+- `bootstrap/providers.php` ne déclare aucun Orders provider ; aucun provider n'existe pour les domaines manquants.
+- `AppServiceProvider` lie déjà AuditWriter, CheckoutCatalog, CooperativeAddressManager et SuperAdminCooperativeAssignmentService. Il enregistre aussi encore MediaOwnerObserver globalement sur Product, Cooperative et User : ce point reste un couplage à retirer après mise en place des contrats et adaptateurs propriétaires.
+- Aucun fichier de workflow GitHub Actions ni test d'architecture/boundary n'a été trouvé dans l'arbre inspecté.
+
+### 10.3 Migrations et propriété des données
+
+Les migrations applicatives historiques sont toutes regroupées sous `database/migrations/` au HEAD contrôlé. Elles couvrent Identity, Localization/Countries, Cooperatives, Catalog/Categories/Products, Audit, Media et Orders. Les cinq migrations les plus récentes introduisent notamment les tables Orders, les prix et les unités Products.
+
+Constats :
+- Aucune migration Inventory, Delivery, Finance, Communication, Statistics ou CMS n'existe.
+- Le placement historique des migrations ne respecte pas encore la cible ADR-021 qui prévoit des migrations métier nouvelles dans le domaine propriétaire. Ne pas déplacer ni réécrire les migrations existantes ; appliquer la convention de domaine aux migrations nouvelles, après vérification de la découverte Laravel.
+- Les tables `category_product`, `catalog_product` et `super_admin_cooperative` restent des pivots d'intégration dont les contrats/ownership applicatifs doivent être explicités.
+- Les FK et triggers recensés en section 9 sont uniquement ceux relus ; le registre complet des FKs Identity, Media, sessions, sécurité, notifications et toutes les contraintes de suppression reste à compléter.
+- La table Laravel `notifications` existe déjà, mais cela ne constitue pas un domaine Communication : propriétaire des notifications métier, préférences, modèles, canaux et journal des envois restent à décider.
+
+### 10.4 Dépendances directes encore visibles après les premiers contrats
+
+| Intégration | État constaté | Travail restant |
+|---|---|---|
+| Audit → consommateurs | `AuditWriter` est public et utilisé par les services inspectés | Finaliser ownership du DTO, vérifier couverture et atomicité dans chaque service. |
+| Products → Orders | `CheckoutCatalog` / `CheckoutProductData` sont intégrés dans `OrderCreationService` | Tests MySQL de transaction/lock ; contrats de disponibilité et changements de prix à stabiliser. |
+| Localization → Cooperatives | `CooperativeAddressManager` est consommé par `CooperativeService` | Vérifier toutes les opérations et les imports directs restants dans AddressService/Policies. |
+| Identity ↔ Cooperatives | `SuperAdminCooperativeAssignmentService` est déclaré dans Identity et lié dans le composition root | Définir la frontière d'affectation et les opérations de lecture coopérative sans faire importer à Cooperatives les modèles privés Identity. |
+| Media ↔ propriétaires | Media importe encore Product, Cooperative et User dans catégorie, service, observer et policy | Contrats publics de propriétaires, contexte d'acteur et adaptateurs dans les domaines fournisseurs. |
+| Catalog / Categories / Products | Relations Eloquent et services se réfèrent encore directement aux modèles/pivots des domaines voisins | Encapsuler `category_product` dans Categories et `catalog_product` dans Catalog ; exposer des contrats/DTO à Products. |
+| Orders ↔ Identity / Cooperatives | Les modèles Orders référencent directement User/Cooperative et les services typent l'acteur User | Contrat d'identité/acteur et références logiques de propriétaire ; conserver snapshots et invariants historiques. |
+| Dashboard ↔ domaines métier | Les contrôleurs consomment directement plusieurs domaines | Définir des contrats de lecture/projections, appliquer les filtres coopératifs à la source et éviter toute écriture métier. |
+| Localization ↔ Identity / Cooperatives | AddressService et les relations d'adresse gardent des références aux propriétaires | Contrats d'identité et de cycle de vie du propriétaire ; garder l'invariant XOR user/cooperative. |
+
+### 10.5 Domaines absents et arbitrages de périmètre
+
+| Domaine cible | Statut | Décision / condition préalable |
+|---|---|---|
+| Inventory | Absent du code ; spécification V1 INV-001 à INV-016 existante | Audit global effectué ; audit technique détaillé des modèles, unités, migrations, commandes, transactions, autorisations et événements à terminer avant schéma/code. |
+| Delivery | Absent | Règles connues : offres transporteurs, acceptation 12 h, première acceptation exclusive, attribution automatique au tarif le moins cher, collecte/livraison et transferts. Départage en cas d'égalité et plusieurs cas d'échec restent ouverts. |
+| Finance | Absent | Propriétaire cible des contrats financiers, encaissements reçus, commissions, transferts et reversements. Paramètres contractuels, remboursements, litiges et rapprochements restent incomplets. |
+| Facturation | Absente comme domaine autonome | Doit rester dans Finance ; pas de domaine Billing/Invoicing séparé sans ADR explicite. Facture unique par commande validée après réservation, immuable, numérotation par coopérative et année, PDF conservé et envoyé. |
+| Communication | Absent | Notification in-app et email validées pour événements de commande ; SMS hors V1. Le domaine doit posséder modèles, préférences éventuelles, orchestration d'envoi et journal de livraison, sans prendre possession des événements sources. |
+| Statistics | Absent | Autonomie du domaine validée ; définir indicateurs, projections, fraîcheur, fuseau, devise et contrats de lecture. |
+| CMS | Absent | Domaine prévu dans la roadmap mais aucune spécification fonctionnelle V1 détaillée n'a été trouvée ; ne pas inventer pages, workflow ou permissions. |
+| Sales | Absent | Les documents historiques sont contradictoires : Sales englobait Order/Delivery dans DOMAIN_BOUNDARIES, tandis que la décision ADR-021 actuelle attribue explicitement les commandes à Orders et Delivery est suivi séparément. Ne pas créer Sales avant arbitrage de son éventuel rôle (panier/checkout uniquement ou absence de domaine distinct). |
+| Incidents | Aucun domaine autonome | Les incidents Media sont déjà possédés par Media. Aucun périmètre général d'incidents plateforme n'est spécifié ; ne pas créer un domaine Incidents sur la seule base des anciennes roadmaps. |
+
+### 10.6 Séquence autorisée après l'audit global
+
+1. Terminer les corrections de frontières sûres et caractérisées dans les domaines présents : Media, Catalog/Categories/Products, Identity/Cooperatives, Localization, Orders et Dashboard.
+2. Effectuer maintenant l'audit technique détaillé Inventory : migrations et invariants Products, contrats de confirmation Orders, verrouillage transactionnel, mouvements, réservation, événements, permissions et scénarios d'échec.
+3. Implémenter Inventory par lots verticaux après validation du schéma et des contrats ; ne jamais réserver au checkout ni pendant le délai de réponse de 12 heures.
+4. Compléter le parcours HTTP et les événements Orders, en gardant Orders propriétaire des statuts commerciaux et snapshots.
+5. Implémenter Delivery et Finance uniquement après fermeture des points fonctionnels ouverts qui affectent les transitions, calculs ou rapprochements.
+6. Créer Communication et Statistics avec contrats/événements sources définis ; cadrer CMS séparément.
+7. Résoudre formellement Sales et le périmètre Incidents avant toute création de code.
+
+### 10.7 Conditions de clôture du présent audit
+
+- Inventaire structurel complet des domaines et points d'entrée : réalisé au HEAD indiqué.
+- Cartographie des principaux couplages et pivots : réalisée statiquement, mais certains appels internes et FK restent à recenser exhaustivement.
+- Vérification réelle MySQL des FKs, contraintes et triggers : à exécuter.
+- Tests de frontières automatisés : absents.
+- Audit détaillé Inventory : prochaine étape, non réalisé par ce rapport.
+- Tests PHPUnit/Pint : non exécutés ; aucun domaine n'est déclaré globalement validé.
+
