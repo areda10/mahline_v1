@@ -319,3 +319,11 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - **À faire :** contrats MediaOwner, contrats Address, ownership des pivots, policies/providers locaux, audit exhaustif FK/cascades/triggers, tests d'architecture et CI.
 - **Non exécuté :** PHPUnit/Pint/tests MySQL. Le lot est intégré statiquement mais reste à valider dans l'environnement local.
 - Référence de code après intégration : `f8f7535b1ae98879738c6aad0b0eef614b97a29f`.
+
+
+### Mise à jour — policies propriétaires intégrées
+- **Intégré :** AddressPolicy → Localization ; CooperativePolicy → Cooperatives.
+- **Intégré :** providers de domaine et enregistrement dans `bootstrap/providers.php`, sans changement de noms de Gates ni des règles métier.
+- **Intégré :** tests de policies déplacés et namespaces mis à jour.
+- **À faire :** déplacer les autres enregistrements de policies vers leurs domaines (Audit, Catalog, Categories, Media, Products) après audit de tous les usages ; ajouter les tests d'architecture qui empêchent une régression.
+- **Non exécuté :** PHPUnit/Pint.
