@@ -281,9 +281,8 @@ final class AddressService extends BaseService implements CooperativeAddressMana
 
     public function restoreLatestUserAddressesById(string $userId, string $actorId): void
     {
-        $owner = $this->userOwners->lock($userId);
         $batch = Address::withTrashed()
-            ->where('user_id', $owner->id)
+            ->where('user_id', $userId)
             ->where('deletion_source', 'owner')
             ->whereNotNull('owner_deletion_batch_id')
             ->orderByDesc('deleted_at')
@@ -601,6 +600,7 @@ final class AddressService extends BaseService implements CooperativeAddressMana
         ?array $newValues = null,
     ): void {
         $coopId = $cooperativeId ?? $address->cooperative_id;
+        $coopId = $coopId === null ? null : (string) $coopId;
 
         if ($coopId === null && $address->user_id !== null) {
             $coopId = $this->userOwners->cooperativeId((string) $address->user_id);
