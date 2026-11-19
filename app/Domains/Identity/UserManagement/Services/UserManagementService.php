@@ -281,7 +281,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
             $this->assertSuperAdminTarget($superAdmin);
 
-            $alreadyAssigned = DB::table('super_admin_cooperative')
+            $alreadyAssigned = SuperAdminCooperative::query()
                 ->where('super_admin_id', $superAdmin->getKey())
                 ->where('cooperative_id', $cooperativeId)
                 ->exists();
@@ -290,7 +290,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 return;
             }
 
-            $assignedToAnotherSuperAdmin = DB::table('super_admin_cooperative')
+            $assignedToAnotherSuperAdmin = SuperAdminCooperative::query()
                 ->where('cooperative_id', $cooperativeId)
                 ->where('super_admin_id', '<>', $superAdmin->getKey())
                 ->exists();
@@ -370,7 +370,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 return;
             }
 
-            $assignedToAnotherSuperAdmin = DB::table('super_admin_cooperative')
+            $assignedToAnotherSuperAdmin = SuperAdminCooperative::query()
                 ->where('cooperative_id', $cooperativeId)
                 ->where('super_admin_id', '<>', $lockedSuperAdmin->getKey())
                 ->exists();
