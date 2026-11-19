@@ -211,3 +211,23 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 ### Journal
 
 - **19 novembre 2026 :** création de la spécification et du suivi Inventory V1. Aucun fichier applicatif modifié, aucune migration créée, aucun test exécuté.
+
+
+## 10. Décision architecturale — contrôle des dépendances inter-domaines (19 novembre 2026)
+
+**Décision 9 validée :** les domaines ne peuvent dépendre les uns des autres qu'à travers des contrats publics explicitement exposés. Les imports vers les composants internes d'un domaine fournisseur sont interdits.
+
+- Les dépendances autorisées sont orientées, justifiées et inscrites dans un registre central.
+- Les modèles Eloquent, repositories, migrations, Actions/Services internes, contrôleurs, composants Infrastructure et détails de persistance d'un autre domaine ne sont pas accessibles directement.
+- Les dépendances circulaires sont interdites.
+- Les échanges synchrones passent par des contrats publics ; les notifications de faits métier passent par des événements publics.
+- Les frontières doivent être contrôlées par des tests architecturaux automatisés intégrés à la CI.
+- Toute nouvelle dépendance ou exception doit être approuvée et documentée avant implémentation.
+
+**Document de décision :** [ADR-009 — Contrôle des dépendances entre domaines](decisions/ADR-009-domain-dependencies.md).
+
+**État :** décision d'architecture acceptée ; audit des dépendances réelles, définition des surfaces publiques, registre détaillé et contrôles automatisés restent à réaliser. Aucun code applicatif ni test n'a été modifié ou exécuté dans le cadre de cette décision.
+
+### Journal — 19 novembre 2026
+- Ajout de l'ADR-009 et référencement dans la feuille de route centrale.
+- Aucun changement applicatif, aucune migration et aucune modification de configuration CI.
