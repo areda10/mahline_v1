@@ -446,3 +446,18 @@ Cette règle complète SALES-021, SALES-023 et SALES-024 : en l'absence de limit
 **Décision confirmée — 19 novembre 2026**
 
 Aucun transfert de produit d'une coopérative vers une autre n'est prévu dans MAHLINE V1. Un produit reste rattaché à sa coopérative propriétaire ; il n'existe donc pas de scénario de changement de propriétaire entre coopératives à traiter par Sales. La question SALES-026 relative au transfert de produit est sans objet et n'introduit aucune règle de transfert ou de migration de limite commerciale.
+
+
+### SALES-027 — Produit supprimé alors qu'il figure dans plusieurs paniers
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative supprime un produit présent dans plusieurs paniers clients :
+
+- Chaque panier conserve sa ligne historique ; aucune suppression automatique n'est effectuée dans les paniers concernés.
+- La ligne est signalée comme supprimée/indisponible et ne peut plus être achetée.
+- Le checkout de chaque panier concerné est bloqué tant que cette ligne y demeure.
+- Chaque client doit retirer lui-même la ligne pour poursuivre son checkout.
+- Les informations descriptives conservées selon SALES-010 restent disponibles pour identifier l'article.
+
+Cette règle s'applique indépendamment du nombre de paniers concernés et complète SALES-010. La suppression du produit par la coopérative ne doit jamais modifier silencieusement les paniers des clients.
