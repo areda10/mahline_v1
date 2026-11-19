@@ -41,9 +41,12 @@ Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient act
 - `Identity`
 - `Localization`
 - `Media`
+- `Orders`
 - `Products`
 
 Cet inventaire décrit uniquement la présence de dossiers dans le dépôt au moment de cette mise à jour. Il ne constitue pas une validation fonctionnelle ou technique de ces domaines.
+
+**Référence vérifiée pour cette révision :** branche `feature/Marketplace`, HEAD `c83614660b601bb1768223f67202e3d1f85d3c0e`, arbre Git récursif. Onze dossiers sont présents. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d)) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
 
 Les documents d'architecture décrivent également des domaines ou périmètres prévus qui ne figurent pas dans cet inventaire, notamment `Inventory`, `Sales`, `Finance`, `Media`, `Communication` et `CMS`. Cette différence devra être traitée progressivement, sans créer de dossiers ni déplacer du code avant validation de leur périmètre.
 
@@ -62,7 +65,7 @@ Les documents d'architecture décrivent également des domaines ou périmètres 
 | Dashboard | Présentation des indicateurs et vues de pilotage | Oui | À cadrer avec Statistics |
 | Media | Fichiers et ressources média transversales consommés par plusieurs domaines | Oui | Présent dans le dépôt ; audit V1 et tests à poursuivre |
 | Inventory | Stocks, mouvements, réservations, entrepôts et ajustements | Non | À planifier |
-| Orders | Commandes client, lignes, cycle de vie et éventuelle segmentation par coopérative | Non | À cadrer : le document DOMAIN_BOUNDARIES place actuellement Order dans Sales |
+| Orders | Commandes client, lignes, sous-commandes coopératives et cycle de vie | Oui | Présent dans le dépôt ; audit métier/architecture à terminer et frontières avec Inventory, Delivery et Finance à consolider |
 | Delivery | Expédition, transport, tarifs, suivi, statuts et documents de livraison | Non | À cadrer : le document DOMAIN_BOUNDARIES place actuellement Delivery dans Sales |
 | Finance / Facturation | Factures client et coopérative, paiements, remboursements, commissions, reversements et transactions | Non | À planifier ; Finance est le domaine de référence prévu pour la facturation |
 | Statistics | Agrégation et analyse des indicateurs produits et, à terme, commandes, stocks, livraisons et ventes | Non | Domaine autonome approuvé — périmètre détaillé à définir |
@@ -470,3 +473,20 @@ Pour chaque domaine, conserver les informations suivantes dans son propre cahier
 - Ajout de l'ADR-020 et référencement dans la feuille de route centrale.
 - Mise à jour de l'ADR-019 pour indiquer que la question 19, ouverte à cette date, a été arbitrée par l'ADR-020.
 - Aucun changement applicatif, aucune migration et aucun test exécuté.
+
+
+## 22. Plan de correction transversal — audit du 19 novembre 2026
+
+Le plan détaillé et ordonné est enregistré dans [IMPLEMENTATION_REMEDIATION_PLAN.md](IMPLEMENTATION_REMEDIATION_PLAN.md). Il constitue le plan d'exécution de référence après l'audit transversal. Les statuts y distinguent les constats prouvés, les contrôles restant à faire et les changements proposés.
+
+### Corrections documentaires immédiates
+- Rectification de l'inventaire : `Orders` est présent dans `app/Domains` et les migrations marketplace sont présentes.
+- Signalement de l'ancienneté du rapport d'audit du 17 novembre.
+- Enregistrement du conflit de numérotation entre `docs/framework/ADR.md` (ADR-001 à ADR-015 historiques) et `docs/architecture/decisions/ADR-009` à `ADR-020`.
+- Les ADR-001 à ADR-008 du cadre V1 doivent être localisés et reliés au registre canonique ; aucune renumérotation ni suppression n'est autorisée sans traçabilité.
+
+### Journal — 19 novembre 2026
+- Ajout du plan de correction transversal, avec priorités, séquencement, fichiers cibles, dépendances et critères de sortie.
+- Correction de la présence du domaine Orders dans l'inventaire courant.
+- Aucun code métier, aucune migration, configuration ou test applicatif modifié/exécuté dans cette mise à jour documentaire.
+- Aucun merge vers `main`.
