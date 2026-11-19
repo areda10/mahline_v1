@@ -347,7 +347,7 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
-    public function test_root_temporary_activation_archives_the_existing_password(): void
+    public function test_root_activation_keeps_email_unverified_and_preserves_existing_password(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
         $target = User::factory()->create([
@@ -356,18 +356,12 @@ final class UserManagementServiceTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        $activated = $this->service->activateAndVerifyUser($root, $target);
+        $activated = $this->service->activateUser($root, $target);
 
         $this->assertSame(UserStatus::Active, $activated->status);
-        $this->assertTrue($activated->must_change_password);
-        $this->assertTrue(Hash::check('MahlineMahline', (string) $activated->password));
-
-        $history = DB::table('user_password_histories')
-            ->where('user_id', $target->getKey())
-            ->first();
-
-        $this->assertNotNull($history);
-        $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $history->password_hash));
+        $this->assertNull($activated->email_verified_at);
+        $this->assertFalse($activated->must_change_password);
+        $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $activated->password));
     }
 
     public function test_super_admin_root_account_cannot_be_deleted_through_user_management(): void
