@@ -48,12 +48,6 @@
                 <button class="button" type="submit">Activer et envoyer une invitation</button>
             </form>
 
-            <form method="POST" action="{{ route('root.backoffice.users.activate-and-verify', $user) }}"
-                  onsubmit="return confirm('Activer immédiatement et vérifier l’e-mail ? Le mot de passe provisoire sera MahlineMahline et son changement sera obligatoire à la première connexion.');">
-                @csrf
-                @method('PATCH')
-                <button class="button" type="submit">Activer, vérifier l’e-mail et autoriser la connexion</button>
-            </form>
         @endcan
 
         @can('deactivate', $user)
