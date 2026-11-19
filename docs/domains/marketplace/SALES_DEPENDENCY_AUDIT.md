@@ -183,7 +183,7 @@ Fichiers inspectés :
 - Audit statique des fichiers cités uniquement ; aucune exécution locale PHP ou MySQL n'a été possible dans cette session.
 - Aucun PHPUnit, Pint, test de migration, test MySQL ou pipeline CI exécuté.
 - Les migrations historiques n'ont pas été modifiées.
-- Aucun code métier n'a été modifié dans le cadre de cet audit.
+- Un correctif ciblé de métadonnées checkout Products a été appliqué après l'audit statique ; voir section 9. Aucun refactor de frontière inter-domaines n'est encore déclaré terminé.
 - Les points non lus ou non vérifiés ne sont pas déclarés conformes.
 
 
@@ -196,3 +196,23 @@ Fichiers inspectés :
 - Aucun changement d'interface, de règle métier, de migration ou de table.
 - Vérification statique après écriture : les trois providers contiennent leurs bindings et AppServiceProvider ne les contient plus.
 - **À exécuter localement :** tests de boot/providers, résolution du conteneur pour les trois contrats, tests ciblés Audit/Products/Localization, Pint et suite complète.
+
+
+## 9. Correctif ciblé — résolution des variantes Products (19 novembre 2026)
+
+### Défaut constaté
+Dans `ProductService::resolveForCheckout()`, `hasVariants` était calculé avec la condition `! $variantRequested && $product->variants()->exists()`. Dès qu'un identifiant de variante était fourni, le DTO annonçait donc `hasVariants = false`, même si le produit possédait des variantes.
+
+### Correction appliquée
+- `hasVariants` est désormais calculé indépendamment de la présence d'un identifiant de variante : `$product->variants()->exists()`.
+- Le contrat `CheckoutCatalog` et le DTO existant sont conservés ; aucune signature publique n'est cassée.
+- Ajout de `CheckoutCatalogResolutionTest` couvrant produit avec variante sélectionnée, produit avec variantes sans sélection, variante introuvable et produit sans variante.
+
+### Références GitHub
+- `ProductService.php` — commit `b59fe37d830daaf568d2b1346c07624944b90f01`.
+- `CheckoutCatalogResolutionTest.php` — commit `b56794db594e828ea8840d4c37ef425fe3823ed3`.
+
+### Validation
+- Revue statique du diff : effectuée.
+- PHPUnit/Pint/boot du conteneur/MySQL : non exécutés depuis cette session ; exécution locale requise.
+- Ce correctif ne résout pas encore le contrat commercial versionné nécessaire aux états historiques du panier. Ce chantier reste P0.
