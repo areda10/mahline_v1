@@ -598,3 +598,18 @@ Lorsqu'une coopérative inactive crée une nouvelle variante pour un produit exi
 - Les lignes de panier existantes restent soumises à leurs propres règles de disponibilité ; la création d'une nouvelle variante ne réactive pas une variante supprimée et ne contourne pas SALES-035.
 
 Cette règle garantit que l'ajout d'une variante par la coopérative ne vaut jamais choix ou consentement du client.
+
+### SALES-037 — Modification commerciale d'une variante pendant l'indisponibilité de la coopérative
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative modifie une caractéristique commerciale d'une variante déjà référencée dans des paniers clients pendant sa période d'inactivité, sans supprimer cette variante, puis redevient active :
+
+- La ligne de panier conserve les caractéristiques commerciales initialement choisies ; elles ne sont pas remplacées silencieusement par la nouvelle configuration.
+- Le changement commercial est détecté et présenté clairement au client.
+- Le checkout de la ligne reste bloqué jusqu'à ce que le client accepte explicitement la nouvelle configuration ou retire la ligne.
+- Aucune modification commerciale ne peut être considérée comme acceptée du seul fait de la réactivation de la coopérative.
+- Les caractéristiques acceptées et les informations nécessaires à la traçabilité doivent être transmises à Orders pour le snapshot de commande.
+- Les autres contrôles de disponibilité, de prix, de limite commerciale, de quantité et de stock restent applicables.
+
+Cette règle couvre les changements tels que la contenance, le poids, le conditionnement ou l'unité. Elle complète SALES-011 et les règles d'acceptation explicite des changements commerciaux.
