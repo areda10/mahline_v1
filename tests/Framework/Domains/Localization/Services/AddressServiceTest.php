@@ -10,6 +10,7 @@ use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
+use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Services\AddressService;
 use Database\Seeders\CountrySeeder;
 use Database\Seeders\PermissionSeeder;
@@ -34,6 +35,36 @@ final class AddressServiceTest extends TestCase
             PermissionSeeder::class,
             RolePermissionSeeder::class,
             CountrySeeder::class,
+        ]);
+    }
+
+    public function test_identity_can_use_the_public_user_address_lifecycle_contract(): void
+    {
+        $user = $this->userWithRole('user');
+        $address = app(AddressService::class)->createForUser($user, $user, [
+            'street' => 'Rue du Contrat',
+            'city' => 'Casablanca',
+        ]);
+
+        $lifecycle = app(UserAddressLifecycleManager::class);
+
+        $batch = $lifecycle->softDeleteUserAddressesById(
+            (string) $user->getKey(),
+            (string) $user->getKey(),
+        );
+
+        self::assertNotSame('', $batch);
+        self::assertSoftDeleted('addresses', ['id' => $address->getKey()]);
+
+        $lifecycle->restoreLatestUserAddressesById(
+            (string) $user->getKey(),
+            (string) $user->getKey(),
+        );
+
+        self::assertDatabaseHas('addresses', [
+            'id' => $address->getKey(),
+            'deleted_at' => null,
+            'user_id' => $user->getKey(),
         ]);
     }
 
