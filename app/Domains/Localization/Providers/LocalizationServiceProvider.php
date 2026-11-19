@@ -7,6 +7,7 @@ namespace App\Domains\Localization\Providers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Contracts\CooperativeAddressManager;
+use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Localization\Services\AddressService;
 use App\Domains\Localization\Policies\AddressPolicy;
@@ -18,6 +19,7 @@ final class LocalizationServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CooperativeAddressManager::class, AddressService::class);
+        $this->app->bind(UserAddressLifecycleManager::class, AddressService::class);
     }
 
     public function boot(): void
