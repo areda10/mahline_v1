@@ -54,6 +54,9 @@ final class PasswordResetServiceTest extends TestCase
     {
         $user = User::factory()->create();
 
+        self::assertFalse($this->passwordResetService->canRequestReset($user, true));
+        self::assertTrue($this->passwordResetService->canRequestReset($user, false));
+
         $this->expectException(\App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException::class);
 
         $this->passwordResetService->createToken(
@@ -72,6 +75,9 @@ final class PasswordResetServiceTest extends TestCase
             ['name' => 'customer', 'is_active' => true],
         );
         $customer->roles()->attach($role->getKey());
+
+        self::assertTrue($this->passwordResetService->canRequestReset($customer, true));
+        self::assertFalse($this->passwordResetService->canRequestReset($customer, false));
 
         $this->expectException(\App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException::class);
 
