@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\UserManagement\Services;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
@@ -30,7 +30,7 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
     private const ROLE_USER = 'user';
 
     public function __construct(
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
         private readonly SessionService $sessions,
         private readonly ApiTokenService $apiTokens,
         private readonly PasswordHistoryService $passwordHistory,
