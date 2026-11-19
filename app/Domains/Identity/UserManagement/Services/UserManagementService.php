@@ -10,7 +10,6 @@ use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
-use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\Users\Models\User;
@@ -33,7 +32,6 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
         private readonly AuditWriter $audit,
         private readonly SessionService $sessions,
         private readonly ApiTokenService $apiTokens,
-        private readonly PasswordHistoryService $passwordHistory,
         private readonly AddressService $addresses,
     ) {}
 
