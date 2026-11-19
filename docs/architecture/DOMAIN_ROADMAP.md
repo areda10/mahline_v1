@@ -967,3 +967,12 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Tests ajoutés pour ActorContext, verrou d'urgence, lecteur de pivot et bindings ; tests non exécutés.
 - Localization reste à découpler de User/Cooperative dans `AddressService` : ports owner User et owner Cooperative à définir et implémenter sans dépendance circulaire.
 - Les trois domaines restent `AUDIT_IN_PROGRESS`.
+
+### 20. Lot A10 — Localization sans modèles propriétaires
+
+- `AddressService` est désormais indépendant des modèles Eloquent User et Cooperative ; ses APIs échangent des IDs et DTOs.
+- Localization définit les ports `UserAddressOwnerGateway` et `CooperativeAddressOwnerGateway`; Identity et Cooperatives fournissent les adaptateurs.
+- L'autorisation passe toujours par les Policies Laravel via les adapters, pas par une duplication de règles.
+- Les contrôleurs consomment les contrats `UserAddressLifecycleManager` et `CooperativeAddressManager`.
+- Tests de service adaptés, test de frontière ajouté, tests de bindings ajoutés ; non exécutés.
+- Identity / Localization / Cooperatives restent `AUDIT_IN_PROGRESS` jusqu'à exécution des suites et audit final.
