@@ -22,6 +22,7 @@ final class OrderCreationService
     public function __construct(
         private readonly CheckoutCatalog $products,
     ) {}
+
     /**
      * Persist a complete multi-cooperative order from checkout intent.
      *
