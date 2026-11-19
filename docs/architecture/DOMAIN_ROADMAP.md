@@ -986,3 +986,9 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - LocalizationServiceProvider ne contient plus de Gate closures couplées aux modèles User/Cooperative.
 - Tests d'architecture et tests de Policies ajoutés/adaptés, non exécutés.
 - Relations Eloquent réciproques conservées uniquement comme mapping relationnel/lecture ; toutes les écritures de pivot restent dans Identity.
+
+### 22. Lot A12 — UserPolicy
+
+- UserPolicy utilise les contrats CooperativeIdentityReference et SuperAdminCooperativeAssignmentReader, pas le modèle Cooperative ni la relation User::cooperatives().
+- Contrôleur d'affectation transmet les identifiants pour Gate et les opérations de service.
+- Test de frontière UserPolicy ajouté ; tests non exécutés.
