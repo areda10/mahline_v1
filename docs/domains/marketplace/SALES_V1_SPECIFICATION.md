@@ -337,3 +337,17 @@ Lorsqu'Orders confirme la création réussie d'une commande à partir du checkou
 Cette règle est particulièrement importante pour un panier multi-coopératives : seules les lignes réellement consommées par la commande créée sont retirées, sans supprimer les articles restants.
 
 L'atomicité entre la création Orders et la consommation des lignes Sales, ainsi que le traitement des réponses perdues, reprises et idempotence, seront définis lors de l'audit technique des contrats avant implémentation.
+
+### SALES-019 — Limite maximale de quantité par produit ou variante
+
+**Statut : VALIDÉ — 19 novembre 2026 (option C)**
+
+La quantité maximale commandable dans une ligne de panier est configurable au niveau du produit ou de la variante par la coopérative propriétaire.
+
+- La limite est définie pour le produit ou la variante concerné(e), et non imposée comme une valeur métier identique à l'ensemble du catalogue.
+- Lorsqu'une limite est définie, Sales refuse l'ajout ou la modification qui ferait dépasser cette limite et explique au client la quantité maximale autorisée.
+- Cette limite commerciale est indépendante du stock disponible : autoriser une quantité dans la limite ne réserve pas le stock et ne garantit pas sa disponibilité.
+- Les contrôles de disponibilité et de stock restent ceux définis par SALES-009 et SALES-013 et par le domaine Inventory.
+- Pour une ligne avec variante, la règle de quantité doit être déterminée au niveau de la variante ; pour un produit sans variante, elle est déterminée au niveau du produit.
+
+Restent à préciser avant implémentation : le comportement lorsqu'aucune limite n'est configurée, les valeurs minimales/maximales techniques autorisées, les droits de modification de cette limite, ainsi que le traitement d'une limite abaissée alors qu'une quantité supérieure se trouve déjà dans un panier. La limite ne doit pas être contournée par la fusion des paniers (SALES-003) ou par des modifications concurrentes (SALES-017).
