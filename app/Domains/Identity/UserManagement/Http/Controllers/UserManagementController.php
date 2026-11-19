@@ -7,6 +7,7 @@ namespace App\Domains\Identity\UserManagement\Http\Controllers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
@@ -122,6 +123,25 @@ final class UserManagementController
                 'success',
                 'Une nouvelle invitation a été envoyée à l’adresse e-mail de cet utilisateur.',
             );
+    }
+
+    public function sendPasswordReset(
+        User $user,
+        PasswordResetService $passwordResetService,
+    ): RedirectResponse {
+        Gate::authorize('sendPasswordReset', $user);
+
+        try {
+            $passwordResetService->createToken($user);
+        } catch (\\Throwable) {
+            return redirect()
+                ->route('backoffice.users.show', $user)
+                ->with('error', 'Le lien de réinitialisation n’a pas pu être envoyé. Vous pourrez réessayer.');
+        }
+
+        return redirect()
+            ->route('backoffice.users.show', $user)
+            ->with('success', 'Un lien sécurisé de réinitialisation du mot de passe a été envoyé par e-mail.');
     }
 
     public function edit(Request $request, User $user): View
