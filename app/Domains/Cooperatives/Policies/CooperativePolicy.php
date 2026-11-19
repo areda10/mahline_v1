@@ -74,7 +74,7 @@ final class CooperativePolicy extends BasePolicy
 
         if ($user->hasRole(self::ROLE_SUPER_ADMIN)) {
             return $this->assignments->isAssigned(
-                (string) $user->getKey(),
+                (string) $user->getAuthIdentifier(),
                 (string) $cooperative->getKey(),
             );
         }
