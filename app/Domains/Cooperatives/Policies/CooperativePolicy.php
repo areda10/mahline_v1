@@ -6,7 +6,7 @@ namespace App\Domains\Cooperatives\Policies;
 
 use App\Core\Foundation\Policies\BasePolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Users\Models\User;
+use App\Shared\Contracts\IdentityActor;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 
 final class CooperativePolicy extends BasePolicy
@@ -21,19 +21,19 @@ final class CooperativePolicy extends BasePolicy
 
     private const ROLE_USER = 'user';
 
-    public function viewAny(User $user): bool
+    public function viewAny(IdentityActor $user): bool
     {
         return $this->hasPermission($user, 'cooperatives.view')
             && $this->hasSupportedRole($user);
     }
 
-    public function view(User $user, Cooperative $cooperative): bool
+    public function view(IdentityActor $user, Cooperative $cooperative): bool
     {
         return $this->canAccessCooperative($user, $cooperative)
             && $this->hasPermission($user, 'cooperatives.view');
     }
 
-    public function create(User $user): bool
+    public function create(IdentityActor $user): bool
     {
         return $this->hasAnyRole($user, [
             self::ROLE_SUPER_ADMIN_ROOT,
@@ -41,7 +41,7 @@ final class CooperativePolicy extends BasePolicy
         ]) && $this->hasPermission($user, 'cooperatives.create');
     }
 
-    public function update(User $user, Cooperative $cooperative): bool
+    public function update(IdentityActor $user, Cooperative $cooperative): bool
     {
         return $this->canAccessCooperative($user, $cooperative)
             && $this->hasPermission($user, 'cooperatives.update')
@@ -52,7 +52,7 @@ final class CooperativePolicy extends BasePolicy
             ]);
     }
 
-    public function delete(User $user, Cooperative $cooperative): bool
+    public function delete(IdentityActor $user, Cooperative $cooperative): bool
     {
         return $this->canAccessCooperative($user, $cooperative)
             && $this->hasPermission($user, 'cooperatives.delete')
@@ -62,7 +62,7 @@ final class CooperativePolicy extends BasePolicy
             ]);
     }
 
-    private function canAccessCooperative(User $user, Cooperative $cooperative): bool
+    private function canAccessCooperative(IdentityActor $user, Cooperative $cooperative): bool
     {
         if (! $user->isAuthorized()) {
             return false;
@@ -90,18 +90,18 @@ final class CooperativePolicy extends BasePolicy
         return false;
     }
 
-    private function hasPermission(User $user, string $permission): bool
+    private function hasPermission(IdentityActor $user, string $permission): bool
     {
         return $user->isAuthorized() && $user->hasPermission($permission);
     }
 
     /** @param list<string> $roles */
-    private function hasAnyRole(User $user, array $roles): bool
+    private function hasAnyRole(IdentityActor $user, array $roles): bool
     {
         return $user->isAuthorized() && $user->hasAnyRole($roles);
     }
 
-    private function hasSupportedRole(User $user): bool
+    private function hasSupportedRole(IdentityActor $user): bool
     {
         return $this->hasAnyRole($user, [
             self::ROLE_SUPER_ADMIN_ROOT,
