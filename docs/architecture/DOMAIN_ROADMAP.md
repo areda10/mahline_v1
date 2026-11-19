@@ -682,9 +682,11 @@ Spécification de référence : [Sales V1](../domains/marketplace/SALES_V1_SPECI
 
 Décisions validées :
 - panier invité et authentifié ; fusion du panier invité avec le panier du compte à la connexion (SALES-001) ;
+- fusion des lignes uniquement lorsque toutes les caractéristiques commerciales sont identiques (SALES-003) ;
+- conservation du panier invité pendant 30 jours sans activité ; durée du panier authentifié à définir (SALES-004) ;
 - Sales, Orders, Inventory, Delivery, Finance et Communication sont autonomes dans le monolithe modulaire, chacun propriétaire de ses modèles, tables, règles, contrats et tests (SALES-002) ;
 - Sales possède le parcours précommande ; Orders possède la commande après création ; Finance possède les opérations financières.
 
-Le cadrage détaillé reste ouvert : fusion des lignes, expiration, prix, promotions, coupons, devis, idempotence et validations du checkout. Aucun code Sales ni migration Sales n'est déclaré réalisé.
+Le cadrage détaillé reste ouvert : limites de quantité lors des fusions, durée du panier authentifié, prix, promotions, coupons, devis, idempotence et validations du checkout. Aucun code Sales ni migration Sales n'est déclaré réalisé.
 
 Ordre de travail confirmé par l'utilisateur : Sales → Inventory → Orders → Delivery → Finance → Communication. Pour chaque domaine : cadrage métier, audit technique des contrats et fichiers réels, validation, puis implémentation et tests. L'ordre de travail ne modifie pas les frontières de propriété ni les dépendances nécessaires entre domaines.
