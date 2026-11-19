@@ -999,3 +999,9 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - PasswordResetService valide la séparation client / non-client dès la demande, à l'émission du token et à sa consommation ; classification par rôles actifs, même si l'e-mail n'est pas vérifié.
 - Tests de session et de reset ajoutés ; non exécutés.
 - Revue statique des tokens, invitations et changement d'e-mail documentée ; aucun gel Identity tant que la suite complète n'a pas été exécutée.
+
+### 24. Lot A14 — schéma Localization
+
+- Audit statique des contraintes d'ownership, index uniques et foreign keys terminé.
+- Tests MySQL existants identifiés pour les triggers et index ; exécution runtime encore en attente.
+- Countries reste intégré à Localization.
