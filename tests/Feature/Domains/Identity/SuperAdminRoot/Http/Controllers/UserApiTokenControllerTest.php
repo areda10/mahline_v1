@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -14,6 +15,13 @@ use Tests\TestCase;
 final class UserApiTokenControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+    }
 
     public function test_root_token_workflow_rejects_customer_role_even_when_account_is_suspended(): void
     {
