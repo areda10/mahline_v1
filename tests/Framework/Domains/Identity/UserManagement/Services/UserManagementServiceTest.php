@@ -270,12 +270,12 @@ final class UserManagementServiceTest extends TestCase
         $superAdmin = $this->createUserWithRole('super_admin');
 
         $beforeAssignment = $superAdmin->createToken('before-assignment');
-        $this->service->assignSuperAdminToCooperative($root, $superAdmin, $cooperative);
+        $this->service->assignSuperAdminToCooperative($root, $superAdmin, (string) $cooperative->getKey());
 
         self::assertNotNull($beforeAssignment->accessToken->fresh()->revoked_at);
 
         $afterAssignment = $superAdmin->createToken('after-assignment');
-        $this->service->removeSuperAdminFromCooperative($root, $superAdmin, $cooperative);
+        $this->service->removeSuperAdminFromCooperative($root, $superAdmin, (string) $cooperative->getKey());
 
         self::assertNotNull($afterAssignment->accessToken->fresh()->revoked_at);
         $this->assertDatabaseHas('audit_events', [
@@ -295,7 +295,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->assignSuperAdminToCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         self::assertTrue(
@@ -320,7 +320,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->removeSuperAdminFromCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         self::assertFalse(
@@ -343,7 +343,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->assignSuperAdminToCooperative(
             $superAdmin,
             $target,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
     }
 
@@ -687,7 +687,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->removeSuperAdminFromCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         self::assertFalse(
@@ -743,7 +743,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->assignSuperAdminToCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         $this->assertDatabaseHas('audit_events', [
@@ -766,7 +766,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->removeSuperAdminFromCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         $this->assertDatabaseHas('audit_events', [
@@ -787,13 +787,13 @@ final class UserManagementServiceTest extends TestCase
         $this->service->assignSuperAdminToCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         $this->service->assignSuperAdminToCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         $this->assertDatabaseCount('super_admin_cooperative', 1);
@@ -816,12 +816,12 @@ final class UserManagementServiceTest extends TestCase
         $firstSuperAdmin = $this->createUserWithRole('super_admin');
         $secondSuperAdmin = $this->createUserWithRole('super_admin');
 
-        $this->service->assignSuperAdminToCooperative($root, $firstSuperAdmin, $cooperative);
+        $this->service->assignSuperAdminToCooperative($root, $firstSuperAdmin, (string) $cooperative->getKey());
 
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('A cooperative can be assigned to only one super admin.');
 
-        $this->service->assignSuperAdminToCooperative($root, $secondSuperAdmin, $cooperative);
+        $this->service->assignSuperAdminToCooperative($root, $secondSuperAdmin, (string) $cooperative->getKey());
     }
 
     public function test_removing_non_existing_assignment_does_not_record_audit_event(): void
@@ -833,7 +833,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->removeSuperAdminFromCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         $this->assertDatabaseMissing('audit_events', [
@@ -1022,7 +1022,7 @@ final class UserManagementServiceTest extends TestCase
         $this->service->assignSuperAdminToCooperative(
             $root,
             $superAdmin,
-            $cooperative,
+            (string) $cooperative->getKey(),
         );
 
         $this->expectException(QueryException::class);
