@@ -7,7 +7,7 @@ namespace App\Domains\Cooperatives\Http\Controllers;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Localization\Enums\MoroccanRegion;
-use App\Domains\Localization\Services\AddressService;
+use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +19,7 @@ final class CooperativeController
 {
     public function __construct(
         private readonly CooperativeService $cooperativeService,
-        private readonly AddressService $addresses,
+        private readonly CooperativeAddressManager $addresses,
     ) {}
 
     public function index(): View
@@ -108,7 +108,7 @@ final class CooperativeController
                 $this->cooperativeService->update($actor, $model, $attributes);
             }
             if ($address !== []) {
-                $this->addresses->updateForCooperative($actor, $model, $address);
+                $this->addresses->updateAddressForCooperative($actor, (string) $model->getKey(), $address);
             }
         });
 
