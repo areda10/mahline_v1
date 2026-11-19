@@ -302,7 +302,7 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 ### 19 novembre 2026
 - Création du plan concret de correction transversal.
 - Correction du registre de domaines : Orders est présent.
-- Référence de travail : `feature/Marketplace` à `c83614660b601bb1768223f67202e3d1f85d3c0e`.
+- Référence de travail : `feature/Marketplace` à `c5981e490f3f15f8f1672b589a1c962a1c51abc2`.
 
 
 ### Mise à jour du 19 novembre 2026 — architecture hybride
