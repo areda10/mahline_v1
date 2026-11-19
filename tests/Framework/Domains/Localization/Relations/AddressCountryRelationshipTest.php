@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Localization\Relations;
 
-use App\Domains\Countries\Models\Country;
+use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Models\Address;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
