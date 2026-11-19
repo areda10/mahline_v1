@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Catalog\Services;
 
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Catalog\Repositories\CatalogRepository;
 use App\Domains\Identity\Users\Models\User;
@@ -20,7 +20,7 @@ final class CatalogService
 {
     public function __construct(
         private readonly CatalogRepository $repository,
-        private readonly AuditService $audit,
+        private readonly AuditWriter $audit,
     ) {}
 
     public function paginateForCooperative(
