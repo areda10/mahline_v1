@@ -192,3 +192,12 @@ Les règles ci-dessous ont été relues dans les migrations existantes. Elles d�
 - Le registre ci-dessus couvre les migrations explicitement relues pour les relations clés ; les autres FKs des migrations Identity, Media et des tables de sécurité doivent encore être ajoutées au registre exhaustif.
 - Aucun schéma MySQL réel n'a été interrogé dans cette session ; les règles ont été lues dans les fichiers de migration.
 - Aucun trigger n'a été exécuté ni testé dans une base MySQL locale.
+
+
+### Authorization — policies déplacées vers les domaines propriétaires
+- `AddressPolicy` déplacée de Identity vers `Localization/Policies`.
+- `CooperativePolicy` déplacée de Identity vers `Cooperatives/Policies`.
+- Création de `LocalizationServiceProvider` et `CooperativesServiceProvider`, enregistrés dans `bootstrap/providers.php`.
+- Les Gates `updateUserAddress`, `createCooperativeAddress` et `updateCooperativeAddress` restent disponibles avec leurs mêmes noms et délèguent désormais à Localization.
+- Le provider Identity ne référence plus les modèles/policies Address et Cooperative.
+- Les tests des deux policies ont été déplacés sous les domaines propriétaires et leurs namespaces/imports mis à jour. Tests non exécutés.
