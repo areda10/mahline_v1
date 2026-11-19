@@ -12,14 +12,16 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
-use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductVariant;
+use App\Domains\Products\Contracts\CheckoutCatalog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class OrderCreationService
 {
+    public function __construct(
+        private readonly CheckoutCatalog $products,
+    ) {}
     /**
      * Persist a complete multi-cooperative order from checkout intent.
      *
@@ -54,62 +56,49 @@ final class OrderCreationService
                     ]);
                 }
 
-                $product = Product::query()
-                    ->whereKey((string) $input['product_id'])
-                    ->lockForUpdate()
-                    ->first();
+                $productData = $this->products->resolveForCheckout(
+                    (string) $input['product_id'],
+                    empty($input['product_variant_id']) ? null : (string) $input['product_variant_id'],
+                );
 
-                if ($product === null || ! $product->is_active) {
+                if ($productData === null) {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_id" => ['Ce produit est indisponible ou son prix doit être défini.'],
                     ]);
                 }
 
-                $variant = null;
-                if (! empty($input['product_variant_id'])) {
-                    $variant = ProductVariant::query()
-                        ->whereKey((string) $input['product_variant_id'])
-                        ->where('product_id', $product->getKey())
-                        ->where('is_active', true)
-                        ->lockForUpdate()
-                        ->first();
-
-                    if ($variant === null) {
-                        throw ValidationException::withMessages([
-                            "items.{$index}.product_variant_id" => ['Cette variante est indisponible ou ne correspond pas au produit.'],
-                        ]);
-                    }
+                if ($productData->variantRequested && ! $productData->variantFound) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_variant_id" => ['Cette variante est indisponible ou ne correspond pas au produit.'],
+                    ]);
                 }
 
-                if ($variant === null && $product->variants()->exists()) {
+                if (! $productData->variantRequested && $productData->hasVariants) {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_variant_id" => ['Une variante doit être sélectionnée pour ce produit.'],
                     ]);
                 }
 
-                if ($variant !== null && $product->unit_id !== null) {
+                if ($productData->variantFound && $productData->variantId !== null && $productData->hasParentUnit) {
                     throw ValidationException::withMessages([
                         "items.{$index}.unit" => ['Un produit avec variantes ne peut pas conserver une unité parent.'],
                     ]);
                 }
 
-                // L'unité de commande provient exclusivement de Products :
-                // produit simple ou variante sélectionnée. La valeur cliente est ignorée.
-                $stockUnit = $variant !== null ? $variant->unit : $product->unit;
-                if ($stockUnit === null) {
+                if ($productData->unitCode === null || $productData->unitLabel === null) {
                     throw ValidationException::withMessages([
                         "items.{$index}.unit" => ['L’unité de stock du produit ou de sa variante doit être définie avant la commande.'],
                     ]);
                 }
 
-                if ((string) $product->currency !== 'MAD') {
+                if ($productData->currency !== 'MAD') {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_id" => ['Seuls les produits en MAD sont commandables en V1.'],
                     ]);
                 }
 
                 $quantityMilli = $this->quantityToMilli($input['quantity'] ?? null, $index);
-                $unitPrice = $variant?->price ?? $product->price;
+                $unitPrice = $productData->effectivePrice;
                 if ($unitPrice === null) {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_id" => ['Le prix du produit ou de sa variante doit être défini.'],
@@ -130,17 +119,17 @@ final class OrderCreationService
                 }
 
                 $lineCents = intdiv(($unitPriceCents * $quantityMilli) + 500, 1000);
-                $cooperativeId = (string) $product->cooperative_id;
+                $cooperativeId = $productData->cooperativeId;
 
                 $snapshot = [
-                    'product_id' => (string) $product->getKey(),
-                    'product_name' => $product->name,
-                    'product_slug' => $product->slug,
-                    'variant_id' => $variant ? (string) $variant->getKey() : null,
-                    'variant_label' => $variant?->label,
-                    'sku' => $variant?->sku,
-                    'unit' => $stockUnit->code,
-                    'unit_label' => $stockUnit->label,
+                    'product_id' => $productData->productId,
+                    'product_name' => $productData->productName,
+                    'product_slug' => $productData->productSlug,
+                    'variant_id' => $productData->variantId,
+                    'variant_label' => $productData->variantLabel,
+                    'sku' => $productData->variantSku,
+                    'unit' => $productData->unitCode,
+                    'unit_label' => $productData->unitLabel,
                     'quantity' => $this->formatQuantity($quantityMilli),
                     'unit_price' => $this->formatMoney($unitPriceCents),
                     'currency' => 'MAD',
@@ -148,11 +137,11 @@ final class OrderCreationService
 
                 $prepared[] = [
                     'cooperative_id' => $cooperativeId,
-                    'product_id' => (string) $product->getKey(),
-                    'product_variant_id' => $variant ? (string) $variant->getKey() : null,
+                    'product_id' => $productData->productId,
+                    'product_variant_id' => $productData->variantId,
                     'snapshot' => $snapshot,
                     'quantity' => $this->formatQuantity($quantityMilli),
-                    'unit' => $stockUnit->code,
+                    'unit' => $productData->unitCode,
                     'unit_price' => $this->formatMoney($unitPriceCents),
                     'line_cents' => $lineCents,
                 ];
