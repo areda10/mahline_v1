@@ -7,7 +7,7 @@ namespace App\Domains\Cooperatives\Policies;
 use App\Core\Foundation\Policies\BasePolicy;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 
 final class CooperativePolicy extends BasePolicy
 {
