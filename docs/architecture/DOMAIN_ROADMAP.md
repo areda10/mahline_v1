@@ -604,3 +604,53 @@ Un lot ne peut être marqué « Validé » qu'après :
 
 Aucune fusion vers `main` n'est autorisée sans instruction explicite.
 
+## 15. Inventaire global réconcilié — 19 novembre 2026
+
+**Audit de référence :** `docs/architecture/DOMAIN_DEPENDENCY_AUDIT.md`, section 10.  
+**HEAD inventorié :** `ad3de3395a794e965973493716fbae1e0ca358bb`.  
+**Commit de mise à jour de l'audit :** `10756fe898e0513c2a409ecf2c575d53a403aee1`.
+
+### Domaines présents
+
+| Domaine | Fichiers | État de suivi |
+|---|---:|---|
+| Identity | 99 | À compléter : audit fonctionnel, contrats vers les domaines et tests complets |
+| Media | 21 | À découpler des modèles Product/Cooperative/User |
+| Orders | 13 | À compléter : parcours HTTP, contrats Inventory/Delivery/Finance et événements |
+| Products | 12 | À compléter : contrats Catalog/Categories/Media et tests d'intégration |
+| Audit | 11 | À compléter : couverture de toutes les opérations et validation MySQL |
+| Catalog | 8 | À compléter : ownership du pivot et contrats Products/Categories |
+| Cooperatives | 7 | À compléter : frontière d'affectation avec Identity et intégration |
+| Localization | 7 | À compléter : contrats de propriétaire d'adresse et validation MySQL |
+| Categories | 6 | À compléter : ownership du pivot category_product |
+| Dashboard | 2 | À développer : contrats de lecture/projections et contrôle des périmètres |
+
+### Domaines absents à construire
+
+- **Inventory** : spécification V1 existante INV-001 à INV-016 ; audit technique détaillé obligatoire avant schéma et code.
+- **Delivery** : périmètre validé en partie ; critères d'égalité des tarifs et cas d'échec à arbitrer.
+- **Finance** : inclut Facturation, encaissements, commissions, transferts, remboursements, reversements et rapprochement ; les paramètres et exceptions restent à préciser.
+- **Communication** : notifications in-app et email V1 ; SMS exclu. La table Laravel notifications existante ne constitue pas le domaine.
+- **Statistics** : autonomie du domaine déjà validée ; spécification et contrats de lecture à construire.
+- **CMS** : domaine prévu, mais pas de spécification V1 suffisante ; cadrage préalable requis.
+
+### Domaines non décidés comme domaines autonomes
+
+- **Sales** : ne pas créer à ce stade. Les documents antérieurs le décrivent tantôt comme propriétaire de commandes/livraisons, alors que l'ADR-021 actuel donne la propriété des commandes à Orders et suit Delivery séparément. Son éventuel périmètre panier/checkout doit être arbitré.
+- **Invoicing/Billing** : ne pas créer séparément ; Facturation relève de Finance selon la feuille de route et les règles métier.
+- **Countries** : ne pas recréer ; absorbé par Localization.
+- **Incidents** : les incidents Media restent dans Media. Aucun périmètre d'incidents généraux n'est validé pour un domaine autonome.
+
+### Ordre d'exécution après audit global
+
+1. Corriger les frontières des domaines existants : Media, Catalog/Categories/Products, Identity/Cooperatives, Localization, Orders, Dashboard.
+2. Auditer techniquement Inventory puis l'implémenter par lots verticaux.
+3. Compléter Orders (API/HTTP, événements, tests et intégration Inventory).
+4. Cadrer et implémenter Delivery.
+5. Cadrer et implémenter Finance / Facturation.
+6. Créer Communication et Statistics.
+7. Cadrer CMS.
+8. Décider Sales et Incidents avant toute création.
+
+**Statut global :** l'inventaire et l'audit statique des principales relations sont mis à jour ; les domaines ne sont pas déclarés terminés. La validation MySQL, l'audit exhaustif des FK/triggers, les tests d'architecture et les suites PHPUnit/Pint restent à réaliser.
+
