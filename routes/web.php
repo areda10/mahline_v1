@@ -328,8 +328,6 @@ Route::prefix('root/back-office')
             ->name('users.show');
         Route::patch('users/{user}/activate', [SuperAdminRootUserManagementController::class, 'activate'])
             ->name('users.activate');
-        Route::patch('users/{user}/activate-and-verify', [SuperAdminRootUserManagementController::class, 'activateAndVerify'])
-            ->name('users.activate-and-verify');
         Route::patch('users/{user}/deactivate', [SuperAdminRootUserManagementController::class, 'deactivate'])
             ->name('users.deactivate');
         Route::patch('users/{user}/suspend', [SuperAdminRootUserManagementController::class, 'suspend'])
