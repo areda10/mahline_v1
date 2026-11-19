@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Media\Services;
 
-use App\Domains\Audit\Repositories\AuditEventRepository;
-use App\Domains\Audit\Services\AuditService;
+use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
@@ -34,8 +33,7 @@ final class MediaService
     public function __construct(
         private readonly MediaValidationService $validator,
         private readonly MediaImageProcessor $processor,
-        private readonly AuditService $audit,
-        private readonly AuditEventRepository $auditEvents,
+        private readonly AuditWriter $audit
     ) {}
 
     public function upload(
@@ -519,7 +517,7 @@ final class MediaService
     public function ownerHistory(User $actor, Model $owner): \Illuminate\Support\Collection
     {
         if (! $actor->isAuthorized() || ! $actor->hasRole('super_admin_root')) {
-            if (! $this->auditEvents->verifyIntegrity()) {
+            if (! $this->audit->verifyIntegrity()) {
                 throw new RuntimeException('La chaîne d’audit est invalide ; consultation de l’historique refusée.');
             }
 
