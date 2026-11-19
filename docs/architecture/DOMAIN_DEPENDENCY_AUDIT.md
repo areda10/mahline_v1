@@ -324,3 +324,97 @@ Les décisions SALES-001 à SALES-037 ont été validées par l'utilisateur. Le 
 Le code Sales n'est pas encore créé. Les dépendances à traiter en priorité sont consignées dans le rapport dédié `docs/domains/marketplace/SALES_DEPENDENCY_AUDIT.md`. Cette mise à jour remplace la conclusion de la ligne Sales de la section 10.5, sans modifier les autres conclusions de l'audit global.
 
 Limites : cet audit de dépendances est statique. Les suites PHP/PHPUnit/Pint, les contrôles MySQL et les tests de contrats n'ont pas été exécutés dans cette session.
+
+
+## 11. Ré-audit transversal actualisé — HEAD `befe78ab89cf7b2ab8dc4433c5a4c1ee6ff46930`
+
+- **Date :** 19 novembre 2026
+- **Branche :** `feature/Marketplace`
+- **Méthode :** arbre Git récursif complet, inventaire de tous les fichiers sous `app/Domains`, lecture ciblée des contrats, services, modèles, providers, routes, tests et migrations concernés.
+- **Limites :** audit statique GitHub. Aucun accès à la base locale, aucune exécution PHP/PHPUnit/Pint, aucune vérification runtime des transactions, providers ou triggers. Les éléments non inspectés ne sont pas déclarés conformes.
+
+### 11.1 Photographie exacte de l'arborescence
+
+| Domaine présent | Fichiers sous `app/Domains/<domaine>` |
+|---|---:|
+| Identity | 99 |
+| Media | 21 |
+| Orders | 13 |
+| Products | 12 |
+| Audit | 11 |
+| Catalog | 8 |
+| Cooperatives | 7 |
+| Localization | 7 |
+| Categories | 6 |
+| Dashboard | 2 |
+| **Total** | **186** |
+
+Domaines prévus mais absents de `app/Domains` : Sales, Inventory, Delivery, Finance/Facturation, Communication, Statistics et CMS. La présence d'une spécification ne vaut pas implémentation.
+
+Le dépôt contient des tests Feature et Framework pour les domaines existants, mais leur présence ne prouve ni la couverture exhaustive des règles ni leur réussite sur ce HEAD. Aucun répertoire `tests/Architecture` n'a été trouvé dans l'arbre recensé.
+
+### 11.2 Défauts et blocages P0 confirmés par lecture du code
+
+| ID | Domaine | Constat actuel | Conséquence / correction obligatoire |
+|---|---|---|---|
+| XDOM-001 | Products | `ProductService` importe directement `Catalog`, `Categories` et `Identity\Users\Models\User`. Il lit et synchronise directement les pivots `catalog_product` et `category_product`. | Introduire les contrats propriétaires pour les associations Catalog/Categories ; remplacer le modèle User par un contexte d'acteur/ID logique, sans perdre l'autorisation ni l'audit. |
+| XDOM-002 | Localization | `AddressService` importe et verrouille directement les modèles User et Cooperative ; ses opérations publiques sont centrées sur des modèles Eloquent. | Garder Address et ses règles dans Localization, fournir un contrat public d'adresse client avec vérification d'ownership et DTO snapshot ; découpler l'acteur et le cycle de vie des propriétaires. |
+| XDOM-003 | Cooperatives | `CooperativeService` reçoit directement le modèle User. Le domaine ne fournit pas encore de contrat public de lecture du statut d'une coopérative pour les consommateurs métier. | Ajouter un contrat de lecture par identifiant et un DTO de statut ; garder les règles d'organisation dans Cooperatives. |
+| XDOM-004 | Orders | `OrderCreationService::createFromCheckout(User, array): Order` expose User et un tableau libre à la frontière ; aucune clé d'idempotence n'est présente dans l'entrée observée. | Créer un contrat public Orders versionné, DTO d'entrée/sortie, ID client logique et clé d'idempotence ; couvrir retries, doublons, concurrence et rollback. |
+| XDOM-005 | Orders / Inventory | `CooperativeOrderResponseService` confirme une sous-commande et change les statuts Orders, mais aucun appel de réservation Inventory n'existe. | Bloquer la confirmation de production tant que la réservation atomique Inventory n'est pas intégrée. La règle Inventory validée exige la réservation complète à la confirmation, sans réservation partielle. |
+| XDOM-006 | Orders / Delivery | La création initialise `delivery_total` et `delivery_fee` à `0.00`. Aucun contrat Delivery n'existe dans le code. | Ne jamais présenter ce montant comme frais de livraison réels ; intégrer un devis Delivery avec validité et périmètre avant total final. |
+| XDOM-007 | Media / composition | `AppServiceProvider` attache `MediaOwnerObserver` directement à Product, Cooperative et User. | Déplacer la composition vers des adaptateurs/contrats de propriétaires enregistrés par les domaines, sans casser les événements de suppression/restauration. |
+| XDOM-008 | Orders / exposition | Orders possède modèles et services mais pas de provider de domaine ni de contrôleurs/routes propres identifiés dans l'arbre. | Définir la surface applicative et HTTP d'Orders, ses Policies et son provider avant de considérer le domaine utilisable/complet. |
+
+### 11.3 État des providers
+
+`bootstrap/providers.php` enregistre DatabaseMacro, Audit, Catalog, Categories, Media, Products, Cooperatives, Localization et les providers Authorization d'Identity. Il n'enregistre pas de provider Orders ou Dashboard. Aucun provider n'existe encore pour les domaines absents.
+
+`AppServiceProvider` ne contient plus les bindings AuditWriter, CheckoutCatalog et CooperativeAddressManager, mais conserve :
+- le binding `SuperAdminCooperativeAssignmentService` vers `UserManagementService` ;
+- le binding `AuthenticationWorkflowHook` ;
+- l'enregistrement transversal de `MediaOwnerObserver` sur Product, Cooperative et User ;
+- le rate limiter Media public et la configuration Sanctum.
+
+Les deux bindings Identity doivent être classés explicitement comme services de composition Identity ou déplacés vers un provider Identity si la résolution et l'ordre de boot le permettent. Le rate limiter peut rester transversal s'il est documenté comme configuration HTTP globale.
+
+### 11.4 Contrats publics actuellement présents et manquants
+
+Présents et confirmés :
+- Audit : `AuditWriter`.
+- Products : `CheckoutCatalog` / `CheckoutProductData`.
+- Localization : `CooperativeAddressManager`.
+
+À créer ou compléter avant clôture :
+- Products : lecteur d'état commercial complet pour panier, avec produit/variante absents, supprimés, désactivés, prix/configuration modifiés et fingerprint/version stable.
+- Catalog et Categories : contrats d'association dont chacun possède son pivot.
+- Cooperatives : lecteur de statut public par ID.
+- Localization : lecteur autorisé d'adresse client et snapshot immuable.
+- Identity : contexte d'acteur minimal, sans modèle User consommé par les domaines métier.
+- Orders : création depuis DTO versionné, idempotence, résultat explicite et intégration Inventory.
+- Media : contrat de résolution/autorisation des propriétaires, sans importer les modèles Eloquent des domaines consommateurs.
+- Inventory, Delivery, Finance et Communication : contrats inter-domaines définis dans leurs spécifications avant implémentation.
+
+### 11.5 Ordre de correction et clôture
+
+1. **Frontières fondatrices :** Identity / Localization / Cooperatives (acteur, adresse, statut et cycle de vie).
+2. **Catalogue :** Catalog / Categories / Products (ownership des pivots, lecture commerciale, variantes, unités et états).
+3. **Transversal :** Media / Audit (propriétaires médias, accès, intégrité, événements et rétention).
+4. **Commerce :** Orders / Inventory (contrat idempotent, confirmation et réservation atomiques).
+5. **Exécution logistique et financière :** Delivery / Finance / Communication.
+6. **Projection et contenu :** Statistics / Dashboard / CMS.
+7. **Sales :** implémenter le panier et le checkout seulement lorsque les contrats Products, Cooperatives, Localization, Identity, Orders, Inventory et Delivery sont stables.
+
+### 11.6 Critère de clôture obligatoire
+
+Un domaine ne peut passer à `FROZEN` que si toutes les conditions suivantes sont prouvées sur le même HEAD :
+1. spécification V1 complète et décisions ouvertes identifiées ;
+2. ownership des modèles, tables, pivots, migrations et contraintes SQL attribué sans ambiguïté ;
+3. contrats publics et dépendances entrantes/sortantes documentés, sans import privé non autorisé ;
+4. services, transactions, verrouillages, idempotence, événements et erreurs métier implémentés ;
+5. routes, contrôleurs, Policies, permissions et scopes coopératifs couverts lorsqu'applicables ;
+6. tests Unit, Feature/HTTP, contrats, intégration, sécurité, concurrence et migrations adaptés au domaine ;
+7. tests ciblés, tests de frontières, Pint et suite complète exécutés avec résultats verts ; tests MySQL réels pour triggers, verrous et contraintes ;
+8. audit final des fichiers et du diff, documentation et roadmap mises à jour avec SHA/commit de preuve.
+
+Un domaine absent du code reste `À implémenter`, pas `FROZEN`. Un domaine partiellement présent reste `Écarts à corriger` ou `À tester`. Aucun résultat de test non exécuté n'est réputé vert.
