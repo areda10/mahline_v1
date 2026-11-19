@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Framework\Domains\Identity\Authorization\Policies;
+namespace Tests\Framework\Domains\Localization\Policies;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
