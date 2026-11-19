@@ -366,3 +366,13 @@ Les lots peuvent se chevaucher pour la documentation et les tests, mais aucun ch
 - **Corrigé :** suppression de ces bindings du `AppServiceProvider`, qui ne porte plus ces contrats métier.
 - **À valider :** résolution du conteneur, boot Laravel, tests Audit/Products/Localization, Pint et suite complète.
 - **Non exécuté :** aucun test PHP/PHPUnit/Pint/MySQL dans cette session.
+
+
+### Mise à jour — 19 novembre 2026 : correction checkout Products
+
+- **Défaut confirmé :** `ProductService::resolveForCheckout()` indiquait à tort `hasVariants = false` dès qu'une variante était demandée.
+- **Corrigé :** le calcul de `hasVariants` est maintenant indépendant de `variantRequested`.
+- **Tests ajoutés :** `CheckoutCatalogResolutionTest` couvre quatre scénarios de résolution.
+- **Commits :** `b59fe37d830daaf568d2b1346c07624944b90f01` (service), `b56794db594e828ea8840d4c37ef425fe3823ed3` (tests).
+- **Non exécuté :** PHPUnit, Pint, tests MySQL et résolution réelle du conteneur. Le correctif est intégré statiquement, pas encore validé à l'exécution.
+- **Suite P0 :** concevoir le contrat de lecture commerciale versionnée Products, puis découpler progressivement les dépendances directes Catalog/Categories/Identity avec tests de caractérisation.
