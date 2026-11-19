@@ -21,6 +21,7 @@ final class CooperativeController
     public function __construct(
         private readonly CooperativeService $cooperativeService,
         private readonly CooperativeAddressManager $addresses,
+        private readonly SuperAdminCooperativeAssignmentReader $assignments,
     ) {}
 
     public function index(): View
@@ -28,7 +29,7 @@ final class CooperativeController
         Gate::authorize('viewAny', Cooperative::class);
         $cooperatives = Cooperative::query()->visibleTo(
             request()->user(),
-            app(SuperAdminCooperativeAssignmentReader::class)->cooperativeIdsFor((string) request()->user()->getKey()),
+            $this->assignments->cooperativeIdsFor((string) request()->user()->getKey()),
         )->with('address')->orderBy('name')->paginate(15);
 
         return view('backoffice.cooperatives.index', compact('cooperatives'));
