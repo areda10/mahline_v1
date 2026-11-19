@@ -31,6 +31,7 @@
 | [ADR-018 — Gouvernance automatisée de l'architecture](ADR-018-automated-architecture-governance.md) | Présent | ACCEPTED |
 | [ADR-019 — Applicabilité à MAHLINE V1](ADR-019-v1-architecture-decision-scope.md) | Présent | ACCEPTED |
 | [ADR-020 — CI/CD et approbations humaines](ADR-020-ci-cd-human-approvals.md) | Présent | ACCEPTED |
+| [ADR-021 — Architecture hybride du monolithe modulaire](ADR-021-hybrid-modular-monolith.md) | Présent | ACCEPTÉ — confirmé par l'utilisateur le 19 novembre 2026 |
 
 ## 3. Traitement des ADR-001 à ADR-008
 
@@ -53,6 +54,7 @@ En conséquence :
 ## 5. Journal
 
 ### 19 novembre 2026
+- Ajout de l'ADR-021 : architecture hybride du monolithe modulaire, confirmée par l'utilisateur.
 - Création du registre canonique V1.
 - Détection et documentation de la collision entre les identifiants historiques du framework et ceux des décisions V1.
 - ADR-001 à ADR-008 laissés en état « source à retrouver » ; aucune reconstruction spéculative.
