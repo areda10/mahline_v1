@@ -3,7 +3,7 @@
 - **Date :** 19 novembre 2026
 - **Branche :** `feature/Marketplace`
 - **HEAD de départ :** `23cc0ebaa4f1099e77282bbdf050ec6448a896ea`
-- **Dernier HEAD après intégration Localization/Country :** à relever après finalisation de cette révision
+- **HEAD code après intégration des contrats AuditWriter et CheckoutCatalog :** `f8f7535b1ae98879738c6aad0b0eef614b97a29f`
 - **Portée :** inspection statique des imports, modèles, services, policies, providers, routes et migrations.
 - **Limite :** aucune suite PHP/PHPUnit/Pint n'a été exécutée dans cet audit ; l'inventaire statique ne prouve pas le comportement à l'exécution.
 
@@ -116,3 +116,35 @@ Les triggers MySQL de cohérence coopérative et de propriété des adresses son
 - Auditer toutes les clauses `ON DELETE` / `ON UPDATE`, les triggers, les pivots et les accès SQL hors domaine propriétaire.
 - Vérifier les dispatchs d'événements, jobs, listeners, notifications et transactions réelles.
 - Aucune de ces vérifications d'exécution n'est déclarée verte à ce stade.
+
+
+## 8. Corrections de frontières intégrées — 19 novembre 2026
+
+Référence du code après intégration : `f8f7535b1ae98879738c6aad0b0eef614b97a29f` sur `feature/Marketplace`.
+
+### Audit — contrat public effectif
+- Création de `App\\Domains\\Audit\\Contracts\\AuditWriter`, surface publique pour `record(AuditEntryDTO)` et `verifyIntegrity()`.
+- `AuditService` implémente ce contrat ; le repository et la chaîne SHA-256 restent internes à Audit.
+- Binding du contrat dans le composition root Laravel (`AppServiceProvider`).
+- Les services consommateurs de Catalog, Categories, Cooperatives, Identity, Localization, Products et Media injectent désormais `AuditWriter`, pas `AuditService`.
+- Media ne référence plus `AuditEventRepository` pour vérifier l'intégrité ; les contrôles passent par le contrat public.
+- Le DTO partagé reste une dépendance explicite. Son ownership et son emplacement seront consolidés dans une étape dédiée ; aucune duplication de DTO n'a été introduite.
+
+### Orders / Products — contrat checkout effectif
+- Création de `Products\\Contracts\\CheckoutCatalog` et du DTO immuable `Products\\DTOs\\CheckoutProductData`.
+- `ProductService` implémente le contrat et conserve la responsabilité de recharger/verrouiller le produit et la variante, de vérifier leur état et de fournir prix, unité et identité de coopérative.
+- `OrderCreationService` ne charge plus directement `Product` ni `ProductVariant`. Il consomme les données autoritatives fournies par Products et conserve la transaction de création, les calculs de commande et les snapshots dans Orders.
+- Le binding `CheckoutCatalog → ProductService` est déclaré dans le composition root. Les verrous restent dans la transaction SQL ouverte par le cas d'usage Orders ; cela est intentionnel dans le monolithe hybride et doit être vérifié par tests MySQL.
+
+### Contrôles et limites
+- Vérification statique des imports et des points d'injection modifiés ; aucune suite PHP/PHPUnit/Pint n'a été exécutée dans cette session.
+- Les tests existants de commande utilisent le conteneur Laravel (`app(OrderCreationService::class)`) ; aucune instanciation directe repérée dans le test ciblé.
+- Les relations Eloquent, FK, pivots, policies et providers ne sont pas toutes découplées. Le travail restant est décrit ci-dessous.
+
+### Suite à réaliser
+1. Définir et intégrer les contrats de propriétaires médias afin que Media ne dépende plus des modèles Product/Cooperative/User.
+2. Attribuer et encapsuler les pivots `category_product` et `catalog_product` ; supprimer les imports réciproques Catalog/Categories/Products par lots.
+3. Déplacer les policies d'Address et Cooperative vers Localization et Cooperatives, puis enregistrer les policies via providers locaux sans changer les règles d'autorisation.
+4. Définir le contrat d'adresse utilisé par Identity/Cooperatives.
+5. Finaliser le registre des FK, cascades et triggers à partir des migrations réelles ; ne supprimer aucune FK sans migration additive et tests d'intégrité.
+6. Ajouter tests de frontières, tests de contrat et CI progressive.
