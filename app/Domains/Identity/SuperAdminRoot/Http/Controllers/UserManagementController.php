@@ -10,6 +10,7 @@ use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Password\Services\PasswordResetService;
 use App\Domains\Identity\UserManagement\Exceptions\UserInvitationDeliveryException;
 use App\Domains\Identity\UserManagement\Http\Requests\CreateUserRequest;
 use App\Domains\Identity\UserManagement\Services\UserInvitationService;
@@ -210,6 +211,28 @@ final class UserManagementController
                 'success',
                 'Une nouvelle invitation a été envoyée à l’adresse e-mail de cet utilisateur.',
             );
+    }
+
+    public function sendPasswordReset(
+        Request $request,
+        User $user,
+        PasswordResetService $passwordResetService,
+    ): RedirectResponse {
+        $this->authorizeRoot($request);
+        Gate::authorize('sendPasswordReset', $user);
+        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+
+        try {
+            $passwordResetService->createToken($user);
+        } catch (\\Throwable) {
+            return redirect()
+                ->route('root.backoffice.users.show', $user)
+                ->with('error', 'Le lien de réinitialisation n’a pas pu être envoyé. Vous pourrez réessayer.');
+        }
+
+        return redirect()
+            ->route('root.backoffice.users.show', $user)
+            ->with('success', 'Un lien sécurisé de réinitialisation du mot de passe a été envoyé par e-mail.');
     }
 
     public function show(Request $request, User $user, SessionService $sessionService, ApiTokenService $apiTokenService): View
