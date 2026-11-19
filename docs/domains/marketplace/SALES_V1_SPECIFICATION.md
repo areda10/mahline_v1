@@ -89,7 +89,7 @@ Les sujets suivants doivent être arbitrés avant le gel fonctionnel et le sché
 - durée de conservation du panier invité : 30 jours sans activité (SALES-004) ;
 - panier authentifié conservé sans expiration automatique, jusqu'à suppression volontaire ou transformation en commande (SALES-005) ;
 - traitement d'une ligne dont le produit ou la variante devient inactive ou n'est plus vendable : règle validée par SALES-006 ;
-- traitement d'une modification du prix catalogue entre ajout au panier et checkout : acceptation explicite du nouveau prix exigée (SALES-007) ;
+- traitement d'une modification du prix catalogue entre ajout au panier et checkout : hausse soumise à acceptation explicite et baisse appliquée automatiquement (SALES-007 et SALES-008) ;
 - moment et durée de validité du prix affiché ;
 - règles d'arrondi et de calcul des totaux, taxes et éventuels frais ;
 - promotions : périmètre global ou par coopérative, cumul, priorité, plafonds, période, éligibilité et limites d'utilisation ;
@@ -171,3 +171,15 @@ Si le prix de référence d'un produit ou d'une variante change après son ajout
 - la demande transmise à Orders contient le prix accepté et les informations nécessaires à son snapshot commercial.
 
 Le mécanisme d'acceptation doit être lié à une version/valeur de prix vérifiée au checkout afin d'éviter qu'une nouvelle modification concurrente soit considérée comme acceptée par erreur. Les détails de versionnement, de concurrence et de preuve d'acceptation seront définis à l'audit technique.
+
+
+### SALES-008 — Baisse du prix après ajout au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option C)**
+
+Si le prix de référence d'un produit ou d'une variante baisse après son ajout au panier et avant la validation du checkout :
+- Sales applique automatiquement le nouveau prix inférieur ;
+- le client est informé de la baisse et du nouveau total ;
+- aucune acceptation supplémentaire n'est requise pour bénéficier de cette baisse.
+
+La règle SALES-007 reste applicable aux hausses : toute augmentation doit être présentée au client et acceptée explicitement avant de poursuivre le checkout. Une baisse ultérieure doit toujours bénéficier au client. Le prix final transmis à Orders est le prix de référence courant vérifié au moment de la validation, avec les informations nécessaires au snapshot commercial.
