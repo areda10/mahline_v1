@@ -667,3 +667,9 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Signatures finales/commentaire : `6e6fff1e085c8301bd2c295694d56af766702d95`, `d9e75e7d147603615c5832a95b964f97198f9b52`
 
 **Validation :** modifications et tests écrits, non exécutés. Identity conserve encore des relations Eloquent vers Cooperative dans User et dans les Policies/contrôleurs ; l'objectif de ce lot était de supprimer l'import modèle du service métier.
+
+#### Complément A8 — pivot détenu explicitement par Identity
+
+- Les opérations de lecture/écriture/suppression du pivot `super_admin_cooperative` dans `UserManagementService` passent désormais par le modèle Identity `SuperAdminCooperative`, et non par la relation Eloquent `User::cooperatives()` qui traverse le domaine Cooperatives.
+- Le service Identity ne contient plus aucune occurrence de `cooperatives()` ni d'import du modèle Cooperative ; les contrôleurs gardent le route binding pour les Policies et transmettent un identifiant au service.
+- Commits complémentaires : `841b85efe176ea610733468ab4d7c24894dd6e5e`, `31f70f13ce3bfd47ac7e5446659586f7d5461a11`, `50f4f05ec1de6d20bfcdcdae6907789f1372e3fb`, `bdb0d9ae253dae2b5580ffd7edae62f732b457d4`, `d2f364532e918bce3c5d954f7e328588ece480d4`.
