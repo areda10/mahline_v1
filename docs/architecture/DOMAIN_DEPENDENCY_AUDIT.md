@@ -601,3 +601,21 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Commits : `6b6086d1f5d7c475631191cbd72d14ecb34bb7f2`, `491e211a904ee9cd971258a22a1d6de75403cea8`, `96f59bd0d4977095c525921c9ab93ab2aa623b82`, `0cbd481d79805889fbe1ec12812e94b2a7e10357`, `25af5094f747c17011f437c18cdfca7f526c588e`.
 - Reste à traiter : tests des consommateurs quand la coopérative est inactive/supprimée ; contrat d'acteur et découplage User Eloquent dans CooperativeService.
 - Tests non exécutés.
+
+### 11.13 Lot A7 — Cooperatives / Identity : ownership du pivot d'affectation
+
+**Écart corrigé :** `CooperativeService::create` écrivait directement dans le pivot `super_admin_cooperative` via la relation Eloquent User. Cela contournait le service propriétaire Identity, son audit d'affectation et la révocation des API tokens qui accompagne un changement de périmètre.
+
+**Correction :**
+- Ajout de `assignCreatorToNewCooperative(superAdminId, cooperativeId)` au contrat Identity `SuperAdminCooperativeAssignmentService`.
+- Implémentation dans `UserManagementService` : verrouillage User puis Cooperative, validation du rôle/état, affectation idempotente, unicité d'un super_admin par coopérative, révocation des tokens et événement d'audit `identity.super_admin.cooperative_assigned`.
+- `CooperativeService` délègue désormais l'affectation au contrat Identity ; il ne modifie plus directement le pivot.
+- Test d'intégration service étendu : création par super_admin, pivot affecté, token antérieur révoqué et audit d'affectation enregistré.
+
+**Commits :**
+- Contrat : `5d9f0469f85b992c57b49d0209d925b7dba80fcb`
+- Service Identity : `6bc5332ddff5edf3e973f61147b4411b8af664ea`
+- Service Cooperatives : `2394de8663f965db82fde9404d991e73058c923d`
+- Test : `1a0fe1db28bd8dde6eed215b7970b48c040b14cc`
+
+**Validation :** tests écrits mais non exécutés. Ce lot supprime une écriture inter-domaines privée et restaure l'audit/révocation cohérents.
