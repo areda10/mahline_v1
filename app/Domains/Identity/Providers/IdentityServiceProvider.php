@@ -6,7 +6,6 @@ namespace App\Domains\Identity\Providers;
 
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
-use App\Domains\Identity\Authorization\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
 use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
@@ -19,6 +18,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\Users\Services\IdentityUserAddressOwnerGateway;
 use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
 use App\Shared\Contracts\ActorAuthorizer;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Domains\Identity\Users\Observers\UserObserver;
 use Illuminate\Support\Facades\Event;
