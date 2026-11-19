@@ -565,3 +565,19 @@ Le contrôle statique ciblé des fichiers de route et de vue ne retrouve plus l'
 - Test ajouté : 5 adresses client sont restaurées après archivage et soft delete du compte ; une seule redevient principale.
 - Commits : `c0ee1beae3598802f328e23caf8e15c999365209`, `5a2aa1ac3cb0ef0563d4b545e2ce985766560d58`.
 - PHPUnit non exécuté.
+
+### 11.10 Lot A4 — Identity : concurrence de révocation et classification des rôles (19 novembre 2026)
+
+**Corrections :**
+- `SessionService::revokeForUser` verrouille désormais d'abord la ligne User, puis les sessions actives, dans une transaction. Le verrou utilisateur est le même que celui utilisé par `SessionService::create`, ce qui empêche un login concurrent de créer une session après la sélection des sessions à révoquer.
+- `UserApiTokenController::assertManageableTarget` ne s'appuie plus sur `hasAnyRole` (qui retourne faux pour un compte inactif) pour exclure les rôles `super_admin_root` et `customer`. La classification est désormais faite directement sur la relation roles, indépendamment du statut.
+- Test ajouté pour confirmer qu'un compte customer suspendu est refusé par le workflow root de gestion des tokens.
+- Test ajouté pour vérifier l'ordre de verrouillage User puis AuthenticationSession pendant la révocation globale.
+
+**Commits :**
+- SessionService : `737d3f0e7ada879f4c4fa4dc10066e83c172788c`
+- Test ordre de verrouillage : `cf708570a919133dee6a821e5df610685ebf7cc1`
+- UserApiTokenController : `fec7d87b330ee56a3aa345be14bdd382d10c027b`
+- Test cible customer suspendu : `8378e8a304c8e80c8b64d19aa1177b33f842cc6d`
+
+**Validation :** tests écrits mais non exécutés. Tests de concurrence réels et suite Identity restent à exécuter sur MySQL.
