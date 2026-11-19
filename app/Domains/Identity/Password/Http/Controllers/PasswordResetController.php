@@ -43,19 +43,9 @@ final class PasswordResetController
 
         $customerOnly = $request->routeIs('customer.password.email');
 
-        $isCustomerAccount = $user !== null
-            && $user->hasRole('customer')
-            && ! $user->hasAnyRole([
-                'super_admin_root',
-                'super_admin',
-                'cooperative_admin',
-                'user',
-            ]);
-
         if (
             $user !== null
-            && $user->status->value === 'active'
-            && ($customerOnly ? $isCustomerAccount : ! $user->hasRole('customer'))
+            && $this->passwordResetService->canRequestReset($user, $customerOnly)
         ) {
             $this->passwordResetService->createToken(
                 user: $user,
