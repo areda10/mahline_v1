@@ -14,9 +14,9 @@ use App\Domains\Identity\Authorization\Models\SuperAdminCooperative;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Media\Models\Media;
+use App\Shared\Contracts\IdentityActor;
 use Database\Factories\UserFactory;
 use Illuminate\Auth\Authenticatable;
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,7 +30,7 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-final class User extends BaseModel implements AuthenticatableContract
+final class User extends BaseModel implements IdentityActor
 {
     use Authenticatable;
     use Authorizable;
@@ -61,6 +61,11 @@ final class User extends BaseModel implements AuthenticatableContract
     protected static function newFactory(): Factory
     {
         return UserFactory::new();
+    }
+
+    public function cooperativeId(): ?string
+    {
+        return $this->cooperative_id === null ? null : (string) $this->cooperative_id;
     }
 
     public function roles(): BelongsToMany
