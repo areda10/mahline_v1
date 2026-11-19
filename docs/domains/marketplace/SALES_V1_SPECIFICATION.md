@@ -199,3 +199,20 @@ Le client peut ajouter au panier une quantité supérieure au stock actuellement
 - Sales doit présenter les informations de disponibilité disponibles sans les transformer en promesse de stock réservé.
 
 Les limites absolues de quantité par ligne, les règles anti-abus et les contrôles de dépassement indépendants du stock restent à définir.
+
+
+### SALES-010 — Produit supprimé du catalogue alors qu'il figure au panier
+
+**Statut : VALIDÉ — 19 novembre 2026 (option C)**
+
+Lorsqu'un produit est supprimé du catalogue par sa coopérative alors qu'il figure déjà dans un panier :
+
+- Sales conserve la ligne du panier comme ligne historique non achetable.
+- La ligne conserve les informations descriptives disponibles au moment de l'ajout, notamment le nom du produit et son prix de référence, afin que le client puisse identifier l'article concerné.
+- La ligne est signalée comme indisponible/supprimée et ne peut pas être commandée.
+- Le checkout est bloqué tant que cette ligne non achetable demeure dans le panier.
+- Le client doit retirer lui-même la ligne pour poursuivre le checkout.
+- Aucune suppression automatique de la ligne n'est effectuée.
+- La conservation de ces informations dans le panier ne ressuscite pas le produit et ne crée aucun droit à l'achat.
+
+Les champs exacts du snapshot descriptif et la durée de conservation d'une ligne historique dans le panier restent à préciser lors de la conception technique.
