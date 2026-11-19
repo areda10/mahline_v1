@@ -364,6 +364,25 @@ final class UserManagementServiceTest extends TestCase
         $this->assertTrue(Hash::check('ExistingPassword2026!', (string) $activated->password));
     }
 
+    public function test_creator_assignment_rejects_a_cooperative_created_by_another_user(): void
+    {
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $otherCreator = $this->createUserWithRole('super_admin_root');
+        $cooperative = Cooperative::factory()->create([
+            'created_by' => (string) $otherCreator->getKey(),
+        ]);
+
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage(
+            'Only the cooperative creator can receive its initial super admin assignment.',
+        );
+
+        $this->service->assignCreatorToNewCooperative(
+            (string) $superAdmin->getKey(),
+            (string) $cooperative->getKey(),
+        );
+    }
+
     public function test_super_admin_root_account_cannot_be_deleted_through_user_management(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
