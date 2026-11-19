@@ -9,7 +9,7 @@ interface CooperativeIdentityReference
     public function existsNotDeleted(string $cooperativeId): bool;
 
     /**
-     * Lock an active cooperative row for the duration of the caller's transaction.
+     * Lock a non-deleted cooperative row for the duration of the caller's transaction.
      */
     public function lockNotDeleted(string $cooperativeId): bool;
 }
