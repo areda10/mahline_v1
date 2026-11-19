@@ -53,7 +53,7 @@ final class MediaOwnerObserver
                 ));
             });
 
-            app(AuditService::class)->record(new AuditEntryDTO(
+            app(AuditWriter::class)->record(new AuditEntryDTO(
                 eventKey: 'media.owner_restore_prepared',
                 action: 'owner_restore_prepared',
                 actorType: $actor instanceof User ? User::class : null,
@@ -79,7 +79,7 @@ final class MediaOwnerObserver
                 throw new RuntimeException('La chaîne d’audit est invalide ; suppression logique du propriétaire refusée.');
             }
 
-            app(AuditService::class)->record(new AuditEntryDTO(
+            app(AuditWriter::class)->record(new AuditEntryDTO(
                 eventKey: 'media.owner_soft_deleted',
                 action: 'owner_soft_deleted',
                 actorType: $actor instanceof User ? User::class : null,
@@ -112,7 +112,7 @@ final class MediaOwnerObserver
                     default => null,
                 };
 
-                app(AuditService::class)->record(new AuditEntryDTO(
+                app(AuditWriter::class)->record(new AuditEntryDTO(
                     eventKey: 'media.owner_force_deleted',
                     action: 'owner_force_deleted',
                     actorType: $actor instanceof User ? User::class : null,
