@@ -491,3 +491,19 @@ Lorsqu'un produit est temporairement désactivé par sa coopérative alors qu'il
 - Aucune ligne n'est supprimée ou modifiée silencieusement du seul fait de la désactivation ou de la réactivation.
 
 Cette règle concerne une désactivation temporaire, et non la suppression définitive du produit traitée par SALES-010 et SALES-027.
+
+
+### SALES-030 — Coopérative inactive ou fermée avec produits présents dans les paniers
+
+**Statut : VALIDÉ — 19 novembre 2026 (option A)**
+
+Lorsqu'une coopérative devient inactive ou ferme son compte alors que ses produits figurent dans des paniers clients :
+
+- Les lignes de panier concernées sont conservées comme lignes historiques non achetables et signalées comme indisponibles.
+- Le checkout de chaque panier concerné est bloqué tant qu'une de ces lignes y demeure.
+- Chaque client doit retirer manuellement les lignes concernées pour poursuivre son checkout.
+- Aucune suppression automatique des lignes et aucune vente maintenue au motif qu'un stock serait encore disponible.
+- Les informations utiles à l'identification et à la traçabilité des produits restent conservées conformément aux règles de conservation des lignes de panier.
+- Aucun transfert de propriété vers une autre coopérative n'est effectué, conformément à la règle V1 d'absence de transfert de produits entre coopératives.
+
+Cette règle s'applique à l'indisponibilité de la coopérative propriétaire ; elle ne transforme pas une fermeture en transfert de produits ni en autorisation de vente résiduelle.
