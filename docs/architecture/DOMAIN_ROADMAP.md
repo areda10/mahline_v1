@@ -940,3 +940,9 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Test du contrat : coopérative inactive mais non supprimée acceptée ; soft-deleted refusée.
 - Commits : `4266034`, `521b8e6`, `692cf78`, `70e7c60`, `599ac39`, `d2f3645`, `50f4f05`, `bdb0d9a`, `75b79f2`, `a5b8820`, `65dd84e`, `6e6fff1`, `d9e75e7`.
 - Tests non exécutés.
+
+#### Complément A8 — pivot Identity
+
+- `UserManagementService` ne manipule plus le pivot via la relation `User::cooperatives()` ; il utilise le modèle Identity `SuperAdminCooperative`.
+- Aucun import du modèle Cooperative ni appel `cooperatives()` ne subsiste dans ce service.
+- Commits : `841b85e`, `31f70f1`.
