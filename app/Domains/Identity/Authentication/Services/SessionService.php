@@ -200,24 +200,38 @@ final class SessionService extends BaseService
      */
     public function revokeForUser(User $user, string $reason = 'logout'): bool
     {
-        $sessions = AuthenticationSession::query()
-            ->where('user_id', $user->getKey())
-            ->whereNull('revoked_at')
-            ->get();
+        return DB::transaction(function () use ($user, $reason): bool {
+            /*
+             * Serialize global logout against SessionService::create().
+             * Both operations acquire the user row before touching sessions,
+             * so a concurrent login cannot create a session after this
+             * operation has selected the active-session set.
+             */
+            $lockedUser = User::query()
+                ->whereKey($user->getKey())
+                ->lockForUpdate()
+                ->first();
 
-        if ($sessions->isEmpty()) {
-            return false;
-        }
-
-        $revoked = false;
-
-        foreach ($sessions as $session) {
-            if ($this->revoke($session, $reason)) {
-                $revoked = true;
+            if ($lockedUser === null) {
+                return false;
             }
-        }
 
-        return $revoked;
+            $sessions = AuthenticationSession::query()
+                ->where('user_id', $lockedUser->getKey())
+                ->whereNull('revoked_at')
+                ->lockForUpdate()
+                ->get();
+
+            $revoked = false;
+
+            foreach ($sessions as $session) {
+                if ($this->revoke($session, $reason)) {
+                    $revoked = true;
+                }
+            }
+
+            return $revoked;
+        });
     }
 
     /**
