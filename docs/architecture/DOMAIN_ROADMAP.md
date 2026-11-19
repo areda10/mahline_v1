@@ -832,3 +832,14 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Commits : `048f47736203c2b1c5d08208bd68b1fc195c411c` (Policy), `6cc88ab802b18c947668ca4f9149710f040526ae` (test).
 - Restent à traiter : dépendance directe User dans CooperativeService, dépendance directe AddressService dans CooperativeController, relations Eloquent transversales du modèle Cooperative et contrat public de statut.
 - Tests non exécutés ; statut du lot : **correction écrite, validation runtime en attente**.
+
+
+### 11. Lot A2 — Identity (19 novembre 2026)
+
+- Suppression du parcours dangereux `activate-and-verify` qui validait directement l'e-mail et exposait le mot de passe partagé `MahlineMahline`.
+- L'activation root conserve désormais le parcours vérifiable : compte activé mais e-mail non vérifié, invitation envoyée, connexion bloquée jusqu'à vérification.
+- Test de service modifié pour vérifier la conservation du mot de passe existant et l'absence de validation automatique de l'e-mail.
+- Dépendance PasswordHistoryService inutilisée retirée du service.
+- Commits : `acc9518`, `1b6041b`, `9730d4c`, `2d2f761`, `cfc950e`, `4789744`.
+- Restent à traiter : frontières Eloquent Identity↔Cooperatives/Localization/Media, provider Identity, vérification complète API token/expiration, reset/invitation/email change et scénarios de concurrence.
+- Tests non exécutés ; statut du lot : **correction écrite, validation runtime en attente**.
