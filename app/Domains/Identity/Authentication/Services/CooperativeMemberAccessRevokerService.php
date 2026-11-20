@@ -26,6 +26,9 @@ final class CooperativeMemberAccessRevokerService implements CooperativeMemberAc
                 ->whereHas('roles', static fn ($roles) => $roles
                     ->where('roles.is_active', true)
                     ->whereIn('roles.slug', ['cooperative_admin', 'user']))
+                ->whereDoesntHave('roles', static fn ($roles) => $roles
+                    ->where('roles.is_active', true)
+                    ->whereIn('roles.slug', ['super_admin_root', 'super_admin', 'customer']))
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get();
