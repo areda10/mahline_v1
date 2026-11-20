@@ -331,3 +331,14 @@ Ces points ne changent pas les règles déjà validées ; ils précisent les tra
 - Implémentation Inventory : non commencée.
 - Tests PHPUnit/Pint et tests de concurrence MySQL : non exécutés.
 
+
+
+## Complément A20 — contrat Delivery (20 novembre 2026)
+
+Référence : `DELIVERY_V1_SPECIFICATION.md`.
+
+- Delivery est propriétaire des expéditions, transporteurs, missions, preuves, retours physiques, anomalies et litiges ; Inventory reste propriétaire des soldes, mouvements, réservations et quarantaines.
+- Inventory ne consomme pas le stock sur simple création d'une mission ou acceptation transporteur. Le fait exact de sortie/consommation reste à arbitrer entre confirmation, remise physique au transporteur et départ effectif.
+- À réception d'un retour, Delivery fournit un résultat d'inspection par produit ; Inventory seul décide/enregistre la réintégration des produits acceptés ou la mise en quarantaine des produits refusés, selon ses règles métier.
+- Les contrats doivent être orientés et publics. Delivery ne peut pas écrire dans les tables Inventory ; Inventory ne peut pas écrire dans les tables Delivery.
+- Aucun contrat de ce type n'est actuellement intégré au code. L'implémentation est bloquée sur le choix du fait de consommation et les transitions de retour, qui doivent être validés avant les migrations/handlers correspondants.
