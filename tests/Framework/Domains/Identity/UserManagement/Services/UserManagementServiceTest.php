@@ -430,6 +430,10 @@ final class UserManagementServiceTest extends TestCase
         string $roleSlug,
         ?string $cooperativeId = null,
     ): User {
+        if ($cooperativeId === null && in_array($roleSlug, ['cooperative_admin', 'user'], true)) {
+            $cooperativeId = (string) $this->createCooperative()->getKey();
+        }
+
         $user = User::factory()->create([
             'cooperative_id' => $cooperativeId,
         ]);
