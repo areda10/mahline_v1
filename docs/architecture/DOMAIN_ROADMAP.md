@@ -1043,3 +1043,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Statistics est défini comme domaine autonome de projections ; Dashboard reste la couche de présentation.
 - **État :** conception initiale documentée ; décisions techniques/métier bloquantes listées dans le document ; aucun domaine n'est déclaré implémenté ou validé.
 - **Prochaine étape :** arbitrer les points bloquants, auditer les conventions exactes (BaseModel, migrations, permissions, providers, tests), puis coder par incréments et auditer routes/Policies/middleware/contrats après chaque lot.
+
+
+### 29. Lot A19 — spécifications initiales Finance et Statistics (20 novembre 2026)
+
+- Création de `docs/domains/marketplace/FINANCE_V1_SPECIFICATION.md` à partir des règles fonctionnelles validées du 16 novembre ; statut non gelé en raison de l'arbitrage facture globale/par sous-commande, de la fiscalité et des écarts de rapprochement.
+- Création de `docs/domains/marketplace/STATISTICS_V1_SPECIFICATION.md` ; l'autonomie du domaine est respectée et les KPI sont explicitement marqués comme propositions à valider.
+- Les documents ne déclarent aucun modèle, migration, route, Policy ou test implémenté.
+- Prochaine étape : résoudre les arbitrages bloquants puis commencer Sales et Inventory par lots, avec tests et mise à jour du registre après chaque incrément.
