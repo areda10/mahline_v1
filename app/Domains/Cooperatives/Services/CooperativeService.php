@@ -6,6 +6,7 @@ namespace App\Domains\Cooperatives\Services;
 
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Cooperatives\Contracts\CooperativeMemberAccessRevoker;
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Shared\Contracts\ActorAuthorizer;
@@ -37,6 +38,7 @@ final class CooperativeService
         private readonly CooperativeAddressManager $cooperativeAddresses,
         private readonly ActorContextProvider $actors,
         private readonly ActorAuthorizer $authorizer,
+        private readonly CooperativeMemberAccessRevoker $memberAccessRevoker,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -168,6 +170,10 @@ final class CooperativeService
             }
 
             $before = $this->auditSnapshot($cooperative);
+            $accessRevocation = $this->memberAccessRevoker->revokeMemberAccess(
+                (string) $cooperative->getKey(),
+                'cooperative_deleted',
+            );
             $this->cooperativeAddresses->softDeleteCooperativeAddressesById((string) $cooperative->getKey(), $actor->id);
             $cooperative->deleted_by = (string) $actor->id;
             $cooperative->save();
@@ -180,6 +186,7 @@ final class CooperativeService
                 action: 'deleted',
                 oldValues: $before,
                 newValues: ['deleted' => true],
+                metadata: ['access_revocation' => $accessRevocation],
             );
         });
     }
@@ -248,11 +255,20 @@ final class CooperativeService
                 return $cooperative;
             }
 
-            $this->assertAllowedStatusTransition($actor, $cooperative->status, $status);
+            $previousStatus = $cooperative->status;
+            $this->assertAllowedStatusTransition($actor, $previousStatus, $status);
 
             $cooperative->status = $status;
             $cooperative->updated_by = (string) $actor->id;
             $cooperative->save();
+
+            $accessRevocation = null;
+            if ($previousStatus === CooperativeStatus::ACTIVE && $status !== CooperativeStatus::ACTIVE) {
+                $accessRevocation = $this->memberAccessRevoker->revokeMemberAccess(
+                    (string) $cooperative->getKey(),
+                    'cooperative_'.$status->value,
+                );
+            }
 
             $this->record(
                 actor: $actor,
@@ -261,6 +277,7 @@ final class CooperativeService
                 action: $action,
                 oldValues: $before,
                 newValues: $this->auditSnapshot($cooperative),
+                metadata: $accessRevocation === null ? null : ['access_revocation' => $accessRevocation],
             );
 
             return $cooperative;
