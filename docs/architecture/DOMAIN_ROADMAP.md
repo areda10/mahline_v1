@@ -1051,3 +1051,14 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Création de `docs/domains/marketplace/STATISTICS_V1_SPECIFICATION.md` ; l'autonomie du domaine est respectée et les KPI sont explicitement marqués comme propositions à valider.
 - Les documents ne déclarent aucun modèle, migration, route, Policy ou test implémenté.
 - Prochaine étape : résoudre les arbitrages bloquants puis commencer Sales et Inventory par lots, avec tests et mise à jour du registre après chaque incrément.
+
+
+### 30. Lot A20 — Delivery V1 et décision Sales (20 novembre 2026)
+
+- Décision utilisateur SALES-019 : maximum absolu fixé à **100 unités par ligne de panier**, tous produits/variantes/coopératives confondus. Application obligatoire côté serveur aux ajouts, modifications, fusions et checkout ; indépendant du stock. La valeur minimale et la précision/unité restent à cadrer.
+- Création de `docs/domains/marketplace/DELIVERY_V1_SPECIFICATION.md` : périmètre autonome Delivery, transporteurs, tarifs de trajet, devis, missions, affectations, expéditions, colis, suivi, preuves, retours, anomalies et litiges.
+- Règles déjà validées consolidées : tarification par trajet ; somme des frais par expédition multi-coopérative ; fenêtre d'acceptation transporteur 12 h ; première acceptation valide exclusive ; à défaut, attribution automatique au tarif le moins cher ; accès transporteur dédié au premier release ; photos aux étapes de départ et retour ; contrôles produit par produit ; responsabilité de frais de retour selon motif ; litiges humains et gouvernance de contestation.
+- Les arbitrages encore ouverts (égalité tarifaire, éligibilité, identité transporteur, devis, statuts, échecs, matrice photos, consommation stock, FR-014 et autres) sont inscrits dans la spécification Delivery.
+- Audit statique : aucun domaine/provider/migration/modèle/route/Policy/middleware Delivery n'existe au code consulté. Orders initialise encore les frais de livraison à zéro et ne possède pas de contrat Delivery intégré.
+- **État :** spécification Delivery initiale et audit des frontières documentés ; pas de code Delivery ni de migration créée ; aucun test runtime exécuté.
+- **Prochaine étape :** arbitrer les points bloquants Delivery et stabiliser les contrats Orders/Inventory/Localization/Identity/Media avant les migrations et l'implémentation Delivery.
