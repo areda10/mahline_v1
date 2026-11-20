@@ -1032,3 +1032,14 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - La Policy d'autorisation Identity consulte le contrat `CooperativeStatusReader` : aucun nouveau login/session ou jeton API n'est possible tant que la coopérative n'est pas active ; le middleware web et la validation Sanctum invalident également les accès existants.
 - Implémentation par contrat `CooperativeMemberAccessRevoker` défini dans Cooperatives et adaptateur implémenté par Identity.
 - Tests de régression ajoutés pour désactivation, suppression et non-restauration ; exécution non réalisée. Cooperatives/Identity restent `AUDIT_IN_PROGRESS`.
+
+
+### 28. Lot A18 — conception technique Sales / Inventory / Finance / Statistics (20 novembre 2026)
+
+- Ajout de `docs/domains/marketplace/FOUR_DOMAINS_TECHNICAL_DESIGN.md` : ownership, modèles candidats, contrats publics, événements, transactions, routes, middleware, policies, matrice de portée, tests et séquence de livraison.
+- Audit statique de `app/Domains` sur `feature/Marketplace` : Sales, Inventory, Finance et Statistics absents ; Orders et Dashboard présents.
+- Les spécifications Sales V1 et Inventory V1 préexistantes sont conservées comme sources métier. Aucun modèle ni migration n'a été créé dans ce lot.
+- Finance est conçu à partir des règles validées du document `ORDER_INVOICING_PAYMENTS_DELIVERY_FUNCTIONAL_RULES.md`, avec un point bloquant à résoudre sur l'unicité de facture par commande versus numérotation par coopérative.
+- Statistics est défini comme domaine autonome de projections ; Dashboard reste la couche de présentation.
+- **État :** conception initiale documentée ; décisions techniques/métier bloquantes listées dans le document ; aucun domaine n'est déclaré implémenté ou validé.
+- **Prochaine étape :** arbitrer les points bloquants, auditer les conventions exactes (BaseModel, migrations, permissions, providers, tests), puis coder par incréments et auditer routes/Policies/middleware/contrats après chaque lot.
