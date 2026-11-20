@@ -845,7 +845,7 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 Décision métier validée : la désactivation d'une coopérative révoque aussi les sessions web et les jetons API des comptes membres qui lui appartiennent.
 
 - Les statuts propres des comptes Identity ne changent pas.
-- Lors d'une transition depuis `ACTIVE` vers `INACTIVE`, `SUSPENDED` ou `ARCHIVED`, les accès de tous les comptes ayant un rôle actif `cooperative_admin` ou `user` et rattachés par `cooperative_id` sont révoqués.
+- Lors de toute transition vers un statut autre que `ACTIVE` (notamment `PENDING`, `INACTIVE`, `SUSPENDED` ou `ARCHIVED`), les accès de tous les comptes ayant un rôle actif `cooperative_admin` ou `user` et rattachés par `cooperative_id` sont révoqués.
 - La suppression logique d'une coopérative déclenche la même révocation.
 - Les comptes `super_admin_root`, `super_admin` et `customer` sont explicitement exclus. Les affectations des super-admins à une coopérative ne sont pas considérées comme des comptes membres.
 - Les sessions sont révoquées par `SessionService`, avec historique de connexion et audit ; les jetons Sanctum sont conservés en base, marqués révoqués et audités. Aucun secret n'est journalisé.
