@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -166,7 +167,10 @@ final class ApiTokenManagementControllerTest extends TestCase
 
     private function actor(string $roleSlug): User
     {
-        $user = User::factory()->create([
+        $attributes = in_array($roleSlug, ['cooperative_admin', 'user'], true)
+            ? ['cooperative_id' => Cooperative::factory()->active()->create()->getKey()]
+            : [];
+        $user = User::factory()->create($attributes + [
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
             'must_change_password' => false,
