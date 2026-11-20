@@ -9,6 +9,10 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Localization\Models\Country;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
+use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
+use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
@@ -289,6 +293,64 @@ final class CooperativeServiceTest extends TestCase
             'activate', 'cooperatives.activated', 'activated');
     }
 
+    public function test_deactivating_cooperative_revokes_member_sessions_and_tokens_without_changing_identity_status(): void
+    {
+        $root = $this->rootActor();
+        $cooperative = Cooperative::factory()->create([
+            'status' => CooperativeStatus::ACTIVE,
+        ]);
+
+        $cooperativeAdmin = $this->cooperativeMember($cooperative, 'cooperative_admin');
+        $user = $this->cooperativeMember($cooperative, 'user');
+        $rootSession = app(SessionService::class)->create(
+            $root,
+            'root-session-'.uniqid(),
+        );
+        $adminSession = app(SessionService::class)->create(
+            $cooperativeAdmin,
+            'cooperative-admin-session-'.uniqid(),
+        );
+        $userSession = app(SessionService::class)->create(
+            $user,
+            'cooperative-user-session-'.uniqid(),
+        );
+        $adminToken = $cooperativeAdmin->createToken('admin-device')->accessToken;
+        $userToken = $user->createToken('user-device')->accessToken;
+        $rootToken = $root->createToken('root-device')->accessToken;
+
+        $this->actingAs($root);
+        $this->service->deactivate((string) $root->getKey(), $cooperative);
+
+        foreach ([$cooperativeAdmin, $user] as $member) {
+            self::assertSame(UserStatus::Active, $member->fresh()->status);
+        }
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $adminSession->getKey(),
+            'revocation_reason' => 'cooperative_inactive',
+        ]);
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $userSession->getKey(),
+            'revocation_reason' => 'cooperative_inactive',
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $adminToken->getKey(),
+            'revoked_at' => now()->toDateTimeString(),
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $userToken->getKey(),
+            'revoked_at' => now()->toDateTimeString(),
+        ]);
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $rootSession->getKey(),
+            'revoked_at' => null,
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $rootToken->getKey(),
+            'revoked_at' => null,
+        ]);
+    }
+
     public function test_deactivate_records_status_transition(): void
     {
         $this->assertStatusTransition(CooperativeStatus::ACTIVE, CooperativeStatus::INACTIVE,
@@ -533,6 +595,22 @@ final class CooperativeServiceTest extends TestCase
             'is_primary' => true,
         ]);
         $this->assertAuditEvent('cooperatives.restored', 'restored', $actor, $cooperative);
+    }
+
+    private function cooperativeMember(Cooperative $cooperative, string $roleSlug): User
+    {
+        $member = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+        $role = Role::query()->firstOrCreate(
+            ['slug' => $roleSlug],
+            ['name' => $roleSlug, 'is_active' => true],
+        );
+        $member->roles()->attach($role->getKey());
+
+        return $member;
     }
 
     private function cooperativeAdminActor(Cooperative $cooperative): User
