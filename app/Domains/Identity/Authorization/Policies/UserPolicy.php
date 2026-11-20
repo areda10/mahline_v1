@@ -140,19 +140,9 @@ final class UserPolicy extends BasePolicy
     {
         if (! $this->hasPermission($actor, 'users.invite')
             || $target->trashed()
+            || $target->status !== UserStatus::Pending
             || $target->email_verified_at !== null
             || ! $this->isInternalManagedTarget($target)) {
-            return false;
-        }
-
-        if ($target->status === UserStatus::Active) {
-            return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
-                || ($this->targetHasActiveRole($target, 'user')
-                    && $this->canAccessUser($actor, $target)
-                    && ($actor->hasRole(self::ROLE_SUPER_ADMIN) || $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)));
-        }
-
-        if ($target->status !== UserStatus::Pending) {
             return false;
         }
 
