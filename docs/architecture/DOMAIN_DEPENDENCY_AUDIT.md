@@ -894,3 +894,58 @@ Référence de conception : `docs/domains/marketplace/FOUR_DOMAINS_TECHNICAL_DES
 - Aucun PHP, Pint, PHPUnit, route:list ou test MySQL n'a été exécuté par le connecteur GitHub.
 - Aucune migration, classe applicative, route, Policy ou middleware des quatre domaines n'a été créé dans ce lot.
 - Les quatre domaines restent **non implémentés** ; le présent lot livre la conception initiale et le registre des écarts uniquement.
+
+
+## 13. Lot A20 — Delivery et décision de quantité Sales (20 novembre 2026)
+
+Références : `docs/domains/marketplace/DELIVERY_V1_SPECIFICATION.md`, `SALES_V1_SPECIFICATION.md`, `FOUR_DOMAINS_TECHNICAL_DESIGN.md` (addendum A20).
+
+### 13.1 Sales — limite décidée
+
+- Décision utilisateur : maximum absolu **100 unités par ligne de panier**.
+- La limite est appliquée par le serveur aux ajouts, modifications, fusions et validations ; elle est indépendante du stock.
+- La limite commerciale produit/variante peut être inférieure ou égale à 100.
+- La limite minimale et la précision/conversion d'unités restent ouvertes ; ne pas inventer une conversion pour les produits au poids/volume.
+
+### 13.2 Delivery — présence et points d'entrée
+
+- Aucun dossier `app/Domains/Delivery` n'est présent dans l'arborescence vérifiée.
+- Aucun DeliveryServiceProvider n'est déclaré dans `bootstrap/providers.php`.
+- Aucun contrôleur Delivery n'est importé ni route Delivery enregistrée dans `routes/web.php` ou `routes/api.php` au HEAD inspecté.
+- Aucun modèle, migration, Policy, permission dédiée ou middleware Delivery n'a été trouvé dans les chemins contrôlés.
+- Aucun contrat DeliveryQuoteProvider, carrier eligibility, assignment, shipment ou retour n'est intégré.
+
+### 13.3 Dépendances et propriété
+
+- Sales → Delivery : contrat public de devis par expédition ; Sales ne calcule aucun tarif transporteur.
+- Delivery → Orders : contrat public de lecture d'une sous-commande prête et de son snapshot ; aucune lecture directe des modèles/tables Orders.
+- Delivery → Cooperatives/Localization : statut coopérative, ville/adresse de départ et destination via contrats.
+- Delivery → Identity : contexte d'acteur et permission générale ; la stratégie de compte transporteur reste à arbitrer.
+- Delivery → Media : contrat de pièces privées et preuves ; pas de stockage fichier autonome dans Delivery.
+- Orders consomme les événements logistiques et applique lui-même ses transitions commerciales.
+- Inventory consomme les faits de sortie/retour explicitement retenus et reste seul propriétaire des mouvements et soldes.
+- Finance consomme les événements de livraison et de collecte COD ; Delivery ne tient aucune écriture financière.
+- Communication consomme les événements Delivery ; Delivery ne gère pas directement les envois.
+
+### 13.4 Routes, middleware et Policies — contrôle
+
+- Les routes actuelles sont organisées dans `routes/web.php` avec les espaces root `root.backoffice.*`, back-office `backoffice.*`, customer et user. `routes/api.php` contient les groupes Identity/Audit ; aucune route Delivery n'y figure.
+- Conformément à ADR-021, les futures routes Delivery devront être chargées par le provider Delivery, et non dispersées dans un contrôleur ou provider d'un domaine voisin.
+- Middleware de base attendu : authentification/session active Identity, permission générale, throttling ; Policy Delivery obligatoire ensuite pour l'objet, le client propriétaire, la coopérative, l'affectation et le transporteur attribué.
+- Les Policies Delivery devront être possédées/enregistrées par Delivery (mission, shipment, evidence, return, dispute, carrier). Les permissions exactes et l'espace carrier attendent l'arbitrage de l'identité transporteur.
+- Les accès root, super_admin affecté, cooperative_admin propre coopérative, client propriétaire et transporteur affecté doivent être testés séparément. Le transporteur ne choisit jamais son propre périmètre depuis un paramètre de requête.
+
+### 13.5 Risques fonctionnels/techniques P0
+
+- Orders initialise les frais de livraison à zéro ; le checkout ne peut pas présenter ce montant comme un tarif réel sans devis Delivery versionné et validé.
+- L'acceptation transporteur concurrente doit être atomique ; l'attribution automatique à 12 heures doit être idempotente et sans course avec une acceptation valide.
+- Le critère de départage des tarifs égaux reste ouvert.
+- Le moment de consommation de la réservation Inventory et le contrat de retour contrôlé ne sont pas encore définis.
+- L'identité/role des transporteurs, les statuts logistiques, les cas d'échec collecte/livraison/COD, les règles détaillées de devis et FR-014 sont ouverts.
+- La matrice photo par étape/acteur et le cycle complet des anomalies/litiges nécessitent un schéma validé avant migrations.
+
+### 13.6 Limites de vérification
+
+- Audit statique des chemins et documents cités ; aucune exécution PHP, Pint, PHPUnit, route:list ou test MySQL depuis le connecteur GitHub.
+- La spécification Delivery est créée ; aucun code, migration, route, Policy, middleware ou provider Delivery n'est déclaré implémenté.
+- Le présent lot ne clôt pas Sales, Inventory, Orders, Delivery, Finance ou Statistics.
