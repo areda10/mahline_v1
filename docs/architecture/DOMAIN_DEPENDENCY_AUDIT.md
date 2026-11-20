@@ -852,3 +852,45 @@ Décision métier validée : la désactivation d'une coopérative révoque aussi
 **Contrat inter-domaines :** Cooperatives définit `CooperativeMemberAccessRevoker`; Identity fournit `CooperativeMemberAccessRevokerService` et l'enregistre via `IdentityServiceProvider`. Cooperatives ne dépend pas des modèles ou services internes Identity.
 
 **Tests ajoutés :** désactivation avec révocation des sessions/jetons de cooperative_admin et user, exclusion des accès root, suppression logique et absence de restauration des anciens accès. Exécution MySQL/PHPUnit en attente.
+
+
+## 12. Lot A18 — audit initial des quatre domaines marketplace (20 novembre 2026)
+
+Référence de conception : `docs/domains/marketplace/FOUR_DOMAINS_TECHNICAL_DESIGN.md`.
+
+### 12.1 Présence applicative constatée
+
+- `app/Domains/Orders` contient les modèles de commande et les services de création/réponse coopérative.
+- `app/Domains/Dashboard` contient une couche HTTP de présentation.
+- Aucun dossier applicatif `Sales`, `Inventory`, `Finance` ou `Statistics` n'est présent dans l'arborescence consultée.
+- Les documents Sales V1 et Inventory V1 existent déjà ; les règles fonctionnelles Finance existent dans `ORDER_INVOICING_PAYMENTS_DELIVERY_FUNCTIONAL_RULES.md`.
+
+### 12.2 Relations et risques connus
+
+- Sales doit dépendre des surfaces publiques Products, Cooperatives, Localization, Identity, Inventory, Orders et Delivery ; il ne doit pas importer leurs modèles/services privés.
+- Inventory doit posséder les soldes/mouvements/réservations et intégrer Orders par contrat. Le chemin actuel `CooperativeOrderResponseService::confirmByCooperative()` effectue la transition `CONFIRMED` sans appel Inventory : risque fonctionnel bloquant avant production.
+- Finance doit consommer les faits publiés par Orders et Delivery et ne doit jamais modifier les statuts de commande.
+- Statistics doit consommer événements/DTO publiés et ne doit pas joindre directement les tables privées des domaines sources. Dashboard doit consommer Statistics, pas recalculer les métriques à partir des tables métier.
+
+### 12.3 Routes / Policies / middleware — audit initial
+
+- Le composition root est `bootstrap/providers.php`; les providers locaux des domaines existants y sont déclarés.
+- `routes/web.php` contient des espaces root dédiés `root.backoffice.*` et des espaces back-office `backoffice.*`. Les nouveaux domaines devront enregistrer leurs routes depuis leurs providers, sans ajouter toutes leurs routes aux contrôleurs d'un domaine voisin.
+- `routes/api.php` expose actuellement les groupes Identity et Audit ; aucune route Sales/Inventory/Finance/Statistics n'y est déclarée dans le périmètre consulté.
+- Les middlewares communs d'authentification active et de rôle sont présents dans les routes back-office. Ils devront être complétés par les permissions réelles du registre, puis par les Policies du domaine.
+- Les Policies doivent être possédées et enregistrées par le domaine métier concerné. Les contrôles de périmètre doivent dériver l'ID de coopérative depuis l'acteur et les contrats d'affectation, jamais depuis un paramètre client non vérifié.
+- Cet audit ne déclare pas les futures routes, slugs ou Policies comme implémentés ; la matrice proposée est dans le document de conception.
+
+### 12.4 Décisions bloquantes avant implémentation
+
+- Sales : valeur numérique de la limite technique globale de quantité ; paramètres de version et idempotence.
+- Inventory : transaction commune Orders/Inventory, fait de consommation, libération après annulation, retour contrôlé, transfert parent-vers-variantes.
+- Finance : arbitrage du document de facture (une facture par commande globale ou par sous-commande coopérative) ; paramètres fiscaux et règles des écarts/litiges.
+- Statistics : catalogue KPI V1, dimensions et portées d'accès.
+
+### 12.5 Limites de l'audit
+
+- Audit statique des chemins et documents listés ; aucun scan exhaustif automatisé de tous les imports, migrations, permissions, middleware ou routes n'a été exécuté.
+- Aucun PHP, Pint, PHPUnit, route:list ou test MySQL n'a été exécuté par le connecteur GitHub.
+- Aucune migration, classe applicative, route, Policy ou middleware des quatre domaines n'a été créé dans ce lot.
+- Les quatre domaines restent **non implémentés** ; le présent lot livre la conception initiale et le registre des écarts uniquement.
