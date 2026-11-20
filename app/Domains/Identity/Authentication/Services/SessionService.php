@@ -254,7 +254,7 @@ final class SessionService extends BaseService
         string $reason = 'global_logout',
     ): array {
         if (trim($reason) === '') {
-            throw new \\InvalidArgumentException('An access revocation reason is required.');
+            throw new \InvalidArgumentException('An access revocation reason is required.');
         }
 
         return DB::transaction(function () use ($user, $reason): array {
@@ -328,11 +328,15 @@ final class SessionService extends BaseService
         User $user,
         User $actor,
         string $reason,
+        string $eventKey = 'identity.authentication.token_revoked',
+        string $action = 'token_revoked',
     ): int {
         return $this->apiTokens->revokeForUser(
             user: $user,
             actor: $actor,
             reason: $reason,
+            eventKey: $eventKey,
+            action: $action,
         );
     }
 
