@@ -249,9 +249,15 @@ final class SessionService extends BaseService
      *
      * @return array{sessions: int, tokens: int}
      */
-    public function revokeAllAccessForUser(User $user): array
-    {
-        return DB::transaction(function () use ($user): array {
+    public function revokeAllAccessForUser(
+        User $user,
+        string $reason = 'global_logout',
+    ): array {
+        if (trim($reason) === '') {
+            throw new \\InvalidArgumentException('An access revocation reason is required.');
+        }
+
+        return DB::transaction(function () use ($user, $reason): array {
             /*
              * SessionService::create() locks the same user row. This serializes
              * global revocation against a concurrent web login so a new
@@ -267,7 +273,7 @@ final class SessionService extends BaseService
                 ->whereNull('revoked_at')
                 ->count();
 
-            $this->revokeForUser($lockedUser, 'global_logout');
+            $this->revokeForUser($lockedUser, $reason);
 
             $actor = auth()->user();
             $actor = $actor instanceof User ? $actor : $lockedUser;
@@ -275,15 +281,21 @@ final class SessionService extends BaseService
             $revokedTokenCount = $this->revokeApiTokensForUser(
                 user: $lockedUser,
                 actor: $actor,
-                reason: 'global_logout',
+                reason: $reason,
+                eventKey: $reason === 'global_logout'
+                    ? 'identity.authentication.token_revoked'
+                    : 'identity.authentication.cooperative_access_revoked',
+                action: $reason,
             );
 
             $actor = auth()->user();
             $actor = $actor instanceof User ? $actor : null;
 
             $this->audit->record(new AuditEntryDTO(
-                eventKey: 'identity.authentication.global_logout',
-                action: 'global_logout',
+                eventKey: $reason === 'global_logout'
+                    ? 'identity.authentication.global_logout'
+                    : 'identity.authentication.cooperative_access_revoked',
+                action: $reason,
                 actorType: $actor ? User::class : null,
                 actorId: $actor ? (string) $actor->getKey() : null,
                 cooperativeId: $lockedUser->cooperative_id
