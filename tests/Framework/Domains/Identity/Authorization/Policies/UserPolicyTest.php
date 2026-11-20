@@ -501,6 +501,37 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($actor)->allows('view', $peerAdmin));
     }
 
+    public function test_root_classifies_suspended_target_by_active_role_for_lifecycle_permissions(): void
+    {
+        $root = $this->userWithRoleAndPermissions('super_admin_root', [
+            'users.update',
+            'users.archive',
+            'users.invite',
+        ]);
+        $target = $this->userWithRoleAndPermissions('user', [], [
+            'status' => UserStatus::Suspended,
+            'email_verified_at' => null,
+        ]);
+
+        self::assertTrue(Gate::forUser($root)->allows('update', $target));
+        self::assertTrue(Gate::forUser($root)->allows('archive', $target));
+        self::assertTrue(Gate::forUser($root)->allows('resendInvitation', $target));
+    }
+
+    public function test_managed_target_without_an_active_operational_role_is_not_classified_as_managed(): void
+    {
+        $root = $this->userWithRoleAndPermissions('super_admin_root', ['users.update']);
+        $target = $this->userWithRoleAndPermissions('user', [], [
+            'status' => UserStatus::Suspended,
+        ]);
+        $target->roles()->updateExistingPivot(
+            Role::query()->where('slug', 'user')->value('id'),
+            ['is_active' => false],
+        );
+
+        self::assertFalse(Gate::forUser($root)->allows('update', $target));
+    }
+
     private function createCooperative(): Cooperative
     {
         return Cooperative::factory()->create();
