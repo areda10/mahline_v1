@@ -298,13 +298,14 @@ final class UserPolicy extends BasePolicy
     {
         // Role classification must remain independent from account status.
         // hasAnyRole() returns false for inactive, suspended or archived users.
-        return ! $target->roles()
-            ->where('roles.is_active', true)
-            ->whereIn('slug', [
-                self::ROLE_SUPER_ADMIN_ROOT,
-                'customer',
-            ])
-            ->exists();
+        // A managed account must have an active operational role. This query
+        // deliberately ignores User.status: suspended/archived accounts keep
+        // their identity classification for root lifecycle operations.
+        return $this->targetHasAnyActiveRole($target, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_COOPERATIVE_ADMIN,
+            'user',
+        ]);
     }
 
     private function targetHasActiveRole(User $target, string $roleSlug): bool
