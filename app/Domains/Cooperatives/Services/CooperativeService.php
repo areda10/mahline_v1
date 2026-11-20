@@ -263,7 +263,7 @@ final class CooperativeService
             $cooperative->save();
 
             $accessRevocation = null;
-            if ($previousStatus === CooperativeStatus::ACTIVE && $status !== CooperativeStatus::ACTIVE) {
+            if ($status !== CooperativeStatus::ACTIVE) {
                 $accessRevocation = $this->memberAccessRevoker->revokeMemberAccess(
                     (string) $cooperative->getKey(),
                     'cooperative_'.$status->value,
