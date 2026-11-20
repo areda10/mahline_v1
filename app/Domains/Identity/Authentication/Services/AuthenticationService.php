@@ -247,6 +247,27 @@ final class AuthenticationService extends BaseService
             );
         }
 
+        if (! $user->isAuthorized()) {
+            $this->securityService->recordFailedAuthentication(
+                $email,
+                $context->ipAddress,
+            );
+
+            $this->loginHistoryService->recordFailure(
+                email: $email,
+                reason: 'cooperative_not_active',
+                user: $user,
+                ipAddress: $context->ipAddress,
+                userAgent: $context->userAgent,
+                browser: $context->browser,
+                device: $context->device,
+            );
+
+            throw new AuthenticationFailedException(
+                'The cooperative account is not active.',
+            );
+        }
+
         /*
          * Upgrade a valid legacy hash when the configured hashing
          * parameters have changed. This custom authentication flow uses
