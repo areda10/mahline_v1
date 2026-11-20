@@ -158,7 +158,7 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
     private function userWithRole(string $slug): User
     {
         $attributes = in_array($slug, ['cooperative_admin', 'user'], true)
-            ? ['cooperative_id' => Cooperative::factory()->create()->getKey()]
+            ? ['cooperative_id' => Cooperative::factory()->active()->create()->getKey()]
             : [];
         $user = User::factory()->create($attributes);
 
