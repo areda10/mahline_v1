@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Authorization\Concerns;
 
+use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -86,8 +87,28 @@ trait HasAuthorization
 
     public function isAuthorized(): bool
     {
-        return $this->status === UserStatus::Active
-            && $this->email_verified_at !== null
-            && $this->emergency_locked_at === null;
+        if ($this->status !== UserStatus::Active
+            || $this->email_verified_at === null
+            || $this->emergency_locked_at !== null) {
+            return false;
+        }
+
+        $belongsToCooperativeMemberRole = $this->roles()
+            ->where('roles.is_active', true)
+            ->whereIn('roles.slug', ['cooperative_admin', 'user'])
+            ->exists();
+
+        if (! $belongsToCooperativeMemberRole) {
+            return true;
+        }
+
+        if ($this->cooperative_id === null) {
+            return false;
+        }
+
+        $cooperative = app(CooperativeStatusReader::class)
+            ->findStatus((string) $this->cooperative_id);
+
+        return $cooperative?->isActive ?? false;
     }
 }
