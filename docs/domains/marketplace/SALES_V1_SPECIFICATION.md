@@ -86,7 +86,7 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Elles ne doivent plus être présentées comme des questions métier ouvertes. Les éléments ci-dessous sont des paramètres techniques ou des périmètres fonctionnels qui nécessitent encore un arbitrage explicite avant le gel du schéma ou du checkout :
 
 ### 6.1 Paramètres et invariants techniques
-- Valeur numérique de la limite technique globale de quantité par ligne (SALES-019) ; la limite commerciale par produit/variante est configurable par la coopérative et reste plafonnée par cette limite globale.
+- Valeur minimale technique de quantité par ligne et contrôles de précision/unité ; la limite technique globale maximale est désormais fixée à **100 unités par ligne** (SALES-019). La limite commerciale par produit/variante est configurable par la coopérative et reste plafonnée à 100.
 - Format/version du panier, stratégie exacte de verrouillage optimiste, réponse API en cas de version périmée et politique de retry (SALES-016/017).
 - Clé d'idempotence, empreinte de requête, conservation du résultat et reprise après timeout/réponse incertaine du contrat Orders (SALES-018).
 - Durée de validité d'un prix/devis affiché et mécanisme de preuve d'acceptation d'une hausse ou d'une modification commerciale (SALES-007/008/033/034/037).
@@ -157,7 +157,7 @@ Cette conservation est indépendante de la durée de vie du panier invité, fix�
 
 ### SALES-006 — Produit devenu indisponible dans le panier
 
-**Statut : VALIDÉ — 19 novembre 2026 (option D)**
+**Statut : VALIDÉ — 20 novembre 2026 (maximum absolu fixé à 100 unités par ligne)**
 
 Lorsqu'un produit ou une variante présent(e) dans le panier devient inactif(ve), désactivé(e) ou n'est plus vendable :
 - Sales conserve la ligne dans le panier ;
@@ -354,7 +354,7 @@ L'atomicité entre la création Orders et la consommation des lignes Sales, ains
 
 La quantité d'une ligne de panier est encadrée par deux niveaux complémentaires :
 
-1. **Limite technique globale de la plateforme :** une borne maximale absolue protège MAHLINE contre les quantités aberrantes, les abus et les valeurs hors capacité technique. Elle s'applique à toutes les lignes, quels que soient le produit et la coopérative.
+1. **Limite technique globale de la plateforme :** la borne maximale absolue est fixée à **100 unités par ligne de panier**. Elle protège MAHLINE contre les quantités aberrantes, les abus et les valeurs hors capacité technique. Elle s'applique à toutes les lignes, quels que soient le produit et la coopérative.
 2. **Limite commerciale configurable :** la coopérative propriétaire peut définir une quantité maximale propre à chaque produit ou variante, adaptée à ses conditions de vente.
 
 Règles d'application :
@@ -366,7 +366,7 @@ Règles d'application :
 - Ces limites sont indépendantes du stock : une quantité autorisée dans le panier ne réserve pas le stock et ne garantit pas sa disponibilité. Les contrôles de disponibilité restent ceux de SALES-009, SALES-013 et du domaine Inventory.
 - Les règles s'appliquent également à la fusion des paniers (SALES-003) et aux modifications concurrentes (SALES-017) ; aucune de ces opérations ne peut contourner les limites.
 
-Restent à préciser avant implémentation : les valeurs numériques minimale et maximale de la limite technique, le comportement lorsqu'aucune limite commerciale n'est configurée, les droits de modification de la limite par la coopérative, ainsi que le traitement d'une limite abaissée alors qu'une quantité supérieure se trouve déjà dans un panier.
+Restent à préciser avant implémentation : la valeur minimale technique, la précision/unité de quantité admise et les contrôles de conversion ; la limite maximale absolue est fixée à 100 unités par ligne. Le comportement sans limite commerciale, les droits de modification et le traitement d'une limite abaissée sont définis par SALES-020 à SALES-025.
 
 ### SALES-020 — Réduction d'une limite commerciale avec une quantité déjà au panier
 
@@ -623,3 +623,13 @@ Lorsqu'une coopérative modifie une caractéristique commerciale d'une variante 
 - Les autres contrôles de disponibilité, de prix, de limite commerciale, de quantité et de stock restent applicables.
 
 Cette règle couvre les changements tels que la contenance, le poids, le conditionnement ou l'unité. Elle complète SALES-011 et les règles d'acceptation explicite des changements commerciaux.
+
+
+### Complément décisionnel — SALES-019 (20 novembre 2026)
+
+- **Décision utilisateur :** quantité maximale absolue fixée à **100 unités par ligne de panier**, toutes coopératives, produits et variantes confondus.
+- Cette borne s'applique aux ajouts, modifications, fusions de paniers et opérations de checkout. Elle ne constitue pas une disponibilité de stock et ne crée aucune réservation.
+- Une limite commerciale définie par la coopérative peut être inférieure ou égale à 100, jamais supérieure.
+- Toute tentative de quantité supérieure à 100 est rejetée côté serveur ; l'interface ne constitue pas un contrôle de sécurité.
+- Tests obligatoires : quantité 100 acceptée, 101 rejetée, fusion produisant 100 acceptée et fusion produisant 101 rejetée, limite commerciale inférieure, limite commerciale supérieure à 100 refusée.
+- La valeur minimale, la précision numérique et la sémantique exacte de l'unité pour les produits vendus au poids/volume restent à préciser ; « 100 » désigne la valeur numérique de quantité, sans conversion automatique d'unité.
