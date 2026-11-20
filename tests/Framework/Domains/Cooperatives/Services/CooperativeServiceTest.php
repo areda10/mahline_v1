@@ -321,6 +321,7 @@ final class CooperativeServiceTest extends TestCase
 
         foreach ([$cooperativeAdmin, $user] as $member) {
             self::assertSame(UserStatus::Active, $member->fresh()->status);
+            self::assertFalse($member->fresh()->isAuthorized());
         }
 
         $this->assertDatabaseHas('authentication_sessions', [
@@ -341,6 +342,14 @@ final class CooperativeServiceTest extends TestCase
             'id' => $rootToken->getKey(),
             'revoked_at' => null,
         ]);
+
+        $this->service->activate((string) $root->getKey(), $cooperative->fresh());
+        self::assertTrue($cooperativeAdmin->fresh()->isAuthorized());
+        self::assertTrue($user->fresh()->isAuthorized());
+        self::assertNotNull(DB::table('personal_access_tokens')->where('id', $adminToken->getKey())->value('revoked_at'));
+        self::assertNotNull(DB::table('personal_access_tokens')->where('id', $userToken->getKey())->value('revoked_at'));
+        self::assertNotNull($adminSession->fresh()->revoked_at);
+        self::assertNotNull($userSession->fresh()->revoked_at);
     }
 
     public function test_deactivate_records_status_transition(): void
