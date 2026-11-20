@@ -301,14 +301,17 @@ final class UserPolicy extends BasePolicy
         // A managed account must have an active operational role. This query
         // deliberately ignores User.status: suspended/archived accounts keep
         // their identity classification for root lifecycle operations.
-        return $this->targetHasAnyActiveRole($target, [
-            self::ROLE_SUPER_ADMIN,
-            self::ROLE_COOPERATIVE_ADMIN,
-            'user',
-        ]) && ! $this->targetHasAnyActiveRole($target, [
-            self::ROLE_SUPER_ADMIN_ROOT,
-            'customer',
-        ]);
+        $activeRoles = $target->roles()
+            ->where('roles.is_active', true)
+            ->pluck('roles.slug')
+            ->all();
+
+        return count($activeRoles) === 1
+            && in_array($activeRoles[0], [
+                self::ROLE_SUPER_ADMIN,
+                self::ROLE_COOPERATIVE_ADMIN,
+                'user',
+            ], true);
     }
 
     private function targetHasActiveRole(User $target, string $roleSlug): bool
