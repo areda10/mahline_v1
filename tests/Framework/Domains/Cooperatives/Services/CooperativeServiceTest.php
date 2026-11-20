@@ -333,15 +333,15 @@ final class CooperativeServiceTest extends TestCase
         try {
             app(SessionService::class)->create($user->fresh(), 'blocked-after-coop-deactivation');
             self::fail('A member of an inactive cooperative must not create a new web session.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertStringContainsString('cooperative is not active', $exception->getMessage());
         }
 
         try {
-            app(\\App\\Domains\\Identity\\Authentication\\Services\\ApiTokenService::class)
+            app(\App\Domains\Identity\Authentication\Services\ApiTokenService::class)
                 ->createForOwner($user->fresh(), $user->fresh(), 'blocked-after-coop-deactivation');
             self::fail('A member of an inactive cooperative must not create a new API token.');
-        } catch (\\RuntimeException $exception) {
+        } catch (\RuntimeException $exception) {
             self::assertStringContainsString('not authorized', $exception->getMessage());
         }
 
