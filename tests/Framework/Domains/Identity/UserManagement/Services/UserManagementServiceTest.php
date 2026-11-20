@@ -350,11 +350,12 @@ final class UserManagementServiceTest extends TestCase
     public function test_root_activation_keeps_email_unverified_and_preserves_existing_password(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
-        $target = User::factory()->create([
+        $target = $this->createUserWithRole('user');
+        $target->forceFill([
             'status' => UserStatus::Pending,
             'password' => 'ExistingPassword2026!',
             'email_verified_at' => null,
-        ]);
+        ])->save();
 
         $activated = $this->service->activateUser($root, $target);
 
@@ -402,7 +403,7 @@ final class UserManagementServiceTest extends TestCase
     public function test_password_history_survives_soft_delete_and_cascades_on_force_delete(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
-        $target = User::factory()->create();
+        $target = $this->createUserWithRole('user');
 
         DB::table('user_password_histories')->insert([
             'id' => (string) Str::ulid(),
