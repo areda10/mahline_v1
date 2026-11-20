@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Providers;
 
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
+use App\Domains\Cooperatives\Contracts\CooperativeMemberAccessRevoker;
+use App\Domains\Identity\Authentication\Services\CooperativeMemberAccessRevokerService;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
@@ -30,6 +32,7 @@ final class IdentityServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(SuperAdminCooperativeAssignmentReader::class, SuperAdminCooperativeAssignmentReaderService::class);
+        $this->app->bind(CooperativeMemberAccessRevoker::class, CooperativeMemberAccessRevokerService::class);
         $this->app->bind(UserAddressOwnerGateway::class, IdentityUserAddressOwnerGateway::class);
         $this->app->bind(ActorContextProvider::class, IdentityActorContextProvider::class);
         $this->app->bind(ActorAuthorizer::class, IdentityActorAuthorizer::class);
