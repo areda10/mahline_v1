@@ -671,6 +671,7 @@ final class CooperativeServiceTest extends TestCase
 
     private function cooperativeAdminActor(Cooperative $cooperative): User
     {
+        $cooperative->forceFill(['status' => CooperativeStatus::ACTIVE])->save();
         $actor = User::factory()->create(['cooperative_id' => $cooperative->id]);
         $role = Role::query()->firstOrCreate(
             ['slug' => 'cooperative_admin'],
