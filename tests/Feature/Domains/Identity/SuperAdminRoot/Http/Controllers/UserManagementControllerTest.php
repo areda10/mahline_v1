@@ -114,7 +114,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::fake();
 
         $root = $this->actor('super_admin_root', ['users.invite']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Active,
             'email_verified_at' => null,
         ]);
@@ -155,7 +155,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::fake();
 
         $root = $this->actor('super_admin_root', ['users.activate']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Inactive,
             'email_verified_at' => null,
         ]);
@@ -201,7 +201,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_archived_user_must_be_restored_before_root_activation(): void
     {
         $root = $this->actor('super_admin_root', ['users.activate']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Archived,
             'email_verified_at' => null,
         ]);
@@ -219,7 +219,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_deactivate_an_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.deactivate']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
         [$session, $token] = $this->createAccessCredentials($target);
         $invitation = $this->createPendingInvitation($target, 'deactivation-token');
 
@@ -322,7 +322,7 @@ final class UserManagementControllerTest extends TestCase
             'users.delete',
             'users.restore_deleted',
         ]);
-        $target = User::factory()->create();
+        $target = $this->managedUser();
         [$session, $token] = $this->createAccessCredentials($target);
         $invitation = $this->createPendingInvitation($target, 'deleted-user-token');
 
@@ -684,6 +684,14 @@ final class UserManagementControllerTest extends TestCase
                 'cooperative_id' => (string) $cooperativeId,
             ]),
         ];
+    }
+
+    private function managedUser(array $attributes = []): User
+    {
+        $user = User::factory()->create($attributes);
+        $user->roles()->syncWithoutDetaching([$this->ensureRole('user')->getKey()]);
+
+        return $user;
     }
 
     private function ensureRole(string $slug): Role
