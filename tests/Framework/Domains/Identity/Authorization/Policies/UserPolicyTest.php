@@ -541,6 +541,10 @@ final class UserPolicyTest extends TestCase
         array $permissionSlugs,
         array $attributes = [],
     ): User {
+        if ($roleSlug === 'cooperative_admin' && ! array_key_exists('cooperative_id', $attributes)) {
+            $attributes['cooperative_id'] = Cooperative::factory()->create()->getKey();
+        }
+
         $user = User::factory()->create($attributes);
 
         $role = Role::query()->firstOrCreate(
