@@ -839,3 +839,20 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - En conséquence, **dans le comportement actuel observé**, un changement de statut de coopérative ne désactive pas automatiquement les comptes Identity, leurs sessions ou leurs jetons. Les accès aux ressources coopératives restent soumis aux Policies existantes, qui ne bloquent pas actuellement selon le statut de la coopérative.
 
 **Décision métier encore requise :** déterminer si un statut Cooperatives non actif doit bloquer les comptes `cooperative_admin`/`user` de cette coopérative, et si ce blocage doit préserver les statuts Identity et les sessions/jetons (réactivation automatique des accès à la remise en état) ou révoquer les accès nécessitant une reconnexion. Aucun changement d'authentification n'est appliqué avant validation explicite.
+
+## 11.24 Lot A17 — révocation des accès lors de la désactivation Cooperatives
+
+Décision métier validée : la désactivation d'une coopérative révoque aussi les sessions web et les jetons API des comptes membres qui lui appartiennent.
+
+- Les statuts propres des comptes Identity ne changent pas.
+- Lors d'une transition depuis `ACTIVE` vers `INACTIVE`, `SUSPENDED` ou `ARCHIVED`, les accès de tous les comptes ayant un rôle actif `cooperative_admin` ou `user) et rattachés par `cooperative_id` sont révoqués.
+- La suppression logique d'une coopérative déclenche la même révocation.
+- Les comptes `super_admin_root`, `super_admin) et `customer` sont explicitement exclus. Les affectations des super-admins à une coopérative ne sont pas considérées comme des comptes membres.
+- Les sessions sont révoquées par `SessionService`, avec historique de connexion et audit ; les jetons Sanctum sont conservés en base, marqués révoqués et audités. Aucun secret n'est journalisé.
+- La révocation est exécutée dans la transaction de changement de statut/suppression. Une erreur d'audit ou de révocation fait échouer l'opération complète.
+- La réactivation/restauration de la coopérative ne restaure ni les sessions ni les jetons. Les membres doivent se reconnecter et créer de nouveaux jetons API.
+- Les comptes Identity restent à leur statut antérieur ; leur autorisation individuelle (statut actif, e-mail vérifié, absence de verrou d'urgence) continue de s'appliquer.
+
+**Contrat inter-domaines :** Cooperatives définit `CooperativeMemberAccessRevoker`; Identity fournit `CooperativeMemberAccessRevokerService` et l'enregistre via `IdentityServiceProvider`. Cooperatives ne dépend pas des modèles ou services internes Identity.
+
+**Tests ajoutés :** désactivation avec révocation des sessions/jetons de cooperative_admin et user, exclusion des accès root, suppression logique et absence de restauration des anciens accès. Exécution MySQL/PHPUnit en attente.
