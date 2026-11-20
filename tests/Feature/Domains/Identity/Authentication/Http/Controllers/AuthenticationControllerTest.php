@@ -257,6 +257,32 @@ final class AuthenticationControllerTest extends TestCase
         $this->assertGreaterThan(now()->getTimestamp(), $sessionCookie->getExpiresTime());
     }
 
+    public function test_member_cannot_login_when_its_cooperative_is_inactive(): void
+    {
+        $cooperative = Cooperative::factory()->inactive()->create();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'user'],
+            ['name' => 'User', 'is_active' => true],
+        );
+        $user = User::factory()->create([
+            'cooperative_id' => $cooperative->getKey(),
+            'password' => 'password',
+            'status' => UserStatus::Active,
+        ]);
+        $user->roles()->attach($role->getKey());
+
+        $response = $this->post($this->loginUrl, [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+        $this->assertDatabaseMissing('authentication_sessions', [
+            'user_id' => $user->getKey(),
+        ]);
+    }
+
     public function test_super_admin_is_redirected_to_the_backoffice_dashboard_after_login(): void
     {
         $role = Role::query()->firstOrCreate(
