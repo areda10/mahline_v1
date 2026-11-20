@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
@@ -278,6 +279,16 @@ final class UserLifecycleServiceTest extends TestCase
         ?string $cooperativeId = null,
         UserStatus $status = UserStatus::Active,
     ): User {
+        if (in_array($roleSlug, ['cooperative_admin', 'user'], true)) {
+            if ($cooperativeId === null) {
+                $cooperativeId = (string) Cooperative::factory()->active()->create()->getKey();
+            } else {
+                Cooperative::query()->whereKey($cooperativeId)->update([
+                    'status' => CooperativeStatus::ACTIVE,
+                ]);
+            }
+        }
+
         $user = User::factory()->create([
             'cooperative_id' => $cooperativeId,
             'status' => $status,
