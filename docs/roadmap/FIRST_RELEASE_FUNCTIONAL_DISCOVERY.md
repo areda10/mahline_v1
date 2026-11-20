@@ -5829,3 +5829,9 @@ Les décisions antérieures non contredites restent applicables, notamment les r
 - Enregistrement de FR-002 : compte client obligatoire.
 - Enregistrement de FR-003 : panier multi-coopératives, paiement unique, commande et facturation séparées par coopérative.
 - Aucune modification du code applicatif.
+
+### Version 3.41 — 20 novembre 2026
+
+- **SALES-019 — limite maximale absolue par ligne de panier :** décision utilisateur : 100 unités maximum par ligne, tous produits, variantes et coopératives confondus. Contrôle serveur obligatoire pour ajout, modification, fusion et checkout ; limite commerciale spécifique inférieure ou égale à 100 ; indépendance vis-à-vis du stock. La valeur minimale et la précision/conversion des unités restent à préciser.
+- **Delivery — consolidation documentaire :** création de `docs/domains/marketplace/DELIVERY_V1_SPECIFICATION.md` à partir des décisions FR-005 à FR-009 et des décisions complémentaires de retour, preuves, anomalies, litiges et contestations. FR-014 sur la portée nationale/internationale du premier release reste ouvert.
+- Aucun code, migration, route, Policy ou middleware Delivery créé dans cette mise à jour documentaire.
