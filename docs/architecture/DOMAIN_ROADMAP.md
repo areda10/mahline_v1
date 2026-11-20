@@ -1013,3 +1013,12 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Envoi d'un lien de réinitialisation du mot de passe selon le même périmètre ; routes, contrôleurs, Policy et formulaires ajoutés. Token de reset valable 30 minutes.
 - L'affectation d'un super_admin exige un compte actif, vérifié et non verrouillé dans les deux couches Policy et service.
 - Tests ciblés ajoutés mais non exécutés. Identity reste AUDIT_IN_PROGRESS jusqu'à validation locale, tests de routes et suite complète.
+
+### 26. Lot A16 — restrictions de profil et frontière des statuts Cooperatives
+
+- `cooperative_admin` peut modifier uniquement `email` et `telephone` des comptes `user) de sa coopérative. Le contrôleur filtre les champs et le service applique une seconde liste blanche.
+- `super_admin` conserve la modification des champs de profil prénom/nom/e-mail/téléphone des comptes `user) dans les coopératives affectées.
+- Les rôles cibles sont filtrés par association de rôle active en base, sans dépendre du statut de compte Identity.
+- Le constat actuel sur les statuts Cooperatives est consigné dans `DOMAIN_DEPENDENCY_AUDIT.md` section 11.23 : aucune cascade vers les comptes Identity, sessions ou jetons n'est actuellement codée ; le lecteur de statut existe mais n'est pas consommé par l'authentification ni les Policies Cooperatives.
+- **Décision en attente :** définir le blocage d'accès des membres d'une coopérative non active et le sort des sessions/jetons à la suspension, l'inactivation, l'archivage ou la suppression logique. Aucun comportement n'est gelé sur ce point.
+- Tests ajoutés/adaptés mais non exécutés ; Identity et Cooperatives restent `AUDIT_IN_PROGRESS`.
