@@ -1019,8 +1019,8 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - `cooperative_admin` peut modifier uniquement `email` et `telephone` des comptes `user` de sa coopérative. Le contrôleur filtre les champs et le service applique une seconde liste blanche.
 - `super_admin` conserve la modification des champs de profil prénom/nom/e-mail/téléphone des comptes `user` dans les coopératives affectées.
 - Les rôles cibles sont filtrés par association de rôle active en base, sans dépendre du statut de compte Identity.
-- Le constat actuel sur les statuts Cooperatives est consigné dans `DOMAIN_DEPENDENCY_AUDIT.md` section 11.23 : aucune cascade vers les comptes Identity, sessions ou jetons n'est actuellement codée ; le lecteur de statut existe mais n'est pas consommé par l'authentification ni les Policies Cooperatives.
-- **Décision en attente :** définir le blocage d'accès des membres d'une coopérative non active et le sort des sessions/jetons à la suspension, l'inactivation, l'archivage ou la suppression logique. Aucun comportement n'est gelé sur ce point.
+- Le constat initial de la section 11.23 (absence de cascade) a été remplacé par la décision A17 : le lecteur de statut est consommé par Identity et la révocation des sessions/jetons est intégrée lors des transitions vers un statut non actif et de la suppression logique.
+- **Décision métier : validée dans le lot A17.** Les comptes membres conservent leur statut Identity, mais perdent leurs sessions et jetons ; la réactivation ne restaure pas les anciens accès.
 - Contrôle statique : les 15 actions root et 15 actions back-office de gestion des comptes correspondent à des méthodes de contrôleur existantes ; les endpoints root sont gardés et les endpoints délégués utilisent les Gates/permissions prévues. Les routes back-office create/store demeurent volontairement inopérantes pour les rôles délégués (`create` root-only).
 - Tests ajoutés/adaptés mais non exécutés ; Identity et Cooperatives restent `AUDIT_IN_PROGRESS`.
 
