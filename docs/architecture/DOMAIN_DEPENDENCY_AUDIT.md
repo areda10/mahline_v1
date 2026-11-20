@@ -949,3 +949,16 @@ Références : `docs/domains/marketplace/DELIVERY_V1_SPECIFICATION.md`, `SALES_V
 - Audit statique des chemins et documents cités ; aucune exécution PHP, Pint, PHPUnit, route:list ou test MySQL depuis le connecteur GitHub.
 - La spécification Delivery est créée ; aucun code, migration, route, Policy, middleware ou provider Delivery n'est déclaré implémenté.
 - Le présent lot ne clôt pas Sales, Inventory, Orders, Delivery, Finance ou Statistics.
+
+
+### 13.7 Écarts Orders découverts lors du contrôle Delivery
+
+Lecture directe des fichiers réels :
+
+- `OrderCreationService::createFromCheckout(User $customer, array $checkout)` importe et accepte le modèle Eloquent Identity User. Cela expose un détail interne Identity à Orders et contrevient à ADR-009/ADR-021 ; remplacer par un contexte d'acteur/identifiant logique via contrat public, après tests de caractérisation.
+- `CooperativeOrderResponseService` importe également Identity User, appelle ses méthodes de rôle et sa relation cooperatives(). Le contrôle d'accès et la résolution d'affectation doivent être déplacés derrière les contrats Identity/Cooperatives appropriés, tandis que les Policies de ressources restent détenues par Orders.
+- `CooperativeOrderResponseService::confirmByCooperative()` passe actuellement le statut de la sous-commande à CONFIRMED sans appel de réservation Inventory. C'est un défaut P0 : la transition ne doit pas être rendue disponible en production avant réservation atomique complète ou échec intégral.
+- `OrderCreationService` initialise `orders.delivery_total` et `cooperative_orders.delivery_fee` à `0.00`. Aucun devis Delivery ne participe à la création. Le total ne doit pas être considéré comme final tant que Sales/Orders n'intègrent pas un devis Delivery valide, versionné et snapshoté.
+- L'arborescence Orders inspectée contient Enums, Models, Services et README ; aucun Contracts, Providers, Policies ou Http n'est présent. Aucun OrdersServiceProvider n'est enregistré dans `bootstrap/providers.php`, et aucun contrôleur/route Orders n'est importé dans `routes/web.php` ou `routes/api.php` au code inspecté.
+
+**Conséquence :** le chantier Delivery ne peut pas être branché directement au service actuel sans d'abord établir les contrats publics Orders et retirer les dépendances directes Identity. L'orchestration HTTP peut assembler les domaines, mais ne doit pas déplacer l'ownership métier.
