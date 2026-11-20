@@ -1037,6 +1037,17 @@ final class UserManagementServiceTest extends TestCase
         );
     }
 
+    public function test_root_cannot_delete_customer_through_internal_user_management_service(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $customer = $this->createUserWithRole('customer');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Customer accounts cannot be deleted through internal user management.');
+
+        $this->service->deleteUser($root, $customer);
+    }
+
     public function test_service_rejects_assignment_to_unverified_super_admin_like_policy(): void
     {
         $root = $this->createUserWithRole('super_admin_root');
