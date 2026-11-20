@@ -991,26 +991,66 @@ final class UserManagementServiceTest extends TestCase
         self::assertTrue($updated->hasRole('user'));
     }
 
-    public function test_cooperative_admin_can_update_only_user_profile_in_own_cooperative(): void
+    public function test_cooperative_admin_can_update_only_contact_fields_for_user_in_own_cooperative(): void
     {
         $cooperative = $this->createCooperative();
         $admin = $this->createUserWithRole('cooperative_admin', (string) $cooperative->getKey());
         $target = $this->createUserWithRole('user', (string) $cooperative->getKey());
+        $originalFirstName = $target->first_name;
+        $originalLastName = $target->last_name;
 
         $updated = $this->service->updateUserAccount(
             $admin,
             $target,
             [
-                'first_name' => 'Local',
-                'last_name' => 'User',
                 'email' => $target->email,
                 'telephone' => '+212600000034',
             ],
             'user',
         );
 
-        self::assertSame('Local', $updated->first_name);
+        self::assertSame($originalFirstName, $updated->first_name);
+        self::assertSame($originalLastName, $updated->last_name);
+        self::assertSame('+212600000034', $updated->telephone);
         self::assertSame($cooperative->getKey(), $updated->cooperative_id);
+    }
+
+    public function test_cooperative_admin_cannot_change_user_name_fields_through_service(): void
+    {
+        $cooperative = $this->createCooperative();
+        $admin = $this->createUserWithRole('cooperative_admin', (string) $cooperative->getKey());
+        $target = $this->createUserWithRole('user', (string) $cooperative->getKey());
+
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage('The actor supplied profile fields outside their permitted scope.');
+
+        $this->service->updateUserAccount(
+            $admin,
+            $target,
+            [
+                'first_name' => 'Forbidden',
+                'email' => $target->email,
+                'telephone' => $target->telephone,
+            ],
+            'user',
+        );
+    }
+
+    public function test_service_rejects_assignment_to_unverified_super_admin_like_policy(): void
+    {
+        $root = $this->createUserWithRole('super_admin_root');
+        $cooperative = $this->createCooperative();
+        $superAdmin = $this->createUserWithRole('super_admin');
+        $superAdmin->forceFill(['email_verified_at' => null])->save();
+
+        $this->expectException(\\DomainException::class);
+        $this->expectExceptionMessage('An inactive user cannot receive or retain a super admin assignment.');
+
+        $this->service->assignSuperAdminToCooperative(
+            $root,
+            $superAdmin,
+            (string) $cooperative->getKey(),
+        );
     }
 
     public function test_database_rejects_duplicate_super_admin_cooperative_assignment(): void
