@@ -324,6 +324,21 @@ final class CooperativeServiceTest extends TestCase
             self::assertFalse($member->fresh()->isAuthorized());
         }
 
+        try {
+            app(SessionService::class)->create($user->fresh(), 'blocked-after-coop-deactivation');
+            self::fail('A member of an inactive cooperative must not create a new web session.');
+        } catch (\\RuntimeException $exception) {
+            self::assertStringContainsString('cooperative is not active', $exception->getMessage());
+        }
+
+        try {
+            app(\\App\\Domains\\Identity\\Authentication\\Services\\ApiTokenService::class)
+                ->createForOwner($user->fresh(), $user->fresh(), 'blocked-after-coop-deactivation');
+            self::fail('A member of an inactive cooperative must not create a new API token.');
+        } catch (\\RuntimeException $exception) {
+            self::assertStringContainsString('not authorized', $exception->getMessage());
+        }
+
         $this->assertDatabaseHas('authentication_sessions', [
             'id' => $adminSession->getKey(),
             'revocation_reason' => 'cooperative_inactive',
