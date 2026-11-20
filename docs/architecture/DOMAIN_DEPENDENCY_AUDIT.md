@@ -831,14 +831,9 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - Les opérations de service de modification, cycle de vie et suppression exigent désormais exactement un rôle interne actif (`super_admin`, `cooperative_admin` ou `user`) ; les comptes `customer`, `super_admin_root`, sans rôle ou à rôles opérationnels multiples sont exclus même en appel direct du service.
 - Contrôle statique des routes Identity : 15 actions root et 15 actions back-office pointent vers des méthodes existantes ; les actions root sont protégées par le garde root et les Gates métier, les actions déléguées par le middleware de rôle et les Gates/FormRequest. Les routes back-office create/store restent présentes mais sont refusées par l'autorisation `create`, réservée au root.
 
-**Constat statique sur les statuts Cooperatives (aucune règle métier nouvelle n'est présumée) :**
-- `CooperativeStatusReaderService` expose `status`, `isActive` et `isDeleted`; `isActive` vaut vrai uniquement si la coopérative n'est pas supprimée logiquement et son statut est `ACTIVE`.
-- `User::isAuthorized()`, `SessionService::create()` et `ApiTokenService::createForOwner()` contrôlent le statut propre du compte Identity, l'e-mail vérifié et le verrou d'urgence ; ils ne consultent pas le statut de la coopérative.
-- `CooperativePolicy` vérifie l'état Identity de l'acteur, son rôle, ses permissions et son périmètre d'affectation/propriété ; elle ne vérifie pas le statut de la coopérative.
-- `CooperativeService::changeStatus()` modifie et audite le statut de la coopérative sans transition automatique des statuts des comptes Identity liés.
-- En conséquence, **dans le comportement actuel observé**, un changement de statut de coopérative ne désactive pas automatiquement les comptes Identity, leurs sessions ou leurs jetons. Les accès aux ressources coopératives restent soumis aux Policies existantes, qui ne bloquent pas actuellement selon le statut de la coopérative.
+**État du constat A16 : remplacé par la décision et l'implémentation A17 ci-dessous.**
 
-**Décision métier encore requise :** déterminer si un statut Cooperatives non actif doit bloquer les comptes `cooperative_admin`/`user` de cette coopérative, et si ce blocage doit préserver les statuts Identity et les sessions/jetons (réactivation automatique des accès à la remise en état) ou révoquer les accès nécessitant une reconnexion. Aucun changement d'authentification n'est appliqué avant validation explicite.
+Au moment de l'audit A16, le lecteur `CooperativeStatusReaderService` existait mais n'était pas consommé par l'authentification. La décision A17 a depuis été validée et intégrée : `User::isAuthorized()` consulte `CooperativeStatusReader` pour les rôles membres `cooperative_admin` et `user`, et Cooperatives appelle le port `CooperativeMemberAccessRevoker` dans la transaction de désactivation/suppression. Les anciens constats A16 sur l'absence de blocage et de révocation ne décrivent donc plus le comportement actuel.
 
 ## 11.24 Lot A17 — révocation des accès lors de la désactivation Cooperatives
 
