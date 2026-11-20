@@ -1036,7 +1036,7 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 
 ### 28. Lot A18 — conception technique Sales / Inventory / Finance / Statistics (20 novembre 2026)
 
-- Ajout de `docs/domains/marketplace/FOUR_DOMAINS_TECHNICAL_DESIGN.md` : ownership, modèles candidats, contrats publics, événements, transactions, routes, middleware, policies, matrice de portée, tests et séquence de livraison.
+- Ajout de `docs/domains/marketplace/MARKETPLACE_DOMAINS_TECHNICAL_DESIGN.md` : ownership, modèles candidats, contrats publics, événements, transactions, routes, middleware, policies, matrice de portée, tests et séquence de livraison.
 - Audit statique de `app/Domains` sur `feature/Marketplace` : Sales, Inventory, Finance et Statistics absents ; Orders et Dashboard présents.
 - Les spécifications Sales V1 et Inventory V1 préexistantes sont conservées comme sources métier. Aucun modèle ni migration n'a été créé dans ce lot.
 - Finance est conçu à partir des règles validées du document `ORDER_INVOICING_PAYMENTS_DELIVERY_FUNCTIONAL_RULES.md`, avec un point bloquant à résoudre sur l'unicité de facture par commande versus numérotation par coopérative.
