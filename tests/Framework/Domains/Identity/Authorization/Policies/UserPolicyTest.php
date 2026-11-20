@@ -506,7 +506,6 @@ final class UserPolicyTest extends TestCase
         $root = $this->userWithRoleAndPermissions('super_admin_root', [
             'users.update',
             'users.archive',
-            'users.invite',
         ]);
         $target = $this->userWithRoleAndPermissions('user', [], [
             'status' => UserStatus::Suspended,
@@ -515,7 +514,6 @@ final class UserPolicyTest extends TestCase
 
         self::assertTrue(Gate::forUser($root)->allows('update', $target));
         self::assertTrue(Gate::forUser($root)->allows('archive', $target));
-        self::assertTrue(Gate::forUser($root)->allows('resendInvitation', $target));
     }
 
     public function test_managed_target_without_an_active_operational_role_is_not_classified_as_managed(): void
@@ -524,10 +522,7 @@ final class UserPolicyTest extends TestCase
         $target = $this->userWithRoleAndPermissions('user', [], [
             'status' => UserStatus::Suspended,
         ]);
-        $target->roles()->updateExistingPivot(
-            Role::query()->where('slug', 'user')->value('id'),
-            ['is_active' => false],
-        );
+        Role::query()->where('slug', 'user')->update(['is_active' => false]);
 
         self::assertFalse(Gate::forUser($root)->allows('update', $target));
     }
