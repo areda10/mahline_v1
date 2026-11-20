@@ -845,13 +845,14 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 Décision métier validée : la désactivation d'une coopérative révoque aussi les sessions web et les jetons API des comptes membres qui lui appartiennent.
 
 - Les statuts propres des comptes Identity ne changent pas.
-- Lors d'une transition depuis `ACTIVE` vers `INACTIVE`, `SUSPENDED` ou `ARCHIVED`, les accès de tous les comptes ayant un rôle actif `cooperative_admin` ou `user) et rattachés par `cooperative_id` sont révoqués.
+- Lors d'une transition depuis `ACTIVE` vers `INACTIVE`, `SUSPENDED` ou `ARCHIVED`, les accès de tous les comptes ayant un rôle actif `cooperative_admin` ou `user` et rattachés par `cooperative_id` sont révoqués.
 - La suppression logique d'une coopérative déclenche la même révocation.
-- Les comptes `super_admin_root`, `super_admin) et `customer` sont explicitement exclus. Les affectations des super-admins à une coopérative ne sont pas considérées comme des comptes membres.
+- Les comptes `super_admin_root`, `super_admin` et `customer` sont explicitement exclus. Les affectations des super-admins à une coopérative ne sont pas considérées comme des comptes membres.
 - Les sessions sont révoquées par `SessionService`, avec historique de connexion et audit ; les jetons Sanctum sont conservés en base, marqués révoqués et audités. Aucun secret n'est journalisé.
 - La révocation est exécutée dans la transaction de changement de statut/suppression. Une erreur d'audit ou de révocation fait échouer l'opération complète.
 - La réactivation/restauration de la coopérative ne restaure ni les sessions ni les jetons. Les membres doivent se reconnecter et créer de nouveaux jetons API.
 - Les comptes Identity restent à leur statut antérieur ; leur autorisation individuelle (statut actif, e-mail vérifié, absence de verrou d'urgence) continue de s'appliquer.
+- La vérification d'autorisation Identity consulte désormais `CooperativeStatusReader` pour les rôles `cooperative_admin` et `user`. Un compte membre d'une coopérative non active ne peut donc ni ouvrir une nouvelle session web, ni créer un jeton API ; les sessions web existantes sont également rejetées par le middleware, et les jetons Sanctum sont invalides via `User::isAuthorized()`.
 
 **Contrat inter-domaines :** Cooperatives définit `CooperativeMemberAccessRevoker`; Identity fournit `CooperativeMemberAccessRevokerService` et l'enregistre via `IdentityServiceProvider`. Cooperatives ne dépend pas des modèles ou services internes Identity.
 
