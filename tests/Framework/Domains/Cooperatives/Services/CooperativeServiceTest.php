@@ -300,6 +300,7 @@ final class CooperativeServiceTest extends TestCase
 
         $cooperativeAdmin = $this->cooperativeMember($cooperative, 'cooperative_admin');
         $user = $this->cooperativeMember($cooperative, 'user');
+        $assignedSuperAdminLike = $this->cooperativeMember($cooperative, 'super_admin');
         $rootSession = app(SessionService::class)->create(
             $root,
             'root-session-'.uniqid(),
@@ -312,8 +313,13 @@ final class CooperativeServiceTest extends TestCase
             $user,
             'cooperative-user-session-'.uniqid(),
         );
+        $superAdminSession = app(SessionService::class)->create(
+            $assignedSuperAdminLike,
+            'super-admin-session-'.uniqid(),
+        );
         $adminToken = $cooperativeAdmin->createToken('admin-device')->accessToken;
         $userToken = $user->createToken('user-device')->accessToken;
+        $superAdminToken = $assignedSuperAdminLike->createToken('super-admin-device')->accessToken;
         $rootToken = $root->createToken('root-device')->accessToken;
 
         $this->actingAs($root);
@@ -353,8 +359,16 @@ final class CooperativeServiceTest extends TestCase
             'id' => $rootSession->getKey(),
             'revoked_at' => null,
         ]);
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $superAdminSession->getKey(),
+            'revoked_at' => null,
+        ]);
         $this->assertDatabaseHas('personal_access_tokens', [
             'id' => $rootToken->getKey(),
+            'revoked_at' => null,
+        ]);
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'id' => $superAdminToken->getKey(),
             'revoked_at' => null,
         ]);
 
