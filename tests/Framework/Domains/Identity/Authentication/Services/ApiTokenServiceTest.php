@@ -91,7 +91,7 @@ final class ApiTokenServiceTest extends TestCase
         $root->roles()->attach($rootRole->getKey());
 
         $owner = User::factory()->create([
-            'cooperative_id' => Cooperative::factory()->create()->getKey(),
+            'cooperative_id' => Cooperative::factory()->active()->create()->getKey(),
         ]);
         $userRole = Role::query()->firstOrCreate(
             ['slug' => 'user'],
