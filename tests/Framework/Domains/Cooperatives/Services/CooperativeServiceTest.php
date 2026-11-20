@@ -60,7 +60,7 @@ final class CooperativeServiceTest extends TestCase
         $this->expectExceptionMessage('A cooperative address must be created through the Localization address contract.');
 
         $this->service->create(
-            $actor,
+            (string) $actor->getKey(),
             [...$this->attributes(), 'address_id' => '01H00000000000000000000000'],
             $this->addressAttributes(),
         );
@@ -584,7 +584,7 @@ final class CooperativeServiceTest extends TestCase
         ]);
 
         try {
-            $this->service->activate($ordinary, $cooperative);
+            $this->service->activate((string) $ordinary->getKey(), $cooperative);
             $this->fail('Ordinary actor must not reactivate an archived cooperative.');
         } catch (AuthorizationException) {
             $this->assertSame(CooperativeStatus::ARCHIVED, $cooperative->fresh()->status);
@@ -607,7 +607,7 @@ final class CooperativeServiceTest extends TestCase
             'status' => CooperativeStatus::ARCHIVED,
         ]);
 
-        $this->service->activate($root, $cooperative);
+        $this->service->activate((string) $root->getKey(), $cooperative);
 
         $this->assertSame(CooperativeStatus::ACTIVE, $cooperative->fresh()->status);
         $this->assertAuditEvent('cooperatives.activated', 'activated', $root, $cooperative);
