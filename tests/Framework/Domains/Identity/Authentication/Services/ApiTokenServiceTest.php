@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Authentication\Services;
 
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\ApiTokenService;
@@ -89,7 +90,9 @@ final class ApiTokenServiceTest extends TestCase
         $rootRole->permissions()->syncWithoutDetaching([$usersView->getKey()]);
         $root->roles()->attach($rootRole->getKey());
 
-        $owner = User::factory()->create();
+        $owner = User::factory()->create([
+            'cooperative_id' => Cooperative::factory()->create()->getKey(),
+        ]);
         $userRole = Role::query()->firstOrCreate(
             ['slug' => 'user'],
             ['name' => 'User', 'is_active' => true],
