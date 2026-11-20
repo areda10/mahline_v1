@@ -267,7 +267,6 @@ final class AuthenticationControllerTest extends TestCase
         $user = User::factory()->create([
             'password' => 'password',
             'status' => UserStatus::Active,
-            'cooperative_id' => Cooperative::factory()->active()->create()->getKey(),
         ]);
         $user->roles()->attach($role->getKey());
 
@@ -294,6 +293,7 @@ final class AuthenticationControllerTest extends TestCase
         $user = User::factory()->create([
             'password' => 'password',
             'status' => UserStatus::Active,
+            'cooperative_id' => Cooperative::factory()->active()->create()->getKey(),
         ]);
         $user->roles()->attach($role->getKey());
 
