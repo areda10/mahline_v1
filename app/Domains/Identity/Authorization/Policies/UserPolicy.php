@@ -305,6 +305,9 @@ final class UserPolicy extends BasePolicy
             self::ROLE_SUPER_ADMIN,
             self::ROLE_COOPERATIVE_ADMIN,
             'user',
+        ]) && ! $this->targetHasAnyActiveRole($target, [
+            self::ROLE_SUPER_ADMIN_ROOT,
+            'customer',
         ]);
     }
 
