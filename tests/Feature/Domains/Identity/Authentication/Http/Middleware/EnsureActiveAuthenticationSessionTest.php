@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Middleware;
 
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -156,7 +157,10 @@ final class EnsureActiveAuthenticationSessionTest extends TestCase
 
     private function userWithRole(string $slug): User
     {
-        $user = User::factory()->create();
+        $attributes = in_array($slug, ['cooperative_admin', 'user'], true)
+            ? ['cooperative_id' => Cooperative::factory()->create()->getKey()]
+            : [];
+        $user = User::factory()->create($attributes);
 
         $role = Role::query()->firstOrCreate(
             ['slug' => $slug],
