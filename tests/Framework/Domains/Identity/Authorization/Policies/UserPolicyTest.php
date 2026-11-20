@@ -172,7 +172,7 @@ final class UserPolicyTest extends TestCase
             ['users.invite'],
         );
 
-        $target = User::factory()->create([
+        $target = $this->userWithRoleAndPermissions('user', [], [
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
         ]);
@@ -408,7 +408,7 @@ final class UserPolicyTest extends TestCase
             'super_admin',
             ['users.archive', 'users.delete'],
         );
-        $target = User::factory()->create();
+        $target = $this->userWithRoleAndPermissions('user', []);
         $protectedRoot = $this->userWithRoleAndPermissions('super_admin_root', []);
 
         self::assertTrue(Gate::forUser($root)->allows('archive', $target));
