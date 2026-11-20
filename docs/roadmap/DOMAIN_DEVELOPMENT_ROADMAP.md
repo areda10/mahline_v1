@@ -1301,3 +1301,19 @@ La spécification détaillée et le registre fonctionnel sont créés dans [`doc
 - **État :** cadrage initial documenté ; implémentation non commencée ; audit post-codage non réalisé ; tests non exécutés.
 
 Aucune fonction Inventory ne doit être considérée comme réalisée sur la seule base de cette documentation. Les statuts doivent être actualisés avec les fichiers, migrations, tests et preuves de validation au fil du développement.
+
+
+## 23. Sales / Delivery — décisions et cadrage complémentaire (20 novembre 2026)
+
+### Sales
+- SALES-019 : la limite technique maximale absolue est fixée à 100 unités par ligne de panier. Elle s'applique aux ajouts, mises à jour, fusions et validations côté serveur ; la limite commerciale d'un produit/variante ne peut dépasser 100.
+- La valeur minimale, la précision des quantités et les conversions d'unités pour les produits vendus au poids/volume restent à arbitrer.
+- Référence canonique : `docs/domains/marketplace/SALES_V1_SPECIFICATION.md`.
+
+### Delivery
+- Création de la spécification fonctionnelle et technique `docs/domains/marketplace/DELIVERY_V1_SPECIFICATION.md`.
+- Domaine autonome : transporteurs, tarifs de trajet, devis, missions, affectations, expéditions, suivi, preuves, retours, anomalies et litiges.
+- Règles existantes FR-005 à FR-009 consolidées ; FR-014 (livraison nationale/internationale au premier release) reste à poser.
+- Le domaine Delivery est absent de `app/Domains` et ne possède aucun provider, modèle, migration, route, Policy ou middleware dans le code inspecté.
+- Les points bloquants et la matrice des dépendances sont détaillés dans la spécification et dans `docs/architecture/DOMAIN_DEPENDENCY_AUDIT.md`.
+- **Statut :** conception initiale, non gelée, aucun code Delivery créé, aucun test exécuté.
