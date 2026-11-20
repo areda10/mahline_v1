@@ -821,3 +821,19 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - L'affectation d'un super-admin exige désormais dans la Policy le même état isAuthorized() que le service (actif, e-mail vérifié, non verrouillé). Le service vérifie aussi que le rôle super_admin est actif.
 - Tests de Policy ajoutés pour la classification indépendante du statut, les invitations dans le périmètre, les liens de reset et le refus d'affectation d'un super-admin non vérifié. Tests non exécutés.
 - Les suites PHPUnit, Pint, les tests MySQL et le contrôle route:list restent à exécuter localement ; aucune fermeture de domaine n'est prononcée.
+
+### 11.23 Lot A16 — champs de profil et effet des statuts Cooperatives sur Identity
+
+- Le contrôleur back-office valide désormais uniquement `email` et `telephone` pour un `cooperative_admin`; les champs prénom/nom sont réservés au root et au super_admin délégué.
+- `UserManagementService::updateUserAccount` impose la même liste blanche côté domaine. Une tentative directe d'ajouter `first_name`, `last_name` ou un autre champ non autorisé est rejetée, même si le contrôleur est contourné.
+- La fiche root filtre les rôles opérationnels actifs pour ses exclusions et sa liste de comptes gérés.
+- Tests de service ajoutés/adaptés : mise à jour contact-only, refus de modification du nom et refus d'affectation d'un super_admin non vérifié. Tests Policy ajoutés pour les rôles actifs indépendamment du statut du compte. Exécution en attente.
+
+**Constat statique sur les statuts Cooperatives (aucune règle métier nouvelle n'est présumée) :**
+- `CooperativeStatusReaderService` expose `status`, `isActive` et `isDeleted`; `isActive` vaut vrai uniquement si la coopérative n'est pas supprimée logiquement et son statut est `ACTIVE`.
+- `User::isAuthorized()`, `SessionService::create()` et `ApiTokenService::createForOwner()` contrôlent le statut propre du compte Identity, l'e-mail vérifié et le verrou d'urgence ; ils ne consultent pas le statut de la coopérative.
+- `CooperativePolicy` vérifie l'état Identity de l'acteur, son rôle, ses permissions et son périmètre d'affectation/propriété ; elle ne vérifie pas le statut de la coopérative.
+- `CooperativeService::changeStatus()` modifie et audite le statut de la coopérative sans transition automatique des statuts des comptes Identity liés.
+- En conséquence, **dans le comportement actuel observé**, un changement de statut de coopérative ne désactive pas automatiquement les comptes Identity, leurs sessions ou leurs jetons. Les accès aux ressources coopératives restent soumis aux Policies existantes, qui ne bloquent pas actuellement selon le statut de la coopérative.
+
+**Décision métier encore requise :** déterminer si un statut Cooperatives non actif doit bloquer les comptes `cooperative_admin`/`user` de cette coopérative, et si ce blocage doit préserver les statuts Identity et les sessions/jetons (réactivation automatique des accès à la remise en état) ou révoquer les accès nécessitant une reconnexion. Aucun changement d'authentification n'est appliqué avant validation explicite.
