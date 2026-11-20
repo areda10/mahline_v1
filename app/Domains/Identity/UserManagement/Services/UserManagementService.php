@@ -69,18 +69,20 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 ->lockForUpdate()
                 ->first();
 
-            if ($lockedTarget === null
-                || $lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
-                throw new DomainException('Root accounts cannot be modified through ordinary user management.');
+            if ($lockedTarget === null) {
+                throw new DomainException('The target account does not exist or is deleted.');
             }
+
+            $this->assertManagedInternalTarget(
+                $lockedTarget,
+                'Root accounts cannot be modified through ordinary user management.',
+                'Customer accounts cannot be modified through ordinary user management.',
+            );
 
             $currentRoleSlugs = $lockedTarget->roles()
                 ->where('roles.is_active', true)
                 ->pluck('roles.slug')
                 ->all();
-            if (count($currentRoleSlugs) !== 1) {
-                throw new DomainException('The target account must have exactly one operational role.');
-            }
 
             $currentRole = $currentRoleSlugs[0];
             $isRoot = $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
@@ -640,9 +642,11 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('The user does not exist or is already deleted.');
             }
 
-            if ($lockedTarget->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
-                throw new DomainException('The super admin root account cannot be deleted.');
-            }
+            $this->assertManagedInternalTarget(
+                $lockedTarget,
+                'The super admin root account cannot be deleted.',
+                'Customer accounts cannot be deleted through internal user management.',
+            );
 
             $this->recordLifecycleAudit(
                 actor: $actor,
@@ -987,8 +991,37 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
     private function assertTargetIsNotRoot(User $target): void
     {
-        if ($target->roles()->where('slug', self::ROLE_SUPER_ADMIN_ROOT)->exists()) {
-            throw new DomainException('The super admin root account status cannot be changed.');
+        $this->assertManagedInternalTarget(
+            $target,
+            'The super admin root account status cannot be changed.',
+            'Customer account status cannot be changed through internal user management.',
+        );
+    }
+
+    private function assertManagedInternalTarget(
+        User $target,
+        string $rootMessage,
+        string $customerMessage,
+    ): void {
+        $activeRoles = $target->roles()
+            ->where('roles.is_active', true)
+            ->pluck('roles.slug')
+            ->all();
+
+        if (in_array(self::ROLE_SUPER_ADMIN_ROOT, $activeRoles, true)) {
+            throw new DomainException($rootMessage);
+        }
+
+        if (in_array('customer', $activeRoles, true)) {
+            throw new DomainException($customerMessage);
+        }
+
+        if (count($activeRoles) !== 1 || ! in_array($activeRoles[0], [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_COOPERATIVE_ADMIN,
+            self::ROLE_USER,
+        ], true)) {
+            throw new DomainException('The target account must have exactly one active internal role.');
         }
     }
 
