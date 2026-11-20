@@ -856,7 +856,7 @@ Décision métier validée : la désactivation d'une coopérative révoque aussi
 
 ## 12. Lot A18 — audit initial des quatre domaines marketplace (20 novembre 2026)
 
-Référence de conception : `docs/domains/marketplace/FOUR_DOMAINS_TECHNICAL_DESIGN.md`.
+Référence de conception : `docs/domains/marketplace/MARKETPLACE_DOMAINS_TECHNICAL_DESIGN.md`.
 
 ### 12.1 Présence applicative constatée
 
