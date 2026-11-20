@@ -1021,7 +1021,7 @@ final class UserManagementServiceTest extends TestCase
         $admin = $this->createUserWithRole('cooperative_admin', (string) $cooperative->getKey());
         $target = $this->createUserWithRole('user', (string) $cooperative->getKey());
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('The actor supplied profile fields outside their permitted scope.');
 
         $this->service->updateUserAccount(
@@ -1043,7 +1043,7 @@ final class UserManagementServiceTest extends TestCase
         $superAdmin = $this->createUserWithRole('super_admin');
         $superAdmin->forceFill(['email_verified_at' => null])->save();
 
-        $this->expectException(\\DomainException::class);
+        $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('An inactive user cannot receive or retain a super admin assignment.');
 
         $this->service->assignSuperAdminToCooperative(
