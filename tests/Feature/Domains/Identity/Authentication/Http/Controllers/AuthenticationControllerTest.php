@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\Authentication\Http\Controllers;
 
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\AuthenticationSecurityService;
 use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
@@ -57,6 +58,7 @@ final class AuthenticationControllerTest extends TestCase
 
         $user = User::factory()->create([
             'email' => 'logout-controller@example.com',
+            'cooperative_id' => Cooperative::factory()->active()->create()->getKey(),
             'password' => 'password',
             'status' => UserStatus::Active,
         ]);
@@ -237,6 +239,7 @@ final class AuthenticationControllerTest extends TestCase
         $user = User::factory()->create([
             'password' => 'password',
             'status' => UserStatus::Active,
+            'cooperative_id' => Cooperative::factory()->active()->create()->getKey(),
         ]);
 
         $user->roles()->attach($userRole->getKey());
@@ -264,6 +267,7 @@ final class AuthenticationControllerTest extends TestCase
         $user = User::factory()->create([
             'password' => 'password',
             'status' => UserStatus::Active,
+            'cooperative_id' => Cooperative::factory()->active()->create()->getKey(),
         ]);
         $user->roles()->attach($role->getKey());
 
