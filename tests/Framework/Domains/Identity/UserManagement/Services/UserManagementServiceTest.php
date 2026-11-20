@@ -471,7 +471,7 @@ final class UserManagementServiceTest extends TestCase
             ],
         );
 
-        return Cooperative::factory()->create();
+        return Cooperative::factory()->active()->create();
     }
 
     public function test_unknown_role_cannot_be_assigned_during_user_creation(): void
