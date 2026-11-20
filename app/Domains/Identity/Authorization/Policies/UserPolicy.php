@@ -138,16 +138,25 @@ final class UserPolicy extends BasePolicy
 
     public function resendInvitation(User $actor, User $target): bool
     {
+        $isRoot = $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT);
+
         if (! $this->hasPermission($actor, 'users.invite')
             || $target->trashed()
-            || $target->status !== UserStatus::Pending
             || $target->email_verified_at !== null
-            || ! $this->isInternalManagedTarget($target)) {
+            || ! $this->isInternalManagedTarget($target)
+            || (
+                $target->status !== UserStatus::Pending
+                && ! ($isRoot && $target->status === UserStatus::Active)
+            )) {
             return false;
         }
 
-        return $actor->hasRole(self::ROLE_SUPER_ADMIN_ROOT)
-            || ($this->targetHasActiveRole($target, 'user')
+        // Root may resend either an activation invitation to a pending account
+        // or a manual verification invitation to an active, unverified account.
+        // Delegated administrators remain limited to pending user accounts.
+        return $isRoot
+            || ($target->status === UserStatus::Pending
+                && $this->targetHasActiveRole($target, 'user')
                 && $this->canAccessUser($actor, $target)
                 && ($actor->hasRole(self::ROLE_SUPER_ADMIN) || $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)));
     }
