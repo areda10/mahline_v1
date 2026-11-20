@@ -163,19 +163,29 @@ final class UserManagementController
     ): RedirectResponse {
         Gate::authorize('update', $user);
 
-        $data = $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
-            'telephone' => ['required', 'string', 'max:255'],
-        ]);
+        $actor = $request->user();
+        $roleSlug = $user->roles()
+            ->where('roles.is_active', true)
+            ->whereIn('roles.slug', ['cooperative_admin', 'user'])
+            ->value('roles.slug');
 
-        $roleSlug = $user->roles()->value('slug');
-
-        if (! in_array($roleSlug, ['cooperative_admin', 'user'], true)) {
+        if ($roleSlug === null) {
             abort(403);
         }
 
+        $rules = [
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
+            'telephone' => ['required', 'string', 'max:255'],
+        ];
+
+        // cooperative_admin may update contact details only. Assigned
+        // super_admins may also correct the user's first and last names.
+        if (! $actor->hasRole('cooperative_admin')) {
+            $rules['first_name'] = ['required', 'string', 'max:255'];
+            $rules['last_name'] = ['required', 'string', 'max:255'];
+        }
+
+        $data = $request->validate($rules);
         $emailChanged = $user->email !== $data['email'];
 
         try {
