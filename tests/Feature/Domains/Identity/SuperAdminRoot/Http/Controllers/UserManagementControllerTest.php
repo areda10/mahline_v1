@@ -244,7 +244,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_suspend_an_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.suspend']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
         [$session, $token] = $this->createAccessCredentials($target);
         $invitation = $this->createPendingInvitation($target, 'suspension-token');
 
@@ -271,7 +271,7 @@ final class UserManagementControllerTest extends TestCase
             'users.archive',
             'users.restore',
         ]);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
         [$session, $token] = $this->createAccessCredentials($target);
         $invitation = $this->createPendingInvitation($target, 'archive-token');
 
