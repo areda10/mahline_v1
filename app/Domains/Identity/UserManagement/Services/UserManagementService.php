@@ -92,6 +92,14 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
 
                 $this->assertCanUpdateTarget($actor, $lockedTarget, $currentRole);
 
+                $allowedFields = $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)
+                    ? ['email', 'telephone']
+                    : ['first_name', 'last_name', 'email', 'telephone'];
+
+                if (array_diff(array_keys($attributes), $allowedFields) !== []) {
+                    throw new DomainException('The actor supplied profile fields outside their permitted scope.');
+                }
+
                 if (array_key_exists('cooperative_id', $attributes)
                     && (string) $attributes['cooperative_id'] !== (string) $lockedTarget->cooperative_id) {
                     throw new DomainException('Only the super admin root can change a cooperative assignment.');
@@ -112,7 +120,8 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 throw new DomainException('The cooperative does not exist or is no longer available.');
             }
 
-            $emailChanged = $lockedTarget->email !== $attributes['email'];
+            $emailChanged = array_key_exists('email', $attributes)
+                && $lockedTarget->email !== $attributes['email'];
             $roleChanged = $isRoot && $roleSlug !== $currentRole;
             $cooperativeAssignmentChanged = (string) $lockedTarget->cooperative_id
                 !== (string) $cooperativeId;
@@ -129,12 +138,22 @@ final class UserManagementService implements SuperAdminCooperativeAssignmentServ
                 'roles' => $currentRoleSlugs,
             ];
 
-            $lockedTarget->fill([
-                'first_name' => $attributes['first_name'],
-                'last_name' => $attributes['last_name'],
-                'display_name' => trim($attributes['first_name'].' '.$attributes['last_name']),
-                'email' => $attributes['email'],
-                'telephone' => $attributes['telephone'],
+            $profileAttributes = array_intersect_key($attributes, array_flip([
+                'first_name',
+                'last_name',
+                'email',
+                'telephone',
+            ]));
+
+            if (array_key_exists('first_name', $profileAttributes)
+                || array_key_exists('last_name', $profileAttributes)) {
+                $profileAttributes['display_name'] = trim(
+                    ($profileAttributes['first_name'] ?? $lockedTarget->first_name).' '.
+                    ($profileAttributes['last_name'] ?? $lockedTarget->last_name),
+                );
+            }
+
+            $lockedTarget->fill($profileAttributes + [
                 'cooperative_id' => $cooperativeId,
             ]);
 
