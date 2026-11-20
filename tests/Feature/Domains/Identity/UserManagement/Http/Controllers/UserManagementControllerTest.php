@@ -32,7 +32,7 @@ final class UserManagementControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root', ['users.view']);
         $cooperative = Cooperative::factory()->create(['name' => 'Coopérative visible']);
-        $assignedUser = User::factory()->create([
+        $assignedUser = $this->managedUser([
             'display_name' => 'Utilisateur affecté',
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -40,7 +40,7 @@ final class UserManagementControllerTest extends TestCase
         $unassignedSuperAdmin = $this->actor('super_admin', [], [
             'display_name' => 'Super admin non affecté',
         ]);
-        $userWithoutCooperative = User::factory()->create([
+        $userWithoutCooperative = $this->managedUser([
             'display_name' => 'Utilisateur sans coopérative',
             'cooperative_id' => null,
             'email_verified_at' => null,
@@ -89,7 +89,7 @@ final class UserManagementControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root', ['users.view']);
         $cooperative = Cooperative::factory()->create(['name' => 'Coopérative détail']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Utilisateur détaillé',
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -105,7 +105,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_sees_resend_invitation_button_for_pending_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.invite']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
         ]);
@@ -123,7 +123,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['users.view', 'users.invite']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -141,7 +141,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['users.view', 'users.invite']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Active,
             'email_verified_at' => null,
@@ -159,7 +159,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_does_not_see_resend_invitation_button_for_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.invite']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Active,
         ]);
 
@@ -177,7 +177,7 @@ final class UserManagementControllerTest extends TestCase
             'cooperative_id' => $cooperative->getKey(),
         ]);
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -214,7 +214,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_view_user_detail_without_cooperative(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte indépendant',
             'cooperative_id' => null,
         ]);
@@ -231,7 +231,7 @@ final class UserManagementControllerTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.view']);
         $actor->cooperatives()->attach($cooperative->getKey());
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Utilisateur du périmètre',
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -248,7 +248,7 @@ final class UserManagementControllerTest extends TestCase
         $unassigned = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.view']);
         $actor->cooperatives()->attach($assigned->getKey());
-        $target = User::factory()->create(['cooperative_id' => $unassigned->getKey()]);
+        $target = $this->managedUser(['cooperative_id' => $unassigned->getKey()]);
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.show', $target))
@@ -261,7 +261,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('cooperative_admin', ['users.view'], [
             'cooperative_id' => $cooperative->getKey(),
         ]);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Utilisateur de ma coopérative',
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -279,7 +279,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('cooperative_admin', ['users.view'], [
             'cooperative_id' => $own->getKey(),
         ]);
-        $target = User::factory()->create(['cooperative_id' => $other->getKey()]);
+        $target = $this->managedUser(['cooperative_id' => $other->getKey()]);
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.show', $target))
@@ -289,7 +289,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_without_users_view_permission_cannot_view_user_detail(): void
     {
         $root = $this->actor('super_admin_root', []);
-        $target = User::factory()->create();
+        $target = $this->managedUser();
 
         $this->actingAs($root)
             ->get(route('root.backoffice.users.show', $target))
@@ -310,7 +310,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::fake();
 
         $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte à activer',
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -348,7 +348,7 @@ final class UserManagementControllerTest extends TestCase
         $actor->cooperatives()->attach($cooperative->getKey());
 
         foreach ([UserStatus::Pending, UserStatus::Inactive] as $status) {
-            $target = User::factory()->create([
+            $target = $this->managedUser([
                 'cooperative_id' => $cooperative->getKey(),
                 'status' => $status,
             ]);
@@ -367,7 +367,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_activate_a_suspended_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Suspended,
         ]);
 
@@ -385,7 +385,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_deactivate_an_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.deactivate']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte à désactiver',
             'status' => UserStatus::Active,
         ]);
@@ -410,7 +410,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_suspend_an_active_user_from_the_detail_page(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.suspend']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte à suspendre',
             'status' => UserStatus::Active,
         ]);
@@ -437,7 +437,7 @@ final class UserManagementControllerTest extends TestCase
         $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.suspend']);
         $actor->cooperatives()->attach($cooperative->getKey());
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Active,
         ]);
@@ -459,7 +459,7 @@ final class UserManagementControllerTest extends TestCase
         $unassigned = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.suspend']);
         $actor->cooperatives()->attach($assigned->getKey());
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $unassigned->getKey(),
             'status' => UserStatus::Active,
         ]);
@@ -477,7 +477,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_user_suspension_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.suspend', $target))
@@ -492,7 +492,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_already_inactive_user_cannot_be_suspended(): void
     {
         $root = $this->actor('super_admin_root', ['users.suspend']);
-        $target = User::factory()->create(['status' => UserStatus::Inactive]);
+        $target = $this->managedUser(['status' => UserStatus::Inactive]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.suspend', $target))
@@ -502,7 +502,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_user_activation_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create(['status' => UserStatus::Pending]);
+        $target = $this->managedUser(['status' => UserStatus::Pending]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.activate', $target))
@@ -517,7 +517,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_user_deactivation_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.deactivate', $target))
@@ -532,7 +532,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_cannot_activate_an_already_active_user(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.activate']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.activate', $target))
@@ -542,7 +542,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_archive_an_active_user_from_the_detail_page(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.archive']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte à archiver',
             'status' => UserStatus::Active,
         ]);
@@ -567,7 +567,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_restore_an_archived_user_to_pending(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte archivé',
             'status' => UserStatus::Archived,
         ]);
@@ -592,7 +592,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_archiving_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.archive', $target))
@@ -607,7 +607,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_restoring_archived_user_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create(['status' => UserStatus::Archived]);
+        $target = $this->managedUser(['status' => UserStatus::Archived]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.restore', $target))
@@ -622,8 +622,8 @@ final class UserManagementControllerTest extends TestCase
     public function test_non_root_user_cannot_archive_or_restore_users(): void
     {
         $actor = $this->actor('super_admin', ['users.archive', 'users.restore']);
-        $active = User::factory()->create(['status' => UserStatus::Active]);
-        $archived = User::factory()->create(['status' => UserStatus::Archived]);
+        $active = $this->managedUser(['status' => UserStatus::Active]);
+        $archived = $this->managedUser(['status' => UserStatus::Archived]);
 
         $this->actingAs($actor)
             ->patch(route('backoffice.users.archive', $active))
@@ -636,7 +636,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_archived_user_cannot_be_archived_again(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.archive']);
-        $target = User::factory()->create(['status' => UserStatus::Archived]);
+        $target = $this->managedUser(['status' => UserStatus::Archived]);
 
         $this->actingAs($root)
             ->patch(route('root.backoffice.users.archive', $target))
@@ -646,7 +646,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_non_archived_user_cannot_be_restored(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.restore']);
-        $target = User::factory()->create(['status' => UserStatus::Active]);
+        $target = $this->managedUser(['status' => UserStatus::Active]);
 
         $this->actingAs($root)
             ->patch(route('backoffice.users.restore', $target))
@@ -659,11 +659,11 @@ final class UserManagementControllerTest extends TestCase
         $unassigned = Cooperative::factory()->create();
         $actor = $this->actor('super_admin', ['users.view']);
         $actor->cooperatives()->attach($assigned->getKey());
-        User::factory()->create([
+        $this->managedUser([
             'display_name' => 'Utilisateur autorisé',
             'cooperative_id' => $assigned->getKey(),
         ]);
-        User::factory()->create([
+        $this->managedUser([
             'display_name' => 'Utilisateur hors périmètre',
             'cooperative_id' => $unassigned->getKey(),
         ]);
@@ -682,12 +682,12 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('cooperative_admin', ['users.view'], [
             'cooperative_id' => $own->getKey(),
         ]);
-        $ownUser = User::factory()->create([
+        $ownUser = $this->managedUser([
             'display_name' => 'Utilisateur de ma coopérative',
             'cooperative_id' => $own->getKey(),
         ]);
         $ownUser->roles()->attach($this->ensureRole('user')->getKey());
-        User::factory()->create([
+        $this->managedUser([
             'display_name' => 'Utilisateur autre coopérative',
             'cooperative_id' => $other->getKey(),
         ]);
@@ -722,7 +722,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_soft_delete_user_from_detail_page(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.delete']);
-        $target = User::factory()->create(['display_name' => 'Compte à supprimer']);
+        $target = $this->managedUser(['display_name' => 'Compte à supprimer']);
 
         $this->actingAs($root)
             ->delete(route('root.backoffice.users.destroy', $target))
@@ -740,7 +740,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_user_deletion_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create();
+        $target = $this->managedUser();
 
         $this->actingAs($root)
             ->delete(route('root.backoffice.users.destroy', $target))
@@ -755,8 +755,8 @@ final class UserManagementControllerTest extends TestCase
     public function test_non_root_user_cannot_soft_delete_or_restore_deleted_users(): void
     {
         $actor = $this->actor('super_admin', ['users.delete', 'users.restore_deleted']);
-        $active = User::factory()->create();
-        $deleted = User::factory()->create();
+        $active = $this->managedUser();
+        $deleted = $this->managedUser();
         $deleted->delete();
 
         $this->actingAs($actor)
@@ -770,7 +770,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_root_can_list_and_restore_soft_deleted_users(): void
     {
         $root = $this->actor('super_admin_root', ['users.view', 'users.restore_deleted']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'display_name' => 'Compte supprimé à restaurer',
             'status' => UserStatus::Inactive,
         ]);
@@ -805,7 +805,7 @@ final class UserManagementControllerTest extends TestCase
     public function test_restoring_deleted_user_requires_its_specific_permission(): void
     {
         $root = $this->actor('super_admin_root', ['users.view']);
-        $target = User::factory()->create();
+        $target = $this->managedUser();
         $target->delete();
 
         $this->actingAs($root)
@@ -1213,7 +1213,7 @@ final class UserManagementControllerTest extends TestCase
         Notification::fake();
 
         $root = $this->actor('super_admin_root', ['users.invite']);
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
         ]);
@@ -1246,7 +1246,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['users.invite']);
         $actor->cooperatives()->attach($cooperative->getKey());
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -1276,7 +1276,7 @@ final class UserManagementControllerTest extends TestCase
         $actor = $this->actor('super_admin', ['users.invite']);
         $actor->cooperatives()->attach($assigned->getKey());
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $unassigned->getKey(),
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -1299,7 +1299,7 @@ final class UserManagementControllerTest extends TestCase
 
         $cooperative = Cooperative::factory()->create();
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'cooperative_id' => $cooperative->getKey(),
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
@@ -1334,7 +1334,7 @@ final class UserManagementControllerTest extends TestCase
             UserStatus::Suspended,
             UserStatus::Archived,
         ] as $status) {
-            $target = User::factory()->create([
+            $target = $this->managedUser([
                 'status' => $status,
             ]);
 
@@ -1352,7 +1352,7 @@ final class UserManagementControllerTest extends TestCase
     {
         $root = $this->actor('super_admin_root', ['users.invite']);
 
-        $target = User::factory()->create([
+        $target = $this->managedUser([
             'status' => UserStatus::Pending,
             'email_verified_at' => null,
         ]);
@@ -1444,6 +1444,21 @@ final class UserManagementControllerTest extends TestCase
                 'is_active' => true,
             ],
         );
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function managedUser(array $attributes = []): User
+    {
+        if (isset($attributes['cooperative_id'])) {
+            Cooperative::query()->whereKey($attributes['cooperative_id'])->update([
+                'status' => CooperativeStatus::ACTIVE,
+            ]);
+        }
+
+        $user = User::factory()->create($attributes);
+        $user->roles()->syncWithoutDetaching([$this->ensureRole('user')->getKey()]);
+
+        return $user;
     }
 
     private function actor(string $roleSlug, array $permissions, array $attributes = []): User
