@@ -102,7 +102,7 @@ final class UserPolicy extends BasePolicy
     public function update(User $actor, User $target): bool
     {
         if ($target->trashed()
-            || $this->targetHasActiveRole($target, self::ROLE_SUPER_ADMIN_ROOT)
+            || ! $this->isInternalManagedTarget($target)
             || ! $this->hasPermission($actor, 'users.update')
             || ! $this->canAccessUser($actor, $target)) {
             return false;
