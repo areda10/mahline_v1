@@ -1026,7 +1026,7 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 
 ### 27. Lot A17 — révocation des accès Identity lors de la désactivation Cooperatives
 
-- Décision validée : une transition de coopérative active vers inactive, suspendue ou archivée, ainsi que sa suppression logique, révoque toutes les sessions web et tous les jetons API des comptes membres `cooperative_admin` et `user` de cette coopérative.
+- Décision validée : toute transition vers un statut autre que `ACTIVE` (`PENDING`, `INACTIVE`, `SUSPENDED` ou `ARCHIVED`), ainsi que la suppression logique, révoque toutes les sessions web et tous les jetons API des comptes membres `cooperative_admin` et `user` de cette coopérative.
 - Le statut Identity des comptes membres n'est pas modifié. Les comptes `super_admin_root`, `super_admin` et `customer` sont exclus.
 - Les sessions et jetons restent historisés et portent une raison de révocation auditable. Une réactivation/restauration ne rétablit aucun ancien accès.
 - La Policy d'autorisation Identity consulte le contrat `CooperativeStatusReader` : aucun nouveau login/session ou jeton API n'est possible tant que la coopérative n'est pas active ; le middleware web et la validation Sanctum invalident également les accès existants.
