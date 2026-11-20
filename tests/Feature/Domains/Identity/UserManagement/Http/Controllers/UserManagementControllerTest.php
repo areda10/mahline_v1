@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\UserManagement\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -1447,6 +1448,16 @@ final class UserManagementControllerTest extends TestCase
 
     private function actor(string $roleSlug, array $permissions, array $attributes = []): User
     {
+        if ($roleSlug === 'cooperative_admin') {
+            if (! array_key_exists('cooperative_id', $attributes) || $attributes['cooperative_id'] === null) {
+                $attributes['cooperative_id'] = Cooperative::factory()->active()->create()->getKey();
+            } else {
+                Cooperative::query()->whereKey($attributes['cooperative_id'])->update([
+                    'status' => CooperativeStatus::ACTIVE,
+                ]);
+            }
+        }
+
         $actor = User::factory()->create($attributes);
 
         $role = Role::query()->firstOrCreate(
