@@ -303,3 +303,44 @@ Cet audit est statique et limité aux chemins inspectés ; il ne remplace pas l'
 Pour chaque domaine : audit des conventions réelles → conception et arbitrage → migrations additives → modèles/services/contrats/événements → policies/providers/routes/controllers → tests unitaires/feature/architecture/MySQL → documentation README et roadmap → audit final des références, imports, routes, policies et middleware.
 
 Un domaine n'est déclaré **Validé** que si son périmètre V1 est implémenté, les contrats inter-domaines sont testés, les routes et policies sont auditées, les migrations sont exécutées et la suite ciblée puis complète est verte. Aucun merge vers `main` n'est autorisé sans demande explicite.
+
+
+## Addendum A20 — décision SALES-019 et extension Delivery (20 novembre 2026)
+
+### A20.1 Limite absolue Sales
+
+- La limite maximale absolue est fixée par l'utilisateur à **100 unités par ligne de panier**.
+- Elle s'applique aux ajouts, mises à jour, fusions et validations côté serveur, indépendamment du stock.
+- La limite commerciale d'un produit/variante peut être inférieure ou égale à 100 ; jamais supérieure.
+- La valeur minimale, la précision et les conversions d'unités pour les produits vendus au poids/volume restent des points techniques ouverts.
+- La spécification canonique mise à jour est `SALES_V1_SPECIFICATION.md`.
+
+### A20.2 Delivery — cinquième domaine autonome
+
+La spécification canonique est `DELIVERY_V1_SPECIFICATION.md`. Delivery possède les transporteurs opérationnels, contrats et tarifs de trajet, devis, missions, affectations, expéditions, colis, événements de suivi, preuves logistiques, retours physiques, anomalies et litiges.
+
+Delivery ne possède pas les commandes (Orders), les réservations/mouvements (Inventory), les factures/fonds (Finance), les fichiers (Media), les comptes/rôles généraux (Identity) ni les notifications (Communication).
+
+### A20.3 Flux validés et contrats
+
+- Tarifs par trajet ville d'origine → ville de destination ; grille réelle fournie par le transporteur, encore attendue.
+- Panier multi-coopératives : frais calculés par expédition puis additionnés.
+- À la mise à disposition d'une sous-commande prête, notification des transporteurs éligibles ; fenêtre d'acceptation de 12 h ; première acceptation valide exclusive ; à défaut, attribution automatique au tarif le plus bas.
+- Le départage en cas d'égalité de tarif reste ouvert.
+- Accès transporteur dédié au premier release, limité aux expéditions attribuées ; API transporteur post-release.
+- Photos coopérative avant remise, transporteur à la prise en charge ; au retour, transporteur au départ du retour et coopérative à réception. Au moins une photo par étape concernée ; matrice précise encore ouverte.
+- Retours, responsabilités de frais, inspection produit par produit et gouvernance des litiges sont consolidés dans la spécification Delivery.
+- Delivery publie des faits logistiques ; Orders conserve la propriété des transitions commerciales ; Inventory consomme les faits retenus pour sortie/retour ; Finance consomme les faits de collecte COD et livraison.
+
+### A20.4 Contrôles d'architecture et limites
+
+- Aucun dossier `app/Domains/Delivery`, provider, migration, modèle, route, Policy ou middleware Delivery n'a été trouvé dans l'arborescence contrôlée.
+- `bootstrap/providers.php` enregistre les providers existants mais aucun provider Delivery.
+- `routes/web.php` et `routes/api.php` ne déclarent aucune route Delivery dans le code inspecté.
+- Orders possède actuellement des modèles et services de création/réponse coopérative, mais aucun contrat Delivery/quote n'est intégré. Le service Orders initialise les frais de livraison à zéro ; Sales ne doit pas présenter ce zéro comme un tarif réel.
+- Aucun code Delivery n'est créé dans A20 : l'identité des comptes transporteurs, l'égalité tarifaire, l'éligibilité, les transitions exactes, l'échec de livraison/COD, la matrice photo, les retours et FR-014 restent à arbitrer.
+- Les routes et Policies proposées sont des cibles de conception, pas des composants existants.
+
+### A20.5 Séquence de livraison
+
+Sales (panier et checkout) et Inventory (soldes/réservations) sont conçus en parallèle, mais leur intégration exige les contrats Orders. Delivery doit être cadré avant le checkout complet et avant la consommation définitive du stock. Finance consomme ensuite les faits Orders/Delivery ; Statistics consomme les événements publiés par les domaines sources.
