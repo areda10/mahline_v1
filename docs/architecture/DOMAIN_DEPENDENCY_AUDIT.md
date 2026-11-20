@@ -829,6 +829,7 @@ Le test de refus d'affectation a été adapté pour vérifier le rôle super_adm
 - La fiche root filtre les rôles opérationnels actifs pour ses exclusions et sa liste de comptes gérés.
 - Tests de service ajoutés/adaptés : mise à jour contact-only, refus de modification du nom et refus d'affectation d'un super_admin non vérifié. Tests Policy ajoutés pour les rôles actifs indépendamment du statut du compte. Exécution en attente.
 - Les opérations de service de modification, cycle de vie et suppression exigent désormais exactement un rôle interne actif (`super_admin`, `cooperative_admin` ou `user`) ; les comptes `customer`, `super_admin_root`, sans rôle ou à rôles opérationnels multiples sont exclus même en appel direct du service.
+- Contrôle statique des routes Identity : 15 actions root et 15 actions back-office pointent vers des méthodes existantes ; les actions root sont protégées par le garde root et les Gates métier, les actions déléguées par le middleware de rôle et les Gates/FormRequest. Les routes back-office create/store restent présentes mais sont refusées par l'autorisation `create`, réservée au root.
 
 **Constat statique sur les statuts Cooperatives (aucune règle métier nouvelle n'est présumée) :**
 - `CooperativeStatusReaderService` expose `status`, `isActive` et `isDeleted`; `isActive` vaut vrai uniquement si la coopérative n'est pas supprimée logiquement et son statut est `ACTIVE`.
