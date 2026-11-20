@@ -329,6 +329,7 @@ final class CooperativeServiceTest extends TestCase
             self::assertSame(UserStatus::Active, $member->fresh()->status);
             self::assertFalse($member->fresh()->isAuthorized());
         }
+        self::assertTrue($assignedSuperAdminLike->fresh()->isAuthorized());
 
         try {
             app(SessionService::class)->create($user->fresh(), 'blocked-after-coop-deactivation');
@@ -446,8 +447,10 @@ final class CooperativeServiceTest extends TestCase
         ]);
         self::assertNotNull(DB::table('personal_access_tokens')->where('id', $token->getKey())->value('revoked_at'));
         self::assertSame(UserStatus::Active, $member->fresh()->status);
+        self::assertFalse($member->fresh()->isAuthorized());
 
         $this->service->restore((string) $root->getKey(), $cooperative);
+        self::assertTrue($member->fresh()->isAuthorized());
         self::assertNotNull(DB::table('personal_access_tokens')->where('id', $token->getKey())->value('revoked_at'));
         self::assertNotNull($session->fresh()->revoked_at);
     }
