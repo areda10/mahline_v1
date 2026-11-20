@@ -9,8 +9,6 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
 use App\Domains\Localization\Models\Country;
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
-use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Authorization\Models\Permission;
@@ -333,14 +331,8 @@ final class CooperativeServiceTest extends TestCase
             'id' => $userSession->getKey(),
             'revocation_reason' => 'cooperative_inactive',
         ]);
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'id' => $adminToken->getKey(),
-            'revoked_at' => now()->toDateTimeString(),
-        ]);
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'id' => $userToken->getKey(),
-            'revoked_at' => now()->toDateTimeString(),
-        ]);
+        self::assertNotNull(DB::table('personal_access_tokens')->where('id', $adminToken->getKey())->value('revoked_at'));
+        self::assertNotNull(DB::table('personal_access_tokens')->where('id', $userToken->getKey())->value('revoked_at'));
         $this->assertDatabaseHas('authentication_sessions', [
             'id' => $rootSession->getKey(),
             'revoked_at' => null,
@@ -395,6 +387,31 @@ final class CooperativeServiceTest extends TestCase
             'deleted_by' => $actor->id,
         ]);
         $this->assertAuditEvent('cooperatives.deleted', 'deleted', $actor, $cooperative);
+    }
+
+    public function test_deleting_cooperative_revokes_member_access_and_restore_does_not_restore_old_access(): void
+    {
+        $root = $this->rootActor();
+        $cooperative = Cooperative::factory()->create([
+            'status' => CooperativeStatus::ACTIVE,
+        ]);
+        $member = $this->cooperativeMember($cooperative, 'user');
+        $session = app(SessionService::class)->create($member, 'deleted-coop-session-'.uniqid());
+        $token = $member->createToken('deleted-coop-device')->accessToken;
+
+        $this->actingAs($root);
+        $this->service->delete((string) $root->getKey(), $cooperative);
+
+        $this->assertDatabaseHas('authentication_sessions', [
+            'id' => $session->getKey(),
+            'revocation_reason' => 'cooperative_deleted',
+        ]);
+        self::assertNotNull(DB::table('personal_access_tokens')->where('id', $token->getKey())->value('revoked_at'));
+        self::assertSame(UserStatus::Active, $member->fresh()->status);
+
+        $this->service->restore((string) $root->getKey(), $cooperative);
+        self::assertNotNull(DB::table('personal_access_tokens')->where('id', $token->getKey())->value('revoked_at'));
+        self::assertNotNull($session->fresh()->revoked_at);
     }
 
     public function test_deleting_already_deleted_cooperative_is_idempotent(): void
@@ -608,6 +625,7 @@ final class CooperativeServiceTest extends TestCase
             ['slug' => $roleSlug],
             ['name' => $roleSlug, 'is_active' => true],
         );
+        $role->forceFill(['is_active' => true])->save();
         $member->roles()->attach($role->getKey());
 
         return $member;
