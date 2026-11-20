@@ -57,7 +57,7 @@ final class UserManagementController
     public function edit(Request $request, User $user): View
     {
         $this->authorizeRoot($request);
-        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+        abort_if($user->roles()->where('roles.is_active', true)->whereIn('roles.slug', ['super_admin_root', 'customer'])->exists(), 404);
 
         Gate::authorize('update', $user);
 
@@ -83,7 +83,7 @@ final class UserManagementController
         UserInvitationService $invitationService,
     ): RedirectResponse {
         $this->authorizeRoot($request);
-        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+        abort_if($user->roles()->where('roles.is_active', true)->whereIn('roles.slug', ['super_admin_root', 'customer'])->exists(), 404);
         Gate::authorize('update', $user);
 
         $data = $request->validate([
@@ -220,7 +220,7 @@ final class UserManagementController
     ): RedirectResponse {
         $this->authorizeRoot($request);
         Gate::authorize('sendPasswordReset', $user);
-        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+        abort_if($user->roles()->where('roles.is_active', true)->whereIn('roles.slug', ['super_admin_root', 'customer'])->exists(), 404);
 
         try {
             $passwordResetService->createToken($user);
@@ -239,7 +239,7 @@ final class UserManagementController
     {
         $this->authorizeRoot($request);
         Gate::authorize('view', $user);
-        abort_if($user->roles()->whereIn('slug', ['super_admin_root', 'customer'])->exists(), 404);
+        abort_if($user->roles()->where('roles.is_active', true)->whereIn('roles.slug', ['super_admin_root', 'customer'])->exists(), 404);
 
         $user->load([
             'roles' => static fn ($query) => $query->orderBy('name'),
@@ -448,7 +448,7 @@ final class UserManagementController
         abort_if($deletedOnly && ! $isRoot, 403);
 
         $users = User::query()
-            ->whereHas('roles', static fn (Builder $roles) => $roles->whereIn('slug', ['super_admin', 'cooperative_admin', 'user']))
+            ->whereHas('roles', static fn (Builder $roles) => $roles->where('roles.is_active', true)->whereIn('roles.slug', ['super_admin', 'cooperative_admin', 'user']))
             ->when($deletedOnly, static fn (Builder $query) => $query->onlyTrashed())
             ->when(
                 ! $isRoot && $actor->hasRole('super_admin'),
