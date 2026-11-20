@@ -128,3 +128,8 @@ Ce document consigne les décisions fonctionnelles validées. Avant toute migrat
 - identifier les écarts et les dépendances avec Identity, Cooperatives, Products, Orders, Inventory, Media, Invoicing et les futurs domaines Payments/Delivery ;
 - faire valider les règles encore ouvertes ;
 - proposer ensuite une implémentation incrémentale avec tests.
+
+
+## 7. Spécification Delivery consolidée (20 novembre 2026)
+
+Les règles Delivery déjà validées dans ce document et dans le registre fonctionnel sont consolidées dans `DELIVERY_V1_SPECIFICATION.md`. Ce document complémentaire distingue les règles validées des points encore ouverts, notamment le départage tarifaire, les critères d'éligibilité, les cas d'échec, la matrice de preuves, les retours et FR-014. Il ne remplace pas le registre de décisions `FIRST_RELEASE_FUNCTIONAL_DISCOVERY.md` et n'autorise aucune implémentation avant audit technique et arbitrage des bloqueurs.
