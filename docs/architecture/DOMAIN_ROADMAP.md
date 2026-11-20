@@ -1023,3 +1023,11 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - **Décision en attente :** définir le blocage d'accès des membres d'une coopérative non active et le sort des sessions/jetons à la suspension, l'inactivation, l'archivage ou la suppression logique. Aucun comportement n'est gelé sur ce point.
 - Contrôle statique : les 15 actions root et 15 actions back-office de gestion des comptes correspondent à des méthodes de contrôleur existantes ; les endpoints root sont gardés et les endpoints délégués utilisent les Gates/permissions prévues. Les routes back-office create/store demeurent volontairement inopérantes pour les rôles délégués (`create` root-only).
 - Tests ajoutés/adaptés mais non exécutés ; Identity et Cooperatives restent `AUDIT_IN_PROGRESS`.
+
+### 27. Lot A17 — révocation des accès Identity lors de la désactivation Cooperatives
+
+- Décision validée : une transition de coopérative active vers inactive, suspendue ou archivée, ainsi que sa suppression logique, révoque toutes les sessions web et tous les jetons API des comptes membres `cooperative_admin` et `user` de cette coopérative.
+- Le statut Identity des comptes membres n'est pas modifié. Les comptes `super_admin_root`, `super_admin) et `customer` sont exclus.
+- Les sessions et jetons restent historisés et portent une raison de révocation auditable. Une réactivation/restauration ne rétablit aucun ancien accès.
+- Implémentation par contrat `CooperativeMemberAccessRevoker` défini dans Cooperatives et adaptateur implémenté par Identity.
+- Tests de régression ajoutés pour désactivation, suppression et non-restauration ; exécution non réalisée. Cooperatives/Identity restent `AUDIT_IN_PROGRESS`.
