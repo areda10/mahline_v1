@@ -529,7 +529,7 @@ final class UserPolicyTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        return Cooperative::factory()->create();
+        return Cooperative::factory()->active()->create();
     }
 
     /**
@@ -542,7 +542,7 @@ final class UserPolicyTest extends TestCase
         array $attributes = [],
     ): User {
         if ($roleSlug === 'cooperative_admin' && ! array_key_exists('cooperative_id', $attributes)) {
-            $attributes['cooperative_id'] = Cooperative::factory()->create()->getKey();
+            $attributes['cooperative_id'] = Cooperative::factory()->active()->create()->getKey();
         }
 
         $user = User::factory()->create($attributes);
