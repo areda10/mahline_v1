@@ -44,6 +44,7 @@ use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
+use App\Domains\Sales\Http\Controllers\SalesCartController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -154,6 +155,26 @@ Route::prefix('customer')
                 Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
             });
     });
+
+Route::prefix('cart')->name('sales.cart.')->group(function (): void {
+    Route::get('/', [SalesCartController::class, 'show'])
+        ->middleware('throttle:120,1')
+        ->name('show');
+    Route::post('/items', [SalesCartController::class, 'addItem'])
+        ->middleware('throttle:60,1')
+        ->name('items.store');
+    Route::patch('/items/{itemId}', [SalesCartController::class, 'updateItem'])
+        ->whereUlid('itemId')
+        ->middleware('throttle:60,1')
+        ->name('items.update');
+    Route::delete('/items/{itemId}', [SalesCartController::class, 'removeItem'])
+        ->whereUlid('itemId')
+        ->middleware('throttle:60,1')
+        ->name('items.destroy');
+    Route::delete('/', [SalesCartController::class, 'clear'])
+        ->middleware('throttle:20,1')
+        ->name('clear');
+});
 
 Route::middleware([
     'auth',
