@@ -37,6 +37,7 @@ use App\Domains\Products\Http\Controllers\ProductController;
 use App\Domains\Inventory\Http\Controllers\InventoryReportController;
 use App\Domains\Inventory\Http\Controllers\InventorySecurityReportController;
 use App\Domains\Inventory\Http\Controllers\InventoryOperationsController;
+use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Inventory\Http\Controllers\InventoryStockController;
 use App\Domains\Inventory\Http\Controllers\InventoryCountController;
 use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
