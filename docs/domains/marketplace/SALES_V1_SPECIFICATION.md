@@ -661,4 +661,5 @@ Cette règle couvre les changements tels que la contenance, le poids, le conditi
 - Une limite commerciale définie par la coopérative peut être inférieure ou égale à 100, jamais supérieure.
 - Toute tentative de quantité supérieure à 100 est rejetée côté serveur ; l'interface ne constitue pas un contrôle de sécurité.
 - Tests obligatoires : quantité 100 acceptée, 101 rejetée, fusion produisant 100 acceptée et fusion produisant 101 rejetée, limite commerciale inférieure, limite commerciale supérieure à 100 refusée.
-- La valeur minimale, la précision numérique et la sémantique exacte de l'unité pour les produits vendus au poids/volume restent à préciser ; « 100 » désigne la valeur numérique de quantité, sans conversion automatique d'unité.
+- **Décision utilisateur (21 novembre 2026) :** la précision de quantité est fixée à exactement trois décimales. Les quantités sont stockées en `DECIMAL(15,3)` et toute entrée comportant plus de trois décimales est rejetée, sans arrondi silencieux.
+- « 100 » désigne la valeur numérique de quantité, sans conversion automatique d'unité. La limite maximale reste 100 par ligne, quelle que soit l'unité.
