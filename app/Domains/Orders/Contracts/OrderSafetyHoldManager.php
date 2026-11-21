@@ -6,6 +6,8 @@ namespace App\Domains\Orders\Contracts;
 
 interface OrderSafetyHoldManager
 {
+    public function assertCooperativeOrderScope(string $cooperativeOrderId, string $cooperativeId): void;
+
     public function raiseHold(
         string $cooperativeOrderId,
         string $sourceType,
