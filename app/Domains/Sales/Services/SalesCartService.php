@@ -35,23 +35,33 @@ final class SalesCartService implements SalesCartManager
 
     public function getOrCreateCustomerCart(string $customerId): SalesCart
     {
-        return DB::transaction(function () use ($customerId): SalesCart {
-            $cart = SalesCart::query()
-                ->where('customer_id', $customerId)
-                ->lockForUpdate()
-                ->first();
+        try {
+            return DB::transaction(function () use ($customerId): SalesCart {
+                $cart = SalesCart::query()
+                    ->where('customer_id', $customerId)
+                    ->lockForUpdate()
+                    ->first();
 
+                if ($cart !== null) {
+                    return $cart;
+                }
+
+                return SalesCart::query()->create([
+                    'customer_id' => $customerId,
+                    'version' => 1,
+                    'last_activity_at' => now(),
+                    'expires_at' => null,
+                ]);
+            });
+        } catch (QueryException $exception) {
+            // The unique customer_id constraint resolves simultaneous first-cart creation.
+            $cart = SalesCart::query()->where('customer_id', $customerId)->first();
             if ($cart !== null) {
                 return $cart;
             }
 
-            return SalesCart::query()->create([
-                'customer_id' => $customerId,
-                'version' => 1,
-                'last_activity_at' => now(),
-                'expires_at' => null,
-            ]);
-        });
+            throw $exception;
+        }
     }
 
     public function findGuestCart(string $guestToken): ?SalesCart
