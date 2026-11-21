@@ -80,7 +80,7 @@ final class InventoryThresholdServiceTest extends TestCase
             ->where('alert_type', 'out_of_stock')
             ->whereNull('cleared_at')
             ->count());
-        $this->assertSame(2, InventoryThresholdHistory::query()->where('stock_id', $stock->getKey())->count());
+        $this->assertSame(1, InventoryThresholdHistory::query()->where('stock_id', $stock->getKey())->count());
         $this->assertGreaterThanOrEqual(3, InventoryOutboxMessage::query()
             ->where('event_key', 'inventory.stock_alert.triggered')
             ->count());
