@@ -198,6 +198,10 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ($stock->active_count_session_id !== null) {
+                throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
+            }
+
             $before = $this->balance($stock);
             $quantity = $this->milli($quarantine->quantity_remaining);
 
@@ -416,6 +420,10 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
                 ->whereKey($authorization->quarantine_id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($stock->active_count_session_id !== null) {
+                throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
+            }
 
             $before = $this->balance($stock);
             $reserved = $this->milli($authorization->quantity_reserved);
