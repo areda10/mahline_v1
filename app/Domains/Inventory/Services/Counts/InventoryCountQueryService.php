@@ -99,7 +99,7 @@ final class InventoryCountQueryService extends BaseService
 
     private function authorize(ActorContext $actor, string $cooperativeId): void
     {
-        if (! $actor->authorized || ! $actor->hasPermission('inventory.count.perform')) {
+        if (! $actor->authorized || ! $actor->hasPermission('inventory.count.perform') && ! $actor->hasPermission('inventory.count.view')) {
             throw new AuthorizationException('The actor cannot view this physical count session.');
         }
 
