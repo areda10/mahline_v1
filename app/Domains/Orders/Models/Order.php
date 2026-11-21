@@ -21,6 +21,7 @@ final class Order extends BaseModel
         'customer_id', 'reference', 'status', 'currency', 'items_subtotal',
         'delivery_total', 'grand_total', 'delivery_address_snapshot',
         'placed_at', 'confirmed_at', 'cancelled_at', 'cancellation_reason',
+        'checkout_idempotency_key', 'checkout_request_hash', 'inventory_excluded_cooperative_ids',
     ];
 
     protected function casts(): array
@@ -28,6 +29,7 @@ final class Order extends BaseModel
         return [
             'status' => OrderStatus::class,
             'delivery_address_snapshot' => 'array',
+            'inventory_excluded_cooperative_ids' => 'array',
             'items_subtotal' => 'decimal:2',
             'delivery_total' => 'decimal:2',
             'grand_total' => 'decimal:2',
