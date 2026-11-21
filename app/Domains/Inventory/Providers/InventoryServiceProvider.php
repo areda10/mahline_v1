@@ -24,5 +24,9 @@ final class InventoryServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
+        $this->commands([
+            \App\Domains\Inventory\Console\Commands\ExpireInventoryReservations::class,
+            \App\Domains\Inventory\Console\Commands\PublishInventoryOutbox::class,
+        ]);
     }
 }
