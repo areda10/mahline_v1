@@ -88,7 +88,7 @@
                                                 @csrf
                                                 <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
                                                 <label>Seuil en {{ $stock['unit_code'] }}</label>
-                                                <input name="threshold" type="text" inputmode="decimal" required placeholder="Ex. 5.000">
+                                                <input name="threshold" type="text" inputmode="decimal" required placeholder="Seuil souhaité">
                                                 <label>Motif obligatoire</label>
                                                 <input name="reason" type="text" maxlength="500" required>
                                                 <button class="button button-small" type="submit">Enregistrer le seuil</button>
