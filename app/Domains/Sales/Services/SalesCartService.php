@@ -10,6 +10,7 @@ use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;
 use App\Domains\Sales\Models\SalesCartItem;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
