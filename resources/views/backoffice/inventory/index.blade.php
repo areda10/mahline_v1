@@ -38,6 +38,9 @@
                             <th>Produit / variante</th>
                             <th>Unité</th>
                             <th>Disponibilité</th>
+                            @if($canManageStock)
+                                <th>Opérations</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -52,6 +55,48 @@
                                         {{ $stock['status'] }}
                                     </span>
                                 </td>
+                                @if($canManageStock)
+                                    <td>
+                                        <details>
+                                            <summary>Entrée de stock</summary>
+                                            <form method="POST"
+                                                  action="{{ route('backoffice.inventory.stocks.receive', ['cooperativeId' => $stock['cooperative_id']]) }}"
+                                                  data-inventory-stock-operation>
+                                                @csrf
+                                                <input type="hidden" name="stockable_type" value="{{ $stock['stockable_type'] }}">
+                                                <input type="hidden" name="stockable_id" value="{{ $stock['stockable_id'] }}">
+                                                <input type="hidden" name="idempotency_key" value="{{ \Illuminate\Support\Str::uuid() }}">
+                                                <label>Quantité reçue</label>
+                                                <input name="quantity" type="text" inputmode="decimal" required placeholder="Ex. 2.500">
+                                                <label>Nature de l’entrée</label>
+                                                <select name="movement_type">
+                                                    <option value="purchase_receipt">Réception</option>
+                                                    <option value="production_entry">Production</option>
+                                                    <option value="manual_adjustment_in">Correction positive</option>
+                                                </select>
+                                                <label>Motif obligatoire</label>
+                                                <input name="reason" type="text" maxlength="500" required>
+                                                <button class="button button-small" type="submit">Enregistrer l’entrée</button>
+                                            </form>
+                                        </details>
+                                        <details>
+                                            <summary>Ajustement manuel</summary>
+                                            <form method="POST"
+                                                  action="{{ route('backoffice.inventory.stocks.adjust', ['cooperativeId' => $stock['cooperative_id']]) }}"
+                                                  data-inventory-stock-operation>
+                                                @csrf
+                                                <input type="hidden" name="stockable_type" value="{{ $stock['stockable_type'] }}">
+                                                <input type="hidden" name="stockable_id" value="{{ $stock['stockable_id'] }}">
+                                                <input type="hidden" name="idempotency_key" value="{{ \Illuminate\Support\Str::uuid() }}">
+                                                <label>Quantité signée</label>
+                                                <input name="signed_quantity" type="text" inputmode="decimal" required placeholder="Ex. 1.000 ou -0.500">
+                                                <label>Motif obligatoire</label>
+                                                <input name="reason" type="text" maxlength="500" required>
+                                                <button class="button button-small" type="submit">Appliquer l’ajustement</button>
+                                            </form>
+                                        </details>
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
