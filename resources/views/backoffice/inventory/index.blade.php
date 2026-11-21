@@ -121,6 +121,54 @@
         @endif
     </section>
 
+    @if($canInitializeStock)
+        <section class="card">
+            <h2>Initialiser un stock</h2>
+            <p class="muted">Créez le suivi de stock d’un produit simple ou d’une variante. L’unité doit correspondre à l’unité canonique définie dans Products.</p>
+            <form method="POST"
+                  action="{{ route('backoffice.inventory.stocks.initialize', ['cooperativeId' => '__COOP__']) }}"
+                  data-inventory-initialize-stock
+                  data-endpoint-template="{{ route('backoffice.inventory.stocks.initialize', ['cooperativeId' => '__COOP__']) }}">
+                @csrf
+                <div class="field">
+                    <label>Identifiant ULID de la coopérative</label>
+                    <input name="cooperative_id" type="text" minlength="26" maxlength="26" required>
+                </div>
+                <div class="field">
+                    <label>Type de stockable</label>
+                    <select name="stockable_type" required>
+                        <option value="product">Produit simple</option>
+                        <option value="variant">Variante</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Identifiant ULID du produit ou de la variante</label>
+                    <input name="stockable_id" type="text" minlength="26" maxlength="26" required>
+                </div>
+                <div class="field">
+                    <label>Unité canonique</label>
+                    <select name="unit_code" required>
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="l">l</option>
+                        <option value="ml">ml</option>
+                        <option value="u">unité</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Quantité initiale</label>
+                    <input name="quantity" type="text" inputmode="decimal" required placeholder="Ex. 0.000">
+                </div>
+                <div class="field">
+                    <label>Motif obligatoire</label>
+                    <input name="reason" type="text" maxlength="500" required>
+                </div>
+                <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
+                <button class="button" type="submit">Initialiser le stock</button>
+            </form>
+        </section>
+    @endif
+
     @if($canCreateCount)
         <section class="card">
             <h2>Créer une session de comptage</h2>
@@ -199,6 +247,46 @@
 
 @if($canCreateCount || $canManageStock || $canManageThreshold)
     @push('scripts')
+    <script>
+    document.querySelectorAll('[data-inventory-initialize-stock]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = true;
+
+            try {
+                const payload = Object.fromEntries(new FormData(form).entries());
+                delete payload._token;
+                const cooperativeId = payload.cooperative_id;
+                delete payload.cooperative_id;
+                const url = form.dataset.endpointTemplate.replace('__COOP__', encodeURIComponent(cooperativeId));
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Idempotency-Key': payload.idempotency_key,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : (result.message || 'L’initialisation du stock a échoué.');
+                    throw new Error(message);
+                }
+
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message || 'Une erreur est survenue.');
+                button.disabled = false;
+            }
+        });
+    });
+    </script>
     <script>
     document.querySelectorAll('[data-inventory-stock-operation]').forEach((form) => {
         form.addEventListener('submit', async (event) => {
