@@ -29,10 +29,12 @@ final class InventoryOrderAvailabilityService extends BaseService implements Inv
             );
         }
 
-        $available = in_array($reservation->status, [
-            InventoryReservationStatus::ACTIVE->value,
-            InventoryReservationStatus::CONSUMED->value,
-        ], true);
+        $available = $reservation->status === InventoryReservationStatus::CONSUMED->value
+            || (
+                $reservation->status === InventoryReservationStatus::ACTIVE->value
+                && $reservation->expires_at !== null
+                && $reservation->expires_at->isFuture()
+            );
 
         return new InventorySuborderAvailability(
             cooperativeOrderId: $cooperativeOrderId,
