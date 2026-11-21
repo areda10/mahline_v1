@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\MediaIncident;
 use App\Domains\Products\Models\Product;
+use App\Shared\Contracts\PrivateMediaAttachmentOwner;
 
 enum MediaCategory: string
 {
@@ -76,7 +77,8 @@ enum MediaCategory: string
                 Cooperative::class,
                 User::class,
             ], true),
-            self::INCIDENT_ATTACHMENT => $ownerClass === MediaIncident::class,
+            self::INCIDENT_ATTACHMENT => $ownerClass === MediaIncident::class
+                || is_a($ownerClass, PrivateMediaAttachmentOwner::class, true),
         };
     }
 }
