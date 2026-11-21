@@ -81,12 +81,15 @@ final class ProductVariantService
             $variant,
             $attributes,
         ): ProductVariant {
-            $variant = ProductVariant::query()
+            $variantReference = ProductVariant::query()
                 ->whereKey($variant->getKey())
-                ->lockForUpdate()
                 ->firstOrFail();
             $product = Product::query()
-                ->whereKey($variant->product_id)
+                ->whereKey($variantReference->product_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $variant = ProductVariant::query()
+                ->whereKey($variantReference->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
