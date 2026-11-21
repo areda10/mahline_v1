@@ -19,6 +19,7 @@ final class CooperativeOrderResponseService
     public function __construct(
         private readonly InventoryReservationManager $inventoryReservations,
     ) {}
+
     public function confirmByCooperative(CooperativeOrder $cooperativeOrder, User $actor): CooperativeOrder
     {
         return $this->respond($cooperativeOrder, $actor, true, null, false);
@@ -144,9 +145,9 @@ final class CooperativeOrderResponseService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($administrative && ($locked->response_deadline_at === null || $locked->response_deadline_at->isFuture())) {
+            if ($administrative && ($locked->response_deadline_at === null || $locked->response_deadline_at->lessThanOrEqualTo(now()))) {
                 throw ValidationException::withMessages([
-                    'cooperative_order' => ['Une intervention administrative est possible uniquement après l’échéance de réponse.'],
+                    'cooperative_order' => ['Une décision administrative de substitution est possible uniquement avant l’expiration des 24 heures.'],
                 ]);
             }
 
