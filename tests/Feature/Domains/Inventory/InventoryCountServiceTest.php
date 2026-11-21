@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Inventory;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -172,6 +173,39 @@ final class InventoryCountServiceTest extends TestCase
         $this->assertSame(1, $sessions[0]['items_count']);
         $this->assertArrayNotHasKey('expected_quantity', $sessions[0]);
         $this->assertArrayNotHasKey('counted_quantity', $sessions[0]);
+    }
+
+    public function test_count_workspace_redacts_theoretical_quantity_for_counter_users(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $counter = $this->userWithRole('user', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $stock = $this->stock($cooperative, '10.000');
+        $sessionId = app(InventoryCountManager::class)->createSession(
+            (string) $cooperative->getKey(),
+            [(string) $stock->getKey()],
+            (string) $admin->getKey(),
+            'count-session-workspace-001',
+        );
+
+        $this->actingAs($counter);
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+
+        $this->get(route('backoffice.inventory.count-sessions.workspace', ['sessionId' => $sessionId]))
+            ->assertOk()
+            ->assertViewIs('backoffice.inventory.count-sessions.show')
+            ->assertSee('Enregistrer')
+            ->assertDontSee('Théorique');
+
+        $this->actingAs($admin);
+
+        $this->get(route('backoffice.inventory.count-sessions.workspace', ['sessionId' => $sessionId]))
+            ->assertOk()
+            ->assertSee('Théorique');
     }
 
     private function stock(Cooperative $cooperative, string $quantity): InventoryStock
