@@ -117,7 +117,13 @@ final class BackOfficeDashboardControllerTest extends TestCase
 
     private function userWithRole(string $slug): User
     {
-        $user = User::factory()->create();
+        $attributes = [];
+        if (in_array($slug, ['cooperative_admin', 'user'], true)) {
+            $cooperative = Cooperative::factory()->active()->create();
+            $attributes['cooperative_id'] = $cooperative->getKey();
+        }
+
+        $user = User::factory()->create($attributes);
 
         $role = Role::query()->create([
             'name' => str($slug)->replace('_', ' ')->title()->toString(),
