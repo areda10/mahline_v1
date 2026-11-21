@@ -7,6 +7,9 @@ namespace App\Domains\Identity\Providers;
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Cooperatives\Contracts\CooperativeMemberAccessRevoker;
 use App\Domains\Identity\Authentication\Services\CooperativeMemberAccessRevokerService;
+use App\Domains\Identity\Notifications\InventoryStockAlertNotificationDispatcher;
+use App\Domains\Identity\Notifications\Listeners\DispatchInventoryStockAlert;
+use App\Domains\Inventory\Events\InventoryDomainEvent;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
@@ -22,6 +25,7 @@ use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
 use App\Shared\Contracts\ActorAuthorizer;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\Contracts\ActorContextProvider;
+use App\Shared\Contracts\InventoryAlertNotificationDispatcher;
 use App\Domains\Identity\Users\Observers\UserObserver;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -36,6 +40,7 @@ final class IdentityServiceProvider extends ServiceProvider
         $this->app->bind(UserAddressOwnerGateway::class, IdentityUserAddressOwnerGateway::class);
         $this->app->bind(ActorContextProvider::class, IdentityActorContextProvider::class);
         $this->app->bind(ActorAuthorizer::class, IdentityActorAuthorizer::class);
+        $this->app->bind(InventoryAlertNotificationDispatcher::class, InventoryStockAlertNotificationDispatcher::class);
 
         $this->app->bind(
             SuperAdminCooperativeAssignmentService::class,
@@ -53,6 +58,7 @@ final class IdentityServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
 
         Event::listen(CooperativeCreatedV1::class, AssignCreatorToNewCooperative::class);
+        Event::listen(InventoryDomainEvent::class, DispatchInventoryStockAlert::class);
 
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
     }
