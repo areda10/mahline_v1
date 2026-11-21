@@ -26,9 +26,6 @@ final class InventoryCountParticipant extends BaseModel
 
     protected static function booted(): void
     {
-        static::updating(static function (): never {
-            throw new LogicException('Inventory count participants are immutable.');
-        });
         static::deleting(static function (): never {
             throw new LogicException('Inventory count participants cannot be deleted.');
         });
