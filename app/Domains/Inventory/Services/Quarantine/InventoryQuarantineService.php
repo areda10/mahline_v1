@@ -35,6 +35,18 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
         private readonly AuditWriter $audit,
     ) {}
 
+    public function quarantinesForCooperative(string $cooperativeId, string $actorId): \Illuminate\Database\Eloquent\Collection
+    {
+        $actor = $this->actors->forUserId($actorId);
+        $this->authorize($actor, $cooperativeId, 'inventory.quarantine.view');
+
+        return InventoryQuarantine::query()
+            ->with(['stock', 'authorizations'])
+            ->where('cooperative_id', $cooperativeId)
+            ->orderByDesc('received_at')
+            ->get();
+    }
+
     public function receiveReturn(
         string $cooperativeId,
         InventoryStockableType $stockableType,
