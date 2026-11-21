@@ -41,6 +41,8 @@ final class InventoryWorkspaceController
             'canManageStock' => $user->hasAnyRole(['super_admin_root', 'super_admin', 'cooperative_admin'])
                 && $user->hasPermission('inventory.stock.receive')
                 && $user->hasPermission('inventory.stock.adjust'),
+            'canManageThreshold' => $user->hasAnyRole(['super_admin_root', 'super_admin', 'cooperative_admin'])
+                && $user->hasPermission('inventory.threshold.manage'),
             'canInitializeStock' => $user->hasAnyRole(['super_admin_root', 'super_admin', 'cooperative_admin'])
                 && $user->hasPermission('inventory.stock.initialize'),
         ]);
