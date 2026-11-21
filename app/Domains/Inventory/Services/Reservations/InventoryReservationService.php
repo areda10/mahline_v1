@@ -66,7 +66,7 @@ final class InventoryReservationService extends BaseService implements Inventory
             $actor,
             $retainUntilFulfillment,
         ): InventoryReservationResult {
-            $requestHash = $this->reservationRequestHash($cooperativeId, $items);
+            $requestHash = $this->reservationRequestHash($cooperativeId, $items, $retainUntilFulfillment);
             $existing = $this->existingResult(
                 $cooperativeOrderId,
                 'reserve',
@@ -1010,7 +1010,7 @@ final class InventoryReservationService extends BaseService implements Inventory
      *
      * @throws JsonException
      */
-    private function reservationRequestHash(string $cooperativeId, array $items): string
+    private function reservationRequestHash(string $cooperativeId, array $items, bool $retainUntilFulfillment = false): string
     {
         $payload = [];
         foreach ($this->normalizeLines($items) as $item) {
@@ -1024,7 +1024,11 @@ final class InventoryReservationService extends BaseService implements Inventory
         }
 
         return hash('sha256', json_encode(
-            ['cooperative_id' => $cooperativeId, 'items' => $payload],
+            [
+                'cooperative_id' => $cooperativeId,
+                'items' => $payload,
+                'retain_until_fulfillment' => $retainUntilFulfillment,
+            ],
             JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR,
         ));
     }
