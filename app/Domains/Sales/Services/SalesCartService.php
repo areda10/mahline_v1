@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Sales\Services;
 
+use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
@@ -19,7 +20,10 @@ final class SalesCartService implements SalesCartManager
 {
     private const MAX_QUANTITY_MILLI = 100000;
 
-    public function __construct(private readonly CheckoutCatalog $catalog) {}
+    public function __construct(
+        private readonly CheckoutCatalog $catalog,
+        private readonly CooperativeStatusReader $cooperatives,
+    ) {}
 
     public function createGuestCart(): array
     {
@@ -104,6 +108,13 @@ final class SalesCartService implements SalesCartManager
                 || $product->currency !== 'MAD') {
                 throw ValidationException::withMessages([
                     'product_id' => ['Ce produit ou cette variante ne peut pas être ajouté au panier.'],
+                ]);
+            }
+
+            $cooperative = $this->cooperatives->findStatus($product->cooperativeId);
+            if ($cooperative === null || ! $cooperative->isActive || $cooperative->isDeleted) {
+                throw ValidationException::withMessages([
+                    'product_id' => ['La coopérative propriétaire de ce produit est inactive ou indisponible.'],
                 ]);
             }
 
