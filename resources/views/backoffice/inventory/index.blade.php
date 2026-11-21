@@ -181,8 +181,45 @@
     </section>
 @endsection
 
-@if($canCreateCount)
+@if($canCreateCount || $canManageStock)
     @push('scripts')
+    <script>
+    document.querySelectorAll('[data-inventory-stock-operation]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
+
+            try {
+                const payload = Object.fromEntries(new FormData(form).entries());
+                delete payload._token;
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Idempotency-Key': payload.idempotency_key,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : (result.message || 'L’opération de stock a échoué.');
+                    throw new Error(message);
+                }
+
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message || 'Une erreur est survenue.');
+                if (button) button.disabled = false;
+            }
+        });
+    });
+    </script>
     <script>
     document.querySelectorAll('[data-inventory-create-count]').forEach((form) => {
         form.addEventListener('submit', async (event) => {
