@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Inventory;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Inventory\Services\Reports\InventoryReportService;
@@ -31,7 +32,7 @@ final class InventoryReportServiceTest extends TestCase
 
     public function test_user_can_export_only_their_simplified_cooperative_pdf_report(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $user = $this->userWithRole('user', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -54,8 +55,8 @@ final class InventoryReportServiceTest extends TestCase
 
     public function test_user_cannot_export_another_cooperatives_inventory_report(): void
     {
-        $ownCooperative = Cooperative::factory()->create();
-        $otherCooperative = Cooperative::factory()->create();
+        $ownCooperative = Cooperative::factory()->active()->create();
+        $otherCooperative = Cooperative::factory()->active()->create();
         $user = $this->userWithRole('user', [
             'cooperative_id' => $ownCooperative->getKey(),
         ]);
@@ -72,10 +73,13 @@ final class InventoryReportServiceTest extends TestCase
     {
         $role = Role::query()->where('slug', $roleSlug)->firstOrFail();
 
-        return User::factory()->create(array_merge([
+        $user = User::factory()->create(array_merge([
             'role_id' => $role->getKey(),
-            'status' => 'active',
+            'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ], $attributes));
+        $user->roles()->attach($role->getKey());
+
+        return $user;
     }
 }
