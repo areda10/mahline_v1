@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
@@ -16,6 +17,9 @@ use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -26,6 +30,8 @@ final class CooperativeOrderResponseServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->seed([RoleSeeder::class, PermissionSeeder::class, RolePermissionSeeder::class]);
 
         ProductUnit::query()->firstOrCreate(
             ['code' => 'u'],
@@ -50,6 +56,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'currency' => 'MAD',
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
+        $this->stockFor($cooperative, $product);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
@@ -78,6 +85,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'currency' => 'MAD',
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
+        $this->stockFor($cooperativeB, $productB);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
@@ -100,6 +108,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'currency' => 'MAD',
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
+        $this->stockFor($cooperative, $product);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
@@ -128,7 +137,6 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
 
         $suborder = $order->cooperativeOrders->firstOrFail();
-        $suborder->forceFill(['response_deadline_at' => now()->subMinute()])->save();
         $updated = app(CooperativeOrderResponseService::class)
             ->decideOnBehalf($suborder, $root, false, 'Absence de réponse coopérative');
 
@@ -154,6 +162,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
 
         $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill(['response_deadline_at' => now()->addHour()])->save();
         $newDeadline = now()->addHours(3);
         $updated = app(CooperativeOrderResponseService::class)
             ->extendResponseDeadline($suborder, $root, $newDeadline, 'Délai supplémentaire accordé');
@@ -163,6 +172,18 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'subject_type' => 'cooperative_order',
             'subject_id' => $suborder->getKey(),
             'to_status' => CooperativeOrderStatus::AWAITING_COOPERATIVE->value,
+        ]);
+    }
+
+
+    private function stockFor(Cooperative $cooperative, Product $product): void
+    {
+        InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => 'product',
+            'stockable_id' => (string) $product->getKey(),
+            'unit_code' => 'u',
+            'quantity_on_hand' => '10.000',
         ]);
     }
 
