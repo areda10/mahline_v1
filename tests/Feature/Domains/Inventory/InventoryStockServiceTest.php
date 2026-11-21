@@ -12,6 +12,8 @@ use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -36,7 +38,16 @@ final class InventoryStockServiceTest extends TestCase
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
-        $productId = (string) Str::ulid();
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => $unit->getKey(),
+            'price' => '10.00',
+            'currency' => 'MAD',
+        ]);
+        $productId = (string) $product->getKey();
         $manager = app(InventoryStockManager::class);
 
         $stockId = $manager->initialize(
