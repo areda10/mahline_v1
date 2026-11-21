@@ -20,6 +20,7 @@ use App\Shared\DTOs\ActorContext;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Illuminate\Http\UploadedFile;
@@ -141,6 +142,37 @@ final class InventorySecurityReportService extends BaseService implements Invent
 
             return (string) $report->getKey();
         }, 3);
+    }
+
+    public function visibleReports(string $actorId): Collection
+    {
+        $actor = $this->actors->forUserId($actorId);
+        if (! $actor->authorized) {
+            throw new AuthorizationException('The actor cannot list Inventory security reports.');
+        }
+
+        $query = InventorySecurityReport::query()->latest('created_at');
+        if ($actor->hasRole('super_admin_root') && $actor->hasPermission('inventory.security_reports.view')) {
+            return $query->get();
+        }
+
+        if ($actor->hasRole('super_admin') && $actor->hasPermission('inventory.security_reports.view')) {
+            return $query->whereIn('cooperative_id', $this->assignments->cooperativeIdsFor($actor->id))->get();
+        }
+
+        if ($actor->hasRole('cooperative_admin')
+            && $actor->hasPermission('inventory.security_reports.view')
+            && $actor->cooperativeId !== null) {
+            return $query->where('cooperative_id', $actor->cooperativeId)->get();
+        }
+
+        if ($actor->hasRole('user') && $actor->hasPermission('inventory.security_reports.view_own')) {
+            return $query->where('reporter_id', $actor->id)
+                ->where('cooperative_id', $actor->cooperativeId)
+                ->get();
+        }
+
+        throw new AuthorizationException('The actor cannot list Inventory security reports.');
     }
 
     public function visibleReport(string $reportId, string $actorId): InventorySecurityReport
