@@ -56,3 +56,10 @@ Les intégrations présentes comprennent :
 Les routes JSON/PDF sont en place ; les écrans dédiés restent à construire. Les tests ciblés et la suite complète doivent encore être exécutés dans l'environnement MySQL du projet. Voir le [suivi d'implémentation](../../../docs/domains/marketplace/INVENTORY_V1_IMPLEMENTATION_TRACKER.md).
 
 Une fonction ne sera déclarée terminée qu'après inspection du code, tests réellement exécutés, vérification des frontières inter-domaines et documentation synchronisée.
+
+## Disponibilité des sous-commandes
+
+- Avant la confirmation de la coopérative, la disponibilité est calculée depuis les soldes de stock réellement disponibles : stock physique moins quarantaines et réservations normales, augmenté du stock de quarantaine autorisé non réservé.
+- Une session d'inventaire active rend les lignes concernées indisponibles.
+- Après confirmation, l'indicateur repose sur la réservation persistante active (ou consommée) ; une réservation libérée, expirée ou retournée pour sécurité n'est plus disponible.
+- La réservation reste distincte de la disponibilité consultative : le checkout ne réserve jamais le stock.
