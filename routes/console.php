@@ -37,3 +37,8 @@ Schedule::command('inventory:expire-reservations')
 Schedule::command('inventory:publish-outbox')
     ->everyMinute()
     ->withoutOverlapping();
+
+
+Schedule::command('inventory:reconcile-alerts')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
