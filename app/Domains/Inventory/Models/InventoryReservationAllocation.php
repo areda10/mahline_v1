@@ -23,6 +23,13 @@ final class InventoryReservationAllocation extends BaseModel
         return ['quantity' => 'decimal:3'];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory historical records cannot be deleted.');
+        });
+    }
+
     public function reservationItem(): BelongsTo
     {
         return $this->belongsTo(InventoryReservationItem::class, 'reservation_item_id');
