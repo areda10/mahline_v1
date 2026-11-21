@@ -267,7 +267,7 @@
                                     <td>{{ str($quarantine['inspection_result'])->replace('_', ' ')->title() }}</td>
                                     <td>{{ $quarantine['reason'] }}</td>
                                     <td>
-                                        @if($quarantine['inspection_result'] === 'pending')
+                                        @if($quarantine['inspection_result'] === 'pending' && $quarantine['status'] === 'pending_inspection')
                                             <details>
                                                 <summary>Inspecter</summary>
                                                 <form method="POST"
@@ -286,7 +286,7 @@
                                                 </form>
                                             </details>
                                         @endif
-                                        @if($quarantine['inspection_result'] === 'non_compliant')
+                                        @if($quarantine['inspection_result'] === 'non_compliant' && in_array($quarantine['status'], ['non_compliant', 'partially_authorized', 'authorized_for_sale'], true))
                                             <details>
                                                 <summary>Autoriser une vente conditionnelle</summary>
                                                 <form method="POST"
