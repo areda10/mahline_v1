@@ -8,6 +8,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
+use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderItemStatus;
 use App\Domains\Orders\Enums\OrderStatus;
