@@ -60,11 +60,11 @@ Delivery ne possède pas :
 3. MAHLINE notifie les sociétés de livraison concernées/éligibles.
 4. Les sociétés éligibles disposent de **12 heures** pour accepter librement la mission.
 5. La première acceptation valide obtient l'attribution exclusive ; les autres transporteurs ne peuvent plus accepter cette mission.
-6. Si aucune société n'accepte dans les 12 heures, MAHLINE attribue automatiquement la mission à la société éligible proposant le tarif de livraison le moins cher.
+6. À l'expiration des 12 heures, si aucune acceptation valide n'a déjà obtenu la mission, MAHLINE identifie le ou les transporteurs éligibles proposant le tarif minimal. Si un seul transporteur détient ce tarif, la mission lui est attribuée automatiquement. Si plusieurs transporteurs sont exactement ex æquo au tarif minimal, seuls ces transporteurs restent candidats et **le premier qui enregistre une acceptation valide remporte la mission**. L'attribution est exclusive et atomique : une seule acceptation concurrente peut réussir ; les autres sont rejetées.
 7. Le transporteur attribué récupère physiquement la commande auprès de la coopérative et la remet au client.
 8. Le client règle le montant total au transporteur selon le mode COD V1.
 
-Les notifications, acceptations, refus, attribution automatique, motif et horodatages sont historisés. Le départage en cas d'égalité de tarif est **ouvert** ; aucun ordre arbitraire ne doit être implémenté.
+Les notifications, acceptations, refus, attribution, motif et horodatages sont historisés. En cas d'égalité du tarif minimal après les 12 heures, le départage est effectué par la première acceptation valide parmi les transporteurs ex æquo. L'ordre d'arrivée est déterminé côté serveur et protégé contre les courses concurrentes par verrouillage/contrainte d'unicité dans la transaction d'attribution.
 
 ### 2.5 Accès transporteur au premier release
 - Le transporteur dispose d'un accès dédié à MAHLINE pour consulter et mettre à jour les informations des seules expéditions qui lui sont attribuées.
