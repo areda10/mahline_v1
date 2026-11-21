@@ -125,7 +125,7 @@ final class OrderCreationService
             'items' => $items,
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
 
-        return DB::transaction(function () use ($customer, $address, $items, $idempotencyKey, $acceptedInventoryFingerprint, $checkoutRequestHash): Order {
+        return DB::transaction(function () use ($customer, $address, $items, $idempotencyKey, $checkoutRequestHash): Order {
             $existingOrder = Order::query()
                 ->where('checkout_idempotency_key', $idempotencyKey)
                 ->lockForUpdate()
@@ -258,19 +258,9 @@ final class OrderCreationService
             $preview = $this->inventoryAvailability->preview($previewLines);
             $unavailableCooperativeIds = $preview->unavailableCooperativeIds();
 
-            if ($acceptedInventoryFingerprint !== null
-                && ! hash_equals($preview->fingerprint, $acceptedInventoryFingerprint)) {
-                throw ValidationException::withMessages([
-                    'inventory_preview' => ['La disponibilité a changé depuis le récapitulatif. Veuillez actualiser le checkout avant de confirmer.'],
-                ]);
-            }
-
-            if ($unavailableCooperativeIds !== [] && $acceptedInventoryFingerprint === null) {
-                throw ValidationException::withMessages([
-                    'inventory_preview' => ['Certaines coopératives ne disposent plus du stock demandé. Présentez les exclusions au client et obtenez sa confirmation avant de finaliser.'],
-                ]);
-            }
-
+            // Availability is intentionally recalculated inside this transaction.
+            // The customer preview is informational: a stock change does not force
+            // a second confirmation. Unavailable cooperatives are excluded as a whole.
             $prepared = array_values(array_filter(
                 $prepared,
                 static fn (array $line): bool => ! in_array($line['cooperative_id'], $unavailableCooperativeIds, true),
