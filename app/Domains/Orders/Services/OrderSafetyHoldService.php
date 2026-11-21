@@ -141,20 +141,24 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
         $actor = $this->actors->forUserId($actorId);
         $this->authorizeResolution($actor, (string) $initialHold->cooperative_id);
 
-        DB::transaction(function () use ($holdId, $decision, $reason, $actor): void {
+        DB::transaction(function () use ($holdId, $decision, $reason, $actor, $initialHold): void {
+            $cooperativeOrder = CooperativeOrder::query()
+                ->whereKey($initialHold->cooperative_order_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $hold = OrderSafetyHold::query()
                 ->whereKey($holdId)
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ((string) $hold->cooperative_order_id !== (string) $cooperativeOrder->getKey()) {
+                throw new OrderFulfillmentBlocked('The safety hold order reference changed unexpectedly.');
+            }
+
             if ($hold->status !== 'active') {
                 throw new OrderFulfillmentBlocked('This safety hold has already been resolved.');
             }
-
-            $cooperativeOrder = CooperativeOrder::query()
-                ->whereKey($hold->cooperative_order_id)
-                ->lockForUpdate()
-                ->firstOrFail();
 
             if (in_array($cooperativeOrder->status, [
                 CooperativeOrderStatus::SHIPPED,
@@ -320,13 +324,21 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
 
     public function assertCanShip(string $cooperativeOrderId): void
     {
-        $hasActiveHold = OrderSafetyHold::query()
-            ->where('cooperative_order_id', $cooperativeOrderId)
-            ->where('status', 'active')
-            ->exists();
+        DB::transaction(function () use ($cooperativeOrderId): void {
+            CooperativeOrder::query()
+                ->whereKey($cooperativeOrderId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($hasActiveHold) {
-            throw new OrderFulfillmentBlocked('Expédition interdite : un blocage de sécurité est actif sur cette sous-commande.');
-        }
+            $hasActiveHold = OrderSafetyHold::query()
+                ->where('cooperative_order_id', $cooperativeOrderId)
+                ->where('status', 'active')
+                ->lockForUpdate()
+                ->exists();
+
+            if ($hasActiveHold) {
+                throw new OrderFulfillmentBlocked('Expédition interdite : un blocage de sécurité est actif sur cette sous-commande.');
+            }
+        }, 3);
     }
 }
