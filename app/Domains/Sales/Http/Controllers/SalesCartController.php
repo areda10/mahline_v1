@@ -11,7 +11,6 @@ use App\Domains\Sales\Models\SalesCart;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Validation\ValidationException;
 
 final class SalesCartController
 {
