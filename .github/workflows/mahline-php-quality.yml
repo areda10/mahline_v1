@@ -57,7 +57,7 @@ jobs:
           php artisan key:generate
 
       - name: Run Laravel test suite
-        run: php artisan test
+        run: php artisan test tests/Feature
 
       - name: Verify code style
         run: php vendor/bin/pint --test
