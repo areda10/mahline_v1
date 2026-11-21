@@ -7,8 +7,8 @@ namespace App\Domains\Orders\DTOs;
 final readonly class OrderCheckoutData
 {
     /**
-     * @param array<string, mixed> $deliveryAddressSnapshot
-     * @param list<array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}> $items
+     * @param  array<string, mixed>  $deliveryAddressSnapshot
+     * @param  list<array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}>  $items
      */
     public function __construct(
         public string $customerId,
