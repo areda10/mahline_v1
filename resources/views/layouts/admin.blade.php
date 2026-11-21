@@ -84,16 +84,22 @@
         @php($currentUser = auth()->user())
 
         <nav class="nav" aria-label="Navigation du compte">
-            @if($currentUser->hasRole('super_admin'))
+            @if($currentUser->hasRole('super_admin_root'))
+                <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
+                <a href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
+            @elseif($currentUser->hasRole('super_admin'))
                 <a href="{{ route('backoffice.dashboard') }}">Tableau de bord</a>
                 <a href="{{ route('backoffice.cooperatives.index') }}">Coopératives</a>
                 <a href="{{ route('backoffice.users.index') }}">Utilisateurs</a>
+                <a href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
             @elseif($currentUser->hasRole('cooperative_admin'))
                 <a href="{{ route('backoffice.dashboard') }}">Tableau de bord</a>
                 <a href="{{ route('backoffice.cooperatives.index') }}">Ma coopérative</a>
                 <a href="{{ route('backoffice.users.index') }}">Utilisateurs</a>
+                <a href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
             @elseif($currentUser->hasRole('user'))
                 <a href="{{ route('user.dashboard') }}">Mon tableau de bord</a>
+                <a href="{{ route('backoffice.inventory.index') }}">Disponibilité du stock</a>
             @endif
 
             <a href="{{ route('backoffice.profile.address.edit') }}">Mon adresse</a>
