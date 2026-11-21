@@ -32,7 +32,7 @@ final class SalesCartController
         $data = $request->validate([
             'product_id' => ['required', 'string', 'size:26'],
             'product_variant_id' => ['nullable', 'string', 'size:26'],
-            'quantity' => ['required', 'numeric', 'gt:0', 'lte:100'],
+            'quantity' => ['required', 'numeric', 'decimal:0,3', 'gt:0', 'lte:100'],
             'expected_version' => ['required', 'integer', 'min:1'],
         ]);
 
