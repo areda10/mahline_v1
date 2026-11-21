@@ -11,8 +11,11 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
+use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Services\CooperativeOrderResponseService;
+use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
+use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -185,6 +188,101 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
     }
 
+
+    public function test_safety_hold_blocks_fulfillment_and_cancellation_restores_stock(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $customer = $this->userWithRole('customer');
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-safety-cancel-01',
+            'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
+            'items' => [[
+                'product_id' => (string) $product->getKey(),
+                'quantity' => '1',
+            ]],
+        ]);
+        $suborder = $order->cooperativeOrders->firstOrFail();
+
+        app(CooperativeOrderResponseService::class)->confirmByCooperative($suborder, $admin);
+
+        $stock = InventoryStock::query()
+            ->where('cooperative_id', $cooperative->getKey())
+            ->where('stockable_id', $product->getKey())
+            ->firstOrFail();
+        $this->assertSame('9.000', $stock->quantity_on_hand);
+
+        $holdId = app(OrderSafetyHoldManager::class)->raiseHold(
+            (string) $suborder->getKey(),
+            'test_security_report',
+            (string) \Illuminate\Support\Str::ulid(),
+            'Risque de sécurité à examiner.',
+        );
+
+        $this->expectException(OrderFulfillmentBlocked::class);
+        app(OrderSafetyHoldManager::class)->assertCanShip((string) $suborder->getKey());
+    }
+
+    public function test_safety_hold_can_cancel_confirmed_unshipped_suborder_and_restore_stock(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $customer = $this->userWithRole('customer');
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-safety-cancel-02',
+            'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
+            'items' => [[
+                'product_id' => (string) $product->getKey(),
+                'quantity' => '1',
+            ]],
+        ]);
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        app(CooperativeOrderResponseService::class)->confirmByCooperative($suborder, $admin);
+
+        $holdId = app(OrderSafetyHoldManager::class)->raiseHold(
+            (string) $suborder->getKey(),
+            'test_security_report',
+            (string) \Illuminate\Support\Str::ulid(),
+            'Risque confirmé.',
+        );
+
+        app(OrderSafetyHoldManager::class)->resolveHold(
+            $holdId,
+            'cancel',
+            'Annulation de sécurité après examen.',
+            (string) $admin->getKey(),
+        );
+
+        $suborder->refresh();
+        $order->refresh();
+        $stock = InventoryStock::query()
+            ->where('cooperative_id', $cooperative->getKey())
+            ->where('stockable_id', $product->getKey())
+            ->firstOrFail();
+
+        $this->assertSame(CooperativeOrderStatus::CANCELLED, $suborder->status);
+        $this->assertSame(OrderStatus::CANCELLED, $order->status);
+        $this->assertSame('10.000', $stock->quantity_on_hand);
+        $this->assertSame('0.000', $stock->quantity_reserved);
+    }
 
     private function stockFor(Cooperative $cooperative, Product $product): void
     {
