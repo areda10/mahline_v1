@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Notifications\Listeners;
 
-use App\Domains\Identity\Notifications\InventoryStockAlertNotificationDispatcher;
+use App\Shared\Contracts\InventoryAlertNotificationDispatcher;
 use App\Domains\Inventory\Events\InventoryDomainEvent;
 
 final class DispatchInventoryStockAlert
 {
     public function __construct(
-        private readonly InventoryStockAlertNotificationDispatcher $dispatcher,
+        private readonly InventoryAlertNotificationDispatcher $dispatcher,
     ) {}
 
     public function handle(InventoryDomainEvent $event): void
