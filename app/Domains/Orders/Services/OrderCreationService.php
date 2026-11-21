@@ -5,6 +5,12 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
+use App\Domains\Inventory\Contracts\InventoryReservationManager;
+use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
+use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
+use App\Domains\Inventory\DTOs\InventoryReservationLineData;
+use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderItemStatus;
 use App\Domains\Orders\Enums\OrderStatus;
@@ -21,7 +27,61 @@ final class OrderCreationService
 {
     public function __construct(
         private readonly CheckoutCatalog $products,
+        private readonly InventoryCheckoutAvailabilityReader $inventoryAvailability,
+        private readonly InventoryReservationManager $inventoryReservations,
     ) {}
+
+    /**
+     * Return the stock preview that must be shown to the customer before finalization.
+     * The preview never exposes physical or reserved quantities.
+     *
+     * @param array{items: array<int, array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}>} $checkout
+     */
+    public function previewFromCheckout(array $checkout): InventoryCheckoutPreview
+    {
+        $items = $checkout['items'] ?? null;
+        if (! is_array($items) || $items === []) {
+            throw ValidationException::withMessages([
+                'checkout' => ['Au moins un article est obligatoire.'],
+            ]);
+        }
+
+        $lines = [];
+        foreach ($items as $index => $input) {
+            if (! is_array($input) || empty($input['product_id'])) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.product_id" => ['Le produit est obligatoire.'],
+                ]);
+            }
+
+            $productData = $this->products->resolveForCheckout(
+                (string) $input['product_id'],
+                empty($input['product_variant_id']) ? null : (string) $input['product_variant_id'],
+            );
+
+            if ($productData === null
+                || ($productData->variantRequested && ! $productData->variantFound)
+                || (! $productData->variantRequested && $productData->hasVariants)
+                || $productData->unitCode === null) {
+                throw ValidationException::withMessages([
+                    "items.{$index}" => ['Le produit, sa variante ou son unité de stock est indisponible.'],
+                ]);
+            }
+
+            $quantity = $this->quantityToMilli($input['quantity'] ?? null, $index);
+            $variant = $productData->variantId !== null;
+            $lines[] = new InventoryCheckoutLineData(
+                lineKey: (string) $index,
+                cooperativeId: $productData->cooperativeId,
+                stockableType: $variant ? InventoryStockableType::VARIANT : InventoryStockableType::PRODUCT,
+                stockableId: $variant ? $productData->variantId : $productData->productId,
+                quantity: $this->formatQuantity($quantity),
+                unitCode: $productData->unitCode,
+            );
+        }
+
+        return $this->inventoryAvailability->preview($lines);
+    }
 
     /**
      * Persist a complete multi-cooperative order from checkout intent.
@@ -35,7 +95,12 @@ final class OrderCreationService
      *     items: array<int, array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}>
      * } $checkout
      */
-    public function createFromCheckout(User $customer, array $checkout): Order
+    public function createFromCheckout(
+        User $customer,
+        array $checkout,
+        ?string $idempotencyKey = null,
+        ?string $acceptedInventoryFingerprint = null,
+    ): Order
     {
         $address = $checkout['delivery_address_snapshot'] ?? null;
         $items = $checkout['items'] ?? null;
@@ -46,7 +111,17 @@ final class OrderCreationService
             ]);
         }
 
-        return DB::transaction(function () use ($customer, $address, $items): Order {
+        $idempotencyKey = trim($idempotencyKey ?? (string) ($checkout['idempotency_key'] ?? ''));
+        if ($idempotencyKey === '') {
+            $idempotencyKey = (string) Str::ulid();
+        }
+        if (strlen($idempotencyKey) > 100) {
+            throw ValidationException::withMessages([
+                'checkout.idempotency_key' => ['La clé d’idempotence du checkout est trop longue.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($customer, $address, $items, $idempotencyKey, $acceptedInventoryFingerprint): Order {
             $prepared = [];
             $cooperativeTotals = [];
 
@@ -137,6 +212,7 @@ final class OrderCreationService
                 ];
 
                 $prepared[] = [
+                    'line_key' => (string) $index,
                     'cooperative_id' => $cooperativeId,
                     'product_id' => $productData->productId,
                     'product_variant_id' => $productData->variantId,
@@ -150,6 +226,78 @@ final class OrderCreationService
                 $cooperativeTotals[$cooperativeId] = ($cooperativeTotals[$cooperativeId] ?? 0) + $lineCents;
             }
 
+            $previewLines = array_map(
+                fn (array $line): InventoryCheckoutLineData => new InventoryCheckoutLineData(
+                    lineKey: $line['line_key'],
+                    cooperativeId: $line['cooperative_id'],
+                    stockableType: $line['product_variant_id'] === null ? InventoryStockableType::PRODUCT : InventoryStockableType::VARIANT,
+                    stockableId: $line['product_variant_id'] ?? $line['product_id'],
+                    quantity: $line['quantity'],
+                    unitCode: $line['unit'],
+                ),
+                $prepared,
+            );
+            $preview = $this->inventoryAvailability->preview($previewLines);
+            $unavailableCooperativeIds = $preview->unavailableCooperativeIds();
+
+            if ($acceptedInventoryFingerprint !== null
+                && ! hash_equals($preview->fingerprint, $acceptedInventoryFingerprint)) {
+                throw ValidationException::withMessages([
+                    'inventory_preview' => ['La disponibilité a changé depuis le récapitulatif. Veuillez actualiser le checkout avant de confirmer.'],
+                ]);
+            }
+
+            if ($unavailableCooperativeIds !== [] && $acceptedInventoryFingerprint === null) {
+                throw ValidationException::withMessages([
+                    'inventory_preview' => ['Certaines coopératives ne disposent plus du stock demandé. Présentez les exclusions au client et obtenez sa confirmation avant de finaliser.'],
+                ]);
+            }
+
+            $prepared = array_values(array_filter(
+                $prepared,
+                static fn (array $line): bool => ! in_array($line['cooperative_id'], $unavailableCooperativeIds, true),
+            ));
+            if ($prepared === []) {
+                throw ValidationException::withMessages([
+                    'inventory_preview' => ['Aucun article ne peut être réservé.'],
+                ]);
+            }
+
+            $cooperativeTotals = [];
+            foreach ($prepared as $line) {
+                $cooperativeTotals[$line['cooperative_id']] = ($cooperativeTotals[$line['cooperative_id']] ?? 0) + $line['line_cents'];
+            }
+
+            $checkoutRequestHash = hash('sha256', json_encode([
+                'customer_id' => (string) $customer->getKey(),
+                'address' => $address,
+                'lines' => array_map(static fn (array $line): array => [
+                    'line_key' => $line['line_key'],
+                    'cooperative_id' => $line['cooperative_id'],
+                    'product_id' => $line['product_id'],
+                    'product_variant_id' => $line['product_variant_id'],
+                    'quantity' => $line['quantity'],
+                    'unit' => $line['unit'],
+                    'unit_price' => $line['unit_price'],
+                ], $prepared),
+                'preview_fingerprint' => $preview->fingerprint,
+                'excluded_cooperative_ids' => $unavailableCooperativeIds,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+            $existingOrder = Order::query()
+                ->where('checkout_idempotency_key', $idempotencyKey)
+                ->lockForUpdate()
+                ->first();
+            if ($existingOrder !== null) {
+                if (! hash_equals((string) $existingOrder->checkout_request_hash, $checkoutRequestHash)) {
+                    throw ValidationException::withMessages([
+                        'checkout.idempotency_key' => ['Cette clé a déjà été utilisée pour un autre checkout.'],
+                    ]);
+                }
+
+                return $existingOrder->load(['cooperativeOrders.items']);
+            }
+
             $itemsTotalCents = array_sum($cooperativeTotals);
             $order = Order::query()->create([
                 'customer_id' => (string) $customer->getKey(),
@@ -160,6 +308,9 @@ final class OrderCreationService
                 'delivery_total' => '0.00',
                 'grand_total' => $this->formatMoney($itemsTotalCents),
                 'delivery_address_snapshot' => $address,
+                'checkout_idempotency_key' => $idempotencyKey,
+                'checkout_request_hash' => $checkoutRequestHash,
+                'inventory_excluded_cooperative_ids' => $unavailableCooperativeIds,
                 'placed_at' => now(),
             ]);
             $order->forceFill(['created_by' => (string) $customer->getKey()])->save();
@@ -197,6 +348,7 @@ final class OrderCreationService
                 );
             }
 
+            $reservationLinesByCooperative = [];
             foreach ($prepared as $line) {
                 $orderItem = OrderItem::query()->create([
                     'cooperative_order_id' => (string) $cooperativeOrders[$line['cooperative_id']]->getKey(),
@@ -213,6 +365,24 @@ final class OrderCreationService
                     'status' => OrderItemStatus::ACTIVE,
                 ]);
                 $orderItem->forceFill(['created_by' => (string) $customer->getKey()])->save();
+                $reservationLinesByCooperative[$line['cooperative_id']][] = new InventoryReservationLineData(
+                    orderItemId: (string) $orderItem->getKey(),
+                    stockableType: $line['product_variant_id'] === null ? InventoryStockableType::PRODUCT : InventoryStockableType::VARIANT,
+                    stockableId: $line['product_variant_id'] ?? $line['product_id'],
+                    quantity: $line['quantity'],
+                    unitCode: $line['unit'],
+                );
+            }
+
+            foreach ($cooperativeOrders as $cooperativeId => $cooperativeOrder) {
+                $reservationKey = hash('sha256', $idempotencyKey.'|'.$cooperativeOrder->getKey().'|reserve');
+                $this->inventoryReservations->reserveForSuborder(
+                    (string) $cooperativeOrder->getKey(),
+                    (string) $cooperativeId,
+                    $reservationLinesByCooperative[$cooperativeId],
+                    $reservationKey,
+                    (string) $customer->getKey(),
+                );
             }
 
             return $order->load(['cooperativeOrders.items']);
