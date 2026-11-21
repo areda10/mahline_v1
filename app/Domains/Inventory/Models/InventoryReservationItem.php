@@ -31,6 +31,13 @@ final class InventoryReservationItem extends BaseModel
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory historical records cannot be deleted.');
+        });
+    }
+
     public function reservation(): BelongsTo
     {
         return $this->belongsTo(InventoryReservation::class, 'reservation_id');
