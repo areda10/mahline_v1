@@ -236,17 +236,20 @@ final class CooperativeOrderResponseService
         $confirmed = $statuses->filter(
             static fn (string $status): bool => $status === CooperativeOrderStatus::CONFIRMED->value,
         )->count();
-        $refused = $statuses->filter(
-            static fn (string $status): bool => $status === CooperativeOrderStatus::REFUSED->value,
+        $closed = $statuses->filter(
+            static fn (string $status): bool => in_array($status, [
+                CooperativeOrderStatus::REFUSED->value,
+                CooperativeOrderStatus::EXPIRED->value,
+            ], true),
         )->count();
         $total = $statuses->count();
 
         $next = match (true) {
             $total > 0 && $confirmed === $total => OrderStatus::CONFIRMED,
-            $total > 0 && $refused === $total => OrderStatus::REFUSED,
-            $confirmed > 0 && $refused > 0 => OrderStatus::PARTIALLY_REFUSED,
+            $total > 0 && $closed === $total => OrderStatus::REFUSED,
+            $confirmed > 0 && $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
             $confirmed > 0 => OrderStatus::PARTIALLY_CONFIRMED,
-            $refused > 0 => OrderStatus::PARTIALLY_REFUSED,
+            $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
             default => $order->status,
         };
 
