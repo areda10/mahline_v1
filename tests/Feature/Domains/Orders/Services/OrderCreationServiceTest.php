@@ -213,7 +213,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
-            'idempotency_key' => 'undefined',
+            'idempotency_key' => 'test-order-creation-06',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
