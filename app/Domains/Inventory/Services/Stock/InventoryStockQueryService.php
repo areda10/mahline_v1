@@ -95,11 +95,13 @@ final class InventoryStockQueryService extends BaseService
     /** @return array<string, string> */
     private function present(InventoryStock $stock): array
     {
-        $available = $this->milli($stock->quantity_on_hand)
+        $available = $stock->active_count_session_id !== null ? 0 : (
+            $this->milli($stock->quantity_on_hand)
             - $this->milli($stock->quantity_reserved_normal)
             - $this->milli($stock->quantity_quarantined)
             + $this->milli($stock->quantity_quarantine_authorized)
-            - $this->milli($stock->quantity_reserved_quarantine);
+            - $this->milli($stock->quantity_reserved_quarantine)
+        );
 
         return [
             'id' => (string) $stock->getKey(),
