@@ -9,7 +9,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
-use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
+use App\Shared\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
