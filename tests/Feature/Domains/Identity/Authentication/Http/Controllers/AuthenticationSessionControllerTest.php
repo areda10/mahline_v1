@@ -609,9 +609,13 @@ final class AuthenticationSessionControllerTest extends TestCase
      */
     private function actor(string $roleSlug, array $permissions = []): User
     {
-        $actor = User::factory()->create([
-            'status' => UserStatus::Active,
-        ]);
+        $attributes = ['status' => UserStatus::Active];
+        if (in_array($roleSlug, ['cooperative_admin', 'user'], true)) {
+            $cooperative = Cooperative::factory()->active()->create();
+            $attributes['cooperative_id'] = $cooperative->getKey();
+        }
+
+        $actor = User::factory()->create($attributes);
 
         $role = Role::query()->firstOrCreate(
             ['slug' => $roleSlug],
