@@ -42,6 +42,7 @@ use App\Domains\Inventory\Http\Controllers\InventoryWorkspaceController;
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
+use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -87,7 +88,17 @@ Route::prefix('authentication')
 Route::prefix('customer')
     ->name('customer.')
     ->group(function (): void {
-        Route::middleware('guest')->group(function (): void {
+        Route::middleware([
+    'auth',
+    EnsureActiveAuthenticationSession::class,
+    'role:super_admin_root,super_admin,cooperative_admin,user,customer',
+])->prefix('orders')->name('orders.')->group(function (): void {
+    Route::get('{orderId}/availability', [OrderAvailabilityController::class, 'show'])
+        ->whereUlid('orderId')
+        ->name('availability.show');
+});
+
+Route::middleware('guest')->group(function (): void {
             Route::get('login', [AuthenticationController::class, 'showCustomerLogin'])
                 ->name('login');
             Route::post('login', [AuthenticationController::class, 'loginCustomer'])
