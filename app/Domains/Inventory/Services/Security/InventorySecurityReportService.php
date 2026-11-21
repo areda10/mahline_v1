@@ -50,6 +50,10 @@ final class InventorySecurityReportService extends BaseService implements Invent
             }
         }
 
+        if ($cooperativeOrderId !== null && ! Str::isUlid($cooperativeOrderId)) {
+            throw new InvalidArgumentException('The cooperative order reference must be a valid ULID.');
+        }
+
         $actor = $this->actors->forUserId($actorId);
         if (! $actor->authorized || ! $actor->hasPermission('inventory.security_reports.create')) {
             throw new AuthorizationException('The actor cannot create an Inventory security report.');
@@ -68,6 +72,10 @@ final class InventorySecurityReportService extends BaseService implements Invent
             $actor,
             $evidenceFiles,
         ): string {
+            if ($cooperativeOrderId !== null) {
+                $this->safetyHolds->assertCooperativeOrderScope($cooperativeOrderId, $cooperativeId);
+            }
+
             $report = InventorySecurityReport::query()->create([
                 'cooperative_id' => $cooperativeId,
                 'cooperative_order_id' => $cooperativeOrderId,
