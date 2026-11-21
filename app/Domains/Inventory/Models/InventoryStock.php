@@ -47,6 +47,13 @@ final class InventoryStock extends BaseModel
         });
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory historical records cannot be deleted.');
+        });
+    }
+
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class, 'stock_id')
