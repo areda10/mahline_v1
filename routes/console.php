@@ -42,3 +42,8 @@ Schedule::command('inventory:publish-outbox')
 Schedule::command('inventory:reconcile-alerts')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+
+Schedule::command('inventory:escalate-security-reports')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
