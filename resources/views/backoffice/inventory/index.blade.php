@@ -380,6 +380,25 @@
                                        href="{{ route('inventory.security-reports.show', ['reportId' => $report->getKey()]) }}">
                                         Détails JSON
                                     </a>
+                                    @if($canManageSecurityReports && $report->status !== 'closed')
+                                        <form method="POST"
+                                              action="{{ route('inventory.security-reports.close', ['reportId' => $report->getKey()]) }}"
+                                              data-inventory-security-report-action
+                                              data-http-method="PATCH">
+                                            @csrf
+                                            <input name="reason" type="text" maxlength="500" required placeholder="Motif de clôture">
+                                            <button class="button button-small" type="submit">Clôturer</button>
+                                        </form>
+                                    @elseif($canManageSecurityReports && $report->status === 'closed')
+                                        <form method="POST"
+                                              action="{{ route('inventory.security-reports.reopen', ['reportId' => $report->getKey()]) }}"
+                                              data-inventory-security-report-action
+                                              data-http-method="PATCH">
+                                            @csrf
+                                            <input name="reason" type="text" maxlength="500" required placeholder="Motif de réouverture">
+                                            <button class="button button-small" type="submit">Réouvrir</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -469,6 +488,42 @@
             } catch (error) {
                 window.alert(error.message || 'Une erreur est survenue.');
                 button.disabled = false;
+            }
+        });
+    });
+    </script>
+    <script>
+    document.querySelectorAll('[data-inventory-security-report-action]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
+
+            try {
+                const payload = Object.fromEntries(new FormData(form).entries());
+                delete payload._token;
+                const response = await fetch(form.action, {
+                    method: form.dataset.httpMethod || 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : (result.message || 'La décision de sécurité n’a pas pu être enregistrée.');
+                    throw new Error(message);
+                }
+
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message || 'Une erreur est survenue.');
+                if (button) button.disabled = false;
             }
         });
     });
