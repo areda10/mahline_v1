@@ -27,6 +27,7 @@ final class ProductVariantService
             $product,
             $attributes,
         ): ProductVariant {
+            $product = Product::query()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             $this->assertProductIsAvailable($product);
 
             // La conversion d'un produit simple avec unité/stock parent doit passer
@@ -80,9 +81,14 @@ final class ProductVariantService
             $variant,
             $attributes,
         ): ProductVariant {
-            $variant->loadMissing('product');
-
-            $product = $variant->product;
+            $variant = ProductVariant::query()
+                ->whereKey($variant->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+            $product = Product::query()
+                ->whereKey($variant->product_id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
             if ($product !== null && $product->unit_id !== null) {
                 throw ValidationException::withMessages([
