@@ -15,6 +15,9 @@ use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Models\InventoryIdempotencyRecord;
 use App\Domains\Inventory\Models\InventoryMovement;
+use App\Domains\Inventory\Models\InventoryQuarantine;
+use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
+use App\Domains\Inventory\Models\InventoryReservationAllocation;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventoryReservation;
 use App\Domains\Inventory\Models\InventoryReservationItem;
@@ -133,6 +136,48 @@ final class InventoryReservationService extends BaseService implements Inventory
                     );
                 }
 
+                $quarantineAllocations = [];
+                if ($quarantineQuantity > 0) {
+                    $authorizations = InventoryQuarantineAuthorization::query()
+                        ->where('stock_id', $stock->getKey())
+                        ->where('status', 'active')
+                        ->orderBy('authorized_at')
+                        ->orderBy('id')
+                        ->lockForUpdate()
+                        ->get();
+
+                    $remainingToAllocate = $quarantineQuantity;
+                    foreach ($authorizations as $authorization) {
+                        $authorizationAvailable = $this->milli($authorization->quantity_remaining)
+                            - $this->milli($authorization->quantity_reserved);
+                        if ($authorizationAvailable <= 0) {
+                            continue;
+                        }
+
+                        $allocation = min($remainingToAllocate, $authorizationAvailable);
+                        $authorization->quantity_reserved = $this->formatMilli(
+                            $this->milli($authorization->quantity_reserved) + $allocation,
+                        );
+                        $authorization->save();
+
+                        $quarantineAllocations[] = [
+                            'authorization_id' => (string) $authorization->getKey(),
+                            'quantity_milli' => $allocation,
+                        ];
+                        $remainingToAllocate -= $allocation;
+
+                        if ($remainingToAllocate === 0) {
+                            break;
+                        }
+                    }
+
+                    if ($remainingToAllocate > 0) {
+                        throw new InventoryReservationConflict(
+                            'The aggregate quarantine availability has no matching active authorization ledger.',
+                        );
+                    }
+                }
+
                 $stock->quantity_reserved = $this->formatMilli(
                     $this->milli($stock->quantity_reserved) + $line['quantity_milli'],
                 );
@@ -145,7 +190,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 $stock->updated_by = $actor->id;
                 $stock->save();
 
-                InventoryReservationItem::query()->create([
+                $reservationItem = InventoryReservationItem::query()->create([
                     'reservation_id' => (string) $reservation->getKey(),
                     'stock_id' => (string) $stock->getKey(),
                     'order_item_id' => $line['order_item_id'],
@@ -154,6 +199,24 @@ final class InventoryReservationService extends BaseService implements Inventory
                     'quantity_quarantine' => $this->formatMilli($quarantineQuantity),
                     'unit_code' => $line['unit_code'],
                 ]);
+
+                if ($normalQuantity > 0) {
+                    InventoryReservationAllocation::query()->create([
+                        'reservation_item_id' => (string) $reservationItem->getKey(),
+                        'allocation_type' => 'normal',
+                        'quarantine_authorization_id' => null,
+                        'quantity' => $this->formatMilli($normalQuantity),
+                    ]);
+                }
+
+                foreach ($quarantineAllocations as $allocation) {
+                    InventoryReservationAllocation::query()->create([
+                        'reservation_item_id' => (string) $reservationItem->getKey(),
+                        'allocation_type' => 'quarantine_authorized',
+                        'quarantine_authorization_id' => $allocation['authorization_id'],
+                        'quantity' => $this->formatMilli($allocation['quantity_milli']),
+                    ]);
+                }
 
                 $this->recordMovement(
                     $stock,
