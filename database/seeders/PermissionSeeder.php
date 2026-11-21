@@ -85,6 +85,7 @@ final class PermissionSeeder extends Seeder
             'inventory.security_reports.manage' => 'Traiter les signalements de sécurité',
             'inventory.security_reports.close' => 'Clôturer les signalements de sécurité',
             'inventory.security_reports.reopen' => 'Réouvrir les signalements de sécurité',
+            'orders.safety_holds.resolve' => 'Décider de la reprise ou de l’annulation après un blocage de sécurité',
         ];
 
         foreach ($permissions as $slug => $name) {
