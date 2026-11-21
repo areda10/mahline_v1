@@ -91,7 +91,7 @@
             <tbody>
                 @forelse($countSessions as $session)
                     @foreach($session->items as $item)
-                        <tr><td>{{ $session->getKey() }}</td><td>{{ $session->started_at?->format('d/m/Y H:i') }}</td><td>{{ $session->status }}</td><td>{{ $item->stock_id }}</td><td>{{ $item->theoretical_quantity }}</td><td>{{ $item->counted_quantity ?? '—' }}</td><td>{{ $item->difference_quantity ?? '—' }}</td><td>{{ $item->difference_reason }}</td></tr>
+                        <tr><td>{{ $session->getKey() }}</td><td>{{ $session->started_at?->format('d/m/Y H:i') }}</td><td>{{ $session->status }}</td><td>{{ $item->stock_id }}</td><td>{{ $item->expected_quantity }}</td><td>{{ $item->counted_quantity ?? '—' }}</td><td>{{ $item->difference_quantity ?? '—' }}</td><td>{{ $item->difference_reason }}</td></tr>
                     @endforeach
                 @empty
                     <tr><td colspan="8">Aucune session d’inventaire.</td></tr>
