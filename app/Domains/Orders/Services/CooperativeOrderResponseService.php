@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
@@ -15,6 +16,9 @@ use Illuminate\Validation\ValidationException;
 
 final class CooperativeOrderResponseService
 {
+    public function __construct(
+        private readonly InventoryReservationManager $inventoryReservations,
+    ) {}
     public function confirmByCooperative(CooperativeOrder $cooperativeOrder, User $actor): CooperativeOrder
     {
         return $this->respond($cooperativeOrder, $actor, true, null, false);
@@ -25,6 +29,12 @@ final class CooperativeOrderResponseService
         User $actor,
         string $reason,
     ): CooperativeOrder {
+        if (trim($reason) === '') {
+            throw ValidationException::withMessages([
+                'reason' => ['Le motif du refus est obligatoire.'],
+            ]);
+        }
+
         return $this->respond($cooperativeOrder, $actor, false, $reason, false);
     }
 
@@ -148,6 +158,27 @@ final class CooperativeOrderResponseService
 
             if (! $administrative && ! $this->canRespondForCooperative($actor, $locked)) {
                 abort(403);
+            }
+
+            if ($locked->response_deadline_at !== null && $locked->response_deadline_at->lessThanOrEqualTo(now())) {
+                throw ValidationException::withMessages([
+                    'cooperative_order' => ['Le délai de réponse de 24 heures est expiré. Cette sous-commande ne peut plus être confirmée ni refusée.'],
+                ]);
+            }
+
+            if ($accept) {
+                $this->inventoryReservations->consumeForSuborder(
+                    (string) $locked->getKey(),
+                    hash('sha256', (string) $locked->getKey().'|consume|v1'),
+                    (string) $actor->getKey(),
+                );
+            } else {
+                $this->inventoryReservations->releaseForSuborder(
+                    (string) $locked->getKey(),
+                    hash('sha256', (string) $locked->getKey().'|release|v1'),
+                    trim((string) $reason),
+                    (string) $actor->getKey(),
+                );
             }
 
             $fromStatus = $locked->status->value;
