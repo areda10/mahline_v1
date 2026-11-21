@@ -38,6 +38,7 @@ use App\Domains\Inventory\Http\Controllers\InventoryReportController;
 use App\Domains\Inventory\Http\Controllers\InventorySecurityReportController;
 use App\Domains\Inventory\Http\Controllers\InventoryStockController;
 use App\Domains\Inventory\Http\Controllers\InventoryThresholdController;
+use App\Domains\Inventory\Http\Controllers\InventoryWorkspaceController;
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
@@ -790,6 +791,7 @@ Route::middleware([
     EnsureActiveAuthenticationSession::class,
     'role:super_admin_root,super_admin,cooperative_admin,user',
 ])->prefix('backoffice/inventory')->name('backoffice.inventory.')->group(function (): void {
+    Route::get('/', InventoryWorkspaceController::class)->name('index');
     Route::get('/stocks', [InventoryStockController::class, 'index'])
         ->name('stocks.index.all');
     Route::get('/cooperatives/{cooperativeId}/stocks', [InventoryStockController::class, 'index'])
