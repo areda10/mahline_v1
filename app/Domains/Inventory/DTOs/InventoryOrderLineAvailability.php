@@ -9,6 +9,7 @@ final readonly class InventoryOrderLineAvailability
     public function __construct(
         public string $orderItemId,
         public string $quantity,
+        public string $unitCode,
         public bool $available,
     ) {}
 }
