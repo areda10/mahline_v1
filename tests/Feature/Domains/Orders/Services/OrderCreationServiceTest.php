@@ -51,6 +51,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->stock($cooperativeB, 'product', (string) $productB->getKey(), 'kg', '10.000');
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-order-creation-01',
             'delivery_address_snapshot' => [
                 'street' => 'Avenue Hassan II',
                 'city' => 'Casablanca',
@@ -114,6 +115,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->stock($cooperative, 'variant', (string) $variant->getKey(), 'ml', '10.000');
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-order-creation-02',
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
@@ -134,6 +136,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-order-creation-03',
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $unpriced->getKey(),
@@ -160,6 +163,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-order-creation-04',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
@@ -186,6 +190,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-order-creation-05',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
@@ -208,6 +213,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->expectException(\Illuminate\Validation\ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'undefined',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
