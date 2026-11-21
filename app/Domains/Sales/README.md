@@ -20,15 +20,17 @@ Sales ne possède ni le catalogue et les prix de référence (Products), ni le s
 - Fusion transactionnelle du panier invité vers le panier client, avec addition des lignes de même empreinte commerciale.
 - Limite technique de 100 unités par ligne appliquée côté service.
 - Lecture des données produit via le contrat public `CheckoutCatalog` ; aucun import de modèle Products.
+- Contrôle du statut actif/non supprimé de la coopérative via `CooperativeStatusReader` avant tout nouvel ajout au panier.
+- Précision validée : `DECIMAL(15,3)` ; validation HTTP et service limitées à trois décimales.
 
 ## Limites actuelles
 
-- La précision de quantité à trois décimales est provisoire et doit être confirmée au regard du paramètre technique encore ouvert dans SALES-019.
 - Le contrat Products actuel ne donne pas encore l'état détaillé des produits supprimés/désactivés, les limites commerciales ni la version des caractéristiques commerciales. La synchronisation complète des lignes historiques reste donc à intégrer.
 - Les contrats publics de snapshot d'adresse, de création de commande et de calcul de livraison doivent être stabilisés avant le checkout complet.
 - Promotions, coupons et devis ne sont pas implémentés : leurs règles ne sont pas entièrement arbitrées dans la spécification.
-- Aucun contrôleur, route ou écran n'est encore déclaré livré.
+- Contrôleur JSON et routes panier déclarés (`sales.cart.show`, `sales.cart.items.store`, `sales.cart.items.update`, `sales.cart.items.destroy`, `sales.cart.clear`). Les écrans Blade/UI restent à réaliser.
+- La synchronisation des lignes déjà présentes lors d'une désactivation/réactivation de produit ou coopérative, ainsi que l'acceptation explicite des changements de prix et caractéristiques, restent à intégrer.
 
 ## Migrations et tests
 
-Les migrations Sales sont chargées par `SalesServiceProvider`, enregistré dans `bootstrap/providers.php`. Les tests du domaine doivent couvrir notamment la concurrence/version, les limites, la fusion, l'expiration et les frontières inter-domaines.
+Les migrations Sales sont chargées par `SalesServiceProvider`, enregistré dans `bootstrap/providers.php`. Les tests du domaine couvrent le jeton invité, l'expiration, la précision à trois décimales, les limites, la version, la fusion et la conservation logique. La suite complète doit encore être remise au vert.
