@@ -322,6 +322,52 @@ final class InventoryReservationService extends BaseService implements Inventory
                 $normal = $this->milli($item->quantity_normal);
                 $quarantine = $this->milli($item->quantity_quarantine);
 
+                $quarantineAllocations = InventoryReservationAllocation::query()
+                    ->where('reservation_item_id', $item->getKey())
+                    ->where('allocation_type', 'quarantine_authorized')
+                    ->orderBy('quarantine_authorization_id')
+                    ->get();
+                $allocatedQuarantine = 0;
+
+                foreach ($quarantineAllocations as $allocation) {
+                    $authorization = InventoryQuarantineAuthorization::query()
+                        ->whereKey($allocation->quarantine_authorization_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $batch = InventoryQuarantine::query()
+                        ->whereKey($authorization->quarantine_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $allocationQuantity = $this->milli($allocation->quantity);
+                    $allocatedQuarantine += $allocationQuantity;
+
+                    $authorization->quantity_reserved = $this->formatMilli(
+                        $this->milli($authorization->quantity_reserved) - $allocationQuantity,
+                    );
+                    $authorization->quantity_remaining = $this->formatMilli(
+                        $this->milli($authorization->quantity_remaining) - $allocationQuantity,
+                    );
+                    if ($authorization->status === 'active' && $this->milli($authorization->quantity_remaining) === 0) {
+                        $authorization->status = 'exhausted';
+                    }
+                    $authorization->save();
+
+                    $batch->quantity_remaining = $this->formatMilli(
+                        $this->milli($batch->quantity_remaining) - $allocationQuantity,
+                    );
+                    $batch->quantity_authorized = $this->formatMilli(
+                        $this->milli($batch->quantity_authorized) - $allocationQuantity,
+                    );
+                    if ($this->milli($batch->quantity_remaining) === 0) {
+                        $batch->status = 'exhausted';
+                    }
+                    $batch->save();
+                }
+
+                if ($allocatedQuarantine !== $quarantine) {
+                    throw new InventoryReservationConflict('The reservation quarantine allocations do not match the reserved quantity.');
+                }
+
                 $stock->quantity_on_hand = $this->formatMilli($this->milli($stock->quantity_on_hand) - $quantity);
                 $stock->quantity_reserved = $this->formatMilli($this->milli($stock->quantity_reserved) - $quantity);
                 $stock->quantity_reserved_normal = $this->formatMilli($this->milli($stock->quantity_reserved_normal) - $normal);
