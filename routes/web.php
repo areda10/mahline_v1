@@ -665,6 +665,8 @@ Route::prefix('cooperatives/{cooperativeId}/inventory')
         Route::post('/counts', [InventoryOperationsController::class, 'createCount'])->name('counts.store');
         Route::put('/counts/items/{countItemId}', [InventoryOperationsController::class, 'recordCount'])
             ->whereUlid('countItemId')->name('counts.items.update');
+        Route::get('/counts/{sessionId}', [InventoryOperationsController::class, 'showCountSession'])
+            ->whereUlid('sessionId')->name('counts.show');
         Route::post('/counts/{sessionId}/validate', [InventoryOperationsController::class, 'validateCount'])
             ->whereUlid('sessionId')->name('counts.validate');
         Route::post('/counts/{sessionId}/cancel', [InventoryOperationsController::class, 'cancelCount'])
