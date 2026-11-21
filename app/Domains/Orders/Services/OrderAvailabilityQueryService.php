@@ -69,7 +69,6 @@ final class OrderAvailabilityQueryService extends BaseService
                 'cooperative_order_id' => (string) $suborder->getKey(),
                 'cooperative_id' => (string) $suborder->cooperative_id,
                 'available' => $available,
-                'reservation_status' => $inventory->reservationStatus,
                 'lines' => $isMultiCooperative ? [] : $lines,
             ];
         })->all();
