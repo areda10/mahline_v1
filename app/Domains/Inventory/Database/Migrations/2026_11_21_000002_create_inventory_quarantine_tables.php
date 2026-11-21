@@ -66,9 +66,10 @@ return new class extends Migration
                 ->constrained('inventory_reservation_items')
                 ->restrictOnDelete();
             $table->string('allocation_type', 32);
-            $table->foreignUlid('quarantine_authorization_id')
-                ->nullable()
-                ->constrained('inventory_quarantine_authorizations')
+            $table->ulid('quarantine_authorization_id')->nullable();
+            $table->foreign('quarantine_authorization_id', 'inv_res_alloc_auth_fk')
+                ->references('id')
+                ->on('inventory_quarantine_authorizations')
                 ->restrictOnDelete();
             $table->decimal('quantity', 15, 3);
             $table->timestamps();
