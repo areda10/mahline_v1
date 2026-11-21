@@ -12,6 +12,7 @@ use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\Contracts\InventoryCountManager;
 use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
+use App\Domains\Inventory\Contracts\InventoryOrderAvailabilityReader;
 use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Contracts\InventoryThresholdManager;
@@ -20,6 +21,7 @@ use App\Domains\Inventory\Services\Counts\InventoryCountService;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineService;
 use App\Domains\Inventory\Services\Reservations\InventoryCheckoutAvailabilityService;
 use App\Domains\Inventory\Services\Reservations\InventoryReservationService;
+use App\Domains\Inventory\Services\Reservations\InventoryOrderAvailabilityService;
 use App\Domains\Inventory\Services\Security\InventorySecurityReportService;
 use App\Domains\Inventory\Services\Stock\InventoryStockService;
 use App\Domains\Inventory\Services\Stock\InventoryStockUnitChangeGuardService;
@@ -31,6 +33,7 @@ final class InventoryServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(InventoryReservationManager::class, InventoryReservationService::class);
+        $this->app->bind(InventoryOrderAvailabilityReader::class, InventoryOrderAvailabilityService::class);
         $this->app->bind(InventoryCheckoutAvailabilityReader::class, InventoryCheckoutAvailabilityService::class);
         $this->app->bind(InventoryStockManager::class, InventoryStockService::class);
         $this->app->bind(StockUnitChangeGuard::class, InventoryStockUnitChangeGuardService::class);
