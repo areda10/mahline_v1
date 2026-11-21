@@ -139,11 +139,11 @@ final class InventoryCountService extends BaseService implements InventoryCountM
         ?string $expectedSessionId = null,
     ): void {
         $initialItem = InventoryCountItem::query()->with('session')->findOrFail($countItemId);
+        $actor = $this->actors->forUserId($actorId);
+        $this->authorizeCounter($actor, (string) $initialItem->session->cooperative_id);
         if ($expectedSessionId !== null && (string) $initialItem->session_id !== $expectedSessionId) {
             throw new InventoryReservationConflict('The count item does not belong to the requested session.');
         }
-        $actor = $this->actors->forUserId($actorId);
-        $this->authorizeCounter($actor, (string) $initialItem->session->cooperative_id);
 
         DB::transaction(function () use ($countItemId, $countedQuantity, $reason, $actor, $initialItem, $expectedSessionId): void {
             $sessionQuery = InventoryCountSession::query()
