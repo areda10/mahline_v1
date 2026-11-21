@@ -8,8 +8,7 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Inventory\Contracts\InventoryStockUnitChangeGuard;
-use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Shared\Contracts\StockUnitChangeGuard;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
 use App\Domains\Products\DTOs\InventoryStockableData;
@@ -27,7 +26,7 @@ final class ProductService implements CheckoutCatalog
     public function __construct(
         private readonly ProductRepository $repository,
         private readonly AuditWriter $audit,
-        private readonly InventoryStockUnitChangeGuard $stockUnitGuard,
+        private readonly StockUnitChangeGuard $stockUnitGuard,
     ) {}
 
     public function resolveForCheckout(string $productId, ?string $variantId): ?CheckoutProductData
@@ -203,7 +202,7 @@ final class ProductService implements CheckoutCatalog
 
             if (! $hasVariants && $unitId !== $product->unit_id
                 && $this->stockUnitGuard->hasStockRecord(
-                    InventoryStockableType::PRODUCT,
+                    'product',
                     (string) $product->getKey(),
                 )) {
                 throw ValidationException::withMessages([
