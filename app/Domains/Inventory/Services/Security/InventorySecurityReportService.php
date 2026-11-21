@@ -202,6 +202,9 @@ final class InventorySecurityReportService extends BaseService implements Invent
         }
 
         $this->authorizeManager($actor, (string) $report->cooperative_id, 'inventory.security_reports.view');
+        if (! $actor->hasRole('super_admin_root')) {
+            $report->setRelation('attachments', collect());
+        }
 
         return $report;
     }
