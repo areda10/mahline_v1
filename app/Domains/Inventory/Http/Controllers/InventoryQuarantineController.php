@@ -7,11 +7,22 @@ namespace App\Domains\Inventory\Http\Controllers;
 use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Enums\InventoryInspectionResult;
 use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class InventoryQuarantineController
 {
+    public function index(Request $request, string $cooperativeId, InventoryQuarantineQueryService $quarantines): JsonResponse
+    {
+        return response()->json([
+            'data' => $quarantines->index(
+                $cooperativeId,
+                (string) $request->user()->getKey(),
+            ),
+        ]);
+    }
+
     public function receive(Request $request, string $cooperativeId, InventoryQuarantineManager $quarantines): JsonResponse
     {
         $data = $request->validate([
