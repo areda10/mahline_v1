@@ -18,6 +18,37 @@ final class InventoryCountQueryService extends BaseService
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
     ) {}
 
+    /** @return list<array<string, mixed>> */
+    public function sessionsForCooperative(string $cooperativeId, string $actorId): array
+    {
+        $actor = $this->actors->forUserId($actorId);
+        $canView = $actor->hasPermission('inventory.count.view')
+            || ($actor->hasRole('user') && $actor->hasPermission('inventory.count.perform'));
+
+        if (! $actor->authorized || ! $canView) {
+            throw new AuthorizationException('The actor cannot view physical inventory sessions.');
+        }
+
+        $this->authorize($actor, $cooperativeId);
+
+        return InventoryCountSession::query()
+            ->with(['items', 'participants'])
+            ->where('cooperative_id', $cooperativeId)
+            ->orderByDesc('started_at')
+            ->get()
+            ->map(static fn (InventoryCountSession $session): array => [
+                'id' => (string) $session->getKey(),
+                'cooperative_id' => (string) $session->cooperative_id,
+                'status' => (string) $session->status,
+                'started_at' => $session->started_at?->toISOString(),
+                'completed_at' => $session->completed_at?->toISOString(),
+                'items_count' => $session->items->count(),
+                'counted_items_count' => $session->items->whereNotNull('counted_quantity')->count(),
+                'participants_count' => $session->participants->count(),
+            ])
+            ->all();
+    }
+
     /** @return array<string, mixed> */
     public function show(string $sessionId, string $actorId): array
     {
