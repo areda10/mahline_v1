@@ -32,6 +32,22 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
     ) {}
 
+    public function assertSecurityReportCanReopen(?string $cooperativeOrderId): void
+    {
+        if ($cooperativeOrderId === null) {
+            return;
+        }
+
+        $order = CooperativeOrder::query()->findOrFail($cooperativeOrderId);
+        if (in_array($order->status, [
+            CooperativeOrderStatus::SHIPPED,
+            CooperativeOrderStatus::DELIVERED,
+            CooperativeOrderStatus::RETURNED,
+        ], true)) {
+            throw new OrderFulfillmentBlocked('V1 does not support reopening a security report linked to an already shipped suborder.');
+        }
+    }
+
     public function assertCooperativeOrderScope(string $cooperativeOrderId, string $cooperativeId): void
     {
         $cooperativeOrder = CooperativeOrder::query()->findOrFail($cooperativeOrderId);
