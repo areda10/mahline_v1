@@ -89,8 +89,8 @@
                                 <td>{{ $session['started_at'] ? \Illuminate\Support\Carbon::parse($session['started_at'])->format('d/m/Y H:i') : '—' }}</td>
                                 <td>
                                     <a class="button button-secondary button-small"
-                                       href="{{ route('backoffice.inventory.count-sessions.show', ['sessionId' => $session['id']]) }}">
-                                        Détails JSON
+                                       href="{{ route('backoffice.inventory.count-sessions.workspace', ['sessionId' => $session['id']]) }}">
+                                        Ouvrir la session
                                     </a>
                                 </td>
                             </tr>
