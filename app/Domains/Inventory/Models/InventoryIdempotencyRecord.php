@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
+use LogicException;
 
 final class InventoryIdempotencyRecord extends BaseModel
 {
