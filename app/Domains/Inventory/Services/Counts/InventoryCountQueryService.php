@@ -61,6 +61,7 @@ final class InventoryCountQueryService extends BaseService
             'status' => (string) $session->status,
             'started_at' => $session->started_at?->toISOString(),
             'completed_at' => $session->completed_at?->toISOString(),
+            'can_manage' => $managerView,
             'items' => $session->items->map(function ($item) use ($managerView): array {
                 $data = [
                     'id' => (string) $item->getKey(),
