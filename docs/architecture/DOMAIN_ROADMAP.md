@@ -52,12 +52,15 @@ Sur la branche `feature/Marketplace`, l'arborescence `app/Domains/` contient act
 - `Media`
 - `Orders`
 - `Products`
+- `Sales`
+- `Inventory`
+- `Delivery`
+- `Finance`
+- `Statistics`
 
-Cet inventaire décrit uniquement la présence de dossiers dans le dépôt au moment de cette mise à jour. Il ne constitue pas une validation fonctionnelle ou technique de ces domaines.
+Cet inventaire décrit la présence des dossiers racines dans le dépôt au moment de cette mise à jour. Pour Sales, Inventory, Delivery, Finance et Statistics, la présence correspond à un README de domaine et à une racine applicative ; elle ne signifie pas que les services métier, modèles, migrations, routes, policies ou providers sont implémentés.
 
-**Référence historique remplacée par le contrôle du 19 novembre 2026 :** branche `feature/Marketplace`, HEAD `befe78ab89cf7b2ab8dc4433c5a4c1ee6ff46930`, arbre Git récursif. Dix dossiers sont présents (186 fichiers applicatifs). Voir la section 9 pour les comptes par domaine et les écarts confirmés. Le domaine `Orders` est présent et ne doit plus être suivi comme absent. Le rapport `MAHLINE_V1_REPOSITORY_AUDIT.md` du 17 novembre est fondé sur un ancien HEAD (`184d10db20305fa60cdc6b1835f6a6a51bd5aa1d`) ; ses chiffres et conclusions de présence/absence ne sont pas la référence actuelle.
-
-Les documents d'architecture décrivent également des domaines ou périmètres prévus qui ne figurent pas dans cet inventaire, notamment `Inventory`, `Sales`, `Finance`, `Media`, `Communication` et `CMS`. Cette différence devra être traitée progressivement, sans créer de dossiers ni déplacer du code avant validation de leur périmètre.
+**Référence historique :** le contrôle du 19 novembre 2026 recensait dix domaines avant le scaffold Marketplace. Les cinq dossiers ajoutés ensuite sont documentés dans le journal A21. `Orders` était déjà présent et reste le propriétaire des commandes ; il ne doit pas être absorbé dans Sales.
 
 ## 3. Registre central des domaines
 
@@ -72,11 +75,11 @@ Les documents d'architecture décrivent également des domaines ou périmètres 
 | Audit | Journalisation métier, traçabilité et consultation sécurisée | Oui | À auditer indépendamment des simples colonnes techniques |
 | Dashboard | Présentation des indicateurs et vues de pilotage | Oui | À cadrer avec Statistics |
 | Media | Fichiers et ressources média transversales consommés par plusieurs domaines | Oui | Présent dans le dépôt ; audit V1 et tests à poursuivre |
-| Inventory | Stocks, mouvements, réservations, entrepôts et ajustements | Non | À planifier |
+| Inventory | Stocks, mouvements, réservations, quarantaine et disponibilité | Oui (README) | Domaine créé ; cadrage métier présent ; audit technique et conception à poursuivre |
 | Orders | Commandes client, lignes, sous-commandes coopératives et cycle de vie | Oui | Présent dans le dépôt ; audit métier/architecture à terminer et frontières avec Inventory, Delivery et Finance à consolider |
-| Delivery | Expédition, transport, tarifs, suivi, statuts et documents de livraison | Non | À cadrer : le document DOMAIN_BOUNDARIES place actuellement Delivery dans Sales |
-| Finance / Facturation | Factures client et coopérative, paiements, remboursements, commissions, reversements et transactions | Non | À planifier ; Finance est le domaine de référence prévu pour la facturation |
-| Statistics | Agrégation et analyse des indicateurs produits et, à terme, commandes, stocks, livraisons et ventes | Non | Domaine autonome approuvé — périmètre détaillé à définir |
+| Delivery | Transporteurs, tarifs, devis, missions, expéditions, suivi, preuves et retours | Oui (README) | Domaine créé ; spécification partielle ; arbitrages restants avant schéma et code |
+| Finance | Facturation, paiements, remboursements, commissions, rapprochements et reversements | Oui (README) | Domaine créé ; règles consolidées ; arbitrages fiscaux et audit avant implémentation |
+| Statistics | Définitions KPI, projections, agrégations et rapports analytiques | Oui (README) | Domaine créé ; spécification initiale existante ; catalogue KPI et accès à valider |
 | Communication | E-mails, notifications, modèles et suivi des envois | Non | À planifier selon l'architecture |
 | CMS | Pages, contenus éditoriaux et contenus administrables | Non | À planifier selon l'architecture |
 
@@ -101,17 +104,13 @@ Règles de séparation :
 
 **État :** décision d'autonomie validée ; spécification fonctionnelle et technique à cadrer.
 
-## 5. Points d'architecture à arbitrer avant gel
+## 5. Frontières d'architecture confirmées
 
-### 5.1 Orders et Delivery par rapport à Sales
+### 5.1 Sales, Orders et Delivery
 
-Le document `docs/framework/DOMAIN_BOUNDARIES.md` décrit actuellement `Sales` comme propriétaire de `Order`, `OrderItem` et `Delivery`. La présente feuille de route enregistre le souhait d'étudier `Orders` et `Delivery` comme domaines distincts.
+La séparation est désormais explicite : Sales possède le panier et le checkout précommande ; Orders possède la commande globale, les sous-commandes, les lignes et le cycle de vie commercial ; Delivery possède les missions, transporteurs, tarifs, expéditions, preuves et retours physiques. Aucun de ces domaines ne doit importer les modèles ou services privés des deux autres.
 
-Aucune séparation n'est considérée comme définitive à ce stade. Il faudra décider :
-- si `Sales` reste un domaine englobant ou si ses responsabilités sont réparties entre `Orders` et d'autres domaines ;
-- si `Delivery` devient autonome, avec ses propres modèles, statuts, tarifs et documents ;
-- comment représenter une commande contenant des produits de plusieurs coopératives (commande globale et sous-commandes / segments coopératifs) ;
-- quels contrats et événements relient Orders, Inventory, Delivery, Finance et Communication.
+Les contrats et événements nécessaires doivent être conçus et inscrits au registre avant intégration. La spécification Delivery fixe désormais le départage des transporteurs ex æquo au tarif minimal après 12 heures par la première acceptation valide, avec attribution atomique.
 
 ### 5.2 Facturation et Finance
 
@@ -1062,3 +1061,17 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 - Audit statique : aucun domaine/provider/migration/modèle/route/Policy/middleware Delivery n'existe au code consulté. Orders initialise encore les frais de livraison à zéro et ne possède pas de contrat Delivery intégré.
 - **État :** spécification Delivery initiale et audit des frontières documentés ; pas de code Delivery ni de migration créée ; aucun test runtime exécuté.
 - **Prochaine étape :** arbitrer les points bloquants Delivery et stabiliser les contrats Orders/Inventory/Localization/Identity/Media avant les migrations et l'implémentation Delivery.
+
+
+## 14. Journal A21 — création des cinq racines de domaines Marketplace (21 novembre 2026)
+
+À la suite de la demande de création des domaines, les racines suivantes ont été ajoutées sur `feature/Marketplace` avec un README de responsabilité et de frontières :
+- `app/Domains/Sales/README.md`
+- `app/Domains/Inventory/README.md`
+- `app/Domains/Delivery/README.md`
+- `app/Domains/Finance/README.md`
+- `app/Domains/Statistics/README.md`
+
+La spécification Delivery a été mise à jour : après 12 heures, si plusieurs transporteurs sont ex æquo au tarif minimal, le premier à enregistrer une acceptation valide obtient la mission. Le mécanisme devra être atomique et testé contre les courses concurrentes.
+
+Cette création est un scaffold documentaire/applicatif de racine, pas une implémentation métier. Aucun modèle, migration, service, contrôleur, route, Policy ou provider vide n'a été ajouté. Les providers seront enregistrés dans `bootstrap/providers.php` lorsque les premières liaisons réelles du domaine seront définies. Les tests PHP/Pint et l'exécution Laravel restent à faire localement.
