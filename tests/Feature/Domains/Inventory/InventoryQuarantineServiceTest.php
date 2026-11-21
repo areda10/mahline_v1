@@ -145,6 +145,88 @@ final class InventoryQuarantineServiceTest extends TestCase
         $this->assertSame('2.000', $stock->quantity_quarantined);
     }
 
+    public function test_consuming_a_quarantine_sale_decrements_the_quarantine_batch_and_authorization(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $customer = $this->userWithRole('customer');
+        $stockableId = (string) Str::ulid();
+        $stock = InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => InventoryStockableType::PRODUCT->value,
+            'stockable_id' => $stockableId,
+            'unit_code' => 'kg',
+            'quantity_on_hand' => '10.000',
+        ]);
+
+        $quarantineId = app(InventoryQuarantineManager::class)->receiveReturn(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::PRODUCT,
+            $stockableId,
+            '2.000',
+            'customer_return',
+            (string) Str::ulid(),
+            'Retour isolé avant inspection.',
+            (string) $admin->getKey(),
+            'test-quarantine-consume-receive-01',
+        );
+
+        app(InventoryQuarantineManager::class)->inspect(
+            $quarantineId,
+            InventoryInspectionResult::NON_COMPLIANT,
+            'Vente conditionnelle autorisée sous responsabilité de la coopérative.',
+            (string) $admin->getKey(),
+            'test-quarantine-consume-inspect-01',
+        );
+
+        $authorizationId = app(InventoryQuarantineManager::class)->authorizeSale(
+            $quarantineId,
+            '1.500',
+            'Autorisation conditionnelle limitée à 1,5 kg.',
+            (string) $admin->getKey(),
+            'test-quarantine-consume-authorize-01',
+        );
+
+        $cooperativeOrderId = (string) Str::ulid();
+        app(InventoryReservationManager::class)->reserveForSuborder(
+            $cooperativeOrderId,
+            (string) $cooperative->getKey(),
+            [
+                new InventoryReservationLineData(
+                    orderItemId: (string) Str::ulid(),
+                    stockableType: InventoryStockableType::PRODUCT,
+                    stockableId: $stockableId,
+                    quantity: '11.500',
+                    unitCode: 'kg',
+                ),
+            ],
+            'test-quarantine-consume-reserve-01',
+            (string) $customer->getKey(),
+        );
+
+        app(InventoryReservationManager::class)->consumeForSuborder(
+            $cooperativeOrderId,
+            'test-quarantine-consume-commit-01',
+            (string) $admin->getKey(),
+        );
+
+        $stock->refresh();
+        $quarantine = InventoryQuarantine::query()->findOrFail($quarantineId);
+        $authorization = InventoryQuarantineAuthorization::query()->findOrFail($authorizationId);
+
+        $this->assertSame('0.500', $stock->quantity_on_hand);
+        $this->assertSame('0.500', $stock->quantity_quarantined);
+        $this->assertSame('0.000', $stock->quantity_quarantine_authorized);
+        $this->assertSame('0.000', $stock->quantity_reserved);
+        $this->assertSame('0.500', $quarantine->quantity_remaining);
+        $this->assertSame('0.000', $quarantine->quantity_authorized);
+        $this->assertSame('non_compliant', $quarantine->status);
+        $this->assertSame('0.000', $authorization->quantity_remaining);
+        $this->assertSame('exhausted', $authorization->status);
+    }
+
     public function test_quarantine_listing_is_scoped_to_authorized_managers(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
