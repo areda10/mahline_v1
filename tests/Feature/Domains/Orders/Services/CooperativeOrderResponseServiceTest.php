@@ -419,12 +419,12 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertTrue($availability['suborders'][0]['lines'][0]['available']);
 
         $suborder = $order->cooperativeOrders->firstOrFail();
-        app(InventoryReservationManager::class)->releaseForSuborder(
-            (string) $suborder->getKey(),
-            'test-availability-mono-release-01',
-            'Libération de test pour vérifier le voyant de disponibilité.',
-            (string) $customer->getKey(),
-        );
+        $stock = InventoryStock::query()
+            ->where('cooperative_id', $cooperative->getKey())
+            ->where('stockable_id', $product->getKey())
+            ->firstOrFail();
+        $stock->quantity_on_hand = '0.000';
+        $stock->save();
 
         $released = app(OrderAvailabilityQueryService::class)->forOrder(
             (string) $order->getKey(),
@@ -477,14 +477,12 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertTrue($availability['suborders'][0]['available']);
         $this->assertTrue($availability['suborders'][1]['available']);
 
-        $suborderA = $order->cooperativeOrders
-            ->firstWhere('cooperative_id', (string) $cooperativeA->getKey());
-        app(InventoryReservationManager::class)->releaseForSuborder(
-            (string) $suborderA->getKey(),
-            'test-availability-multi-release-01',
-            'Libération de test de la sous-commande A.',
-            (string) $customer->getKey(),
-        );
+        $stockA = InventoryStock::query()
+            ->where('cooperative_id', $cooperativeA->getKey())
+            ->where('stockable_id', $productA->getKey())
+            ->firstOrFail();
+        $stockA->quantity_on_hand = '0.000';
+        $stockA->save();
 
         $afterRelease = app(OrderAvailabilityQueryService::class)->forOrder(
             (string) $order->getKey(),
