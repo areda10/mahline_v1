@@ -33,4 +33,11 @@ interface InventoryReservationManager
         ?string $actorId,
         bool $expired = false,
     ): ?InventoryReservationResult;
+
+    public function restoreAfterSafetyCancellation(
+        string $cooperativeOrderId,
+        string $idempotencyKey,
+        string $reason,
+        string $actorId,
+    ): InventoryReservationResult;
 }
