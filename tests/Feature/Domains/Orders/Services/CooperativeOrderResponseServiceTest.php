@@ -50,7 +50,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
     public function test_cooperative_admin_can_confirm_own_suborder_and_global_status_is_recalculated(): void
     {
         $customer = $this->userWithRole('customer');
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -82,8 +82,8 @@ final class CooperativeOrderResponseServiceTest extends TestCase
     public function test_cooperative_admin_cannot_decide_for_another_cooperative(): void
     {
         $customer = $this->userWithRole('customer');
-        $cooperativeA = Cooperative::factory()->create();
-        $cooperativeB = Cooperative::factory()->create();
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
         $adminA = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperativeA->getKey(),
         ]);
@@ -110,7 +110,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
     {
         $customer = $this->userWithRole('customer');
         $root = $this->userWithRole('super_admin_root');
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
@@ -134,7 +134,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
     {
         $customer = $this->userWithRole('customer');
         $root = $this->userWithRole('super_admin_root');
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
@@ -161,7 +161,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
     {
         $customer = $this->userWithRole('customer');
         $root = $this->userWithRole('super_admin_root');
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
@@ -190,7 +190,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
 
     public function test_safety_hold_blocks_fulfillment_and_cancellation_restores_stock(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $customer = $this->userWithRole('customer');
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
@@ -233,7 +233,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
 
     public function test_safety_hold_can_cancel_confirmed_unshipped_suborder_and_restore_stock(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $customer = $this->userWithRole('customer');
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
