@@ -6,6 +6,7 @@ namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Domains\Inventory\Services\Alerts\InventoryAlertEvaluator;
 
 final class InventoryStock extends BaseModel
 {
@@ -37,6 +38,13 @@ final class InventoryStock extends BaseModel
             'quantity_quarantined' => 'decimal:3',
             'quantity_quarantine_authorized' => 'decimal:3',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(static function (InventoryStock $stock): void {
+            app(InventoryAlertEvaluator::class)->evaluate($stock);
+        });
     }
 
     public function movements(): HasMany
