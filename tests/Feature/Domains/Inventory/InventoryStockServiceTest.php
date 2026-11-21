@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Inventory;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Models\InventoryMovement;
@@ -31,7 +32,7 @@ final class InventoryStockServiceTest extends TestCase
 
     public function test_stock_can_be_tracked_from_zero_then_receive_a_positive_entry(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -72,10 +73,13 @@ final class InventoryStockServiceTest extends TestCase
     {
         $role = Role::query()->where('slug', $roleSlug)->firstOrFail();
 
-        return User::factory()->create(array_merge([
+        $user = User::factory()->create(array_merge([
             'role_id' => $role->getKey(),
-            'status' => 'active',
+            'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ], $attributes));
+        $user->roles()->attach($role->getKey());
+
+        return $user;
     }
 }
