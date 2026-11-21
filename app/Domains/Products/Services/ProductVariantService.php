@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Services;
 
-use App\Shared\Contracts\StockUnitChangeGuard;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
+use App\Shared\Contracts\StockUnitChangeGuard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;

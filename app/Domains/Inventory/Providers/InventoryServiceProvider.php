@@ -14,7 +14,6 @@ use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
-use App\Shared\Contracts\StockUnitChangeGuard;
 use App\Domains\Inventory\Contracts\InventoryThresholdManager;
 use App\Domains\Inventory\Services\Alerts\InventoryThresholdService;
 use App\Domains\Inventory\Services\Counts\InventoryCountService;
@@ -24,6 +23,7 @@ use App\Domains\Inventory\Services\Reservations\InventoryReservationService;
 use App\Domains\Inventory\Services\Security\InventorySecurityReportService;
 use App\Domains\Inventory\Services\Stock\InventoryStockService;
 use App\Domains\Inventory\Services\Stock\InventoryStockUnitChangeGuardService;
+use App\Shared\Contracts\StockUnitChangeGuard;
 use Illuminate\Support\ServiceProvider;
 
 final class InventoryServiceProvider extends ServiceProvider

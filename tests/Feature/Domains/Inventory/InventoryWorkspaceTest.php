@@ -9,6 +9,7 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Models\InventoryStock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
 use Tests\TestCase;
 
@@ -27,7 +28,7 @@ final class InventoryWorkspaceTest extends TestCase
         InventoryStock::query()->create([
             'cooperative_id' => (string) $cooperative->getKey(),
             'stockable_type' => InventoryStockableType::PRODUCT->value,
-            'stockable_id' => (string) \Illuminate\Support\Str::ulid(),
+            'stockable_id' => (string) Str::ulid(),
             'unit_code' => 'kg',
             'quantity_on_hand' => '5.000',
         ]);

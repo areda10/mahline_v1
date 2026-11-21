@@ -20,6 +20,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class InventoryStockServiceTest extends TestCase
@@ -161,10 +162,10 @@ final class InventoryStockServiceTest extends TestCase
         $stock = InventoryStock::query()->create([
             'cooperative_id' => (string) $cooperative->getKey(),
             'stockable_type' => InventoryStockableType::PRODUCT->value,
-            'stockable_id' => (string) \Illuminate\Support\Str::ulid(),
+            'stockable_id' => (string) Str::ulid(),
             'unit_code' => 'kg',
             'quantity_on_hand' => '5.000',
-            'active_count_session_id' => (string) \Illuminate\Support\Str::ulid(),
+            'active_count_session_id' => (string) Str::ulid(),
         ]);
 
         $status = app(InventoryStockQueryService::class)->show(

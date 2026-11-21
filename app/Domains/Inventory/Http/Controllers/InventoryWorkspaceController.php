@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domains\Inventory\Http\Controllers;
 
+use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
-use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Services\Stock\InventoryStockQueryService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

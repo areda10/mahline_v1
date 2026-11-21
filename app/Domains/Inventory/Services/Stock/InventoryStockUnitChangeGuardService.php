@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Services\Stock;
 
 use App\Core\Foundation\Services\BaseService;
-use App\Shared\Contracts\StockUnitChangeGuard;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Shared\Contracts\StockUnitChangeGuard;
 
 final class InventoryStockUnitChangeGuardService extends BaseService implements StockUnitChangeGuard
 {
