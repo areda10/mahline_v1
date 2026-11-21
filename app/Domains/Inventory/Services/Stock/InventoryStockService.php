@@ -64,6 +64,11 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $actor,
             $idempotencyKey,
         ): string {
+            $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+            if ($stockable->unitCode !== $unitCode) {
+                throw new InvalidArgumentException('The stock unit must match the canonical Products unit.');
+            }
+
             $stock = InventoryStock::query()
                 ->where('cooperative_id', $cooperativeId)
                 ->where('stockable_type', $stockableType->value)
@@ -249,6 +254,11 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $reason,
             $expectedUnitCode,
         ): string {
+            $currentStockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+            if ($currentStockable->unitCode !== $expectedUnitCode) {
+                throw new InventoryReservationConflict('The Products unit changed during the stock operation.');
+            }
+
             $stock = InventoryStock::query()
                 ->where('cooperative_id', $cooperativeId)
                 ->where('stockable_type', $stockableType->value)
