@@ -83,6 +83,7 @@ Invariants :
 - `quantity_reserved_normal <= quantity_on_hand - quantity_quarantined`.
 - `quantity_reserved_quarantine <= quantity_quarantine_authorized`.
 - `quantity_reserved <= quantity_on_hand - quantity_quarantined + quantity_quarantine_authorized`.
+- L’unité d’un produit simple ou d’une variante devient immuable dès qu’un enregistrement de stock existe. Products consulte le contrat `InventoryStockUnitChangeGuard` avant toute modification d’unité ; les opérations concurrentes verrouillent d’abord le produit parent, puis la variante, puis le solde Inventory.
 
 ### 3.2 Disponibilité et priorité
 
@@ -179,16 +180,19 @@ Les événements de sécurité sont append-only. Les détails de reprise de comm
 
 ### Inventory fournit
 
-- `InventoryCheckoutAvailability` : évaluer les groupes coopératifs et lignes au checkout.
-- `InventoryReservationManager` : réserver, consommer, libérer et expirer une réservation.
-- `InventoryAvailabilityReader` : retourner uniquement l'état de disponibilité autorisé.
-- `InventoryReturnIntake` : recevoir un résultat d'inspection de retour.
-- `InventoryStockQuery` : lecture administrative dans le périmètre.
-- `InventorySecurityReporter` : créer/consulter/traiter les signalements via DTO.
+- `InventoryCheckoutAvailabilityReader` : évaluer les groupes coopératifs et lignes au checkout.
+- `InventoryReservationManager` : réserver, consommer et libérer les réservations ; la commande planifiée gère les expirations.
+- `InventoryStockManager` : initialiser, recevoir et ajuster les soldes.
+- `InventoryStockUnitChangeGuard` : indiquer à Products si un stock existe déjà pour un produit/une variante, afin d'empêcher la modification de l'unité canonique.
+- `InventoryQuarantineManager` : réceptionner les retours en quarantaine, inspecter, autoriser et révoquer une vente conditionnelle.
+- `InventoryCountManager` : gérer les sessions, comptages, validations partielles et annulations logiques.
+- `InventoryThresholdManager` : gérer les seuils et épisodes d'alerte.
+- `InventorySecurityReportManager` : créer, consulter et traiter les signalements via DTO.
+- `InventoryStockQueryService` / `InventoryStockReadService` : lectures de disponibilité dans le périmètre, sans quantité détaillée dans l'indicateur de statut.
 
 ### Inventory consomme
 
-- `CheckoutCatalog` (Products) pour identité, variante, unité et données produit autoritatives.
+- `CheckoutCatalog` (Products), via `resolveForCheckout()` et `resolveForInventory()`, pour identité, variante, coopérative et unité canonique. La résolution stockable est exécutée sous transaction et verrouille le produit parent avant la variante.
 - `ActorContextProvider`, `ActorAuthorizer`, `SuperAdminCooperativeAssignmentReader` (Shared/Identity) pour acteur, permissions et périmètre.
 - `AuditWriter` pour l'audit transversal.
 - Un contrat public Media pour attacher des fichiers privés sans importer les modèles Media.
@@ -199,7 +203,7 @@ Les contrats doivent utiliser des DTO immuables et des identifiants logiques, ja
 
 ## 11. Composition et exécution
 
-- `InventoryServiceProvider` lie les contrats aux services/adaptateurs.
+- `InventoryServiceProvider` lie les contrats aux services/adaptateurs, y compris le garde-fou d'unité consommé par Products.
 - Le provider charge explicitement `Database/Migrations` via `loadMigrationsFrom`.
 - Le provider est enregistré dans `bootstrap/providers.php`.
 - Commandes planifiées : expiration des réservations, publication Outbox, alertes/escalades de sécurité et détection d'épisodes.
