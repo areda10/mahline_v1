@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Services;
 
+use App\Domains\Inventory\Contracts\InventoryStockUnitChangeGuard;
+use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
@@ -13,6 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 final class ProductVariantService
 {
+    public function __construct(
+        private readonly InventoryStockUnitChangeGuard $stockUnitGuard,
+    ) {}
+
     public function create(
         Product $product,
         array $attributes,
@@ -120,9 +126,21 @@ final class ProductVariantService
                 $variant->sku = $attributes['sku'];
             }
 
-            $variant->unit_id = $this->validatedUnitId(
+            $unitId = $this->validatedUnitId(
                 $attributes['unit_id'] ?? $variant->unit_id,
             );
+
+            if ($unitId !== $variant->unit_id
+                && $this->stockUnitGuard->hasStockRecord(
+                    InventoryStockableType::VARIANT,
+                    (string) $variant->getKey(),
+                )) {
+                throw ValidationException::withMessages([
+                    'unit_id' => ['L’unité ne peut plus être modifiée après l’initialisation du stock de cette variante.'],
+                ]);
+            }
+
+            $variant->unit_id = $unitId;
 
             if (array_key_exists('price', $attributes)) {
                 $variant->price = $this->validatedPrice($attributes['price']);
