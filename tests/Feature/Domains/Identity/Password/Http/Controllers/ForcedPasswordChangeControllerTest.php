@@ -275,10 +275,17 @@ final class ForcedPasswordChangeControllerTest extends TestCase
         $mustChangePassword = (bool) ($attributes['must_change_password'] ?? false);
         unset($attributes['must_change_password']);
 
-        $user = User::factory()->create(array_merge([
+        $userAttributes = array_merge([
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
-        ], $attributes));
+        ], $attributes);
+
+        if (in_array($roleSlug, ['cooperative_admin', 'user'], true)) {
+            $cooperative = Cooperative::factory()->active()->create();
+            $userAttributes['cooperative_id'] = $cooperative->getKey();
+        }
+
+        $user = User::factory()->create($userAttributes);
 
         $user->must_change_password = $mustChangePassword;
         $user->save();
