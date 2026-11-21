@@ -316,6 +316,9 @@ final class InventoryReservationService extends BaseService implements Inventory
                 if (! $stock instanceof InventoryStock) {
                     throw new InventoryReservationConflict('A reserved stock balance no longer exists.');
                 }
+                if ($stock->active_count_session_id !== null) {
+                    throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
+                }
 
                 $before = $this->balance($stock);
                 $quantity = $this->milli($item->quantity);
@@ -492,6 +495,9 @@ final class InventoryReservationService extends BaseService implements Inventory
                 $stock = $stocks->get((string) $item->stock_id);
                 if (! $stock instanceof InventoryStock) {
                     throw new InventoryReservationConflict('A reserved stock balance no longer exists.');
+                }
+                if ($stock->active_count_session_id !== null) {
+                    throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
                 }
 
                 $before = $this->balance($stock);
