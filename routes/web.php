@@ -35,6 +35,7 @@ use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use App\Domains\Inventory\Http\Controllers\InventoryReportController;
+use App\Domains\Inventory\Http\Controllers\InventorySecurityReportController;
 use App\Domains\Inventory\Http\Controllers\InventoryStockController;
 use App\Domains\Inventory\Http\Controllers\InventoryCountController;
 use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
@@ -632,6 +633,32 @@ Route::get('/cooperatives/{cooperativeId}/inventory/report.pdf', InventoryReport
     ])
     ->whereUlid('cooperativeId')
     ->name('inventory.reports.pdf');
+
+Route::prefix('cooperatives/{cooperativeId}/inventory/security-reports')
+    ->name('inventory.security-reports.')
+    ->middleware([
+        'auth',
+        EnsureActiveAuthenticationSession::class,
+        'role:super_admin_root,super_admin,cooperative_admin,user',
+    ])
+    ->where(['cooperativeId' => '[0-9A-HJKMNP-TV-Z]{26}'])
+    ->group(function (): void {
+        Route::post('/', [InventorySecurityReportController::class, 'store'])->name('store');
+    });
+
+Route::prefix('inventory/security-reports/{reportId}')
+    ->name('inventory.security-reports.')
+    ->middleware([
+        'auth',
+        EnsureActiveAuthenticationSession::class,
+        'role:super_admin_root,super_admin,cooperative_admin,user',
+    ])
+    ->where(['reportId' => '[0-9A-HJKMNP-TV-Z]{26}'])
+    ->group(function (): void {
+        Route::get('/', [InventorySecurityReportController::class, 'show'])->name('show');
+        Route::patch('/close', [InventorySecurityReportController::class, 'close'])->name('close');
+        Route::patch('/reopen', [InventorySecurityReportController::class, 'reopen'])->name('reopen');
+    });
 
 /*
 |--------------------------------------------------------------------------
