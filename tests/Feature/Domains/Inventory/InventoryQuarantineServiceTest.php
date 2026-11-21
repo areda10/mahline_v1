@@ -16,6 +16,7 @@ use App\Domains\Inventory\Models\InventoryQuarantine;
 use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
 use App\Domains\Inventory\Models\InventoryReservation;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -142,6 +143,44 @@ final class InventoryQuarantineServiceTest extends TestCase
         $this->assertSame('0.000', $stock->quantity_reserved_quarantine);
         $this->assertSame('12.000', $stock->quantity_on_hand);
         $this->assertSame('2.000', $stock->quantity_quarantined);
+    }
+
+    public function test_quarantine_listing_is_scoped_to_authorized_managers(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $stockableId = (string) Str::ulid();
+        InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => InventoryStockableType::PRODUCT->value,
+            'stockable_id' => $stockableId,
+            'unit_code' => 'kg',
+            'quantity_on_hand' => '3.000',
+        ]);
+
+        app(InventoryQuarantineManager::class)->receiveReturn(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::PRODUCT,
+            $stockableId,
+            '1.000',
+            'customer_return',
+            (string) Str::ulid(),
+            'Retour reçu en attente de contrôle.',
+            (string) $admin->getKey(),
+            'test-quarantine-list-01',
+        );
+
+        $rows = app(InventoryQuarantineQueryService::class)->index(
+            (string) $cooperative->getKey(),
+            (string) $admin->getKey(),
+        );
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('pending_inspection', $rows[0]['status']);
+        $this->assertSame('1.000', $rows[0]['quantity_remaining']);
+        $this->assertSame($stockableId, $rows[0]['stockable_id']);
     }
 
     private function userWithRole(string $roleSlug, array $attributes = []): User
