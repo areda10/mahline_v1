@@ -10,7 +10,9 @@ use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Contracts\InventoryThresholdManager;
+use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Services\Alerts\InventoryThresholdService;
+use App\Domains\Inventory\Services\Security\InventorySecurityReportService;
 use App\Domains\Inventory\Services\Counts\InventoryCountService;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineService;
 use App\Domains\Inventory\Services\Reservations\InventoryCheckoutAvailabilityService;
@@ -28,6 +30,7 @@ final class InventoryServiceProvider extends ServiceProvider
         $this->app->bind(InventoryQuarantineManager::class, InventoryQuarantineService::class);
         $this->app->bind(InventoryCountManager::class, InventoryCountService::class);
         $this->app->bind(InventoryThresholdManager::class, InventoryThresholdService::class);
+        $this->app->bind(InventorySecurityReportManager::class, InventorySecurityReportService::class);
     }
 
     public function boot(): void
@@ -37,6 +40,7 @@ final class InventoryServiceProvider extends ServiceProvider
             \App\Domains\Inventory\Console\Commands\ExpireInventoryReservations::class,
             \App\Domains\Inventory\Console\Commands\PublishInventoryOutbox::class,
             \App\Domains\Inventory\Console\Commands\ReconcileInventoryAlerts::class,
+            \App\Domains\Inventory\Console\Commands\EscalateInventorySecurityReports::class,
         ]);
     }
 }
