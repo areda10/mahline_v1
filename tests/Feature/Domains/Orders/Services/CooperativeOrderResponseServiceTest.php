@@ -157,6 +157,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'currency' => 'MAD',
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
+        $this->stockFor($cooperative, $product);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
