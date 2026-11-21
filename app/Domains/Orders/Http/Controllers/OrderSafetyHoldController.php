@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Orders\Http\Controllers;
 
-use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
+use App\Shared\Contracts\OrderSafetyHoldManager;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
