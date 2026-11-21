@@ -414,12 +414,12 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
                 ->whereKey($stockId)
                 ->lockForUpdate()
                 ->firstOrFail();
-            $quarantine = InventoryQuarantine::query()
-                ->whereKey($quarantineId)
-                ->lockForUpdate()
-                ->firstOrFail();
             $authorization = InventoryQuarantineAuthorization::query()
                 ->whereKey($authorizationId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $quarantine = InventoryQuarantine::query()
+                ->whereKey($quarantineId)
                 ->lockForUpdate()
                 ->firstOrFail();
             if ((string) $authorization->stock_id !== (string) $stock->getKey()
