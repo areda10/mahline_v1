@@ -6,9 +6,14 @@ namespace App\Domains\Inventory\Contracts;
 
 use App\Domains\Inventory\Enums\InventoryInspectionResult;
 use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Domains\Inventory\Models\InventoryQuarantine;
+use Illuminate\Database\Eloquent\Collection;
 
 interface InventoryQuarantineManager
 {
+    /** @return Collection<int, InventoryQuarantine> */
+    public function quarantinesForCooperative(string $cooperativeId, string $actorId): Collection;
+
     public function receiveReturn(
         string $cooperativeId,
         InventoryStockableType $stockableType,
