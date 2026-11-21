@@ -13,6 +13,7 @@ use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Enums\InventoryReservationStatus;
 use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
+use App\Domains\Inventory\Services\Alerts\InventoryAlertEvaluator;
 use App\Domains\Inventory\Models\InventoryIdempotencyRecord;
 use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryQuarantine;
@@ -41,6 +42,7 @@ final class InventoryReservationService extends BaseService implements Inventory
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
+        private readonly InventoryAlertEvaluator $alerts,
     ) {}
 
     public function reserveForSuborder(
@@ -189,6 +191,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 );
                 $stock->updated_by = $actor->id;
                 $stock->save();
+                $this->alerts->evaluate($stock);
 
                 $reservationItem = InventoryReservationItem::query()->create([
                     'reservation_id' => (string) $reservation->getKey(),
@@ -385,6 +388,7 @@ final class InventoryReservationService extends BaseService implements Inventory
 
                 $stock->updated_by = $actor->id;
                 $stock->save();
+                $this->alerts->evaluate($stock);
 
                 $this->recordMovement(
                     $stock,
@@ -553,6 +557,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                     $stock->updated_by = $actor->id;
                 }
                 $stock->save();
+                $this->alerts->evaluate($stock);
 
                 $this->recordMovement(
                     $stock,
@@ -718,6 +723,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 );
                 $stock->updated_by = $actor->id;
                 $stock->save();
+                $this->alerts->evaluate($stock);
 
                 $this->recordMovement(
                     $stock,
