@@ -367,13 +367,15 @@ final class OrderCreationService
 
             foreach ($cooperativeOrders as $cooperativeId => $cooperativeOrder) {
                 $reservationKey = hash('sha256', $idempotencyKey.'|'.$cooperativeOrder->getKey().'|reserve');
-                $this->inventoryReservations->reserveForSuborder(
+                $reservation = $this->inventoryReservations->reserveForSuborder(
                     (string) $cooperativeOrder->getKey(),
                     (string) $cooperativeId,
                     $reservationLinesByCooperative[$cooperativeId],
                     $reservationKey,
                     (string) $customer->getKey(),
                 );
+                $cooperativeOrder->response_deadline_at = $reservation->expiresAt;
+                $cooperativeOrder->save();
             }
 
             return $order->load(['cooperativeOrders.items']);
