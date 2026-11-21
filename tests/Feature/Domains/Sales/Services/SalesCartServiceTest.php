@@ -12,6 +12,7 @@ use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -40,7 +41,7 @@ final class SalesCartServiceTest extends TestCase
     {
         [$product] = $this->product();
         $manager = app(SalesCartManager::class);
-        $cart = $manager->getOrCreateCustomerCart((string) \Illuminate\Support\Str::ulid());
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
 
         $first = $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '2', 1);
         $second = $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '3.5', 2);
@@ -54,7 +55,7 @@ final class SalesCartServiceTest extends TestCase
     {
         [$product] = $this->product();
         $manager = app(SalesCartManager::class);
-        $cart = $manager->getOrCreateCustomerCart((string) \Illuminate\Support\Str::ulid());
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
 
         $this->expectException(ValidationException::class);
         $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '100.001', 1);
@@ -64,7 +65,7 @@ final class SalesCartServiceTest extends TestCase
     {
         [$product] = $this->product();
         $manager = app(SalesCartManager::class);
-        $cart = $manager->getOrCreateCustomerCart((string) \Illuminate\Support\Str::ulid());
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
         $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1', 1);
 
         try {
@@ -82,7 +83,7 @@ final class SalesCartServiceTest extends TestCase
         [$product] = $this->product();
         $manager = app(SalesCartManager::class);
         $guest = $manager->createGuestCart();
-        $customerId = (string) \Illuminate\Support\Str::ulid();
+        $customerId = (string) Str::ulid();
         $customerCart = $manager->getOrCreateCustomerCart($customerId);
 
         $manager->addItem((string) $guest['cart']->getKey(), (string) $product->getKey(), null, '2', 1);
@@ -99,7 +100,7 @@ final class SalesCartServiceTest extends TestCase
     {
         [$product] = $this->product();
         $manager = app(SalesCartManager::class);
-        $cart = $manager->getOrCreateCustomerCart((string) \Illuminate\Support\Str::ulid());
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
         $item = $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1', 1);
 
         $manager->removeItem((string) $cart->getKey(), (string) $item->getKey(), 2);

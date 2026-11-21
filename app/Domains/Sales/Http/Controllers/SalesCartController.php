@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Cookie;
 final class SalesCartController
 {
     private const GUEST_COOKIE = 'mahline_sales_cart';
+
     private const GUEST_COOKIE_MINUTES = 43200;
 
     public function __construct(private readonly SalesCartManager $carts) {}
