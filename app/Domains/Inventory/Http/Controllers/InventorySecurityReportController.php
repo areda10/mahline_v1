@@ -27,7 +27,7 @@ final class InventorySecurityReportController
         InventorySecurityReportManager $reports,
     ): Response {
         $validated = $request->validate([
-            'cooperative_order_id' => ['nullable', 'string', 'size:26'],
+            'cooperative_order_id' => ['nullable', 'string', 'regex:/^[0-9A-HJKMNP-TV-Z]{26}$/i'],
             'category' => ['required', 'string', 'max:60'],
             'description' => ['required', 'string', 'max:10000'],
             'urgency' => ['required', Rule::in(['normal', 'urgent'])],
