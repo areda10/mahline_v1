@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
+use LogicException;
 use App\Shared\Contracts\PrivateMediaAttachmentOwner;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
