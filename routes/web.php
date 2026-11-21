@@ -35,6 +35,10 @@ use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use App\Domains\Inventory\Http\Controllers\InventoryReportController;
+use App\Domains\Inventory\Http\Controllers\InventoryStockController;
+use App\Domains\Inventory\Http\Controllers\InventoryCountController;
+use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
+use App\Domains\Inventory\Http\Controllers\InventoryThresholdController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -697,3 +701,58 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
             ->whereUlid('media')
             ->name('destroy');
     });
+
+
+Route::middleware([
+    'auth',
+    EnsureActiveAuthenticationSession::class,
+    'role:super_admin_root,super_admin,cooperative_admin,user',
+])->prefix('backoffice/inventory')->name('backoffice.inventory.')->group(function (): void {
+    Route::get('/cooperatives/{cooperativeId}/stocks', [InventoryStockController::class, 'index'])
+        ->whereUlid('cooperativeId')
+        ->name('stocks.index');
+    Route::get('/stocks/{stockId}', [InventoryStockController::class, 'show'])
+        ->whereUlid('stockId')
+        ->name('stocks.show');
+    Route::post('/cooperatives/{cooperativeId}/stocks/initialize', [InventoryStockController::class, 'initialize'])
+        ->whereUlid('cooperativeId')
+        ->name('stocks.initialize');
+    Route::post('/cooperatives/{cooperativeId}/stocks/receive', [InventoryStockController::class, 'receive'])
+        ->whereUlid('cooperativeId')
+        ->name('stocks.receive');
+    Route::post('/cooperatives/{cooperativeId}/stocks/adjust', [InventoryStockController::class, 'adjust'])
+        ->whereUlid('cooperativeId')
+        ->name('stocks.adjust');
+
+    Route::post('/stocks/{stockId}/threshold', [InventoryThresholdController::class, 'update'])
+        ->whereUlid('stockId')
+        ->name('stocks.threshold.update');
+
+    Route::post('/cooperatives/{cooperativeId}/count-sessions', [InventoryCountController::class, 'create'])
+        ->whereUlid('cooperativeId')
+        ->name('count-sessions.create');
+    Route::post('/count-sessions/{sessionId}/items/{itemId}/count', [InventoryCountController::class, 'record'])
+        ->whereUlid('sessionId')
+        ->whereUlid('itemId')
+        ->name('count-sessions.items.count');
+    Route::post('/count-sessions/{sessionId}/validate', [InventoryCountController::class, 'validateSession'])
+        ->whereUlid('sessionId')
+        ->name('count-sessions.validate');
+    Route::post('/count-sessions/{sessionId}/cancel', [InventoryCountController::class, 'cancel'])
+        ->whereUlid('sessionId')
+        ->name('count-sessions.cancel');
+
+    Route::post('/cooperatives/{cooperativeId}/quarantines/receive', [InventoryQuarantineController::class, 'receive'])
+        ->whereUlid('cooperativeId')
+        ->name('quarantines.receive');
+    Route::post('/quarantines/{quarantineId}/inspect', [InventoryQuarantineController::class, 'inspect'])
+        ->whereUlid('quarantineId')
+        ->name('quarantines.inspect');
+    Route::post('/quarantines/{quarantineId}/authorize-sale', [InventoryQuarantineController::class, 'authorizeSale'])
+        ->whereUlid('quarantineId')
+        ->name('quarantines.authorize-sale');
+    Route::post('/quarantine-authorizations/{authorizationId}/revoke', [InventoryQuarantineController::class, 'revokeSale'])
+        ->whereUlid('authorizationId')
+        ->name('quarantine-authorizations.revoke');
+});
+
