@@ -39,7 +39,7 @@ final class OrderAvailabilityQueryService extends BaseService
             throw new AuthorizationException('The actor cannot view availability for this order.');
         }
 
-        $suborders = $visibleSuborders->map(function ($suborder): array {
+        $suborders = $visibleSuborders->map(function ($suborder) use ($isMultiCooperative): array {
             $inventory = $this->inventory->forSuborder((string) $suborder->getKey());
             $lineAvailability = collect($inventory->lines)->keyBy('orderItemId');
 
@@ -65,7 +65,7 @@ final class OrderAvailabilityQueryService extends BaseService
                 'cooperative_id' => (string) $suborder->cooperative_id,
                 'available' => $available,
                 'reservation_status' => $inventory->reservationStatus,
-                'lines' => $lines,
+                'lines' => $isMultiCooperative ? [] : $lines,
             ];
         })->all();
 
