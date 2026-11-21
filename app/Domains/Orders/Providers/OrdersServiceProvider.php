@@ -15,7 +15,7 @@ final class OrdersServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(OrderSafetyHoldManager::class, OrderSafetyHoldService::class);
+        $this->app->bind(OrderSafetyHoldManager::class, OrderSafetyHoldService::class);\n        $this->app->bind(OrderCheckoutCreator::class, OrderCheckoutService::class);
     }
 
     public function boot(): void
