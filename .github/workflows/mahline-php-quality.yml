@@ -65,7 +65,7 @@ jobs:
         env:
           PINT_BASE: 72e27c4b32aefd09c2118e631f2aec0433627e84
         run: |
-          FILES=$(git diff --name-only "$PINT_BASE"...HEAD -- '*.php')
+          FILES=$(git diff --name-only --diff-filter=ACMRT "$PINT_BASE"...HEAD -- '*.php')
           if [ -n "$FILES" ]; then
             printf '%s\n' "$FILES" | xargs -r php vendor/bin/pint
           fi
