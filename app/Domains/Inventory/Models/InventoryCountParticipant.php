@@ -6,6 +6,7 @@ namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 final class InventoryCountParticipant extends BaseModel
 {
@@ -21,6 +22,16 @@ final class InventoryCountParticipant extends BaseModel
     protected function casts(): array
     {
         return ['joined_at' => 'datetime'];
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(static function (): never {
+            throw new LogicException('Inventory count participants are immutable.');
+        });
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory count participants cannot be deleted.');
+        });
     }
 
     public function session(): BelongsTo
