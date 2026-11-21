@@ -10,7 +10,6 @@ use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
-use App\Domains\Inventory\Services\Alerts\InventoryAlertEvaluator;
 use App\Domains\Inventory\Models\InventoryIdempotencyRecord;
 use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
@@ -31,7 +30,6 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
-        private readonly InventoryAlertEvaluator $alerts,
     ) {}
 
     public function initialize(
@@ -89,7 +87,6 @@ final class InventoryStockService extends BaseService implements InventoryStockM
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
             ]);
-            $this->alerts->evaluate($stock);
 
             $this->movement(
                 $stock,
@@ -283,7 +280,6 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $stock->quantity_on_hand = $this->format($nextOnHand);
             $stock->updated_by = $actor->id;
             $stock->save();
-            $this->alerts->evaluate($stock);
 
             $this->movement(
                 $stock,
