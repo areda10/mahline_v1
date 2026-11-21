@@ -7,6 +7,7 @@ namespace App\Domains\Inventory\Services\Stock;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
+use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
@@ -30,6 +31,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
+        private readonly CheckoutCatalog $products,
     ) {}
 
     public function initialize(
@@ -42,6 +44,11 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $actorId,
         string $idempotencyKey,
     ): string {
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+        if ($stockable->unitCode !== $unitCode) {
+            throw new InvalidArgumentException('The stock unit must match the canonical Products unit.');
+        }
+
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.initialize');
         $quantityMilli = $this->quantity($quantity, $unitCode, allowZero: true);
@@ -149,6 +156,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $idempotencyKey,
         string $movementType = 'purchase_receipt',
     ): string {
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.receive');
         $quantityMilli = $this->milli($quantity);
@@ -177,6 +185,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $type,
             $quantityMilli,
             trim($reason),
+            $stockable->unitCode,
         );
     }
 
@@ -189,6 +198,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $actorId,
         string $idempotencyKey,
     ): string {
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.adjust');
         $quantityMilli = $this->signedQuantity($signedQuantity);
@@ -209,6 +219,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $quantityMilli > 0 ? InventoryMovementType::MANUAL_ADJUSTMENT_IN : InventoryMovementType::MANUAL_ADJUSTMENT_OUT,
             $quantityMilli,
             trim($reason),
+            $stockable->unitCode,
         );
     }
 
@@ -223,6 +234,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         InventoryMovementType $movementType,
         int $quantityMilli,
         string $reason,
+        string $expectedUnitCode,
     ): string {
         return DB::transaction(function () use (
             $cooperativeId,
@@ -235,6 +247,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $movementType,
             $quantityMilli,
             $reason,
+            $expectedUnitCode,
         ): string {
             $stock = InventoryStock::query()
                 ->where('cooperative_id', $cooperativeId)
@@ -242,6 +255,10 @@ final class InventoryStockService extends BaseService implements InventoryStockM
                 ->where('stockable_id', $stockableId)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ((string) $stock->unit_code !== $expectedUnitCode) {
+                throw new InventoryReservationConflict('The stored stock unit no longer matches the Products unit.');
+            }
 
             $existing = $this->existingOperation($stock->getKey(), $operation, $idempotencyKey, $requestHash);
             if ($existing !== null) {
@@ -313,6 +330,22 @@ final class InventoryStockService extends BaseService implements InventoryStockM
 
             return (string) $stock->getKey();
         }, 3);
+    }
+
+    private function resolveStockable(
+        string $cooperativeId,
+        InventoryStockableType $stockableType,
+        string $stockableId,
+    ): \App\Domains\Products\DTOs\InventoryStockableData {
+        $stockable = $this->products->resolveForInventory($stockableType->value, $stockableId);
+        if ($stockable === null
+            || $stockable->cooperativeId !== $cooperativeId
+            || $stockable->stockableType !== $stockableType->value
+            || $stockable->stockableId !== $stockableId) {
+            throw new InvalidArgumentException('The product or variant is not a valid stockable item for this cooperative.');
+        }
+
+        return $stockable;
     }
 
     private function authorize(ActorContext $actor, string $cooperativeId, string $permission): void
