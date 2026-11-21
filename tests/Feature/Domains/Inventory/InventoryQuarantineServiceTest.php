@@ -36,7 +36,7 @@ final class InventoryQuarantineServiceTest extends TestCase
 
     public function test_quarantine_authorization_is_allocated_and_revocation_protects_existing_reservation(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -149,10 +149,12 @@ final class InventoryQuarantineServiceTest extends TestCase
             ->where('slug', $roleSlug)
             ->firstOrFail();
 
-        return User::factory()->create(array_merge([
-            'role_id' => $role->getKey(),
+        $user = User::factory()->create(array_merge([
             'status' => 'active',
             'email_verified_at' => now(),
         ], $attributes));
+        $user->roles()->attach($role->getKey());
+
+        return $user;
     }
 }
