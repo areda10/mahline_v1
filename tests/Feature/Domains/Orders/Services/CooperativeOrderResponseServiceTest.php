@@ -90,6 +90,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             ->firstOrFail();
         $this->assertSame('10.000', $stock->quantity_on_hand);
         $this->assertSame('1.000', $stock->quantity_reserved);
+        $availability = app(OrderAvailabilityQueryService::class)->forOrder(
+            (string) $order->getKey(),
+            (string) $customer->getKey(),
+        );
+        $this->assertTrue($availability['suborders'][0]['available']);
     }
 
     public function test_confirmation_fails_atomically_when_stock_is_insufficient(): void

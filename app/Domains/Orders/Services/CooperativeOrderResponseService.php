@@ -46,7 +46,7 @@ final class CooperativeOrderResponseService
 
     /**
      * Administrative substitution is restricted to root or the super-admin
-     * assigned to this cooperative, before the fixed 24-hour reservation deadline.
+     * assigned to this cooperative, before the fixed response deadline (12 hours by default, 24 hours maximum).
      */
     public function decideOnBehalf(
         CooperativeOrder $cooperativeOrder,

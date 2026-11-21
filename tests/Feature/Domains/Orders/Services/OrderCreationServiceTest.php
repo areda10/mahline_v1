@@ -73,6 +73,9 @@ final class OrderCreationServiceTest extends TestCase
 
         $this->assertCount(2, $order->cooperativeOrders);
         $this->assertDatabaseCount('inventory_reservations', 0);
+        $this->assertTrue($order->cooperativeOrders->every(
+            static fn ($suborder): bool => $suborder->response_deadline_at->equalTo($suborder->created_at->copy()->addHours(12)),
+        ));
         $this->assertDatabaseHas('inventory_stocks', [
             'cooperative_id' => $cooperativeA->getKey(),
             'stockable_id' => $productA->getKey(),

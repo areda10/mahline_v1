@@ -253,7 +253,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 subjectId: (string) $reservation->getKey(),
                 newValues: [
                     'status' => InventoryReservationStatus::ACTIVE->value,
-                    'expires_at' => $reservation->expires_at->toIso8601String(),
+                    'expires_at' => $reservation->expires_at?->toIso8601String(),
                     'items_count' => count($normalizedItems),
                 ],
             ));
@@ -262,7 +262,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 'reservation_id' => (string) $reservation->getKey(),
                 'cooperative_order_id' => $cooperativeOrderId,
                 'cooperative_id' => $cooperativeId,
-                'expires_at' => $reservation->expires_at->toIso8601String(),
+                'expires_at' => $reservation->expires_at?->toIso8601String(),
             ]);
 
             return $result;

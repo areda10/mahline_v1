@@ -12,7 +12,7 @@ final class ExpireInventoryReservations extends Command
 {
     protected $signature = 'inventory:expire-reservations {--limit=100}';
 
-    protected $description = 'Release Inventory reservations that have passed their 24-hour deadline.';
+    protected $description = 'Release temporary Inventory reservations that have passed their 24-hour deadline.';
 
     public function handle(InventoryReservationManager $reservations): int
     {
