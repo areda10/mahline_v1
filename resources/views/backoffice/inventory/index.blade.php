@@ -139,35 +139,6 @@
         </section>
     @endif
 
-    @if($canCreateCount)
-        <section class="card">
-            <h2>Créer une session d’inventaire</h2>
-            @foreach($cooperativeIds as $cooperativeId)
-                @php($cooperativeStocks = $stocksByCooperative->get($cooperativeId, collect()))
-                <form method="POST"
-                      action="{{ route('backoffice.inventory.count-sessions.create', ['cooperativeId' => $cooperativeId]) }}"
-                      data-count-create-form
-                      data-workspace-url="{{ route('backoffice.inventory.count-sessions.workspace', ['sessionId' => '__SESSION_ID__']) }}">
-                    @csrf
-                    <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
-                    <h3>Coopérative <code>{{ $cooperativeId }}</code></h3>
-                    @forelse($cooperativeStocks as $stock)
-                        <label class="inventory-stock-choice">
-                            <input type="checkbox" name="stock_ids[]" value="{{ $stock['id'] }}">
-                            <span>{{ $stock['stockable_type'] === 'variant' ? 'Variante' : 'Produit' }}
-                                <code>{{ $stock['stockable_id'] }}</code> · {{ $stock['unit_code'] }} · {{ $stock['status'] }}</span>
-                        </label>
-                    @empty
-                        <p class="muted">Aucun stock à inventorier.</p>
-                    @endforelse
-                    @if($cooperativeStocks->isNotEmpty())
-                        <button class="button button-secondary button-small" type="submit">Créer la session</button>
-                    @endif
-                </form>
-            @endforeach
-        </section>
-    @endif
-
     <section class="card">
         <h2>Inventaires physiques</h2>
         @if($countSessions === [])
@@ -255,46 +226,7 @@
         });
     });
     </script>
-    <script>
-document.querySelectorAll('[data-count-create-form]').forEach((form) => {
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const selected = form.querySelectorAll('input[name="stock_ids[]"]:checked');
-        if (selected.length === 0) {
-            alert('Sélectionnez au moins un produit ou une variante.');
-            return;
-        }
-
-        const button = form.querySelector('button[type="submit"]');
-        if (button) button.disabled = true;
-
-        try {
-            const payload = Object.fromEntries(new FormData(form).entries());
-            payload.stock_ids = Array.from(selected, (input) => input.value);
-            delete payload._token;
-            const response = await fetch(form.action, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Idempotency-Key': payload.idempotency_key,
-                },
-                body: JSON.stringify(payload),
-            });
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || Object.values(result.errors || {}).flat().join(' ') || 'Création impossible.');
-            }
-
-            window.location.href = form.dataset.workspaceUrl.replace('__SESSION_ID__', result.session_id);
-        } catch (error) {
-            alert(error.message || 'Une erreur est survenue.');
-            if (button) button.disabled = false;
-        }
-    });
-});
-</script>
+    
 
 @endpush
 @endif
