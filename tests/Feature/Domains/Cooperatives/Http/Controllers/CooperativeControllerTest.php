@@ -155,7 +155,7 @@ final class CooperativeControllerTest extends TestCase
 
     public function test_cooperative_admin_can_update_contact_fields_but_not_name(): void
     {
-        $cooperative = Cooperative::factory()->create(['name' => 'Nom protégé']);
+        $cooperative = Cooperative::factory()->active()->create(['name' => 'Nom protégé']);
         $actor = $this->actor('cooperative_admin', [
             'cooperatives.view',
             'cooperatives.update',
