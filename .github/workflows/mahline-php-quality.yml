@@ -59,6 +59,9 @@ jobs:
       - name: Run Orders integration tests
         run: php artisan test tests/Feature/Domains/Orders
 
+      - name: Run Inventory integration tests
+        run: php artisan test tests/Feature/Domains/Inventory
+
       - name: Run full Laravel feature suite
         run: php artisan test tests/Feature
 
