@@ -32,6 +32,7 @@ use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationControlle
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
 use App\Domains\Inventory\Http\Controllers\InventoryCountController;
+use App\Domains\Inventory\Http\Controllers\InventoryCountWorkspaceController;
 use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
 use App\Domains\Inventory\Http\Controllers\InventoryReportController;
 use App\Domains\Inventory\Http\Controllers\InventorySecurityReportController;
@@ -779,6 +780,9 @@ Route::middleware([
     Route::get('/count-sessions/{sessionId}', [InventoryCountController::class, 'show'])
         ->whereUlid('sessionId')
         ->name('count-sessions.show');
+    Route::get('/count-sessions/{sessionId}/workspace', InventoryCountWorkspaceController::class)
+        ->whereUlid('sessionId')
+        ->name('count-sessions.workspace');
     Route::get('/cooperatives/{cooperativeId}/count-sessions', [InventoryCountController::class, 'index'])
         ->whereUlid('cooperativeId')
         ->name('count-sessions.index');
