@@ -13,7 +13,7 @@ use App\Domains\Inventory\Models\InventorySecurityReport;
 use App\Domains\Inventory\Models\InventorySecurityReportAttachment;
 use App\Domains\Inventory\Models\InventorySecurityReportEvent;
 use App\Domains\Media\Contracts\PrivateMediaAttachmentUploader;
-use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
+use App\Shared\Contracts\OrderSafetyHoldManager;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\DTOs\ActorContext;
