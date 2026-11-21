@@ -30,7 +30,7 @@ final class InventoryOperationsController
             'stockable_type' => ['required', Rule::in(['product', 'variant'])],
             'stockable_id' => ['required', 'string', 'size:26'],
             'unit_code' => ['required', Rule::in(['kg', 'g', 'l', 'ml', 'u'])],
-            'quantity' => ['required', 'numeric', 'gt:0'],
+            'quantity' => ['required', 'numeric', 'min:0'],
             'reason' => ['required', 'string', 'max:500'],
             'idempotency_key' => ['required', 'string', 'max:100'],
         ]);
