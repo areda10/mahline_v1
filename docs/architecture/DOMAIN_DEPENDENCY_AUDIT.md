@@ -962,3 +962,20 @@ Lecture directe des fichiers réels :
 - L'arborescence Orders inspectée contient Enums, Models, Services et README ; aucun Contracts, Providers, Policies ou Http n'est présent. Aucun OrdersServiceProvider n'est enregistré dans `bootstrap/providers.php`, et aucun contrôleur/route Orders n'est importé dans `routes/web.php` ou `routes/api.php` au code inspecté.
 
 **Conséquence :** le chantier Delivery ne peut pas être branché directement au service actuel sans d'abord établir les contrats publics Orders et retirer les dépendances directes Identity. L'orchestration HTTP peut assembler les domaines, mais ne doit pas déplacer l'ownership métier.
+
+
+## 13.8 — Création des racines Sales, Inventory, Delivery, Finance et Statistics (21 novembre 2026)
+
+L'arborescence `app/Domains/` contient désormais les cinq racines suivantes, chacune avec un `README.md` décrivant son ownership et ses frontières :
+
+- `Sales` : panier et orchestration précommande ;
+- `Inventory` : stock, mouvements, réservations, quarantaine et disponibilité ;
+- `Delivery` : transporteurs, tarifs, missions, expéditions, suivi, preuves et retours ;
+- `Finance` : facturation, encaissements, paiements, commissions, rapprochements et reversements ;
+- `Statistics` : projections analytiques et agrégations, sans propriété des données transactionnelles sources.
+
+**Limite exacte du scaffold :** ces cinq dossiers sont créés par leur README uniquement. Aucun modèle, migration, service, contrat PHP, événement PHP, route, Policy, contrôleur ou provider n'a été ajouté à ce stade. En conséquence, aucun provider n'a été ajouté à `bootstrap/providers.php` : il n'existe encore aucun binding ou route de ces domaines à enregistrer. Les spécifications Sales, Inventory, Delivery, Finance et Statistics restent les références fonctionnelles ; elles doivent être auditées avec les fichiers source avant les lots de code.
+
+**Ordre d'intégration recommandé :** corriger les frontières Orders–Identity et l'absence de réservation Inventory dans la confirmation des sous-commandes ; construire Inventory et ses contrats de disponibilité/réservation ; intégrer Sales au checkout et à Orders ; construire Delivery sur les contrats Orders/Inventory/Localization/Media ; construire Finance sur les faits Orders/Delivery ; puis Statistics sur les événements/contrats versionnés de tous les domaines. Cet ordre est une dépendance d'implémentation, pas une autorisation de contourner les décisions métier ouvertes.
+
+**Contrôle :** présence des cinq README vérifiée par lecture GitHub sur `feature/Marketplace`. Aucun test PHP, PHPUnit, Pint ou test de base de données n'a été exécuté par cet audit.
