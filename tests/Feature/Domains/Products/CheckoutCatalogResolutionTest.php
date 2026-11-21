@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Products;
+namespace Tests\Feature\Domains\Products;
 
-use App\\Domains\\Products\\Contracts\\CheckoutCatalog;
-use App\\Domains\\Products\\Models\\Product;
-use App\\Domains\\Products\\Models\\ProductVariant;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Products\Contracts\CheckoutCatalog;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductVariant;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class CheckoutCatalogResolutionTest extends TestCase
 {
