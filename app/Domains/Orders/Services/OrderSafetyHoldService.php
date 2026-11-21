@@ -38,7 +38,10 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
             return;
         }
 
-        $order = CooperativeOrder::query()->findOrFail($cooperativeOrderId);
+        $order = CooperativeOrder::query()
+            ->whereKey($cooperativeOrderId)
+            ->lockForUpdate()
+            ->firstOrFail();
         if (in_array($order->status, [
             CooperativeOrderStatus::SHIPPED,
             CooperativeOrderStatus::DELIVERED,
