@@ -336,7 +336,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         app(OrderSafetyHoldManager::class)->assertCanShip((string) $suborder->getKey());
     }
 
-    public function test_safety_hold_can_cancel_confirmed_unshipped_suborder_and_restore_stock(): void
+    public function test_safety_hold_can_cancel_confirmed_unshipped_suborder_and_release_reservation(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
         $customer = $this->userWithRole('customer');

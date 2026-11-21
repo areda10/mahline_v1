@@ -6,7 +6,7 @@
 
 ## Responsabilité
 
-Sales possède le parcours précommande : panier invité/authentifié, lignes de panier, calcul du récapitulatif commercial, promotions/devis uniquement après arbitrage dédié, et orchestration du checkout vers Orders.
+Sales possède le parcours précommande : panier invité/authentifié, lignes de panier, calcul du récapitulatif commercial et orchestration du checkout vers Orders. Les promotions, coupons et devis sont hors périmètre V1 et reportés à V2.
 
 Sales ne possède ni le catalogue et les prix de référence (Products), ni le stock et les réservations (Inventory), ni les commandes après création (Orders), ni les expéditions (Delivery), ni les factures/paiements/commissions (Finance).
 
@@ -29,7 +29,7 @@ Sales ne possède ni le catalogue et les prix de référence (Products), ni le s
 
 - Le contrat Products actuel ne donne pas encore l'état détaillé des produits supprimés/désactivés, les limites commerciales ni la version des caractéristiques commerciales. La synchronisation complète des lignes historiques reste donc à intégrer.
 - Les contrats publics de snapshot d'adresse, de création de commande et de calcul de livraison doivent être stabilisés avant le checkout complet.
-- Promotions, coupons et devis ne sont pas implémentés : leurs règles ne sont pas entièrement arbitrées dans la spécification.
+- Promotions, coupons et devis sont explicitement reportés à V2 ; ils ne bloquent pas le checkout V1.
 - Contrôleur JSON et routes panier déclarés (`sales.cart.show`, `sales.cart.items.store`, `sales.cart.items.update`, `sales.cart.items.destroy`, `sales.cart.clear`). Les écrans Blade/UI restent à réaliser.
 - Les limites commerciales par produit/variante et leur administration restent à intégrer dans Products ; les champs de limites ne sont pas encore exposés par son contrat checkout.
 

@@ -63,7 +63,7 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 1. Le client consulte le catalogue ; Catalog / Products restent les sources de vérité des données catalogue.
 2. Sales ajoute et conserve les articles dans le panier.
 3. Sales demande aux domaines propriétaires les informations nécessaires au calcul et à la validation.
-4. Les règles de promotions et de devis s'appliquent uniquement selon les décisions qui seront validées.
+4. Les promotions, coupons et devis ne s'appliquent pas en V1 : ils sont reportés à V2.
 5. Au checkout, Sales prépare une demande complète et validée ; l'aperçu Inventory ne réserve rien.
 6. Sales transmet cette demande au contrat public de création d'Orders.
 7. Orders crée la commande globale et ses sous-commandes en attente ; Sales ne modifie ensuite ni les lignes ni les statuts de cette commande.
@@ -89,7 +89,7 @@ Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Elles ne do
 - Valeur minimale technique de quantité par ligne et contrôles de précision/unité ; la limite technique globale maximale est désormais fixée à **100 unités par ligne** (SALES-019). La limite commerciale par produit/variante est configurable par la coopérative et reste plafonnée à 100.
 - Format/version du panier, stratégie exacte de verrouillage optimiste, réponse API en cas de version périmée et politique de retry (SALES-016/017).
 - Clé d'idempotence, empreinte de requête, conservation du résultat et reprise après timeout/réponse incertaine du contrat Orders (SALES-018).
-- Durée de validité d'un prix/devis affiché et mécanisme de preuve d'acceptation d'une hausse ou d'une modification commerciale (SALES-007/008/033/034/037).
+- Durée de validité d'un prix affiché et mécanisme de preuve d'acceptation d'une hausse ou d'une modification commerciale (SALES-007/008/033/034/037). Les devis sont reportés à V2.
 - Champs exacts et version des snapshots de panier et de commande, notamment pour les produits/variantes supprimés ou modifiés (SALES-010/011/012/028/035/037).
 - Règles d'arrondi monétaire, précision des quantités, calculs des sous-totaux, taxes et frais. Les paramètres fiscaux ne doivent pas être inventés.
 - Durée de conservation et accès à l'historique des lignes retirées/supprimées (SALES-014/015).
