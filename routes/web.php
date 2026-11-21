@@ -34,6 +34,7 @@ use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Products\Http\Controllers\ProductController;
+use App\Domains\Inventory\Http\Controllers\InventoryReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -612,6 +613,21 @@ Route::prefix('back-office')
 //         ),
 //     ]);
 // });
+
+/*
+|--------------------------------------------------------------------------
+| Inventory PDF reports
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/cooperatives/{cooperativeId}/inventory/report.pdf', InventoryReportController::class)
+    ->middleware([
+        'auth',
+        EnsureActiveAuthenticationSession::class,
+        'role:super_admin_root,super_admin,cooperative_admin,user',
+    ])
+    ->whereUlid('cooperativeId')
+    ->name('inventory.reports.pdf');
 
 /*
 |--------------------------------------------------------------------------
