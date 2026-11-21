@@ -60,6 +60,40 @@
         @endif
     </section>
 
+    @if($canCreateCount)
+        <section class="card">
+            <h2>Créer une session de comptage</h2>
+            <p class="muted">Sélectionnez les produits ou variantes à compter. Les éléments sélectionnés seront temporairement verrouillés.</p>
+            @foreach($stocksByCooperative as $cooperativeId => $cooperativeStocks)
+                <form method="POST"
+                      action="{{ route('backoffice.inventory.count-sessions.create', ['cooperativeId' => $cooperativeId]) }}"
+                      data-inventory-create-count
+                      data-workspace-url="{{ route('backoffice.inventory.count-sessions.workspace', ['sessionId' => '__SESSION__']) }}">
+                    @csrf
+                    <input type="hidden" name="idempotency_key" value="{{ \Illuminate\Support\Str::uuid() }}">
+                    <h3>Coopérative <code>{{ $cooperativeId }}</code></h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Sélection</th><th>Type</th><th>Produit / variante</th><th>Unité</th><th>État</th></tr></thead>
+                            <tbody>
+                                @foreach($cooperativeStocks as $stock)
+                                    <tr>
+                                        <td><input type="checkbox" name="stock_ids[]" value="{{ $stock['id'] }}"></td>
+                                        <td>{{ $stock['stockable_type'] === 'variant' ? 'Variante' : 'Produit' }}</td>
+                                        <td><code>{{ $stock['stockable_id'] }}</code></td>
+                                        <td>{{ $stock['unit_code'] }}</td>
+                                        <td>{{ $stock['status'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="button" type="submit">Créer et ouvrir la session</button>
+                </form>
+            @endforeach
+        </section>
+    @endif
+
     <section class="card">
         <h2>Inventaires physiques</h2>
         @if($countSessions === [])
@@ -101,3 +135,51 @@
         @endif
     </section>
 @endsection
+
+@if($canCreateCount)
+    @push('scripts')
+    <script>
+    document.querySelectorAll('[data-inventory-create-count]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+                const payload = {
+                    idempotency_key: formData.get('idempotency_key'),
+                    stock_ids: formData.getAll('stock_ids[]'),
+                };
+                if (payload.stock_ids.length === 0) {
+                    throw new Error('Sélectionnez au moins un élément à compter.');
+                }
+
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : (result.message || 'La création de la session a échoué.');
+                    throw new Error(message);
+                }
+
+                window.location.href = form.dataset.workspaceUrl.replace('__SESSION__', result.session_id);
+            } catch (error) {
+                window.alert(error.message || 'Une erreur est survenue.');
+                button.disabled = false;
+            }
+        });
+    });
+    </script>
+    @endpush
+@endif
