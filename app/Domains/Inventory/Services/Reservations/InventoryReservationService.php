@@ -576,12 +576,12 @@ final class InventoryReservationService extends BaseService implements Inventory
             'stock_id' => (string) $stock->getKey(),
             'cooperative_id' => (string) $stock->cooperative_id,
             'movement_type' => $type->value,
-            'quantity_delta' => $this->formatMilli($quantityDelta),
-            'reserved_delta' => $this->formatMilli($reservedDelta),
-            'reserved_normal_delta' => $this->formatMilli($reservedNormalDelta),
-            'reserved_quarantine_delta' => $this->formatMilli($reservedQuarantineDelta),
-            'quarantined_delta' => $this->formatMilli($quarantinedDelta),
-            'quarantine_authorized_delta' => $this->formatMilli($quarantineAuthorizedDelta),
+            'quantity_delta' => $this->formatSignedMilli($quantityDelta),
+            'reserved_delta' => $this->formatSignedMilli($reservedDelta),
+            'reserved_normal_delta' => $this->formatSignedMilli($reservedNormalDelta),
+            'reserved_quarantine_delta' => $this->formatSignedMilli($reservedQuarantineDelta),
+            'quarantined_delta' => $this->formatSignedMilli($quarantinedDelta),
+            'quarantine_authorized_delta' => $this->formatSignedMilli($quarantineAuthorizedDelta),
             'balance_before' => $before,
             'balance_after' => $this->balance($stock),
             'unit_code' => $stock->unit_code,
@@ -720,6 +720,14 @@ final class InventoryReservationService extends BaseService implements Inventory
         [$whole, $fraction] = array_pad(explode('.', $formatted, 2), 2, '0');
 
         return ((int) $whole * 1000) + (int) str_pad($fraction, 3, '0');
+    }
+
+    private function formatSignedMilli(int $value): string
+    {
+        $sign = $value < 0 ? '-' : '';
+        $absolute = abs($value);
+
+        return $sign.intdiv($absolute, 1000).'.'.str_pad((string) ($absolute % 1000), 3, '0', STR_PAD_LEFT);
     }
 
     private function formatMilli(int $value): string
