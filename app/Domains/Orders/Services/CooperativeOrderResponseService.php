@@ -254,6 +254,7 @@ final class CooperativeOrderResponseService
 
         $next = match (true) {
             $total > 0 && $cancelled === $total => OrderStatus::CANCELLED,
+            $total > 0 && $confirmed === $total => OrderStatus::CONFIRMED,
             $cancelled > 0 => OrderStatus::PARTIALLY_CANCELLED,
             $total > 0 && $closed === $total => OrderStatus::REFUSED,
             $confirmed > 0 && $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
