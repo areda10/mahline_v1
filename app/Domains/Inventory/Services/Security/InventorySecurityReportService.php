@@ -232,6 +232,12 @@ final class InventorySecurityReportService extends BaseService implements Invent
             $oldStatus = (string) $report->status;
 
             if ($reopen) {
+                $this->safetyHolds->assertSecurityReportCanReopen(
+                    $report->cooperative_order_id === null ? null : (string) $report->cooperative_order_id,
+                );
+            }
+
+            if ($reopen) {
                 if ($oldStatus !== 'closed') {
                     throw new InvalidArgumentException('Only a closed security report can be reopened.');
                 }
