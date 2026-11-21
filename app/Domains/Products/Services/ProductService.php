@@ -62,7 +62,7 @@ final class ProductService implements CheckoutCatalog
             productName: (string) $product->name,
             productSlug: (string) $product->slug,
             currency: (string) $product->currency,
-            effectivePrice: $variant?->effectivePrice() ?? ($variant === null ? $product->price : null),
+            effectivePrice: $variant === null ? $product->price : ($variant->price ?? $product->price),
             hasVariants: $hasVariants,
             hasParentUnit: $product->unit_id !== null,
             variantRequested: $variantRequested,

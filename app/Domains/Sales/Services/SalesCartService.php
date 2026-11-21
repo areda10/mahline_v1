@@ -137,12 +137,35 @@ final class SalesCartService implements SalesCartManager
                 ]);
             }
 
+            $newLineFingerprint = hash('sha256', $cart->getKey().'|'.$fingerprint);
+            $duplicate = $cart->activeItems()
+                ->whereKeyNot($item->getKey())
+                ->where('line_fingerprint', $newLineFingerprint)
+                ->lockForUpdate()
+                ->first();
+
+            if ($duplicate !== null) {
+                $combinedQuantity = $this->quantityToMilli((string) $duplicate->quantity)
+                    + $this->quantityToMilli((string) $item->quantity);
+                $this->assertQuantityLimit($combinedQuantity);
+                $duplicate->forceFill(['quantity' => $this->formatQuantity($combinedQuantity)])->save();
+                $item->forceFill([
+                    'status' => 'merged',
+                    'removed_at' => now(),
+                    'line_fingerprint' => null,
+                    'unavailable_reason' => null,
+                ])->save();
+                $this->touch($cart);
+
+                return $duplicate->refresh();
+            }
+
             $item->forceFill([
                 'accepted_unit_price' => $item->current_unit_price,
                 'accepted_price_fingerprint' => hash('sha256', $fingerprint.'|'.$item->current_unit_price.'|MAD'),
                 'accepted_commercial_fingerprint' => $fingerprint,
                 'commercial_fingerprint' => $fingerprint,
-                'line_fingerprint' => hash('sha256', $cart->getKey().'|'.$fingerprint),
+                'line_fingerprint' => $newLineFingerprint,
                 'unavailable_reason' => null,
             ])->save();
 
@@ -192,10 +215,19 @@ final class SalesCartService implements SalesCartManager
             $commercialFingerprint = $this->commercialFingerprint($product);
             $snapshot['commercial_fingerprint'] = $commercialFingerprint;
 
+            $legacyFingerprint = $item->accepted_commercial_fingerprint === null;
             $acceptedFingerprint = (string) ($item->accepted_commercial_fingerprint
                 ?? $item->commercial_fingerprint);
-            $commercialChanged = $acceptedFingerprint !== ''
+            $commercialChanged = ! $legacyFingerprint
+                && $acceptedFingerprint !== ''
                 && ! hash_equals($acceptedFingerprint, $commercialFingerprint);
+
+            if ($legacyFingerprint) {
+                // First refresh after this field was introduced: establish the current
+                // commercial baseline without forcing a false-positive acceptance.
+                $changes['accepted_commercial_fingerprint'] = $commercialFingerprint;
+                $changes['commercial_fingerprint'] = $commercialFingerprint;
+            }
 
             $currentPriceCents = $this->moneyToCents((string) $product->effectivePrice);
             $acceptedPriceCents = $this->moneyToCents((string) ($item->accepted_unit_price ?? $item->initial_unit_price));
@@ -325,6 +357,7 @@ final class SalesCartService implements SalesCartManager
                 $item = $existing;
             } else {
                 $snapshot = $this->productSnapshot($product);
+                $snapshot['commercial_fingerprint'] = $commercialFingerprint;
                 $item = $cart->items()->create([
                     'product_id' => $product->productId,
                     'product_variant_id' => $product->variantId,

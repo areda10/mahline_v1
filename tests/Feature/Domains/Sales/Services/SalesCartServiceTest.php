@@ -69,6 +69,55 @@ final class SalesCartServiceTest extends TestCase
         }
     }
 
+    public function test_refresh_marks_disabled_product_unavailable_and_reactivates_it_without_losing_the_line(): void
+    {
+        [$product] = $this->product();
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
+        $item = $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1', 1);
+
+        $product->forceFill(['is_active' => false])->save();
+        $cart = $manager->refresh((string) $cart->getKey());
+
+        $this->assertSame('product_unavailable', $cart->activeItems->firstOrFail()->unavailable_reason);
+
+        $product->forceFill(['is_active' => true])->save();
+        $cart = $manager->refresh((string) $cart->getKey());
+
+        $this->assertSame($item->getKey(), $cart->activeItems->firstOrFail()->getKey());
+        $this->assertNull($cart->activeItems->firstOrFail()->unavailable_reason);
+    }
+
+    public function test_price_increase_requires_explicit_acceptance_and_price_decrease_is_applied_automatically(): void
+    {
+        [$product] = $this->product();
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
+        $item = $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1', 1);
+
+        $product->forceFill(['price' => '25.90'])->save();
+        $cart = $manager->refresh((string) $cart->getKey());
+        $item->refresh();
+
+        $this->assertSame('price_change_pending', $item->unavailable_reason);
+        $this->assertSame('25.90', $item->current_unit_price);
+        $this->assertSame('19.90', $item->accepted_unit_price);
+
+        $manager->acceptCurrentChanges(
+            (string) $cart->getKey(),
+            (string) $item->getKey(),
+            (int) $cart->version,
+        );
+        $this->assertNull($item->fresh()->unavailable_reason);
+        $this->assertSame('25.90', $item->fresh()->accepted_unit_price);
+
+        $product->forceFill(['price' => '15.00'])->save();
+        $cart = $manager->refresh((string) $cart->getKey());
+
+        $this->assertNull($item->fresh()->unavailable_reason);
+        $this->assertSame('15.00', $item->fresh()->accepted_unit_price);
+    }
+
     public function test_quantity_above_one_hundred_is_rejected(): void
     {
         [$product] = $this->product();

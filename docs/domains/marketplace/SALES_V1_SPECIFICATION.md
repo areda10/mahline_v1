@@ -124,7 +124,7 @@ Implémenté sur `feature/Marketplace` :
 - limite technique de 100 unités appliquée côté service ;
 - lecture du produit et de son prix initial par le contrat public Products `CheckoutCatalog` ;
 - provider Sales enregistré dans `bootstrap/providers.php` ;
-- tests Feature initiaux ajoutés pour jeton invité, expiration, fusion, retrait historique, limite et conflit de version.
+- tests Feature pour jeton invité, expiration, fusion, retrait historique, limite, conflit de version, réactivation produit, hausses/baisse de prix et acceptation des changements.
 
 ### Points non livrés
 
@@ -135,13 +135,15 @@ Le panier n'est pas encore complet au regard de SALES-001 à SALES-037. Restent 
 - contrat public Localization pour valider et capturer l'adresse ;
 - contrat public idempotent Orders et orchestration de consommation des seules lignes commandées ;
 - contrat Delivery pour les frais de livraison ;
-- contrôleurs, routes, policies, interfaces et tests HTTP ;
+- contrat public Localization pour lire et capturer une adresse active ;
+- contrat public idempotent Orders sans réservation de stock au checkout, et contrat Delivery pour calculer les frais ;
+- interfaces Blade/UI, policies et tests HTTP complets ;
 - rétention/purge des paniers invités expirés et historique ;
 - promotions, coupons et devis : périmètres métier non encore arbitrés dans la présente spécification, donc non implémentés.
 
-### Paramètre technique provisoire
+### Paramètre technique confirmé
 
-La première migration stocke les quantités à trois décimales, en cohérence avec le format actuel utilisé par Inventory. La spécification signale toujours la précision de quantité comme paramètre à confirmer : cette échelle est donc provisoire et devra être validée avant gel de Sales V1.
+Le 21 novembre 2026, l'utilisateur a confirmé la précision des quantités à trois décimales. Sales stocke les quantités en `DECIMAL(15,3)` et rejette toute valeur comportant plus de trois décimales, sans arrondi silencieux.
 
 Les tests ont été ajoutés mais n'ont pas été exécutés dans un environnement Laravel/PHP durant cette intervention. Aucune validation CI, Pint ou suite complète n'est revendiquée.
 

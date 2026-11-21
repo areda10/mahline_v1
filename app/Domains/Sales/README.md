@@ -20,7 +20,9 @@ Sales ne possède ni le catalogue et les prix de référence (Products), ni le s
 - Fusion transactionnelle du panier invité vers le panier client, avec addition des lignes de même empreinte commerciale.
 - Limite technique de 100 unités par ligne appliquée côté service.
 - Lecture des données produit via le contrat public `CheckoutCatalog` ; aucun import de modèle Products.
-- Contrôle du statut actif/non supprimé de la coopérative via `CooperativeStatusReader` avant tout nouvel ajout au panier.
+- Contrôle du statut actif/non supprimé de la coopérative via `CooperativeStatusReader` à l'ajout et au rafraîchissement du panier.
+- Rafraîchissement des produits/variantes existants : désactivation/suppression bloquante sans suppression de ligne ; réactivation reconnue automatiquement.
+- Détection des hausses de prix et changements commerciaux, acceptation explicite via `sales.cart.items.accept-current` ; baisse de prix appliquée automatiquement.
 - Précision validée : `DECIMAL(15,3)` ; validation HTTP et service limitées à trois décimales.
 
 ## Limites actuelles
@@ -29,7 +31,7 @@ Sales ne possède ni le catalogue et les prix de référence (Products), ni le s
 - Les contrats publics de snapshot d'adresse, de création de commande et de calcul de livraison doivent être stabilisés avant le checkout complet.
 - Promotions, coupons et devis ne sont pas implémentés : leurs règles ne sont pas entièrement arbitrées dans la spécification.
 - Contrôleur JSON et routes panier déclarés (`sales.cart.show`, `sales.cart.items.store`, `sales.cart.items.update`, `sales.cart.items.destroy`, `sales.cart.clear`). Les écrans Blade/UI restent à réaliser.
-- La synchronisation des lignes déjà présentes lors d'une désactivation/réactivation de produit ou coopérative, ainsi que l'acceptation explicite des changements de prix et caractéristiques, restent à intégrer.
+- Les limites commerciales par produit/variante et leur administration restent à intégrer dans Products ; les champs de limites ne sont pas encore exposés par son contrat checkout.
 
 ## Migrations et tests
 
