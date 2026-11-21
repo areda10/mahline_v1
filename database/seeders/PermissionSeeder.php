@@ -59,6 +59,32 @@ final class PermissionSeeder extends Seeder
             'products.delete' => 'Supprimer un produit',
             'products.restore' => 'Restaurer un produit',
             'products.force_delete' => 'Supprimer définitivement un produit',
+
+            // Inventory
+            'inventory.stock.view' => 'Consulter l’état du stock dans le périmètre autorisé',
+            'inventory.stock.initialize' => 'Initialiser le stock',
+            'inventory.stock.adjust' => 'Effectuer des ajustements de stock',
+            'inventory.stock.receive' => 'Enregistrer des entrées de stock',
+            'inventory.movements.view' => 'Consulter les mouvements de stock',
+            'inventory.reservations.create' => 'Créer les réservations de stock au checkout',
+            'inventory.reservations.consume' => 'Consommer les réservations lors de la confirmation',
+            'inventory.reservations.release' => 'Libérer les réservations autorisées',
+            'inventory.quarantine.manage' => 'Gérer les quarantaines et inspections',
+            'inventory.quarantine.authorize_sale' => 'Autoriser la vente de quantités en quarantaine',
+            'inventory.quarantine.revoke_sale' => 'Révoquer une autorisation de vente en quarantaine',
+            'inventory.count.create' => 'Créer une session d’inventaire physique',
+            'inventory.count.perform' => 'Effectuer les comptages physiques',
+            'inventory.count.validate' => 'Valider les comptages physiques',
+            'inventory.count.cancel' => 'Annuler logiquement une session d’inventaire',
+            'inventory.threshold.manage' => 'Configurer les seuils de stock',
+            'inventory.reports.view' => 'Consulter les rapports Inventory',
+            'inventory.reports.export' => 'Exporter les rapports Inventory en PDF',
+            'inventory.security_reports.create' => 'Signaler un risque de sécurité Inventory',
+            'inventory.security_reports.view' => 'Consulter les signalements de sécurité dans le périmètre autorisé',
+            'inventory.security_reports.view_own' => 'Consulter le suivi de ses propres signalements',
+            'inventory.security_reports.manage' => 'Traiter les signalements de sécurité',
+            'inventory.security_reports.close' => 'Clôturer les signalements de sécurité',
+            'inventory.security_reports.reopen' => 'Réouvrir les signalements de sécurité',
         ];
 
         foreach ($permissions as $slug => $name) {
