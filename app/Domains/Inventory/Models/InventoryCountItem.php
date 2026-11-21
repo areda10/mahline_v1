@@ -7,6 +7,7 @@ namespace App\Domains\Inventory\Models;
 use App\Core\Foundation\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 final class InventoryCountItem extends BaseModel
 {
@@ -35,6 +36,18 @@ final class InventoryCountItem extends BaseModel
             'counted_at' => 'datetime',
             'validated_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(static function (InventoryCountItem $item): void {
+            if ($item->getOriginal('status') === 'validated') {
+                throw new LogicException('Validated inventory count items are immutable.');
+            }
+        });
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory count items cannot be deleted.');
+        });
     }
 
     public function session(): BelongsTo
