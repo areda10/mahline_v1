@@ -44,7 +44,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
     ): string {
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.initialize');
-        $quantityMilli = $this->quantity($quantity, $unitCode);
+        $quantityMilli = $this->quantity($quantity, $unitCode, allowZero: true);
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
         return DB::transaction(function () use (
@@ -423,14 +423,14 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         }
     }
 
-    private function quantity(string $value, string $unitCode, bool $allowAnyUnit = false): int
+    private function quantity(string $value, string $unitCode, bool $allowZero = false): int
     {
-        if (! in_array($unitCode, self::UNITS, true) && ! $allowAnyUnit) {
+        if (! in_array($unitCode, self::UNITS, true)) {
             throw new InvalidArgumentException('Unsupported stock unit.');
         }
 
         $quantity = $this->milli($value);
-        if ($quantity <= 0 || ($unitCode === 'u' && $quantity % 1000 !== 0)) {
+        if (($quantity < 0 || (! $allowZero && $quantity === 0)) || ($unitCode === 'u' && $quantity % 1000 !== 0)) {
             throw new InvalidArgumentException('The stock quantity is invalid for its unit.');
         }
 
