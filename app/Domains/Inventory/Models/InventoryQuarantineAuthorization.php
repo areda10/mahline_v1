@@ -37,6 +37,13 @@ final class InventoryQuarantineAuthorization extends BaseModel
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory historical records cannot be deleted.');
+        });
+    }
+
     public function quarantine(): BelongsTo
     {
         return $this->belongsTo(InventoryQuarantine::class, 'quarantine_id');
