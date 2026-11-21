@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Providers;
 
 use App\Domains\Inventory\Events\InventoryDomainEvent;
+use App\Domains\Orders\Contracts\OrderCheckoutCreator;
 use App\Domains\Orders\Listeners\HandleInventoryDomainEvent;
+use App\Domains\Orders\Services\OrderCheckoutService;
 use App\Domains\Orders\Services\OrderSafetyHoldService;
 use App\Shared\Contracts\OrderSafetyHoldManager;
 use Illuminate\Support\Facades\Event;
@@ -15,7 +17,8 @@ final class OrdersServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(OrderSafetyHoldManager::class, OrderSafetyHoldService::class);\n        $this->app->bind(OrderCheckoutCreator::class, OrderCheckoutService::class);
+        $this->app->bind(OrderSafetyHoldManager::class, OrderSafetyHoldService::class);
+        $this->app->bind(OrderCheckoutCreator::class, OrderCheckoutService::class);
     }
 
     public function boot(): void
