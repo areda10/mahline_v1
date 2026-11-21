@@ -59,6 +59,10 @@ final class InventoryStockQueryService extends BaseService
             return [$requestedCooperativeId];
         }
 
+        if ($actor->hasRole('super_admin')) {
+            return $this->assignments->cooperativeIdsFor($actor->id);
+        }
+
         if (($actor->hasRole('cooperative_admin') || $actor->hasRole('user')) && $actor->cooperativeId !== null) {
             return [$actor->cooperativeId];
         }
