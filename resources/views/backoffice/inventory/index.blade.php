@@ -450,7 +450,7 @@
     </section>
 @endsection
 
-@if($canCreateCount || $canManageStock || $canManageThreshold || $canInitializeStock)
+@if($canCreateCount || $canManageStock || $canManageThreshold || $canInitializeStock || $canCreateSecurityReport)
     @push('scripts')
     <script>
     document.querySelectorAll('[data-inventory-initialize-stock]').forEach((form) => {
