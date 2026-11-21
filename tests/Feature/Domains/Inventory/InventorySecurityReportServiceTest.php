@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Inventory;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Enums\InventorySecurityReportUrgency;
 use App\Domains\Inventory\Models\InventorySecurityReport;
@@ -32,7 +33,7 @@ final class InventorySecurityReportServiceTest extends TestCase
     public function test_urgent_report_is_visible_to_its_reporter_and_escalates_after_two_hours_without_releasing_holds(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-21 10:00:00'));
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $reporter = $this->userWithRole('user', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -71,10 +72,13 @@ final class InventorySecurityReportServiceTest extends TestCase
     {
         $role = Role::query()->where('slug', $roleSlug)->firstOrFail();
 
-        return User::factory()->create(array_merge([
+        $user = User::factory()->create(array_merge([
             'role_id' => $role->getKey(),
-            'status' => 'active',
+            'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ], $attributes));
+        $user->roles()->attach($role->getKey());
+
+        return $user;
     }
 }
