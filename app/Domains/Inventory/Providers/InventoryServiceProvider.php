@@ -14,6 +14,7 @@ use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
+use App\Domains\Inventory\Contracts\InventoryStockUnitChangeGuard;
 use App\Domains\Inventory\Contracts\InventoryThresholdManager;
 use App\Domains\Inventory\Services\Alerts\InventoryThresholdService;
 use App\Domains\Inventory\Services\Counts\InventoryCountService;
@@ -22,6 +23,7 @@ use App\Domains\Inventory\Services\Reservations\InventoryCheckoutAvailabilitySer
 use App\Domains\Inventory\Services\Reservations\InventoryReservationService;
 use App\Domains\Inventory\Services\Security\InventorySecurityReportService;
 use App\Domains\Inventory\Services\Stock\InventoryStockService;
+use App\Domains\Inventory\Services\Stock\InventoryStockUnitChangeGuardService;
 use Illuminate\Support\ServiceProvider;
 
 final class InventoryServiceProvider extends ServiceProvider
@@ -31,6 +33,7 @@ final class InventoryServiceProvider extends ServiceProvider
         $this->app->bind(InventoryReservationManager::class, InventoryReservationService::class);
         $this->app->bind(InventoryCheckoutAvailabilityReader::class, InventoryCheckoutAvailabilityService::class);
         $this->app->bind(InventoryStockManager::class, InventoryStockService::class);
+        $this->app->bind(InventoryStockUnitChangeGuard::class, InventoryStockUnitChangeGuardService::class);
         $this->app->bind(InventoryQuarantineManager::class, InventoryQuarantineService::class);
         $this->app->bind(InventoryCountManager::class, InventoryCountService::class);
         $this->app->bind(InventoryThresholdManager::class, InventoryThresholdService::class);
