@@ -91,7 +91,14 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $this->movement(
                 $stock,
                 InventoryMovementType::OPENING_BALANCE,
-                ['quantity_on_hand' => '0.000'],
+                [
+                    'quantity_on_hand' => '0.000',
+                    'quantity_reserved' => '0.000',
+                    'quantity_reserved_normal' => '0.000',
+                    'quantity_reserved_quarantine' => '0.000',
+                    'quantity_quarantined' => '0.000',
+                    'quantity_quarantine_authorized' => '0.000',
+                ],
                 $actor,
                 $idempotencyKey,
                 quantityDelta: $quantityMilli,
@@ -144,7 +151,10 @@ final class InventoryStockService extends BaseService implements InventoryStockM
     ): string {
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.receive');
-        $quantityMilli = $this->quantity($quantity, 'kg', allowAnyUnit: true);
+        $quantityMilli = $this->milli($quantity);
+        if ($quantityMilli <= 0) {
+            throw new InvalidArgumentException('A stock receipt quantity must be positive.');
+        }
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
         $type = InventoryMovementType::tryFrom($movementType);
@@ -248,6 +258,10 @@ final class InventoryStockService extends BaseService implements InventoryStockM
 
             $before = $this->balance($stock);
             $currentOnHand = $this->milli($stock->quantity_on_hand);
+
+            if ($operation === 'receive' && $quantityMilli <= 0) {
+                throw new InvalidArgumentException('A stock receipt quantity must be positive.');
+            }
 
             if ($quantityMilli < 0) {
                 $normalAvailable = $currentOnHand
