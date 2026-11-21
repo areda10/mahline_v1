@@ -12,6 +12,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class InventorySecurityReportController
 {
+    public function index(
+        Request $request,
+        InventorySecurityReportManager $reports,
+    ): Response {
+        return response()->json([
+            'reports' => $reports->visibleReports((string) $request->user()->getKey()),
+        ]);
+    }
+
     public function store(
         Request $request,
         string $cooperativeId,
