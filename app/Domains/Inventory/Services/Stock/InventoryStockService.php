@@ -371,6 +371,8 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         return [
             'quantity_on_hand' => (string) $stock->quantity_on_hand,
             'quantity_reserved' => (string) $stock->quantity_reserved,
+            'quantity_reserved_normal' => (string) $stock->quantity_reserved_normal,
+            'quantity_reserved_quarantine' => (string) $stock->quantity_reserved_quarantine,
             'quantity_quarantined' => (string) $stock->quantity_quarantined,
             'quantity_quarantine_authorized' => (string) $stock->quantity_quarantine_authorized,
         ];
