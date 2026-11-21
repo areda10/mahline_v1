@@ -72,6 +72,12 @@ final class MediaOwnerObserver
             return;
         }
 
+        // Identity owns the protected-root deletion rule. Do not emit Media
+        // audit events before UserObserver rejects deletion of that account.
+        if ($owner instanceof User && $owner->roles()->where('slug', 'super_admin_root')->exists()) {
+            return;
+        }
+
         $actor = Auth::user();
         $actorId = $actor instanceof User ? (string) $actor->getKey() : null;
 
