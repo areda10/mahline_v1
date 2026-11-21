@@ -104,7 +104,7 @@ final class InventoryReportService extends BaseService
                 ->get();
         }
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', false);
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml(View::make('inventory.reports.pdf', $data)->render(), 'UTF-8');
@@ -149,6 +149,7 @@ final class InventoryReportService extends BaseService
     {
         $formatted = (string) $value;
         [$whole, $fraction] = array_pad(explode('.', $formatted, 2), 2, '0');
+
         return ((int) $whole * 1000) + (int) str_pad($fraction, 3, '0', STR_PAD_LEFT);
     }
 

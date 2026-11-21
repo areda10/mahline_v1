@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Password\Services;
 
-use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Audit\Contracts\AuditWriter;
+use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException;
 use App\Domains\Identity\Password\Services\PasswordHistoryService;
 use App\Domains\Identity\Password\Services\PasswordResetService;
-use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -57,7 +58,7 @@ final class PasswordResetServiceTest extends TestCase
         self::assertFalse($this->passwordResetService->canRequestReset($user, true));
         self::assertTrue($this->passwordResetService->canRequestReset($user, false));
 
-        $this->expectException(\App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException::class);
+        $this->expectException(InvalidPasswordResetTokenException::class);
 
         $this->passwordResetService->createToken(
             user: $user,
@@ -79,7 +80,7 @@ final class PasswordResetServiceTest extends TestCase
         self::assertTrue($this->passwordResetService->canRequestReset($customer, true));
         self::assertFalse($this->passwordResetService->canRequestReset($customer, false));
 
-        $this->expectException(\App\Domains\Identity\Password\Exceptions\InvalidPasswordResetTokenException::class);
+        $this->expectException(InvalidPasswordResetTokenException::class);
 
         $this->passwordResetService->createToken(
             user: $customer,

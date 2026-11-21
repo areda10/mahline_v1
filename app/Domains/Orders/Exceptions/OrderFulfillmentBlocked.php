@@ -6,6 +6,4 @@ namespace App\Domains\Orders\Exceptions;
 
 use RuntimeException;
 
-final class OrderFulfillmentBlocked extends RuntimeException
-{
-}
+final class OrderFulfillmentBlocked extends RuntimeException {}

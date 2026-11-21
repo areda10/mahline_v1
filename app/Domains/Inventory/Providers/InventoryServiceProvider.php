@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Domains\Inventory\Providers;
 
+use App\Domains\Inventory\Console\Commands\EscalateInventorySecurityReports;
+use App\Domains\Inventory\Console\Commands\ExpireInventoryReservations;
+use App\Domains\Inventory\Console\Commands\PublishInventoryOutbox;
+use App\Domains\Inventory\Console\Commands\ReconcileInventoryAlerts;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\Contracts\InventoryCountManager;
 use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
+use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Contracts\InventoryThresholdManager;
-use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Services\Alerts\InventoryThresholdService;
-use App\Domains\Inventory\Services\Security\InventorySecurityReportService;
 use App\Domains\Inventory\Services\Counts\InventoryCountService;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineService;
 use App\Domains\Inventory\Services\Reservations\InventoryCheckoutAvailabilityService;
 use App\Domains\Inventory\Services\Reservations\InventoryReservationService;
+use App\Domains\Inventory\Services\Security\InventorySecurityReportService;
 use App\Domains\Inventory\Services\Stock\InventoryStockService;
 use Illuminate\Support\ServiceProvider;
 
@@ -37,10 +41,10 @@ final class InventoryServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
         $this->commands([
-            \App\Domains\Inventory\Console\Commands\ExpireInventoryReservations::class,
-            \App\Domains\Inventory\Console\Commands\PublishInventoryOutbox::class,
-            \App\Domains\Inventory\Console\Commands\ReconcileInventoryAlerts::class,
-            \App\Domains\Inventory\Console\Commands\EscalateInventorySecurityReports::class,
+            ExpireInventoryReservations::class,
+            PublishInventoryOutbox::class,
+            ReconcileInventoryAlerts::class,
+            EscalateInventorySecurityReports::class,
         ]);
     }
 }

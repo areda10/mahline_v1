@@ -37,7 +37,7 @@ final class OrderCreationService
      * Return the stock preview that must be shown to the customer before finalization.
      * The preview never exposes physical or reserved quantities.
      *
-     * @param array{items: array<int, array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}>} $checkout
+     * @param  array{items: array<int, array{product_id: string, product_variant_id?: string|null, quantity: string|int|float}>}  $checkout
      */
     public function previewFromCheckout(array $checkout): InventoryCheckoutPreview
     {
@@ -102,8 +102,7 @@ final class OrderCreationService
         array $checkout,
         ?string $idempotencyKey = null,
         ?string $acceptedInventoryFingerprint = null,
-    ): Order
-    {
+    ): Order {
         $address = $checkout['delivery_address_snapshot'] ?? null;
         $items = $checkout['items'] ?? null;
 

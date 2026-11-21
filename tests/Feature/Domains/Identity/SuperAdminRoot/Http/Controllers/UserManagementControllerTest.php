@@ -15,8 +15,8 @@ use App\Domains\Identity\UserManagement\Models\UserInvitation;
 use App\Domains\Identity\UserManagement\Notifications\UserInvitationNotification;
 use App\Domains\Identity\Users\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -195,7 +195,7 @@ final class UserManagementControllerTest extends TestCase
 
     public function test_root_cannot_use_the_removed_direct_activation_shortcut(): void
     {
-        self::assertFalse(\Illuminate\Support\Facades\Route::has('root.backoffice.users.activate-and-verify'));
+        self::assertFalse(Route::has('root.backoffice.users.activate-and-verify'));
     }
 
     public function test_archived_user_must_be_restored_before_root_activation(): void

@@ -16,7 +16,6 @@ use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventoryQuarantine;
 use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
-use App\Domains\Inventory\Models\InventoryReservationAllocation;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Inventory;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
@@ -144,7 +145,7 @@ final class InventoryQuarantineServiceTest extends TestCase
 
     private function userWithRole(string $roleSlug, array $attributes = []): User
     {
-        $role = \App\Domains\Identity\Authorization\Models\Role::query()
+        $role = Role::query()
             ->where('slug', $roleSlug)
             ->firstOrFail();
 

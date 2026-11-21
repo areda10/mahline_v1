@@ -6,22 +6,22 @@ namespace App\Domains\Orders\Services;
 
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
-use App\Shared\DTOs\AuditEntryDTO;
-use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
+use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
+use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
+use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
+use App\Domains\Orders\Models\OrderSafetyHold;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\DTOs\ActorContext;
+use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
-use InvalidArgumentException;
-use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
-use App\Domains\Orders\Models\CooperativeOrder;
-use App\Domains\Orders\Models\OrderSafetyHold;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 final class OrderSafetyHoldService extends BaseService implements OrderSafetyHoldManager
 {
@@ -31,6 +31,7 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
     ) {}
+
     public function assertCooperativeOrderScope(string $cooperativeOrderId, string $cooperativeId): void
     {
         $cooperativeOrder = CooperativeOrder::query()->findOrFail($cooperativeOrderId);

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
-use LogicException;
 use App\Shared\Contracts\PrivateMediaAttachmentOwner;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use LogicException;
 
 final class InventorySecurityReport extends BaseModel implements PrivateMediaAttachmentOwner
 {
@@ -33,7 +33,7 @@ final class InventorySecurityReport extends BaseModel implements PrivateMediaAtt
 
     protected static function booted(): void
     {
-        static::deleting(static function (): never {
+        self::deleting(static function (): never {
             throw new LogicException('Inventory historical records cannot be deleted.');
         });
     }

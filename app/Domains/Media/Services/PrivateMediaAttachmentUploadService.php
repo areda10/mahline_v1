@@ -8,9 +8,9 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Contracts\PrivateMediaAttachmentUploader;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Shared\Contracts\PrivateMediaAttachmentOwner;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Auth\Access\AuthorizationException;
 
 final class PrivateMediaAttachmentUploadService implements PrivateMediaAttachmentUploader
 {

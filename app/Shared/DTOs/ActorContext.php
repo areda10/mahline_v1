@@ -7,8 +7,8 @@ namespace App\Shared\DTOs;
 final readonly class ActorContext
 {
     /**
-     * @param list<string> $roles
-     * @param list<string> $permissions
+     * @param  list<string>  $roles
+     * @param  list<string>  $permissions
      */
     public function __construct(
         public string $id,

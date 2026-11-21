@@ -9,7 +9,6 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
-use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -19,6 +18,7 @@ use Database\Seeders\ProductUnitSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 final class OrderCreationServiceTest extends TestCase
@@ -133,7 +133,7 @@ final class OrderCreationServiceTest extends TestCase
             'unit_id' => ProductUnit::query()->where('code', 'kg')->value('id'),
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
             'idempotency_key' => 'test-order-creation-03',
@@ -160,7 +160,7 @@ final class OrderCreationServiceTest extends TestCase
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
             'idempotency_key' => 'test-order-creation-04',
@@ -187,7 +187,7 @@ final class OrderCreationServiceTest extends TestCase
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
             'idempotency_key' => 'test-order-creation-05',
@@ -210,7 +210,7 @@ final class OrderCreationServiceTest extends TestCase
             'unit_id' => null,
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(OrderCreationService::class)->createFromCheckout($customer, [
             'idempotency_key' => 'test-order-creation-06',
@@ -222,7 +222,6 @@ final class OrderCreationServiceTest extends TestCase
             ]],
         ]);
     }
-
 
     private function stock(Cooperative $cooperative, string $stockableType, string $stockableId, string $unit, string $quantity): void
     {

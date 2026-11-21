@@ -31,17 +31,17 @@ use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAs
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
-use App\Domains\Media\Http\Controllers\MediaController;
-use App\Domains\Media\Http\Controllers\MediaIncidentController;
-use App\Domains\Products\Http\Controllers\ProductController;
+use App\Domains\Inventory\Http\Controllers\InventoryCountController;
+use App\Domains\Inventory\Http\Controllers\InventoryOperationsController;
+use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
 use App\Domains\Inventory\Http\Controllers\InventoryReportController;
 use App\Domains\Inventory\Http\Controllers\InventorySecurityReportController;
-use App\Domains\Inventory\Http\Controllers\InventoryOperationsController;
-use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Inventory\Http\Controllers\InventoryStockController;
-use App\Domains\Inventory\Http\Controllers\InventoryCountController;
-use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
 use App\Domains\Inventory\Http\Controllers\InventoryThresholdController;
+use App\Domains\Media\Http\Controllers\MediaController;
+use App\Domains\Media\Http\Controllers\MediaIncidentController;
+use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
+use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -781,7 +781,6 @@ Route::middleware(['auth', EnsureActiveAuthenticationSession::class])
             ->name('destroy');
     });
 
-
 Route::middleware([
     'auth',
     EnsureActiveAuthenticationSession::class,
@@ -839,4 +838,3 @@ Route::middleware([
         ->whereUlid('authorizationId')
         ->name('quarantine-authorizations.revoke');
 });
-

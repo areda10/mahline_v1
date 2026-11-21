@@ -18,6 +18,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -427,76 +428,76 @@ final class MediaService
 
         try {
             return DB::transaction(function () use ($actor, $media, $makePrimary): Media {
-            $owner = $media->mediable;
-            if (! $owner instanceof Model) {
-                throw new RuntimeException('Le propriétaire du média est introuvable.');
-            }
+                $owner = $media->mediable;
+                if (! $owner instanceof Model) {
+                    throw new RuntimeException('Le propriétaire du média est introuvable.');
+                }
 
-            $owner = $owner->newQuery()->lockForUpdate()->findOrFail($owner->getKey());
-            $locked = Media::withTrashed()->whereKey($media->getKey())->lockForUpdate()->firstOrFail();
+                $owner = $owner->newQuery()->lockForUpdate()->findOrFail($owner->getKey());
+                $locked = Media::withTrashed()->whereKey($media->getKey())->lockForUpdate()->firstOrFail();
 
-            if (! $locked->trashed()) {
-                throw ValidationException::withMessages([
-                    'media' => ['Ce média a déjà été restauré.'],
-                ]);
-            }
+                if (! $locked->trashed()) {
+                    throw ValidationException::withMessages([
+                        'media' => ['Ce média a déjà été restauré.'],
+                    ]);
+                }
 
-            $this->assertRetainedFilesAreValid($locked);
+                $this->assertRetainedFilesAreValid($locked);
 
-            $single = in_array($locked->category, [
-                MediaCategory::COOPERATIVE_LOGO->value,
-                MediaCategory::PROFILE_IMAGE->value,
-            ], true);
+                $single = in_array($locked->category, [
+                    MediaCategory::COOPERATIVE_LOGO->value,
+                    MediaCategory::PROFILE_IMAGE->value,
+                ], true);
 
-            if ($single) {
-                $owner->media()->where('category', $locked->category)->lockForUpdate()->get()
-                    ->each(function (Media $active) use ($actor, $locked): void {
-                        $metadata = $active->metadata ?? [];
-                        $metadata['replacement_media_id'] = (string) $locked->getKey();
-                        $active->forceFill([
-                            'metadata' => $metadata,
-                            'deleted_by' => (string) $actor->getKey(),
-                        ])->save();
-                        $active->delete();
-                        $this->record($actor, $active, 'media.replaced_by_restoration', 'replaced_by_restoration');
-                    });
-            }
+                if ($single) {
+                    $owner->media()->where('category', $locked->category)->lockForUpdate()->get()
+                        ->each(function (Media $active) use ($actor, $locked): void {
+                            $metadata = $active->metadata ?? [];
+                            $metadata['replacement_media_id'] = (string) $locked->getKey();
+                            $active->forceFill([
+                                'metadata' => $metadata,
+                                'deleted_by' => (string) $actor->getKey(),
+                            ])->save();
+                            $active->delete();
+                            $this->record($actor, $active, 'media.replaced_by_restoration', 'replaced_by_restoration');
+                        });
+                }
 
-            if ($locked->category === MediaCategory::PRODUCT_IMAGE->value) {
-                $hasActivePrimary = $owner->media()
-                    ->where('category', MediaCategory::PRODUCT_IMAGE->value)
-                    ->where('is_primary', true)
-                    ->exists();
-                $makePrimary = $makePrimary || ! $hasActivePrimary;
-            }
+                if ($locked->category === MediaCategory::PRODUCT_IMAGE->value) {
+                    $hasActivePrimary = $owner->media()
+                        ->where('category', MediaCategory::PRODUCT_IMAGE->value)
+                        ->where('is_primary', true)
+                        ->exists();
+                    $makePrimary = $makePrimary || ! $hasActivePrimary;
+                }
 
-            if ($locked->category === MediaCategory::PRODUCT_IMAGE->value && $makePrimary) {
-                $owner->media()
-                    ->where('category', MediaCategory::PRODUCT_IMAGE->value)
-                    ->where('is_primary', true)
-                    ->lockForUpdate()
-                    ->get()
-                    ->each(function (Media $active) use ($actor): void {
-                        $active->is_primary = false;
-                        $active->updated_by = (string) $actor->getKey();
-                        $active->save();
-                    });
-            }
+                if ($locked->category === MediaCategory::PRODUCT_IMAGE->value && $makePrimary) {
+                    $owner->media()
+                        ->where('category', MediaCategory::PRODUCT_IMAGE->value)
+                        ->where('is_primary', true)
+                        ->lockForUpdate()
+                        ->get()
+                        ->each(function (Media $active) use ($actor): void {
+                            $active->is_primary = false;
+                            $active->updated_by = (string) $actor->getKey();
+                            $active->save();
+                        });
+                }
 
-            $locked->forceFill([
-                'deleted_by' => null,
-                'updated_by' => (string) $actor->getKey(),
-                'is_primary' => $single
-                    ? true
-                    : ($locked->category === MediaCategory::PRODUCT_IMAGE->value
-                        ? $makePrimary
-                        : $locked->is_primary),
-            ])->save();
+                $locked->forceFill([
+                    'deleted_by' => null,
+                    'updated_by' => (string) $actor->getKey(),
+                    'is_primary' => $single
+                        ? true
+                        : ($locked->category === MediaCategory::PRODUCT_IMAGE->value
+                            ? $makePrimary
+                            : $locked->is_primary),
+                ])->save();
 
-            $locked->restore();
-            $this->record($actor, $locked, 'media.restored', 'restored');
+                $locked->restore();
+                $this->record($actor, $locked, 'media.restored', 'restored');
 
-            return $locked->refresh();
+                return $locked->refresh();
             });
         } catch (ValidationException $exception) {
             $this->record($actor, $media, 'media.restore_rejected', 'restore_rejected');
@@ -507,14 +508,14 @@ final class MediaService
     /**
      * Return retained predecessors of a current media item.
      *
-     * @return \Illuminate\Support\Collection<int, Media>
+     * @return Collection<int, Media>
      */
     /**
      * Root-only chronological history for every media item owned by an entity.
      *
-     * @return \Illuminate\Support\Collection<int, Media>
+     * @return Collection<int, Media>
      */
-    public function ownerHistory(User $actor, Model $owner): \Illuminate\Support\Collection
+    public function ownerHistory(User $actor, Model $owner): Collection
     {
         if (! $actor->isAuthorized() || ! $actor->hasRole('super_admin_root')) {
             if (! $this->audit->verifyIntegrity()) {
@@ -557,7 +558,7 @@ final class MediaService
         return $history;
     }
 
-    public function replacementHistory(User $actor, Media $current): \Illuminate\Support\Collection
+    public function replacementHistory(User $actor, Media $current): Collection
     {
         if (! $actor->hasRole('super_admin_root') || ! $actor->isAuthorized()) {
             $this->recordDeniedAccess($actor, $current);

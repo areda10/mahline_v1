@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Identity\Users\Http\Controllers;
 
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
+use App\Domains\Localization\Enums\MoroccanRegion;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

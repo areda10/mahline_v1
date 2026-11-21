@@ -9,7 +9,6 @@ use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Services\Stock\InventoryStockQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 final class InventoryStockController
 {

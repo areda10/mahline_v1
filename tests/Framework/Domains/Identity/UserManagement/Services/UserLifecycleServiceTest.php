@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
-use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Models\LoginHistory;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
 use App\Domains\Identity\Authentication\Services\SessionService;

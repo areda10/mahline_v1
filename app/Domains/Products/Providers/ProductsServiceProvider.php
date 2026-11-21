@@ -6,8 +6,8 @@ namespace App\Domains\Products\Providers;
 
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\Models\Product;
-use App\Domains\Products\Services\ProductService;
 use App\Domains\Products\Policies\ProductPolicy;
+use App\Domains\Products\Services\ProductService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 

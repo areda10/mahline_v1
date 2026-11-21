@@ -7,6 +7,7 @@ namespace App\Domains\Media\Observers;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Services\MediaService;
 use App\Domains\Products\Models\Product;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Model;
@@ -31,7 +32,7 @@ final class MediaOwnerObserver
 
         DB::transaction(function () use ($owner, $actor, $actorId): void {
             $owner->media()->lockForUpdate()->get()->each(function ($media) use ($owner, $actor, $actorId): void {
-                if (app(\App\Domains\Media\Services\MediaService::class)->isMediaIntegrityValid($media)) {
+                if (app(MediaService::class)->isMediaIntegrityValid($media)) {
                     return;
                 }
 
@@ -101,31 +102,31 @@ final class MediaOwnerObserver
 
         DB::transaction(function () use ($owner, $actorId, $actor): void {
             $owner->media()->whereNull('deleted_at')->lockForUpdate()->get()->each(
-            function ($media) use ($actorId, $owner, $actor): void {
-                $media->forceFill(['deleted_by' => $actorId])->save();
-                $media->delete();
+                function ($media) use ($actorId, $owner, $actor): void {
+                    $media->forceFill(['deleted_by' => $actorId])->save();
+                    $media->delete();
 
-                $cooperativeId = match (true) {
-                    $owner instanceof Product => (string) $owner->cooperative_id,
-                    $owner instanceof Cooperative => (string) $owner->getKey(),
-                    $owner instanceof User => $owner->cooperative_id === null ? null : (string) $owner->cooperative_id,
-                    default => null,
-                };
+                    $cooperativeId = match (true) {
+                        $owner instanceof Product => (string) $owner->cooperative_id,
+                        $owner instanceof Cooperative => (string) $owner->getKey(),
+                        $owner instanceof User => $owner->cooperative_id === null ? null : (string) $owner->cooperative_id,
+                        default => null,
+                    };
 
-                app(AuditWriter::class)->record(new AuditEntryDTO(
-                    eventKey: 'media.owner_force_deleted',
-                    action: 'owner_force_deleted',
-                    actorType: $actor instanceof User ? User::class : null,
-                    actorId: $actorId,
-                    cooperativeId: $cooperativeId,
-                    subjectType: $media::class,
-                    subjectId: (string) $media->getKey(),
-                    metadata: [
-                        'category' => $media->category,
-                        'owner_type' => $owner::class,
-                    ],
-                ));
-            },
+                    app(AuditWriter::class)->record(new AuditEntryDTO(
+                        eventKey: 'media.owner_force_deleted',
+                        action: 'owner_force_deleted',
+                        actorType: $actor instanceof User ? User::class : null,
+                        actorId: $actorId,
+                        cooperativeId: $cooperativeId,
+                        subjectType: $media::class,
+                        subjectId: (string) $media->getKey(),
+                        metadata: [
+                            'category' => $media->category,
+                            'owner_type' => $owner::class,
+                        ],
+                    ));
+                },
             );
         });
     }

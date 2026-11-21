@@ -7,7 +7,7 @@ namespace App\Domains\Localization\DTOs;
 final readonly class UserAddressOwnerData
 {
     /**
-     * @param list<string> $roles
+     * @param  list<string>  $roles
      */
     public function __construct(
         public string $id,

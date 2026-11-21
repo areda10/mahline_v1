@@ -10,7 +10,7 @@ use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
 interface InventoryCheckoutAvailabilityReader
 {
     /**
-     * @param list<InventoryCheckoutLineData> $lines
+     * @param  list<InventoryCheckoutLineData>  $lines
      */
     public function preview(array $lines): InventoryCheckoutPreview;
 }

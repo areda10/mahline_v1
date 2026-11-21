@@ -10,8 +10,8 @@ use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Enums\InventorySecurityReportUrgency;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventorySecurityReport;
-use App\Domains\Inventory\Models\InventorySecurityReportEvent;
 use App\Domains\Inventory\Models\InventorySecurityReportAttachment;
+use App\Domains\Inventory\Models\InventorySecurityReportEvent;
 use App\Domains\Media\Contracts\PrivateMediaAttachmentUploader;
 use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Shared\Contracts\ActorContextProvider;
@@ -19,11 +19,11 @@ use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\DTOs\ActorContext;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
-use Illuminate\Http\UploadedFile;
 
 final class InventorySecurityReportService extends BaseService implements InventorySecurityReportManager
 {
@@ -303,6 +303,7 @@ final class InventorySecurityReportService extends BaseService implements Invent
                 return $role;
             }
         }
+
         return 'system';
     }
 

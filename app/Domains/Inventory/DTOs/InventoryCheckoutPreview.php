@@ -7,7 +7,7 @@ namespace App\Domains\Inventory\DTOs;
 final readonly class InventoryCheckoutPreview
 {
     /**
-     * @param list<InventoryCheckoutCooperativeResult> $cooperatives
+     * @param  list<InventoryCheckoutCooperativeResult>  $cooperatives
      */
     public function __construct(
         public array $cooperatives,

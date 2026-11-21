@@ -7,7 +7,7 @@ namespace App\Domains\Inventory\DTOs;
 final readonly class InventoryCheckoutCooperativeResult
 {
     /**
-     * @param list<string> $unavailableLineKeys
+     * @param  list<string>  $unavailableLineKeys
      */
     public function __construct(
         public string $cooperativeId,

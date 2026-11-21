@@ -8,12 +8,13 @@ use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Services\CooperativeService;
-use App\Domains\Localization\Models\Country;
+use App\Domains\Identity\Authentication\Services\ApiTokenService;
 use App\Domains\Identity\Authentication\Services\SessionService;
-use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Country;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -339,7 +340,7 @@ final class CooperativeServiceTest extends TestCase
         }
 
         try {
-            app(\App\Domains\Identity\Authentication\Services\ApiTokenService::class)
+            app(ApiTokenService::class)
                 ->createForOwner($user->fresh(), $user->fresh(), 'blocked-after-coop-deactivation');
             self::fail('A member of an inactive cooperative must not create a new API token.');
         } catch (\RuntimeException $exception) {

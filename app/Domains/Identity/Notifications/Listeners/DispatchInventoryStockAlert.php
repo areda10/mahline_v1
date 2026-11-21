@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Identity\Notifications\Listeners;
 
-use App\Shared\Contracts\InventoryAlertNotificationDispatcher;
 use App\Domains\Inventory\Events\InventoryDomainEvent;
+use App\Shared\Contracts\InventoryAlertNotificationDispatcher;
 
 final class DispatchInventoryStockAlert
 {

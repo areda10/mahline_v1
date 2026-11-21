@@ -62,6 +62,7 @@ final class InventoryThresholdService extends BaseService implements InventoryTh
                 if (! hash_equals((string) $existing->request_hash, $hash)) {
                     throw new InventoryReservationConflict('The threshold idempotency key was reused with different data.');
                 }
+
                 return;
             }
 
@@ -139,6 +140,7 @@ final class InventoryThresholdService extends BaseService implements InventoryTh
             throw new InvalidArgumentException('The threshold must have at most three decimal places.');
         }
         [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '0');
+
         return ((int) $whole * 1000) + (int) str_pad($fraction, 3, '0', STR_PAD_RIGHT);
     }
 

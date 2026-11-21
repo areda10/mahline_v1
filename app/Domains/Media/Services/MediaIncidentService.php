@@ -8,13 +8,14 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Enums\MediaCategory;
 use App\Domains\Media\Enums\MediaIncidentStatus;
+use App\Domains\Media\Models\Media;
 use App\Domains\Media\Models\MediaIncident;
 use App\Domains\Media\Notifications\MediaIncidentNotification;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -182,11 +183,11 @@ final class MediaIncidentService
         ));
     }
 
-    public function attach(User $actor, MediaIncident $incident, UploadedFile $file): \App\Domains\Media\Models\Media
+    public function attach(User $actor, MediaIncident $incident, UploadedFile $file): Media
     {
         $this->assertRoot($actor);
 
-        return DB::transaction(function () use ($actor, $incident, $file): \App\Domains\Media\Models\Media {
+        return DB::transaction(function () use ($actor, $incident, $file): Media {
             $locked = MediaIncident::query()->whereKey($incident->getKey())->lockForUpdate()->firstOrFail();
 
             if ($locked->status === MediaIncidentStatus::CLOSED) {

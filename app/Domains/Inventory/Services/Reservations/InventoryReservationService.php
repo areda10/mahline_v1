@@ -15,11 +15,11 @@ use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Models\InventoryIdempotencyRecord;
 use App\Domains\Inventory\Models\InventoryMovement;
+use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventoryQuarantine;
 use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
-use App\Domains\Inventory\Models\InventoryReservationAllocation;
-use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventoryReservation;
+use App\Domains\Inventory\Models\InventoryReservationAllocation;
 use App\Domains\Inventory\Models\InventoryReservationItem;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Shared\Contracts\ActorContextProvider;
@@ -189,7 +189,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 );
                 $stock->updated_by = $actor->id;
                 $stock->save();
-    
+
                 $reservationItem = InventoryReservationItem::query()->create([
                     'reservation_id' => (string) $reservation->getKey(),
                     'stock_id' => (string) $stock->getKey(),
@@ -385,7 +385,7 @@ final class InventoryReservationService extends BaseService implements Inventory
 
                 $stock->updated_by = $actor->id;
                 $stock->save();
-    
+
                 $this->recordMovement(
                     $stock,
                     InventoryMovementType::SALE,
@@ -553,7 +553,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                     $stock->updated_by = $actor->id;
                 }
                 $stock->save();
-    
+
                 $this->recordMovement(
                     $stock,
                     InventoryMovementType::RESERVATION_RELEASED,
@@ -718,7 +718,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 );
                 $stock->updated_by = $actor->id;
                 $stock->save();
-    
+
                 $this->recordMovement(
                     $stock,
                     InventoryMovementType::SAFETY_CANCELLATION_RETURN,
@@ -819,7 +819,7 @@ final class InventoryReservationService extends BaseService implements Inventory
     }
 
     /**
-     * @param list<InventoryReservationLineData> $items
+     * @param  list<InventoryReservationLineData>  $items
      * @return list<array<string, int|string>>
      */
     private function normalizeLines(array $items): array
@@ -857,7 +857,7 @@ final class InventoryReservationService extends BaseService implements Inventory
     }
 
     /**
-     * @param list<array<string, int|string>> $items
+     * @param  list<array<string, int|string>>  $items
      * @return Collection<string, InventoryStock>
      */
     private function lockStocks(string $cooperativeId, array $items): Collection
@@ -987,7 +987,7 @@ final class InventoryReservationService extends BaseService implements Inventory
     }
 
     /**
-     * @param list<InventoryReservationLineData> $items
+     * @param  list<InventoryReservationLineData>  $items
      *
      * @throws JsonException
      */

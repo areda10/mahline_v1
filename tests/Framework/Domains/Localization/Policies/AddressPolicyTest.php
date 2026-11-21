@@ -8,13 +8,13 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Localization\Policies\AddressPolicy;
-use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
 use App\Domains\Localization\Contracts\CooperativeAddressOwnerGateway;
+use App\Domains\Localization\Contracts\UserAddressOwnerGateway;
+use App\Domains\Localization\DTOs\CooperativeAddressOwnerData;
+use App\Domains\Localization\DTOs\UserAddressOwnerData;
+use App\Domains\Localization\Policies\AddressPolicy;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\DTOs\ActorContext;
-use App\Domains\Localization\DTOs\UserAddressOwnerData;
-use App\Domains\Localization\DTOs\CooperativeAddressOwnerData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -177,7 +177,6 @@ final class AddressPolicyTest extends TestCase
 
         self::assertFalse(app(AddressPolicy::class)->updateCooperativeAddress($this->actorContext($root), $this->cooperativeOwner($cooperative)));
     }
-
 
     private function actorContext(User $user): ActorContext
     {

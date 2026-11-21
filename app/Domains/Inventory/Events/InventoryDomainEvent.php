@@ -7,7 +7,7 @@ namespace App\Domains\Inventory\Events;
 final readonly class InventoryDomainEvent
 {
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function __construct(
         public string $eventKey,

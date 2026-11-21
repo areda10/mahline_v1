@@ -6,6 +6,4 @@ namespace App\Domains\Inventory\Exceptions;
 
 use RuntimeException;
 
-final class InventoryReservationConflict extends RuntimeException
-{
-}
+final class InventoryReservationConflict extends RuntimeException {}

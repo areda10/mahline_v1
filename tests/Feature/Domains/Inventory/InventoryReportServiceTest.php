@@ -13,6 +13,7 @@ use App\Domains\Inventory\Services\Reports\InventoryReportService;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -59,7 +60,7 @@ final class InventoryReportServiceTest extends TestCase
             'cooperative_id' => $ownCooperative->getKey(),
         ]);
 
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
 
         app(InventoryReportService::class)->pdf(
             (string) $otherCooperative->getKey(),

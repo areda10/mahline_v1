@@ -35,12 +35,12 @@ final class InventoryCountSession extends BaseModel
 
     protected static function booted(): void
     {
-        static::updating(static function (InventoryCountSession $session): void {
+        self::updating(static function (InventoryCountSession $session): void {
             if (in_array($session->getOriginal('status'), ['completed', 'cancelled'], true)) {
                 throw new LogicException('Closed inventory count sessions are immutable.');
             }
         });
-        static::deleting(static function (): never {
+        self::deleting(static function (): never {
             throw new LogicException('Inventory count sessions cannot be deleted.');
         });
     }

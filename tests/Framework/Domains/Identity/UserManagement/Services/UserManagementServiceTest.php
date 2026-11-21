@@ -6,12 +6,12 @@ namespace Tests\Framework\Domains\Identity\UserManagement\Services;
 
 use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Localization\Models\Country;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Country;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -70,6 +70,7 @@ final class InventoryStockReadService extends BaseService
     {
         $formatted = (string) $value;
         [$whole, $fraction] = array_pad(explode('.', $formatted, 2), 2, '0');
+
         return ((int) $whole * 1000) + (int) str_pad($fraction, 3, '0', STR_PAD_LEFT);
     }
 }

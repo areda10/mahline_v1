@@ -26,7 +26,7 @@ final class InventoryCountParticipant extends BaseModel
 
     protected static function booted(): void
     {
-        static::deleting(static function (): never {
+        self::deleting(static function (): never {
             throw new LogicException('Inventory count participants cannot be deleted.');
         });
     }

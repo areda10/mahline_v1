@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Cooperatives\Services;
 
-use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Cooperatives\Contracts\CooperativeIdentityReference;
+use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use Illuminate\Foundation\Testing\RefreshDatabase;

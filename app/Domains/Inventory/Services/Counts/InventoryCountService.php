@@ -271,7 +271,7 @@ final class InventoryCountService extends BaseService implements InventoryCountM
                 $stock->active_count_session_id = null;
                 $stock->updated_by = $actor->id;
                 $stock->save();
-    
+
                 if ($difference !== 0) {
                     InventoryMovement::query()->create([
                         'stock_id' => (string) $stock->getKey(),

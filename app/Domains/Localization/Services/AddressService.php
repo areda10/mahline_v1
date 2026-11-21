@@ -593,8 +593,8 @@ final class AddressService extends BaseService implements CooperativeAddressMana
     }
 
     /**
-     * @param array<string, mixed>|null $oldValues
-     * @param array<string, mixed>|null $newValues
+     * @param  array<string, mixed>|null  $oldValues
+     * @param  array<string, mixed>|null  $newValues
      */
     private function record(
         ActorContext $actor,

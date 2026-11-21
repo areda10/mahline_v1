@@ -25,10 +25,10 @@ final class InventoryThresholdHistory extends BaseModel
 
     protected static function booted(): void
     {
-        static::updating(static function (): never {
+        self::updating(static function (): never {
             throw new LogicException('Inventory threshold history is immutable.');
         });
-        static::deleting(static function (): never {
+        self::deleting(static function (): never {
             throw new LogicException('Inventory threshold history cannot be deleted.');
         });
     }

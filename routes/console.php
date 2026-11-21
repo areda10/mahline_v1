@@ -24,11 +24,9 @@ Schedule::command('media:cleanup-orphans')
     ->dailyAt('02:30')
     ->withoutOverlapping();
 
-
 Schedule::command('media:verify-audit')
     ->dailyAt('03:00')
     ->withoutOverlapping();
-
 
 Schedule::command('inventory:expire-reservations')
     ->everyMinute()
@@ -38,11 +36,9 @@ Schedule::command('inventory:publish-outbox')
     ->everyMinute()
     ->withoutOverlapping();
 
-
 Schedule::command('inventory:reconcile-alerts')
     ->everyFiveMinutes()
     ->withoutOverlapping();
-
 
 Schedule::command('inventory:escalate-security-reports')
     ->everyFiveMinutes()

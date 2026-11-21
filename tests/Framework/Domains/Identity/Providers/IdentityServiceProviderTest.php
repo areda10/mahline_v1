@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Identity\Providers;
 
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Workflows\AuthenticationWorkflowHook;
+use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
+use App\Domains\Identity\Authorization\Models\Permission;
+use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Authorization\Services\IdentityActorAuthorizer;
 use App\Domains\Identity\Authorization\Services\IdentityActorContextProvider;
 use App\Domains\Identity\Authorization\Services\SuperAdminCooperativeAssignmentReaderService;
-use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authorization\Models\Permission;
-use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Identity\Users\Models\User;
-use App\Domains\Identity\Authentication\Workflows\RecordNewDeviceAuthenticationWorkflowHook;
 use App\Domains\Identity\UserManagement\Contracts\SuperAdminCooperativeAssignmentService;
 use App\Domains\Identity\UserManagement\Services\UserManagementService;
+use App\Domains\Identity\Users\Models\User;
 use App\Shared\Contracts\ActorAuthorizer;
-use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\Contracts\IdentityActor;
+use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
@@ -40,7 +41,7 @@ final class IdentityServiceProviderTest extends TestCase
 
         $user->forceFill(['emergency_locked_at' => now()])->save();
 
-        $this->expectException(\Illuminate\Auth\Access\AuthorizationException::class);
+        $this->expectException(AuthorizationException::class);
 
         app(ActorAuthorizer::class)->authorize(
             (string) $user->getKey(),

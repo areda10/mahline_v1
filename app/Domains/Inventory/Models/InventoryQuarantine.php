@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
-use LogicException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 final class InventoryQuarantine extends BaseModel
 {
@@ -44,7 +44,7 @@ final class InventoryQuarantine extends BaseModel
 
     protected static function booted(): void
     {
-        static::deleting(static function (): never {
+        self::deleting(static function (): never {
             throw new LogicException('Inventory historical records cannot be deleted.');
         });
     }

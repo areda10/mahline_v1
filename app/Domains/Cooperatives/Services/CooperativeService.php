@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Domains\Cooperatives\Services;
 
 use App\Domains\Audit\Contracts\AuditWriter;
-use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Contracts\CooperativeMemberAccessRevoker;
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Events\CooperativeCreatedV1;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Shared\Contracts\ActorAuthorizer;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\DTOs\ActorContext;
-use App\Domains\Localization\Contracts\CooperativeAddressManager;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;

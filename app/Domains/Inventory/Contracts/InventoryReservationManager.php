@@ -10,7 +10,7 @@ use App\Domains\Inventory\DTOs\InventoryReservationResult;
 interface InventoryReservationManager
 {
     /**
-     * @param list<InventoryReservationLineData> $items
+     * @param  list<InventoryReservationLineData>  $items
      */
     public function reserveForSuborder(
         string $cooperativeOrderId,

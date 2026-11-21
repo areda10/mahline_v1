@@ -9,21 +9,22 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
-use App\Domains\Orders\Models\CooperativeOrder;
-use App\Domains\Orders\Services\CooperativeOrderResponseService;
-use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
+use App\Domains\Orders\Services\CooperativeOrderResponseService;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 final class CooperativeOrderResponseServiceTest extends TestCase
@@ -100,7 +101,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'items' => [['product_id' => (string) $productB->getKey(), 'quantity' => '1']],
         ]);
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
 
         app(CooperativeOrderResponseService::class)
             ->confirmByCooperative($order->cooperativeOrders->firstOrFail(), $adminA);
@@ -188,7 +189,6 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
     }
 
-
     public function test_safety_hold_blocks_fulfillment_and_cancellation_restores_stock(): void
     {
         $cooperative = Cooperative::factory()->create();
@@ -224,7 +224,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $holdId = app(OrderSafetyHoldManager::class)->raiseHold(
             (string) $suborder->getKey(),
             'test_security_report',
-            (string) \Illuminate\Support\Str::ulid(),
+            (string) Str::ulid(),
             'Risque de sécurité à examiner.',
         );
 
@@ -260,7 +260,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $holdId = app(OrderSafetyHoldManager::class)->raiseHold(
             (string) $suborder->getKey(),
             'test_security_report',
-            (string) \Illuminate\Support\Str::ulid(),
+            (string) Str::ulid(),
             'Risque confirmé.',
         );
 

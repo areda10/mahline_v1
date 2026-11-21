@@ -6,12 +6,12 @@ use App\Domains\Catalog\Providers\CatalogServiceProvider;
 use App\Domains\Categories\Providers\CategoriesServiceProvider;
 use App\Domains\Cooperatives\Providers\CooperativesServiceProvider;
 use App\Domains\Identity\Authorization\Providers\AuthorizationServiceProvider;
+use App\Domains\Identity\Authorization\Providers\PermissionGateServiceProvider;
 use App\Domains\Identity\Providers\IdentityServiceProvider;
 use App\Domains\Inventory\Providers\InventoryServiceProvider;
-use App\Domains\Orders\Providers\OrdersServiceProvider;
-use App\Domains\Identity\Authorization\Providers\PermissionGateServiceProvider;
 use App\Domains\Localization\Providers\LocalizationServiceProvider;
 use App\Domains\Media\Providers\MediaServiceProvider;
+use App\Domains\Orders\Providers\OrdersServiceProvider;
 use App\Domains\Products\Providers\ProductsServiceProvider;
 use App\Providers\AppServiceProvider;
 

@@ -11,6 +11,7 @@ use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -78,7 +79,7 @@ final class CooperativeOrderResponseService
             ]);
         }
 
-        $deadline = \Illuminate\Support\Carbon::instance($newDeadline);
+        $deadline = Carbon::instance($newDeadline);
         $fixedReservationDeadline = $cooperativeOrder->created_at?->copy()->addHours(24);
         if ($deadline->lessThanOrEqualTo(now())
             || $fixedReservationDeadline === null

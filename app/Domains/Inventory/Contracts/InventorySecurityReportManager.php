@@ -6,7 +6,6 @@ namespace App\Domains\Inventory\Contracts;
 
 use App\Domains\Inventory\Enums\InventorySecurityReportUrgency;
 use App\Domains\Inventory\Models\InventorySecurityReport;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Database\Eloquent\Collection;
 
 interface InventorySecurityReportManager

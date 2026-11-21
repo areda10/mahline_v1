@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Identity\UserManagement\Http\Controllers;
 
-use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Cooperatives\Enums\CooperativeStatus;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;

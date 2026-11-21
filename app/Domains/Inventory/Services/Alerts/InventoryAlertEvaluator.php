@@ -97,6 +97,7 @@ final class InventoryAlertEvaluator
     {
         $formatted = (string) $value;
         [$whole, $fraction] = array_pad(explode('.', $formatted, 2), 2, '0');
+
         return ((int) $whole * 1000) + (int) str_pad($fraction, 3, '0');
     }
 
