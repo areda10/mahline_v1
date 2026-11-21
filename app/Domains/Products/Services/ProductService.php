@@ -31,12 +31,13 @@ final class ProductService implements CheckoutCatalog
 
     public function resolveForCheckout(string $productId, ?string $variantId): ?CheckoutProductData
     {
-        $product = Product::query()
+        // Keep deleted and inactive records readable for historical cart validation.
+        $product = Product::withTrashed()
             ->whereKey($productId)
             ->lockForUpdate()
             ->first();
 
-        if ($product === null || ! $product->is_active) {
+        if ($product === null) {
             return null;
         }
 
@@ -44,15 +45,15 @@ final class ProductService implements CheckoutCatalog
         $variant = null;
 
         if ($variantRequested) {
-            $variant = ProductVariant::query()
+            $variant = ProductVariant::withTrashed()
                 ->whereKey($variantId)
                 ->where('product_id', $product->getKey())
-                ->where('is_active', true)
                 ->lockForUpdate()
                 ->first();
         }
 
-        $hasVariants = $product->variants()->exists();
+        $hasVariants = $product->variants()->withTrashed()->exists();
+        $variantFound = ! $variantRequested || $variant !== null;
         $unit = $variant !== null ? $variant->unit : ($variantRequested ? null : $product->unit);
 
         return new CheckoutProductData(
@@ -61,16 +62,22 @@ final class ProductService implements CheckoutCatalog
             productName: (string) $product->name,
             productSlug: (string) $product->slug,
             currency: (string) $product->currency,
-            effectivePrice: $variant?->price ?? $product->price,
+            effectivePrice: $variant?->effectivePrice() ?? ($variant === null ? $product->price : null),
             hasVariants: $hasVariants,
             hasParentUnit: $product->unit_id !== null,
             variantRequested: $variantRequested,
-            variantFound: ! $variantRequested || $variant !== null,
+            variantFound: $variantFound,
             variantId: $variant === null ? null : (string) $variant->getKey(),
             variantLabel: $variant?->label,
             variantSku: $variant?->sku,
             unitCode: $unit?->code,
             unitLabel: $unit?->label,
+            productIsActive: (bool) $product->is_active,
+            productIsDeleted: $product->trashed(),
+            variantIsActive: $variant === null || (bool) $variant->is_active,
+            variantIsDeleted: $variant?->trashed() ?? false,
+            variantAttributes: $variant?->attributes,
+            productDescription: $product->description,
         );
     }
 

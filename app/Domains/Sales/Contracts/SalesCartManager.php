@@ -16,6 +16,14 @@ interface SalesCartManager
 
     public function findGuestCart(string $guestToken): ?SalesCart;
 
+    public function refresh(string $cartId): SalesCart;
+
+    public function acceptCurrentChanges(
+        string $cartId,
+        string $itemId,
+        int $expectedVersion,
+    ): SalesCartItem;
+
     public function addItem(
         string $cartId,
         string $productId,

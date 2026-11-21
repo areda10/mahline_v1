@@ -85,6 +85,198 @@ final class SalesCartService implements SalesCartManager
             ->first();
     }
 
+    public function refresh(string $cartId): SalesCart
+    {
+        return DB::transaction(function () use ($cartId): SalesCart {
+            $cart = $this->lockCart($cartId);
+            $changed = false;
+
+            foreach ($cart->activeItems()->lockForUpdate()->get() as $item) {
+                $changed = $this->refreshItem($item) || $changed;
+            }
+
+            if ($changed) {
+                $this->touch($cart);
+            }
+
+            return $cart->fresh()->load('activeItems');
+        });
+    }
+
+    public function acceptCurrentChanges(
+        string $cartId,
+        string $itemId,
+        int $expectedVersion,
+    ): SalesCartItem {
+        return DB::transaction(function () use ($cartId, $itemId, $expectedVersion): SalesCartItem {
+            $cart = $this->lockCart($cartId);
+            $this->assertVersion($cart, $expectedVersion);
+            $item = $cart->activeItems()->whereKey($itemId)->lockForUpdate()->first();
+
+            if ($item === null) {
+                throw (new ModelNotFoundException)->setModel(SalesCartItem::class, [$itemId]);
+            }
+
+            $this->refreshItem($item);
+            if ($item->unavailable_reason !== null
+                && ! in_array($item->unavailable_reason, [
+                    'price_change_pending',
+                    'commercial_change_pending',
+                    'price_and_commercial_change_pending',
+                ], true)) {
+                throw ValidationException::withMessages([
+                    'item' => ['Cette ligne est indisponible et ne peut pas être acceptée.'],
+                ]);
+            }
+
+            $snapshot = $item->current_product_snapshot ?? [];
+            $fingerprint = (string) ($snapshot['commercial_fingerprint'] ?? '');
+            if ($fingerprint === '') {
+                throw ValidationException::withMessages([
+                    'item' => ['Les informations commerciales actuelles sont incomplètes.'],
+                ]);
+            }
+
+            $item->forceFill([
+                'accepted_unit_price' => $item->current_unit_price,
+                'accepted_price_fingerprint' => hash('sha256', $fingerprint.'|'.$item->current_unit_price.'|MAD'),
+                'accepted_commercial_fingerprint' => $fingerprint,
+                'commercial_fingerprint' => $fingerprint,
+                'line_fingerprint' => hash('sha256', $cart->getKey().'|'.$fingerprint),
+                'unavailable_reason' => null,
+            ])->save();
+
+            $this->touch($cart);
+
+            return $item->refresh();
+        });
+    }
+
+    private function refreshItem(SalesCartItem $item): bool
+    {
+        $product = $this->catalog->resolveForCheckout(
+            (string) $item->product_id,
+            $item->product_variant_id === null ? null : (string) $item->product_variant_id,
+        );
+
+        $reason = null;
+        if ($product === null || $product->productIsDeleted) {
+            $reason = 'product_deleted';
+        } elseif (! $product->productIsActive) {
+            $reason = 'product_unavailable';
+        } elseif ($product->variantRequested && ! $product->variantFound) {
+            $reason = 'variant_deleted';
+        } elseif ($product->variantRequested && $product->variantIsDeleted) {
+            $reason = 'variant_deleted';
+        } elseif ($product->variantRequested && ! $product->variantIsActive) {
+            $reason = 'variant_unavailable';
+        } elseif (! $product->variantRequested && $product->hasVariants) {
+            $reason = 'variant_required';
+        } elseif ($product->unitCode === null || $product->unitLabel === null
+            || $product->effectivePrice === null || $product->currency !== 'MAD') {
+            $reason = 'product_unavailable';
+        }
+
+        if ($reason === null) {
+            $cooperative = $this->cooperatives->findStatus($product->cooperativeId);
+            if ($cooperative === null || ! $cooperative->isActive || $cooperative->isDeleted) {
+                $reason = 'cooperative_unavailable';
+            }
+        }
+
+        $changes = [];
+        if ($reason !== null) {
+            $changes['unavailable_reason'] = $reason;
+        } else {
+            $snapshot = $this->productSnapshot($product);
+            $commercialFingerprint = $this->commercialFingerprint($product);
+            $snapshot['commercial_fingerprint'] = $commercialFingerprint;
+
+            $acceptedFingerprint = (string) ($item->accepted_commercial_fingerprint
+                ?? $item->commercial_fingerprint);
+            $commercialChanged = $acceptedFingerprint !== ''
+                && ! hash_equals($acceptedFingerprint, $commercialFingerprint);
+
+            $currentPriceCents = $this->moneyToCents((string) $product->effectivePrice);
+            $acceptedPriceCents = $this->moneyToCents((string) ($item->accepted_unit_price ?? $item->initial_unit_price));
+            $priceIncreased = $currentPriceCents > $acceptedPriceCents;
+            $priceDecreased = $currentPriceCents < $acceptedPriceCents;
+
+            $changes['current_product_snapshot'] = $snapshot;
+            $changes['current_unit_price'] = $product->effectivePrice;
+
+            if ($priceDecreased) {
+                $changes['accepted_unit_price'] = $product->effectivePrice;
+                $changes['accepted_price_fingerprint'] = hash('sha256', $commercialFingerprint.'|'.$product->effectivePrice.'|MAD');
+            }
+
+            $changes['unavailable_reason'] = match (true) {
+                $priceIncreased && $commercialChanged => 'price_and_commercial_change_pending',
+                $priceIncreased => 'price_change_pending',
+                $commercialChanged => 'commercial_change_pending',
+                default => null,
+            };
+        }
+
+        $dirty = false;
+        foreach ($changes as $key => $value) {
+            if ($item->getAttribute($key) != $value) {
+                $dirty = true;
+                break;
+            }
+        }
+
+        if ($dirty) {
+            $item->forceFill($changes)->save();
+        }
+
+        return $dirty;
+    }
+
+    private function commercialFingerprint(\App\Domains\Products\DTOs\CheckoutProductData $product): string
+    {
+        return hash('sha256', json_encode([
+            'product_id' => $product->productId,
+            'variant_id' => $product->variantId,
+            'cooperative_id' => $product->cooperativeId,
+            'unit_code' => $product->unitCode,
+            'unit_label' => $product->unitLabel,
+            'variant_label' => $product->variantLabel,
+            'variant_attributes' => $product->variantAttributes,
+        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+    }
+
+    /** @return array<string, mixed> */
+    private function productSnapshot(\App\Domains\Products\DTOs\CheckoutProductData $product): array
+    {
+        return [
+            'product_id' => $product->productId,
+            'name' => $product->productName,
+            'slug' => $product->productSlug,
+            'description' => $product->productDescription,
+            'variant_id' => $product->variantId,
+            'variant_label' => $product->variantLabel,
+            'sku' => $product->variantSku,
+            'variant_attributes' => $product->variantAttributes,
+            'unit_code' => $product->unitCode,
+            'unit_label' => $product->unitLabel,
+            'currency' => $product->currency,
+        ];
+    }
+
+    private function moneyToCents(string $amount): int
+    {
+        if (! preg_match('/^\\d{1,12}(?:\\.\\d{1,2})?$/', $amount)) {
+            throw ValidationException::withMessages([
+                'price' => ['Le prix du produit est invalide.'],
+            ]);
+        }
+
+        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '0');
+
+        return ((int) $whole * 100) + (int) str_pad($fraction, 2, '0');
+    }
+
     public function addItem(
         string $cartId,
         string $productId,
@@ -99,8 +291,8 @@ final class SalesCartService implements SalesCartManager
             $this->assertVersion($cart, $expectedVersion);
 
             $product = $this->catalog->resolveForCheckout($productId, $variantId);
-            if ($product === null
-                || ($product->variantRequested && ! $product->variantFound)
+            if ($product === null || $product->productIsDeleted || ! $product->productIsActive
+                || ($product->variantRequested && (! $product->variantFound || $product->variantIsDeleted || ! $product->variantIsActive))
                 || (! $product->variantRequested && $product->hasVariants)
                 || $product->unitCode === null
                 || $product->unitLabel === null
@@ -118,13 +310,7 @@ final class SalesCartService implements SalesCartManager
                 ]);
             }
 
-            $fingerprintData = [
-                'product_id' => $product->productId,
-                'variant_id' => $product->variantId,
-                'cooperative_id' => $product->cooperativeId,
-                'unit_code' => $product->unitCode,
-            ];
-            $commercialFingerprint = hash('sha256', json_encode($fingerprintData, JSON_THROW_ON_ERROR));
+            $commercialFingerprint = $this->commercialFingerprint($product);
             $lineFingerprint = hash('sha256', $cart->getKey().'|'.$commercialFingerprint);
             $priceFingerprint = hash('sha256', $commercialFingerprint.'|'.$product->effectivePrice.'|'.$product->currency);
             $existing = $cart->activeItems()
@@ -138,17 +324,7 @@ final class SalesCartService implements SalesCartManager
                 $existing->forceFill(['quantity' => $this->formatQuantity($newQuantity)])->save();
                 $item = $existing;
             } else {
-                $snapshot = [
-                    'product_id' => $product->productId,
-                    'name' => $product->productName,
-                    'slug' => $product->productSlug,
-                    'variant_id' => $product->variantId,
-                    'variant_label' => $product->variantLabel,
-                    'sku' => $product->variantSku,
-                    'unit_code' => $product->unitCode,
-                    'unit_label' => $product->unitLabel,
-                    'currency' => $product->currency,
-                ];
+                $snapshot = $this->productSnapshot($product);
                 $item = $cart->items()->create([
                     'product_id' => $product->productId,
                     'product_variant_id' => $product->variantId,
@@ -161,6 +337,7 @@ final class SalesCartService implements SalesCartManager
                     'current_unit_price' => $product->effectivePrice,
                     'accepted_unit_price' => $product->effectivePrice,
                     'accepted_price_fingerprint' => $priceFingerprint,
+                    'accepted_commercial_fingerprint' => $commercialFingerprint,
                     'commercial_fingerprint' => $commercialFingerprint,
                     'line_fingerprint' => $lineFingerprint,
                     'status' => 'active',

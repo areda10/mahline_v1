@@ -163,6 +163,10 @@ Route::prefix('cart')->name('sales.cart.')->group(function (): void {
     Route::post('/items', [SalesCartController::class, 'addItem'])
         ->middleware('throttle:60,1')
         ->name('items.store');
+    Route::post('/items/{itemId}/accept-current', [SalesCartController::class, 'acceptCurrentChanges'])
+        ->whereUlid('itemId')
+        ->middleware('throttle:30,1')
+        ->name('items.accept-current');
     Route::patch('/items/{itemId}', [SalesCartController::class, 'updateItem'])
         ->whereUlid('itemId')
         ->middleware('throttle:60,1')

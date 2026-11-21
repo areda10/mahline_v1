@@ -22,5 +22,11 @@ final readonly class CheckoutProductData
         public ?string $variantSku,
         public ?string $unitCode,
         public ?string $unitLabel,
+        public bool $productIsActive = true,
+        public bool $productIsDeleted = false,
+        public bool $variantIsActive = true,
+        public bool $variantIsDeleted = false,
+        public ?array $variantAttributes = null,
+        public ?string $productDescription = null,
     ) {}
 }

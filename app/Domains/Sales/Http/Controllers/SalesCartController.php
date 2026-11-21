@@ -27,6 +27,24 @@ final class SalesCartController
         return $this->cartResponse($cart);
     }
 
+    public function acceptCurrentChanges(Request $request, string $itemId): JsonResponse
+    {
+        $data = $request->validate([
+            'expected_version' => ['required', 'integer', 'min:1'],
+        ]);
+
+        return $this->handleMutation(function () use ($request, $itemId, $data): JsonResponse {
+            $cart = $this->resolveCart($request);
+            $this->carts->acceptCurrentChanges(
+                (string) $cart->getKey(),
+                $itemId,
+                (int) $data['expected_version'],
+            );
+
+            return $this->cartResponse($cart->fresh()->load('activeItems'));
+        });
+    }
+
     public function addItem(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -53,7 +71,7 @@ final class SalesCartController
     public function updateItem(Request $request, string $itemId): JsonResponse
     {
         $data = $request->validate([
-            'quantity' => ['required', 'numeric', 'gt:0', 'lte:100'],
+            'quantity' => ['required', 'numeric', 'decimal:0,3', 'gt:0', 'lte:100'],
             'expected_version' => ['required', 'integer', 'min:1'],
         ]);
 
@@ -118,13 +136,13 @@ final class SalesCartController
 
             Cookie::queue(Cookie::forget(self::GUEST_COOKIE));
 
-            return $cart->load('activeItems');
+            return $this->carts->refresh((string) $cart->getKey());
         }
 
         if ($guestToken !== '') {
             $cart = $this->carts->findGuestCart($guestToken);
             if ($cart !== null) {
-                return $cart;
+                return $this->carts->refresh((string) $cart->getKey());
             }
         }
 
@@ -141,7 +159,7 @@ final class SalesCartController
             'lax',
         ));
 
-        return $created['cart']->load('activeItems');
+        return $this->carts->refresh((string) $created['cart']->getKey());
     }
 
     private function cartResponse(SalesCart $cart): JsonResponse
@@ -160,6 +178,14 @@ final class SalesCartController
                     'product' => $item->current_product_snapshot,
                     'unit_price' => (string) $item->current_unit_price,
                     'currency' => 'MAD',
+                    'status' => $item->status,
+                    'unavailable_reason' => $item->unavailable_reason,
+                    'accepted_unit_price' => $item->accepted_unit_price === null ? null : (string) $item->accepted_unit_price,
+                    'requires_acceptance' => in_array($item->unavailable_reason, [
+                        'price_change_pending',
+                        'commercial_change_pending',
+                        'price_and_commercial_change_pending',
+                    ], true),
                 ])->values(),
             ],
         ]);
