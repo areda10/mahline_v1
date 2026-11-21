@@ -7,6 +7,9 @@ namespace App\Domains\Inventory\Contracts;
 interface InventoryCountManager
 {
     /** @param list<string> $stockIds */
+    /** @return Collection<int, InventoryCountSession> */
+    public function sessionsForCooperative(string $cooperativeId, string $actorId): Collection;
+
     public function createSession(
         string $cooperativeId,
         array $stockIds,
