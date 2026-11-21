@@ -46,13 +46,6 @@ final class InventoryStock extends BaseModel
         static::saved(static function (InventoryStock $stock): void {
             app(InventoryAlertEvaluator::class)->evaluate($stock);
         });
-    }
-
-    protected static function booted(): void
-    {
-        static::saved(static function (InventoryStock $stock): void {
-            app(InventoryAlertEvaluator::class)->evaluate($stock);
-        });
 
         static::deleting(static function (): never {
             throw new LogicException('Inventory historical records cannot be deleted.');
