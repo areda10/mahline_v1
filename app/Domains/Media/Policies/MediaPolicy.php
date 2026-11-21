@@ -53,7 +53,7 @@ final class MediaPolicy extends BasePolicy
         }
 
         if ($owner instanceof PrivateMediaAttachmentOwner) {
-            return false;
+            return $user->hasRole('super_admin_root');
         }
 
         if ($owner instanceof User) {
@@ -114,8 +114,12 @@ final class MediaPolicy extends BasePolicy
             return false;
         }
 
-        if ($owner instanceof MediaIncident || $owner instanceof PrivateMediaAttachmentOwner) {
+        if ($owner instanceof MediaIncident) {
             return $user->hasRole('super_admin_root');
+        }
+
+        if ($owner instanceof PrivateMediaAttachmentOwner) {
+            return false;
         }
 
         if ($owner instanceof User) {
