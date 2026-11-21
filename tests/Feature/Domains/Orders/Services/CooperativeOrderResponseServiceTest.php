@@ -9,11 +9,13 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
 use App\Domains\Orders\Services\CooperativeOrderResponseService;
 use App\Domains\Orders\Services\OrderCreationService;
+use App\Domains\Orders\Services\OrderAvailabilityQueryService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Shared\Contracts\OrderSafetyHoldManager;
@@ -330,6 +332,122 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertSame(OrderStatus::CANCELLED, $order->status);
         $this->assertSame('10.000', $stock->quantity_on_hand);
         $this->assertSame('0.000', $stock->quantity_reserved);
+    }
+
+    public function test_mono_cooperative_order_exposes_global_and_line_availability_indicators(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $customer = $this->userWithRole('customer');
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-availability-mono-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [[
+                'product_id' => (string) $product->getKey(),
+                'quantity' => '2',
+            ]],
+        ]);
+
+        $availability = app(OrderAvailabilityQueryService::class)->forOrder(
+            (string) $order->getKey(),
+            (string) $customer->getKey(),
+        );
+
+        $this->assertFalse($availability['is_multi_cooperative']);
+        $this->assertTrue($availability['global_available']);
+        $this->assertCount(1, $availability['suborders'][0]['lines']);
+        $this->assertTrue($availability['suborders'][0]['lines'][0]['available']);
+
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        app(InventoryReservationManager::class)->releaseForSuborder(
+            (string) $suborder->getKey(),
+            'test-availability-mono-release-01',
+            'Libération de test pour vérifier le voyant de disponibilité.',
+            (string) $customer->getKey(),
+        );
+
+        $released = app(OrderAvailabilityQueryService::class)->forOrder(
+            (string) $order->getKey(),
+            (string) $customer->getKey(),
+        );
+
+        $this->assertFalse($released['global_available']);
+        $this->assertFalse($released['suborders'][0]['lines'][0]['available']);
+    }
+
+    public function test_multi_cooperative_order_has_suborder_indicators_without_global_or_line_indicators(): void
+    {
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+        $customer = $this->userWithRole('customer');
+        $adminA = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperativeA->getKey(),
+        ]);
+        $productA = Product::factory()->forCooperative($cooperativeA)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $productB = Product::factory()->forCooperative($cooperativeB)->create([
+            'price' => '25.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperativeA, $productA);
+        $this->stockFor($cooperativeB, $productB);
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-availability-multi-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [
+                ['product_id' => (string) $productA->getKey(), 'quantity' => '1'],
+                ['product_id' => (string) $productB->getKey(), 'quantity' => '1'],
+            ],
+        ]);
+
+        $availability = app(OrderAvailabilityQueryService::class)->forOrder(
+            (string) $order->getKey(),
+            (string) $customer->getKey(),
+        );
+
+        $this->assertTrue($availability['is_multi_cooperative']);
+        $this->assertNull($availability['global_available']);
+        $this->assertCount(2, $availability['suborders']);
+        $this->assertSame([[], []], array_column($availability['suborders'], 'lines'));
+        $this->assertTrue($availability['suborders'][0]['available']);
+        $this->assertTrue($availability['suborders'][1]['available']);
+
+        $suborderA = $order->cooperativeOrders
+            ->firstWhere('cooperative_id', (string) $cooperativeA->getKey());
+        app(InventoryReservationManager::class)->releaseForSuborder(
+            (string) $suborderA->getKey(),
+            'test-availability-multi-release-01',
+            'Libération de test de la sous-commande A.',
+            (string) $customer->getKey(),
+        );
+
+        $afterRelease = app(OrderAvailabilityQueryService::class)->forOrder(
+            (string) $order->getKey(),
+            (string) $customer->getKey(),
+        );
+        $byCooperative = collect($afterRelease['suborders'])->keyBy('cooperative_id');
+        $this->assertFalse($byCooperative[(string) $cooperativeA->getKey()]['available']);
+        $this->assertTrue($byCooperative[(string) $cooperativeB->getKey()]['available']);
+
+        $adminView = app(OrderAvailabilityQueryService::class)->forOrder(
+            (string) $order->getKey(),
+            (string) $adminA->getKey(),
+        );
+        $this->assertTrue($adminView['is_multi_cooperative']);
+        $this->assertNull($adminView['global_available']);
+        $this->assertCount(1, $adminView['suborders']);
+        $this->assertSame((string) $cooperativeA->getKey(), $adminView['suborders'][0]['cooperative_id']);
     }
 
     private function stockFor(Cooperative $cooperative, Product $product): void
