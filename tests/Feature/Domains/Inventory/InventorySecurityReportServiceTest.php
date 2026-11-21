@@ -6,8 +6,8 @@ namespace Tests\Feature\Domains\Inventory;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Enums\InventorySecurityReportUrgency;
 use App\Domains\Inventory\Models\InventorySecurityReport;
