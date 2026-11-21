@@ -12,7 +12,6 @@ use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
 use App\Domains\Products\DTOs\InventoryStockableData;
 use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Repositories\ProductRepository;
