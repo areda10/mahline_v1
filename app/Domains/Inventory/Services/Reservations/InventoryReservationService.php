@@ -84,6 +84,7 @@ final class InventoryReservationService extends BaseService implements Inventory
 
             $normalizedItems = $this->normalizeLines($items);
             $stocks = $this->lockStocks($cooperativeId, $normalizedItems);
+            $reservedAt = now();
             $reservation = InventoryReservation::query()->create([
                 'cooperative_order_id' => $cooperativeOrderId,
                 'cooperative_id' => $cooperativeId,
@@ -91,8 +92,8 @@ final class InventoryReservationService extends BaseService implements Inventory
                 'idempotency_key' => $idempotencyKey,
                 'actor_id' => $actor->id,
                 'actor_type' => $actor->actorType,
-                'reserved_at' => now(),
-                'expires_at' => now()->addHours(24),
+                'reserved_at' => $reservedAt,
+                'expires_at' => $reservedAt->copy()->addHours(24),
             ]);
 
             foreach ($normalizedItems as $line) {
