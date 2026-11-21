@@ -5,11 +5,19 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Http\Controllers;
 
 use App\Domains\Inventory\Contracts\InventoryCountManager;
+use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class InventoryCountController
 {
+    public function show(Request $request, string $sessionId, InventoryCountQueryService $counts): JsonResponse
+    {
+        return response()->json([
+            'data' => $counts->show($sessionId, (string) $request->user()->getKey()),
+        ]);
+    }
+
     public function create(Request $request, string $cooperativeId, InventoryCountManager $counts): JsonResponse
     {
         $data = $request->validate([
