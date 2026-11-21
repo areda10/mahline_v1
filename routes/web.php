@@ -796,6 +796,9 @@ Route::middleware([
         ->whereUlid('sessionId')
         ->name('count-sessions.cancel');
 
+    Route::get('/cooperatives/{cooperativeId}/quarantines', [InventoryQuarantineController::class, 'index'])
+        ->whereUlid('cooperativeId')
+        ->name('quarantines.index');
     Route::post('/cooperatives/{cooperativeId}/quarantines/receive', [InventoryQuarantineController::class, 'receive'])
         ->whereUlid('cooperativeId')
         ->name('quarantines.receive');
