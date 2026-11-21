@@ -8,6 +8,8 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Contracts\InventoryStockUnitChangeGuard;
+use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
 use App\Domains\Products\DTOs\InventoryStockableData;
@@ -25,6 +27,7 @@ final class ProductService implements CheckoutCatalog
     public function __construct(
         private readonly ProductRepository $repository,
         private readonly AuditWriter $audit,
+        private readonly InventoryStockUnitChangeGuard $stockUnitGuard,
     ) {}
 
     public function resolveForCheckout(string $productId, ?string $variantId): ?CheckoutProductData
@@ -177,6 +180,16 @@ final class ProductService implements CheckoutCatalog
             $before = $this->snapshot($product);
 
             $hasVariants = $product->variants()->exists();
+
+            if (! $hasVariants && $unitId !== $product->unit_id
+                && $this->stockUnitGuard->hasStockRecord(
+                    InventoryStockableType::PRODUCT,
+                    (string) $product->getKey(),
+                )) {
+                throw ValidationException::withMessages([
+                    'unit_id' => ['L’unité ne peut plus être modifiée après l’initialisation du stock. Effectuez un ajustement compensatoire dans Inventory si nécessaire.'],
+                ]);
+            }
 
             if ($hasVariants) {
                 if ($product->unit_id !== null) {
