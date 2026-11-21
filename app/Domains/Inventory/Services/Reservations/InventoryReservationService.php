@@ -361,8 +361,16 @@ final class InventoryReservationService extends BaseService implements Inventory
                     $batch->quantity_authorized = $this->formatMilli(
                         $this->milli($batch->quantity_authorized) - $allocationQuantity,
                     );
-                    if ($this->milli($batch->quantity_remaining) === 0) {
+                    $batchRemaining = $this->milli($batch->quantity_remaining);
+                    $batchAuthorized = $this->milli($batch->quantity_authorized);
+                    if ($batchRemaining === 0) {
                         $batch->status = 'exhausted';
+                    } elseif ($batchAuthorized === 0) {
+                        $batch->status = 'non_compliant';
+                    } elseif ($batchAuthorized < $batchRemaining) {
+                        $batch->status = 'partially_authorized';
+                    } else {
+                        $batch->status = 'authorized_for_sale';
                     }
                     $batch->save();
                 }
@@ -530,6 +538,15 @@ final class InventoryReservationService extends BaseService implements Inventory
                         $batch->quantity_authorized = $this->formatMilli(
                             $this->milli($batch->quantity_authorized) - $allocationQuantity,
                         );
+                        if ($this->milli($batch->quantity_remaining) === 0) {
+                            $batch->status = 'exhausted';
+                        } elseif ($this->milli($batch->quantity_authorized) === 0) {
+                            $batch->status = 'non_compliant';
+                        } elseif ($this->milli($batch->quantity_authorized) < $this->milli($batch->quantity_remaining)) {
+                            $batch->status = 'partially_authorized';
+                        } else {
+                            $batch->status = 'authorized_for_sale';
+                        }
                         $batch->save();
                         $revokedQuarantine += $allocationQuantity;
                     }
