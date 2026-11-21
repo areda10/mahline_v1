@@ -181,16 +181,6 @@ final class ProductService implements CheckoutCatalog
 
             $hasVariants = $product->variants()->exists();
 
-            if (! $hasVariants && $unitId !== $product->unit_id
-                && $this->stockUnitGuard->hasStockRecord(
-                    InventoryStockableType::PRODUCT,
-                    (string) $product->getKey(),
-                )) {
-                throw ValidationException::withMessages([
-                    'unit_id' => ['L’unité ne peut plus être modifiée après l’initialisation du stock. Effectuez un ajustement compensatoire dans Inventory si nécessaire.'],
-                ]);
-            }
-
             if ($hasVariants) {
                 if ($product->unit_id !== null) {
                     throw ValidationException::withMessages([
@@ -209,6 +199,16 @@ final class ProductService implements CheckoutCatalog
                 $unitId = $this->validatedUnitId(
                     $attributes['unit_id'] ?? $product->unit_id,
                 );
+            }
+
+            if (! $hasVariants && $unitId !== $product->unit_id
+                && $this->stockUnitGuard->hasStockRecord(
+                    InventoryStockableType::PRODUCT,
+                    (string) $product->getKey(),
+                )) {
+                throw ValidationException::withMessages([
+                    'unit_id' => ['L’unité ne peut plus être modifiée après l’initialisation du stock. Effectuez un ajustement compensatoire dans Inventory si nécessaire.'],
+                ]);
             }
 
             $categoryIds = array_key_exists('category_ids', $attributes)
