@@ -11,6 +11,7 @@ use App\Domains\Inventory\Contracts\InventoryThresholdManager;
 use App\Domains\Inventory\Enums\InventoryInspectionResult;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Services\Stock\InventoryStockReadService;
+use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
