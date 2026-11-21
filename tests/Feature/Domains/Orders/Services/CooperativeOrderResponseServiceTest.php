@@ -108,8 +108,6 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             ->where('cooperative_id', $cooperative->getKey())
             ->where('stockable_id', $product->getKey())
             ->firstOrFail();
-        $stock->quantity_on_hand = '0.500';
-        $stock->save();
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'idempotency_key' => 'test-response-insufficient-stock-01',
@@ -117,6 +115,8 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
         ]);
         $suborder = $order->cooperativeOrders->firstOrFail();
+        $stock->quantity_on_hand = '0.500';
+        $stock->save();
 
         try {
             app(CooperativeOrderResponseService::class)->confirmByCooperative($suborder, $admin);
