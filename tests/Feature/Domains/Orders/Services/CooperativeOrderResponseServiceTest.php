@@ -59,6 +59,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->stockFor($cooperative, $product);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
         ]);
@@ -88,6 +89,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->stockFor($cooperativeB, $productB);
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-02',
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $productB->getKey(), 'quantity' => '1']],
         ]);
@@ -110,6 +112,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-03',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
         ]);
@@ -133,6 +136,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-04',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
         ]);
@@ -159,6 +163,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-05',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
         ]);
