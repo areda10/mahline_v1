@@ -23,7 +23,6 @@ use App\Shared\DTOs\ActorContext;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
 
 final class InventoryCountService extends BaseService implements InventoryCountManager
@@ -35,30 +34,6 @@ final class InventoryCountService extends BaseService implements InventoryCountM
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
     ) {}
-
-    public function sessionsForCooperative(string $cooperativeId, string $actorId): Collection
-    {
-        $actor = $this->actors->forUserId($actorId);
-        $canView = $actor->hasPermission('inventory.count.view')
-            || ($actor->hasRole('user') && $actor->hasPermission('inventory.count.perform'));
-        if (! $actor->authorized || ! $canView) {
-            throw new AuthorizationException('The actor cannot view physical inventory sessions.');
-        }
-
-        $inScope = $actor->hasRole('super_admin_root')
-            || ($actor->hasRole('super_admin') && $this->assignments->isAssigned($actor->id, $cooperativeId))
-            || ($actor->hasAnyRole(['cooperative_admin', 'user']) && $actor->cooperativeId === $cooperativeId);
-
-        if (! $inScope) {
-            throw new AuthorizationException('The actor is outside the cooperative scope.');
-        }
-
-        return InventoryCountSession::query()
-            ->with(['items.events', 'participants'])
-            ->where('cooperative_id', $cooperativeId)
-            ->orderByDesc('started_at')
-            ->get();
-    }
 
     public function createSession(
         string $cooperativeId,
