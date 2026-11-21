@@ -80,21 +80,6 @@
                                             </form>
                                         </details>
                                         @if($canManageThreshold)
-                                            <details>
-                                                <summary>Seuil d’alerte</summary>
-                                                <form method="POST"
-                                                      action="{{ route('backoffice.inventory.stocks.threshold.update', ['stockId' => $stock['id']]) }}"
-                                                      data-inventory-stock-operation>
-                                                    @csrf
-                                                    <input type="hidden" name="idempotency_key" value="{{ \Illuminate\Support\Str::uuid() }}">
-                                                    <label>Seuil de stock bas</label>
-                                                    <input name="threshold" type="text" inputmode="decimal" required placeholder="Ex. 5.000">
-                                                    <label>Motif obligatoire</label>
-                                                    <input name="reason" type="text" maxlength="500" required>
-                                                    <button class="button button-small" type="submit">Enregistrer le seuil</button>
-                                                </form>
-                                            </details>
-                                        @endif
                                         <details>
                                             <summary>Seuil de stock faible</summary>
                                             <form method="POST"
@@ -109,6 +94,7 @@
                                                 <button class="button button-small" type="submit">Enregistrer le seuil</button>
                                             </form>
                                         </details>
+                                        @endif
                                         <details>
                                             <summary>Ajustement manuel</summary>
                                             <form method="POST"
