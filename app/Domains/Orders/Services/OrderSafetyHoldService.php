@@ -197,9 +197,9 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
                     throw new OrderFulfillmentBlocked('Only a confirmed, unshipped suborder can be cancelled for safety.');
                 }
 
-                $this->inventoryReservations->restoreAfterSafetyCancellation(
+                $this->inventoryReservations->releaseForSuborder(
                     (string) $cooperativeOrder->getKey(),
-                    hash('sha256', $holdId.'|safety-cancel|v1'),
+                    hash('sha256', $holdId.'|safety-cancel-release|v1'),
                     trim($reason),
                     $actor->id,
                 );

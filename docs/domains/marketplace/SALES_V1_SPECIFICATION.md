@@ -15,8 +15,8 @@ Sales possède le parcours commercial précommande :
 - panier invité et panier client authentifié ;
 - lignes et regroupement des articles dans le panier ;
 - calcul et présentation du récapitulatif commercial ;
-- promotions et coupons, après définition de leurs règles ;
-- devis, après définition de leur cycle de vie ;
+- promotions et coupons : reportés à V2 ;
+- devis : reportés à V2 ;
 - orchestration du checkout et transmission de la demande de création à Orders.
 
 Sales ne possède pas :
@@ -64,10 +64,10 @@ Orders reste le domaine propriétaire de la commande après sa création. Financ
 2. Sales ajoute et conserve les articles dans le panier.
 3. Sales demande aux domaines propriétaires les informations nécessaires au calcul et à la validation.
 4. Les règles de promotions et de devis s'appliquent uniquement selon les décisions qui seront validées.
-5. Au checkout, Sales prépare une demande complète et validée.
+5. Au checkout, Sales prépare une demande complète et validée ; l'aperçu Inventory ne réserve rien.
 6. Sales transmet cette demande au contrat public de création d'Orders.
-7. Orders crée la commande globale et ses sous-commandes ; Sales ne modifie ensuite ni les lignes ni les statuts de cette commande.
-8. Le checkout ne réserve aucun stock. La réservation intervient uniquement lors de la confirmation de la sous-commande par la coopérative, selon la spécification Inventory.
+7. Orders crée la commande globale et ses sous-commandes en attente ; Sales ne modifie ensuite ni les lignes ni les statuts de cette commande.
+8. Le checkout ne réserve aucun stock. À la confirmation d'une sous-commande par sa coopérative, Orders demande à Inventory de réserver toutes les lignes actives de cette sous-commande, après revalidation et verrouillage du stock. Si une ligne est insuffisante, la confirmation entière échoue sans réservation partielle.
 
 ## 5. Règles existantes à préserver
 
@@ -95,9 +95,7 @@ Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Elles ne do
 - Durée de conservation et accès à l'historique des lignes retirées/supprimées (SALES-014/015).
 
 ### 6.2 Périmètres fonctionnels non encore arbitrés
-- Promotions : périmètre global ou par coopérative, cumul, priorité, plafonds, périodes, éligibilité et limites d'utilisation.
-- Coupons : attribution, unicité, limites d'utilisation, cumul et prévention des abus.
-- Devis : acteurs autorisés, validité, acceptation, expiration, révision et conversion en commande.
+- Promotions, coupons et devis sont explicitement hors périmètre V1 et reportés à V2. Leurs règles métier seront définies dans le cadrage V2 ; ils ne bloquent pas le checkout V1.
 - Droits exacts de consultation et d'administration des paniers par rôle MAHLINE, au-delà de la propriété du panier client.
 - Règles tarifaires de livraison, frais, partage éventuel et contrat de calcul avec Delivery.
 - Comportement de récupération si Orders confirme la création mais que Sales ne reçoit pas la réponse ; aucun panier ne doit être consommé sans confirmation vérifiable.
@@ -136,10 +134,10 @@ Le panier n'est pas encore complet au regard de SALES-001 à SALES-037. Restent 
 - contrat public idempotent Orders et orchestration de consommation des seules lignes commandées ;
 - contrat Delivery pour les frais de livraison ;
 - contrat public Localization pour lire et capturer une adresse active ;
-- contrat public idempotent Orders sans réservation de stock au checkout, et contrat Delivery pour calculer les frais ;
+- contrat public idempotent Orders sans réservation au checkout ; la réservation est déclenchée par la confirmation coopérative dans Orders via Inventory ; contrat Delivery pour calculer les frais ;
 - interfaces Blade/UI, policies et tests HTTP complets ;
 - rétention/purge des paniers invités expirés et historique ;
-- promotions, coupons et devis : périmètres métier non encore arbitrés dans la présente spécification, donc non implémentés.
+- promotions, coupons et devis : explicitement reportés à V2 et non implémentés en V1.
 
 ### Paramètre technique confirmé
 

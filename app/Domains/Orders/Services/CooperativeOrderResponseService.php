@@ -6,6 +6,10 @@ namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
+use App\Domains\Inventory\DTOs\InventoryReservationLineData;
+use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
+use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
@@ -172,18 +176,34 @@ final class CooperativeOrderResponseService
             }
 
             if ($accept) {
-                $this->inventoryReservations->consumeForSuborder(
-                    (string) $locked->getKey(),
-                    hash('sha256', (string) $locked->getKey().'|consume|v1'),
-                    (string) $actor->getKey(),
-                );
-            } else {
-                $this->inventoryReservations->releaseForSuborder(
-                    (string) $locked->getKey(),
-                    hash('sha256', (string) $locked->getKey().'|release|v1'),
-                    trim((string) $reason),
-                    (string) $actor->getKey(),
-                );
+                $reservationLines = $locked->items()
+                    ->where('status', 'active')
+                    ->orderBy('id')
+                    ->get()
+                    ->map(static fn ($item): InventoryReservationLineData => new InventoryReservationLineData(
+                        orderItemId: (string) $item->getKey(),
+                        stockableType: $item->product_variant_id === null
+                            ? InventoryStockableType::PRODUCT
+                            : InventoryStockableType::VARIANT,
+                        stockableId: (string) ($item->product_variant_id ?? $item->product_id),
+                        quantity: (string) $item->quantity,
+                        unitCode: (string) $item->unit,
+                    ))
+                    ->all();
+
+                try {
+                    $this->inventoryReservations->reserveForSuborder(
+                        (string) $locked->getKey(),
+                        (string) $locked->cooperative_id,
+                        $reservationLines,
+                        hash('sha256', (string) $locked->getKey().'|confirm-reservation|v1'),
+                        (string) $actor->getKey(),
+                    );
+                } catch (InsufficientInventoryStock|InventoryReservationConflict) {
+                    throw ValidationException::withMessages([
+                        'inventory' => ['Stock insuffisant ou indisponible. La sous-commande reste en attente et aucune réservation partielle n’est conservée.'],
+                    ]);
+                }
             }
 
             $fromStatus = $locked->status->value;

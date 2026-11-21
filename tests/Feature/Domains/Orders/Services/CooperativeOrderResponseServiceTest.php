@@ -79,6 +79,53 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertSame(CooperativeOrderStatus::CONFIRMED, $updated->status);
         $this->assertSame(OrderStatus::CONFIRMED, $order->fresh()->status);
         $this->assertNotNull($updated->confirmed_at);
+        $this->assertDatabaseHas('inventory_reservations', [
+            'cooperative_order_id' => $suborder->getKey(),
+            'status' => 'active',
+        ]);
+        $stock = InventoryStock::query()
+            ->where('cooperative_id', $cooperative->getKey())
+            ->where('stockable_id', $product->getKey())
+            ->firstOrFail();
+        $this->assertSame('10.000', $stock->quantity_on_hand);
+        $this->assertSame('1.000', $stock->quantity_reserved);
+    }
+
+    public function test_confirmation_fails_atomically_when_stock_is_insufficient(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+        $stock = InventoryStock::query()
+            ->where('cooperative_id', $cooperative->getKey())
+            ->where('stockable_id', $product->getKey())
+            ->firstOrFail();
+        $stock->quantity_on_hand = '0.500';
+        $stock->save();
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-insufficient-stock-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
+        ]);
+        $suborder = $order->cooperativeOrders->firstOrFail();
+
+        try {
+            app(CooperativeOrderResponseService::class)->confirmByCooperative($suborder, $admin);
+            $this->fail('The cooperative must not confirm a suborder with insufficient stock.');
+        } catch (ValidationException) {
+            $this->assertSame(CooperativeOrderStatus::AWAITING_COOPERATIVE, $suborder->fresh()->status);
+            $this->assertDatabaseCount('inventory_reservations', 0);
+            $this->assertSame('0.000', $stock->fresh()->quantity_reserved);
+        }
     }
 
     public function test_multi_cooperative_order_becomes_confirmed_only_after_every_suborder_is_confirmed(): void
@@ -269,7 +316,8 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             ->where('cooperative_id', $cooperative->getKey())
             ->where('stockable_id', $product->getKey())
             ->firstOrFail();
-        $this->assertSame('9.000', $stock->quantity_on_hand);
+        $this->assertSame('10.000', $stock->quantity_on_hand);
+        $this->assertSame('1.000', $stock->quantity_reserved);
 
         $holdId = app(OrderSafetyHoldManager::class)->raiseHold(
             (string) $suborder->getKey(),

@@ -6,13 +6,8 @@ namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
-use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
-use App\Domains\Inventory\DTOs\InventoryReservationLineData;
-use App\Domains\Inventory\Enums\InventoryStockableType;
-use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
-use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderItemStatus;
 use App\Domains\Orders\Enums\OrderStatus;
@@ -30,7 +25,6 @@ final class OrderCreationService
     public function __construct(
         private readonly CheckoutCatalog $products,
         private readonly InventoryCheckoutAvailabilityReader $inventoryAvailability,
-        private readonly InventoryReservationManager $inventoryReservations,
     ) {}
 
     /**
@@ -342,7 +336,6 @@ final class OrderCreationService
                 );
             }
 
-            $reservationLinesByCooperative = [];
             foreach ($prepared as $line) {
                 $orderItem = OrderItem::query()->create([
                     'cooperative_order_id' => (string) $cooperativeOrders[$line['cooperative_id']]->getKey(),
@@ -359,32 +352,10 @@ final class OrderCreationService
                     'status' => OrderItemStatus::ACTIVE,
                 ]);
                 $orderItem->forceFill(['created_by' => (string) $customer->getKey()])->save();
-                $reservationLinesByCooperative[$line['cooperative_id']][] = new InventoryReservationLineData(
-                    orderItemId: (string) $orderItem->getKey(),
-                    stockableType: $line['product_variant_id'] === null ? InventoryStockableType::PRODUCT : InventoryStockableType::VARIANT,
-                    stockableId: $line['product_variant_id'] ?? $line['product_id'],
-                    quantity: $line['quantity'],
-                    unitCode: $line['unit'],
-                );
             }
 
-            foreach ($cooperativeOrders as $cooperativeId => $cooperativeOrder) {
-                $reservationKey = hash('sha256', $idempotencyKey.'|'.$cooperativeOrder->getKey().'|reserve');
-                try {
-                    $reservation = $this->inventoryReservations->reserveForSuborder(
-                        (string) $cooperativeOrder->getKey(),
-                        (string) $cooperativeId,
-                        $reservationLinesByCooperative[$cooperativeId],
-                        $reservationKey,
-                        (string) $customer->getKey(),
-                    );
-                } catch (InsufficientInventoryStock|InventoryReservationConflict) {
-                    throw ValidationException::withMessages([
-                        'inventory_preview' => ['Le stock a changé pendant la finalisation. Aucun article n’a été réservé ; veuillez actualiser le checkout.'],
-                    ]);
-                }
-
-                $cooperativeOrder->response_deadline_at = $reservation->expiresAt;
+            foreach ($cooperativeOrders as $cooperativeOrder) {
+                $cooperativeOrder->response_deadline_at = now()->addHours(12);
                 $cooperativeOrder->save();
             }
 

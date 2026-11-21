@@ -50,6 +50,7 @@ Les clés étrangères des produits, variantes, coopératives et utilisateurs pr
 - Calcule les quantités à trois décimales et les montants en unités monétaires mineures entières, sans calcul flottant de prix.
 - Crée une commande globale et regroupe les lignes par coopérative pour créer une sous-commande par coopérative.
 - Persiste les lignes, les snapshots commerciaux et l'historique initial dans une transaction avec tentatives de reprise configurées.
+- Ne crée aucune réservation Inventory au checkout ; la sous-commande démarre en attente avec une échéance de réponse de 12 heures (plafond absolu de 24 heures).
 
 ### 3.2 Réponse d'une coopérative — `CooperativeOrderResponseService`
 
@@ -60,9 +61,9 @@ Fonctions actuellement présentes :
 - `extendResponseDeadline()` : prolongation motivée, réservée à root ou au super_admin affecté, avec échéance future et plafond de 24 heures.
 - `refreshGlobalOrderStatus()` : agrégation du statut de la commande globale à partir des décisions des sous-commandes.
 
-La réponse verrouille la sous-commande dans une transaction, vérifie son statut en attente, contrôle le périmètre de l'acteur, enregistre la décision et l'historique, puis verrouille la commande globale pour recalculer son statut. Une réponse concurrente ne peut donc pas décider deux fois la même sous-commande.
+La réponse verrouille la sous-commande dans une transaction, vérifie son statut en attente et le périmètre de l'acteur. En cas de confirmation, Orders transmet les lignes actives à Inventory, qui verrouille les soldes, revérifie toutes les quantités et réserve la sous-commande intégralement. La confirmation et la réservation sont exécutées dans la même transaction SQL ; si une ligne manque de stock, l'opération échoue, la sous-commande reste en attente et aucune réservation partielle n'est conservée. En cas de refus, aucune réservation n'est créée. L'historique est ensuite écrit et le statut global recalculé. Une réponse concurrente ne peut donc pas décider deux fois la même sous-commande.
 
-**Limite fonctionnelle majeure à traiter dans l'intégration Inventory :** la confirmation actuelle passe la sous-commande à `confirmed` sans vérifier ni réserver le stock. Ne pas considérer ce chemin comme prêt pour la production avant raccordement transactionnel à Inventory.
+Une annulation de sécurité avant expédition libère cette réservation ; elle ne consomme ni ne recrée du stock. La consommation de la réservation appartient à une étape ultérieure du cycle d'exécution/expédition.
 
 ## 4. Règles métier validées à préserver
 
@@ -70,7 +71,7 @@ La réponse verrouille la sous-commande dans une transaction, vérifie son statu
 - Une commande mono-coopérative possède une sous-commande ; une commande multi-coopératives possède un segment par coopérative.
 - Les snapshots de ligne conservent notamment produit, variante, unité, libellé d'unité, quantité, prix et devise.
 - V1 : MAD, paiement à la livraison ; aucune réservation au checkout.
-- Le stock sera réservé uniquement au moment où la coopérative confirme sa sous-commande.
+- Le stock est réservé uniquement au moment où la coopérative confirme sa sous-commande ; la disponibilité affichée avant confirmation reste informative.
 - Une confirmation doit porter sur la quantité intégrale demandée pour chaque ligne active. Aucune confirmation partielle de quantité n'est permise.
 - Si le stock disponible est inférieur à une quantité demandée, la coopérative ne confirme pas. Le `cooperative_admin` actualise/corrige le stock au moyen des opérations Inventory autorisées ; la disponibilité est ensuite recalculée.
 - Pour une commande multi-coopératives, le voyant de disponibilité est porté par chaque sous-commande, indépendamment des autres coopératives.

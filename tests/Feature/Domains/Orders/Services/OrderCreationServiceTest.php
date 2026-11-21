@@ -72,6 +72,12 @@ final class OrderCreationServiceTest extends TestCase
         ]);
 
         $this->assertCount(2, $order->cooperativeOrders);
+        $this->assertDatabaseCount('inventory_reservations', 0);
+        $this->assertDatabaseHas('inventory_stocks', [
+            'cooperative_id' => $cooperativeA->getKey(),
+            'stockable_id' => $productA->getKey(),
+            'quantity_reserved' => '0.000',
+        ]);
         $this->assertSame('50.00', $order->items_subtotal);
         $this->assertSame('50.00', $order->grand_total);
         $this->assertSame('MAD', $order->currency);
