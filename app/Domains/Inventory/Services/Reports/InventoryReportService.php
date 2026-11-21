@@ -37,7 +37,7 @@ final class InventoryReportService extends BaseService
             ->orderBy('stockable_id')
             ->get()
             ->map(function (InventoryStock $stock) use ($simplified): array {
-                $available = max(
+                $available = $stock->active_count_session_id !== null ? 0 : max(
                     0,
                     $this->milli($stock->quantity_on_hand)
                     - $this->milli($stock->quantity_reserved_normal)
