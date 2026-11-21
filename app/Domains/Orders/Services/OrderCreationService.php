@@ -11,6 +11,8 @@ use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
 use App\Domains\Inventory\DTOs\InventoryReservationLineData;
 use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
+use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderItemStatus;
 use App\Domains\Orders\Enums\OrderStatus;
@@ -369,13 +371,20 @@ final class OrderCreationService
 
             foreach ($cooperativeOrders as $cooperativeId => $cooperativeOrder) {
                 $reservationKey = hash('sha256', $idempotencyKey.'|'.$cooperativeOrder->getKey().'|reserve');
-                $reservation = $this->inventoryReservations->reserveForSuborder(
-                    (string) $cooperativeOrder->getKey(),
-                    (string) $cooperativeId,
-                    $reservationLinesByCooperative[$cooperativeId],
-                    $reservationKey,
-                    (string) $customer->getKey(),
-                );
+                try {
+                    $reservation = $this->inventoryReservations->reserveForSuborder(
+                        (string) $cooperativeOrder->getKey(),
+                        (string) $cooperativeId,
+                        $reservationLinesByCooperative[$cooperativeId],
+                        $reservationKey,
+                        (string) $customer->getKey(),
+                    );
+                } catch (InsufficientInventoryStock|InventoryReservationConflict) {
+                    throw ValidationException::withMessages([
+                        'inventory_preview' => ['Le stock a changé pendant la finalisation. Aucun article n’a été réservé ; veuillez actualiser le checkout.'],
+                    ]);
+                }
+
                 $cooperativeOrder->response_deadline_at = $reservation->expiresAt;
                 $cooperativeOrder->save();
             }
