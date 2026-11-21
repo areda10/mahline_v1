@@ -16,4 +16,11 @@ interface OrderSafetyHoldManager
     ): string;
 
     public function assertCanShip(string $cooperativeOrderId): void;
+
+    public function resolveHold(
+        string $holdId,
+        string $decision,
+        string $reason,
+        string $actorId,
+    ): void;
 }
