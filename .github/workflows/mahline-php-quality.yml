@@ -56,8 +56,12 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run Laravel test suite
+      - name: Run Orders integration tests
+        run: php artisan test tests/Feature/Domains/Orders
+
+      - name: Run full Laravel feature suite
         run: php artisan test tests/Feature
 
       - name: Verify code style
+        if: always()
         run: php vendor/bin/pint --test
