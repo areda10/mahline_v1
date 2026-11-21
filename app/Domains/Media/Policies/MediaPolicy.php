@@ -12,6 +12,7 @@ use App\Domains\Media\Enums\MediaIncidentStatus;
 use App\Domains\Media\Models\Media;
 use App\Domains\Media\Models\MediaIncident;
 use App\Domains\Products\Models\Product;
+use App\Shared\Contracts\PrivateMediaAttachmentOwner;
 use Illuminate\Database\Eloquent\Model;
 
 final class MediaPolicy extends BasePolicy
@@ -47,7 +48,7 @@ final class MediaPolicy extends BasePolicy
             }
         }
 
-        if ($owner instanceof MediaIncident) {
+        if ($owner instanceof MediaIncident || $owner instanceof PrivateMediaAttachmentOwner) {
             return $user->hasRole('super_admin_root');
         }
 
@@ -74,6 +75,12 @@ final class MediaPolicy extends BasePolicy
             return $user->hasRole('super_admin_root')
                 && $mediaCategory === MediaCategory::INCIDENT_ATTACHMENT
                 && $owner->status !== MediaIncidentStatus::CLOSED;
+        }
+
+        if ($owner instanceof PrivateMediaAttachmentOwner) {
+            return $mediaCategory === MediaCategory::INCIDENT_ATTACHMENT
+                && $owner->privateMediaUploadOpen()
+                && (string) $user->getKey() === $owner->privateMediaReporterId();
         }
 
         if ($owner instanceof User) {
@@ -103,7 +110,7 @@ final class MediaPolicy extends BasePolicy
             return false;
         }
 
-        if ($owner instanceof MediaIncident) {
+        if ($owner instanceof MediaIncident || $owner instanceof PrivateMediaAttachmentOwner) {
             return $user->hasRole('super_admin_root');
         }
 
