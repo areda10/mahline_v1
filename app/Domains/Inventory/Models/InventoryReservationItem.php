@@ -6,6 +6,7 @@ namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class InventoryReservationItem extends BaseModel
 {
@@ -38,5 +39,10 @@ final class InventoryReservationItem extends BaseModel
     public function stock(): BelongsTo
     {
         return $this->belongsTo(InventoryStock::class, 'stock_id');
+    }
+
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(InventoryReservationAllocation::class, 'reservation_item_id');
     }
 }
