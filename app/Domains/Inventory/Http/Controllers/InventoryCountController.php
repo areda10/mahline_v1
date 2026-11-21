@@ -58,6 +58,7 @@ final class InventoryCountController
             $data['counted_quantity'],
             $data['reason'] ?? null,
             (string) $request->user()->getKey(),
+            $sessionId,
         );
 
         return response()->json(['status' => 'counted']);
