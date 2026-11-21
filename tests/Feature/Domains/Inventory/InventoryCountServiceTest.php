@@ -14,6 +14,7 @@ use App\Domains\Inventory\Models\InventoryCountItem;
 use App\Domains\Inventory\Models\InventoryCountItemEvent;
 use App\Domains\Inventory\Models\InventoryCountSession;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -141,6 +142,36 @@ final class InventoryCountServiceTest extends TestCase
         $this->assertSame('4.000', $item->counted_quantity);
         $this->assertNull($stock->active_count_session_id);
         $this->assertSame('5.000', $stock->quantity_on_hand);
+    }
+
+    public function test_count_session_listing_is_scoped_and_does_not_expose_counted_quantities(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $counter = $this->userWithRole('user', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $stock = $this->stock($cooperative, '8.000');
+
+        $sessionId = app(InventoryCountManager::class)->createSession(
+            (string) $cooperative->getKey(),
+            [(string) $stock->getKey()],
+            (string) $admin->getKey(),
+            'count-session-list-001',
+        );
+
+        $sessions = app(InventoryCountQueryService::class)->sessionsForCooperative(
+            (string) $cooperative->getKey(),
+            (string) $counter->getKey(),
+        );
+
+        $this->assertCount(1, $sessions);
+        $this->assertSame($sessionId, $sessions[0]['id']);
+        $this->assertSame(1, $sessions[0]['items_count']);
+        $this->assertArrayNotHasKey('expected_quantity', $sessions[0]);
+        $this->assertArrayNotHasKey('counted_quantity', $sessions[0]);
     }
 
     private function stock(Cooperative $cooperative, string $quantity): InventoryStock
