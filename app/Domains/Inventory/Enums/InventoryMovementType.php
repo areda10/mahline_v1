@@ -21,4 +21,5 @@ enum InventoryMovementType: string
     case QUARANTINE_AUTHORIZATION_REVOKED = 'quarantine_authorization_revoked';
     case INVENTORY_COUNT_ADJUSTMENT = 'inventory_count_adjustment';
     case DISPOSAL = 'disposal';
+    case SAFETY_CANCELLATION_RETURN = 'safety_cancellation_return';
 }
