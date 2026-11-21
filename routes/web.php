@@ -813,6 +813,9 @@ Route::middleware([
     Route::get('/count-sessions/{sessionId}', [InventoryCountController::class, 'show'])
         ->whereUlid('sessionId')
         ->name('count-sessions.show');
+    Route::get('/cooperatives/{cooperativeId}/count-sessions', [InventoryCountController::class, 'index'])
+        ->whereUlid('cooperativeId')
+        ->name('count-sessions.index');
     Route::post('/cooperatives/{cooperativeId}/count-sessions', [InventoryCountController::class, 'create'])
         ->whereUlid('cooperativeId')
         ->name('count-sessions.create');
