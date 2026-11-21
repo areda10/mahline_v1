@@ -13,6 +13,7 @@ use App\Domains\Localization\Providers\LocalizationServiceProvider;
 use App\Domains\Media\Providers\MediaServiceProvider;
 use App\Domains\Orders\Providers\OrdersServiceProvider;
 use App\Domains\Products\Providers\ProductsServiceProvider;
+use App\Domains\Sales\Providers\SalesServiceProvider;
 use App\Providers\AppServiceProvider;
 
 return [
@@ -30,6 +31,7 @@ return [
     CategoriesServiceProvider::class,
     MediaServiceProvider::class,
     ProductsServiceProvider::class,
+    SalesServiceProvider::class,
     InventoryServiceProvider::class,
     OrdersServiceProvider::class,
     CooperativesServiceProvider::class,
