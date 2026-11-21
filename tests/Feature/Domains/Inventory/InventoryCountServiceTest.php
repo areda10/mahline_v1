@@ -159,7 +159,6 @@ final class InventoryCountServiceTest extends TestCase
         $role = Role::query()->where('slug', $roleSlug)->firstOrFail();
 
         $user = User::factory()->create(array_merge([
-            'role_id' => $role->getKey(),
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ], $attributes));
