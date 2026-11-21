@@ -8,6 +8,8 @@ interface OrderSafetyHoldManager
 {
     public function assertCooperativeOrderScope(string $cooperativeOrderId, string $cooperativeId): void;
 
+    public function assertSecurityReportCanReopen(?string $cooperativeOrderId): void;
+
     public function raiseHold(
         string $cooperativeOrderId,
         string $sourceType,
