@@ -137,6 +137,7 @@ final class InventoryQuarantineServiceTest extends TestCase
         $this->assertSame('0.000', $authorization->quantity_reserved);
         $this->assertSame('0.000', $authorization->quantity_remaining);
         $this->assertSame('0.000', $quarantine->quantity_authorized);
+        $this->assertSame('non_compliant', $quarantine->status);
         $this->assertSame('0.000', $stock->quantity_quarantine_authorized);
         $this->assertSame('0.000', $stock->quantity_reserved_quarantine);
         $this->assertSame('12.000', $stock->quantity_on_hand);
