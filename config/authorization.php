@@ -86,6 +86,7 @@ return [
             'inventory.security_reports.manage',
             'inventory.security_reports.close',
             'inventory.security_reports.reopen',
+            'orders.safety_holds.resolve',
         ],
 
         /*
@@ -142,6 +143,7 @@ return [
             'inventory.security_reports.manage',
             'inventory.security_reports.close',
             'inventory.security_reports.reopen',
+            'orders.safety_holds.resolve',
         ],
 
         /*
@@ -198,6 +200,7 @@ return [
             'inventory.security_reports.manage',
             'inventory.security_reports.close',
             'inventory.security_reports.reopen',
+            'orders.safety_holds.resolve',
         ],
 
         /*
