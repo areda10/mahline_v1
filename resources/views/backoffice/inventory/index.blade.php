@@ -329,6 +329,67 @@
     @endif
 
     <section class="card">
+        <h2>Signalements de sécurité</h2>
+        @if($canCreateSecurityReport)
+            <details>
+                <summary>Déclarer un incident de stock</summary>
+                <form method="POST"
+                      enctype="multipart/form-data"
+                      action="{{ route('inventory.security-reports.store', ['cooperativeId' => '__COOP__']) }}"
+                      data-inventory-security-report
+                      data-endpoint-template="{{ route('inventory.security-reports.store', ['cooperativeId' => '__COOP__']) }}">
+                    @csrf
+                    <label>Identifiant ULID de la coopérative</label>
+                    <input name="cooperative_id" type="text" minlength="26" maxlength="26"
+                           value="{{ $defaultCooperativeId }}" required>
+                    <label>Commande coopérative concernée (facultatif)</label>
+                    <input name="cooperative_order_id" type="text" minlength="26" maxlength="26">
+                    <label>Catégorie</label>
+                    <input name="category" type="text" maxlength="60" required placeholder="Ex. stock_discrepancy">
+                    <label>Description détaillée</label>
+                    <textarea name="description" maxlength="10000" required></textarea>
+                    <label>Urgence</label>
+                    <select name="urgency">
+                        <option value="normal">Normale</option>
+                        <option value="urgent">Urgente</option>
+                    </select>
+                    <label>Pièces justificatives privées (PDF, JPG, PNG — 10 Mo maximum par fichier)</label>
+                    <input name="attachments[]" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
+                    <button class="button" type="submit">Envoyer le signalement</button>
+                </form>
+            </details>
+        @endif
+
+        @if($securityReports->isEmpty())
+            <p class="empty">Aucun signalement visible dans votre périmètre.</p>
+        @else
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Coopérative</th><th>Catégorie</th><th>Urgence</th><th>Statut</th><th>Créé le</th><th>Description</th><th>Action</th></tr></thead>
+                    <tbody>
+                        @foreach($securityReports as $report)
+                            <tr>
+                                <td><code>{{ $report->cooperative_id }}</code></td>
+                                <td>{{ $report->category }}</td>
+                                <td>{{ $report->urgency }}</td>
+                                <td>{{ $report->status }}</td>
+                                <td>{{ $report->created_at?->format('d/m/Y H:i') ?? '—' }}</td>
+                                <td>{{ \Illuminate\Support\Str::limit($report->description, 120) }}</td>
+                                <td>
+                                    <a class="button button-secondary button-small"
+                                       href="{{ route('inventory.security-reports.show', ['reportId' => $report->getKey()]) }}">
+                                        Détails JSON
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </section>
+
+    <section class="card">
         <h2>Inventaires physiques</h2>
         @if($countSessions === [])
             <p class="empty">Aucune session d'inventaire physique n'est enregistrée dans votre périmètre.</p>
@@ -408,6 +469,46 @@
             } catch (error) {
                 window.alert(error.message || 'Une erreur est survenue.');
                 button.disabled = false;
+            }
+        });
+    });
+    </script>
+    <script>
+    document.querySelectorAll('[data-inventory-security-report]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
+
+            try {
+                const formData = new FormData(form);
+                const cooperativeId = formData.get('cooperative_id');
+                formData.delete('cooperative_id');
+                formData.delete('_token');
+                const response = await fetch(
+                    form.dataset.endpointTemplate.replace('__COOP__', encodeURIComponent(cooperativeId)),
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: formData,
+                    },
+                );
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : (result.message || 'Le signalement n’a pas pu être envoyé.');
+                    throw new Error(message);
+                }
+
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message || 'Une erreur est survenue.');
+                if (button) button.disabled = false;
             }
         });
     });
