@@ -38,6 +38,7 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
         string $reason,
         ?string $actorId = null,
         ?string $actorType = 'system',
+        ?string $expectedCooperativeId = null,
     ): string {
         return DB::transaction(function () use (
             $cooperativeOrderId,
@@ -46,11 +47,17 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
             $reason,
             $actorId,
             $actorType,
+            $expectedCooperativeId,
         ): string {
             $cooperativeOrder = CooperativeOrder::query()
                 ->whereKey($cooperativeOrderId)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($expectedCooperativeId !== null
+                && (string) $cooperativeOrder->cooperative_id !== $expectedCooperativeId) {
+                throw new AuthorizationException('The safety hold order is outside the expected cooperative scope.');
+            }
 
             $hold = OrderSafetyHold::query()->firstOrCreate(
                 [
