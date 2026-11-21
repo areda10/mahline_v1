@@ -41,7 +41,7 @@ final class CooperativeOrderResponseService
 
     /**
      * Administrative substitution is restricted to root or the super-admin
-     * assigned to this cooperative, and is always reasoned and attributed.
+     * assigned to this cooperative, before the fixed 24-hour reservation deadline.
      */
     public function decideOnBehalf(
         CooperativeOrder $cooperativeOrder,
@@ -79,9 +79,12 @@ final class CooperativeOrderResponseService
         }
 
         $deadline = \Illuminate\Support\Carbon::instance($newDeadline);
-        if ($deadline->lessThanOrEqualTo(now()) || $deadline->greaterThan(now()->addHours(24))) {
+        $fixedReservationDeadline = $cooperativeOrder->created_at?->copy()->addHours(24);
+        if ($deadline->lessThanOrEqualTo(now())
+            || $fixedReservationDeadline === null
+            || $deadline->greaterThan($fixedReservationDeadline)) {
             throw ValidationException::withMessages([
-                'response_deadline_at' => ['La nouvelle échéance doit être future et ne peut pas dépasser 24 heures.'],
+                'response_deadline_at' => ['La nouvelle échéance doit rester dans la fenêtre fixe de réservation de 24 heures.'],
             ]);
         }
 
