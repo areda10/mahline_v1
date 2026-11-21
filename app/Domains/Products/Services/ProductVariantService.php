@@ -27,7 +27,7 @@ final class ProductVariantService
             $product,
             $attributes,
         ): ProductVariant {
-            $product = Product::query()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
+            $product = Product::withTrashed()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             $this->assertProductIsAvailable($product);
 
             // La conversion d'un produit simple avec unité/stock parent doit passer
