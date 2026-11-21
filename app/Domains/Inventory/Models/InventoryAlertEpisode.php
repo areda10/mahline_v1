@@ -26,6 +26,13 @@ final class InventoryAlertEpisode extends BaseModel
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory historical records cannot be deleted.');
+        });
+    }
+
     public function stock(): BelongsTo
     {
         return $this->belongsTo(InventoryStock::class, 'stock_id');
