@@ -22,7 +22,7 @@ final class CooperativeOrder extends BaseModel
         'order_id', 'cooperative_id', 'reference', 'status', 'items_subtotal',
         'delivery_fee', 'grand_total', 'response_deadline_at', 'response_overdue_at',
         'responded_at', 'substituted_by_admin_id', 'substitution_reason',
-        'confirmed_at', 'refused_at', 'refusal_reason',
+        'confirmed_at', 'refused_at', 'refusal_reason', 'safety_cancelled_at', 'safety_cancellation_reason',
     ];
 
     protected function casts(): array
@@ -36,6 +36,7 @@ final class CooperativeOrder extends BaseModel
             'response_overdue_at' => 'datetime',
             'responded_at' => 'datetime',
             'confirmed_at' => 'datetime',
+            'safety_cancelled_at' => 'datetime',
             'refused_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
