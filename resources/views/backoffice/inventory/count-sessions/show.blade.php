@@ -46,7 +46,7 @@
                                 <th>Motif de l’écart</th>
                             @endif
                             <th>État</th>
-                            @if(in_array($session['status'], ['active', 'partially_validated'], true))
+                            @if(in_array($session['status'], ['in_progress', 'partially_validated'], true))
                                 <th>Action</th>
                             @endif
                         </tr>
@@ -68,7 +68,7 @@
                                     <td>{{ $item['difference_reason'] ?? '—' }}</td>
                                 @endif
                                 <td><span class="badge">{{ str($item['status'])->replace('_', ' ')->title() }}</span></td>
-                                @if(in_array($session['status'], ['active', 'partially_validated'], true))
+                                @if(in_array($session['status'], ['in_progress', 'partially_validated'], true))
                                     <td>
                                         @if($item['status'] !== 'validated')
                                             <form method="POST"
@@ -98,7 +98,7 @@
         @endif
     </section>
 
-    @if($session['can_manage'] && in_array($session['status'], ['active', 'partially_validated'], true))
+    @if($session['can_manage'] && in_array($session['status'], ['in_progress', 'partially_validated'], true))
         <section class="card">
             <h2>Actions de gestion</h2>
             <div class="actions">
