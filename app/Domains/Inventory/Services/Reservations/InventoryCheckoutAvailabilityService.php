@@ -23,10 +23,16 @@ final class InventoryCheckoutAvailabilityService extends BaseService implements 
         }
 
         $normalized = [];
+        $seenLineKeys = [];
         foreach ($lines as $line) {
             if (! $line instanceof InventoryCheckoutLineData) {
                 throw new InvalidArgumentException('Checkout lines must be InventoryCheckoutLineData objects.');
             }
+
+            if (isset($seenLineKeys[$line->lineKey])) {
+                throw new InvalidArgumentException('Checkout line keys must be unique.');
+            }
+            $seenLineKeys[$line->lineKey] = true;
 
             if (! in_array($line->unitCode, self::UNITS, true)) {
                 throw new InvalidArgumentException('Unsupported stock unit.');
@@ -95,9 +101,11 @@ final class InventoryCheckoutAvailabilityService extends BaseService implements 
                 $stock = $stocks->get($stockKey);
                 $available = 0;
 
+                $unitCodes = array_values(array_unique(array_column($stockLines, 'unit_code')));
                 if ($stock instanceof InventoryStock
                     && $stock->active_count_session_id === null
-                    && $stock->unit_code === $stockLines[0]['unit_code']) {
+                    && count($unitCodes) === 1
+                    && $stock->unit_code === $unitCodes[0]) {
                     $normalAvailable = $this->milli($stock->quantity_on_hand)
                         - $this->milli($stock->quantity_quarantined)
                         - $this->milli($stock->quantity_reserved_normal);
