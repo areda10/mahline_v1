@@ -59,6 +59,14 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
                 throw new AuthorizationException('The safety hold order is outside the expected cooperative scope.');
             }
 
+            if (! in_array($cooperativeOrder->status, [
+                CooperativeOrderStatus::CONFIRMED,
+                CooperativeOrderStatus::PREPARING,
+                CooperativeOrderStatus::READY_FOR_SHIPMENT,
+            ], true)) {
+                return '';
+            }
+
             $hold = OrderSafetyHold::query()->firstOrCreate(
                 [
                     'cooperative_order_id' => $cooperativeOrderId,
