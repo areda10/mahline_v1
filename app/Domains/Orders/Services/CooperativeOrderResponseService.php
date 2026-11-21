@@ -198,6 +198,7 @@ final class CooperativeOrderResponseService
                         $reservationLines,
                         hash('sha256', (string) $locked->getKey().'|confirm-reservation|v1'),
                         (string) $actor->getKey(),
+                        retainUntilFulfillment: true,
                     );
                 } catch (InsufficientInventoryStock|InventoryReservationConflict) {
                     throw ValidationException::withMessages([

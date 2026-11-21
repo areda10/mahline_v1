@@ -61,9 +61,9 @@ Fonctions actuellement présentes :
 - `extendResponseDeadline()` : prolongation motivée, réservée à root ou au super_admin affecté, avec échéance future et plafond de 24 heures.
 - `refreshGlobalOrderStatus()` : agrégation du statut de la commande globale à partir des décisions des sous-commandes.
 
-La réponse verrouille la sous-commande dans une transaction, vérifie son statut en attente et le périmètre de l'acteur. En cas de confirmation, Orders transmet les lignes actives à Inventory, qui verrouille les soldes, revérifie toutes les quantités et réserve la sous-commande intégralement. La confirmation et la réservation sont exécutées dans la même transaction SQL ; si une ligne manque de stock, l'opération échoue, la sous-commande reste en attente et aucune réservation partielle n'est conservée. En cas de refus, aucune réservation n'est créée. L'historique est ensuite écrit et le statut global recalculé. Une réponse concurrente ne peut donc pas décider deux fois la même sous-commande.
+La réponse verrouille la sous-commande dans une transaction, vérifie son statut en attente et le périmètre de l'acteur. En cas de confirmation, Orders transmet les lignes actives à Inventory, qui verrouille les soldes, revérifie toutes les quantités et réserve la sous-commande intégralement. La confirmation et la réservation sont exécutées dans la même transaction SQL ; si une ligne manque de stock, l'opération échoue, la sous-commande reste en attente et aucune réservation partielle n'est conservée. Cette réservation confirmée n'a pas d'expiration automatique : elle reste active jusqu'à sa consommation lors de l'exécution ou sa libération explicite. En cas de refus, aucune réservation n'est créée. L'historique est ensuite écrit et le statut global recalculé. Une réponse concurrente ne peut donc pas décider deux fois la même sous-commande.
 
-Une annulation de sécurité avant expédition libère cette réservation ; elle ne consomme ni ne recrée du stock. La consommation de la réservation appartient à une étape ultérieure du cycle d'exécution/expédition.
+Une annulation de sécurité avant expédition libère cette réservation ; elle ne consomme ni ne recrée du stock.
 
 ## 4. Règles métier validées à préserver
 

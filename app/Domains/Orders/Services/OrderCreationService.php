@@ -318,7 +318,7 @@ final class OrderCreationService
                     'cooperative_id' => $cooperativeId,
                     'reference' => 'CO-'.Str::ulid(),
                     'status' => CooperativeOrderStatus::AWAITING_COOPERATIVE,
-                    'response_deadline_at' => now()->addHours(24),
+                    'response_deadline_at' => now()->addHours(12),
                     'items_subtotal' => $this->formatMoney($subtotalCents),
                     'delivery_fee' => '0.00',
                     'grand_total' => $this->formatMoney($subtotalCents),
@@ -352,11 +352,6 @@ final class OrderCreationService
                     'status' => OrderItemStatus::ACTIVE,
                 ]);
                 $orderItem->forceFill(['created_by' => (string) $customer->getKey()])->save();
-            }
-
-            foreach ($cooperativeOrders as $cooperativeOrder) {
-                $cooperativeOrder->response_deadline_at = now()->addHours(12);
-                $cooperativeOrder->save();
             }
 
             return $order->load(['cooperativeOrders.items']);

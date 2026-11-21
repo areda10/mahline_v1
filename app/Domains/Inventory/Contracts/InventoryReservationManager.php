@@ -18,6 +18,7 @@ interface InventoryReservationManager
         array $items,
         string $idempotencyKey,
         string $actorId,
+        bool $retainUntilFulfillment = false,
     ): InventoryReservationResult;
 
     public function consumeForSuborder(

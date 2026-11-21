@@ -49,6 +49,7 @@ final class InventoryReservationService extends BaseService implements Inventory
         array $items,
         string $idempotencyKey,
         string $actorId,
+        bool $retainUntilFulfillment = false,
     ): InventoryReservationResult {
         if ($items === [] || trim($idempotencyKey) === '') {
             throw new InvalidArgumentException('A reservation requires items and an idempotency key.');
@@ -63,6 +64,7 @@ final class InventoryReservationService extends BaseService implements Inventory
             $items,
             $idempotencyKey,
             $actor,
+            $retainUntilFulfillment,
         ): InventoryReservationResult {
             $requestHash = $this->reservationRequestHash($cooperativeId, $items);
             $existing = $this->existingResult(
@@ -96,7 +98,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                 'actor_id' => $actor->id,
                 'actor_type' => $actor->actorType,
                 'reserved_at' => $reservedAt,
-                'expires_at' => $reservedAt->copy()->addHours(24),
+                'expires_at' => $retainUntilFulfillment ? null : $reservedAt->copy()->addHours(24),
             ]);
 
             foreach ($normalizedItems as $line) {
@@ -299,7 +301,7 @@ final class InventoryReservationService extends BaseService implements Inventory
             }
 
             if ($reservation->status !== InventoryReservationStatus::ACTIVE->value
-                || $reservation->expires_at->lessThanOrEqualTo(now())) {
+                || ($reservation->expires_at !== null && $reservation->expires_at->lessThanOrEqualTo(now()))) {
                 throw new InventoryReservationConflict('The reservation is no longer active.');
             }
 

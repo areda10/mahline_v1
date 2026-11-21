@@ -82,6 +82,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertDatabaseHas('inventory_reservations', [
             'cooperative_order_id' => $suborder->getKey(),
             'status' => 'active',
+            'expires_at' => null,
         ]);
         $stock = InventoryStock::query()
             ->where('cooperative_id', $cooperative->getKey())
