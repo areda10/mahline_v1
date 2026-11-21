@@ -11,6 +11,8 @@ use App\Domains\Inventory\Enums\InventorySecurityReportUrgency;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventorySecurityReport;
 use App\Domains\Inventory\Models\InventorySecurityReportEvent;
+use App\Domains\Inventory\Models\InventorySecurityReportAttachment;
+use App\Domains\Media\Contracts\PrivateMediaAttachmentUploader;
 use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
@@ -20,6 +22,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Illuminate\Http\UploadedFile;
 
 final class InventorySecurityReportService extends BaseService implements InventorySecurityReportManager
 {
@@ -28,6 +31,7 @@ final class InventorySecurityReportService extends BaseService implements Invent
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
         private readonly OrderSafetyHoldManager $safetyHolds,
+        private readonly PrivateMediaAttachmentUploader $attachments,
     ) {}
 
     public function reportRisk(
@@ -37,7 +41,14 @@ final class InventorySecurityReportService extends BaseService implements Invent
         string $description,
         InventorySecurityReportUrgency $urgency,
         string $actorId,
+        array $evidenceFiles = [],
     ): string {
+        foreach ($evidenceFiles as $file) {
+            if (! $file instanceof UploadedFile) {
+                throw new InvalidArgumentException('Security report evidence must contain uploaded files.');
+            }
+        }
+
         $actor = $this->actors->forUserId($actorId);
         if (! $actor->authorized || ! $actor->hasPermission('inventory.security_reports.create')) {
             throw new AuthorizationException('The actor cannot create an Inventory security report.');
@@ -54,6 +65,7 @@ final class InventorySecurityReportService extends BaseService implements Invent
             $description,
             $urgency,
             $actor,
+            $evidenceFiles,
         ): string {
             $report = InventorySecurityReport::query()->create([
                 'cooperative_id' => $cooperativeId,
@@ -63,13 +75,27 @@ final class InventorySecurityReportService extends BaseService implements Invent
                 'category' => trim($category),
                 'description' => trim($description),
                 'urgency' => $urgency->value,
-                'status' => 'open',
+                'status' => 'draft',
                 'response_due_at' => $urgency === InventorySecurityReportUrgency::URGENT ? now()->addHours(2) : null,
             ]);
+
+            foreach ($evidenceFiles as $file) {
+                $mediaId = $this->attachments->upload($actor->id, $report, $file);
+                InventorySecurityReportAttachment::query()->create([
+                    'report_id' => (string) $report->getKey(),
+                    'media_id' => $mediaId,
+                    'uploaded_by' => $actor->id,
+                    'attached_at' => now(),
+                ]);
+            }
+
+            $report->status = 'open';
+            $report->save();
 
             $this->recordEvent($report, 'created', null, 'open', null, $actor, [
                 'urgency' => $urgency->value,
                 'cooperative_order_id' => $cooperativeOrderId,
+                'attachment_count' => count($evidenceFiles),
             ]);
 
             $this->audit->record(new AuditEntryDTO(
@@ -84,6 +110,7 @@ final class InventorySecurityReportService extends BaseService implements Invent
                     'category' => trim($category),
                     'urgency' => $urgency->value,
                     'cooperative_order_id' => $cooperativeOrderId,
+                    'attachment_count' => count($evidenceFiles),
                 ],
             ));
 
