@@ -4,7 +4,7 @@
 - **Version :** 1.0 — cadrage initial
 - **Date :** 19 novembre 2026
 - **Branche :** `feature/Marketplace`
-- **Statut :** EN COURS — décision d'architecture et mode de panier validés ; règles détaillées à définir.
+- **Statut :** EN COURS — décisions fonctionnelles SALES-001 à SALES-037 validées ; socle technique du panier en cours d'implémentation.
 - **Référence d'architecture :** [ADR-021 — Architecture hybride du monolithe modulaire](../../architecture/decisions/ADR-021-hybrid-modular-monolith.md)
 
 > Ce document est le registre des décisions fonctionnelles et techniques du domaine Sales. Une règle non validée reste explicitement ouverte. Aucune migration ou implémentation ne doit être créée sur la base d'une supposition.
@@ -112,9 +112,38 @@ Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Elles ne do
 
 ## 7. Suivi d'implémentation
 
-Aucun modèle, migration, route, contrôleur ou service Sales n'est déclaré implémenté par ce document. Les décisions fonctionnelles SALES-001 à SALES-037 sont validées. Le développement du panier peut commencer après audit et stabilisation des contrats Products, Cooperatives, Localization et Identity ; le checkout complet reste conditionné aux contrats publics Orders, Inventory et Delivery.
+### Socle panier — 21 novembre 2026
 
-Les tests requis devront couvrir au minimum : panier invité, panier connecté, fusion et conflits, multi-coopératives, prix obsolètes, promotions, devis, checkout idempotent, sécurité des accès, et non-régression Orders / Inventory.
+Implémenté sur `feature/Marketplace` :
+- tables `sales_carts` et `sales_cart_items`, avec ULID et références inter-domaines logiques ;
+- modèle de panier invité (jeton aléatoire, seul son SHA-256 est stocké, expiration après 30 jours d'inactivité) ;
+- panier client sans expiration automatique ;
+- lignes actives et conservation logique des lignes retirées/vidées ;
+- version optimiste obligatoire sur les mutations ;
+- fusion transactionnelle panier invité → panier client ;
+- limite technique de 100 unités appliquée côté service ;
+- lecture du produit et de son prix initial par le contrat public Products `CheckoutCatalog` ;
+- provider Sales enregistré dans `bootstrap/providers.php` ;
+- tests Feature initiaux ajoutés pour jeton invité, expiration, fusion, retrait historique, limite et conflit de version.
+
+### Points non livrés
+
+Le panier n'est pas encore complet au regard de SALES-001 à SALES-037. Restent notamment :
+- contrat Products enrichi pour les états supprimé/désactivé/réactivé, les limites commerciales et le versionnement des caractéristiques ;
+- rafraîchissement des données descriptives et détection/acceptation des changements de prix et de caractéristiques ;
+- statut et activité de la coopérative via Cooperatives ;
+- contrat public Localization pour valider et capturer l'adresse ;
+- contrat public idempotent Orders et orchestration de consommation des seules lignes commandées ;
+- contrat Delivery pour les frais de livraison ;
+- contrôleurs, routes, policies, interfaces et tests HTTP ;
+- rétention/purge des paniers invités expirés et historique ;
+- promotions, coupons et devis : périmètres métier non encore arbitrés dans la présente spécification, donc non implémentés.
+
+### Paramètre technique provisoire
+
+La première migration stocke les quantités à trois décimales, en cohérence avec le format actuel utilisé par Inventory. La spécification signale toujours la précision de quantité comme paramètre à confirmer : cette échelle est donc provisoire et devra être validée avant gel de Sales V1.
+
+Les tests ont été ajoutés mais n'ont pas été exécutés dans un environnement Laravel/PHP durant cette intervention. Aucune validation CI, Pint ou suite complète n'est revendiquée.
 
 ## 8. Journal des décisions
 
