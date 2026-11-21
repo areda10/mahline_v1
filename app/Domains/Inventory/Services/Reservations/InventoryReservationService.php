@@ -498,10 +498,55 @@ final class InventoryReservationService extends BaseService implements Inventory
                 $quantity = $this->milli($item->quantity);
                 $normal = $this->milli($item->quantity_normal);
                 $quarantine = $this->milli($item->quantity_quarantine);
+                $quarantineAllocations = InventoryReservationAllocation::query()
+                    ->where('reservation_item_id', $item->getKey())
+                    ->where('allocation_type', 'quarantine_authorized')
+                    ->orderBy('quarantine_authorization_id')
+                    ->get();
+                $allocatedQuarantine = 0;
+                $revokedQuarantine = 0;
+
+                foreach ($quarantineAllocations as $allocation) {
+                    $authorization = InventoryQuarantineAuthorization::query()
+                        ->whereKey($allocation->quarantine_authorization_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $allocationQuantity = $this->milli($allocation->quantity);
+                    $allocatedQuarantine += $allocationQuantity;
+                    $authorization->quantity_reserved = $this->formatMilli(
+                        $this->milli($authorization->quantity_reserved) - $allocationQuantity,
+                    );
+
+                    if ($authorization->status === 'revoked') {
+                        $authorization->quantity_remaining = $this->formatMilli(
+                            $this->milli($authorization->quantity_remaining) - $allocationQuantity,
+                        );
+                        $batch = InventoryQuarantine::query()
+                            ->whereKey($authorization->quarantine_id)
+                            ->lockForUpdate()
+                            ->firstOrFail();
+                        $batch->quantity_authorized = $this->formatMilli(
+                            $this->milli($batch->quantity_authorized) - $allocationQuantity,
+                        );
+                        $batch->save();
+                        $revokedQuarantine += $allocationQuantity;
+                    }
+
+                    $authorization->save();
+                }
+
+                if ($allocatedQuarantine !== $quarantine) {
+                    throw new InventoryReservationConflict('The reservation quarantine allocations do not match the reserved quantity.');
+                }
 
                 $stock->quantity_reserved = $this->formatMilli($this->milli($stock->quantity_reserved) - $quantity);
                 $stock->quantity_reserved_normal = $this->formatMilli($this->milli($stock->quantity_reserved_normal) - $normal);
                 $stock->quantity_reserved_quarantine = $this->formatMilli($this->milli($stock->quantity_reserved_quarantine) - $quarantine);
+                if ($revokedQuarantine > 0) {
+                    $stock->quantity_quarantine_authorized = $this->formatMilli(
+                        $this->milli($stock->quantity_quarantine_authorized) - $revokedQuarantine,
+                    );
+                }
                 if ($actor !== null) {
                     $stock->updated_by = $actor->id;
                 }
@@ -516,6 +561,7 @@ final class InventoryReservationService extends BaseService implements Inventory
                     reservedDelta: -$quantity,
                     reservedNormalDelta: -$normal,
                     reservedQuarantineDelta: -$quarantine,
+                    quarantineAuthorizedDelta: -$revokedQuarantine,
                     reason: trim($reason),
                     referenceType: 'cooperative_order',
                     referenceId: $cooperativeOrderId,
