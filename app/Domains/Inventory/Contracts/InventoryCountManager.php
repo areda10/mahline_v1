@@ -4,14 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Inventory\Contracts;
 
-use App\Domains\Inventory\Models\InventoryCountSession;
-use Illuminate\Database\Eloquent\Collection;
-
 interface InventoryCountManager
 {
-    /** @return Collection<int, InventoryCountSession> */
-    public function sessionsForCooperative(string $cooperativeId, string $actorId): Collection;
-
     /** @param list<string> $stockIds */
     public function createSession(
         string $cooperativeId,
