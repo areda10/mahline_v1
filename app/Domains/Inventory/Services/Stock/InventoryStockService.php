@@ -44,13 +44,13 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $actorId,
         string $idempotencyKey,
     ): string {
+        $actor = $this->actors->forUserId($actorId);
+        $this->authorize($actor, $cooperativeId, 'inventory.stock.initialize');
+
         $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         if ($stockable->unitCode !== $unitCode) {
             throw new InvalidArgumentException('The stock unit must match the canonical Products unit.');
         }
-
-        $actor = $this->actors->forUserId($actorId);
-        $this->authorize($actor, $cooperativeId, 'inventory.stock.initialize');
         $quantityMilli = $this->quantity($quantity, $unitCode, allowZero: true);
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
@@ -156,9 +156,9 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $idempotencyKey,
         string $movementType = 'purchase_receipt',
     ): string {
-        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.receive');
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         $quantityMilli = $this->milli($quantity);
         if ($quantityMilli <= 0) {
             throw new InvalidArgumentException('A stock receipt quantity must be positive.');
@@ -198,9 +198,9 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $actorId,
         string $idempotencyKey,
     ): string {
-        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.adjust');
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
         $quantityMilli = $this->signedQuantity($signedQuantity);
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
