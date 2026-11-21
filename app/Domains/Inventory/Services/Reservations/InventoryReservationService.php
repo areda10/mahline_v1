@@ -606,6 +606,169 @@ final class InventoryReservationService extends BaseService implements Inventory
         }, 3);
     }
 
+    public function restoreAfterSafetyCancellation(
+        string $cooperativeOrderId,
+        string $idempotencyKey,
+        string $reason,
+        string $actorId,
+    ): InventoryReservationResult {
+        if (trim($reason) === '') {
+            throw new InvalidArgumentException('A safety cancellation requires a reason.');
+        }
+
+        $reservation = InventoryReservation::query()
+            ->where('cooperative_order_id', $cooperativeOrderId)
+            ->firstOrFail();
+        $actor = $this->actors->forUserId($actorId);
+        $this->authorizeManager($actor, (string) $reservation->cooperative_id, 'inventory.reservations.release');
+
+        return DB::transaction(function () use (
+            $cooperativeOrderId,
+            $idempotencyKey,
+            $reason,
+            $actor,
+        ): InventoryReservationResult {
+            $reservation = InventoryReservation::query()
+                ->where('cooperative_order_id', $cooperativeOrderId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $requestHash = hash('sha256', $cooperativeOrderId.'|'.trim($reason));
+            $existing = $this->existingResult(
+                $cooperativeOrderId,
+                'safety_return',
+                $idempotencyKey,
+                $requestHash,
+            );
+            if ($existing !== null) {
+                return $existing;
+            }
+
+            if ($reservation->status === InventoryReservationStatus::SAFETY_RETURNED->value) {
+                return $this->result($reservation);
+            }
+
+            if ($reservation->status !== InventoryReservationStatus::CONSUMED->value) {
+                throw new InventoryReservationConflict('Only a consumed reservation can be restored after a safety cancellation.');
+            }
+
+            $items = $reservation->items()->orderBy('stock_id')->get();
+            $stocks = InventoryStock::query()
+                ->whereIn('id', $items->pluck('stock_id')->unique()->all())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($items as $item) {
+                $stock = $stocks->get((string) $item->stock_id);
+                if (! $stock instanceof InventoryStock) {
+                    throw new InventoryReservationConflict('A consumed stock balance no longer exists.');
+                }
+
+                if ($stock->active_count_session_id !== null) {
+                    throw new InventoryReservationConflict('A safety return cannot alter stock locked by an active physical inventory count.');
+                }
+
+                $before = $this->balance($stock);
+                $quantity = $this->milli($item->quantity);
+                $quarantine = $this->milli($item->quantity_quarantine);
+                $allocations = InventoryReservationAllocation::query()
+                    ->where('reservation_item_id', $item->getKey())
+                    ->where('allocation_type', 'quarantine_authorized')
+                    ->orderBy('quarantine_authorization_id')
+                    ->get();
+                $allocatedQuarantine = 0;
+
+                foreach ($allocations as $allocation) {
+                    $authorization = InventoryQuarantineAuthorization::query()
+                        ->whereKey($allocation->quarantine_authorization_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $batch = InventoryQuarantine::query()
+                        ->whereKey($authorization->quarantine_id)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+                    $allocationQuantity = $this->milli($allocation->quantity);
+                    $allocatedQuarantine += $allocationQuantity;
+
+                    $batch->quantity_remaining = $this->formatMilli(
+                        $this->milli($batch->quantity_remaining) + $allocationQuantity,
+                    );
+                    if ($this->milli($batch->quantity_authorized) === 0) {
+                        $batch->status = 'non_compliant';
+                    } elseif ($this->milli($batch->quantity_authorized) >= $this->milli($batch->quantity_remaining)) {
+                        $batch->status = 'authorized_for_sale';
+                    } else {
+                        $batch->status = 'partially_authorized';
+                    }
+                    $batch->save();
+                }
+
+                if ($allocatedQuarantine !== $quarantine) {
+                    throw new InventoryReservationConflict('The consumed quarantine allocations do not match the reservation item.');
+                }
+
+                $stock->quantity_on_hand = $this->formatMilli(
+                    $this->milli($stock->quantity_on_hand) + $quantity,
+                );
+                $stock->quantity_quarantined = $this->formatMilli(
+                    $this->milli($stock->quantity_quarantined) + $quarantine,
+                );
+                $stock->updated_by = $actor->id;
+                $stock->save();
+
+                $this->recordMovement(
+                    $stock,
+                    InventoryMovementType::SAFETY_CANCELLATION_RETURN,
+                    $before,
+                    $actor,
+                    $idempotencyKey,
+                    quantityDelta: $quantity,
+                    quarantinedDelta: $quarantine,
+                    reason: trim($reason),
+                    referenceType: 'cooperative_order',
+                    referenceId: $cooperativeOrderId,
+                );
+            }
+
+            $reservation->status = InventoryReservationStatus::SAFETY_RETURNED->value;
+            $reservation->released_at = now();
+            $reservation->release_reason = trim($reason);
+            $reservation->save();
+
+            $result = $this->result($reservation);
+            $this->completeIdempotency(
+                $cooperativeOrderId,
+                'safety_return',
+                $idempotencyKey,
+                $requestHash,
+                $result,
+            );
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: 'inventory.reservation.restored_after_safety_cancellation',
+                action: 'safety_return',
+                actorType: $actor->actorType,
+                actorId: $actor->id,
+                cooperativeId: (string) $reservation->cooperative_id,
+                subjectType: 'inventory_reservation',
+                subjectId: (string) $reservation->getKey(),
+                newValues: [
+                    'status' => $reservation->status,
+                    'reason' => trim($reason),
+                ],
+            ));
+
+            $this->outbox('inventory.reservation.restored_after_safety_cancellation', [
+                'reservation_id' => (string) $reservation->getKey(),
+                'cooperative_order_id' => $cooperativeOrderId,
+                'cooperative_id' => (string) $reservation->cooperative_id,
+            ]);
+
+            return $result;
+        }, 3);
+    }
+
     private function authorizeReservation(ActorContext $actor, string $cooperativeId): void
     {
         if (! $actor->authorized) {
