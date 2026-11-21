@@ -634,6 +634,14 @@ Route::get('/cooperatives/{cooperativeId}/inventory/report.pdf', InventoryReport
     ->whereUlid('cooperativeId')
     ->name('inventory.reports.pdf');
 
+Route::get('/inventory/security-reports', [InventorySecurityReportController::class, 'index'])
+    ->middleware([
+        'auth',
+        EnsureActiveAuthenticationSession::class,
+        'role:super_admin_root,super_admin,cooperative_admin,user',
+    ])
+    ->name('inventory.security-reports.index');
+
 Route::prefix('cooperatives/{cooperativeId}/inventory/security-reports')
     ->name('inventory.security-reports.')
     ->middleware([
