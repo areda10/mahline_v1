@@ -39,6 +39,7 @@ final class InventoryServiceProvider extends ServiceProvider
         $this->commands([
             \App\Domains\Inventory\Console\Commands\ExpireInventoryReservations::class,
             \App\Domains\Inventory\Console\Commands\PublishInventoryOutbox::class,
+            \App\Domains\Inventory\Console\Commands\ReconcileInventoryAlerts::class,
         ]);
     }
 }
