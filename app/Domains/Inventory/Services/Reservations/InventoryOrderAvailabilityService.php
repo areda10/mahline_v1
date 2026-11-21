@@ -42,6 +42,7 @@ final class InventoryOrderAvailabilityService extends BaseService implements Inv
                 ->map(static fn ($item): InventoryOrderLineAvailability => new InventoryOrderLineAvailability(
                     orderItemId: (string) $item->order_item_id,
                     quantity: (string) $item->quantity,
+                    unitCode: (string) $item->unit_code,
                     available: $available,
                 ))
                 ->all(),
