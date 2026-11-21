@@ -30,6 +30,13 @@ final class InventorySecurityReport extends BaseModel implements PrivateMediaAtt
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory historical records cannot be deleted.');
+        });
+    }
+
     public function media(): MorphMany
     {
         return $this->morphMany('App\\Domains\\Media\\Models\\Media', 'mediable');
