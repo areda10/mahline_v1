@@ -31,6 +31,14 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
     ) {}
+    public function assertCooperativeOrderScope(string $cooperativeOrderId, string $cooperativeId): void
+    {
+        $cooperativeOrder = CooperativeOrder::query()->findOrFail($cooperativeOrderId);
+        if ((string) $cooperativeOrder->cooperative_id !== $cooperativeId) {
+            throw new AuthorizationException('The cooperative order is outside the requested cooperative scope.');
+        }
+    }
+
     public function raiseHold(
         string $cooperativeOrderId,
         string $sourceType,
