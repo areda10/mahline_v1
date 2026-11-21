@@ -132,7 +132,7 @@
                 @csrf
                 <div class="field">
                     <label>Identifiant ULID de la coopérative</label>
-                    <input name="cooperative_id" type="text" minlength="26" maxlength="26" required>
+                    <input name="cooperative_id" type="text" minlength="26" maxlength="26" value="{{ $defaultCooperativeId }}" required>
                 </div>
                 <div class="field">
                     <label>Type de stockable</label>
