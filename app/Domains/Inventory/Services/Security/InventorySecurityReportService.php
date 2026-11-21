@@ -132,9 +132,11 @@ final class InventorySecurityReportService extends BaseService implements Invent
                     $cooperativeId,
                 );
 
-                $this->recordEvent($report, 'safety_hold_raised', 'open', 'open', null, $actor, [
-                    'order_safety_hold_id' => $holdId,
-                ]);
+                if ($holdId !== '') {
+                    $this->recordEvent($report, 'safety_hold_raised', 'open', 'open', null, $actor, [
+                        'order_safety_hold_id' => $holdId,
+                    ]);
+                }
             }
 
             return (string) $report->getKey();
