@@ -670,6 +670,7 @@ Route::prefix('cooperatives/{cooperativeId}/inventory')
         Route::post('/counts/{sessionId}/cancel', [InventoryOperationsController::class, 'cancelCount'])
             ->whereUlid('sessionId')->name('counts.cancel');
 
+        Route::get('/quarantines', [InventoryOperationsController::class, 'quarantines'])->name('quarantines.index');
         Route::post('/quarantines/returns', [InventoryOperationsController::class, 'receiveQuarantine'])->name('quarantines.returns');
         Route::post('/quarantines/{quarantineId}/inspect', [InventoryOperationsController::class, 'inspectQuarantine'])
             ->whereUlid('quarantineId')->name('quarantines.inspect');
