@@ -12,7 +12,6 @@ use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
-use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
 use App\Domains\Orders\Services\CooperativeOrderResponseService;
 use App\Domains\Orders\Services\OrderCreationService;
