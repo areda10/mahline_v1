@@ -112,10 +112,17 @@ final class PersonalAddressControllerTest extends TestCase
     /** @param list<string> $permissions */
     private function userWithRole(string $slug, array $permissions = []): User
     {
-        $user = User::factory()->create([
+        $attributes = [
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
-        ]);
+        ];
+
+        if (in_array($slug, ['cooperative_admin', 'user'], true)) {
+            $cooperative = Cooperative::factory()->active()->create();
+            $attributes['cooperative_id'] = $cooperative->getKey();
+        }
+
+        $user = User::factory()->create($attributes);
 
         $role = Role::query()->firstOrCreate(
             ['slug' => $slug],
