@@ -89,6 +89,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
                 'created_by' => $actor->id,
                 'updated_by' => $actor->id,
             ]);
+            $this->alerts->evaluate($stock);
 
             $this->movement(
                 $stock,
@@ -282,6 +283,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $stock->quantity_on_hand = $this->format($nextOnHand);
             $stock->updated_by = $actor->id;
             $stock->save();
+            $this->alerts->evaluate($stock);
 
             $this->movement(
                 $stock,
