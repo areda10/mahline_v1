@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
+use LogicException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Domains\Inventory\Services\Alerts\InventoryAlertEvaluator;
 
@@ -49,6 +50,10 @@ final class InventoryStock extends BaseModel
 
     protected static function booted(): void
     {
+        static::saved(static function (InventoryStock $stock): void {
+            app(InventoryAlertEvaluator::class)->evaluate($stock);
+        });
+
         static::deleting(static function (): never {
             throw new LogicException('Inventory historical records cannot be deleted.');
         });
