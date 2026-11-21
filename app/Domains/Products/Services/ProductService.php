@@ -608,7 +608,7 @@ final class ProductService implements CheckoutCatalog
     public function resolveForInventory(string $stockableType, string $stockableId): ?InventoryStockableData
     {
         if ($stockableType === 'product') {
-            $product = Product::withTrashed()->with('unit')->whereKey($stockableId)->first();
+            $product = Product::withTrashed()->with('unit')->whereKey($stockableId)->lockForUpdate()->first();
             if ($product === null || $product->unit === null) {
                 return null;
             }
@@ -633,6 +633,7 @@ final class ProductService implements CheckoutCatalog
             $variant = ProductVariant::withTrashed()
                 ->with(['product.unit', 'unit'])
                 ->whereKey($stockableId)
+                ->lockForUpdate()
                 ->first();
 
             if ($variant === null || $variant->product === null) {
