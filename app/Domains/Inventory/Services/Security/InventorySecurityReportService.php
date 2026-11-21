@@ -102,6 +102,7 @@ final class InventorySecurityReportService extends BaseService implements Invent
                     'Signalement de sécurité Inventory urgent : examen humain obligatoire avant expédition.',
                     $actor->id,
                     $actor->actorType,
+                    $cooperativeId,
                 );
 
                 $this->recordEvent($report, 'safety_hold_raised', 'open', 'open', null, $actor, [
@@ -124,7 +125,10 @@ final class InventorySecurityReportService extends BaseService implements Invent
             throw new AuthorizationException('The actor cannot view this Inventory security report.');
         }
 
-        if ($actor->hasRole('user') && (string) $report->reporter_id === $actor->id) {
+        if ($actor->hasRole('user')
+            && $actor->hasPermission('inventory.security_reports.view_own')
+            && (string) $report->reporter_id === $actor->id
+            && $actor->cooperativeId === (string) $report->cooperative_id) {
             return $report;
         }
 
