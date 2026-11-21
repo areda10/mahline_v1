@@ -605,6 +605,7 @@ final class ProductService implements CheckoutCatalog
             newValues: $newValues,
         ));
     }
+
     public function resolveForInventory(string $stockableType, string $stockableId): ?InventoryStockableData
     {
         if ($stockableType === 'product') {
@@ -669,6 +670,4 @@ final class ProductService implements CheckoutCatalog
 
         return null;
     }
-
-
 }

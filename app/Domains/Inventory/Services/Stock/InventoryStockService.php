@@ -7,7 +7,6 @@ namespace App\Domains\Inventory\Services\Stock;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Inventory\Contracts\InventoryStockManager;
-use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
@@ -15,6 +14,8 @@ use App\Domains\Inventory\Models\InventoryIdempotencyRecord;
 use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Products\Contracts\CheckoutCatalog;
+use App\Domains\Products\DTOs\InventoryStockableData;
 use App\Shared\Contracts\ActorContextProvider;
 use App\Shared\Contracts\SuperAdminCooperativeAssignmentReader;
 use App\Shared\DTOs\ActorContext;
@@ -346,7 +347,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $cooperativeId,
         InventoryStockableType $stockableType,
         string $stockableId,
-    ): \App\Domains\Products\DTOs\InventoryStockableData {
+    ): InventoryStockableData {
         $stockable = $this->products->resolveForInventory($stockableType->value, $stockableId);
         if ($stockable === null
             || $stockable->cooperativeId !== $cooperativeId
