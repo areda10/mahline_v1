@@ -29,10 +29,15 @@ final class InventoryWorkspaceController
             ->values()
             ->all();
 
+        $user = $request->user();
+
         return view('backoffice.inventory.index', [
             'stocks' => $stockRows,
+            'stocksByCooperative' => collect($stockRows)->groupBy('cooperative_id'),
             'cooperativeIds' => $cooperativeIds->all(),
             'countSessions' => $sessions,
+            'canCreateCount' => $user->hasAnyRole(['super_admin_root', 'super_admin', 'cooperative_admin'])
+                && $user->hasPermission('inventory.count.create'),
         ]);
     }
 }
