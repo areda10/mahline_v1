@@ -11,7 +11,6 @@ use App\Domains\Inventory\Enums\InventoryInspectionResult;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
-use App\Domains\Inventory\Services\Alerts\InventoryAlertEvaluator;
 use App\Domains\Inventory\Models\InventoryIdempotencyRecord;
 use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
@@ -35,7 +34,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
-        private readonly InventoryAlertEvaluator $alerts,
     ) {}
 
     public function receiveReturn(
@@ -104,7 +102,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
             $stock->quantity_quarantined = $this->format($this->milli($stock->quantity_quarantined) + $quantityMilli);
             $stock->updated_by = $actor->id;
             $stock->save();
-            $this->alerts->evaluate($stock);
 
             $quarantine = InventoryQuarantine::query()->create([
                 'stock_id' => (string) $stock->getKey(),
@@ -228,7 +225,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
             $quarantine->inspected_at = now();
             $stock->updated_by = $actor->id;
             $stock->save();
-            $this->alerts->evaluate($stock);
             $quarantine->save();
 
             if ($result === InventoryInspectionResult::COMPLIANT) {
@@ -345,7 +341,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
             );
             $stock->updated_by = $actor->id;
             $stock->save();
-            $this->alerts->evaluate($stock);
 
             $this->movement(
                 $stock,
@@ -456,7 +451,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
             );
             $stock->updated_by = $actor->id;
             $stock->save();
-            $this->alerts->evaluate($stock);
 
             $this->movement(
                 $stock,
