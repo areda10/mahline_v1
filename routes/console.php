@@ -28,3 +28,12 @@ Schedule::command('media:cleanup-orphans')
 Schedule::command('media:verify-audit')
     ->dailyAt('03:00')
     ->withoutOverlapping();
+
+
+Schedule::command('inventory:expire-reservations')
+    ->everyMinute()
+    ->withoutOverlapping();
+
+Schedule::command('inventory:publish-outbox')
+    ->everyMinute()
+    ->withoutOverlapping();
