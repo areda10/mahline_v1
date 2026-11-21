@@ -83,7 +83,7 @@ Invariants :
 - `quantity_reserved_normal <= quantity_on_hand - quantity_quarantined`.
 - `quantity_reserved_quarantine <= quantity_quarantine_authorized`.
 - `quantity_reserved <= quantity_on_hand - quantity_quarantined + quantity_quarantine_authorized`.
-- L’unité d’un produit simple ou d’une variante devient immuable dès qu’un enregistrement de stock existe. Products consulte le contrat `InventoryStockUnitChangeGuard` avant toute modification d’unité ; les opérations concurrentes verrouillent d’abord le produit parent, puis la variante, puis le solde Inventory.
+- L’unité d’un produit simple ou d’une variante devient immuable dès qu’un enregistrement de stock existe. Products consulte le contrat `StockUnitChangeGuard` (Shared) avant toute modification d’unité ; les opérations concurrentes verrouillent d’abord le produit parent, puis la variante, puis le solde Inventory.
 
 ### 3.2 Disponibilité et priorité
 
