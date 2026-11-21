@@ -1,27 +1,34 @@
 # MAHLINE V1 — Domaine Sales
 
-- **Statut :** domaine créé — cadrage fonctionnel en cours — implémentation non démarrée.
+- **Statut :** implémentation du socle panier en cours ; checkout et fonctionnalités commerciales avancées non gelés techniquement.
 - **Spécification :** [SALES_V1_SPECIFICATION.md](../../../docs/domains/marketplace/SALES_V1_SPECIFICATION.md)
-- **Architecture :** ADR-009, ADR-011, ADR-012, ADR-017 et ADR-021.
+- **Architecture :** ADR-021 — monolithe modulaire à contrats explicites.
 
 ## Responsabilité
 
-Sales possède le parcours précommande : panier invité/authentifié, lignes de panier, calcul du récapitulatif commercial, devis/promotions lorsqu'ils seront cadrés et orchestration du checkout vers Orders.
+Sales possède le parcours précommande : panier invité/authentifié, lignes de panier, calcul du récapitulatif commercial, promotions/devis uniquement après arbitrage dédié, et orchestration du checkout vers Orders.
 
-Sales ne possède ni le catalogue et les prix de référence (Products), ni le stock et les réservations (Inventory), ni les commandes après création (Orders), ni les missions/expéditions (Delivery), ni les factures/paiements/commissions (Finance).
+Sales ne possède ni le catalogue et les prix de référence (Products), ni le stock et les réservations (Inventory), ni les commandes après création (Orders), ni les expéditions (Delivery), ni les factures/paiements/commissions (Finance).
 
-## Règle quantitative validée
+## Socle réalisé
 
-La quantité maximale absolue est de **100 unités par ligne de panier**. Le contrôle serveur doit être appliqué à l'ajout, la modification, la fusion de paniers et au checkout. Cette règle est indépendante du stock et ne remplace pas les limites commerciales plus basses éventuellement définies par la coopérative ou le produit.
+- Persistance distincte des paniers invités et authentifiés.
+- Jeton invité aléatoire dont seul le SHA-256 est conservé en base.
+- Expiration du panier invité après 30 jours d'inactivité ; aucune expiration automatique du panier authentifié.
+- Lignes historiques retirées/vidées conservées logiquement.
+- Version optimiste du panier : les écritures exigent la version attendue.
+- Fusion transactionnelle du panier invité vers le panier client, avec addition des lignes de même empreinte commerciale.
+- Limite technique de 100 unités par ligne appliquée côté service.
+- Lecture des données produit via le contrat public `CheckoutCatalog` ; aucun import de modèle Products.
 
-## Intégrations
+## Limites actuelles
 
-- Products : lecture des informations/prix via contrat public.
-- Inventory : consultation de disponibilité via contrat public, sans réserver depuis Sales.
-- Localization : validation/résolution d'adresse via contrat public.
-- Delivery : demande de devis logistique via contrat public lorsque le panier est éligible.
-- Orders : transmission du checkout via contrat public ; Orders reste propriétaire des commandes.
+- La précision de quantité à trois décimales est provisoire et doit être confirmée au regard du paramètre technique encore ouvert dans SALES-019.
+- Le contrat Products actuel ne donne pas encore l'état détaillé des produits supprimés/désactivés, les limites commerciales ni la version des caractéristiques commerciales. La synchronisation complète des lignes historiques reste donc à intégrer.
+- Les contrats publics de snapshot d'adresse, de création de commande et de calcul de livraison doivent être stabilisés avant le checkout complet.
+- Promotions, coupons et devis ne sont pas implémentés : leurs règles ne sont pas entièrement arbitrées dans la spécification.
+- Aucun contrôleur, route ou écran n'est encore déclaré livré.
 
-## État technique
+## Migrations et tests
 
-Ce dossier est la racine du domaine. Aucun modèle, migration, service, route ou provider vide n'est créé artificiellement. Les composants seront ajoutés par lots fonctionnels après audit des contrats et approbation des changements fichier par fichier.
+Les migrations Sales sont chargées par `SalesServiceProvider`, enregistré dans `bootstrap/providers.php`. Les tests du domaine doivent couvrir notamment la concurrence/version, les limites, la fusion, l'expiration et les frontières inter-domaines.
