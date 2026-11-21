@@ -620,6 +620,15 @@ Route::prefix('back-office')
 //     ]);
 // });
 
+Route::post('/orders/safety-holds/{holdId}/resolve', [OrderSafetyHoldController::class, 'resolve'])
+    ->middleware([
+        'auth',
+        EnsureActiveAuthenticationSession::class,
+        'role:super_admin_root,super_admin,cooperative_admin',
+    ])
+    ->whereUlid('holdId')
+    ->name('orders.safety-holds.resolve');
+
 /*
 |--------------------------------------------------------------------------
 | Inventory PDF reports
