@@ -630,23 +630,37 @@ final class ProductService implements CheckoutCatalog
         }
 
         if ($stockableType === 'variant') {
+            $variantReference = ProductVariant::withTrashed()
+                ->whereKey($stockableId)
+                ->first();
+
+            if ($variantReference === null) {
+                return null;
+            }
+
+            $product = Product::withTrashed()
+                ->with('unit')
+                ->whereKey($variantReference->product_id)
+                ->lockForUpdate()
+                ->first();
+
             $variant = ProductVariant::withTrashed()
-                ->with(['product.unit', 'unit'])
+                ->with('unit')
                 ->whereKey($stockableId)
                 ->lockForUpdate()
                 ->first();
 
-            if ($variant === null || $variant->product === null) {
+            if ($variant === null || $product === null) {
                 return null;
             }
 
-            $unitCode = $variant->unit?->code ?? $variant->product->unit?->code;
+            $unitCode = $variant->unit?->code ?? $product->unit?->code;
             if ($unitCode === null) {
                 return null;
             }
 
             return new InventoryStockableData(
-                cooperativeId: (string) $variant->product->cooperative_id,
+                cooperativeId: (string) $product->cooperative_id,
                 stockableType: 'variant',
                 stockableId: (string) $variant->getKey(),
                 unitCode: (string) $unitCode,
