@@ -8,7 +8,6 @@ use App\Domains\Inventory\Models\InventoryAlertEpisode;
 use App\Domains\Inventory\Models\InventoryOutboxMessage;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Inventory\Models\InventoryStockThreshold;
-use Illuminate\Support\Facades\DB;
 
 final class InventoryAlertEvaluator
 {
@@ -35,7 +34,7 @@ final class InventoryAlertEvaluator
         $this->syncEpisode(
             $stock,
             'low_stock',
-            $thresholdMilli !== null && $availableMilli <= $thresholdMilli,
+            $thresholdMilli !== null && $thresholdMilli > 0 && $availableMilli <= $thresholdMilli,
             $availableMilli,
             $thresholdMilli,
         );
