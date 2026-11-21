@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Services;
 
-use App\Domains\Inventory\Contracts\InventoryStockUnitChangeGuard;
-use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Shared\Contracts\StockUnitChangeGuard;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
@@ -16,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 final class ProductVariantService
 {
     public function __construct(
-        private readonly InventoryStockUnitChangeGuard $stockUnitGuard,
+        private readonly StockUnitChangeGuard $stockUnitGuard,
     ) {}
 
     public function create(
@@ -141,7 +140,7 @@ final class ProductVariantService
 
             if ($unitId !== $variant->unit_id
                 && $this->stockUnitGuard->hasStockRecord(
-                    InventoryStockableType::VARIANT,
+                    'variant',
                     (string) $variant->getKey(),
                 )) {
                 throw ValidationException::withMessages([
