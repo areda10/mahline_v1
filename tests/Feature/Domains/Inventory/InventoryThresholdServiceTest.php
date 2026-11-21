@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Inventory;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Inventory\Contracts\InventoryThresholdManager;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Models\InventoryAlertEpisode;
@@ -33,7 +34,7 @@ final class InventoryThresholdServiceTest extends TestCase
 
     public function test_low_stock_and_out_of_stock_alerts_rearm_as_separate_episodes(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
@@ -90,10 +91,13 @@ final class InventoryThresholdServiceTest extends TestCase
     {
         $role = Role::query()->where('slug', $roleSlug)->firstOrFail();
 
-        return User::factory()->create(array_merge([
+        $user = User::factory()->create(array_merge([
             'role_id' => $role->getKey(),
-            'status' => 'active',
+            'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ], $attributes));
+        $user->roles()->attach($role->getKey());
+
+        return $user;
     }
 }
