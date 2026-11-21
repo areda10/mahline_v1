@@ -661,6 +661,7 @@ Route::prefix('cooperatives/{cooperativeId}/inventory')
         Route::put('/stocks/{stockId}/threshold', [InventoryOperationsController::class, 'threshold'])
             ->whereUlid('stockId')->name('stocks.threshold');
 
+        Route::get('/counts', [InventoryOperationsController::class, 'countSessions'])->name('counts.index');
         Route::post('/counts', [InventoryOperationsController::class, 'createCount'])->name('counts.store');
         Route::put('/counts/items/{countItemId}', [InventoryOperationsController::class, 'recordCount'])
             ->whereUlid('countItemId')->name('counts.items.update');
