@@ -10,4 +10,5 @@ enum InventoryReservationStatus: string
     case CONSUMED = 'consumed';
     case RELEASED = 'released';
     case EXPIRED = 'expired';
+    case SAFETY_RETURNED = 'safety_returned';
 }
