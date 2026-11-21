@@ -258,7 +258,6 @@ final class CooperativeOrderResponseService
             $cancelled > 0 => OrderStatus::PARTIALLY_CANCELLED,
             $total > 0 && $closed === $total => OrderStatus::REFUSED,
             $confirmed > 0 && $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
-            $total > 0 && $confirmed === $total => OrderStatus::CONFIRMED,
             $confirmed > 0 => OrderStatus::PARTIALLY_CONFIRMED,
             $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
             default => $order->status,
