@@ -41,8 +41,8 @@ use App\Domains\Inventory\Http\Controllers\InventoryThresholdController;
 use App\Domains\Inventory\Http\Controllers\InventoryWorkspaceController;
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
-use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
+use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 

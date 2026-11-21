@@ -7,7 +7,7 @@ namespace App\Domains\Inventory\DTOs;
 final readonly class InventorySuborderAvailability
 {
     /**
-     * @param list<InventoryOrderLineAvailability> $lines
+     * @param  list<InventoryOrderLineAvailability>  $lines
      */
     public function __construct(
         public string $cooperativeOrderId,
