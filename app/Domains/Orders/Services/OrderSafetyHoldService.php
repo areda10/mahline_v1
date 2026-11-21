@@ -330,13 +330,13 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $hasActiveHold = OrderSafetyHold::query()
+            $activeHold = OrderSafetyHold::query()
                 ->where('cooperative_order_id', $cooperativeOrderId)
                 ->where('status', 'active')
                 ->lockForUpdate()
-                ->exists();
+                ->first();
 
-            if ($hasActiveHold) {
+            if ($activeHold !== null) {
                 throw new OrderFulfillmentBlocked('Expédition interdite : un blocage de sécurité est actif sur cette sous-commande.');
             }
         }, 3);
