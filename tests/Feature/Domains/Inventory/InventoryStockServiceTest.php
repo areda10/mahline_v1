@@ -14,6 +14,7 @@ use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Products\Models\ProductVariant;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -78,6 +79,77 @@ final class InventoryStockServiceTest extends TestCase
         $stock->refresh();
         $this->assertSame('4.250', $stock->quantity_on_hand);
         $this->assertSame(2, InventoryMovement::query()->where('stock_id', $stockId)->count());
+    }
+
+    public function test_parent_product_with_variants_cannot_own_a_stock_balance(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => null,
+            'price' => '10.00',
+            'currency' => 'MAD',
+        ]);
+        ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'unit_id' => $unit->getKey(),
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        app(InventoryStockManager::class)->initialize(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::PRODUCT,
+            (string) $product->getKey(),
+            'kg',
+            '5.000',
+            'Le parent ne porte pas de stock lorsque des variantes existent.',
+            (string) $admin->getKey(),
+            'stock-parent-with-variants-001',
+        );
+    }
+
+    public function test_variant_owns_its_own_stock_balance(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => null,
+            'price' => '10.00',
+            'currency' => 'MAD',
+        ]);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'unit_id' => $unit->getKey(),
+        ]);
+
+        $stockId = app(InventoryStockManager::class)->initialize(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::VARIANT,
+            (string) $variant->getKey(),
+            'kg',
+            '2.000',
+            'Stock initial de la variante.',
+            (string) $admin->getKey(),
+            'stock-variant-init-001',
+        );
+
+        $stock = InventoryStock::query()->findOrFail($stockId);
+        $this->assertSame('variant', $stock->stockable_type);
+        $this->assertSame((string) $variant->getKey(), (string) $stock->stockable_id);
+        $this->assertSame('2.000', $stock->quantity_on_hand);
     }
 
     private function userWithRole(string $roleSlug, array $attributes = []): User
