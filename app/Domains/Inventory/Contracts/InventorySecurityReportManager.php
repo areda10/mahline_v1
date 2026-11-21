@@ -7,6 +7,7 @@ namespace App\Domains\Inventory\Contracts;
 use App\Domains\Inventory\Enums\InventorySecurityReportUrgency;
 use App\Domains\Inventory\Models\InventorySecurityReport;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Database\Eloquent\Collection;
 
 interface InventorySecurityReportManager
 {
@@ -19,6 +20,9 @@ interface InventorySecurityReportManager
         string $actorId,
         array $evidenceFiles = [],
     ): string;
+
+    /** @return Collection<int, InventorySecurityReport> */
+    public function visibleReports(string $actorId): Collection;
 
     public function visibleReport(string $reportId, string $actorId): InventorySecurityReport;
 
