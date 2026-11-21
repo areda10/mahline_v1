@@ -6,6 +6,7 @@ namespace App\Domains\Inventory\Models;
 
 use App\Core\Foundation\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use LogicException;
 
 final class InventoryCountSession extends BaseModel
 {
@@ -30,6 +31,18 @@ final class InventoryCountSession extends BaseModel
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(static function (InventoryCountSession $session): void {
+            if (in_array($session->getOriginal('status'), ['completed', 'cancelled'], true)) {
+                throw new LogicException('Closed inventory count sessions are immutable.');
+            }
+        });
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory count sessions cannot be deleted.');
+        });
     }
 
     public function items(): HasMany
