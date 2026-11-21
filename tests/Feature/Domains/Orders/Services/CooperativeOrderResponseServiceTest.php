@@ -79,6 +79,55 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertNotNull($updated->confirmed_at);
     }
 
+    public function test_multi_cooperative_order_becomes_confirmed_only_after_every_suborder_is_confirmed(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+        $adminA = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperativeA->getKey(),
+        ]);
+        $adminB = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperativeB->getKey(),
+        ]);
+        $productA = Product::factory()->forCooperative($cooperativeA)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $productB = Product::factory()->forCooperative($cooperativeB)->create([
+            'price' => '25.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperativeA, $productA);
+        $this->stockFor($cooperativeB, $productB);
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-response-multi-coop-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [
+                ['product_id' => (string) $productA->getKey(), 'quantity' => '1'],
+                ['product_id' => (string) $productB->getKey(), 'quantity' => '1'],
+            ],
+        ]);
+
+        $suborders = $order->cooperativeOrders()->orderBy('cooperative_id')->get();
+        $this->assertCount(2, $suborders);
+
+        app(CooperativeOrderResponseService::class)->confirmByCooperative(
+            $suborders->firstOrFail(),
+            $adminA,
+        );
+        $this->assertSame(OrderStatus::PARTIALLY_CONFIRMED, $order->fresh()->status);
+
+        app(CooperativeOrderResponseService::class)->confirmByCooperative(
+            $suborders->last(),
+            $adminB,
+        );
+        $this->assertSame(OrderStatus::CONFIRMED, $order->fresh()->status);
+    }
+
     public function test_cooperative_admin_cannot_decide_for_another_cooperative(): void
     {
         $customer = $this->userWithRole('customer');
