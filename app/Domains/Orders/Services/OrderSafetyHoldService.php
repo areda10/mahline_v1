@@ -344,21 +344,25 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
 
     public function assertCanShip(string $cooperativeOrderId): void
     {
-        DB::transaction(function () use ($cooperativeOrderId): void {
-            CooperativeOrder::query()
-                ->whereKey($cooperativeOrderId)
-                ->lockForUpdate()
-                ->firstOrFail();
+        if (DB::transactionLevel() < 1) {
+            throw new InvalidArgumentException(
+                'The shipping safety check must run inside the transaction that performs the shipment transition.',
+            );
+        }
 
-            $activeHold = OrderSafetyHold::query()
-                ->where('cooperative_order_id', $cooperativeOrderId)
-                ->where('status', 'active')
-                ->lockForUpdate()
-                ->first();
+        CooperativeOrder::query()
+            ->whereKey($cooperativeOrderId)
+            ->lockForUpdate()
+            ->firstOrFail();
 
-            if ($activeHold !== null) {
-                throw new OrderFulfillmentBlocked('Expédition interdite : un blocage de sécurité est actif sur cette sous-commande.');
-            }
-        }, 3);
+        $activeHold = OrderSafetyHold::query()
+            ->where('cooperative_order_id', $cooperativeOrderId)
+            ->where('status', 'active')
+            ->lockForUpdate()
+            ->first();
+
+        if ($activeHold !== null) {
+            throw new OrderFulfillmentBlocked('Expédition interdite : un blocage de sécurité est actif sur cette sous-commande.');
+        }
     }
 }
