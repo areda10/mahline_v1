@@ -46,7 +46,8 @@ Toutes les tables métier Inventory utilisent ULID, timestamps, acteurs logiques
 | `inventory_stocks` | Solde unique coopérative + stockable (produit simple ou variante), unité canonique, verrou d'inventaire actif |
 | `inventory_movements` | Grand livre append-only des changements de quantités et soldes avant/après |
 | `inventory_reservations` | Une réservation par sous-commande, état, échéance 24 h, clé d'idempotence |
-| `inventory_reservation_items` | Quantités réservées par ligne de commande et source (stock normal / quarantaine autorisée) |
+| `inventory_reservation_items` | Quantités réservées par ligne de commande et totaux d’allocation normal/quarantaine |
+| `inventory_reservation_allocations` | Détail append-only des sources prélevées : stock normal ou autorisation de vente en quarantaine précise |
 | `inventory_quarantines` | Lots de quarantaine, quantité physique restante, inspection, état et motif |
 | `inventory_quarantine_authorizations` | Autorisations quantitatives de vente, auteur, motif, durée jusqu'à épuisement/révocation, révocations |
 | `inventory_count_sessions` | Session de comptage par coopérative, état, créateur, validation/cancellation |
@@ -170,7 +171,7 @@ Inventory émet des messages Outbox. Un adaptateur de notification in-app résou
 
 Inventory conserve le dossier et son historique. Le déclarant `user` peut créer le signalement et consulter son propre suivi ; les détails sont accessibles aux responsables de la coopérative et au root dans leur périmètre. Les preuves privées sont référencées via Media, qui reste propriétaire des fichiers et de leur pipeline antivirus.
 
-Un signalement urgent déclenche une demande immédiate de hold auprès d'Orders via un contrat public. Orders conserve un enregistrement de blocage de fulfillment indépendant du statut commercial. Le blocage ne peut être levé que par un responsable autorisé après décision explicite. Le délai de deux heures déclenche les escalades ; le délai dépassé ne lève jamais le blocage.
+Un signalement urgent déclenche une demande immédiate de hold auprès d'Orders via un contrat public. Orders conserve un enregistrement `order_safety_holds` de blocage de fulfillment indépendant du statut commercial. Le contrat `OrderSafetyHoldManager::assertCanShip()` est la porte obligatoire à appeler par le futur domaine Delivery. Une décision de reprise lève le hold ; une annulation de sécurité avant expédition restitue les quantités normales au stock normal et les quantités provenant de quarantaine à la quarantaine non autorisée. Le blocage ne peut être levé que par un responsable autorisé après décision explicite. Le délai de deux heures déclenche les escalades ; le délai dépassé ne lève jamais le blocage.
 
 Les événements de sécurité sont append-only. Les détails de reprise de commande après expédition et les ajouts du déclarant sont hors V1.
 
