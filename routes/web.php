@@ -708,6 +708,8 @@ Route::middleware([
     EnsureActiveAuthenticationSession::class,
     'role:super_admin_root,super_admin,cooperative_admin,user',
 ])->prefix('backoffice/inventory')->name('backoffice.inventory.')->group(function (): void {
+    Route::get('/stocks', [InventoryStockController::class, 'index'])
+        ->name('stocks.index.all');
     Route::get('/cooperatives/{cooperativeId}/stocks', [InventoryStockController::class, 'index'])
         ->whereUlid('cooperativeId')
         ->name('stocks.index');
