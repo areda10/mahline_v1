@@ -33,7 +33,7 @@ final class SalesCartServiceTest extends TestCase
 
         $this->assertNotSame($result['guest_token'], $cart->guest_token_hash);
         $this->assertSame(hash('sha256', $result['guest_token']), $cart->guest_token_hash);
-        $this->assertTrue($cart->expires_at->equalTo(now()->addDays(30)));
+        $this->assertEqualsWithDelta(now()->addDays(30)->timestamp, $cart->expires_at->timestamp, 1);
         $this->assertNull($cart->customer_id);
     }
 
@@ -49,6 +49,24 @@ final class SalesCartServiceTest extends TestCase
         $this->assertSame('5.500', $second->quantity);
         $this->assertSame(3, $second->cart->fresh()->version);
         $this->assertSame($first->getKey(), $second->getKey());
+    }
+
+    public function test_quantity_supports_exactly_three_decimal_places(): void
+    {
+        [$product] = $this->product();
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) Str::ulid());
+
+        $item = $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '0.125', 1);
+
+        $this->assertSame('0.125', $item->quantity);
+
+        try {
+            $manager->changeQuantity((string) $cart->getKey(), (string) $item->getKey(), '0.0001', 2);
+            $this->fail('A quantity with more than three decimal places must be rejected.');
+        } catch (ValidationException) {
+            $this->assertSame('0.125', $item->fresh()->quantity);
+        }
     }
 
     public function test_quantity_above_one_hundred_is_rejected(): void
