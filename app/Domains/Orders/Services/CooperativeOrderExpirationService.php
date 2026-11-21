@@ -61,16 +61,21 @@ final class CooperativeOrderExpirationService extends BaseService
             $confirmed = $statuses->filter(
                 static fn (string $status): bool => $status === CooperativeOrderStatus::CONFIRMED->value,
             )->count();
+            $cancelled = $statuses->filter(
+                static fn (string $status): bool => $status === CooperativeOrderStatus::CANCELLED->value,
+            )->count();
             $closed = $statuses->filter(
                 static fn (string $status): bool => in_array($status, [
                     CooperativeOrderStatus::REFUSED->value,
                     CooperativeOrderStatus::EXPIRED->value,
+                    CooperativeOrderStatus::CANCELLED->value,
                 ], true),
             )->count();
             $total = $statuses->count();
 
             $next = match (true) {
-                $total > 0 && $confirmed === $total => OrderStatus::CONFIRMED,
+                $total > 0 && $cancelled === $total => OrderStatus::CANCELLED,
+                $cancelled > 0 => OrderStatus::PARTIALLY_CANCELLED,
                 $total > 0 && $closed === $total => OrderStatus::REFUSED,
                 $confirmed > 0 && $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
                 $confirmed > 0 => OrderStatus::PARTIALLY_CONFIRMED,
