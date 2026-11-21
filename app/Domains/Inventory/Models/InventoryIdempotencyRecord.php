@@ -21,6 +21,16 @@ final class InventoryIdempotencyRecord extends BaseModel
         'completed_at',
     ];
 
+    protected static function booted(): void
+    {
+        static::updating(static function (): never {
+            throw new LogicException('Inventory idempotency records are immutable.');
+        });
+        static::deleting(static function (): never {
+            throw new LogicException('Inventory idempotency records cannot be deleted.');
+        });
+    }
+
     protected function casts(): array
     {
         return [
