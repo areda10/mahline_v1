@@ -65,6 +65,9 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
 
         $suborder = $order->cooperativeOrders->firstOrFail();
+        $this->assertTrue($admin->hasRole('cooperative_admin'));
+        $this->assertSame((string) $cooperative->getKey(), (string) $admin->cooperative_id);
+        $this->assertSame((string) $cooperative->getKey(), (string) $suborder->cooperative_id);
         $updated = app(CooperativeOrderResponseService::class)
             ->confirmByCooperative($suborder, $admin);
 
