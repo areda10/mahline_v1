@@ -15,7 +15,7 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: 
           MYSQL_DATABASE: mahline_test
         ports:
           - 3306:3306
@@ -32,7 +32,7 @@ jobs:
       DB_PORT: 3306
       DB_DATABASE: mahline_test
       DB_USERNAME: root
-      DB_PASSWORD: root
+      DB_PASSWORD: 
       CACHE_STORE: array
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
