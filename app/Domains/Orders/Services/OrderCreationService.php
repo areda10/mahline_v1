@@ -113,7 +113,9 @@ final class OrderCreationService
 
         $idempotencyKey = trim($idempotencyKey ?? (string) ($checkout['idempotency_key'] ?? ''));
         if ($idempotencyKey === '') {
-            $idempotencyKey = (string) Str::ulid();
+            throw ValidationException::withMessages([
+                'checkout.idempotency_key' => ['Une clé d’idempotence stable est obligatoire pour finaliser le checkout.'],
+            ]);
         }
         if (strlen($idempotencyKey) > 100) {
             throw ValidationException::withMessages([
