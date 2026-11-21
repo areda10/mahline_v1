@@ -5,7 +5,12 @@
 - **Date :** 19 novembre 2026
 - **Branche de référence :** `feature/Marketplace`
 - **Commit de référence :** `72e27c4b32aefd09c2118e631f2aec0433627e84`
-- **Statut :** CADRAGE MÉTIER INITIAL VALIDÉ — audit technique complémentaire et conception du schéma à poursuivre ; aucun code Inventory implémenté à cette référence.
+- **Statut :** document de cadrage initial conservé comme historique ; son état d'implémentation et ses règles contradictoires sont dépassés.
+- **Décisions V1 faisant foi :** [INVENTORY_V1_DECISIONS_2026-11-21.md](INVENTORY_V1_DECISIONS_2026-11-21.md).
+- **Conception technique :** [INVENTORY_V1_TECHNICAL_DESIGN.md](INVENTORY_V1_TECHNICAL_DESIGN.md).
+- **Suivi réel :** [INVENTORY_V1_IMPLEMENTATION_TRACKER.md](INVENTORY_V1_IMPLEMENTATION_TRACKER.md).
+
+> **AVERTISSEMENT — HISTORIQUE :** plusieurs règles de ce cadrage initial ont été remplacées par les décisions validées du 21 novembre 2026. En particulier, le checkout réserve désormais le stock à la finalisation et non à la confirmation coopérative. Ne pas utiliser ce document seul pour coder.
 
 > Ce document est le registre opérationnel du domaine Inventory. Il distingue les règles métier validées, les contrats inter-domaines, les fonctions à implémenter, les contrôles d'audit et les éléments restant à décider. Une fonction ne sera déclarée réalisée qu'après vérification du code et exécution des tests requis.
 
