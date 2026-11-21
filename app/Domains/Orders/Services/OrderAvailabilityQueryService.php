@@ -30,7 +30,12 @@ final class OrderAvailabilityQueryService extends BaseService
         $this->authorizeOrder($actor, $order);
 
         $allSuborders = $order->cooperativeOrders;
-        $isMultiCooperative = $allSuborders->count() > 1;
+        $participatingCooperativeIds = $allSuborders
+            ->pluck('cooperative_id')
+            ->merge($order->inventory_excluded_cooperative_ids ?? [])
+            ->unique();
+
+        $isMultiCooperative = $participatingCooperativeIds->count() > 1;
         $visibleSuborders = $allSuborders->filter(
             fn ($suborder): bool => $this->canViewCooperative($actor, (string) $suborder->cooperative_id),
         )->values();
