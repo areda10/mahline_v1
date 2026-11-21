@@ -217,6 +217,117 @@
         </section>
     @endif
 
+    @if($canManageQuarantine)
+        <section class="card">
+            <h2>Quarantaine et retours</h2>
+            @foreach($cooperativeIds as $cooperativeId)
+                <details>
+                    <summary>Réceptionner un retour · Coopérative <code>{{ $cooperativeId }}</code></summary>
+                    <form method="POST"
+                          action="{{ route('backoffice.inventory.quarantines.receive', ['cooperativeId' => $cooperativeId]) }}"
+                          data-inventory-quarantine-operation>
+                        @csrf
+                        <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
+                        <label>Type</label>
+                        <select name="stockable_type"><option value="product">Produit</option><option value="variant">Variante</option></select>
+                        <label>Identifiant produit / variante</label>
+                        <input name="stockable_id" type="text" minlength="26" maxlength="26" required>
+                        <label>Quantité reçue</label>
+                        <input name="quantity" type="text" inputmode="decimal" required>
+                        <label>Type de source</label>
+                        <input name="source_type" type="text" maxlength="60" value="customer_return" required>
+                        <label>Identifiant ULID de la source</label>
+                        <input name="source_id" type="text" minlength="26" maxlength="26" required>
+                        <label>Motif de mise en quarantaine</label>
+                        <input name="reason" type="text" maxlength="500" required>
+                        <button class="button button-small" type="submit">Réceptionner en quarantaine</button>
+                    </form>
+                </details>
+            @endforeach
+
+            @if($quarantines === [])
+                <p class="empty">Aucun lot en quarantaine n’est enregistré dans votre périmètre.</p>
+            @else
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Produit / variante</th><th>Reçu</th><th>Restant</th><th>Autorisé</th><th>État</th><th>Inspection</th><th>Motif</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach($quarantines as $quarantine)
+                                <tr>
+                                    <td>
+                                        {{ $quarantine['stockable_type'] === 'variant' ? 'Variante' : 'Produit' }}
+                                        <div><code>{{ $quarantine['stockable_id'] }}</code></div>
+                                    </td>
+                                    <td>{{ $quarantine['quantity_received'] }} {{ $quarantine['unit_code'] }}</td>
+                                    <td>{{ $quarantine['quantity_remaining'] }} {{ $quarantine['unit_code'] }}</td>
+                                    <td>{{ $quarantine['quantity_authorized'] }} {{ $quarantine['unit_code'] }}</td>
+                                    <td>{{ str($quarantine['status'])->replace('_', ' ')->title() }}</td>
+                                    <td>{{ str($quarantine['inspection_result'])->replace('_', ' ')->title() }}</td>
+                                    <td>{{ $quarantine['reason'] }}</td>
+                                    <td>
+                                        @if($quarantine['inspection_result'] === 'pending')
+                                            <details>
+                                                <summary>Inspecter</summary>
+                                                <form method="POST"
+                                                      action="{{ route('backoffice.inventory.quarantines.inspect', ['quarantineId' => $quarantine['id']]) }}"
+                                                      data-inventory-quarantine-operation>
+                                                    @csrf
+                                                    <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
+                                                    <label>Résultat</label>
+                                                    <select name="result">
+                                                        <option value="compliant">Conforme · réintégrer au stock normal</option>
+                                                        <option value="non_compliant">Non conforme · rester en quarantaine</option>
+                                                    </select>
+                                                    <label>Motif obligatoire</label>
+                                                    <input name="reason" type="text" maxlength="500" required>
+                                                    <button class="button button-small" type="submit">Enregistrer l’inspection</button>
+                                                </form>
+                                            </details>
+                                        @endif
+                                        @if($quarantine['inspection_result'] === 'non_compliant')
+                                            <details>
+                                                <summary>Autoriser une vente conditionnelle</summary>
+                                                <form method="POST"
+                                                      action="{{ route('backoffice.inventory.quarantines.authorize-sale', ['quarantineId' => $quarantine['id']]) }}"
+                                                      data-inventory-quarantine-operation>
+                                                    @csrf
+                                                    <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
+                                                    <label>Quantité à autoriser</label>
+                                                    <input name="quantity" type="text" inputmode="decimal" required>
+                                                    <label>Motif et responsabilité</label>
+                                                    <input name="reason" type="text" maxlength="500" required>
+                                                    <button class="button button-small" type="submit">Autoriser la vente</button>
+                                                </form>
+                                            </details>
+                                        @endif
+                                        @foreach($quarantine['authorizations'] as $authorization)
+                                            @if($authorization['status'] === 'active')
+                                                <details>
+                                                    <summary>Révoquer l’autorisation {{ substr($authorization['id'], 0, 8) }}</summary>
+                                                    <form method="POST"
+                                                          action="{{ route('backoffice.inventory.quarantine-authorizations.revoke', ['authorizationId' => $authorization['id']]) }}"
+                                                          data-inventory-quarantine-operation>
+                                                        @csrf
+                                                        <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::ulid() }}">
+                                                        <label>Motif obligatoire</label>
+                                                        <input name="reason" type="text" maxlength="500" required>
+                                                        <button class="button button-danger button-small" type="submit">Révoquer</button>
+                                                    </form>
+                                                </details>
+                                            @endif
+                                        @endforeach
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </section>
+    @endif
+
     <section class="card">
         <h2>Inventaires physiques</h2>
         @if($countSessions === [])
@@ -297,6 +408,43 @@
             } catch (error) {
                 window.alert(error.message || 'Une erreur est survenue.');
                 button.disabled = false;
+            }
+        });
+    });
+    </script>
+    <script>
+    document.querySelectorAll('[data-inventory-quarantine-operation]').forEach((form) => {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = form.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
+
+            try {
+                const payload = Object.fromEntries(new FormData(form).entries());
+                delete payload._token;
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Idempotency-Key': payload.idempotency_key,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+
+                if (!response.ok) {
+                    const message = result.errors
+                        ? Object.values(result.errors).flat().join(' ')
+                        : (result.message || 'L’opération de quarantaine a échoué.');
+                    throw new Error(message);
+                }
+
+                window.location.reload();
+            } catch (error) {
+                window.alert(error.message || 'Une erreur est survenue.');
+                if (button) button.disabled = false;
             }
         });
     });
