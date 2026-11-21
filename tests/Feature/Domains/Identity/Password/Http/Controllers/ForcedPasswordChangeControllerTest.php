@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Identity\Password\Http\Controllers;
 
 use App\Domains\Audit\Models\AuditEvent;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Models\PersonalAccessToken;
