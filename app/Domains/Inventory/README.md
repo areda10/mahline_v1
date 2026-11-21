@@ -1,6 +1,7 @@
 # MAHLINE V1 — Domaine Inventory
 
-- **Statut :** cadrage métier V1 consolidé le 21 novembre 2026 ; conception technique et implémentation en cours.
+- **Statut :** cadrage métier consolidé ; socle Inventory et intégrations en cours de vérification.
+- **Suivi d'implémentation :** [INVENTORY_V1_IMPLEMENTATION_TRACKER.md](../../../docs/domains/marketplace/INVENTORY_V1_IMPLEMENTATION_TRACKER.md).
 - **Spécification initiale :** [INVENTORY_V1_SPECIFICATION.md](../../../docs/domains/marketplace/INVENTORY_V1_SPECIFICATION.md).
 - **Décisions validées faisant foi :** [INVENTORY_V1_DECISIONS_2026-11-21.md](../../../docs/domains/marketplace/INVENTORY_V1_DECISIONS_2026-11-21.md).
 - **Architecture :** ADR-009, ADR-011, ADR-012, ADR-017 et ADR-021.
@@ -41,8 +42,15 @@ Aucun autre domaine n'écrit directement dans les tables Inventory. Les intégra
 
 ## État technique
 
-Le domaine était initialement un dossier documentaire sans modèles, migrations, services, contrats ni tests. La conception et l'implémentation sont en cours sur `feature/Marketplace`.
+Le domaine comporte maintenant les modèles et migrations de stock, mouvements, réservations, quarantaines, inventaires physiques, seuils/alertes et signalements de sécurité. Les services correspondants sont enregistrés dans `InventoryServiceProvider`.
 
-Les migrations seront ajoutées dans `app/Domains/Inventory/Database/Migrations` et chargées explicitement par le provider Inventory. Les migrations déjà exécutées ne seront jamais modifiées.
+Les intégrations présentes comprennent :
+- checkout / Orders : preview, réservation, consommation, libération et expiration ;
+- Identity : contexte d'acteur, permissions et notifications in-app ;
+- Media : preuves privées des signalements ;
+- Orders : blocages de sécurité et résolution humaine ;
+- PDF : rapports complets ou simplifiés selon le rôle.
+
+Les routes JSON/PDF sont en place ; les écrans dédiés restent à construire. Les tests ciblés et la suite complète doivent encore être exécutés dans l'environnement MySQL du projet. Voir le [suivi d'implémentation](../../../docs/domains/marketplace/INVENTORY_V1_IMPLEMENTATION_TRACKER.md).
 
 Une fonction ne sera déclarée terminée qu'après inspection du code, tests réellement exécutés, vérification des frontières inter-domaines et documentation synchronisée.
