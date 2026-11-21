@@ -6,6 +6,7 @@ namespace App\Domains\Sales\Services;
 
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Products\Contracts\CheckoutCatalog;
+use App\Domains\Products\DTOs\CheckoutProductData;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;
@@ -265,7 +266,7 @@ final class SalesCartService implements SalesCartManager
         return $dirty;
     }
 
-    private function commercialFingerprint(\App\Domains\Products\DTOs\CheckoutProductData $product): string
+    private function commercialFingerprint(CheckoutProductData $product): string
     {
         return hash('sha256', json_encode([
             'product_id' => $product->productId,
@@ -279,7 +280,7 @@ final class SalesCartService implements SalesCartManager
     }
 
     /** @return array<string, mixed> */
-    private function productSnapshot(\App\Domains\Products\DTOs\CheckoutProductData $product): array
+    private function productSnapshot(CheckoutProductData $product): array
     {
         return [
             'product_id' => $product->productId,
