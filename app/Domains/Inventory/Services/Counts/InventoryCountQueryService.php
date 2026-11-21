@@ -22,13 +22,6 @@ final class InventoryCountQueryService extends BaseService
     public function sessionsForCooperative(string $cooperativeId, string $actorId): array
     {
         $actor = $this->actors->forUserId($actorId);
-        $canView = $actor->hasPermission('inventory.count.view')
-            || ($actor->hasRole('user') && $actor->hasPermission('inventory.count.perform'));
-
-        if (! $actor->authorized || ! $canView) {
-            throw new AuthorizationException('The actor cannot view physical inventory sessions.');
-        }
-
         $this->authorize($actor, $cooperativeId);
 
         return InventoryCountSession::query()
