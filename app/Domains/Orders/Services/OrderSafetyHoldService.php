@@ -7,7 +7,7 @@ namespace App\Domains\Orders\Services;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
-use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
+use App\Shared\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
