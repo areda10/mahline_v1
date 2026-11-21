@@ -8,6 +8,7 @@ use App\Domains\Cooperatives\Providers\CooperativesServiceProvider;
 use App\Domains\Identity\Authorization\Providers\AuthorizationServiceProvider;
 use App\Domains\Identity\Providers\IdentityServiceProvider;
 use App\Domains\Inventory\Providers\InventoryServiceProvider;
+use App\Domains\Orders\Providers\OrdersServiceProvider;
 use App\Domains\Identity\Authorization\Providers\PermissionGateServiceProvider;
 use App\Domains\Localization\Providers\LocalizationServiceProvider;
 use App\Domains\Media\Providers\MediaServiceProvider;
@@ -30,6 +31,7 @@ return [
     MediaServiceProvider::class,
     ProductsServiceProvider::class,
     InventoryServiceProvider::class,
+    OrdersServiceProvider::class,
     CooperativesServiceProvider::class,
     LocalizationServiceProvider::class,
     IdentityServiceProvider::class,
