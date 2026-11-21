@@ -38,6 +38,9 @@ final class InventoryWorkspaceController
             'countSessions' => $sessions,
             'canCreateCount' => $user->hasAnyRole(['super_admin_root', 'super_admin', 'cooperative_admin'])
                 && $user->hasPermission('inventory.count.create'),
+            'canManageStock' => $user->hasAnyRole(['super_admin_root', 'super_admin', 'cooperative_admin'])
+                && $user->hasPermission('inventory.stock.receive')
+                && $user->hasPermission('inventory.stock.adjust'),
         ]);
     }
 }
