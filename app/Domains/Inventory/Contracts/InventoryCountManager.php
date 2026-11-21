@@ -19,6 +19,7 @@ interface InventoryCountManager
         string $countedQuantity,
         ?string $reason,
         string $actorId,
+        ?string $expectedSessionId = null,
     ): void;
 
     public function validateSession(string $sessionId, string $actorId): void;
