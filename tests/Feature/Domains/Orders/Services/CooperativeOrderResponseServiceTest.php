@@ -116,13 +116,13 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertCount(2, $suborders);
 
         app(CooperativeOrderResponseService::class)->confirmByCooperative(
-            $suborders->firstOrFail(),
+            $suborders->firstWhere('cooperative_id', (string) $cooperativeA->getKey()),
             $adminA,
         );
         $this->assertSame(OrderStatus::PARTIALLY_CONFIRMED, $order->fresh()->status);
 
         app(CooperativeOrderResponseService::class)->confirmByCooperative(
-            $suborders->last(),
+            $suborders->firstWhere('cooperative_id', (string) $cooperativeB->getKey()),
             $adminB,
         );
         $this->assertSame(OrderStatus::CONFIRMED, $order->fresh()->status);
