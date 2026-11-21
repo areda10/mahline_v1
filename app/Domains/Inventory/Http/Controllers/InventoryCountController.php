@@ -11,6 +11,16 @@ use Illuminate\Http\Request;
 
 final class InventoryCountController
 {
+    public function index(Request $request, string $cooperativeId, InventoryCountQueryService $counts): JsonResponse
+    {
+        return response()->json([
+            'data' => $counts->sessionsForCooperative(
+                $cooperativeId,
+                (string) $request->user()->getKey(),
+            ),
+        ]);
+    }
+
     public function show(Request $request, string $sessionId, InventoryCountQueryService $counts): JsonResponse
     {
         return response()->json([
