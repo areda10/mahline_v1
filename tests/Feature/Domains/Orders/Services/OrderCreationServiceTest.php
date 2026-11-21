@@ -8,12 +8,16 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
+use Database\Seeders\PermissionSeeder;
 use Database\Seeders\ProductUnitSeeder;
+use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -24,7 +28,7 @@ final class OrderCreationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(ProductUnitSeeder::class);
+        $this->seed([RoleSeeder::class, PermissionSeeder::class, RolePermissionSeeder::class, ProductUnitSeeder::class]);
     }
 
     public function test_checkout_creates_one_order_with_cooperative_segments_and_price_snapshots(): void
@@ -43,6 +47,8 @@ final class OrderCreationServiceTest extends TestCase
         ]);
         $productA->update(['unit_id' => ProductUnit::query()->where('code', 'u')->value('id')]);
         $productB->update(['unit_id' => ProductUnit::query()->where('code', 'kg')->value('id')]);
+        $this->stock($cooperativeA, 'product', (string) $productA->getKey(), 'u', '10.000');
+        $this->stock($cooperativeB, 'product', (string) $productB->getKey(), 'kg', '10.000');
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => [
@@ -53,7 +59,7 @@ final class OrderCreationServiceTest extends TestCase
             'items' => [
                 [
                     'product_id' => (string) $productA->getKey(),
-                    'quantity' => '2.500',
+                    'quantity' => '2',
                     'unit' => 'kg', // Valeur falsifiée : Orders doit reprendre l'unité Products.
                     'unit_price' => '0.01',
                 ],
@@ -65,8 +71,8 @@ final class OrderCreationServiceTest extends TestCase
         ]);
 
         $this->assertCount(2, $order->cooperativeOrders);
-        $this->assertSame('60.00', $order->items_subtotal);
-        $this->assertSame('60.00', $order->grand_total);
+        $this->assertSame('50.00', $order->items_subtotal);
+        $this->assertSame('50.00', $order->grand_total);
         $this->assertSame('MAD', $order->currency);
         $this->assertSame(
             'Unité / pièce (u)',
@@ -76,8 +82,8 @@ final class OrderCreationServiceTest extends TestCase
         $this->assertDatabaseHas('order_items', [
             'product_id' => $productA->getKey(),
             'unit_price' => '20.00',
-            'quantity' => '2.500',
-            'line_total' => '50.00',
+            'quantity' => '2.000',
+            'line_total' => '40.00',
             'unit' => 'u',
         ]);
         $this->assertDatabaseHas('order_items', [
@@ -105,6 +111,7 @@ final class OrderCreationServiceTest extends TestCase
             'price' => '92.50',
             'unit_id' => ProductUnit::query()->where('code', 'ml')->value('id'),
         ]);
+        $this->stock($cooperative, 'variant', (string) $variant->getKey(), 'ml', '10.000');
 
         $order = app(OrderCreationService::class)->createFromCheckout($customer, [
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
@@ -207,6 +214,18 @@ final class OrderCreationServiceTest extends TestCase
                 'quantity' => '1',
                 'unit' => 'u',
             ]],
+        ]);
+    }
+
+
+    private function stock(Cooperative $cooperative, string $stockableType, string $stockableId, string $unit, string $quantity): void
+    {
+        InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => $stockableType,
+            'stockable_id' => $stockableId,
+            'unit_code' => $unit,
+            'quantity_on_hand' => $quantity,
         ]);
     }
 
