@@ -177,11 +177,20 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
         $this->authorize($actor, (string) $quarantine->cooperative_id, 'inventory.quarantine.manage');
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
-        DB::transaction(function () use ($quarantineId, $result, $reason, $actor, $idempotencyKey): void {
+        $stockId = (string) $quarantine->stock_id;
+
+        DB::transaction(function () use ($quarantineId, $stockId, $result, $reason, $actor, $idempotencyKey): void {
+            $stock = InventoryStock::query()
+                ->whereKey($stockId)
+                ->lockForUpdate()
+                ->firstOrFail();
             $quarantine = InventoryQuarantine::query()
                 ->whereKey($quarantineId)
                 ->lockForUpdate()
                 ->firstOrFail();
+            if ((string) $quarantine->stock_id !== (string) $stock->getKey()) {
+                throw new InventoryReservationConflict('The quarantine stock reference changed unexpectedly.');
+            }
             $requestHash = $this->hash([$quarantineId, $result->value, trim($reason)]);
             if ($this->existing('inventory_quarantine', $quarantineId, 'inspect', $idempotencyKey, $requestHash) !== null) {
                 return;
@@ -191,11 +200,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
                 || $quarantine->status !== 'pending_inspection') {
                 throw new InventoryReservationConflict('This quarantine batch has already been inspected.');
             }
-
-            $stock = InventoryStock::query()
-                ->whereKey($quarantine->stock_id)
-                ->lockForUpdate()
-                ->firstOrFail();
 
             if ($stock->active_count_session_id !== null) {
                 throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
@@ -283,11 +287,20 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
         $this->authorize($actor, (string) $quarantine->cooperative_id, 'inventory.quarantine.authorize_sale');
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
-        return DB::transaction(function () use ($quarantineId, $quantity, $reason, $actor, $idempotencyKey): string {
+        $stockId = (string) $quarantine->stock_id;
+
+        return DB::transaction(function () use ($quarantineId, $stockId, $quantity, $reason, $actor, $idempotencyKey): string {
+            $stock = InventoryStock::query()
+                ->whereKey($stockId)
+                ->lockForUpdate()
+                ->firstOrFail();
             $quarantine = InventoryQuarantine::query()
                 ->whereKey($quarantineId)
                 ->lockForUpdate()
                 ->firstOrFail();
+            if ((string) $quarantine->stock_id !== (string) $stock->getKey()) {
+                throw new InventoryReservationConflict('The quarantine stock reference changed unexpectedly.');
+            }
             $requestHash = $this->hash([$quarantineId, $quantity, trim($reason)]);
             $existing = $this->existing('inventory_quarantine', $quarantineId, 'authorize_sale', $idempotencyKey, $requestHash);
             if ($existing !== null) {
@@ -299,10 +312,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
                 throw new InventoryReservationConflict('Only inspected non-compliant quarantine batches can receive a conditional sale authorization.');
             }
 
-            $stock = InventoryStock::query()
-                ->whereKey($quarantine->stock_id)
-                ->lockForUpdate()
-                ->firstOrFail();
             if ($stock->active_count_session_id !== null) {
                 throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
             }
@@ -397,11 +406,26 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
         $this->authorize($actor, (string) $authorization->stock->cooperative_id, 'inventory.quarantine.revoke_sale');
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
-        DB::transaction(function () use ($authorizationId, $reason, $actor, $idempotencyKey): void {
+        $stockId = (string) $authorization->stock_id;
+        $quarantineId = (string) $authorization->quarantine_id;
+
+        DB::transaction(function () use ($authorizationId, $stockId, $quarantineId, $reason, $actor, $idempotencyKey): void {
+            $stock = InventoryStock::query()
+                ->whereKey($stockId)
+                ->lockForUpdate()
+                ->firstOrFail();
+            $quarantine = InventoryQuarantine::query()
+                ->whereKey($quarantineId)
+                ->lockForUpdate()
+                ->firstOrFail();
             $authorization = InventoryQuarantineAuthorization::query()
                 ->whereKey($authorizationId)
                 ->lockForUpdate()
                 ->firstOrFail();
+            if ((string) $authorization->stock_id !== (string) $stock->getKey()
+                || (string) $authorization->quarantine_id !== (string) $quarantine->getKey()) {
+                throw new InventoryReservationConflict('The quarantine authorization references changed unexpectedly.');
+            }
             $requestHash = $this->hash([$authorizationId, trim($reason)]);
             if ($this->existing('inventory_quarantine_authorization', $authorizationId, 'revoke_sale', $idempotencyKey, $requestHash) !== null) {
                 return;
@@ -410,15 +434,6 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
             if ($authorization->status !== 'active') {
                 throw new InventoryReservationConflict('Only an active quarantine sale authorization can be revoked.');
             }
-
-            $stock = InventoryStock::query()
-                ->whereKey($authorization->stock_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-            $quarantine = InventoryQuarantine::query()
-                ->whereKey($authorization->quarantine_id)
-                ->lockForUpdate()
-                ->firstOrFail();
 
             if ($stock->active_count_session_id !== null) {
                 throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
