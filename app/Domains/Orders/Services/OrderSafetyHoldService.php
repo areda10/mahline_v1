@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Services;
 
 use App\Core\Foundation\Services\BaseService;
+use App\Domains\Audit\Contracts\AuditWriter;
+use App\Shared\DTOs\AuditEntryDTO;
 use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
 use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
 use App\Domains\Orders\Models\CooperativeOrder;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 final class OrderSafetyHoldService extends BaseService implements OrderSafetyHoldManager
 {
+    public function __construct(private readonly AuditWriter $audit) {}
     public function raiseHold(
         string $cooperativeOrderId,
         string $sourceType,
@@ -50,6 +53,8 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
                 ],
             );
 
+            $wasRecentlyCreated = $hold->wasRecentlyCreated;
+            $previousStatus = $hold->status;
             if ($hold->status !== 'active') {
                 $hold->status = 'active';
                 $hold->reason = trim($reason);
@@ -63,6 +68,18 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
                 $hold->resolved_at = null;
                 $hold->save();
             }
+
+            $this->audit->record(new AuditEntryDTO(
+                eventKey: $wasRecentlyCreated ? 'orders.safety_hold.raised' : ($previousStatus === 'active' ? 'orders.safety_hold.duplicate' : 'orders.safety_hold.reopened'),
+                action: $wasRecentlyCreated ? 'create' : 'update',
+                actorType: $actorType ?? 'system',
+                actorId: $actorId,
+                cooperativeId: (string) $cooperativeOrder->cooperative_id,
+                subjectType: 'order_safety_hold',
+                subjectId: (string) $hold->getKey(),
+                oldValues: $wasRecentlyCreated ? [] : ['status' => $previousStatus],
+                newValues: ['status' => $hold->status, 'source_type' => $sourceType, 'source_id' => $sourceId, 'reason' => trim($reason)],
+            ));
 
             return (string) $hold->getKey();
         }, 3);
