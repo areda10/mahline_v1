@@ -9,6 +9,7 @@ use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Inventory\Contracts\InventoryCountManager;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
+use App\Domains\Inventory\Services\Alerts\InventoryAlertEvaluator;
 use App\Domains\Inventory\Models\InventoryCountItem;
 use App\Domains\Inventory\Models\InventoryCountItemEvent;
 use App\Domains\Inventory\Models\InventoryCountParticipant;
@@ -33,6 +34,7 @@ final class InventoryCountService extends BaseService implements InventoryCountM
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
+        private readonly InventoryAlertEvaluator $alerts,
     ) {}
 
     public function createSession(
@@ -271,6 +273,7 @@ final class InventoryCountService extends BaseService implements InventoryCountM
                 $stock->active_count_session_id = null;
                 $stock->updated_by = $actor->id;
                 $stock->save();
+                $this->alerts->evaluate($stock);
 
                 if ($difference !== 0) {
                     InventoryMovement::query()->create([
