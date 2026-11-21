@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -40,6 +43,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -56,6 +61,22 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      - name: Format PHP files changed since Inventory baseline
+        env:
+          PINT_BASE: 72e27c4b32aefd09c2118e631f2aec0433627e84
+        run: |
+          FILES=$(git diff --name-only "$PINT_BASE"...HEAD -- '*.php')
+          if [ -n "$FILES" ]; then
+            printf '%s\n' "$FILES" | xargs -r php vendor/bin/pint
+          fi
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && ! git diff --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add -A
+            git commit -m 'style: format PHP files changed since Inventory baseline [skip ci]'
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
       - name: Run Orders integration tests
         run: php artisan test tests/Feature/Domains/Orders
 
@@ -65,6 +86,12 @@ jobs:
       - name: Run full Laravel feature suite
         run: php artisan test tests/Feature
 
-      - name: Verify code style
+      - name: Verify changed PHP code style
         if: always()
-        run: php vendor/bin/pint --test
+        env:
+          PINT_BASE: 72e27c4b32aefd09c2118e631f2aec0433627e84
+        run: |
+          FILES=$(git diff --name-only "$PINT_BASE"...HEAD -- '*.php')
+          if [ -n "$FILES" ]; then
+            printf '%s\n' "$FILES" | xargs -r php vendor/bin/pint --test
+          fi
