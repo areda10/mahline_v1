@@ -121,7 +121,27 @@ final class OrderCreationService
             ]);
         }
 
-        return DB::transaction(function () use ($customer, $address, $items, $idempotencyKey, $acceptedInventoryFingerprint): Order {
+        $checkoutRequestHash = hash('sha256', json_encode([
+            'customer_id' => (string) $customer->getKey(),
+            'address' => $address,
+            'items' => $items,
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        return DB::transaction(function () use ($customer, $address, $items, $idempotencyKey, $acceptedInventoryFingerprint, $checkoutRequestHash): Order {
+            $existingOrder = Order::query()
+                ->where('checkout_idempotency_key', $idempotencyKey)
+                ->lockForUpdate()
+                ->first();
+            if ($existingOrder !== null) {
+                if (! hash_equals((string) $existingOrder->checkout_request_hash, $checkoutRequestHash)) {
+                    throw ValidationException::withMessages([
+                        'checkout.idempotency_key' => ['Cette clé a déjà été utilisée pour un autre checkout.'],
+                    ]);
+                }
+
+                return $existingOrder->load(['cooperativeOrders.items']);
+            }
+
             $prepared = [];
             $cooperativeTotals = [];
 
@@ -268,36 +288,6 @@ final class OrderCreationService
                 $cooperativeTotals[$line['cooperative_id']] = ($cooperativeTotals[$line['cooperative_id']] ?? 0) + $line['line_cents'];
             }
 
-            $checkoutRequestHash = hash('sha256', json_encode([
-                'customer_id' => (string) $customer->getKey(),
-                'address' => $address,
-                'lines' => array_map(static fn (array $line): array => [
-                    'line_key' => $line['line_key'],
-                    'cooperative_id' => $line['cooperative_id'],
-                    'product_id' => $line['product_id'],
-                    'product_variant_id' => $line['product_variant_id'],
-                    'quantity' => $line['quantity'],
-                    'unit' => $line['unit'],
-                    'unit_price' => $line['unit_price'],
-                ], $prepared),
-                'preview_fingerprint' => $preview->fingerprint,
-                'excluded_cooperative_ids' => $unavailableCooperativeIds,
-            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
-
-            $existingOrder = Order::query()
-                ->where('checkout_idempotency_key', $idempotencyKey)
-                ->lockForUpdate()
-                ->first();
-            if ($existingOrder !== null) {
-                if (! hash_equals((string) $existingOrder->checkout_request_hash, $checkoutRequestHash)) {
-                    throw ValidationException::withMessages([
-                        'checkout.idempotency_key' => ['Cette clé a déjà été utilisée pour un autre checkout.'],
-                    ]);
-                }
-
-                return $existingOrder->load(['cooperativeOrders.items']);
-            }
-
             $itemsTotalCents = array_sum($cooperativeTotals);
             $order = Order::query()->create([
                 'customer_id' => (string) $customer->getKey(),
@@ -331,6 +321,7 @@ final class OrderCreationService
                     'cooperative_id' => $cooperativeId,
                     'reference' => 'CO-'.Str::ulid(),
                     'status' => CooperativeOrderStatus::AWAITING_COOPERATIVE,
+                    'response_deadline_at' => now()->addHours(24),
                     'items_subtotal' => $this->formatMoney($subtotalCents),
                     'delivery_fee' => '0.00',
                     'grand_total' => $this->formatMoney($subtotalCents),
