@@ -6,6 +6,7 @@ namespace App\Domains\Inventory\Http\Controllers;
 
 use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
+use App\Domains\Inventory\Contracts\InventorySecurityReportManager;
 use App\Domains\Inventory\Services\Stock\InventoryStockQueryService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,6 +18,7 @@ final class InventoryWorkspaceController
         InventoryStockQueryService $stocks,
         InventoryCountQueryService $counts,
         InventoryQuarantineQueryService $quarantines,
+        InventorySecurityReportManager $securityReports,
     ): View {
         $actorId = (string) $request->user()->getKey();
         $stockRows = $stocks->index($actorId);
@@ -40,6 +42,7 @@ final class InventoryWorkspaceController
                 ->values()
                 ->all()
             : [];
+        $visibleSecurityReports = $securityReports->visibleReports($actorId);
 
         return view('backoffice.inventory.index', [
             'stocks' => $stockRows,
@@ -57,6 +60,9 @@ final class InventoryWorkspaceController
                 && $user->hasPermission('inventory.stock.initialize'),
             'canManageQuarantine' => $canManageQuarantine,
             'quarantines' => $quarantineRows,
+            'securityReports' => $visibleSecurityReports,
+            'canCreateSecurityReport' => $user->hasPermission('inventory.security_reports.create'),
+            'canManageSecurityReports' => $user->hasPermission('inventory.security_reports.manage'),
             'defaultCooperativeId' => (string) ($user->cooperative_id ?? ''),
         ]);
     }
