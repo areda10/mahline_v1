@@ -141,13 +141,14 @@ final class InventoryCountService extends BaseService implements InventoryCountM
         $actor = $this->actors->forUserId($actorId);
         $this->authorizeCounter($actor, (string) $initialItem->session->cooperative_id);
 
-        DB::transaction(function () use ($countItemId, $countedQuantity, $reason, $actor): void {
-            $item = InventoryCountItem::query()
-                ->whereKey($countItemId)
+        DB::transaction(function () use ($countItemId, $countedQuantity, $reason, $actor, $initialItem): void {
+            $session = InventoryCountSession::query()
+                ->whereKey($initialItem->session_id)
                 ->lockForUpdate()
                 ->firstOrFail();
-            $session = InventoryCountSession::query()
-                ->whereKey($item->session_id)
+            $item = InventoryCountItem::query()
+                ->whereKey($countItemId)
+                ->where('session_id', $session->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
             $stock = InventoryStock::query()
@@ -271,27 +272,29 @@ final class InventoryCountService extends BaseService implements InventoryCountM
                 $stock->updated_by = $actor->id;
                 $stock->save();
 
-                InventoryMovement::query()->create([
-                    'stock_id' => (string) $stock->getKey(),
-                    'cooperative_id' => (string) $stock->cooperative_id,
-                    'movement_type' => InventoryMovementType::INVENTORY_COUNT_ADJUSTMENT->value,
-                    'quantity_delta' => $this->formatSigned($difference),
-                    'reserved_delta' => '0.000',
-                    'reserved_normal_delta' => '0.000',
-                    'reserved_quarantine_delta' => '0.000',
-                    'quarantined_delta' => '0.000',
-                    'quarantine_authorized_delta' => '0.000',
-                    'balance_before' => $before,
-                    'balance_after' => $this->balance($stock),
-                    'unit_code' => $stock->unit_code,
-                    'reason' => $item->difference_reason,
-                    'actor_id' => $actor->id,
-                    'actor_type' => $actor->actorType,
-                    'reference_type' => 'inventory_count_session',
-                    'reference_id' => $sessionId,
-                    'idempotency_key' => hash('sha256', $sessionId.'|'.$item->getKey().'|validate'),
-                    'occurred_at' => now(),
-                ]);
+                if ($difference !== 0) {
+                    InventoryMovement::query()->create([
+                        'stock_id' => (string) $stock->getKey(),
+                        'cooperative_id' => (string) $stock->cooperative_id,
+                        'movement_type' => InventoryMovementType::INVENTORY_COUNT_ADJUSTMENT->value,
+                        'quantity_delta' => $this->formatSigned($difference),
+                        'reserved_delta' => '0.000',
+                        'reserved_normal_delta' => '0.000',
+                        'reserved_quarantine_delta' => '0.000',
+                        'quarantined_delta' => '0.000',
+                        'quarantine_authorized_delta' => '0.000',
+                        'balance_before' => $before,
+                        'balance_after' => $this->balance($stock),
+                        'unit_code' => $stock->unit_code,
+                        'reason' => $item->difference_reason,
+                        'actor_id' => $actor->id,
+                        'actor_type' => $actor->actorType,
+                        'reference_type' => 'inventory_count_session',
+                        'reference_id' => $sessionId,
+                        'idempotency_key' => hash('sha256', $sessionId.'|'.$item->getKey().'|validate'),
+                        'occurred_at' => now(),
+                    ]);
+                }
 
                 $item->status = 'validated';
                 $item->validated_by = $actor->id;
@@ -506,11 +509,6 @@ final class InventoryCountService extends BaseService implements InventoryCountM
             'result' => $result,
             'completed_at' => now(),
         ]);
-    }
-
-    private function movementBalance(InventoryStock $stock): array
-    {
-        return $this->balance($stock);
     }
 
     private function balance(InventoryStock $stock): array
