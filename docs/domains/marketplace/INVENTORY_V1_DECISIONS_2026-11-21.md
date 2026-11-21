@@ -23,18 +23,18 @@
 
 ## 2. Checkout, réservation et cycle Orders
 
-1. La réservation commence à la finalisation du checkout, et non à la confirmation coopérative.
-2. Durée d'une réservation : 24 heures.
-3. Sans réponse coopérative à l'expiration, la réservation est libérée et la sous-commande est définitivement clôturée. Elle ne peut pas être rouverte ; le client doit créer une nouvelle commande.
-4. Pour une commande multi-coopératives, chaque sous-commande possède sa réservation et son expiration indépendantes.
-5. Si une coopérative ne dispose pas du stock suffisant, sa sous-commande entière est exclue ; les sous-commandes des autres coopératives disposant du stock peuvent être créées/réservées. Aucune réservation partielle ne subsiste pour la coopérative exclue.
-6. Le client doit être informé des coopératives/lignes exclues avant de finaliser le checkout.
-7. En concurrence, la première transaction qui verrouille le solde et réserve suffisamment gagne ; les suivantes échouent si le disponible est insuffisant. Aucun stock négatif ni double réservation.
-8. Chaque opération est idempotente, avec une clé unique par sous-commande et opération. Un retry renvoie le résultat initial sans dupliquer mouvement, réservation ou décrément.
-9. Après checkout, la commande et ses lignes sont figées. Une modification exige l'annulation autorisée de la sous-commande puis une nouvelle commande.
-10. Un refus ou une annulation avant confirmation coopérative libère immédiatement la réservation et crée le mouvement de libération.
+1. Le checkout ne crée aucune réservation et ne modifie aucun solde Inventory.
+2. L'aperçu de disponibilité au checkout est informatif ; il ne garantit pas que le stock sera encore disponible à la confirmation.
+3. Aucune réservation n'est créée pendant l'attente de réponse de la coopérative (12 heures par défaut, plafond de 24 heures).
+4. La réservation est créée uniquement lorsque la coopérative confirme sa sous-commande.
+5. À la confirmation, Inventory relit et verrouille tous les soldes concernés, vérifie la quantité complète de chaque ligne active, puis réserve toutes les lignes de la sous-commande dans une transaction atomique.
+6. Si une seule ligne est insuffisante ou verrouillée par un inventaire physique, la confirmation entière échoue : la sous-commande reste en attente et aucune réservation partielle ne subsiste.
+7. Pour une commande multi-coopératives, chaque sous-commande est confirmée et réservée indépendamment ; la disponibilité d'une coopérative n'empêche pas la décision d'une autre.
+8. Une réservation créée après confirmation reste active sans expiration automatique jusqu'à sa consommation lors de l'exécution/expédition ou sa libération explicite.
+9. Le décrément physique du stock intervient à la consommation de la réservation, pas au checkout ni à la confirmation seule.
+10. Un refus avant confirmation ne crée aucune réservation. Une annulation de sécurité autorisée avant expédition libère la réservation active.
 11. Une fois la sous-commande confirmée par la coopérative, l'annulation commerciale ordinaire est interdite.
-12. Le décrément physique du stock intervient à la confirmation de la sous-commande par la coopérative, en consommant la réservation existante.
+12. Chaque opération de réservation, consommation ou libération est idempotente, avec une clé unique par sous-commande et opération. Un retry ne duplique ni mouvement ni mutation de stock.
 13. Les règles d'indicateurs validées restent : multi-coopératives = un indicateur par sous-commande ; mono-coopérative = un indicateur global et un par ligne. Vert signifie que le disponible couvre la quantité complète ; rouge sinon.
 
 ## 3. Disponibilité et visibilité

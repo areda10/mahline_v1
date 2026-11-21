@@ -21,7 +21,7 @@ Aucun autre domaine n'écrit directement dans les tables Inventory. Les intégra
 ## Intégrations V1
 
 - **Products :** identité produit/variante et unité canonique via contrat public.
-- **Orders :** pré-évaluation de disponibilité au checkout, réservation atomique à la finalisation, expiration après 24 heures, consommation de la réservation lors de la confirmation coopérative, libération lors d'un refus/annulation autorisé.
+- **Orders :** pré-évaluation de disponibilité au checkout sans mutation ; réservation atomique uniquement à la confirmation coopérative ; réservation confirmée conservée sans expiration automatique jusqu'à consommation lors de l'exécution ou libération autorisée.
 - **Catalog / Sales :** consultation de l'état de disponibilité sans exposer les quantités internes.
 - **Identity / Cooperatives :** contexte d'acteur, rôles, permissions et périmètre coopératif via contrats publics.
 - **Delivery :** contrat public futur pour inspection des retours ; Inventory reste seul décideur des mouvements de stock.
@@ -35,8 +35,10 @@ Aucun autre domaine n'écrit directement dans les tables Inventory. Les intégra
 - Quantités `DECIMAL(15,3)`, unités `kg`, `g`, `l`, `ml`, `u`, aucune conversion automatique.
 - Aucun stock négatif ; transactions et verrous de ligne obligatoires.
 - Mouvements append-only ; correction par mouvement compensatoire.
-- Réservation au checkout, 24 heures, expiration indépendante par sous-commande.
-- Décrément physique à la confirmation de la sous-commande par la coopérative.
+- Aucune réservation au checkout ni pendant l'attente de réponse coopérative.
+- Réservation intégrale à la confirmation de la sous-commande, après revalidation et verrouillage des soldes ; aucune réservation partielle.
+- Une réservation confirmée reste active sans expiration automatique jusqu'à consommation lors de l'exécution ou libération explicite.
+- Le décrément physique intervient lors de la consommation de la réservation, pas au checkout ni à la simple confirmation.
 - Quarantaine, autorisation de vente conditionnelle et inventaires physiques avec blocage sélectif.
 - Rapports PDF uniquement en V1.
 
@@ -45,7 +47,7 @@ Aucun autre domaine n'écrit directement dans les tables Inventory. Les intégra
 Le domaine comporte maintenant les modèles et migrations de stock, mouvements, réservations, quarantaines, inventaires physiques, seuils/alertes et signalements de sécurité. Les services correspondants sont enregistrés dans `InventoryServiceProvider`.
 
 Les intégrations présentes comprennent :
-- checkout / Orders : preview, réservation, consommation, libération et expiration ;
+- checkout / Orders : preview sans réservation ; réservation persistante à la confirmation coopérative, consommation lors de l'exécution, libération sur annulation de sécurité ; expiration des seules réservations temporaires ;
 - Identity : contexte d'acteur, permissions et notifications in-app ;
 - Media : preuves privées des signalements ;
 - Orders : blocages de sécurité et résolution humaine ;

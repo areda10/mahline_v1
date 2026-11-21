@@ -15,7 +15,7 @@
 | Solde par coopérative + produit/variante | Modèle, migration, unités et quantités à trois décimales | Tests d'invariants et de concurrence sur MySQL |
 | Mouvements | Grand livre avant/après, acteurs, motifs, références, modèle protégé contre UPDATE/DELETE | Tests d'immutabilité et de cohérence |
 | Entrées et ajustements | Initialisation, réception, ajustement motivé, verrou de ligne | Tests rôles, unités, idempotence et refus de stock négatif |
-| Checkout / Orders | Preview par coopérative, fingerprint d'acceptation, réservation à la finalisation, consommation à confirmation, libération et expiration | Tests end-to-end Orders + Inventory, concurrence, rollback multi-coop |
+| Checkout / Orders | Preview sans réservation ; réservation atomique et persistante à la confirmation coopérative ; consommation lors de l'exécution ; libération en cas d'annulation de sécurité | Tests end-to-end Orders + Inventory, concurrence, rollback multi-coop, non-expiration après confirmation |
 | Quarantaine | Réception de retour, inspection, autorisation quantitative, révocation et allocation par autorisation | Tests complets des états, allocations et opérations concurrentes |
 | Inventaire physique | Sessions, participants, comptages, corrections historisées, validation partielle et annulation logique | Tests de sessions simultanées, verrous, reprise et immutabilité |
 | Seuils et alertes | Seuil par stock, historique, épisodes distincts low/out, réarmement et réconciliation périodique | Tests de concurrence et de notification |
@@ -24,7 +24,7 @@
 | Preuves privées | Upload via contrat Media pendant la soumission ; type/antivirus/limites par Media ; consultation root-only | Tests de rollback fichier/DB et audit des consultations |
 | Blocage Orders | Contrat de safety hold, contrôle de périmètre coopératif, résolution humaine resume/cancel ; `assertCanShip` exige désormais une transaction appelante et conserve les verrous jusqu'à sa fin | Brancher le contrôle au flux d'expédition Delivery et tester la course blocage/expédition sur MySQL |
 | Rapports PDF | Rapport complet managers et simplifié user, stocks/mouvements/alertes/comptages/quarantaines | Tests PDF, confidentialité et gros volumes |
-| Outbox / commandes planifiées | Expiration réservations, publication outbox, réconciliation alertes, escalade signalements | Vérifier ordonnanceur en environnement déployé |
+| Outbox / commandes planifiées | Expiration des seules réservations temporaires, publication outbox, réconciliation alertes, escalade signalements | Vérifier ordonnanceur en environnement déployé |
 
 ## Interfaces HTTP présentes
 

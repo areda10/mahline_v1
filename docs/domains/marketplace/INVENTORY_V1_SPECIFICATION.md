@@ -10,7 +10,7 @@
 - **Conception technique :** [INVENTORY_V1_TECHNICAL_DESIGN.md](INVENTORY_V1_TECHNICAL_DESIGN.md).
 - **Suivi réel :** [INVENTORY_V1_IMPLEMENTATION_TRACKER.md](INVENTORY_V1_IMPLEMENTATION_TRACKER.md).
 
-> **AVERTISSEMENT — HISTORIQUE :** plusieurs règles de ce cadrage initial ont été remplacées par les décisions validées du 21 novembre 2026. En particulier, le checkout réserve désormais le stock à la finalisation et non à la confirmation coopérative. Ne pas utiliser ce document seul pour coder.
+> **AVERTISSEMENT — HISTORIQUE :** plusieurs règles de ce cadrage initial ont été remplacées par les décisions consolidées du 21 novembre 2026. Règle actuelle : le checkout ne réserve aucun stock ; la réservation commence uniquement à la confirmation de la sous-commande par la coopérative et reste active jusqu'à consommation ou libération explicite. Ne pas utiliser ce document seul pour coder.
 
 > Ce document est le registre opérationnel du domaine Inventory. Il distingue les règles métier validées, les contrats inter-domaines, les fonctions à implémenter, les contrôles d'audit et les éléments restant à décider. Une fonction ne sera déclarée réalisée qu'après vérification du code et exécution des tests requis.
 
