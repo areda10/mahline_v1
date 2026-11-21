@@ -84,10 +84,10 @@ final class ProductVariantService
             $variantReference = ProductVariant::query()
                 ->whereKey($variant->getKey())
                 ->firstOrFail();
-            $product = Product::query()
+            $product = Product::withTrashed()
                 ->whereKey($variantReference->product_id)
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
             $variant = ProductVariant::query()
                 ->whereKey($variantReference->getKey())
                 ->lockForUpdate()
