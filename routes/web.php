@@ -730,6 +730,9 @@ Route::middleware([
         ->whereUlid('stockId')
         ->name('stocks.threshold.update');
 
+    Route::get('/count-sessions/{sessionId}', [InventoryCountController::class, 'show'])
+        ->whereUlid('sessionId')
+        ->name('count-sessions.show');
     Route::post('/cooperatives/{cooperativeId}/count-sessions', [InventoryCountController::class, 'create'])
         ->whereUlid('cooperativeId')
         ->name('count-sessions.create');
