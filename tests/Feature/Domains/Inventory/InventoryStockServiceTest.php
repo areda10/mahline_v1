@@ -12,6 +12,7 @@ use App\Domains\Inventory\Contracts\InventoryStockManager;
 use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Models\InventoryMovement;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Inventory\Services\Stock\InventoryStockQueryService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
@@ -149,6 +150,30 @@ final class InventoryStockServiceTest extends TestCase
         $this->assertSame('variant', $stock->stockable_type);
         $this->assertSame((string) $variant->getKey(), (string) $stock->stockable_id);
         $this->assertSame('2.000', $stock->quantity_on_hand);
+    }
+
+    public function test_stock_status_is_rupture_while_item_is_locked_for_physical_count(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $user = $this->userWithRole('user', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $stock = InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => InventoryStockableType::PRODUCT->value,
+            'stockable_id' => (string) \Illuminate\Support\Str::ulid(),
+            'unit_code' => 'kg',
+            'quantity_on_hand' => '5.000',
+            'active_count_session_id' => (string) \Illuminate\Support\Str::ulid(),
+        ]);
+
+        $status = app(InventoryStockQueryService::class)->show(
+            (string) $stock->getKey(),
+            (string) $user->getKey(),
+        );
+
+        $this->assertSame('Rupture de stock', $status['status']);
+        $this->assertArrayNotHasKey('quantity_on_hand', $status);
     }
 
     private function userWithRole(string $roleSlug, array $attributes = []): User
