@@ -55,6 +55,10 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
 
             $wasRecentlyCreated = $hold->wasRecentlyCreated;
             $previousStatus = $hold->status;
+            if (! $wasRecentlyCreated && $previousStatus === 'active') {
+                return (string) $hold->getKey();
+            }
+
             if ($hold->status !== 'active') {
                 $hold->status = 'active';
                 $hold->reason = trim($reason);
@@ -70,7 +74,7 @@ final class OrderSafetyHoldService extends BaseService implements OrderSafetyHol
             }
 
             $this->audit->record(new AuditEntryDTO(
-                eventKey: $wasRecentlyCreated ? 'orders.safety_hold.raised' : ($previousStatus === 'active' ? 'orders.safety_hold.duplicate' : 'orders.safety_hold.reopened'),
+                eventKey: $wasRecentlyCreated ? 'orders.safety_hold.raised' : 'orders.safety_hold.reopened',
                 action: $wasRecentlyCreated ? 'create' : 'update',
                 actorType: $actorType ?? 'system',
                 actorId: $actorId,
