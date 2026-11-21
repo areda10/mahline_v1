@@ -26,6 +26,9 @@ final class InventoryReservationAllocation extends BaseModel
 
     protected static function booted(): void
     {
+        static::updating(static function (): never {
+            throw new LogicException('Inventory reservation ledger records are immutable.');
+        });
         static::deleting(static function (): never {
             throw new LogicException('Inventory historical records cannot be deleted.');
         });
