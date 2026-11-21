@@ -10,7 +10,9 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
+use App\Domains\Products\DTOs\InventoryStockableData;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Repositories\ProductRepository;
@@ -591,4 +593,55 @@ final class ProductService implements CheckoutCatalog
             newValues: $newValues,
         ));
     }
+    public function resolveForInventory(string $stockableType, string $stockableId): ?InventoryStockableData
+    {
+        if ($stockableType === 'product') {
+            $product = Product::withTrashed()->with('unit')->whereKey($stockableId)->first();
+            if ($product === null || $product->unit === null) {
+                return null;
+            }
+
+            $hasAnyVariant = ProductVariant::withTrashed()
+                ->where('product_id', $stockableId)
+                ->exists();
+
+            if ($hasAnyVariant) {
+                return null;
+            }
+
+            return new InventoryStockableData(
+                cooperativeId: (string) $product->cooperative_id,
+                stockableType: 'product',
+                stockableId: (string) $product->getKey(),
+                unitCode: (string) $product->unit->code,
+            );
+        }
+
+        if ($stockableType === 'variant') {
+            $variant = ProductVariant::withTrashed()
+                ->with(['product.unit', 'unit'])
+                ->whereKey($stockableId)
+                ->first();
+
+            if ($variant === null || $variant->product === null) {
+                return null;
+            }
+
+            $unitCode = $variant->unit?->code ?? $variant->product->unit?->code;
+            if ($unitCode === null) {
+                return null;
+            }
+
+            return new InventoryStockableData(
+                cooperativeId: (string) $variant->product->cooperative_id,
+                stockableType: 'variant',
+                stockableId: (string) $variant->getKey(),
+                unitCode: (string) $unitCode,
+            );
+        }
+
+        return null;
+    }
+
+
 }
