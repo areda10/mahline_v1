@@ -13,6 +13,7 @@ interface OrderSafetyHoldManager
         string $reason,
         ?string $actorId = null,
         ?string $actorType = 'system',
+        ?string $expectedCooperativeId = null,
     ): string;
 
     public function assertCanShip(string $cooperativeOrderId): void;
