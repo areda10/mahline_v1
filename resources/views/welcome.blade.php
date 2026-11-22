@@ -21,7 +21,7 @@
     </div>
 </section>
 <section class="shop-card" style="padding:25px;margin-bottom:24px">
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+    <div class="home-steps" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
         <div><span class="shop-eyebrow">01 — Découvrir</span><h2 style="font-size:17px;margin:7px 0">Parcourez la boutique</h2><p class="shop-muted" style="font-size:12px;margin:0">Recherchez par produit, catégorie ou coopérative.</p></div>
         <div><span class="shop-eyebrow">02 — Sélectionner</span><h2 style="font-size:17px;margin:7px 0">Choisissez vos variantes</h2><p class="shop-muted" style="font-size:12px;margin:0">Consultez les prix, unités et options disponibles.</p></div>
         <div><span class="shop-eyebrow">03 — Préparer</span><h2 style="font-size:17px;margin:7px 0">Composez votre panier</h2><p class="shop-muted" style="font-size:12px;margin:0">Ajoutez vos articles avant de vous connecter pour commander.</p></div>
