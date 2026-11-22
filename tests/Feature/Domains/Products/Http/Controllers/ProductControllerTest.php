@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domains\Products\Http\Controllers;
+namespace Tests\\Feature\\Domains\\Products\\Http\\Controllers;
 
-use App\Domains\Categories\Models\Category;
-use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductUnit;
-use Database\Seeders\ProductUnitSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
-use Tests\TestCase;
+use App\\Domains\\Categories\\Models\\Category;
+use App\\Domains\\Cooperatives\\Models\\Cooperative;
+use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
+use App\\Domains\\Products\\Models\\Product;
+use App\\Domains\\Products\\Models\\ProductUnit;
+use Database\\Seeders\\ProductUnitSeeder;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\Support\\Concerns\\CreatesAuthorizedCooperativeAdmin;
+use Tests\\TestCase;
 
 final class ProductControllerTest extends TestCase
 {
@@ -28,6 +28,9 @@ final class ProductControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Simulate the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
 
         $this->seed(ProductUnitSeeder::class);
         $this->unitId = (string) ProductUnit::query()->where('code', 'kg')->value('id');
