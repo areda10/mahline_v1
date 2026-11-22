@@ -133,6 +133,53 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         }
     }
 
+    public function test_separate_orders_cannot_over_reserve_the_same_stock_at_confirmation(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+
+        $firstOrder = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-reservation-race-first-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '7.000']],
+        ]);
+        $secondOrder = app(OrderCreationService::class)->createFromCheckout($customer, [
+            'idempotency_key' => 'test-reservation-race-second-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '7.000']],
+        ]);
+
+        // Checkout is intentionally non-reserving; the first cooperative confirmation
+        // acquires the stock row lock and reserves its quantity.
+        $this->assertDatabaseCount('inventory_reservations', 0);
+        $firstSuborder = $firstOrder->cooperativeOrders->firstOrFail();
+        $secondSuborder = $secondOrder->cooperativeOrders->firstOrFail();
+
+        app(CooperativeOrderResponseService::class)->confirmByCooperative($firstSuborder, $admin);
+
+        try {
+            app(CooperativeOrderResponseService::class)->confirmByCooperative($secondSuborder, $admin);
+            $this->fail('The second confirmation must not reserve stock already reserved by the first.');
+        } catch (ValidationException) {
+            $this->assertSame(CooperativeOrderStatus::CONFIRMED, $firstSuborder->fresh()->status);
+            $this->assertSame(CooperativeOrderStatus::AWAITING_COOPERATIVE, $secondSuborder->fresh()->status);
+            $this->assertDatabaseCount('inventory_reservations', 1);
+            $this->assertSame('7.000', InventoryStock::query()
+                ->where('cooperative_id', $cooperative->getKey())
+                ->where('stockable_id', $product->getKey())
+                ->value('quantity_reserved'));
+        }
+    }
+
     public function test_multi_cooperative_order_becomes_confirmed_only_after_every_suborder_is_confirmed(): void
     {
         $customer = $this->userWithRole('customer');
