@@ -334,6 +334,45 @@ final class SalesCheckoutServiceTest extends TestCase
         }
     }
 
+    public function test_http_confirmation_failure_rolls_back_order_receipt_and_cart_consumption(): void
+    {
+        $customer = $this->checkoutCustomer();
+        $address = Address::factory()->forUser($customer)->create();
+        [, $product] = $this->productWithStock('5.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
+        $this->mock(OrderCheckoutCreator::class, function ($mock): void {
+            $mock->shouldReceive('create')
+                ->once()
+                ->andThrow(new \RuntimeException('HTTP checkout persistence failure.'));
+        });
+
+        try {
+            $this->withoutExceptionHandling()
+                ->actingAs($customer)
+                ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+                ->postJson(route('sales.cart.checkout.confirm'), [
+                    'delivery_address_id' => (string) $address->getKey(),
+                    'idempotency_key' => 'http-checkout-transaction-failure-01',
+                ]);
+
+            $this->fail('The simulated persistence error must propagate through the HTTP route.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('HTTP checkout persistence failure.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('sales_checkout_attempts', 0);
+        $this->assertSame(1, $cart->fresh()->activeItems()->count());
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $product->getKey(),
+            'status' => 'active',
+        ]);
+    }
+
     public function test_all_unavailable_cooperatives_leave_the_cart_and_create_no_order(): void
     {
         $customer = User::factory()->create();
