@@ -100,6 +100,8 @@ final class SalesCheckoutService
                 $orderItems[] = [
                     'product_id' => (string) $item->product_id,
                     'product_variant_id' => $item->product_variant_id === null ? null : (string) $item->product_variant_id,
+                    'cooperative_id' => (string) $item->cooperative_id,
+                    'accepted_unit_price' => (string) ($item->accepted_unit_price ?? $item->initial_unit_price),
                     'quantity' => (string) $item->quantity,
                 ];
                 $orderedCartItems[] = $item;
