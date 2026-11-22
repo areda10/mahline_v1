@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domains\Sales\Services;
 
+use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\Enums\InventoryStockableType;
@@ -21,6 +22,7 @@ final class SalesCheckoutService
 {
     public function __construct(
         private readonly CheckoutCatalog $catalog,
+        private readonly CooperativeStatusReader $cooperatives,
         private readonly InventoryCheckoutAvailabilityReader $inventory,
         private readonly CheckoutAddressReader $addresses,
         private readonly OrderCheckoutCreator $orders,
@@ -88,6 +90,12 @@ final class SalesCheckoutService
             $availability = $this->availability($items);
             $excludedIds = $availability['unavailable_cooperative_ids'];
             $eligibleIds = $availability['available_cooperative_ids'];
+
+            if ($availability['inactive_cooperative_ids'] !== []) {
+                throw ValidationException::withMessages([
+                    'cooperatives' => ['Une coopérative de votre panier est inactive ou fermée. Retirez manuellement les lignes concernées avant de poursuivre. Votre panier a été conservé.'],
+                ]);
+            }
 
             if ($eligibleIds === []) {
                 throw ValidationException::withMessages([
@@ -198,9 +206,18 @@ final class SalesCheckoutService
     {
         $linesByCooperative = [];
         $invalidCooperatives = [];
+        $inactiveCooperatives = [];
 
         foreach ($items as $index => $item) {
             $cooperativeId = (string) $item->cooperative_id;
+            $cooperative = $this->cooperatives->findStatus($cooperativeId);
+            if ($cooperative === null || ! $cooperative->isActive || $cooperative->isDeleted) {
+                $invalidCooperatives[$cooperativeId] = true;
+                $inactiveCooperatives[$cooperativeId] = true;
+
+                continue;
+            }
+
             if ($item->unavailable_reason !== null) {
                 $invalidCooperatives[$cooperativeId] = true;
 
@@ -267,6 +284,7 @@ final class SalesCheckoutService
         return [
             'available_cooperative_ids' => $available,
             'unavailable_cooperative_ids' => $unavailable,
+            'inactive_cooperative_ids' => array_keys($inactiveCooperatives),
             'cooperatives' => array_map(
                 static fn (string $id): array => [
                     'cooperative_id' => $id,
