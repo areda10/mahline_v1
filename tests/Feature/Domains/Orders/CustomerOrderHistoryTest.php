@@ -91,7 +91,10 @@ final class CustomerOrderHistoryTest extends TestCase
 
     private function customer(): User
     {
-        $role = Role::query()->where('slug', 'customer')->firstOrFail();
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'customer'],
+            ['name' => 'Customer', 'is_active' => true],
+        );
         $customer = User::factory()->create([
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
