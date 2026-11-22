@@ -378,6 +378,7 @@ final class MediaControllerTest extends TestCase
                 [
                     'HTTP_ACCEPT' => 'application/json',
                     'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+                    'HTTP_SEC_FETCH_SITE' => 'same-origin',
                 ],
             );
 
@@ -416,6 +417,7 @@ final class MediaControllerTest extends TestCase
                 [
                     'HTTP_ACCEPT' => 'application/json',
                     'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+                    'HTTP_SEC_FETCH_SITE' => 'same-origin',
                 ],
             );
 
