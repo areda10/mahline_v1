@@ -6,6 +6,7 @@ namespace Tests\Feature\Domains\Notifications;
 
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Notifications\Http\Controllers\NotificationCenterController;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -51,7 +52,7 @@ final class NotificationCenterTest extends TestCase
 
         Auth::login($owner);
 
-        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        $this->expectException(ModelNotFoundException::class);
 
         app(NotificationCenterController::class)->markRead($notification->getKey());
     }
