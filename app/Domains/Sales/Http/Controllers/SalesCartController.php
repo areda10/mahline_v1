@@ -8,6 +8,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;
+use App\Domains\Sales\Services\SalesCheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
