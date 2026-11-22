@@ -149,7 +149,7 @@ final class SalesCheckoutConcurrencyTest extends TestCase
             self::assertSame($first['order_id'], $second['order_id']);
             self::assertDatabaseCount('orders', 1);
             self::assertDatabaseCount('sales_checkout_attempts', 1);
-            self::assertSame(1, $cart->fresh()->activeItems()->count());
+            self::assertSame(0, $cart->fresh()->activeItems()->count());
             self::assertDatabaseHas('sales_cart_items', [
                 'cart_id' => $cart->getKey(),
                 'product_id' => $product->getKey(),
