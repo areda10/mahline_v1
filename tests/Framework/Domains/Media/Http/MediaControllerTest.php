@@ -104,7 +104,7 @@ final class MediaControllerTest extends TestCase
     {
         Storage::fake('local');
 
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $actor = $this->userWithRole('user', (string) $cooperative->getKey());
         $path = 'media/private/profile-image.jpg';
         Storage::disk('local')->put($path, 'private-profile-image');
