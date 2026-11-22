@@ -30,6 +30,7 @@
     <nav aria-label="Espace client">
         <a href="{{ route('storefront.products.index') }}">Boutique</a>
         <a href="{{ route('sales.cart.page') }}">Mon panier</a>
+        <a href="{{ route('customer.orders.index') }}">Mes commandes</a>
         <a href="{{ route('customer.dashboard') }}">Mon espace</a>
         <a href="{{ route('customer.profile.edit') }}">Mon profil</a>
         <a href="{{ route('customer.security.password.edit') }}">Sécurité</a>
