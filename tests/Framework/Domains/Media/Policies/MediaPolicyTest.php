@@ -21,7 +21,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_policy_rejects_media_category_that_does_not_match_its_owner(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $actor = $this->userWithPermission(
             'cooperative_admin',
             'products.view',
@@ -43,7 +43,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_manage_media_for_its_own_products_only(): void
     {
-        $ownCooperative = Cooperative::factory()->create();
+        $ownCooperative = Cooperative::factory()->active()->create();
         $otherCooperative = Cooperative::factory()->create();
         $actor = $this->userWithPermission('cooperative_admin', 'products.update', (string) $ownCooperative->getKey());
 
@@ -56,7 +56,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_user_role_cannot_upload_product_media(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $actor = $this->userWithPermission('user', 'products.view', (string) $cooperative->getKey());
         $product = Product::factory()->forCooperative($cooperative)->create();
 
@@ -65,7 +65,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_users_can_manage_only_their_own_profile_media(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $actor = $this->userWithPermission('user', 'products.view', (string) $cooperative->getKey());
         $otherUser = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
 
@@ -89,7 +89,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_cooperative_admin_cannot_view_private_documents_outside_its_cooperative(): void
     {
-        $own = Cooperative::factory()->create();
+        $own = Cooperative::factory()->active()->create();
         $other = Cooperative::factory()->create();
         $actor = $this->userWithPermission('cooperative_admin', 'products.view', (string) $own->getKey());
 
@@ -99,7 +99,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_user_can_view_own_private_documents_but_not_another_users_documents(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $actor = $this->userWithPermission('user', 'products.view', (string) $cooperative->getKey());
         $otherUser = User::factory()->create(['cooperative_id' => $cooperative->getKey()]);
 
@@ -160,7 +160,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_only_root_can_view_private_documents_after_owner_soft_delete(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $document = $product->media()->create($this->documentAttributes('products/deleted-owner/proof.pdf'));
         $product->delete();
@@ -193,7 +193,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_pending_archived_or_emergency_locked_users_cannot_view_private_media(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $media = $product->media()->create($this->documentAttributes('products/private/proof.pdf'));
 
@@ -213,7 +213,7 @@ final class MediaPolicyTest extends TestCase
 
     public function test_unverified_or_inactive_users_cannot_view_private_media(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $media = $product->media()->create($this->documentAttributes('products/private/proof.pdf'));
 
