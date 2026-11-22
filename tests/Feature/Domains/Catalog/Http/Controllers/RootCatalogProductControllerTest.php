@@ -21,6 +21,9 @@ final class RootCatalogProductControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Simulate the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
     }
 
