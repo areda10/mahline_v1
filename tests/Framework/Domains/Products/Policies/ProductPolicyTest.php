@@ -57,7 +57,7 @@ final class ProductPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_access_product_of_own_cooperative(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithPermission(
             'products.update',
