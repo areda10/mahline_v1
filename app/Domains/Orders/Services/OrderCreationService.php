@@ -271,6 +271,12 @@ final class OrderCreationService
                 static fn (array $line): bool => ! in_array($line['cooperative_id'], $forcedUnavailableCooperativeIds, true),
             ));
 
+            if ($prepared === []) {
+                throw ValidationException::withMessages([
+                    'inventory_preview' => ['Aucun article ne peut être commandé après vérification des statuts et des prix.'],
+                ]);
+            }
+
             $previewLines = array_map(
                 fn (array $line): InventoryCheckoutLineData => new InventoryCheckoutLineData(
                     lineKey: $line['line_key'],
