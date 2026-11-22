@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Products\\Http\\Controllers;
+namespace Tests\Feature\Domains\Products\Http\Controllers;
 
-use App\\Domains\\Categories\\Models\\Category;
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
-use App\\Domains\\Products\\Models\\Product;
-use App\\Domains\\Products\\Models\\ProductUnit;
-use Database\\Seeders\\ProductUnitSeeder;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\Support\\Concerns\\CreatesAuthorizedCooperativeAdmin;
-use Tests\\TestCase;
+use App\Domains\Categories\Models\Category;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\ProductUnitSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\Concerns\CreatesAuthorizedCooperativeAdmin;
+use Tests\TestCase;
 
 final class ProductControllerTest extends TestCase
 {
