@@ -38,7 +38,7 @@
         .shop-product-body{padding:15px}
         .shop-price{font-size:18px;font-weight:800;color:var(--shop-green)}
         .shop-pill{display:inline-flex;padding:4px 9px;border-radius:999px;background:#edf3ee;color:#426052;font-size:10px;font-weight:700}
-        @media(max-width:900px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media(max-width:900px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}\n        @media(max-width:760px){.shop-product-detail{grid-template-columns:1fr!important}}
         @media(max-width:600px){.shop-nav{padding:13px 16px;align-items:flex-start;flex-direction:column;gap:12px}.shop-links{gap:13px}.shop-main{padding:24px 15px 45px}.shop-grid{grid-template-columns:1fr 1fr;gap:10px}.shop-product-body{padding:11px}.shop-product-image,.shop-placeholder{aspect-ratio:1/1}}
         @media(max-width:380px){.shop-grid{grid-template-columns:1fr}}
     </style>
