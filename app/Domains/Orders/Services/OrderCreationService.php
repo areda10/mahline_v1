@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Orders\Services;
 
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
@@ -162,6 +162,7 @@ final class OrderCreationService
                 if ($productData === null) {
                     if ($requestedCooperativeId !== '') {
                         $forcedUnavailableCooperativeIds[] = $requestedCooperativeId;
+
                         continue;
                     }
 
@@ -180,31 +181,37 @@ final class OrderCreationService
                 $cooperative = $this->cooperatives->findStatus($cooperativeId);
                 if ($cooperative === null || ! $cooperative->isActive || $cooperative->isDeleted) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
                 if ($productData->variantRequested && ! $productData->variantFound) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
                 if (! $productData->variantRequested && $productData->hasVariants) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
                 if ($productData->variantFound && $productData->variantId !== null && $productData->hasParentUnit) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
                 if ($productData->unitCode === null || $productData->unitLabel === null) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
                 if ($productData->currency !== 'MAD') {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
@@ -212,6 +219,7 @@ final class OrderCreationService
                 $unitPrice = $productData->effectivePrice;
                 if ($unitPrice === null) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
                 $unitPriceCents = $this->moneyToCents((string) $unitPrice);
@@ -220,6 +228,7 @@ final class OrderCreationService
                 if ($acceptedPrice !== null && $unitPriceCents > $this->moneyToCents((string) $acceptedPrice)) {
                     // A price increase requires explicit customer acceptance in Sales.
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
                     continue;
                 }
 
