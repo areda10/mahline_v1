@@ -204,8 +204,40 @@ final class SalesCheckoutServiceTest extends TestCase
             'cart_id' => $cart->getKey(),
             'product_id' => $product->getKey(),
             'status' => 'active',
-            'unavailable_reason' => 'price_change_pending',
         ]);
+    }
+
+    public function test_price_decrease_after_preview_is_applied_automatically_at_confirmation(): void
+    {
+        $customer = $this->checkoutCustomer();
+        $address = Address::factory()->forUser($customer)->create();
+        [, $product] = $this->productWithStock('5.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->getJson(route('sales.cart.checkout.preview'))
+            ->assertOk();
+
+        $product->forceFill(['price' => '10.00'])->save();
+
+        $response = $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('sales.cart.checkout.confirm'), [
+                'delivery_address_id' => (string) $address->getKey(),
+                'idempotency_key' => 'http-price-decrease-recheck-0001',
+            ])
+            ->assertOk();
+
+        $orderId = $response->json('data.order_id');
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $orderId,
+            'product_id' => $product->getKey(),
+            'unit_price' => '10.00',
+        ]);
+        $this->assertDatabaseCount('orders', 1);
     }
 
     public function test_product_and_variant_deactivation_between_preview_and_confirmation_blocks_checkout(): void
