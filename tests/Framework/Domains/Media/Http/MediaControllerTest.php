@@ -496,7 +496,6 @@ final class MediaControllerTest extends TestCase
         $this->get(route('media.show', $media))->assertNotFound();
     }
 
-
     public function test_generic_upload_http_route_resolves_product_cooperative_and_own_user_owners(): void
     {
         Storage::fake('local');
@@ -522,7 +521,7 @@ final class MediaControllerTest extends TestCase
                     'document_category' => 'legal',
                     'file' => UploadedFile::fake()->createWithContent(
                         'proof.pdf',
-                        "%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF",
+                        '%PDF-1.4\\n1 0 obj\\n<< /Type /Catalog >>\\nendobj\\n%%EOF',
                     ),
                 ])
                 ->assertCreated()
