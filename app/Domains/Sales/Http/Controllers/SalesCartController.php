@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Sales\Http\Controllers;
 
-use App\Domains\Identity\Users\Models\User;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;

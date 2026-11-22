@@ -45,8 +45,8 @@ use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use App\Domains\Products\Http\Controllers\ProductStorefrontController;
-use App\Domains\Sales\Http\Controllers\SalesCartPageController;
 use App\Domains\Sales\Http\Controllers\SalesCartController;
+use App\Domains\Sales\Http\Controllers\SalesCartPageController;
 use Illuminate\Support\Facades\Route;
 
 /*

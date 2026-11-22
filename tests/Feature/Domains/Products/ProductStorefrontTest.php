@@ -10,7 +10,9 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
+use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class ProductStorefrontTest extends TestCase
@@ -24,7 +26,7 @@ final class ProductStorefrontTest extends TestCase
         parent::setUp();
 
         $this->withHeader('Sec-Fetch-Site', 'same-origin');
-        $this->seed(\Database\Seeders\ProductUnitSeeder::class);
+        $this->seed(ProductUnitSeeder::class);
         $this->unitId = (string) ProductUnit::query()->where('code', 'kg')->value('id');
     }
 
@@ -119,7 +121,7 @@ final class ProductStorefrontTest extends TestCase
 
         $product = Product::factory()->forCooperative($cooperative)->create(array_merge([
             'name' => $name,
-            'slug' => \Illuminate\Support\Str::slug($name).'-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(5)),
+            'slug' => Str::slug($name).'-'.Str::lower(Str::random(5)),
             'unit_id' => $this->unitId,
             'is_active' => true,
         ], $productAttributes));
