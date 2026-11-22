@@ -31,6 +31,9 @@ final class AuthenticationControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Match the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+
         $this->loginUrl = route('authentication.login.store');
         $this->logoutUrl = route('authentication.logout');
     }
