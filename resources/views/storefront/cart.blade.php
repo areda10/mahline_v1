@@ -71,9 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
         itemsElement.innerHTML = items.map(item => {
             const snapshot = item.product || {};
             const unavailable = item.unavailable_reason;
-            const lineTotal = Number(item.unit_price || 0) * Number(item.quantity || 0);
+            const displayedUnitPrice = item.requires_acceptance ? (item.accepted_unit_price ?? item.unit_price) : item.unit_price;
+            const lineTotal = Number(displayedUnitPrice || 0) * Number(item.quantity || 0);
             const name = snapshot.name || snapshot.product_name || 'Produit';
-            const cooperative = snapshot.cooperative_name || 'Coopérative';
+            const cooperative = item.cooperative_name || 'Coopérative';
             const variant = snapshot.variant_label || snapshot.variant || '';
             const reasonLabels = {
                 cooperative_unavailable:'Coopérative indisponible : retirez cette ligne pour commander les autres articles.',
@@ -91,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return '<article class="shop-card" style="padding:16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px">'+
                 '<div><span class="shop-pill">'+escapeHtml(cooperative)+'</span><h3 style="margin:8px 0 3px;font-size:15px">'+escapeHtml(name)+'</h3>'+
                 (variant ? '<div class="shop-muted" style="font-size:11px">'+escapeHtml(variant)+'</div>' : '')+
-                '<div class="shop-muted" style="font-size:11px;margin-top:4px">'+money(item.unit_price)+' / '+escapeHtml(snapshot.unit_label || item.unit_code || 'unité')+'</div>'+
+                '<div class="shop-muted" style="font-size:11px;margin-top:4px">'+money(displayedUnitPrice)+' / '+escapeHtml(snapshot.unit_label || item.unit_code || 'unité')+'</div>'+
                 alert+
                 '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px">'+
                 '<label style="font-size:11px;font-weight:700" for="qty-'+escapeHtml(item.id)+'">Quantité</label>'+
@@ -101,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 '<strong style="white-space:nowrap">'+money(lineTotal)+'</strong></article>';
         }).join('');
 
-        const subtotal = items.reduce((sum,item)=>sum+(Number(item.unit_price || 0)*Number(item.quantity || 0)),0);
+        const subtotal = items.reduce((sum,item)=>sum+(Number((item.requires_acceptance ? (item.accepted_unit_price ?? item.unit_price) : item.unit_price) || 0)*Number(item.quantity || 0)),0);
         document.getElementById('cart-count').textContent = items.length;
         document.getElementById('cart-subtotal').textContent = money(subtotal);
         const hasUnavailable = items.some(item => item.unavailable_reason && !item.requires_acceptance);
