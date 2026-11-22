@@ -132,10 +132,13 @@ final class ProductStorefrontController
             ->limit(4)
             ->get();
 
+        $hasVariants = $productModel->variants()->withTrashed()->exists();
+
         return view('storefront.products.show', [
             'product' => $productModel,
             'relatedProducts' => $relatedProducts,
-            'hasVariants' => $productModel->activeVariants->isNotEmpty(),
+            'hasVariants' => $hasVariants,
+            'variantsAvailable' => $productModel->activeVariants->isNotEmpty(),
         ]);
     }
 
