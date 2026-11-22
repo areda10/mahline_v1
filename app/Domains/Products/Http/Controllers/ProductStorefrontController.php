@@ -9,6 +9,7 @@ use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -30,7 +31,7 @@ final class ProductStorefrontController
                 'cooperative.logo',
                 'primaryImage',
                 'unit',
-                'activeVariants' => static fn (Builder $variants) => $variants
+                'activeVariants' => static fn (HasMany $variants) => $variants
                     ->whereNotNull('unit_id')
                     ->whereHas('unit')
                     ->where(function (Builder $price) {
@@ -128,7 +129,7 @@ final class ProductStorefrontController
                 'primaryImage',
                 'images',
                 'unit',
-                'activeVariants' => static fn (Builder $variants) => $variants
+                'activeVariants' => static fn (HasMany $variants) => $variants
                     ->whereNotNull('unit_id')
                     ->whereHas('unit')
                     ->where(function (Builder $price) {
