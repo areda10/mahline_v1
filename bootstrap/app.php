@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 use App\Domains\Audit\Http\Middleware\CorrelationIdMiddleware;
-use App\Domains\Media\Http\Middleware\MediaEnumerationGuard;
-use App\Domains\Media\Http\Middleware\MediaRootAccessAuditMiddleware;
 use App\Domains\Identity\Authentication\Http\Middleware\ApplyDeviceTrustCookie;
 use App\Domains\Identity\Authentication\Http\Middleware\ApplyRoleBasedSessionCookiePolicy;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureForcedPasswordChangeCompleted;
 use App\Domains\Identity\Authorization\Http\Middleware\EnsureUserHasRole;
+use App\Domains\Media\Http\Middleware\MediaEnumerationGuard;
+use App\Domains\Media\Http\Middleware\MediaRootAccessAuditMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
