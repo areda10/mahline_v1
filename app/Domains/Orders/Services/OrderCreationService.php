@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
@@ -26,6 +27,7 @@ final class OrderCreationService
     public function __construct(
         private readonly CheckoutCatalog $products,
         private readonly InventoryCheckoutAvailabilityReader $inventoryAvailability,
+        private readonly CooperativeStatusReader $cooperatives,
     ) {}
 
     /**
@@ -142,6 +144,7 @@ final class OrderCreationService
 
             $prepared = [];
             $cooperativeTotals = [];
+            $forcedUnavailableCooperativeIds = [];
 
             foreach ($items as $index => $input) {
                 if (! is_array($input) || empty($input['product_id'])) {
@@ -150,55 +153,75 @@ final class OrderCreationService
                     ]);
                 }
 
+                $requestedCooperativeId = (string) ($input['cooperative_id'] ?? '');
                 $productData = $this->products->resolveForCheckout(
                     (string) $input['product_id'],
                     empty($input['product_variant_id']) ? null : (string) $input['product_variant_id'],
                 );
 
                 if ($productData === null) {
+                    if ($requestedCooperativeId !== '') {
+                        $forcedUnavailableCooperativeIds[] = $requestedCooperativeId;
+                        continue;
+                    }
+
                     throw ValidationException::withMessages([
                         "items.{$index}.product_id" => ['Ce produit est indisponible ou son prix doit être défini.'],
                     ]);
                 }
 
-                if ($productData->variantRequested && ! $productData->variantFound) {
+                $cooperativeId = $productData->cooperativeId;
+                if ($requestedCooperativeId !== '' && ! hash_equals($requestedCooperativeId, $cooperativeId)) {
                     throw ValidationException::withMessages([
-                        "items.{$index}.product_variant_id" => ['Cette variante est indisponible ou ne correspond pas au produit.'],
+                        "items.{$index}.product_id" => ['Le produit ne correspond plus à la coopérative enregistrée dans le panier.'],
                     ]);
+                }
+
+                $cooperative = $this->cooperatives->findStatus($cooperativeId);
+                if ($cooperative === null || ! $cooperative->isActive || $cooperative->isDeleted) {
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
+                }
+
+                if ($productData->variantRequested && ! $productData->variantFound) {
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
                 }
 
                 if (! $productData->variantRequested && $productData->hasVariants) {
-                    throw ValidationException::withMessages([
-                        "items.{$index}.product_variant_id" => ['Une variante doit être sélectionnée pour ce produit.'],
-                    ]);
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
                 }
 
                 if ($productData->variantFound && $productData->variantId !== null && $productData->hasParentUnit) {
-                    throw ValidationException::withMessages([
-                        "items.{$index}.unit" => ['Un produit avec variantes ne peut pas conserver une unité parent.'],
-                    ]);
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
                 }
 
                 if ($productData->unitCode === null || $productData->unitLabel === null) {
-                    throw ValidationException::withMessages([
-                        "items.{$index}.unit" => ['L’unité de stock du produit ou de sa variante doit être définie avant la commande.'],
-                    ]);
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
                 }
 
                 if ($productData->currency !== 'MAD') {
-                    throw ValidationException::withMessages([
-                        "items.{$index}.product_id" => ['Seuls les produits en MAD sont commandables en V1.'],
-                    ]);
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
                 }
 
                 $quantityMilli = $this->quantityToMilli($input['quantity'] ?? null, $index);
                 $unitPrice = $productData->effectivePrice;
                 if ($unitPrice === null) {
-                    throw ValidationException::withMessages([
-                        "items.{$index}.product_id" => ['Le prix du produit ou de sa variante doit être défini.'],
-                    ]);
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
                 }
                 $unitPriceCents = $this->moneyToCents((string) $unitPrice);
+
+                $acceptedPrice = $input['accepted_unit_price'] ?? null;
+                if ($acceptedPrice !== null && $unitPriceCents > $this->moneyToCents((string) $acceptedPrice)) {
+                    // A price increase requires explicit customer acceptance in Sales.
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+                    continue;
+                }
 
                 if ($unitPriceCents <= 0 || $quantityMilli <= 0) {
                     throw ValidationException::withMessages([
@@ -213,8 +236,6 @@ final class OrderCreationService
                 }
 
                 $lineCents = intdiv(($unitPriceCents * $quantityMilli) + 500, 1000);
-                $cooperativeId = $productData->cooperativeId;
-
                 $snapshot = [
                     'product_id' => $productData->productId,
                     'product_name' => $productData->productName,
@@ -244,6 +265,12 @@ final class OrderCreationService
                 $cooperativeTotals[$cooperativeId] = ($cooperativeTotals[$cooperativeId] ?? 0) + $lineCents;
             }
 
+            $forcedUnavailableCooperativeIds = array_values(array_unique($forcedUnavailableCooperativeIds));
+            $prepared = array_values(array_filter(
+                $prepared,
+                static fn (array $line): bool => ! in_array($line['cooperative_id'], $forcedUnavailableCooperativeIds, true),
+            ));
+
             $previewLines = array_map(
                 fn (array $line): InventoryCheckoutLineData => new InventoryCheckoutLineData(
                     lineKey: $line['line_key'],
@@ -256,7 +283,10 @@ final class OrderCreationService
                 $prepared,
             );
             $preview = $this->inventoryAvailability->preview($previewLines);
-            $unavailableCooperativeIds = $preview->unavailableCooperativeIds();
+            $unavailableCooperativeIds = array_values(array_unique(array_merge(
+                $forcedUnavailableCooperativeIds,
+                $preview->unavailableCooperativeIds(),
+            )));
 
             // Availability is intentionally recalculated inside this transaction.
             // The customer preview is informational: a stock change does not force
