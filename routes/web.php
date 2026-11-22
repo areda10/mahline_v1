@@ -42,6 +42,7 @@ use App\Domains\Inventory\Http\Controllers\InventoryWorkspaceController;
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
+use App\Domains\Orders\Http\Controllers\CustomerOrderHistoryController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
 use App\Domains\Products\Http\Controllers\ProductStorefrontController;
@@ -300,6 +301,16 @@ Route::get('/', function () {
 Route::get('/user/dashboard', [UserDashboardController::class, '__invoke'])
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
+
+Route::prefix('customer/orders')
+    ->name('customer.orders.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
+    ->group(function (): void {
+        Route::get('/', [CustomerOrderHistoryController::class, 'index'])->name('index');
+        Route::get('/{orderId}', [CustomerOrderHistoryController::class, 'show'])
+            ->whereUlid('orderId')
+            ->name('show');
+    });
 
 Route::get('/customer/dashboard', [CustomerDashboardController::class, '__invoke'])
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
