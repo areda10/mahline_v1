@@ -89,6 +89,7 @@ final class SalesCheckoutServiceTest extends TestCase
         $secondAddress = Address::factory()->forUser($customer)->create([
             'street' => 'Rue B',
             'city' => 'Rabat',
+            'is_primary' => false,
         ]);
         [, $product] = $this->productWithStock('5.000');
         $manager = app(SalesCartManager::class);
