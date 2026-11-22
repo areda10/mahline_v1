@@ -18,7 +18,10 @@ final class SalesCartController
 
     private const GUEST_COOKIE_MINUTES = 43200;
 
-    public function __construct(private readonly SalesCartManager $carts) {}
+    public function __construct(
+        private readonly SalesCartManager $carts,
+        private readonly SalesCheckoutService $checkout,
+    ) {}
 
     public function show(Request $request): JsonResponse
     {
@@ -118,6 +121,44 @@ final class SalesCartController
 
             return $this->cartResponse($cart->fresh()->load('activeItems'));
         });
+    }
+
+    public function checkoutPreview(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User || ! $user->hasRole('customer')) {
+            abort(403);
+        }
+
+        $cart = $this->resolveCart($request);
+
+        return response()->json(['data' => $this->checkout->preview(
+            (string) $user->getKey(),
+            (string) $cart->getKey(),
+        )]);
+    }
+
+    public function checkoutConfirm(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user instanceof User || ! $user->hasRole('customer')) {
+            abort(403);
+        }
+
+        $data = $request->validate([
+            'delivery_address_id' => ['required', 'string', 'size:26'],
+            'idempotency_key' => ['required', 'string', 'min:16', 'max:100'],
+        ]);
+
+        $cart = $this->resolveCart($request);
+        $result = $this->checkout->confirm(
+            (string) $user->getKey(),
+            (string) $cart->getKey(),
+            $data['delivery_address_id'],
+            $data['idempotency_key'],
+        );
+
+        return response()->json(['data' => $result]);
     }
 
     private function resolveCart(Request $request): SalesCart
