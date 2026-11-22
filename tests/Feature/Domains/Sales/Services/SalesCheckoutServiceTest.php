@@ -8,7 +8,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Localization\Models\Address;
-use App\Domains\Orders\Models\Order;
+use App\Domains\Orders\Contracts\OrderCheckoutCreator;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Sales\Contracts\SalesCartManager;
@@ -16,6 +16,7 @@ use App\Domains\Sales\Models\SalesCart;
 use App\Domains\Sales\Services\SalesCheckoutService;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 final class SalesCheckoutServiceTest extends TestCase
@@ -86,7 +87,7 @@ final class SalesCheckoutServiceTest extends TestCase
         $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
         $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
 
-        $this->mock(\App\Domains\Orders\Contracts\OrderCheckoutCreator::class, function ($mock): void {
+        $this->mock(OrderCheckoutCreator::class, function ($mock): void {
             $mock->shouldReceive('create')
                 ->once()
                 ->andThrow(new \RuntimeException('Simulated order persistence failure.'));
@@ -131,7 +132,7 @@ final class SalesCheckoutServiceTest extends TestCase
                 'sales-checkout-all-unavailable-01',
             );
             $this->fail('Checkout must fail when every cooperative is unavailable.');
-        } catch (\Illuminate\Validation\ValidationException) {
+        } catch (ValidationException) {
             $this->assertDatabaseCount('orders', 0);
             $this->assertSame(1, $cart->fresh()->activeItems()->count());
         }

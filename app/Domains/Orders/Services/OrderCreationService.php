@@ -18,6 +18,7 @@ use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Products\Contracts\CheckoutCatalog;
+use App\Domains\Products\DTOs\CheckoutProductData;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -415,7 +416,7 @@ final class OrderCreationService
         ]);
     }
 
-    private function commercialFingerprint(\App\Domains\Products\DTOs\CheckoutProductData $product): string
+    private function commercialFingerprint(CheckoutProductData $product): string
     {
         return hash('sha256', json_encode([
             'product_id' => $product->productId,
