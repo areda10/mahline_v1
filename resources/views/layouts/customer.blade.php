@@ -27,6 +27,7 @@
 <body>
 <header>
     <a class="brand" href="{{ route('customer.dashboard') }}">MAHLINE</a>
+    @include('notifications._bell')
     <nav aria-label="Espace client">
         <a href="{{ route('storefront.products.index') }}">Boutique</a>
         <a href="{{ route('sales.cart.page') }}">Mon panier</a>

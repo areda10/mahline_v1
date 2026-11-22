@@ -81,6 +81,7 @@
     </div>
 
     @auth
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">@include('notifications._bell')</div>
         @php($currentUser = auth()->user())
 
         <nav class="nav" aria-label="Navigation du compte">

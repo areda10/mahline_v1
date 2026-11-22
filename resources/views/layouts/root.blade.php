@@ -88,6 +88,7 @@
             <a href="{{ route('root.backoffice.dashboard') }}">MAHLINE ROOT</a>
         </div>
         @auth
+            @include('notifications._bell')
             <form class="logout-form" method="POST" action="{{ route('authentication.logout') }}">
                 @csrf
                 <button class="logout-button" type="submit">Déconnexion</button>

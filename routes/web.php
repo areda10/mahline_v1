@@ -41,6 +41,7 @@ use App\Domains\Inventory\Http\Controllers\InventoryThresholdController;
 use App\Domains\Inventory\Http\Controllers\InventoryWorkspaceController;
 use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
+use App\Domains\Notifications\Http\Controllers\NotificationCenterController;
 use App\Domains\Orders\Http\Controllers\CustomerOrderHistoryController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
@@ -214,6 +215,16 @@ Route::middleware([
         ->whereUlid('orderId')
         ->name('availability.show');
 });
+
+Route::prefix('notifications')
+    ->name('notifications.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root,super_admin,cooperative_admin,user,customer'])
+    ->group(function (): void {
+        Route::get('/', [NotificationCenterController::class, 'index'])->name('index');
+        Route::post('/read-all', [NotificationCenterController::class, 'markAllRead'])->name('read-all');
+        Route::post('/{notificationId}/read', [NotificationCenterController::class, 'markRead'])
+            ->whereUuid('notificationId')->name('read');
+    });
 
 /*
 |--------------------------------------------------------------------------
