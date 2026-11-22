@@ -133,7 +133,7 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_manage_category_of_own_cooperative(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $category = Category::factory()->forCooperative($cooperative)->create();
         $admin = $this->userWithRoleAndPermission(
             'cooperative_admin',
@@ -146,8 +146,8 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_cooperative_admin_cannot_manage_category_of_another_cooperative(): void
     {
-        $own = Cooperative::factory()->create();
-        $other = Cooperative::factory()->create();
+        $own = Cooperative::factory()->active()->create();
+        $other = Cooperative::factory()->active()->create();
         $category = Category::factory()->forCooperative($other)->create();
         $admin = $this->userWithRoleAndPermission(
             'cooperative_admin',
@@ -160,7 +160,12 @@ final class CategoryPolicyTest extends TestCase
 
     public function test_create_permission_does_not_grant_global_category_management(): void
     {
-        $user = $this->userWithRoleAndPermission('cooperative_admin', 'categories.create');
+        $cooperative = Cooperative::factory()->active()->create();
+        $user = $this->userWithRoleAndPermission(
+            'cooperative_admin',
+            'categories.create',
+            (string) $cooperative->getKey(),
+        );
 
         $this->assertTrue($this->policy->create($user));
         $this->assertFalse($this->policy->update($user, Category::factory()->global()->create()));
