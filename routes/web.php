@@ -178,6 +178,20 @@ Route::prefix('cart')->name('sales.cart.')->group(function (): void {
     Route::delete('/', [SalesCartController::class, 'clear'])
         ->middleware('throttle:20,1')
         ->name('clear');
+
+    Route::middleware([
+        'auth',
+        EnsureActiveAuthenticationSession::class,
+        'role:customer',
+        EnsureCustomerAccount::class,
+    ])->group(function (): void {
+        Route::get('/checkout/preview', [SalesCartController::class, 'checkoutPreview'])
+            ->middleware('throttle:30,1')
+            ->name('checkout.preview');
+        Route::post('/checkout/confirm', [SalesCartController::class, 'checkoutConfirm'])
+            ->middleware('throttle:10,1')
+            ->name('checkout.confirm');
+    });
 });
 
 Route::middleware([
