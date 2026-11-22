@@ -158,7 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('cart-checkout')?.addEventListener('click', event => {\n        if (event.currentTarget.getAttribute('aria-disabled') === 'true') {\n            event.preventDefault();\n            feedback.className = 'shop-alert shop-error';\n            feedback.textContent = 'Retirez les lignes indisponibles ou corrigez les changements commerciaux avant de poursuivre.';\n        }\n    });\n\n    document.getElementById('cart-clear').addEventListener('click', async () => {
+    document.getElementById('cart-checkout')?.addEventListener('click', event => {
+        if (event.currentTarget.getAttribute('aria-disabled') === 'true') {
+            event.preventDefault();
+            feedback.className = 'shop-alert shop-error';
+            feedback.textContent = 'Retirez les lignes indisponibles ou corrigez les changements commerciaux avant de poursuivre.';
+        }
+    });
+
+    document.getElementById('cart-clear').addEventListener('click', async () => {
         if (!cart || !window.confirm('Voulez-vous vraiment vider le panier ?')) return;
         try {
             cart = await request(@json(route('sales.cart.clear')), 'DELETE', {expected_version:cart.version});
