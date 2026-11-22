@@ -154,6 +154,54 @@ final class OrderCreationServiceTest extends TestCase
         ]);
     }
 
+    public function test_checkout_rechecks_product_activity_and_accepted_commercial_fingerprint(): void
+    {
+        $customer = $this->customer();
+        $cooperative = Cooperative::factory()->active()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+            'is_active' => false,
+        ]);
+        $this->stock($cooperative, 'product', (string) $product->getKey(), 'u', '10.000');
+
+        try {
+            app(OrderCreationService::class)->createFromCheckout($customer, [
+                'idempotency_key' => 'test-order-inactive-product-01',
+                'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+                'items' => [[
+                    'product_id' => (string) $product->getKey(),
+                    'cooperative_id' => (string) $cooperative->getKey(),
+                    'accepted_unit_price' => '20.00',
+                    'quantity' => '1.000',
+                ]],
+            ]);
+            $this->fail('An inactive product must not be ordered.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('orders', 0);
+        }
+
+        $product->forceFill(['is_active' => true])->save();
+
+        try {
+            app(OrderCreationService::class)->createFromCheckout($customer, [
+                'idempotency_key' => 'test-order-commercial-fingerprint-01',
+                'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+                'items' => [[
+                    'product_id' => (string) $product->getKey(),
+                    'cooperative_id' => (string) $cooperative->getKey(),
+                    'accepted_unit_price' => '20.00',
+                    'accepted_commercial_fingerprint' => str_repeat('0', 64),
+                    'quantity' => '1.000',
+                ]],
+            ]);
+            $this->fail('A changed commercial identity must require renewed acceptance.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('orders', 0);
+        }
+    }
+
     public function test_checkout_requires_a_variant_when_the_product_has_variants(): void
     {
         $customer = $this->customer();
