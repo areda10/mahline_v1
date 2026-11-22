@@ -24,6 +24,9 @@ final class CooperativeControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Simulate the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+
         // Les tests du contrôleur coopérative isolent les règles métier et d'autorisation.
         // Le middleware de session MAHLINE est couvert par ses tests d'intégration dédiés.
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
