@@ -287,7 +287,7 @@ Route::get('/', function () {
     abort(403);
 });
 
-Route::get('/user/dashboard', UserDashboardController::class)
+Route::get('/user/dashboard', [UserDashboardController::class, '__invoke'])
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
 
