@@ -151,7 +151,7 @@ final class SalesCheckoutServiceTest extends TestCase
         $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
         $manager->addItem((string) $cart->getKey(), (string) $unavailableProduct->getKey(), null, '1.000', 2);
 
-        $this->actingAs($customer)
+        $firstResponse = $this->actingAs($customer)
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->postJson(route('sales.cart.checkout.confirm'), [
                 'delivery_address_id' => (string) $address->getKey(),
@@ -160,6 +160,15 @@ final class SalesCheckoutServiceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.ordered_cooperative_ids.0', (string) $availableProduct->cooperative_id)
             ->assertJsonCount(1, 'data.excluded_cooperative_ids');
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('sales.cart.checkout.confirm'), [
+                'delivery_address_id' => (string) $address->getKey(),
+                'idempotency_key' => 'http-checkout-confirm-route-0001',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.order_id', $firstResponse->json('data.order_id'));
 
         $this->assertDatabaseCount('orders', 1);
         $this->assertDatabaseHas('sales_cart_items', [
@@ -231,7 +240,6 @@ final class SalesCheckoutServiceTest extends TestCase
             ])
             ->assertOk();
 
-        $orderId = $response->json('data.order_id');
         $this->assertDatabaseHas('order_items', [
             'product_id' => $product->getKey(),
             'unit_price' => '10.00',
