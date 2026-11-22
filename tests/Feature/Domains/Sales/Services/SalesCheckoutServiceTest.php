@@ -78,6 +78,46 @@ final class SalesCheckoutServiceTest extends TestCase
         $this->assertSame(1, SalesCart::query()->findOrFail($cart->getKey())->activeItems()->count());
     }
 
+    public function test_reusing_idempotency_key_with_another_address_is_rejected(): void
+    {
+        $customer = User::factory()->create();
+        $firstAddress = Address::factory()->forUser($customer)->create([
+            'street' => 'Rue A',
+            'city' => 'Casablanca',
+        ]);
+        $secondAddress = Address::factory()->forUser($customer)->create([
+            'street' => 'Rue B',
+            'city' => 'Rabat',
+        ]);
+        [, $product] = $this->productWithStock('5.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
+        $checkout = app(SalesCheckoutService::class);
+        $key = 'sales-checkout-context-key-001';
+        $first = $checkout->confirm(
+            (string) $customer->getKey(),
+            (string) $cart->getKey(),
+            (string) $firstAddress->getKey(),
+            $key,
+        );
+
+        try {
+            $checkout->confirm(
+                (string) $customer->getKey(),
+                (string) $cart->getKey(),
+                (string) $secondAddress->getKey(),
+                $key,
+            );
+            $this->fail('A key cannot be replayed with a different delivery address.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('idempotency_key', $exception->errors());
+            $this->assertDatabaseCount('orders', 1);
+            $this->assertSame($first['order_id'], Order::query()->firstOrFail()->getKey());
+        }
+    }
+
     public function test_order_creation_failure_keeps_cart_items_and_does_not_write_an_idempotency_receipt(): void
     {
         $customer = User::factory()->create();
