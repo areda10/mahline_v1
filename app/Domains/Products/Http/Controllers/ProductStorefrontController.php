@@ -123,7 +123,12 @@ final class ProductStorefrontController
                 'images',
                 'unit',
                 'activeVariants' => static fn (Builder $variants) => $variants
+                    ->whereNotNull('unit_id')
                     ->whereHas('unit')
+                    ->where(function (Builder $price) {
+                        $price->whereNotNull('price')
+                            ->orWhereHas('product', static fn (Builder $parent) => $parent->whereNotNull('price'));
+                    })
                     ->with('unit'),
                 'categories' => static fn ($categories) => $categories
                     ->where('categories.is_active', true),
@@ -139,11 +144,11 @@ final class ProductStorefrontController
             ->with(['primaryImage', 'unit', 'activeVariants'])
             ->where('id', '!=', $productModel->getKey())
             ->where('cooperative_id', $productModel->cooperative_id)
-            ->where('is_active', true)
-            ->whereHas('catalogs', static fn (Builder $catalogs) => $catalogs
-                ->where('is_active', true)
-                ->whereColumn('catalogs.cooperative_id', 'products.cooperative_id'))
-            ->latest()
+            ->where('is_active', true);
+
+        $this->applyPublishedVisibility($relatedProducts);
+
+        $relatedProducts->latest()
             ->limit(4)
             ->get();
 
@@ -164,6 +169,20 @@ final class ProductStorefrontController
                 ->where('status', CooperativeStatus::ACTIVE))
             ->whereHas('catalogs', static fn (Builder $catalogs) => $catalogs
                 ->where('is_active', true)
-                ->whereColumn('catalogs.cooperative_id', 'products.cooperative_id'));
+                ->whereColumn('catalogs.cooperative_id', 'products.cooperative_id'))
+            ->where(function (Builder $product): void {
+                $product->where(function (Builder $simple): void {
+                    $simple->whereNotNull('unit_id')
+                        ->whereNotNull('price')
+                        ->whereDoesntHave('variants', static fn (Builder $variants) => $variants->withTrashed());
+                })->orWhereHas('activeVariants', static function (Builder $variants): void {
+                    $variants->whereNotNull('unit_id')
+                        ->whereHas('unit')
+                        ->where(function (Builder $price): void {
+                            $price->whereNotNull('price')
+                                ->orWhereHas('product', static fn (Builder $parent) => $parent->whereNotNull('price'));
+                        });
+                });
+            });
     }
 }
