@@ -27,7 +27,15 @@
             <span class="shop-muted">Sous-total indicatif</span><strong id="cart-subtotal">0,00 DH</strong>
         </div>
         <p class="shop-muted" style="font-size:11px;border-top:1px solid var(--shop-line);padding-top:13px">Les frais de livraison et le total définitif seront calculés à l’étape de livraison. Aucun frais fictif n’est ajouté ici.</p>
-        <a id="cart-checkout" class="shop-button" href="{{ route('customer.login', ['redirect' => route('sales.cart.page')]) }}" style="width:100%;margin-top:9px">Continuer ma commande</a>
+        @auth
+            @if (auth()->user()->hasRole('customer'))
+                <button type="button" class="shop-button" disabled style="width:100%;margin-top:9px;opacity:.55;cursor:not-allowed">Finalisation de commande — prochaine étape</button>
+            @else
+                <a class="shop-button shop-button-secondary" href="{{ route('customer.login') }}" style="width:100%;margin-top:9px">Connexion espace client</a>
+            @endif
+        @else
+            <a id="cart-checkout" class="shop-button" href="{{ route('customer.login') }}" style="width:100%;margin-top:9px">Se connecter pour commander</a>
+        @endauth
         <a class="shop-button shop-button-secondary" href="{{ route('storefront.products.index') }}" style="width:100%;margin-top:9px">Continuer mes achats</a>
         <button id="cart-clear" type="button" class="shop-button shop-button-secondary" style="width:100%;margin-top:9px;border-color:#e5c9c9;color:#9a3535">Vider le panier</button>
     </aside>
