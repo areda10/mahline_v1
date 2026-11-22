@@ -43,7 +43,7 @@ final class CatalogPolicyTest extends TestCase
 
     public function test_create_requires_permission_and_cooperative_access(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
 
         $user = $this->userWithPermission(
             'catalogs.create',
@@ -61,8 +61,8 @@ final class CatalogPolicyTest extends TestCase
 
     public function test_create_is_denied_for_another_cooperative(): void
     {
-        $owner = Cooperative::factory()->create();
-        $other = Cooperative::factory()->create();
+        $owner = Cooperative::factory()->active()->create();
+        $other = Cooperative::factory()->active()->create();
 
         $user = $this->userWithPermission(
             'catalogs.create',
@@ -80,8 +80,8 @@ final class CatalogPolicyTest extends TestCase
 
     public function test_update_is_denied_for_another_cooperative(): void
     {
-        $owner = Cooperative::factory()->create();
-        $other = Cooperative::factory()->create();
+        $owner = Cooperative::factory()->active()->create();
+        $other = Cooperative::factory()->active()->create();
 
         $catalog = Catalog::factory()->create([
             'cooperative_id' => $owner->getKey(),
@@ -126,7 +126,7 @@ final class CatalogPolicyTest extends TestCase
 
     public function test_cooperative_admin_can_update_catalog_of_own_cooperative(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $catalog = Catalog::factory()->create(['cooperative_id' => $cooperative->getKey()]);
         $admin = $this->userWithPermission(
             'catalogs.update',
