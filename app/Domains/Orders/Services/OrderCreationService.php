@@ -415,6 +415,19 @@ final class OrderCreationService
         ]);
     }
 
+    private function commercialFingerprint(\App\Domains\Products\DTOs\CheckoutProductData $product): string
+    {
+        return hash('sha256', json_encode([
+            'product_id' => $product->productId,
+            'variant_id' => $product->variantId,
+            'cooperative_id' => $product->cooperativeId,
+            'unit_code' => $product->unitCode,
+            'unit_label' => $product->unitLabel,
+            'variant_label' => $product->variantLabel,
+            'variant_attributes' => $product->variantAttributes,
+        ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+    }
+
     private function moneyToCents(string $amount): int
     {
         if (! preg_match('/^\d{1,12}(?:\.\d{1,2})?$/', $amount)) {
