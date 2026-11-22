@@ -12,6 +12,8 @@ final class SalesCheckoutAttempt extends BaseModel
 
     protected $fillable = [
         'customer_id',
+        'cart_id',
+        'delivery_address_id',
         'idempotency_key_hash',
         'order_id',
         'ordered_cooperative_ids',
