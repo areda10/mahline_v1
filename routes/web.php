@@ -291,7 +291,7 @@ Route::get('/user/dashboard', [UserDashboardController::class, '__invoke'])
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:user'])
     ->name('user.dashboard');
 
-Route::get('/customer/dashboard', CustomerDashboardController::class)
+Route::get('/customer/dashboard', [CustomerDashboardController::class, '__invoke'])
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:customer', EnsureCustomerAccount::class])
     ->name('customer.dashboard');
 
@@ -321,7 +321,7 @@ Route::prefix('root/back-office')
     ->name('root.backoffice.')
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
     ->group(function (): void {
-        Route::get('dashboard', SuperAdminRootDashboardController::class)
+        Route::get('dashboard', [SuperAdminRootDashboardController::class, '__invoke'])
             ->name('dashboard');
 
         Route::get('profile/address', [PersonalAddressController::class, 'edit'])->name('profile.address.edit');
@@ -533,7 +533,7 @@ Route::prefix('back-office')
     ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
     ->group(function (): void {
 
-        Route::get('dashboard', BackOfficeDashboardController::class)
+        Route::get('dashboard', [BackOfficeDashboardController::class, '__invoke'])
             ->name('dashboard');
 
         Route::get('users', [UserManagementController::class, 'index'])
@@ -687,7 +687,7 @@ Route::post('/orders/safety-holds/{holdId}/resolve', [OrderSafetyHoldController:
 |--------------------------------------------------------------------------
 */
 
-Route::get('/cooperatives/{cooperativeId}/inventory/report.pdf', InventoryReportController::class)
+Route::get('/cooperatives/{cooperativeId}/inventory/report.pdf', [InventoryReportController::class, '__invoke'])
     ->middleware([
         'auth',
         EnsureActiveAuthenticationSession::class,
@@ -804,7 +804,7 @@ Route::middleware([
     EnsureActiveAuthenticationSession::class,
     'role:super_admin_root,super_admin,cooperative_admin,user',
 ])->prefix('backoffice/inventory')->name('backoffice.inventory.')->group(function (): void {
-    Route::get('/', InventoryWorkspaceController::class)->name('index');
+    Route::get('/', [InventoryWorkspaceController::class, '__invoke'])->name('index');
     Route::get('/stocks', [InventoryStockController::class, 'index'])
         ->name('stocks.index.all');
     Route::get('/cooperatives/{cooperativeId}/stocks', [InventoryStockController::class, 'index'])
@@ -830,7 +830,7 @@ Route::middleware([
     Route::get('/count-sessions/{sessionId}', [InventoryCountController::class, 'show'])
         ->whereUlid('sessionId')
         ->name('count-sessions.show');
-    Route::get('/count-sessions/{sessionId}/workspace', InventoryCountWorkspaceController::class)
+    Route::get('/count-sessions/{sessionId}/workspace', [InventoryCountWorkspaceController::class, '__invoke'])
         ->whereUlid('sessionId')
         ->name('count-sessions.workspace');
     Route::get('/cooperatives/{cooperativeId}/count-sessions', [InventoryCountController::class, 'index'])
