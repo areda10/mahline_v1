@@ -22,6 +22,9 @@ final class CatalogControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Simulate the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+
         $this->cooperative = Cooperative::factory()
             ->active()
             ->create();
