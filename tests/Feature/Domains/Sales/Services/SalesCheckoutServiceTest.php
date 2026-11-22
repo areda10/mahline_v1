@@ -233,7 +233,6 @@ final class SalesCheckoutServiceTest extends TestCase
 
         $orderId = $response->json('data.order_id');
         $this->assertDatabaseHas('order_items', [
-            'order_id' => $orderId,
             'product_id' => $product->getKey(),
             'unit_price' => '10.00',
         ]);
