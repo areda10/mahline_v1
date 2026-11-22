@@ -191,6 +191,7 @@ final class SalesCheckoutService
             $cooperativeId = (string) $item->cooperative_id;
             if ($item->unavailable_reason !== null) {
                 $invalidCooperatives[$cooperativeId] = true;
+
                 continue;
             }
 
@@ -207,6 +208,7 @@ final class SalesCheckoutService
                 || $product->unitCode === null
                 || $product->currency !== 'MAD') {
                 $invalidCooperatives[$cooperativeId] = true;
+
                 continue;
             }
 
