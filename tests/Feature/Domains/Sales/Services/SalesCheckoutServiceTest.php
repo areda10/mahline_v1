@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Sales\Services;
 
+use App\Domains\Cooperatives\Enums\CooperativeStatus;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -374,6 +375,45 @@ final class SalesCheckoutServiceTest extends TestCase
             'product_id' => $product->getKey(),
             'status' => 'active',
         ]);
+    }
+
+    public function test_inactive_cooperative_blocks_the_entire_multi_cooperative_checkout(): void
+    {
+        $customer = User::factory()->create();
+        $address = Address::factory()->forUser($customer)->create();
+        [, $availableProduct] = $this->productWithStock('5.000');
+        [$inactiveCooperative, $inactiveProduct] = $this->productWithStock('5.000');
+
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
+        $manager->addItem((string) $cart->getKey(), (string) $inactiveProduct->getKey(), null, '1.000', 2);
+
+        $inactiveCooperative->forceFill(['status' => CooperativeStatus::INACTIVE])->save();
+
+        try {
+            app(SalesCheckoutService::class)->confirm(
+                (string) $customer->getKey(),
+                (string) $cart->getKey(),
+                (string) $address->getKey(),
+                'sales-inactive-cooperative-block-001',
+            );
+            $this->fail('An inactive cooperative must block the complete multi-cooperative checkout.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('cooperatives', $exception->errors());
+            $this->assertDatabaseCount('orders', 0);
+            $this->assertSame(2, $cart->fresh()->activeItems()->count());
+            $this->assertDatabaseHas('sales_cart_items', [
+                'cart_id' => $cart->getKey(),
+                'product_id' => $availableProduct->getKey(),
+                'status' => 'active',
+            ]);
+            $this->assertDatabaseHas('sales_cart_items', [
+                'cart_id' => $cart->getKey(),
+                'product_id' => $inactiveProduct->getKey(),
+                'status' => 'active',
+            ]);
+        }
     }
 
     public function test_all_unavailable_cooperatives_leave_the_cart_and_create_no_order(): void
