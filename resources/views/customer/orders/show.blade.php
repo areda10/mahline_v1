@@ -53,10 +53,10 @@
                 <div class="item-row">
                     <div>
                         <strong>{{ $item->product_snapshot['name'] ?? $item->product_snapshot['product_name'] ?? 'Article' }}</strong>
-                        @if (!empty($item->product_snapshot['variant_name']))
+                        @if (!empty($item->product_snapshot['variant_label']))
                             <div class="muted">{{ $item->product_snapshot['variant_name'] }}</div>
                         @endif
-                        <div class="muted">{{ number_format((float) $item->quantity, 3, ',', ' ') }} {{ $item->unit }}</div>
+                        <div class="muted">{{ number_format((float) $item->quantity, 3, ',', ' ') }} {{ $item->product_snapshot['unit_label'] ?? $item->unit }}</div>
                         <div class="muted">État : {{ $statusLabels[$item->status->value] ?? $item->status->value }}</div>
                     </div>
                     <strong>{{ number_format((float) $item->line_total, 2, ',', ' ') }} {{ $order->currency }}</strong>
