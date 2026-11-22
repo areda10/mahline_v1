@@ -104,6 +104,9 @@ jobs:
       - name: Run full Laravel feature suite
         run: php artisan test tests/Feature
 
+      - name: Run Identity authentication workflow framework tests
+        run: php artisan test tests/Framework/Domains/Identity/Authentication/Workflows
+
       - name: Verify changed PHP code style
         if: always()
         env:
