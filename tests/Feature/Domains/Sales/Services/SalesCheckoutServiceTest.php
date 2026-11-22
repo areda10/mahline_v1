@@ -31,6 +31,9 @@ final class SalesCheckoutServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Match the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
         $this->seed(ProductUnitSeeder::class);
     }
 
