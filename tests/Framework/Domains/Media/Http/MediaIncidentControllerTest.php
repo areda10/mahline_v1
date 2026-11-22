@@ -20,6 +20,14 @@ final class MediaIncidentControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Match the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+    }
+
     public function test_incident_csv_export_sanitizes_formula_like_titles(): void
     {
         Notification::fake();
