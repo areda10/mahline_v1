@@ -24,6 +24,9 @@ final class KnownDeviceTest extends TestCase
     {
         parent::setUp();
 
+        // Match the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+
         $this->loginUrl = route('authentication.login.store');
     }
 
