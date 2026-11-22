@@ -34,8 +34,8 @@ final class OrderCreationServiceTest extends TestCase
     public function test_checkout_creates_one_order_with_cooperative_segments_and_price_snapshots(): void
     {
         $customer = $this->customer();
-        $cooperativeA = Cooperative::factory()->create();
-        $cooperativeB = Cooperative::factory()->create();
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
 
         $productA = Product::factory()->forCooperative($cooperativeA)->create([
             'price' => '20.00',
@@ -111,7 +111,7 @@ final class OrderCreationServiceTest extends TestCase
     public function test_checkout_uses_variant_override_price_and_rejects_unpriced_products(): void
     {
         $customer = $this->customer();
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '80.00',
             'currency' => 'MAD',
@@ -157,7 +157,7 @@ final class OrderCreationServiceTest extends TestCase
     public function test_checkout_requires_a_variant_when_the_product_has_variants(): void
     {
         $customer = $this->customer();
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
@@ -184,7 +184,7 @@ final class OrderCreationServiceTest extends TestCase
     public function test_checkout_rejects_parent_unit_when_a_variant_is_selected(): void
     {
         $customer = $this->customer();
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
             'currency' => 'MAD',
@@ -212,7 +212,7 @@ final class OrderCreationServiceTest extends TestCase
     public function test_checkout_rejects_products_without_a_registered_stock_unit(): void
     {
         $customer = $this->customer();
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '15.00',
             'currency' => 'MAD',
