@@ -15,5 +15,6 @@ final class LocalizationServiceProvider extends ServiceProvider
     {
         $this->app->bind(CooperativeAddressManager::class, AddressService::class);
         $this->app->bind(UserAddressLifecycleManager::class, AddressService::class);
+        $this->app->bind(CheckoutAddressReader::class, CheckoutAddressSnapshotService::class);
     }
 }
