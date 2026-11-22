@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Sales\Http\Controllers;
 
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;
@@ -206,6 +207,10 @@ final class SalesCartController
 
     private function cartResponse(SalesCart $cart): JsonResponse
     {
+        $cooperativeNames = Cooperative::query()
+            ->whereIn('id', $cart->activeItems->pluck('cooperative_id')->unique())
+            ->pluck('name', 'id');
+
         return response()->json([
             'data' => [
                 'id' => (string) $cart->getKey(),
@@ -215,6 +220,7 @@ final class SalesCartController
                     'product_id' => (string) $item->product_id,
                     'product_variant_id' => $item->product_variant_id,
                     'cooperative_id' => (string) $item->cooperative_id,
+                    'cooperative_name' => (string) ($cooperativeNames[(string) $item->cooperative_id] ?? 'Coopérative'),
                     'quantity' => (string) $item->quantity,
                     'unit_code' => $item->unit_code,
                     'product' => $item->current_product_snapshot,
