@@ -44,6 +44,8 @@ use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
+use App\Domains\Products\Http\Controllers\ProductStorefrontController;
+use App\Domains\Sales\Http\Controllers\SalesCartPageController;
 use App\Domains\Sales\Http\Controllers\SalesCartController;
 use Illuminate\Support\Facades\Route;
 
@@ -155,6 +157,14 @@ Route::prefix('customer')
                 Route::put('/', [ForcedPasswordChangeController::class, 'update'])->name('update');
             });
     });
+
+Route::get('/boutique', [ProductStorefrontController::class, 'index'])
+    ->name('storefront.products.index');
+Route::get('/boutique/produits/{product}', [ProductStorefrontController::class, 'show'])
+    ->whereUlid('product')
+    ->name('storefront.products.show');
+Route::get('/panier', [SalesCartPageController::class, 'show'])
+    ->name('sales.cart.page');
 
 Route::prefix('cart')->name('sales.cart.')->group(function (): void {
     Route::get('/', [SalesCartController::class, 'show'])
