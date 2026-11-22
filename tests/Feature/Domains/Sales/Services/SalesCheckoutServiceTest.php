@@ -14,6 +14,7 @@ use App\Domains\Localization\Models\Address;
 use App\Domains\Orders\Contracts\OrderCheckoutCreator;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Models\SalesCart;
@@ -171,6 +172,91 @@ final class SalesCheckoutServiceTest extends TestCase
             'product_id' => $unavailableProduct->getKey(),
             'status' => 'active',
         ]);
+    }
+
+    public function test_price_increase_after_preview_requires_new_acceptance_and_preserves_cart(): void
+    {
+        $customer = $this->checkoutCustomer();
+        $address = Address::factory()->forUser($customer)->create();
+        [, $product] = $this->productWithStock('5.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->getJson(route('sales.cart.checkout.preview'))
+            ->assertOk();
+
+        $product->forceFill(['price' => '15.00'])->save();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('sales.cart.checkout.confirm'), [
+                'delivery_address_id' => (string) $address->getKey(),
+                'idempotency_key' => 'http-price-increase-recheck-0001',
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(1, $cart->fresh()->activeItems()->count());
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $product->getKey(),
+            'status' => 'active',
+            'unavailable_reason' => 'price_change_pending',
+        ]);
+    }
+
+    public function test_product_and_variant_deactivation_between_preview_and_confirmation_blocks_checkout(): void
+    {
+        $customer = $this->checkoutCustomer();
+        $address = Address::factory()->forUser($customer)->create();
+        [$cooperative, $product] = $this->productWithStock('5.000');
+
+        $variantProduct = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '18.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+            'is_active' => true,
+        ]);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $variantProduct->getKey(),
+            'price' => '19.00',
+            'unit_id' => ProductUnit::query()->where('code', 'ml')->value('id'),
+            'is_active' => true,
+        ]);
+        InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => 'variant',
+            'stockable_id' => (string) $variant->getKey(),
+            'unit_code' => 'ml',
+            'quantity_on_hand' => '5.000',
+        ]);
+
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+        $manager->addItem((string) $cart->getKey(), (string) $variantProduct->getKey(), (string) $variant->getKey(), '1.000', 2);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->getJson(route('sales.cart.checkout.preview'))
+            ->assertOk();
+
+        $product->forceFill(['is_active' => false])->save();
+        $variant->forceFill(['is_active' => false])->save();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('sales.cart.checkout.confirm'), [
+                'delivery_address_id' => (string) $address->getKey(),
+                'idempotency_key' => 'http-product-variant-status-0001',
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(2, $cart->fresh()->activeItems()->count());
     }
 
     public function test_order_creation_failure_keeps_cart_items_and_does_not_write_an_idempotency_receipt(): void
