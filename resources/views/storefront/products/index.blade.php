@@ -76,6 +76,14 @@
 @else
     <div class="shop-grid">
         @foreach ($products as $product)
+            @php
+                $variantPrices = $product->activeVariants
+                    ->map(static fn ($variant) => $variant->price ?? $product->price)
+                    ->filter(static fn ($price) => $price !== null);
+                $displayPrice = $variantPrices->isNotEmpty()
+                    ? $variantPrices->min()
+                    : $product->price;
+            @endphp
             <article class="shop-card">
                 <a href="{{ route('storefront.products.show', $product) }}" style="display:block;text-decoration:none">
                     @if ($product->primaryImage)
@@ -89,7 +97,7 @@
                     <h3 style="font-size:15px;line-height:1.35;margin:10px 0 7px">
                         <a href="{{ route('storefront.products.show', $product) }}" style="text-decoration:none">{{ $product->name }}</a>
                     </h3>
-                    <div class="shop-price">{{ number_format((float) $product->price, 2, ',', ' ') }} DH</div>
+                    <div class="shop-price">@if ($product->activeVariants->isNotEmpty()) À partir de @endif {{ number_format((float) $displayPrice, 2, ',', ' ') }} DH</div>
                     @if ($product->unit)
                         <div class="shop-muted" style="font-size:11px">Par {{ $product->unit->label }}</div>
                     @elseif ($product->activeVariants->isNotEmpty())
