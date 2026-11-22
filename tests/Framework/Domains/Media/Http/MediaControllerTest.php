@@ -500,7 +500,7 @@ final class MediaControllerTest extends TestCase
     {
         Storage::fake('local');
 
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $product = Product::factory()->forCooperative($cooperative)->create();
         $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
         $selfUser = $this->userWithRole('user', (string) $cooperative->getKey());
