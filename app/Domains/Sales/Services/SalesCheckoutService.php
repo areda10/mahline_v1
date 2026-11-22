@@ -67,6 +67,13 @@ final class SalesCheckoutService
                 ->first();
 
             if ($previous !== null) {
+                if ((string) $previous->cart_id !== $cartId
+                    || (string) $previous->delivery_address_id !== $addressId) {
+                    throw ValidationException::withMessages([
+                        'idempotency_key' => ['Cette clé a déjà été utilisée pour un autre panier ou une autre adresse.'],
+                    ]);
+                }
+
                 return $previous->response_snapshot;
             }
 
@@ -170,6 +177,8 @@ final class SalesCheckoutService
 
             SalesCheckoutAttempt::query()->create([
                 'customer_id' => $customerId,
+                'cart_id' => $cartId,
+                'delivery_address_id' => $addressId,
                 'idempotency_key_hash' => $keyHash,
                 'order_id' => (string) $order->getKey(),
                 'ordered_cooperative_ids' => $orderedIds,
