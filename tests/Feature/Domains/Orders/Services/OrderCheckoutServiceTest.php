@@ -42,7 +42,7 @@ final class OrderCheckoutServiceTest extends TestCase
         ]);
         $customer->roles()->attach($role->getKey());
 
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $unitId = ProductUnit::query()->where('code', 'u')->value('id');
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '25.00',
