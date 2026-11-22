@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Orders;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
@@ -15,8 +17,6 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Customer\Http\Middleware\EnsureCustomerAccount;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
