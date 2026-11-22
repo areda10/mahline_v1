@@ -6,7 +6,7 @@
 @section('content')
 <div style="margin-bottom:18px;font-size:12px"><a href="{{ route('storefront.products.index') }}" style="color:#52675c">Boutique</a> <span class="shop-muted">/</span> {{ $product->name }}</div>
 
-<div style="display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:34px;align-items:start">
+<div class="shop-product-detail" style="display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:34px;align-items:start">
     <section>
         @if ($product->images->isNotEmpty())
             <div class="shop-card" style="padding:10px">
