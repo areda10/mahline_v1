@@ -24,6 +24,14 @@ final class MediaControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Match the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+    }
+
     public function test_public_product_image_is_streamed_without_exposing_storage_url(): void
     {
         Storage::fake('public');
