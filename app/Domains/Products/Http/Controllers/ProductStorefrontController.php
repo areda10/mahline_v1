@@ -58,16 +58,31 @@ final class ProductStorefrontController
         }
 
         if (isset($filters['min_price'])) {
-            $products->where('price', '>=', $filters['min_price']);
+            $minimum = $filters['min_price'];
+            $products->where(function (Builder $query) use ($minimum): void {
+                $query->where('price', '>=', $minimum)
+                    ->orWhereHas('activeVariants', static fn (Builder $variants) => $variants
+                        ->where('price', '>=', $minimum));
+            });
         }
 
         if (isset($filters['max_price'])) {
-            $products->where('price', '<=', $filters['max_price']);
+            $maximum = $filters['max_price'];
+            $products->where(function (Builder $query) use ($maximum): void {
+                $query->where('price', '<=', $maximum)
+                    ->orWhereHas('activeVariants', static fn (Builder $variants) => $variants
+                        ->where('price', '<=', $maximum)
+                        ->orWhereNull('price'));
+            });
+        }
+
+        if (in_array($filters['sort'] ?? '', ['price_asc', 'price_desc'], true)) {
+            $products->withMin('activeVariants', 'price');
         }
 
         match ($filters['sort'] ?? 'newest') {
-            'price_asc' => $products->orderBy('price')->orderBy('name'),
-            'price_desc' => $products->orderByDesc('price')->orderBy('name'),
+            'price_asc' => $products->orderByRaw('COALESCE(active_variants_min_price, products.price) ASC')->orderBy('name'),
+            'price_desc' => $products->orderByRaw('COALESCE(active_variants_min_price, products.price) DESC')->orderBy('name'),
             'name' => $products->orderBy('name'),
             default => $products->latest(),
         };
