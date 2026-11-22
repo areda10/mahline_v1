@@ -30,7 +30,14 @@ final class ProductStorefrontController
                 'cooperative.logo',
                 'primaryImage',
                 'unit',
-                'activeVariants.unit',
+                'activeVariants' => static fn (Builder $variants) => $variants
+                    ->whereNotNull('unit_id')
+                    ->whereHas('unit')
+                    ->where(function (Builder $price) {
+                        $price->whereNotNull('price')
+                            ->orWhereHas('product', static fn (Builder $parent) => $parent->whereNotNull('price'));
+                    })
+                    ->with('unit'),
                 'categories' => static fn ($query) => $query->where('categories.is_active', true),
             ])
             ->where('is_active', true);
@@ -71,8 +78,7 @@ final class ProductStorefrontController
             $products->where(function (Builder $query) use ($maximum): void {
                 $query->where('price', '<=', $maximum)
                     ->orWhereHas('activeVariants', static fn (Builder $variants) => $variants
-                        ->where('price', '<=', $maximum)
-                        ->orWhereNull('price'));
+                        ->where('price', '<=', $maximum));
             });
         }
 
