@@ -79,6 +79,8 @@ final class SalesCheckoutConcurrencyTest extends TestCase
         $readyFiles = [$directory.'/worker-1.ready', $directory.'/worker-2.ready'];
         $resultFiles = [$directory.'/worker-1.result', $directory.'/worker-2.result'];
         $children = [];
+        $customerId = (string) $customer->getKey();
+        $cartId = (string) $cart->getKey();
 
         try {
             // Hold the cart row before either worker starts. Both independent
@@ -165,7 +167,29 @@ final class SalesCheckoutConcurrencyTest extends TestCase
             }
 
             foreach ($children as $pid) {
-                pcntl_waitpid($pid, $status, WNOHANG);
+                pcntl_waitpid($pid, $status);
+            }
+
+            $orderIds = DB::table('orders')->where('customer_id', $customerId)->pluck('id')->all();
+            $suborderIds = DB::table('cooperative_orders')->whereIn('order_id', $orderIds)->pluck('id')->all();
+
+            DB::table('sales_checkout_attempts')->where('customer_id', $customerId)->delete();
+            DB::table('order_items')->whereIn('cooperative_order_id', $suborderIds)->delete();
+            DB::table('order_status_histories')->whereIn('subject_id', array_merge($orderIds, $suborderIds))->delete();
+            DB::table('cooperative_orders')->whereIn('id', $suborderIds)->delete();
+            DB::table('orders')->whereIn('id', $orderIds)->delete();
+            DB::table('sales_cart_items')->where('cart_id', $cartId)->delete();
+            DB::table('sales_carts')->where('id', $cartId)->delete();
+            DB::table('inventory_stocks')->where('cooperative_id', $cooperative->getKey())->delete();
+            DB::table('addresses')->where('user_id', $customerId)->delete();
+            DB::table('products')->where('id', $product->getKey())->delete();
+            DB::table('cooperatives')->where('id', $cooperative->getKey())->delete();
+            DB::table('user_role')->where('user_id', $customerId)->delete();
+            DB::table('users')->where('id', $customerId)->delete();
+
+            // Leave an empty transaction for RefreshDatabase's teardown rollback.
+            if (DB::connection()->transactionLevel() === 0) {
+                DB::connection()->beginTransaction();
             }
 
             foreach (array_merge($readyFiles, $resultFiles) as $file) {
