@@ -30,7 +30,11 @@
         <span class="shop-eyebrow">{{ $product->cooperative->name }}</span>
         <h1 class="shop-title" style="font-size:clamp(26px,3vw,36px)">{{ $product->name }}</h1>
         <div class="shop-price" id="selected-price" style="font-size:26px">
-            {{ number_format((float) ($product->price ?? 0), 2, ',', ' ') }} DH
+            @if ($hasVariants)
+                Sélectionnez une variante
+            @else
+                {{ number_format((float) ($product->price ?? 0), 2, ',', ' ') }} DH
+            @endif
         </div>
         <p class="shop-muted" id="selected-unit" style="font-size:12px;margin:3px 0 20px">
             {{ $product->unit?->label ? 'Par '.$product->unit->label : '' }}
@@ -50,16 +54,21 @@
 
         @if ($hasVariants)
             <div style="margin-top:20px">
-                <label class="shop-label" for="product-variant">Choisir une variante</label>
-                <select class="shop-input" id="product-variant" required>
-                    <option value="" data-price="{{ $product->price }}" data-unit="{{ $product->unit?->label ?? '' }}">Sélectionnez une option</option>
-                    @foreach ($product->activeVariants as $variant)
-                        <option value="{{ $variant->getKey() }}" data-price="{{ $variant->price ?? $product->price }}" data-unit="{{ $variant->unit?->label }}" data-label="{{ $variant->label }}">
-                            {{ $variant->label }} — {{ number_format((float) ($variant->price ?? $product->price), 2, ',', ' ') }} DH / {{ $variant->unit?->label }}
-                        </option>
-                    @endforeach
-                </select>
-                <p class="shop-muted" style="font-size:11px;margin:6px 0 0">Chaque variante possède son propre prix et son unité de vente.</p>
+                @if ($variantsAvailable)
+                    <label class="shop-label" for="product-variant">Choisir une variante</label>
+                    <select class="shop-input" id="product-variant" required>
+                        <option value="" data-price="" data-unit="">Sélectionnez une option</option>
+                        @foreach ($product->activeVariants as $variant)
+                            <option value="{{ $variant->getKey() }}" data-price="{{ $variant->price ?? $product->price }}" data-unit="{{ $variant->unit?->label }}" data-label="{{ $variant->label }}">
+                                {{ $variant->label }} — {{ number_format((float) ($variant->price ?? $product->price), 2, ',', ' ') }} DH / {{ $variant->unit?->label }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="shop-muted" style="font-size:11px;margin:6px 0 0">Chaque variante possède son propre prix et son unité de vente.</p>
+                @else
+                    <p class="shop-alert shop-error" style="margin:0">Ce produit possède des variantes, mais aucune n’est actuellement disponible.</p>
+                    <input type="hidden" id="product-variant" value="">
+                @endif
             </div>
         @else
             <input type="hidden" id="product-variant" value="">
@@ -70,7 +79,7 @@
                 <label class="shop-label" for="product-quantity">Quantité</label>
                 <input class="shop-input" id="product-quantity" type="number" min="0.001" max="100" step="0.001" value="1.000" required>
             </div>
-            <button class="shop-button" id="add-to-cart" type="button" style="flex:1;min-height:43px">Ajouter au panier</button>
+            <button class="shop-button" id="add-to-cart" type="button" style="flex:1;min-height:43px" @disabled($hasVariants && ! $variantsAvailable)>Ajouter au panier</button>
         </div>
         <p id="add-cart-feedback" role="status" class="shop-muted" style="font-size:12px;min-height:20px;margin:10px 0 0"></p>
 
@@ -122,8 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     variant?.addEventListener('change', () => {
         const option = variant.options[variant.selectedIndex];
-        if (price && option.dataset.price) {
-            price.textContent = Number(option.dataset.price).toLocaleString('fr-MA', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' DH';
+        if (price) {
+            price.textContent = option.dataset.price
+                ? Number(option.dataset.price).toLocaleString('fr-MA', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' DH'
+                : 'Sélectionnez une variante';
         }
         if (unit) unit.textContent = option.dataset.unit ? 'Par ' + option.dataset.unit : '';
     });
