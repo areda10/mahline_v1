@@ -17,14 +17,14 @@ use App\Domains\Sales\Models\SalesCart;
 use App\Domains\Sales\Models\SalesCheckoutAttempt;
 use App\Domains\Sales\Services\SalesCheckoutService;
 use Database\Seeders\ProductUnitSeeder;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use Throwable;
 
 final class SalesCheckoutConcurrencyTest extends TestCase
 {
-    use DatabaseMigrations;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -67,6 +67,9 @@ final class SalesCheckoutConcurrencyTest extends TestCase
         $manager = app(SalesCartManager::class);
         $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
         $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
+        // Commit fixture rows so the independent worker connections can see them.
+        DB::connection()->commit();
 
         $directory = sys_get_temp_dir().'/mahline-checkout-'.bin2hex(random_bytes(8));
         if (! mkdir($directory, 0700) && ! is_dir($directory)) {
