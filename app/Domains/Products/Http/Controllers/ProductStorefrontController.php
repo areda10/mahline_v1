@@ -148,7 +148,7 @@ final class ProductStorefrontController
 
         $this->applyPublishedVisibility($relatedProducts);
 
-        $relatedProducts->latest()
+        $relatedProducts = $relatedProducts->latest()
             ->limit(4)
             ->get();
 
