@@ -186,7 +186,14 @@ final class OrderCreationService
                     continue;
                 }
 
-                if ($productData->variantRequested && ! $productData->variantFound) {
+                if ($productData->productIsDeleted || ! $productData->productIsActive) {
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
+                    continue;
+                }
+
+                if ($productData->variantRequested
+                    && (! $productData->variantFound || $productData->variantIsDeleted || ! $productData->variantIsActive)) {
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
 
                     continue;
@@ -228,6 +235,15 @@ final class OrderCreationService
                 $acceptedPrice = $input['accepted_unit_price'] ?? null;
                 if ($acceptedPrice !== null && $unitPriceCents > $this->moneyToCents((string) $acceptedPrice)) {
                     // A price increase requires explicit customer acceptance in Sales.
+                    $forcedUnavailableCooperativeIds[] = $cooperativeId;
+
+                    continue;
+                }
+
+                $acceptedCommercialFingerprint = $input['accepted_commercial_fingerprint'] ?? null;
+                if ($acceptedCommercialFingerprint !== null
+                    && ! hash_equals((string) $acceptedCommercialFingerprint, $this->commercialFingerprint($productData))) {
+                    // A changed variant, unit or commercial identity requires explicit acceptance.
                     $forcedUnavailableCooperativeIds[] = $cooperativeId;
 
                     continue;
