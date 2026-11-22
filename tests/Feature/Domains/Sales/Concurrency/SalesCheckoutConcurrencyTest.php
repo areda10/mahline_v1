@@ -181,7 +181,10 @@ final class SalesCheckoutConcurrencyTest extends TestCase
             DB::table('sales_cart_items')->where('cart_id', $cartId)->delete();
             DB::table('sales_carts')->where('id', $cartId)->delete();
             DB::table('inventory_stocks')->where('cooperative_id', $cooperative->getKey())->delete();
-            DB::table('addresses')->where('user_id', $customerId)->delete();
+            DB::table('addresses')
+                ->where('user_id', $customerId)
+                ->orWhere('cooperative_id', $cooperative->getKey())
+                ->delete();
             DB::table('products')->where('id', $product->getKey())->delete();
             DB::table('cooperatives')->where('id', $cooperative->getKey())->delete();
             DB::table('user_role')->where('user_id', $customerId)->delete();
