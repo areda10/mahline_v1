@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Sales\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Localization\Models\Address;
@@ -120,6 +123,56 @@ final class SalesCheckoutServiceTest extends TestCase
         }
     }
 
+    public function test_checkout_preview_route_returns_live_cooperative_availability(): void
+    {
+        $customer = $this->checkoutCustomer();
+        [, $product] = $this->productWithStock('3.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->getJson(route('sales.cart.checkout.preview'))
+            ->assertOk()
+            ->assertJsonPath('data.available_cooperative_ids.0', (string) $product->cooperative_id)
+            ->assertJsonPath('data.unavailable_cooperative_ids', []);
+    }
+
+    public function test_checkout_confirm_route_creates_order_and_consumes_only_ordered_cart_lines(): void
+    {
+        $customer = $this->checkoutCustomer();
+        $address = Address::factory()->forUser($customer)->create();
+        [, $availableProduct] = $this->productWithStock('3.000');
+        [, $unavailableProduct] = $this->productWithStock('0.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
+        $manager->addItem((string) $cart->getKey(), (string) $unavailableProduct->getKey(), null, '1.000', 2);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('sales.cart.checkout.confirm'), [
+                'delivery_address_id' => (string) $address->getKey(),
+                'idempotency_key' => 'http-checkout-confirm-route-0001',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.ordered_cooperative_ids.0', (string) $availableProduct->cooperative_id)
+            ->assertJsonCount(1, 'data.excluded_cooperative_ids');
+
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $availableProduct->getKey(),
+            'status' => 'ordered',
+        ]);
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $unavailableProduct->getKey(),
+            'status' => 'active',
+        ]);
+    }
+
     public function test_order_creation_failure_keeps_cart_items_and_does_not_write_an_idempotency_receipt(): void
     {
         $customer = User::factory()->create();
@@ -178,6 +231,21 @@ final class SalesCheckoutServiceTest extends TestCase
             $this->assertDatabaseCount('orders', 0);
             $this->assertSame(1, $cart->fresh()->activeItems()->count());
         }
+    }
+
+    private function checkoutCustomer(): User
+    {
+        $role = Role::query()->firstOrCreate(
+            ['slug' => 'customer'],
+            ['name' => 'Customer', 'is_active' => true],
+        );
+        $customer = User::factory()->create([
+            'status' => UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+        $customer->roles()->attach($role->getKey());
+
+        return $customer;
     }
 
     /** @return array{Cooperative, Product} */
