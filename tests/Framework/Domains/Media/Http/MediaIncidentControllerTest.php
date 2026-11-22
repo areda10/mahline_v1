@@ -92,7 +92,6 @@ final class MediaIncidentControllerTest extends TestCase
         self::assertSame([], Storage::disk('local')->allFiles('media'));
     }
 
-
     public function test_non_root_cannot_access_incident_http_endpoints(): void
     {
         Notification::fake();
