@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Domains\Identity\SuperAdminRoot\Http\Controllers;
+namespace Tests\\Feature\\Domains\\Identity\\SuperAdminRoot\\Http\\Controllers;
 
-use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
-use App\Domains\Identity\Authorization\Models\Permission;
-use App\Domains\Identity\Authorization\Models\Role;
-use App\Domains\Identity\Users\Models\User;
-use App\Domains\Products\Models\ProductUnit;
-use Database\Seeders\ProductUnitSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use App\\Domains\\Cooperatives\\Models\\Cooperative;
+use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
+use App\\Domains\\Identity\\Authorization\\Models\\Permission;
+use App\\Domains\\Identity\\Authorization\\Models\\Role;
+use App\\Domains\\Identity\\Users\\Models\\User;
+use App\\Domains\\Products\\Models\\ProductUnit;
+use Database\\Seeders\\ProductUnitSeeder;
+use Illuminate\\Foundation\\Testing\\RefreshDatabase;
+use Tests\\TestCase;
 
 final class ProductControllerTest extends TestCase
 {
@@ -21,6 +21,10 @@ final class ProductControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Simulate the same-origin Fetch Metadata header sent by browsers.
+        $this->withHeader('Sec-Fetch-Site', 'same-origin');
+
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
         $this->seed(ProductUnitSeeder::class);
     }
