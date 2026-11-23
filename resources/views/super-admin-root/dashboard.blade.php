@@ -8,6 +8,10 @@
         <div class="actions">
             <a class="button" href="{{ route('root.backoffice.cooperatives.index') }}">Gérer les coopératives</a>
             <a class="button button-secondary" href="{{ route('root.backoffice.users.index') }}">Gérer les utilisateurs</a>
+            <a class="button button-secondary" href="{{ route('root.backoffice.categories.index') }}">Catégories globales</a>
+            <a class="button button-secondary" href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
+            <a class="button button-secondary" href="{{ route('notifications.index') }}">Notifications</a>
+            <a class="button button-secondary" href="{{ route('root.backoffice.security.authentication-lockouts.index') }}">Sécurité des accès</a>
         </div>
     </div>
     <section class="dashboard-grid" aria-label="Indicateurs globaux">
