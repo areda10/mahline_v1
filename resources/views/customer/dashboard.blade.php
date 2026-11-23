@@ -9,6 +9,27 @@
     </section>
 
     <section class="card">
+        <h2>Mes achats</h2>
+        <p class="muted">Accédez à la boutique, retrouvez votre panier et suivez vos commandes.</p>
+        <div class="actions">
+            <a class="button" href="{{ route('storefront.products.index') }}">Parcourir la boutique</a>
+            <a class="button button-secondary" href="{{ route('sales.cart.page') }}">Voir mon panier</a>
+            <a class="button button-secondary" href="{{ route('customer.orders.index') }}">Suivre mes commandes</a>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Mon compte et ma sécurité</h2>
+        <p class="muted">Gérez vos informations, vos adresses et les appareils autorisés.</p>
+        <div class="actions">
+            <a class="button button-secondary" href="{{ route('customer.profile.edit') }}">Profil et carnet d’adresses</a>
+            <a class="button button-secondary" href="{{ route('customer.security.password.edit') }}">Mot de passe</a>
+            <a class="button button-secondary" href="{{ route('customer.security.devices.index') }}">Mes appareils</a>
+            <a class="button button-secondary" href="{{ route('notifications.index') }}">Mes notifications</a>
+        </div>
+    </section>
+
+    <section class="card">
         <div class="section-heading">
             <h2>Mon profil</h2>
             <a href="{{ route('customer.profile.edit') }}">Modifier mon profil</a>
