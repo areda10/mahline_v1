@@ -1125,4 +1125,31 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 5. Ne créer les écrans Delivery, Finance/Facturation et Statistics qu'après implémentation et audit de leurs services et routes propriétaires.
 6. Exécuter les tests Feature ciblés, la suite complète et Pint localement ; tant que les résultats ne sont pas fournis, l'état reste **À tester**.
 
+### 13.5 Intégrations complémentaires — 23 novembre 2026
+
+- Tableau de bord client : raccourcis vers Boutique, panier, commandes, profil/carnet d'adresses, mot de passe, appareils et notifications.
+- Tableaux de bord `cooperative_admin` et `super_admin` : ouverture directe de la fiche de chaque coopérative déjà filtrée par `visibleTo($user)`.
+- Tableau de bord `super_admin_root` : raccourcis vers catégories globales, inventaire, notifications et sécurité des accès.
+- Le listing back-office des utilisateurs ne présente pas de bouton de création ; la route de création reste protégée par `Gate::authorize('create', User::class)`. La règle métier qui interdit au `cooperative_admin` de créer/inviter des utilisateurs reste donc à préserver.
+- Les trois classes référencées par les directives `@can` de la fiche coopérative ont été normalisées. Le correctif doit encore être confirmé par compilation Blade et tests Feature.
+- Commits de cette séquence : `879952d`, `d0379c0`, `cb3db1d`, `ed965f2` (en plus des correctifs précédemment consignés).
+
+### 13.6 Inventaire final des écrans à construire ou à développer
+
+| Domaine / parcours | Écran ou fonctionnalité restant à construire / développer | Dépendance ou condition préalable |
+|---|---|---|
+| Orders — coopérative | Boîte de réception des sous-commandes, liste filtrable, fiche détaillée, confirmation/refus avec motif, état du délai de réponse ; actions administratives de substitution et prolongation de délai | Le service `CooperativeOrderResponseService` existe, mais il manque le contrôleur HTTP, les routes Web, les vues et les tests Feature. Respecter les périmètres coopératifs et les réservations Inventory atomiques. |
+| Orders — suivi transversal | Écran de suivi des blocages de sécurité et de leur résolution | Auditer les routes et le contrôleur `OrderSafetyHoldController`, puis créer les vues et les autorisations UI manquantes si elles ne sont pas déjà exposées. |
+| Sales / Checkout — client | Étapes de confirmation, choix d'adresse, récapitulatif des sous-commandes et résultat de commande | Ne pas activer avant l'intégration Delivery, le calcul des frais réels et la validation du total ; le service Orders initialise actuellement les frais à zéro. |
+| Delivery — client / coopérative / transporteur / Root | Devis, sélection du mode de livraison, missions, affectations transporteurs, expéditions, colis, suivi, preuves, retours, anomalies et litiges | Domaine Delivery à implémenter (modèles, migrations, services, contrats, contrôleurs, routes, Policies, vues et tests) à partir de `DELIVERY_V1_SPECIFICATION.md`. |
+| Finance / Facturation | Factures, lignes et documents PDF, paiements, commissions/frais de service, remboursements, rapprochements et reversements | Domaine Finance à implémenter ; résoudre les arbitrages de facture et fiscalité, puis relier Orders et Delivery. |
+| Statistics | Tableaux de bord analytiques par rôle, coopérative, période et produit ; indicateurs et exports | Domaine Statistics à implémenter ; définir les KPI validés, les projections et les règles d'accès avant d'afficher des chiffres. |
+| Audit — Root | Interface Web de consultation, filtres et détail des événements d'audit | Le contrôleur Web Audit n'est pas exposé par `routes/web.php` ; l'API `/api/audit/events` existe avec ability `audit.view`. Définir une UI Root dédiée sans élargir l'accès. |
+| Inventory — rapports / sécurité | Vérifier si tous les rapports, quarantaines et signalements disposent de vues de détail, filtres et états de traitement cohérents | Écrans partiellement présents ; audit page par page et tests UI/permissions à terminer. |
+| Client — commandes | Afficher et rafraîchir les indicateurs de disponibilité et les états de livraison lorsqu'ils seront fournis par Orders/Delivery | Le suivi client de commande existe ; les informations transporteur, expédition et livraison dépendent de Delivery. |
+| Tous les espaces — expérience | États vides, erreurs, confirmations, pagination, responsive, accessibilité et cohérence des menus | Revue visuelle et tests Feature sur l'ensemble des vues existantes. |
+| Media | Non inclus dans ce chantier UI | À traiter dans un chantier Media distinct, conformément à la demande. |
+
+**Critère de clôture :** chaque lien mène à une route existante et autorisée ; chaque formulaire correspond à une action métier réelle ; les tests Feature ciblés, la suite complète, Pint et la compilation des vues sont exécutés localement et leurs résultats consignés. Les écrans dépendant de domaines non implémentés restent explicitement dans la liste de développement, sans fausses interfaces.
+
 **État global de l'intégration UI : En implémentation / audit à poursuivre.** Aucun test n'est déclaré vert dans le cadre de ce point de contrôle. Aucun merge vers `main`, aucune exécution GitHub Actions et aucun développement Media.
