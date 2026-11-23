@@ -76,9 +76,13 @@ final class ApiTokenControllerTest extends TestCase
         $this->grantPermission($root, 'users.view');
         $target = $this->actor('user');
 
-        $response = $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+        $csrfToken = str()->random(40);
+
+        $response = $this->withSession(['_token' => $csrfToken])
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->actingAs($root)
             ->post(route('root.backoffice.users.api-tokens.store', $target), [
+                '_token' => $csrfToken,
                 'name' => 'root-created-user-token',
                 'abilities' => [],
             ]);
