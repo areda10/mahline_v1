@@ -81,6 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return '<article><h3 style="font-size:14px;margin:0 0 8px">'+escapeHtml(group.cooperative_name || 'Coopérative')+'</h3>'+lines+'<div style="display:flex;justify-content:space-between;gap:12px;padding-top:8px"><span class="shop-muted">Sous-total</span><strong>'+money(group.subtotal)+'</strong></div><div style="display:flex;justify-content:space-between;gap:12px;padding-top:5px"><span class="shop-muted">Livraison de cette coopérative</span><strong>'+money(group.delivery)+'</strong></div></article>';
             }).join('');
 
+            if ((!preview.groups || preview.groups.length === 0) && preview.items?.length) {
+                groupsElement.innerHTML = preview.items.map(item => {
+                    const snapshot = item.product || {};
+                    const name = snapshot.name || snapshot.product_name || 'Produit';
+                    return '<article class="shop-alert shop-error" style="margin:0"><strong>'+escapeHtml(name)+'</strong><div style="font-size:12px;margin-top:4px">Cet article ne peut pas être commandé dans son état actuel. Retournez au panier pour le corriger ou le retirer.</div></article>';
+                }).join('');
+            }
+
             document.getElementById('checkout-subtotal').textContent = money(preview.subtotal);
             document.getElementById('checkout-delivery').textContent = money(preview.delivery_total);
             document.getElementById('checkout-total').textContent = money(preview.grand_total);
