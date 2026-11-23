@@ -4,7 +4,7 @@
 - **Version :** 1.0 — cadrage initial
 - **Date :** 19 novembre 2026
 - **Branche :** `feature/Marketplace`
-- **Statut :** EN COURS — décisions fonctionnelles SALES-001 à SALES-037 validées ; socle technique du panier en cours d'implémentation.
+- **Statut :** EN COURS — décisions fonctionnelles SALES-001 à SALES-037 validées ; socle panier et interfaces Customer V1 présents ; validation technique intégrée encore requise.
 - **Référence d'architecture :** [ADR-021 — Architecture hybride du monolithe modulaire](../../architecture/decisions/ADR-021-hybrid-modular-monolith.md)
 
 > Ce document est le registre des décisions fonctionnelles et techniques du domaine Sales. Une règle non validée reste explicitement ouverte. Aucune migration ou implémentation ne doit être créée sur la base d'une supposition.
@@ -135,9 +135,29 @@ Le panier n'est pas encore complet au regard de SALES-001 à SALES-037. Restent 
 - contrat Delivery pour les frais de livraison ;
 - contrat public Localization pour lire et capturer une adresse active ;
 - contrat public idempotent Orders sans réservation au checkout ; la réservation est déclenchée par la confirmation coopérative dans Orders via Inventory ; contrat Delivery pour calculer les frais ;
-- interfaces Blade/UI, policies et tests HTTP complets ;
+- vérification complète des policies et des tests HTTP/intégration du parcours Customer ;
 - rétention/purge des paniers invités expirés et historique ;
 - promotions, coupons et devis : explicitement reportés à V2 et non implémentés en V1.
+
+### Interfaces Customer V1 — tranche écrans
+
+Les interfaces Blade Customer sont présentes sur `feature/Marketplace` :
+
+- Catalogue (`storefront.products.index`) : recherche, filtres, tri, ajout au panier pour les produits simples, accès à la fiche pour les produits à variantes et commande directe pour un produit simple.
+- Fiche produit (`storefront.products.show`) : galerie, choix obligatoire d'une variante lorsqu'elle existe, quantité à trois décimales maximum, ajout au panier et commande directe.
+- Panier (`storefront.cart`) : affichage des lignes actives, coopérative, prix et quantités ; modification, retrait, vidage et acceptation explicite des changements de prix/caractéristiques ; accès au checkout du panier.
+- Confirmation (`storefront.checkout`) : aperçu recalculé côté serveur, regroupement par coopérative, devis Delivery par coopérative, adresse de livraison, total en MAD, confirmation COD et référence de commande.
+
+#### Deux parcours indépendants
+
+1. **Commande directe depuis catalogue/fiche** : la demande crée un panier technique invité distinct, dont le jeton opaque est conservé dans la session Customer. Ce panier technique contient uniquement le produit/variante et la quantité demandés. Le panier client préexistant n'est ni lu pour composer la commande ni modifié par ce parcours.
+2. **Commande depuis le panier** : le checkout utilise le panier authentifié et toutes ses lignes actives. Une ligne indisponible bloque la confirmation globale ; aucune ligne n'est écartée silencieusement.
+
+Les deux parcours utilisent les contrôles serveur communs (Products, Cooperatives, Inventory, Localization, Delivery et Orders), l'adresse unique de livraison, le paiement COD et la clé d'idempotence. Les actions de commande sont réservées au rôle `customer`. Le panier invité reste accessible aux visiteurs, conformément à SALES-001.
+
+#### Vérification à effectuer
+
+La tranche d'interface a été complétée dans le catalogue pour proposer l'action « Ajouter au panier » directement sur les cartes des produits simples. Les fichiers Blade et le contrôleur existants ont été inspectés avant cette modification. Aucun test Laravel, Pint ou parcours navigateur n'a été exécuté pendant cette intervention ; la présence des vues ne vaut donc pas validation de bout en bout. La revue des policies, les tests HTTP/intégration et la suite complète restent obligatoires avant gel technique.
 
 ### Paramètre technique confirmé
 
