@@ -10,6 +10,9 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -110,12 +113,12 @@ final class ProductStorefrontTest extends TestCase
 
     public function test_authenticated_customer_can_navigate_from_shop_to_account_orders_and_profile(): void
     {
-        $role = \\App\\Domains\\Identity\\Authorization\\Models\\Role::query()->firstOrCreate(
+        $role = Role::query()->firstOrCreate(
             ['slug' => 'customer'],
             ['name' => 'Customer', 'is_active' => true],
         );
-        $customer = \\App\\Domains\\Identity\\Users\\Models\\User::factory()->create([
-            'status' => \\App\\Domains\\Identity\\Enums\\UserStatus::Active,
+        $customer = User::factory()->create([
+            'status' => UserStatus::Active,
             'email_verified_at' => now(),
         ]);
         $customer->roles()->attach($role->getKey());
