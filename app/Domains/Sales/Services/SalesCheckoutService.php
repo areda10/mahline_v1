@@ -256,17 +256,17 @@ final class SalesCheckoutService
                 ->values()
                 ->all();
 
-            if (array_diff($cooperativeIds, $orderedIds) !== []) {
-                throw ValidationException::withMessages([
-                    'inventory' => ['La disponibilité a changé pendant la confirmation. La commande complète n’a pas été validée et votre panier a été conservé. Actualisez le récapitulatif avant de réessayer.'],
-                ]);
-            }
-
             $orderExcludedIds = array_values(array_unique(array_merge(
                 $excludedIds,
                 array_map('strval', $order->inventory_excluded_cooperative_ids ?? []),
             )));
             $orderedIds = array_values(array_diff($orderedIds, $orderExcludedIds));
+
+            if (array_diff($cooperativeIds, $orderedIds) !== []) {
+                throw ValidationException::withMessages([
+                    'inventory' => ['La disponibilité a changé pendant la confirmation. La commande complète n’a pas été validée et votre panier a été conservé. Actualisez le récapitulatif avant de réessayer.'],
+                ]);
+            }
 
             if ($orderedIds === []) {
                 throw ValidationException::withMessages([
