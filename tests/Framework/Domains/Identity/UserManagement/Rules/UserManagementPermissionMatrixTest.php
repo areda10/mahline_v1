@@ -78,13 +78,13 @@ final class UserManagementPermissionMatrixTest extends TestCase
         }
     }
 
-    public function test_cooperative_admin_can_view_and_edit_user_profiles_but_cannot_create_accounts_or_manage_statuses(): void
+    public function test_cooperative_admin_can_view_and_edit_user_profiles_but_cannot_create_or_invite_accounts_or_manage_statuses(): void
     {
         $permissions = $this->permissionSlugs('cooperative_admin');
 
         self::assertContains('users.view', $permissions);
         self::assertContains('users.update', $permissions);
-        self::assertContains('users.invite', $permissions);
+        self::assertNotContains('users.invite', $permissions);
         foreach ([
             'users.create',
             'users.activate',
