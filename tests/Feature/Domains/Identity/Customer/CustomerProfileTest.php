@@ -49,7 +49,9 @@ final class CustomerProfileTest extends TestCase
             ->assertOk()
             ->assertSee('Mon profil')
             ->assertSee('Salma')
-            ->assertSee('client@example.com');
+            ->assertSee('client@example.com')
+            ->assertDontSee('Photo de profil')
+            ->assertDontSee('domaine Media');
     }
 
     public function test_customer_can_update_their_personal_information(): void
