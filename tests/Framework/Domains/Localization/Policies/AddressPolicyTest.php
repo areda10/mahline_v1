@@ -195,7 +195,7 @@ final class AddressPolicyTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        return Cooperative::factory()->create();
+        return Cooperative::factory()->active()->create();
     }
 
     /**
@@ -207,6 +207,11 @@ final class AddressPolicyTest extends TestCase
         array $permissionSlugs,
         array $attributes = [],
     ): User {
+        if (in_array($roleSlug, ['cooperative_admin', 'user'], true)
+            && ! array_key_exists('cooperative_id', $attributes)) {
+            $attributes['cooperative_id'] = Cooperative::factory()->active()->create()->getKey();
+        }
+
         $user = User::factory()->create($attributes);
         $role = Role::query()->firstOrCreate(
             ['slug' => $roleSlug],
