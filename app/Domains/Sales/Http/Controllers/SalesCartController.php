@@ -134,6 +134,7 @@ final class SalesCartController
         abort_unless($user instanceof User && $user->hasRole('customer'), 403);
 
         $cart = $this->resolveCart($request);
+
         return view('storefront.checkout', [
             'directCartId' => null,
             'idempotencyKey' => $this->checkoutIdempotencyKey($request, (string) $cart->getKey(), (int) $cart->version),
@@ -174,6 +175,7 @@ final class SalesCartController
         abort_unless(is_string($request->session()->get('sales.direct_checkouts.'.$cartId)), 404);
 
         $cart = $this->carts->refresh($cartId);
+
         return view('storefront.checkout', [
             'directCartId' => $cartId,
             'idempotencyKey' => $this->checkoutIdempotencyKey($request, $cartId, (int) $cart->version),
@@ -208,6 +210,7 @@ final class SalesCartController
             ->pluck('name', 'id');
         $preview['groups'] = array_map(static function (array $group) use ($cooperativeNames): array {
             $group['cooperative_name'] = (string) ($cooperativeNames[$group['cooperative_id']] ?? 'Coopérative');
+
             return $group;
         }, $preview['groups'] ?? []);
 
