@@ -6,6 +6,7 @@ namespace App\Domains\Sales\Http\Controllers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Models\Address;
 use App\Domains\Sales\Contracts\SalesCartManager;
 use App\Domains\Sales\Exceptions\SalesCartVersionConflict;
 use App\Domains\Sales\Models\SalesCart;
@@ -13,6 +14,7 @@ use App\Domains\Sales\Services\SalesCheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\View\View;
 
 final class SalesCartController
 {
@@ -125,6 +127,50 @@ final class SalesCartController
         });
     }
 
+    public function checkoutPage(Request $request): View
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->hasRole('customer'), 403);
+
+        return view('storefront.checkout', ['directCartId' => null]);
+    }
+
+    public function startDirectCheckout(Request $request): mixed
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->hasRole('customer'), 403);
+
+        $data = $request->validate([
+            'product_id' => ['required', 'string', 'size:26'],
+            'product_variant_id' => ['nullable', 'string', 'size:26'],
+            'quantity' => ['required', 'numeric', 'decimal:0,3', 'gt:0', 'lte:100'],
+        ]);
+
+        $created = $this->carts->createGuestCart();
+        $cartId = (string) $created['cart']->getKey();
+
+        $this->carts->addItem(
+            $cartId,
+            $data['product_id'],
+            $data['product_variant_id'] ?? null,
+            (string) $data['quantity'],
+            1,
+        );
+
+        $request->session()->put('sales.direct_checkouts.'.$cartId, $created['guest_token']);
+
+        return redirect()->route('sales.cart.checkout.direct', ['cartId' => $cartId]);
+    }
+
+    public function directCheckoutPage(Request $request, string $cartId): View
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->hasRole('customer'), 403);
+        abort_unless(is_string($request->session()->get('sales.direct_checkouts.'.$cartId)), 404);
+
+        return view('storefront.checkout', ['directCartId' => $cartId]);
+    }
+
     public function checkoutPreview(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -132,12 +178,39 @@ final class SalesCartController
             abort(403);
         }
 
-        $cart = $this->resolveCart($request);
+        $directCartId = $request->query('direct_cart_id');
+        $directToken = null;
+        if ($directCartId !== null) {
+            abort_unless(is_string($directCartId) && preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/', $directCartId) === 1, 404);
+            $directToken = $request->session()->get('sales.direct_checkouts.'.$directCartId);
+            abort_unless(is_string($directToken), 404);
+            $cartId = $directCartId;
+        } else {
+            $cartId = (string) $this->resolveCart($request)->getKey();
+        }
 
-        return response()->json(['data' => $this->checkout->preview(
-            (string) $user->getKey(),
-            (string) $cart->getKey(),
-        )]);
+        $preview = $this->checkout->preview((string) $user->getKey(), $cartId, $directToken);
+        $addresses = Address::query()
+            ->with('country')
+            ->where('user_id', (string) $user->getKey())
+            ->whereNull('cooperative_id')
+            ->whereHas('country', static fn ($query) => $query->where('is_active', true))
+            ->orderByDesc('is_primary')
+            ->orderBy('created_at')
+            ->get()
+            ->map(static fn (Address $address): array => [
+                'id' => (string) $address->getKey(),
+                'label' => trim(implode(', ', array_filter([
+                    $address->number,
+                    $address->street,
+                    $address->city,
+                    $address->region,
+                    $address->country?->name,
+                ]))),
+                'is_primary' => (bool) $address->is_primary,
+            ])->values();
+
+        return response()->json(['data' => $preview + ['addresses' => $addresses]]);
     }
 
     public function checkoutConfirm(Request $request): JsonResponse
@@ -150,15 +223,30 @@ final class SalesCartController
         $data = $request->validate([
             'delivery_address_id' => ['required', 'string', 'size:26'],
             'idempotency_key' => ['required', 'string', 'min:16', 'max:100'],
+            'direct_cart_id' => ['nullable', 'string', 'size:26'],
         ]);
 
-        $cart = $this->resolveCart($request);
+        $directCartId = $data['direct_cart_id'] ?? null;
+        $directToken = null;
+        if ($directCartId !== null) {
+            $directToken = $request->session()->get('sales.direct_checkouts.'.$directCartId);
+            abort_unless(is_string($directToken), 404);
+            $cartId = $directCartId;
+        } else {
+            $cartId = (string) $this->resolveCart($request)->getKey();
+        }
+
         $result = $this->checkout->confirm(
             (string) $user->getKey(),
-            (string) $cart->getKey(),
+            $cartId,
             $data['delivery_address_id'],
             $data['idempotency_key'],
+            $directToken,
         );
+
+        if ($directCartId !== null) {
+            $request->session()->forget('sales.direct_checkouts.'.$directCartId);
+        }
 
         return response()->json(['data' => $result]);
     }
