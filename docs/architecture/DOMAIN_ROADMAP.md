@@ -1130,6 +1130,8 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 - Tableau de bord client : raccourcis vers Boutique, panier, commandes, profil/carnet d'adresses, mot de passe, appareils et notifications.
 - Tableaux de bord `cooperative_admin` et `super_admin` : ouverture directe de la fiche de chaque coopérative déjà filtrée par `visibleTo($user)`.
 - Tableau de bord `super_admin_root` : raccourcis vers catégories globales, inventaire, notifications et sécurité des accès.
+- Mise en forme des nouveaux raccourcis du tableau de bord client dans son layout dédié.
+- Tests Feature ajoutés pour la navigation du tableau de bord client et les raccourcis Root : `ProductStorefrontTest` et `BackOfficeDashboardControllerTest`. Ils sont écrits mais pas encore exécutés.
 - Le listing back-office des utilisateurs ne présente pas de bouton de création ; la route de création reste protégée par `Gate::authorize('create', User::class)`. La règle métier qui interdit au `cooperative_admin` de créer/inviter des utilisateurs reste donc à préserver.
 - Les trois classes référencées par les directives `@can` de la fiche coopérative ont été normalisées. Le correctif doit encore être confirmé par compilation Blade et tests Feature.
 - Commits de cette séquence : `879952d`, `d0379c0`, `cb3db1d`, `ed965f2` (en plus des correctifs précédemment consignés).
