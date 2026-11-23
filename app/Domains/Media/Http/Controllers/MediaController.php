@@ -189,15 +189,11 @@ final class MediaController
     public function restore(Request $request, string $media): JsonResponse
     {
         $record = Media::withTrashed()->findOrFail($media);
-        $data = $request->validate([
-            'make_primary' => ['sometimes', 'boolean'],
+        $request->validate([
+            'make_primary' => ['prohibited'],
         ]);
 
-        $restored = $this->media->restore(
-            $request->user(),
-            $record,
-            (bool) ($data['make_primary'] ?? false),
-        );
+        $restored = $this->media->restore($request->user(), $record);
 
         return response()->json([
             'data' => [
