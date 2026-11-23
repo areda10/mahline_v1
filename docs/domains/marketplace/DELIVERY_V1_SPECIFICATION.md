@@ -267,3 +267,29 @@ Le domaine ne peut être déclaré gelé qu'après :
 - audit final des références, imports, routes, policies, middleware, permissions, événements et documentation.
 
 Aucun code ou migration Delivery n'est créé par cette spécification.
+
+
+### 2.3.1 Tarif initial provisoire — 40 DH par expédition coopérative (décision utilisateur du 23 novembre 2026)
+
+**Statut : VALIDÉ pour le tarif initial V1 ; tarif futur configurable par société de livraison.**
+
+- Le tarif actuellement appliqué est fixé à **40,00 MAD pour chaque expédition d'une coopérative vers le client**.
+- L'unité de facturation est l'expédition / la sous-commande coopérative, et non la commande principale, l'article, la ligne ou la quantité.
+- Tous les articles d'une même sous-commande coopérative expédiés ensemble vers le même client partagent un seul frais de 40,00 MAD.
+- Une commande principale multi-coopératives additionne un frais par coopérative expéditrice : une coopérative = 40,00 MAD ; deux coopératives = 80,00 MAD ; trois coopératives = 120,00 MAD.
+- Le total de livraison de la commande principale est la somme exacte des frais de livraison des sous-commandes qui la composent.
+- Chaque sous-commande conserve son propre montant de livraison ; le total de la commande principale doit correspondre à la somme de ses sous-totaux produits et de ses frais de livraison.
+- Le montant de 40,00 MAD est une valeur initiale provisoire et ne doit pas être codée comme une constante métier définitive.
+- Lorsque les contrats et grilles des sociétés de livraison seront configurés, Delivery calculera le montant applicable à chaque expédition selon la société/les conditions tarifaires retenues et le trajet. Sales ne calcule ni ne choisit lui-même le tarif.
+- Le tarif appliqué, sa devise, sa source (tarif initial ou grille/version de société de livraison), son contexte et son horodatage doivent être conservés dans le devis puis dans le snapshot immuable de la commande.
+- Une modification future de la grille tarifaire ne doit pas modifier rétroactivement les devis acceptés ni les commandes déjà créées.
+- Les exemples tarifaires de la section 2.2 (30/40/70 DH par trajet) restent des exemples de découverte et ne remplacent pas cette décision de tarif initial à 40,00 MAD par expédition.
+
+**Exemples de calcul :**
+
+| Expéditions vers le même client | Frais |
+|---|---:|
+| 1 coopérative, plusieurs articles | 40,00 MAD |
+| 2 coopératives | 80,00 MAD |
+| 3 coopératives | 120,00 MAD |
+
