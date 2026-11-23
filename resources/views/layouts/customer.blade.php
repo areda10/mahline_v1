@@ -17,6 +17,11 @@
         main{max-width:1100px;margin:28px auto;padding:0 20px}
         .card{padding:22px;margin-bottom:18px;background:#fff;border:1px solid #e0e8e3;border-radius:10px}
         .muted{color:#65736e}
+        .actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:14px}
+        .button{display:inline-block;padding:10px 14px;border:1px solid #176b57;border-radius:7px;background:#176b57;color:#fff;font-weight:700;text-decoration:none}
+        .button:hover{background:#105342;text-decoration:none}
+        .button-secondary{background:#fff;color:#176b57}
+        .button-secondary:hover{background:#eef5f0}
         .alert{padding:12px 16px;border-radius:7px;margin-bottom:16px}
         .alert-success{background:#e4f5eb;color:#14532d}
         .alert-error{background:#fff0f0;color:#982d35}
