@@ -184,6 +184,9 @@ final class BackOfficeDashboardControllerTest extends TestCase
             ->assertSee('Catégories globales')
             ->assertSee('Coopératives')
             ->assertSee('Utilisateurs')
+            ->assertSee('Inventaire')
+            ->assertSee('Notifications')
+            ->assertSee('Sécurité des accès')
             ->assertDontSee('Coopérative :');
     }
 }
