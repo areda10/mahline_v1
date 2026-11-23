@@ -197,6 +197,12 @@ final class SalesCheckoutService
                 ]);
             }
 
+            if ($excludedIds !== []) {
+                throw ValidationException::withMessages([
+                    'checkout' => ['Au moins un article du panier est indisponible. Aucune commande partielle ne sera créée : corrigez ou retirez les lignes concernées, puis recommencez. Votre panier a été conservé.'],
+                ]);
+            }
+
             if ($eligibleIds === []) {
                 throw ValidationException::withMessages([
                     'inventory' => ['Aucune coopérative ne dispose actuellement de tous les articles demandés. Votre panier a été conservé.'],
@@ -249,6 +255,12 @@ final class SalesCheckoutService
                 ->map(static fn ($suborder): string => (string) $suborder->cooperative_id)
                 ->values()
                 ->all();
+
+            if (array_diff($cooperativeIds, $orderedIds) !== []) {
+                throw ValidationException::withMessages([
+                    'inventory' => ['La disponibilité a changé pendant la confirmation. La commande complète n’a pas été validée et votre panier a été conservé. Actualisez le récapitulatif avant de réessayer.'],
+                ]);
+            }
 
             $orderExcludedIds = array_values(array_unique(array_merge(
                 $excludedIds,
