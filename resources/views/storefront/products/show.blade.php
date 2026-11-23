@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const amount = Number(quantity.value);
-        if (!Number.isFinite(amount) || amount <= 0 || amount > 100 || !/^\\d{1,3}(\\.\\d{1,3})?$/.test(quantity.value)) {
+        if (!Number.isFinite(amount) || amount <= 0 || amount > 100 || !/^\d{1,3}(\.\d{1,3})?$/.test(quantity.value)) {
             event.preventDefault();
             feedback.textContent = 'La quantité doit être comprise entre 0,001 et 100, avec trois décimales maximum.';
             return;
