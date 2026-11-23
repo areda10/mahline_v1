@@ -28,7 +28,7 @@
                     <thead><tr><th>Coopérative</th><th>Statut</th><th>Accès</th></tr></thead>
                     <tbody>
                         @foreach($cooperatives as $cooperative)
-                            <tr><td>{{ $cooperative->name }}</td><td>{{ $cooperative->status->value }}</td></tr>
+                            <tr><td>{{ $cooperative->name }}</td><td>{{ $cooperative->status->value }}</td><td><a href="{{ route('backoffice.cooperatives.show', $cooperative) }}">Ouvrir la fiche</a></td></tr>
                         @endforeach
                     </tbody>
                 </table>
