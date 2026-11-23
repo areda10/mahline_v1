@@ -57,6 +57,8 @@
             @auth
                 @if (auth()->user()->hasRole('customer'))
                     <a href="{{ route('customer.dashboard') }}">Mon compte</a>
+                    <a href="{{ route('customer.orders.index') }}">Mes commandes</a>
+                    <a href="{{ route('customer.profile.edit') }}">Mon profil</a>
                 @else
                     <a href="{{ url('/') }}">Mon espace</a>
                 @endif
