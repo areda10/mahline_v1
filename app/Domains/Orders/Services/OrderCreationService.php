@@ -364,12 +364,14 @@ final class OrderCreationService
             }
 
             $deliveryTotalCents = 0;
+            $usedDeliveryQuotes = [];
             foreach (array_keys($cooperativeTotals) as $cooperativeId) {
                 if (! isset($quotesByCooperative[$cooperativeId])) {
                     throw ValidationException::withMessages([
                         'delivery' => ['Le devis de livraison manque pour une coopérative de la commande.'],
                     ]);
                 }
+                $usedDeliveryQuotes[$cooperativeId] = $quotesByCooperative[$cooperativeId];
                 $deliveryTotalCents += $this->moneyToCents((string) $quotesByCooperative[$cooperativeId]['amount']);
             }
             $itemsTotalCents = array_sum($cooperativeTotals);
@@ -381,7 +383,7 @@ final class OrderCreationService
                 'items_subtotal' => $this->formatMoney($itemsTotalCents),
                 'delivery_total' => $this->formatMoney($deliveryTotalCents),
                 'grand_total' => $this->formatMoney($itemsTotalCents + $deliveryTotalCents),
-                'delivery_snapshot' => array_values($quotesByCooperative),
+                'delivery_snapshot' => array_values($usedDeliveryQuotes),
                 'delivery_address_snapshot' => $address,
                 'checkout_idempotency_key' => $idempotencyKey,
                 'checkout_request_hash' => $checkoutRequestHash,
