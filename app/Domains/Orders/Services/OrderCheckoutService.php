@@ -24,6 +24,7 @@ final class OrderCheckoutService implements OrderCheckoutCreator
             [
                 'delivery_address_snapshot' => $checkout->deliveryAddressSnapshot,
                 'items' => $checkout->items,
+                'delivery_quotes' => $checkout->deliveryQuotes,
                 'idempotency_key' => $checkout->idempotencyKey,
             ],
             $checkout->idempotencyKey,
