@@ -104,24 +104,33 @@
                         <div class="shop-muted" style="font-size:11px">Plusieurs variantes disponibles</div>
                     @endif
                     <a href="{{ route('storefront.products.show', $product) }}" class="shop-button shop-button-secondary" style="width:100%;margin-top:13px">Voir le produit</a>
-                    @auth
-                        @if (auth()->user()->hasRole('customer'))
-                            @if ($product->activeVariants->isEmpty())
+                    @if ($product->activeVariants->isEmpty())
+                        @auth
+                            @if (auth()->user()->hasRole('customer'))
+                                <button type="button" class="shop-button shop-button-secondary" data-add-cart data-product-id="{{ $product->getKey() }}" style="width:100%;margin-top:8px">Ajouter au panier</button>
                                 <form method="POST" action="{{ route('sales.cart.checkout.direct.start') }}" style="margin-top:8px">
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $product->getKey() }}">
                                     <input type="hidden" name="quantity" value="1.000">
                                     <button class="shop-button" type="submit" style="width:100%">Commander</button>
                                 </form>
-                            @else
-                                <a href="{{ route('storefront.products.show', $product) }}" class="shop-button" style="width:100%;margin-top:8px">Commander — choisir une variante</a>
+                            @elseif (auth()->user()->hasRole('user') || auth()->user()->hasRole('cooperative_admin') || auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('super_admin_root'))
+                                <span class="shop-muted" style="display:block;margin-top:8px;font-size:11px">Achat réservé à l’espace client.</span>
                             @endif
                         @else
-                            <a href="{{ route('customer.login') }}" class="shop-button" style="width:100%;margin-top:8px">Connexion client pour commander</a>
-                        @endif
+                            <button type="button" class="shop-button shop-button-secondary" data-add-cart data-product-id="{{ $product->getKey() }}" style="width:100%;margin-top:8px">Ajouter au panier</button>
+                        @endauth
                     @else
-                        <a href="{{ route('customer.login') }}" class="shop-button" style="width:100%;margin-top:8px">Connexion client pour commander</a>
-                    @endauth
+                        <a href="{{ route('storefront.products.show', $product) }}" class="shop-button shop-button-secondary" style="width:100%;margin-top:8px">Choisir une variante</a>
+                        @auth
+                            @if (auth()->user()->hasRole('customer'))
+                                <a href="{{ route('storefront.products.show', $product) }}" class="shop-button" style="width:100%;margin-top:8px">Commander — choisir une variante</a>
+                            @elseif (auth()->user()->hasRole('user') || auth()->user()->hasRole('cooperative_admin') || auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('super_admin_root'))
+                                <span class="shop-muted" style="display:block;margin-top:8px;font-size:11px">Achat réservé à l’espace client.</span>
+                            @endif
+                        @endauth
+                    @endif
+                    <p data-cart-feedback="{{ $product->getKey() }}" role="status" class="shop-muted" style="font-size:11px;min-height:16px;margin:5px 0 0"></p>
                 </div>
             </article>
         @endforeach
