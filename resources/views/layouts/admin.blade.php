@@ -88,6 +88,7 @@
             @if($currentUser->hasRole('super_admin_root'))
                 <a href="{{ route('root.backoffice.dashboard') }}">Tableau de bord</a>
                 <a href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
+                <a href="{{ route('backoffice.orders.cooperative.index') }}">Commandes</a>
             @elseif($currentUser->hasRole('super_admin'))
                 <a href="{{ route('backoffice.dashboard') }}">Tableau de bord</a>
                 <a href="{{ route('backoffice.cooperatives.index') }}">Coopératives</a>
