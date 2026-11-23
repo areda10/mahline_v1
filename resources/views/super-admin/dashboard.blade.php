@@ -25,7 +25,7 @@
         @else
             <div class="table-wrap">
                 <table>
-                    <thead><tr><th>Coopérative</th><th>Statut</th></tr></thead>
+                    <thead><tr><th>Coopérative</th><th>Statut</th><th>Accès</th></tr></thead>
                     <tbody>
                         @foreach($cooperatives as $cooperative)
                             <tr><td>{{ $cooperative->name }}</td><td>{{ $cooperative->status->value }}</td></tr>
