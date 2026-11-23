@@ -313,7 +313,7 @@ final class CooperativePolicyTest extends TestCase
 
     private function createCooperative(): Cooperative
     {
-        return Cooperative::factory()->create();
+        return Cooperative::factory()->active()->create();
     }
 
     /**
