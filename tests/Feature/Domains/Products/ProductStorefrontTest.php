@@ -108,6 +108,26 @@ final class ProductStorefrontTest extends TestCase
         $this->get(route('storefront.products.show', $product))->assertNotFound();
     }
 
+    public function test_authenticated_customer_can_navigate_from_shop_to_account_orders_and_profile(): void
+    {
+        $role = \\App\\Domains\\Identity\\Authorization\\Models\\Role::query()->firstOrCreate(
+            ['slug' => 'customer'],
+            ['name' => 'Customer', 'is_active' => true],
+        );
+        $customer = \\App\\Domains\\Identity\\Users\\Models\\User::factory()->create([
+            'status' => \\App\\Domains\\Identity\\Enums\\UserStatus::Active,
+            'email_verified_at' => now(),
+        ]);
+        $customer->roles()->attach($role->getKey());
+
+        $this->actingAs($customer)
+            ->get(route('storefront.products.index'))
+            ->assertOk()
+            ->assertSee(route('customer.dashboard'))
+            ->assertSee(route('customer.orders.index'))
+            ->assertSee(route('customer.profile.edit'));
+    }
+
     private function publishedProduct(string $name, array $productAttributes = [], bool $activeCooperative = true): array
     {
         $cooperative = $activeCooperative
