@@ -60,7 +60,7 @@ final class IdentityUserAddressOwnerGateway implements UserAddressOwnerGateway
         return new UserAddressOwnerData(
             id: (string) $user->getKey(),
             cooperativeId: $user->cooperative_id === null ? null : (string) $user->cooperative_id,
-            isCustomer: $authorized && in_array('customer', $roles, true),
+            isCustomer: in_array('customer', $roles, true),
             authorized: $authorized,
             roles: $roles,
         );
