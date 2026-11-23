@@ -70,6 +70,15 @@ final class OrderCheckoutServiceTest extends TestCase
                 'product_id' => (string) $product->getKey(),
                 'quantity' => '2.000',
             ]],
+            deliveryQuotes: [[
+                'quote_reference' => 'TEST-QUOTE-ORDER-CHECKOUT-001',
+                'cooperative_id' => (string) $cooperative->getKey(),
+                'amount' => '40.00',
+                'currency' => 'MAD',
+                'tariff_code' => 'TEST_INITIAL_FLAT',
+                'issued_at' => now()->toIso8601String(),
+                'expires_at' => now()->addMinutes(30)->toIso8601String(),
+            ]],
         );
 
         $creator = app(OrderCheckoutCreator::class);
