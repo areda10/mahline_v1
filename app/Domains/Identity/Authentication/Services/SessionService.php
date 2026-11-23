@@ -103,12 +103,20 @@ final class SessionService extends BaseService
      */
     public function inactivityTimeoutMinutes(User $user): int
     {
+        $roleSlugs = $user->roles()
+            ->where('is_active', true)
+            ->pluck('slug')
+            ->all();
+
+        // Inactivity limits are a session policy, not an authorization check.
+        // Resolve roles directly so an inactive cooperative or an incomplete
+        // membership fixture cannot silently downgrade a privileged timeout.
         return match (true) {
-            $user->hasRole('super_admin_root') => 15,
-            $user->hasRole('super_admin') => 30,
-            $user->hasRole('cooperative_admin') => 30,
-            $user->hasRole('customer') => 60,
-            $user->hasRole('user') => 60,
+            in_array('super_admin_root', $roleSlugs, true) => 15,
+            in_array('super_admin', $roleSlugs, true) => 30,
+            in_array('cooperative_admin', $roleSlugs, true) => 30,
+            in_array('customer', $roleSlugs, true) => 60,
+            in_array('user', $roleSlugs, true) => 60,
             default => 60,
         };
     }
