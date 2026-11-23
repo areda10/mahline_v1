@@ -104,6 +104,7 @@
                 <a href="{{ route('root.backoffice.cooperatives.index') }}">Coopératives</a>
                 <a href="{{ route('root.backoffice.users.index') }}">Utilisateurs</a>
                 <a href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
+                <a href="{{ route('root.backoffice.orders.cooperative.index') }}">Commandes</a>
                 <a href="{{ route('notifications.index') }}">Notifications</a>
                 <a href="{{ route('root.backoffice.profile.address.edit') }}">Mon adresse</a>
                 <a href="{{ route('security.password.edit') }}">Mot de passe</a>
