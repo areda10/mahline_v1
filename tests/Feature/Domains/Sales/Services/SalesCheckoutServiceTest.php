@@ -62,6 +62,8 @@ final class SalesCheckoutServiceTest extends TestCase
         );
 
         $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseHas('orders', ['id' => $result['order_id'], 'delivery_total' => '40.00']);
+        $this->assertDatabaseHas('cooperative_orders', ['order_id' => $result['order_id'], 'delivery_fee' => '40.00']);
         $this->assertSame((string) $availableCooperative->getKey(), $result['ordered_cooperative_ids'][0]);
         $this->assertContains((string) $unavailableCooperative->getKey(), $result['excluded_cooperative_ids']);
         $this->assertDatabaseHas('sales_cart_items', [
