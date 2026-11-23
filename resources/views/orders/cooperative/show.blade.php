@@ -6,7 +6,7 @@
 @php
     $isRoot = auth()->user()->hasRole('super_admin_root');
     $isAdmin = auth()->user()->hasAnyRole(['super_admin_root', 'super_admin']);
-    $isAwaiting = $suborder->status === \\App\\Domains\\Orders\\Enums\\CooperativeOrderStatus::AWAITING_COOPERATIVE;
+    $isAwaiting = $suborder->status === \App\Domains\Orders\Enums\CooperativeOrderStatus::AWAITING_COOPERATIVE;
     $deadlineOpen = $suborder->response_deadline_at !== null && $suborder->response_deadline_at->isFuture();
     $routeBase = $routePrefix.'.orders.cooperative';
     $address = $suborder->order?->delivery_address_snapshot ?? [];
@@ -139,8 +139,8 @@
                 <div class="form-grid">
                     <label>Nouvelle échéance
                         <input type="datetime-local" name="response_deadline_at" required
-                            min="{{ now()->format('Y-m-d\\TH:i') }}"
-                            max="{{ $fixedMaximum->format('Y-m-d\\TH:i') }}"
+                            min="{{ now()->format('Y-m-d\TH:i') }}"
+                            max="{{ $fixedMaximum->format('Y-m-d\TH:i') }}"
                             value="{{ old('response_deadline_at') }}">
                     </label>
                     <label>Motif obligatoire
