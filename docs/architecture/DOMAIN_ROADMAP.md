@@ -1095,6 +1095,7 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 ### 13.2 Intégrations UI réalisées pendant la séquence
 
 - Navigation Boutique → espace client, commandes et profil.
+- Correctif de robustesse du panier : le script ne manipule le lien de checkout que lorsqu'il est présent (ce lien n'existe pas dans le rendu client connecté). Commit `fad149b` ; tests runtime non exécutés.
 - Retrait du bloc de photo de profil qui annonçait une fonctionnalité Media dans le profil client. Aucun développement Media n'est inclus dans ce chantier.
 - Navigation back-office enrichie avec notifications, sessions, appareils de confiance et jetons API.
 - Navigation Root enrichie avec inventaire, notifications, appareils de confiance et jetons API.
@@ -1107,7 +1108,7 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 
 | Périmètre | Constat observé dans le dépôt | Conséquence UI |
 |---|---|---|
-| Sales / Checkout | Les endpoints de prévisualisation et confirmation existent, mais le panier présente encore un bouton de finalisation désactivé. | Le parcours checkout n'est pas considéré intégré ; il faut auditer les contrats d'adresse, disponibilité, idempotence et coûts de livraison avant d'activer la confirmation. |
+| Sales / Checkout | Les endpoints de prévisualisation et confirmation existent ; l'adresse snapshot, la disponibilité Inventory et l'idempotence sont implémentées. `OrderCreationService` fixe toutefois `delivery_total` et `delivery_fee` à `0.00`. | Le parcours checkout reste désactivé tant que le calcul et l'intégration Delivery ne sont pas disponibles et testés ; ne pas créer de commande avec des frais de livraison fictifs ou nuls. |
 | Orders — espace coopérative | Les écrans client d'historique/détail et les contrôles d disponibilité existent ; aucun contrôleur d'interface coopérative de traitement des commandes n'a été recensé dans `app/Domains/Orders/Http/Controllers`. | Ne pas ajouter de faux lien « Commandes à traiter » avant la mise en place et l'audit du parcours coopérative. |
 | Delivery | Le dossier de domaine existe, mais aucun contrôleur HTTP, service métier ou route Delivery n'a été recensé dans l'inventaire vérifié. | Pas d'écran de devis, expédition, suivi, preuve de livraison ou retour à relier pour l'instant. |
 | Finance | Le dossier de domaine existe, mais aucun contrôleur HTTP ou service Finance n'a été recensé dans l'inventaire vérifié. | Pas d'écran de factures, paiements, commissions, remboursements, rapprochements ou reversements à relier pour l'instant. |
