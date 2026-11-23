@@ -1184,3 +1184,27 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 - Les routes de prévisualisation et de confirmation ne doivent pas être considérées comme une autorisation d'activer le checkout. Le parcours client ne doit pas être présenté comme opérationnel ni permettre une commande tant que Delivery ne fournit pas les coûts réels et que le total n'est pas recalculé/validé côté serveur.
 - Prochaine tranche : auditer les règles et contrats Delivery, définir le devis de livraison multi-coopérative et son intégration transactionnelle dans Sales/Orders, puis seulement construire et tester l'interface de confirmation client.
 
+
+
+### 13.8 Décision Delivery / Sales — tarif initial de livraison (23 novembre 2026)
+
+**Décision utilisateur validée :**
+- Tarif initial : **40,00 MAD par expédition d'une coopérative vers le client**.
+- Le tarif s'applique une seule fois à l'expédition/sous-commande coopérative, même si celle-ci contient plusieurs articles.
+- Le total de livraison d'une commande multi-coopératives est la somme des frais par coopérative : 1 coopérative = 40 DH ; 2 = 80 DH ; 3 = 120 DH.
+- Le tarif sera ultérieurement configurable et fourni par Delivery selon la société de livraison et sa grille de prix. Le tarif initial ne doit donc pas devenir une constante définitive dans Orders ou Sales.
+- Sales doit afficher le détail de livraison par coopérative et le total agrégé ; Delivery reste propriétaire du calcul et des devis.
+- Le tarif et sa provenance/version doivent être snapshotés dans la commande. Une mise à jour ultérieure des tarifs ne change pas les commandes déjà créées.
+
+**Spécifications mises à jour :**
+- \`docs/domains/marketplace/DELIVERY_V1_SPECIFICATION.md\` — section 2.3.1.
+- \`docs/domains/marketplace/SALES_V1_SPECIFICATION.md\` — règle SALES-038.
+
+**Conséquence technique :**
+- Le blocage du checkout n'est plus l'absence d'une règle de prix : le tarif initial de 40 DH par expédition est désormais défini.
+- Le blocage reste technique : le code actuel Orders enregistre encore \`delivery_total = 0.00\` et \`delivery_fee = 0.00\`, et Sales ne consomme pas encore un contrat de devis Delivery.
+- Il faut donc implémenter le contrat DeliveryQuoteProvider et le calcul d'un devis par sous-commande coopérative, puis transmettre les snapshots validés à Orders. Il ne faut pas contourner cette frontière en mettant arbitrairement 40 DH dans Sales ou Orders.
+- Avant toute mise en production, protéger aussi la route de confirmation contre la création d'une commande sans devis Delivery valide.
+
+**État :** règle métier documentée et validée ; implémentation Delivery / intégration Sales / snapshots Orders et tests restent à construire. Aucun test n'a été exécuté pour cette décision documentaire.
+
