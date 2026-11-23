@@ -79,7 +79,15 @@
                 <label class="shop-label" for="product-quantity">Quantité</label>
                 <input class="shop-input" id="product-quantity" type="number" min="0.001" max="100" step="0.001" value="1.000" required>
             </div>
-            <button class="shop-button shop-button-secondary" id="add-to-cart" type="button" style="flex:1;min-height:43px" @disabled($hasVariants && ! $variantsAvailable)>Ajouter au panier</button>
+            @auth
+                @if (auth()->user()->hasRole('customer'))
+                    <button class="shop-button shop-button-secondary" id="add-to-cart" type="button" style="flex:1;min-height:43px" @disabled($hasVariants && ! $variantsAvailable)>Ajouter au panier</button>
+                @else
+                    <span class="shop-muted" style="font-size:11px">Achat réservé à l’espace client.</span>
+                @endif
+            @else
+                <button class="shop-button shop-button-secondary" id="add-to-cart" type="button" style="flex:1;min-height:43px" @disabled($hasVariants && ! $variantsAvailable)>Ajouter au panier</button>
+            @endauth
         </div>
         @auth
             @if (auth()->user()->hasRole('customer'))
@@ -91,7 +99,7 @@
                     <button class="shop-button" id="buy-now" type="submit" style="width:100%;min-height:45px" @disabled($hasVariants && ! $variantsAvailable)>Commander directement</button>
                 </form>
             @else
-                <a class="shop-button" href="{{ route('customer.login') }}" style="display:block;text-align:center;margin-top:10px">Connexion espace client pour commander</a>
+                <p class="shop-muted" style="font-size:11px;margin-top:10px">La commande est réservée aux comptes Customer.</p>
             @endif
         @else
             <a class="shop-button" href="{{ route('customer.login') }}" style="display:block;text-align:center;margin-top:10px">Se connecter pour commander directement</a>
