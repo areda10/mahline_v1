@@ -129,6 +129,15 @@ final class ProductStorefrontTest extends TestCase
             ->assertSee(route('customer.dashboard'))
             ->assertSee(route('customer.orders.index'))
             ->assertSee(route('customer.profile.edit'));
+
+        $this->actingAs($customer)
+            ->get(route('customer.dashboard'))
+            ->assertOk()
+            ->assertSee('Parcourir la boutique')
+            ->assertSee('Voir mon panier')
+            ->assertSee('Suivre mes commandes')
+            ->assertSee('Profil et carnet d’adresses')
+            ->assertSee('Mes notifications');
     }
 
     private function publishedProduct(string $name, array $productAttributes = [], bool $activeCooperative = true): array
