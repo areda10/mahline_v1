@@ -19,7 +19,18 @@
         <section class="shop-card" style="padding:22px">
             <h2 style="font-size:19px;margin:0 0 15px">Adresse de livraison</h2>
             <div id="checkout-addresses"></div>
-            <a href="{{ route('customer.profile.edit') }}" class="shop-button shop-button-secondary" style="margin-top:10px">Gérer mon carnet d’adresses</a>
+            <details style="margin-top:14px">
+                <summary style="cursor:pointer;font-weight:700;font-size:13px">Ajouter une nouvelle adresse</summary>
+                <form id="checkout-address-form" style="display:grid;gap:10px;margin-top:13px">
+                    <div><label class="shop-label" for="address-number">Numéro (facultatif)</label><input class="shop-input" id="address-number" name="number" maxlength="50"></div>
+                    <div><label class="shop-label" for="address-street">Rue / adresse *</label><input class="shop-input" id="address-street" name="street" maxlength="255" required></div>
+                    <div><label class="shop-label" for="address-floor">Étage / complément (facultatif)</label><input class="shop-input" id="address-floor" name="floor" maxlength="50"></div>
+                    <div><label class="shop-label" for="address-city">Ville *</label><input class="shop-input" id="address-city" name="city" maxlength="120" required></div>
+                    <div><label class="shop-label" for="address-postal">Code postal (facultatif)</label><input class="shop-input" id="address-postal" name="postal_code" maxlength="20"></div>
+                    <button type="submit" class="shop-button shop-button-secondary">Enregistrer cette adresse</button>
+                    <p id="checkout-address-feedback" class="shop-muted" role="status" style="font-size:12px;margin:0"></p>
+                </form>
+            </details>
         </section>
         <aside class="shop-card" style="padding:22px">
             <h2 style="font-size:19px;margin:0 0 15px">Total de la commande</h2>
@@ -105,6 +116,31 @@ document.addEventListener('DOMContentLoaded', () => {
             feedback.textContent = error.message;
         }
     }
+
+    document.getElementById('checkout-address-form')?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const addressFeedback = document.getElementById('checkout-address-feedback');
+        const submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        addressFeedback.textContent = 'Enregistrement…';
+        try {
+            const response = await fetch(@json(route('customer.profile.addresses.store')), {
+                method:'POST',
+                headers:{'Accept':'application/json','X-CSRF-TOKEN':csrf},
+                body:new FormData(form)
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || Object.values(payload.errors || {}).flat().join(' ') || 'Impossible d’enregistrer cette adresse.');
+            form.reset();
+            addressFeedback.textContent = 'Adresse enregistrée. Actualisation du récapitulatif…';
+            await loadPreview();
+        } catch (error) {
+            addressFeedback.textContent = error.message;
+        } finally {
+            submit.disabled = false;
+        }
+    });
 
     confirmButton.addEventListener('click', async () => {
         const address = document.getElementById('delivery-address');
