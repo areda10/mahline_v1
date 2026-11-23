@@ -1180,6 +1180,7 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 **Sales / confirmation client — blocage confirmé :**
 - `SalesCheckoutService::confirm()` appelle le créateur Orders sans fournir de devis ou de frais Delivery.
 - `OrderCreationService` enregistre actuellement `delivery_total = 0.00` sur la commande et `delivery_fee = 0.00` sur chaque sous-commande.
-- Les routes de prévisualisation et de confirmation existent déjà, mais ce constat ne justifie pas l'activation du checkout. Le parcours client ne doit pas être présenté comme opérationnel ni permettre une commande tant que Delivery ne fournit pas les coûts réels et que le total n'est pas recalculé/validé côté serveur.
+- Le bouton de finalisation de la vue panier est désactivé, mais la route POST de confirmation existe encore et appelle le service de checkout. Une requête HTTP directe peut donc actuellement atteindre la création d'une commande avec des frais de livraison nuls : c'est un blocage technique à corriger avant toute exposition du parcours client.
+- Les routes de prévisualisation et de confirmation ne doivent pas être considérées comme une autorisation d'activer le checkout. Le parcours client ne doit pas être présenté comme opérationnel ni permettre une commande tant que Delivery ne fournit pas les coûts réels et que le total n'est pas recalculé/validé côté serveur.
 - Prochaine tranche : auditer les règles et contrats Delivery, définir le devis de livraison multi-coopérative et son intégration transactionnelle dans Sales/Orders, puis seulement construire et tester l'interface de confirmation client.
 
