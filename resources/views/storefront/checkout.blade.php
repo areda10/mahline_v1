@@ -42,6 +42,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const directCartId = @json($directCartId);
+    const idempotencyKey = @json($idempotencyKey);
     const loading = document.getElementById('checkout-loading');
     const content = document.getElementById('checkout-content');
     const feedback = document.getElementById('checkout-feedback');
@@ -108,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         feedback.className = '';
         feedback.textContent = '';
         try {
-            const idempotencyKey = (window.crypto?.randomUUID?.() || (Date.now().toString(36)+Math.random().toString(36).slice(2))).replace(/-/g, '');
             const response = await fetch(@json(route('sales.cart.checkout.confirm')), {
                 method:'POST',
                 headers:{'Accept':'application/json','Content-Type':'application/json','X-CSRF-TOKEN':csrf},
