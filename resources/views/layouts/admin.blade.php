@@ -103,9 +103,12 @@
                 <a href="{{ route('backoffice.inventory.index') }}">Disponibilité du stock</a>
             @endif
 
+            <a href="{{ route('notifications.index') }}">Notifications</a>
             <a href="{{ route('backoffice.profile.address.edit') }}">Mon adresse</a>
-            <a href="{{ route('security.password.edit') }}">Sécurité · Mot de passe</a>
-            <a href="{{ route('backoffice.security.sessions.index') }}">Mes appareils connectés</a>
+            <a href="{{ route('security.password.edit') }}">Mot de passe</a>
+            <a href="{{ route('backoffice.security.sessions.index') }}">Sessions</a>
+            <a href="{{ route('backoffice.security.devices.index') }}">Appareils de confiance</a>
+            <a href="{{ route('backoffice.security.api-tokens.index') }}">Jetons API</a>
             <form method="POST" action="{{ route('authentication.logout') }}" style="display:inline">
                 @csrf
                 <button class="button button-secondary" type="submit">Déconnexion</button>
