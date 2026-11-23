@@ -50,7 +50,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->stock($cooperativeA, 'product', (string) $productA->getKey(), 'u', '10.000');
         $this->stock($cooperativeB, 'product', (string) $productB->getKey(), 'kg', '10.000');
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-01',
             'delivery_address_snapshot' => [
                 'street' => 'Avenue Hassan II',
@@ -69,7 +69,7 @@ final class OrderCreationServiceTest extends TestCase
                     'quantity' => '1.000',
                 ],
             ],
-        ]);
+        ]));
 
         $this->assertCount(2, $order->cooperativeOrders);
         $this->assertDatabaseCount('inventory_reservations', 0);
@@ -123,7 +123,7 @@ final class OrderCreationServiceTest extends TestCase
         ]);
         $this->stock($cooperative, 'variant', (string) $variant->getKey(), 'ml', '10.000');
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-02',
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
             'items' => [[
@@ -131,7 +131,7 @@ final class OrderCreationServiceTest extends TestCase
                 'product_variant_id' => (string) $variant->getKey(),
                 'quantity' => '1',
             ]],
-        ]);
+        ]));
 
         $this->assertSame('92.50', $order->cooperativeOrders->first()->items->first()->unit_price);
         $this->assertSame('ml', $order->cooperativeOrders->first()->items->first()->unit);
@@ -144,14 +144,14 @@ final class OrderCreationServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(OrderCreationService::class)->createFromCheckout($customer, [
+        app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-03',
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $unpriced->getKey(),
                 'quantity' => '1',
             ]],
-        ]);
+        ]));
     }
 
     public function test_checkout_rechecks_product_activity_and_accepted_commercial_fingerprint(): void
@@ -167,7 +167,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->stock($cooperative, 'product', (string) $product->getKey(), 'u', '10.000');
 
         try {
-            app(OrderCreationService::class)->createFromCheckout($customer, [
+            app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
                 'idempotency_key' => 'test-order-inactive-product-01',
                 'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
                 'items' => [[
@@ -176,7 +176,7 @@ final class OrderCreationServiceTest extends TestCase
                     'accepted_unit_price' => '20.00',
                     'quantity' => '1.000',
                 ]],
-            ]);
+            ]));
             $this->fail('An inactive product must not be ordered.');
         } catch (ValidationException) {
             $this->assertDatabaseCount('orders', 0);
@@ -185,7 +185,7 @@ final class OrderCreationServiceTest extends TestCase
         $product->forceFill(['is_active' => true])->save();
 
         try {
-            app(OrderCreationService::class)->createFromCheckout($customer, [
+            app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
                 'idempotency_key' => 'test-order-commercial-fingerprint-01',
                 'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
                 'items' => [[
@@ -195,7 +195,7 @@ final class OrderCreationServiceTest extends TestCase
                     'accepted_commercial_fingerprint' => str_repeat('0', 64),
                     'quantity' => '1.000',
                 ]],
-            ]);
+            ]));
             $this->fail('A changed commercial identity must require renewed acceptance.');
         } catch (ValidationException) {
             $this->assertDatabaseCount('orders', 0);
@@ -219,14 +219,14 @@ final class OrderCreationServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(OrderCreationService::class)->createFromCheckout($customer, [
+        app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-04',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
                 'quantity' => '1',
             ]],
-        ]);
+        ]));
     }
 
     public function test_checkout_rejects_parent_unit_when_a_variant_is_selected(): void
@@ -246,7 +246,7 @@ final class OrderCreationServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(OrderCreationService::class)->createFromCheckout($customer, [
+        app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-05',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
@@ -254,7 +254,7 @@ final class OrderCreationServiceTest extends TestCase
                 'product_variant_id' => (string) $variant->getKey(),
                 'quantity' => '1',
             ]],
-        ]);
+        ]));
     }
 
     public function test_checkout_rejects_products_without_a_registered_stock_unit(): void
@@ -269,7 +269,7 @@ final class OrderCreationServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
 
-        app(OrderCreationService::class)->createFromCheckout($customer, [
+        app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-06',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
@@ -277,7 +277,30 @@ final class OrderCreationServiceTest extends TestCase
                 'quantity' => '1',
                 'unit' => 'u',
             ]],
-        ]);
+        ]));
+    }
+
+    /** @param array<string, mixed> $checkout */
+    private function withDeliveryQuotes(array $checkout): array
+    {
+        $productIds = array_values(array_unique(array_map(
+            static fn (array $line): string => (string) $line['product_id'],
+            $checkout['items'],
+        )));
+        $cooperativeIds = Product::query()->whereIn('id', $productIds)
+            ->pluck('cooperative_id')->map(static fn ($id): string => (string) $id)->unique()->values();
+
+        $checkout['delivery_quotes'] = $cooperativeIds->map(static fn (string $cooperativeId): array => [
+            'quote_reference' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'cooperative_id' => $cooperativeId,
+            'amount' => '40.00',
+            'currency' => 'MAD',
+            'tariff_code' => 'TEST_INITIAL_FLAT',
+            'issued_at' => now()->toIso8601String(),
+            'expires_at' => now()->addMinutes(30)->toIso8601String(),
+        ])->all();
+
+        return $checkout;
     }
 
     private function stock(Cooperative $cooperative, string $stockableType, string $stockableId, string $unit, string $quantity): void
