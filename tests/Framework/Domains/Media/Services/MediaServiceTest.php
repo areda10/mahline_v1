@@ -598,7 +598,7 @@ final class MediaServiceTest extends TestCase
         Storage::disk('local')->put($media->path, "%PDF-1.4\nALTERED CONTENT\n%%EOF");
 
         try {
-            app(MediaService::class)->restore($actor, $media->fresh(), false);
+            app(MediaService::class)->restore($actor, $media->fresh());
             self::fail('An altered retained file must prevent restoration.');
         } catch (ValidationException) {
             self::assertSoftDeleted('media', ['id' => $media->getKey()]);
@@ -629,7 +629,7 @@ final class MediaServiceTest extends TestCase
         self::assertTrue($history->contains(fn (Media $item): bool => $item->is($previous)));
         self::assertTrue($previous->fresh()->trashed());
 
-        $restored = $service->restore($actor, $previous->fresh(), false);
+        $restored = $service->restore($actor, $previous->fresh());
         self::assertFalse($restored->trashed());
         self::assertSame($previous->getKey(), $actor->fresh()->profileImage->getKey());
         self::assertSoftDeleted('media', ['id' => $current->getKey()]);
