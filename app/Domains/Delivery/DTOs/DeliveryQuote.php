@@ -21,7 +21,7 @@ final readonly class DeliveryQuote
 
     public function assertUsable(): void
     {
-        if (bccomp($this->amount, '0.00', 2) <= 0 || $this->currency !== 'MAD') {
+        if ((float) $this->amount <= 0 || $this->currency !== 'MAD') {
             throw ValidationException::withMessages([
                 'delivery' => ['Le devis de livraison est invalide ou son montant est nul.'],
             ]);
