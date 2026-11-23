@@ -25,6 +25,7 @@ final class SalesCheckoutService
         private readonly CooperativeStatusReader $cooperatives,
         private readonly InventoryCheckoutAvailabilityReader $inventory,
         private readonly CheckoutAddressReader $addresses,
+        private readonly DeliveryQuoteProvider $deliveryQuotes,
         private readonly OrderCheckoutCreator $orders,
     ) {}
 
@@ -123,11 +124,26 @@ final class SalesCheckoutService
                 $orderedCartItems[] = $item;
             }
 
+            $cooperativeIds = array_values(array_unique(array_column($orderItems, 'cooperative_id')));
+            $quotes = $this->deliveryQuotes->quoteForCooperatives($cooperativeIds);
+            $quotesByCooperative = [];
+            foreach ($quotes as $quote) {
+                $quote->assertUsable();
+                $quotesByCooperative[$quote->cooperativeId] = $quote->snapshot();
+            }
+            if (count($quotesByCooperative) !== count($cooperativeIds)
+                || array_diff($cooperativeIds, array_keys($quotesByCooperative)) !== []) {
+                throw ValidationException::withMessages([
+                    'delivery' => ['Un devis de livraison valide est requis pour chaque coopérative.'],
+                ]);
+            }
+
             $order = $this->orders->create(new OrderCheckoutData(
                 customerId: $customerId,
                 idempotencyKey: $key,
                 deliveryAddressSnapshot: $address,
                 items: $orderItems,
+                deliveryQuotes: array_values($quotesByCooperative),
             ));
 
             $orderedIds = $order->cooperativeOrders
