@@ -459,7 +459,7 @@ final class MediaServiceTest extends TestCase
         );
 
         app(MediaService::class)->delete($actor, $media);
-        $restored = app(MediaService::class)->restore($actor, $media->fresh(), false);
+        $restored = app(MediaService::class)->restore($actor, $media->fresh());
 
         self::assertFalse($restored->trashed());
         self::assertDatabaseHas('media', ['id' => $media->getKey(), 'deleted_at' => null]);
@@ -470,7 +470,7 @@ final class MediaServiceTest extends TestCase
         ]);
     }
 
-    public function test_root_can_restore_a_deleted_product_image_as_primary_from_owner_history(): void
+    public function test_root_restores_a_deleted_product_image_as_secondary_at_the_end_of_the_gallery(): void
     {
         self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
         Storage::fake('local');
@@ -500,12 +500,55 @@ final class MediaServiceTest extends TestCase
         $history = $service->ownerHistory($actor, $product);
         self::assertTrue($history->contains(fn (Media $item): bool => $item->is($oldImage->fresh())));
 
-        $restored = $service->restore($actor, $oldImage->fresh(), true);
+        $restored = $service->restore($actor, $oldImage->fresh());
 
         self::assertFalse($restored->trashed());
-        self::assertTrue($restored->is_primary);
-        self::assertFalse($newImage->fresh()->is_primary);
-        self::assertSame($oldImage->getKey(), $product->fresh()->primaryImage->getKey());
+        self::assertFalse($restored->is_primary);
+        self::assertTrue($newImage->fresh()->is_primary);
+        self::assertSame($newImage->getKey(), $product->fresh()->primaryImage->getKey());
+        self::assertSame(
+            ((int) $newImage->fresh()->sort_order) + 1,
+            (int) $restored->sort_order,
+        );
+    }
+
+    public function test_product_image_restore_is_refused_when_the_active_gallery_is_full(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+        Storage::fake('local');
+        Storage::fake('public');
+        config(['media.public_disk' => 'public']);
+
+        $actor = $this->rootUser();
+        $product = Product::factory()->create();
+        $service = app(MediaService::class);
+
+        $retainedImage = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->image('retained-product.jpg', 600, 400),
+            'product_image',
+        );
+        $activeImage = $service->upload(
+            $actor,
+            $product,
+            UploadedFile::fake()->image('active-product.jpg', 600, 400),
+            'product_image',
+        );
+
+        $service->delete($actor, $retainedImage);
+        config(['media.limits.product_gallery' => 1]);
+
+        try {
+            $service->restore($actor, $retainedImage->fresh());
+            self::fail('Restoration must be refused when the active gallery is full.');
+        } catch (ValidationException) {
+            self::assertSoftDeleted('media', ['id' => $retainedImage->getKey()]);
+            self::assertSame(1, $product->media()
+                ->where('category', 'product_image')
+                ->count());
+            self::assertTrue($activeImage->fresh()->is_primary);
+        }
     }
 
     public function test_restore_is_refused_when_a_retained_file_is_missing(): void
@@ -528,7 +571,7 @@ final class MediaServiceTest extends TestCase
         Storage::disk('local')->delete($media->path);
 
         try {
-            app(MediaService::class)->restore($actor, $media->fresh(), false);
+            app(MediaService::class)->restore($actor, $media->fresh());
             self::fail('A missing retained file must prevent restoration.');
         } catch (ValidationException) {
             self::assertSoftDeleted('media', ['id' => $media->getKey()]);
