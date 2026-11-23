@@ -6,13 +6,13 @@
 <section class="card">
     <h2>Gestion de la coopérative</h2>
     <div class="actions">
-        @can('viewAny', \App\\Domains\\Catalog\\Models\\Catalog::class)
+        @can('viewAny', \App\Domains\Catalog\Models\Catalog::class)
             <a class="button button-secondary" href="{{ route('backoffice.catalogs.index', ['cooperative' => $cooperative->getKey()]) }}">Catalogues</a>
         @endcan
-        @can('viewAny', \App\\Domains\\Categories\\Models\\Category::class)
+        @can('viewAny', \App\Domains\Categories\Models\Category::class)
             <a class="button button-secondary" href="{{ route('backoffice.categories.index', ['cooperative' => $cooperative->getKey()]) }}">Catégories</a>
         @endcan
-        @can('viewAny', \App\\Domains\\Products\\Models\\Product::class)
+        @can('viewAny', \App\Domains\Products\Models\Product::class)
             <a class="button button-secondary" href="{{ route('backoffice.products.index', ['cooperative' => $cooperative->getKey()]) }}">Produits</a>
         @endcan
     </div>
