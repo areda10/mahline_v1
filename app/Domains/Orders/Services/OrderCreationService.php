@@ -103,8 +103,9 @@ final class OrderCreationService
     ): Order {
         $address = $checkout['delivery_address_snapshot'] ?? null;
         $items = $checkout['items'] ?? null;
+        $deliveryQuotes = $checkout['delivery_quotes'] ?? null;
 
-        if (! is_array($address) || $address === [] || ! is_array($items) || $items === []) {
+        if (! is_array($address) || $address === [] || ! is_array($items) || $items === [] || ! is_array($deliveryQuotes) || $deliveryQuotes === []) {
             throw ValidationException::withMessages([
                 'checkout' => ['Une adresse de livraison et au moins un article sont obligatoires.'],
             ]);
@@ -126,9 +127,10 @@ final class OrderCreationService
             'customer_id' => (string) $customer->getKey(),
             'address' => $address,
             'items' => $items,
+            'delivery_quotes' => $deliveryQuotes,
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
 
-        return DB::transaction(function () use ($customer, $address, $items, $idempotencyKey, $checkoutRequestHash): Order {
+        return DB::transaction(function () use ($customer, $address, $items, $deliveryQuotes, $idempotencyKey, $checkoutRequestHash): Order {
             $existingOrder = Order::query()
                 ->where('checkout_idempotency_key', $idempotencyKey)
                 ->lockForUpdate()
@@ -141,6 +143,29 @@ final class OrderCreationService
                 }
 
                 return $existingOrder->load(['cooperativeOrders.items']);
+            }
+
+            $quotesByCooperative = [];
+            foreach ($deliveryQuotes as $quote) {
+                if (! is_array($quote)
+                    || empty($quote['cooperative_id'])
+                    || empty($quote['quote_reference'])
+                    || empty($quote['amount'])
+                    || ($quote['currency'] ?? null) !== 'MAD'
+                    || empty($quote['expires_at'])
+                    || now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($quote['expires_at']))
+                    || $this->moneyToCents((string) $quote['amount']) <= 0) {
+                    throw ValidationException::withMessages([
+                        'delivery' => ['Chaque sous-commande doit posséder un devis de livraison positif, valide et non expiré.'],
+                    ]);
+                }
+                $cooperativeId = (string) $quote['cooperative_id'];
+                if (isset($quotesByCooperative[$cooperativeId])) {
+                    throw ValidationException::withMessages([
+                        'delivery' => ['Un seul devis est autorisé par coopérative.'],
+                    ]);
+                }
+                $quotesByCooperative[$cooperativeId] = $quote;
             }
 
             $prepared = [];
@@ -338,6 +363,15 @@ final class OrderCreationService
                 $cooperativeTotals[$line['cooperative_id']] = ($cooperativeTotals[$line['cooperative_id']] ?? 0) + $line['line_cents'];
             }
 
+            $deliveryTotalCents = 0;
+            foreach (array_keys($cooperativeTotals) as $cooperativeId) {
+                if (! isset($quotesByCooperative[$cooperativeId])) {
+                    throw ValidationException::withMessages([
+                        'delivery' => ['Le devis de livraison manque pour une coopérative de la commande.'],
+                    ]);
+                }
+                $deliveryTotalCents += $this->moneyToCents((string) $quotesByCooperative[$cooperativeId]['amount']);
+            }
             $itemsTotalCents = array_sum($cooperativeTotals);
             $order = Order::query()->create([
                 'customer_id' => (string) $customer->getKey(),
@@ -345,8 +379,9 @@ final class OrderCreationService
                 'status' => OrderStatus::AWAITING_COOPERATIVES,
                 'currency' => 'MAD',
                 'items_subtotal' => $this->formatMoney($itemsTotalCents),
-                'delivery_total' => '0.00',
-                'grand_total' => $this->formatMoney($itemsTotalCents),
+                'delivery_total' => $this->formatMoney($deliveryTotalCents),
+                'grand_total' => $this->formatMoney($itemsTotalCents + $deliveryTotalCents),
+                'delivery_snapshot' => array_values($quotesByCooperative),
                 'delivery_address_snapshot' => $address,
                 'checkout_idempotency_key' => $idempotencyKey,
                 'checkout_request_hash' => $checkoutRequestHash,
@@ -373,8 +408,9 @@ final class OrderCreationService
                     'status' => CooperativeOrderStatus::AWAITING_COOPERATIVE,
                     'response_deadline_at' => now()->addHours(12),
                     'items_subtotal' => $this->formatMoney($subtotalCents),
-                    'delivery_fee' => '0.00',
-                    'grand_total' => $this->formatMoney($subtotalCents),
+                    'delivery_fee' => $this->formatMoney($this->moneyToCents((string) $quotesByCooperative[$cooperativeId]['amount'])),
+                    'grand_total' => $this->formatMoney($subtotalCents + $this->moneyToCents((string) $quotesByCooperative[$cooperativeId]['amount'])),
+                    'delivery_quote_snapshot' => $quotesByCooperative[$cooperativeId],
                 ]);
                 $cooperativeOrder->forceFill(['created_by' => (string) $customer->getKey()])->save();
 
