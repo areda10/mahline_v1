@@ -10,7 +10,6 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
-use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
