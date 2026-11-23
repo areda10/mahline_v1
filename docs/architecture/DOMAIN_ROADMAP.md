@@ -1155,3 +1155,30 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 **Critère de clôture :** chaque lien mène à une route existante et autorisée ; chaque formulaire correspond à une action métier réelle ; les tests Feature ciblés, la suite complète, Pint et la compilation des vues sont exécutés localement et leurs résultats consignés. Les écrans dépendant de domaines non implémentés restent explicitement dans la liste de développement, sans fausses interfaces.
 
 **État global de l'intégration UI : En implémentation / audit à poursuivre.** Aucun test n'est déclaré vert dans le cadre de ce point de contrôle. Aucun merge vers `main`, aucune exécution GitHub Actions et aucun développement Media.
+
+
+### 13.7 Lot Orders — boîte de réception coopérative et traitement des sous-commandes (23 novembre 2026)
+
+**Implémentation ajoutée sur \`feature/Marketplace\` :**
+- Nouveau contrôleur \`CooperativeOrderController\` : liste filtrable, détail, confirmation, refus avec motif, décision administrative et prolongation de délai.
+- Portée de lecture appliquée dans la requête : Root voit toutes les sous-commandes ; Super Admin voit uniquement les coopératives affectées ; Cooperative Admin voit uniquement sa coopérative. Les identifiants hors périmètre sont masqués par une réponse 404.
+- Routes distinctes Root et back-office ; les routes d'intervention administrative sont réservées à Root et Super Admin. Le service métier existant conserve la vérification d'affectation et les règles de délai.
+- Vues créées : boîte de réception paginée/filtrable et fiche détaillée avec articles, adresse snapshot, historique, réponse coopérative et formulaires administratifs.
+- Navigation « Commandes » ajoutée aux layouts Root, Super Admin et Cooperative Admin.
+- Tests Feature ajoutés pour l'isolation coopérative, la confirmation avec réservation Inventory, le refus avec motif, la visibilité Super Admin affecté / Root et les interventions administratives.
+
+**Commits de cette tranche :**
+- Contrôleur : \`fb4f498\`
+- Vues : \`e2e699e\`, \`0979e9c\`
+- Routes : \`d65e90f\`
+- Navigation : \`bc924eb\`, \`c60776e\`, correctif de portée du menu : \`06daa4c\`
+- Tests : \`248ab6c\`, \`6eb8708\`
+
+**État de validation :** code et tests ajoutés, mais PHPUnit, Pint, compilation Blade et vérification runtime des routes n'ont pas été exécutés dans cet environnement. Le lot reste **À tester** ; ne pas le déclarer terminé avant les validations locales.
+
+**Sales / confirmation client — blocage confirmé :**
+- \`SalesCheckoutService::confirm()\` appelle le créateur Orders sans fournir de devis ou de frais Delivery.
+- \`OrderCreationService\` enregistre actuellement \`delivery_total = 0.00\` sur la commande et \`delivery_fee = 0.00\` sur chaque sous-commande.
+- Les routes de prévisualisation et de confirmation existent déjà, mais ce constat ne justifie pas l'activation du checkout. Le parcours client ne doit pas être présenté comme opérationnel ni permettre une commande tant que Delivery ne fournit pas les coûts réels et que le total n'est pas recalculé/validé côté serveur.
+- Prochaine tranche : auditer les règles et contrats Delivery, définir le devis de livraison multi-coopérative et son intégration transactionnelle dans Sales/Orders, puis seulement construire et tester l'interface de confirmation client.
+
