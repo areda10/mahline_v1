@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Sales\Services;
 
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
+use App\Domains\Delivery\Contracts\DeliveryQuoteProvider;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\Enums\InventoryStockableType;
