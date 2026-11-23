@@ -1100,6 +1100,7 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 - Navigation back-office enrichie avec notifications, sessions, appareils de confiance et jetons API.
 - Navigation Root enrichie avec inventaire, notifications, appareils de confiance et jetons API.
 - Fiche coopérative enrichie de raccourcis vers catalogues, catégories et produits, sous contrôle des Policies existantes.
+- Correction des références de classes dans les directives Blade `@can` de la fiche coopérative (noms de classes pleinement qualifiés). Commit `cb7f7e3` ; compilation Blade/tests runtime à vérifier localement.
 - Tableau de bord du rôle `user` enrichi de raccourcis vers inventaire, adresse personnelle, sessions, appareils, jetons API et mot de passe.
 
 **Fichiers modifiés :** `resources/views/layouts/storefront.blade.php`, `resources/views/customer/profile/edit.blade.php`, `resources/views/layouts/admin.blade.php`, `resources/views/layouts/root.blade.php`, `resources/views/backoffice/cooperatives/show.blade.php`, `resources/views/user/dashboard.blade.php` et tests associés de navigation/profil.
