@@ -15,6 +15,7 @@ final readonly class OrderCheckoutData
         public string $idempotencyKey,
         public array $deliveryAddressSnapshot,
         public array $items,
+        public array $deliveryQuotes,
         public ?string $acceptedInventoryFingerprint = null,
     ) {}
 }
