@@ -26,10 +26,10 @@
         <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:14px;font-size:13px">
             <span class="shop-muted">Sous-total indicatif</span><strong id="cart-subtotal">0,00 DH</strong>
         </div>
-        <p class="shop-muted" style="font-size:11px;border-top:1px solid var(--shop-line);padding-top:13px">Les frais de livraison et le total définitif seront calculés à l’étape de livraison. Aucun frais fictif n’est ajouté ici.</p>
+        <p class="shop-muted" style="font-size:11px;border-top:1px solid var(--shop-line);padding-top:13px">Les frais de livraison sont calculés par coopérative à l’étape de validation, à partir des devis du serveur.</p>
         @auth
             @if (auth()->user()->hasRole('customer'))
-                <button type="button" class="shop-button" disabled style="width:100%;margin-top:9px;opacity:.55;cursor:not-allowed">Finalisation de commande — prochaine étape</button>
+                <a class="shop-button" href="{{ route('sales.cart.checkout.page') }}" style="width:100%;margin-top:9px">Commander le panier</a>
             @else
                 <a class="shop-button shop-button-secondary" href="{{ route('customer.login') }}" style="width:100%;margin-top:9px">Connexion espace client</a>
             @endif
