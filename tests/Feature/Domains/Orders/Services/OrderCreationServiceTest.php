@@ -293,7 +293,7 @@ final class OrderCreationServiceTest extends TestCase
             ->pluck('cooperative_id')->map(static fn ($id): string => (string) $id)->unique()->values();
 
         $checkout['delivery_quotes'] = $cooperativeIds->map(static fn (string $cooperativeId): array => [
-            'quote_reference' => (string) \\Illuminate\\Support\\Str::ulid(),
+            'quote_reference' => (string) \Illuminate\Support\Str::ulid(),
             'cooperative_id' => $cooperativeId,
             'amount' => '40.00',
             'currency' => 'MAD',
