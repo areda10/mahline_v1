@@ -679,3 +679,26 @@ Cette règle couvre les changements tels que la contenance, le poids, le conditi
 - Tests obligatoires : quantité 100 acceptée, 101 rejetée, fusion produisant 100 acceptée et fusion produisant 101 rejetée, limite commerciale inférieure, limite commerciale supérieure à 100 refusée.
 - **Décision utilisateur (21 novembre 2026) :** la précision de quantité est fixée à exactement trois décimales. Les quantités sont stockées en `DECIMAL(15,3)` et toute entrée comportant plus de trois décimales est rejetée, sans arrondi silencieux.
 - « 100 » désigne la valeur numérique de quantité, sans conversion automatique d'unité. La limite maximale reste 100 par ligne, quelle que soit l'unité.
+
+### SALES-039 — Deux parcours distincts de commande client
+
+**Statut : VALIDÉ — décision confirmée dans les questions-réponses**
+
+MAHLINE V1 expose deux parcours d'achat indépendants, réservés au rôle `customer` :
+
+1. **Parcours panier** : le client ajoute plusieurs produits au panier, consulte et modifie les lignes, puis choisit « Commander » depuis la page du panier. La validation porte sur l'ensemble du panier actif. Le récapitulatif regroupe les lignes par coopérative et affiche les frais de livraison de chaque expédition, le total livraison et le total général avant confirmation.
+2. **Parcours commande directe** : depuis une carte de produit ou sa fiche, le client choisit la quantité et, si nécessaire, la variante, puis choisit « Commander ». Cette commande porte exclusivement sur le produit, la variante et la quantité sélectionnés. Elle ne lit, ne fusionne, ne modifie et ne consomme jamais les lignes du panier client existant.
+
+Les deux parcours utilisent les mêmes validations serveur de produit, variante, coopérative, disponibilité Inventory, adresse client, devis Delivery et création idempotente Orders. Le navigateur ne détermine jamais le prix, les frais de livraison ou le total accepté.
+
+Le parcours direct utilise un contexte temporaire de checkout distinct, lié à la session client et protégé par un jeton dont seul le hash est stocké en base. Il ne crée pas un second panier client et n'est pas accessible aux rôles `user`, `cooperative_admin`, `super_admin` ou `super_admin_root`.
+
+### Suivi d'implémentation SALES-039 — 23 novembre 2026
+
+- Ajout d'un aperçu serveur du panier avec regroupement par coopérative, calcul des sous-totaux, devis Delivery et total général.
+- Ajout d'une page de confirmation client avec choix d'une adresse du carnet client et confirmation serveur.
+- Activation de l'entrée « Commander le panier » depuis la page panier.
+- Ajout d'un contexte temporaire isolé pour la commande directe, avec vérification du jeton côté serveur et clé d'idempotence.
+- Ajout de l'action « Commander » sur les cartes de produits simples et de l'action « Commander directement » sur la fiche produit ; les produits avec variantes demandent leur sélection sur la fiche.
+- Les fichiers modifiés nécessitent encore une revue technique et l'exécution des tests Laravel, Pint et des tests HTTP/checkout avant déclaration de livraison validée.
+
