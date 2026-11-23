@@ -115,9 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cart-subtotal').textContent = money(subtotal);
         const hasUnavailable = items.some(item => item.unavailable_reason && !item.requires_acceptance);
         const checkout = document.getElementById('cart-checkout');
-        checkout.style.opacity = hasUnavailable ? '.55' : '1';
-        checkout.setAttribute('aria-disabled', String(hasUnavailable));
-        checkout.title = hasUnavailable ? 'Retirez ou corrigez les lignes indisponibles avant de poursuivre.' : '';
+        if (checkout) {
+            checkout.style.opacity = hasUnavailable ? '.55' : '1';
+            checkout.setAttribute('aria-disabled', String(hasUnavailable));
+            checkout.title = hasUnavailable ? 'Retirez ou corrigez les lignes indisponibles avant de poursuivre.' : '';
+        }
     }
 
     async function loadCart() {
