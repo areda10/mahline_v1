@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Orders;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
@@ -26,6 +27,7 @@ final class CooperativeOrderControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware([EnsureActiveAuthenticationSession::class]);
         $this->seed([RoleSeeder::class, PermissionSeeder::class, RolePermissionSeeder::class]);
         ProductUnit::query()->firstOrCreate(
             ['code' => 'u'],
