@@ -39,7 +39,94 @@ final class SalesCheckoutService
             ->with('activeItems')
             ->firstOrFail();
 
-        return $this->availability($cart->activeItems);
+        $availability = $this->availability($cart->activeItems);
+        $items = $cart->activeItems;
+        $cooperativeIds = $items->pluck('cooperative_id')
+            ->map(static fn ($id): string => (string) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($items->isEmpty()) {
+            throw ValidationException::withMessages([
+                'cart' => ['Le panier ne contient aucun article.'],
+            ]);
+        }
+
+        if ($availability['unavailable_cooperative_ids'] !== []) {
+            return $availability + [
+                'items' => $items->map(static fn (SalesCartItem $item): array => [
+                    'id' => (string) $item->getKey(),
+                    'product' => $item->current_product_snapshot,
+                    'quantity' => (string) $item->quantity,
+                    'unit_price' => (string) ($item->accepted_unit_price ?? $item->current_unit_price),
+                    'cooperative_id' => (string) $item->cooperative_id,
+                    'unavailable_reason' => $item->unavailable_reason,
+                ])->values()->all(),
+                'delivery_quotes' => [],
+                'subtotal' => '0.00',
+                'delivery_total' => '0.00',
+                'grand_total' => '0.00',
+                'checkout_allowed' => false,
+            ];
+        }
+
+        $quotes = $this->deliveryQuotes->quoteForCooperatives($cooperativeIds);
+        $quotesByCooperative = [];
+        foreach ($quotes as $quote) {
+            $quote->assertUsable();
+            $quotesByCooperative[$quote->cooperativeId] = $quote->snapshot();
+        }
+
+        if (count($quotesByCooperative) !== count($cooperativeIds)
+            || array_diff($cooperativeIds, array_keys($quotesByCooperative)) !== []) {
+            throw ValidationException::withMessages([
+                'delivery' => ['Un devis de livraison valide est requis pour chaque coopérative.'],
+            ]);
+        }
+
+        $subtotalCents = 0;
+        $groups = [];
+        foreach ($items as $item) {
+            $cooperativeId = (string) $item->cooperative_id;
+            $unitPrice = (string) ($item->accepted_unit_price ?? $item->current_unit_price);
+            $lineCents = (int) round(((float) $unitPrice) * ((float) $item->quantity) * 100);
+            $subtotalCents += $lineCents;
+            $groups[$cooperativeId] ??= [
+                'cooperative_id' => $cooperativeId,
+                'items' => [],
+                'subtotal' => '0.00',
+                'delivery' => $quotesByCooperative[$cooperativeId]['amount'],
+                'delivery_quote' => $quotesByCooperative[$cooperativeId],
+            ];
+            $groups[$cooperativeId]['items'][] = [
+                'id' => (string) $item->getKey(),
+                'product' => $item->current_product_snapshot,
+                'quantity' => (string) $item->quantity,
+                'unit_price' => $unitPrice,
+                'line_total' => number_format($lineCents / 100, 2, '.', ''),
+            ];
+            $groups[$cooperativeId]['subtotal'] = number_format(
+                ((float) $groups[$cooperativeId]['subtotal']) + ($lineCents / 100),
+                2,
+                '.',
+                '',
+            );
+        }
+
+        $deliveryCents = array_sum(array_map(
+            static fn (array $quote): int => (int) round(((float) $quote['amount']) * 100),
+            array_values($quotesByCooperative),
+        ));
+
+        return $availability + [
+            'groups' => array_values($groups),
+            'delivery_quotes' => array_values($quotesByCooperative),
+            'subtotal' => number_format($subtotalCents / 100, 2, '.', ''),
+            'delivery_total' => number_format($deliveryCents / 100, 2, '.', ''),
+            'grand_total' => number_format(($subtotalCents + $deliveryCents) / 100, 2, '.', ''),
+            'checkout_allowed' => true,
+        ];
     }
 
     /** @return array<string, mixed> */
