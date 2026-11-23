@@ -45,8 +45,12 @@ final class ApiTokenManagementControllerTest extends TestCase
     {
         $user = $this->actor('user');
 
-        $this->actingAs($user)
+        $csrfToken = str()->random(40);
+
+        $this->withSession(['_token' => $csrfToken])
+            ->actingAs($user)
             ->post(route('backoffice.security.api-tokens.store'), [
+                '_token' => $csrfToken,
                 'name' => 'web-personal-key',
             ])
             ->assertRedirect(route('backoffice.security.api-tokens.index'))
@@ -59,7 +63,12 @@ final class ApiTokenManagementControllerTest extends TestCase
             ->assertOk()
             ->assertSee('web-personal-key');
 
-        $this->delete(route('backoffice.security.api-tokens.destroy', $token))
+        $csrfToken = str()->random(40);
+
+        $this->withSession(['_token' => $csrfToken])
+            ->delete(route('backoffice.security.api-tokens.destroy', $token), [
+                '_token' => $csrfToken,
+            ])
             ->assertRedirect(route('backoffice.security.api-tokens.index'));
 
         self::assertNotNull($token->fresh()->revoked_at);
@@ -78,10 +87,15 @@ final class ApiTokenManagementControllerTest extends TestCase
             ->assertSee('Clés API de l’utilisateur')
             ->assertSee('root-managed-key');
 
-        $this->delete(route('root.backoffice.users.api-tokens.destroy', [
-            'user' => $target,
-            'token' => $token->accessToken,
-        ]))
+        $csrfToken = str()->random(40);
+
+        $this->withSession(['_token' => $csrfToken])
+            ->delete(route('root.backoffice.users.api-tokens.destroy', [
+                'user' => $target,
+                'token' => $token->accessToken,
+            ]), [
+                '_token' => $csrfToken,
+            ])
             ->assertRedirect(route('root.backoffice.users.show', $target));
 
         self::assertNotNull($token->accessToken->fresh()->revoked_at);
@@ -93,11 +107,16 @@ final class ApiTokenManagementControllerTest extends TestCase
         $target = $this->actor('user');
         $token = $target->createToken('protected-key');
 
-        $this->actingAs($user)
+        $csrfToken = str()->random(40);
+
+        $this->withSession(['_token' => $csrfToken])
+            ->actingAs($user)
             ->delete(route('root.backoffice.users.api-tokens.destroy', [
                 'user' => $target,
                 'token' => $token->accessToken,
-            ]))
+            ]), [
+                '_token' => $csrfToken,
+            ])
             ->assertForbidden();
 
         self::assertNull($token->accessToken->fresh()->revoked_at);
@@ -117,8 +136,13 @@ final class ApiTokenManagementControllerTest extends TestCase
             'last_activity_at' => now(),
         ]);
 
-        $this->actingAs($root)
-            ->delete(route('root.backoffice.users.api-tokens.destroy-all', $target))
+        $csrfToken = str()->random(40);
+
+        $this->withSession(['_token' => $csrfToken])
+            ->actingAs($root)
+            ->delete(route('root.backoffice.users.api-tokens.destroy-all', $target), [
+                '_token' => $csrfToken,
+            ])
             ->assertRedirect(route('root.backoffice.users.show', $target))
             ->assertSessionHas('success');
 
