@@ -216,13 +216,6 @@
         </form>
     </section>
 
-    <section class="card">
-        <h2>Photo de profil</h2>
-        <p class="muted">
-            L'ajout et le remplacement de la photo seront activés avec le domaine Media.
-            La limite validée est de 2 Mo.
-        </p>
-    </section>
 @endsection
 
 @push('styles')
