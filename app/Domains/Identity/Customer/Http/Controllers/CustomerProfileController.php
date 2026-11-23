@@ -12,6 +12,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +79,7 @@ final class CustomerProfileController
             ->with('success', 'Votre profil a été mis à jour.');
     }
 
-    public function storeAddress(Request $request): RedirectResponse
+    public function storeAddress(Request $request): RedirectResponse|JsonResponse
     {
         $customer = $request->user();
         abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
@@ -91,6 +92,10 @@ final class CustomerProfileController
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
         $this->addresses->createForUser((string) $customer->getKey(), (string) $customer->getKey(), $data);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Adresse ajoutée à votre carnet.'], 201);
+        }
 
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse ajoutée à votre carnet.');
     }
