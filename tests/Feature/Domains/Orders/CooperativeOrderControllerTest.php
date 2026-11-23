@@ -167,6 +167,15 @@ final class CooperativeOrderControllerTest extends TestCase
         return app(OrderCreationService::class)->createFromCheckout($customer, [
             'idempotency_key' => $key,
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'delivery_quotes' => [[
+                'quote_reference' => (string) \Illuminate\Support\Str::ulid(),
+                'cooperative_id' => (string) $cooperative->getKey(),
+                'amount' => '40.00',
+                'currency' => 'MAD',
+                'tariff_code' => 'TEST_INITIAL_FLAT',
+                'issued_at' => now()->toIso8601String(),
+                'expires_at' => now()->addMinutes(30)->toIso8601String(),
+            ]],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
         ]);
     }
