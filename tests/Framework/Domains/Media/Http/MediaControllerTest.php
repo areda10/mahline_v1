@@ -12,6 +12,7 @@ use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Media\Models\Media;
+use App\Domains\Media\Services\MediaService;
 use App\Domains\Media\Services\MediaIncidentService;
 use App\Domains\Products\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -614,6 +615,34 @@ final class MediaControllerTest extends TestCase
                 'subject_id' => $owner->getKey(),
             ]);
         }
+    }
+
+    public function test_restore_endpoint_rejects_make_primary_for_product_images(): void
+    {
+        self::assertTrue(function_exists('imagecreatetruecolor'), 'PHP GD must be enabled for Media V1.');
+        Storage::fake('local');
+        Storage::fake('public');
+        config(['media.public_disk' => 'public']);
+
+        $cooperative = Cooperative::factory()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $root = $this->userWithRole('super_admin_root', (string) $cooperative->getKey());
+
+        $media = app(MediaService::class)->upload(
+            $root,
+            $product,
+            UploadedFile::fake()->image('restore-primary.jpg', 600, 400),
+            'product_image',
+        );
+        app(MediaService::class)->delete($root, $media);
+
+        $this->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->actingAs($root)
+            ->postJson(route('media.restore', $media), ['make_primary' => true])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('make_primary');
+
+        self::assertSoftDeleted('media', ['id' => $media->getKey()]);
     }
 
     private function userWithPermission(string $roleSlug, string $permissionSlug, string $cooperativeId): User
