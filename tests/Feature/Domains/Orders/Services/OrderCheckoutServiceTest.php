@@ -87,6 +87,9 @@ final class OrderCheckoutServiceTest extends TestCase
 
         $this->assertSame($first->getKey(), $retry->getKey());
         $this->assertSame('50.00', $first->items_subtotal);
+        $this->assertSame('40.00', $first->delivery_total);
+        $this->assertSame('90.00', $first->grand_total);
+        $this->assertSame('40.00', $first->cooperativeOrders->first()->delivery_fee);
         $this->assertDatabaseCount('orders', 1);
         $this->assertDatabaseCount('cooperative_orders', 1);
         $this->assertDatabaseCount('order_items', 1);
