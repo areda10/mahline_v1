@@ -14,6 +14,7 @@ use App\Domains\Sales\Services\SalesCheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 final class SalesCartController
@@ -132,7 +133,11 @@ final class SalesCartController
         $user = $request->user();
         abort_unless($user instanceof User && $user->hasRole('customer'), 403);
 
-        return view('storefront.checkout', ['directCartId' => null]);
+        $cart = $this->resolveCart($request);
+        return view('storefront.checkout', [
+            'directCartId' => null,
+            'idempotencyKey' => $this->checkoutIdempotencyKey($request, (string) $cart->getKey(), (int) $cart->version),
+        ]);
     }
 
     public function startDirectCheckout(Request $request): mixed
@@ -168,7 +173,11 @@ final class SalesCartController
         abort_unless($user instanceof User && $user->hasRole('customer'), 403);
         abort_unless(is_string($request->session()->get('sales.direct_checkouts.'.$cartId)), 404);
 
-        return view('storefront.checkout', ['directCartId' => $cartId]);
+        $cart = $this->carts->refresh($cartId);
+        return view('storefront.checkout', [
+            'directCartId' => $cartId,
+            'idempotencyKey' => $this->checkoutIdempotencyKey($request, $cartId, (int) $cart->version),
+        ]);
     }
 
     public function checkoutPreview(Request $request): JsonResponse
@@ -264,6 +273,18 @@ final class SalesCartController
         // confirmation can replay the idempotent result after a lost response.
 
         return response()->json(['data' => $result]);
+    }
+
+    private function checkoutIdempotencyKey(Request $request, string $cartId, int $version): string
+    {
+        $sessionKey = 'sales.checkout_keys.'.$cartId.'.'.$version;
+        $key = $request->session()->get($sessionKey);
+        if (! is_string($key) || $key === '') {
+            $key = Str::random(48);
+            $request->session()->put($sessionKey, $key);
+        }
+
+        return $key;
     }
 
     private function resolveCart(Request $request): SalesCart
