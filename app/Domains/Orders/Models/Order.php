@@ -19,7 +19,7 @@ final class Order extends BaseModel
 
     protected $fillable = [
         'customer_id', 'reference', 'status', 'currency', 'items_subtotal',
-        'delivery_total', 'grand_total', 'delivery_address_snapshot',
+        'delivery_total', 'grand_total', 'delivery_address_snapshot', 'delivery_snapshot',
         'placed_at', 'confirmed_at', 'cancelled_at', 'cancellation_reason',
         'checkout_idempotency_key', 'checkout_request_hash', 'inventory_excluded_cooperative_ids',
     ];
@@ -29,6 +29,7 @@ final class Order extends BaseModel
         return [
             'status' => OrderStatus::class,
             'delivery_address_snapshot' => 'array',
+            'delivery_snapshot' => 'array',
             'inventory_excluded_cooperative_ids' => 'array',
             'items_subtotal' => 'decimal:2',
             'delivery_total' => 'decimal:2',
