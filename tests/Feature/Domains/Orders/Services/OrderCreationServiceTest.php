@@ -82,7 +82,9 @@ final class OrderCreationServiceTest extends TestCase
             'quantity_reserved' => '0.000',
         ]);
         $this->assertSame('50.00', $order->items_subtotal);
-        $this->assertSame('50.00', $order->grand_total);
+        $this->assertSame('130.00', $order->grand_total);
+        $this->assertSame('80.00', $order->delivery_total);
+        $this->assertTrue($order->cooperativeOrders->every(static fn ($suborder): bool => $suborder->delivery_fee === '40.00'));
         $this->assertSame('MAD', $order->currency);
         $this->assertSame(
             'Unité / pièce (u)',
