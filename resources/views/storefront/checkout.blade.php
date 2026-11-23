@@ -26,6 +26,7 @@
             <div class="shop-summary-row"><span>Articles</span><strong id="checkout-subtotal">—</strong></div>
             <div class="shop-summary-row"><span>Livraison</span><strong id="checkout-delivery">—</strong></div>
             <div class="shop-summary-row" style="border-top:1px solid var(--shop-line);padding-top:13px;margin-top:10px;font-size:17px"><span>Total à payer</span><strong id="checkout-total">—</strong></div>
+            <div class="shop-summary-row" style="font-size:12px;margin-top:14px"><span class="shop-muted">Paiement</span><strong>Paiement à la livraison</strong></div>
             <button id="checkout-confirm" type="button" class="shop-button" style="width:100%;margin-top:18px" disabled>Confirmer la commande</button>
             <p class="shop-muted" style="font-size:11px;margin:10px 0 0">Les montants sont recalculés et revérifiés par le serveur au moment de la confirmation.</p>
         </aside>
