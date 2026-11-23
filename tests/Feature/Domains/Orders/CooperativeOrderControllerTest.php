@@ -11,6 +11,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
+use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -148,7 +149,7 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->assertSame((string) $root->getKey(), (string) $suborder->fresh()->substituted_by_admin_id);
     }
 
-    private function makeOrder(User $customer, Cooperative $cooperative, string $key): \App\Domains\Orders\Models\Order
+    private function makeOrder(User $customer, Cooperative $cooperative, string $key): Order
     {
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
