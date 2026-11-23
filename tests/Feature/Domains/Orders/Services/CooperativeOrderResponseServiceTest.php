@@ -62,11 +62,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
-        ]);
+        ]));
 
         $suborder = $order->cooperativeOrders->firstOrFail();
         $this->assertTrue($admin->hasRole('cooperative_admin'));
@@ -114,11 +114,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             ->where('stockable_id', $product->getKey())
             ->firstOrFail();
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-insufficient-stock-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
-        ]);
+        ]));
         $suborder = $order->cooperativeOrders->firstOrFail();
         $stock->quantity_on_hand = '0.500';
         $stock->save();
@@ -147,16 +147,16 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
 
-        $firstOrder = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $firstOrder = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-reservation-race-first-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '7.000']],
-        ]);
-        $secondOrder = app(OrderCreationService::class)->createFromCheckout($customer, [
+        ]));
+        $secondOrder = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-reservation-race-second-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '7.000']],
-        ]);
+        ]));
 
         // Checkout is intentionally non-reserving; the first cooperative confirmation
         // acquires the stock row lock and reserves its quantity.
@@ -204,14 +204,14 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->stockFor($cooperativeA, $productA);
         $this->stockFor($cooperativeB, $productB);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-multi-coop-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [
                 ['product_id' => (string) $productA->getKey(), 'quantity' => '1'],
                 ['product_id' => (string) $productB->getKey(), 'quantity' => '1'],
             ],
-        ]);
+        ]));
 
         $suborders = $order->cooperativeOrders()->orderBy('cooperative_id')->get();
         $this->assertCount(2, $suborders);
@@ -244,11 +244,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperativeB, $productB);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-02',
             'delivery_address_snapshot' => ['city' => 'Rabat', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $productB->getKey(), 'quantity' => '1']],
-        ]);
+        ]));
 
         $this->expectException(HttpException::class);
 
@@ -267,11 +267,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
         $this->stockFor($cooperative, $product);
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-03',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
-        ]);
+        ]));
 
         $suborder = $order->cooperativeOrders->firstOrFail();
 
@@ -291,11 +291,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
         $this->stockFor($cooperative, $product);
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-04',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
-        ]);
+        ]));
 
         $suborder = $order->cooperativeOrders->firstOrFail();
         $updated = app(CooperativeOrderResponseService::class)
@@ -318,11 +318,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
         ]);
         $this->stockFor($cooperative, $product);
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-response-05',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
-        ]);
+        ]));
 
         $suborder = $order->cooperativeOrders->firstOrFail();
         $suborder->forceFill(['response_deadline_at' => now()->addHour()])->save();
@@ -352,14 +352,14 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-safety-cancel-01',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
                 'quantity' => '1',
             ]],
-        ]);
+        ]));
         $suborder = $order->cooperativeOrders->firstOrFail();
 
         app(CooperativeOrderResponseService::class)->confirmByCooperative($suborder, $admin);
@@ -396,14 +396,14 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-safety-cancel-02',
             'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
                 'quantity' => '1',
             ]],
-        ]);
+        ]));
         $suborder = $order->cooperativeOrders->firstOrFail();
         app(CooperativeOrderResponseService::class)->confirmByCooperative($suborder, $admin);
 
@@ -445,14 +445,14 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]);
         $this->stockFor($cooperative, $product);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-availability-mono-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [[
                 'product_id' => (string) $product->getKey(),
                 'quantity' => '2',
             ]],
-        ]);
+        ]));
 
         $availability = app(OrderAvailabilityQueryService::class)->forOrder(
             (string) $order->getKey(),
@@ -502,14 +502,14 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->stockFor($cooperativeA, $productA);
         $this->stockFor($cooperativeB, $productB);
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, [
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
             'idempotency_key' => 'test-availability-multi-01',
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'items' => [
                 ['product_id' => (string) $productA->getKey(), 'quantity' => '1'],
                 ['product_id' => (string) $productB->getKey(), 'quantity' => '1'],
             ],
-        ]);
+        ]));
 
         $availability = app(OrderAvailabilityQueryService::class)->forOrder(
             (string) $order->getKey(),
@@ -593,6 +593,29 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertCount(1, $availability['suborders']);
         $this->assertSame([], $availability['suborders'][0]['lines']);
         $this->assertTrue($availability['suborders'][0]['available']);
+    }
+
+    /** @param array<string, mixed> $checkout */
+    private function withDeliveryQuotes(array $checkout): array
+    {
+        $productIds = array_values(array_unique(array_map(
+            static fn (array $line): string => (string) $line['product_id'],
+            $checkout['items'],
+        )));
+        $cooperativeIds = Product::query()->whereIn('id', $productIds)
+            ->pluck('cooperative_id')->map(static fn ($id): string => (string) $id)->unique()->values();
+
+        $checkout['delivery_quotes'] = $cooperativeIds->map(static fn (string $cooperativeId): array => [
+            'quote_reference' => (string) \Illuminate\Support\Str::ulid(),
+            'cooperative_id' => $cooperativeId,
+            'amount' => '40.00',
+            'currency' => 'MAD',
+            'tariff_code' => 'TEST_INITIAL_FLAT',
+            'issued_at' => now()->toIso8601String(),
+            'expires_at' => now()->addMinutes(30)->toIso8601String(),
+        ])->all();
+
+        return $checkout;
     }
 
     private function stockFor(Cooperative $cooperative, Product $product): void
