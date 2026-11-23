@@ -158,7 +158,7 @@ return [
 
             'users.view',
             'users.update',
-            'users.invite',
+            // Invitations are reserved to root and super administrators.
 
             'catalogs.view',
             'catalogs.create',
