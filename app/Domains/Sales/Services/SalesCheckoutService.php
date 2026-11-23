@@ -31,13 +31,18 @@ final class SalesCheckoutService
     ) {}
 
     /** @return array<string, mixed> */
-    public function preview(string $customerId, string $cartId): array
+    public function preview(string $customerId, string $cartId, ?string $directToken = null): array
     {
-        $cart = SalesCart::query()
-            ->whereKey($cartId)
-            ->where('customer_id', $customerId)
-            ->with('activeItems')
-            ->firstOrFail();
+        $cartQuery = SalesCart::query()->whereKey($cartId);
+        if ($directToken === null) {
+            $cartQuery->where('customer_id', $customerId);
+        } else {
+            $cartQuery->whereNull('customer_id')
+                ->where('guest_token_hash', hash('sha256', $directToken))
+                ->whereNull('merged_into_cart_id')
+                ->where('expires_at', '>', now());
+        }
+        $cart = $cartQuery->with('activeItems')->firstOrFail();
 
         $availability = $this->availability($cart->activeItems);
         $items = $cart->activeItems;
@@ -135,6 +140,7 @@ final class SalesCheckoutService
         string $cartId,
         string $addressId,
         string $idempotencyKey,
+        ?string $directToken = null,
     ): array {
         $key = trim($idempotencyKey);
         if ($key === '' || strlen($key) > 100) {
@@ -143,12 +149,17 @@ final class SalesCheckoutService
             ]);
         }
 
-        return DB::transaction(function () use ($customerId, $cartId, $addressId, $key): array {
-            $cart = SalesCart::query()
-                ->whereKey($cartId)
-                ->where('customer_id', $customerId)
-                ->lockForUpdate()
-                ->firstOrFail();
+        return DB::transaction(function () use ($customerId, $cartId, $addressId, $key, $directToken): array {
+            $cartQuery = SalesCart::query()->whereKey($cartId);
+            if ($directToken === null) {
+                $cartQuery->where('customer_id', $customerId);
+            } else {
+                $cartQuery->whereNull('customer_id')
+                    ->where('guest_token_hash', hash('sha256', $directToken))
+                    ->whereNull('merged_into_cart_id')
+                    ->where('expires_at', '>', now());
+            }
+            $cart = $cartQuery->lockForUpdate()->firstOrFail();
 
             $keyHash = hash('sha256', $key);
             $previous = SalesCheckoutAttempt::query()
