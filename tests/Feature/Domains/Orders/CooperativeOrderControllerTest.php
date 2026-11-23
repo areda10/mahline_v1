@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Orders;
+namespace Tests\Feature\Domains\Orders;
 
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Inventory\\Models\\InventoryStock;
-use App\\Domains\\Orders\\Enums\\CooperativeOrderStatus;
-use App\\Domains\\Orders\\Models\\CooperativeOrder;
-use App\\Domains\\Orders\\Services\\OrderCreationService;
-use App\\Domains\\Products\\Models\\Product;
-use App\\Domains\\Products\\Models\\ProductUnit;
-use Database\\Seeders\\PermissionSeeder;
-use Database\\Seeders\\RolePermissionSeeder;
-use Database\\Seeders\\RoleSeeder;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Orders\Enums\CooperativeOrderStatus;
+use App\Domains\Orders\Models\CooperativeOrder;
+use App\Domains\Orders\Services\OrderCreationService;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RolePermissionSeeder;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class CooperativeOrderControllerTest extends TestCase
 {
@@ -147,7 +147,7 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->assertSame((string) $root->getKey(), (string) $suborder->fresh()->substituted_by_admin_id);
     }
 
-    private function makeOrder(User $customer, Cooperative $cooperative, string $key): \\App\\Domains\\Orders\\Models\\Order
+    private function makeOrder(User $customer, Cooperative $cooperative, string $key): \App\Domains\Orders\Models\Order
     {
         $product = Product::factory()->forCooperative($cooperative)->create([
             'price' => '20.00',
