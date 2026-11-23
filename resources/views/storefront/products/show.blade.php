@@ -79,8 +79,15 @@
                 <label class="shop-label" for="product-quantity">Quantité</label>
                 <input class="shop-input" id="product-quantity" type="number" min="0.001" max="100" step="0.001" value="1.000" required>
             </div>
-            <button class="shop-button" id="add-to-cart" type="button" style="flex:1;min-height:43px" @disabled($hasVariants && ! $variantsAvailable)>Ajouter au panier</button>
+            <button class="shop-button shop-button-secondary" id="add-to-cart" type="button" style="flex:1;min-height:43px" @disabled($hasVariants && ! $variantsAvailable)>Ajouter au panier</button>
         </div>
+        <form method="POST" action="{{ route('sales.cart.checkout.direct.start') }}" style="margin-top:10px">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $product->getKey() }}">
+            <input type="hidden" name="product_variant_id" id="direct-product-variant" value="">
+            <input type="hidden" name="quantity" id="direct-product-quantity" value="1.000">
+            <button class="shop-button" id="buy-now" type="submit" style="width:100%;min-height:45px" @disabled($hasVariants && ! $variantsAvailable)>Commander directement</button>
+        </form>
         <p id="add-cart-feedback" role="status" class="shop-muted" style="font-size:12px;min-height:20px;margin:10px 0 0"></p>
 
         <div style="display:flex;gap:10px;align-items:center;padding-top:18px;margin-top:10px;border-top:1px solid var(--shop-line)">
@@ -128,9 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const add = document.getElementById('add-to-cart');
     const feedback = document.getElementById('add-cart-feedback');
     const quantity = document.getElementById('product-quantity');
+    const directVariant = document.getElementById('direct-product-variant');
+    const directQuantity = document.getElementById('direct-product-quantity');
+    const buyNow = document.getElementById('buy-now');
 
     variant?.addEventListener('change', () => {
         const option = variant.options[variant.selectedIndex];
+        if (directVariant) directVariant.value = variant.value || '';
         if (price) {
             price.textContent = option.dataset.price
                 ? Number(option.dataset.price).toLocaleString('fr-MA', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' DH'
@@ -144,6 +155,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const main = document.getElementById('product-main-image');
             if (main) main.src = button.dataset.productImage;
         });
+    });
+
+    buyNow?.addEventListener('click', event => {
+        const variantId = variant?.value || '';
+        if (variant?.tagName === 'SELECT' && !variantId) {
+            event.preventDefault();
+            feedback.textContent = 'Veuillez choisir une variante avant de commander.';
+            return;
+        }
+        const amount = Number(quantity.value);
+        if (!Number.isFinite(amount) || amount <= 0 || amount > 100 || !/^\\d{1,3}(\\.\\d{1,3})?$/.test(quantity.value)) {
+            event.preventDefault();
+            feedback.textContent = 'La quantité doit être comprise entre 0,001 et 100, avec trois décimales maximum.';
+            return;
+        }
+        directVariant.value = variantId;
+        directQuantity.value = quantity.value;
+        buyNow.disabled = true;
+        buyNow.textContent = 'Préparation…';
     });
 
     add?.addEventListener('click', async () => {
