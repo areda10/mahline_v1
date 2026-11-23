@@ -404,7 +404,7 @@ final class MediaService
      * Restoration is restricted to root because it can replace the current asset
      * and expose retained historical content.
      */
-    public function restore(User $actor, Media $media, bool $makePrimary = false): Media
+    public function restore(User $actor, Media $media): Media
     {
         $this->authorize($actor, 'restore', [$media]);
 
@@ -427,7 +427,7 @@ final class MediaService
         }
 
         try {
-            return DB::transaction(function () use ($actor, $media, $makePrimary): Media {
+            return DB::transaction(function () use ($actor, $media): Media {
                 $owner = $media->mediable;
                 if (! $owner instanceof Model) {
                     throw new RuntimeException('Le propriétaire du média est introuvable.');
@@ -463,25 +463,26 @@ final class MediaService
                         });
                 }
 
-                if ($locked->category === MediaCategory::PRODUCT_IMAGE->value) {
-                    $hasActivePrimary = $owner->media()
-                        ->where('category', MediaCategory::PRODUCT_IMAGE->value)
-                        ->where('is_primary', true)
-                        ->exists();
-                    $makePrimary = $makePrimary || ! $hasActivePrimary;
-                }
+                $restoredSortOrder = $locked->sort_order;
+                $isRestoredProductImage = $locked->category === MediaCategory::PRODUCT_IMAGE->value;
 
-                if ($locked->category === MediaCategory::PRODUCT_IMAGE->value && $makePrimary) {
-                    $owner->media()
+                if ($isRestoredProductImage) {
+                    // The owner row lock serializes gallery mutations while we
+                    // enforce the active-image limit and append the restored item.
+                    $activeProductImages = $owner->media()
                         ->where('category', MediaCategory::PRODUCT_IMAGE->value)
-                        ->where('is_primary', true)
                         ->lockForUpdate()
-                        ->get()
-                        ->each(function (Media $active) use ($actor): void {
-                            $active->is_primary = false;
-                            $active->updated_by = (string) $actor->getKey();
-                            $active->save();
-                        });
+                        ->get();
+
+                    $limit = $this->positiveLimit('media.limits.product_gallery', 10);
+
+                    if ($activeProductImages->count() >= $limit) {
+                        throw ValidationException::withMessages([
+                            'media' => ["La galerie du produit est limitée à {$limit} images actives. La restauration est refusée."],
+                        ]);
+                    }
+
+                    $restoredSortOrder = ((int) $activeProductImages->max('sort_order')) + 1;
                 }
 
                 $locked->forceFill([
@@ -489,9 +490,8 @@ final class MediaService
                     'updated_by' => (string) $actor->getKey(),
                     'is_primary' => $single
                         ? true
-                        : ($locked->category === MediaCategory::PRODUCT_IMAGE->value
-                            ? $makePrimary
-                            : $locked->is_primary),
+                        : ($isRestoredProductImage ? false : $locked->is_primary),
+                    'sort_order' => $restoredSortOrder,
                 ])->save();
 
                 $locked->restore();
