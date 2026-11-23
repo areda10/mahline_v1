@@ -31,8 +31,16 @@
     </section>
 
     <section class="card">
-        <h2>Mon espace</h2>
-        <p>Bienvenue dans votre espace personnel. Les fonctionnalités disponibles seront affichées ici selon les autorisations associées à votre compte.</p>
+        <h2>Accès rapides</h2>
+        <p class="muted">Retrouvez les outils disponibles selon les autorisations de votre compte.</p>
+        <div class="actions">
+            <a class="button" href="{{ route('backoffice.inventory.index') }}">Consulter la disponibilité du stock</a>
+            <a class="button button-secondary" href="{{ route('backoffice.profile.address.edit') }}">Gérer mon adresse</a>
+            <a class="button button-secondary" href="{{ route('backoffice.security.sessions.index') }}">Gérer mes sessions</a>
+            <a class="button button-secondary" href="{{ route('backoffice.security.devices.index') }}">Appareils de confiance</a>
+            <a class="button button-secondary" href="{{ route('backoffice.security.api-tokens.index') }}">Jetons API</a>
+            <a class="button button-secondary" href="{{ route('security.password.edit') }}">Sécurité du compte</a>
+        </div>
     </section>
 @endsection
 
