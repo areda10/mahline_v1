@@ -189,7 +189,19 @@ final class SalesCartController
             $cartId = (string) $this->resolveCart($request)->getKey();
         }
 
+        if ($directToken !== null) {
+            $this->carts->refresh($cartId);
+        }
+
         $preview = $this->checkout->preview((string) $user->getKey(), $cartId, $directToken);
+        $cooperativeNames = Cooperative::query()
+            ->whereIn('id', collect($preview['groups'] ?? [])->pluck('cooperative_id')->all())
+            ->pluck('name', 'id');
+        $preview['groups'] = array_map(static function (array $group) use ($cooperativeNames): array {
+            $group['cooperative_name'] = (string) ($cooperativeNames[$group['cooperative_id']] ?? 'Coopérative');
+            return $group;
+        }, $preview['groups'] ?? []);
+
         $addresses = Address::query()
             ->with('country')
             ->where('user_id', (string) $user->getKey())
@@ -234,6 +246,10 @@ final class SalesCartController
             $cartId = $directCartId;
         } else {
             $cartId = (string) $this->resolveCart($request)->getKey();
+        }
+
+        if ($directToken !== null) {
+            $this->carts->refresh($cartId);
         }
 
         $result = $this->checkout->confirm(
