@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const variant = snapshot.variant_label || snapshot.variant || '';
                     return '<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--shop-line)"><div><strong>'+escapeHtml(name)+'</strong>'+(variant ? '<div class="shop-muted" style="font-size:11px">'+escapeHtml(variant)+'</div>' : '')+'<div class="shop-muted" style="font-size:11px">Quantité : '+escapeHtml(item.quantity)+'</div></div><strong>'+money(item.line_total)+'</strong></div>';
                 }).join('');
-                return '<article><h3 style="font-size:14px;margin:0 0 8px">Coopérative — '+escapeHtml(group.cooperative_id)+'</h3>'+lines+'<div style="display:flex;justify-content:space-between;gap:12px;padding-top:8px"><span class="shop-muted">Sous-total</span><strong>'+money(group.subtotal)+'</strong></div><div style="display:flex;justify-content:space-between;gap:12px;padding-top:5px"><span class="shop-muted">Livraison de cette coopérative</span><strong>'+money(group.delivery)+'</strong></div></article>';
+                return '<article><h3 style="font-size:14px;margin:0 0 8px">'+escapeHtml(group.cooperative_name || 'Coopérative')+'</h3>'+lines+'<div style="display:flex;justify-content:space-between;gap:12px;padding-top:8px"><span class="shop-muted">Sous-total</span><strong>'+money(group.subtotal)+'</strong></div><div style="display:flex;justify-content:space-between;gap:12px;padding-top:5px"><span class="shop-muted">Livraison de cette coopérative</span><strong>'+money(group.delivery)+'</strong></div></article>';
             }).join('');
 
             document.getElementById('checkout-subtotal').textContent = money(preview.subtotal);
