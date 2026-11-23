@@ -104,16 +104,24 @@
                         <div class="shop-muted" style="font-size:11px">Plusieurs variantes disponibles</div>
                     @endif
                     <a href="{{ route('storefront.products.show', $product) }}" class="shop-button shop-button-secondary" style="width:100%;margin-top:13px">Voir le produit</a>
-                    @if ($product->activeVariants->isEmpty())
-                        <form method="POST" action="{{ route('sales.cart.checkout.direct.start') }}" style="margin-top:8px">
-                            @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->getKey() }}">
-                            <input type="hidden" name="quantity" value="1.000">
-                            <button class="shop-button" type="submit" style="width:100%">Commander</button>
-                        </form>
+                    @auth
+                        @if (auth()->user()->hasRole('customer'))
+                            @if ($product->activeVariants->isEmpty())
+                                <form method="POST" action="{{ route('sales.cart.checkout.direct.start') }}" style="margin-top:8px">
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $product->getKey() }}">
+                                    <input type="hidden" name="quantity" value="1.000">
+                                    <button class="shop-button" type="submit" style="width:100%">Commander</button>
+                                </form>
+                            @else
+                                <a href="{{ route('storefront.products.show', $product) }}" class="shop-button" style="width:100%;margin-top:8px">Commander — choisir une variante</a>
+                            @endif
+                        @else
+                            <a href="{{ route('customer.login') }}" class="shop-button" style="width:100%;margin-top:8px">Connexion client pour commander</a>
+                        @endif
                     @else
-                        <a href="{{ route('storefront.products.show', $product) }}" class="shop-button" style="width:100%;margin-top:8px">Commander — choisir une variante</a>
-                    @endif
+                        <a href="{{ route('customer.login') }}" class="shop-button" style="width:100%;margin-top:8px">Connexion client pour commander</a>
+                    @endauth
                 </div>
             </article>
         @endforeach
