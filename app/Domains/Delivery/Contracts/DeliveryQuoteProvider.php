@@ -9,7 +9,7 @@ use App\Domains\Delivery\DTOs\DeliveryQuote;
 interface DeliveryQuoteProvider
 {
     /**
-     * @param list<string> $cooperativeIds
+     * @param  list<string>  $cooperativeIds
      * @return list<DeliveryQuote> One quote per distinct cooperative shipment.
      */
     public function quoteForCooperatives(array $cooperativeIds): array;

@@ -19,6 +19,7 @@ use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -153,7 +154,7 @@ final class OrderCreationService
                     || empty($quote['amount'])
                     || ($quote['currency'] ?? null) !== 'MAD'
                     || empty($quote['expires_at'])
-                    || now()->greaterThanOrEqualTo(\Illuminate\Support\Carbon::parse($quote['expires_at']))
+                    || now()->greaterThanOrEqualTo(Carbon::parse($quote['expires_at']))
                     || $this->moneyToCents((string) $quote['amount']) <= 0) {
                     throw ValidationException::withMessages([
                         'delivery' => ['Chaque sous-commande doit posséder un devis de livraison positif, valide et non expiré.'],

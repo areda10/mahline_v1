@@ -18,6 +18,7 @@ use Database\Seeders\ProductUnitSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -293,7 +294,7 @@ final class OrderCreationServiceTest extends TestCase
             ->pluck('cooperative_id')->map(static fn ($id): string => (string) $id)->unique()->values();
 
         $checkout['delivery_quotes'] = $cooperativeIds->map(static fn (string $cooperativeId): array => [
-            'quote_reference' => (string) \Illuminate\Support\Str::ulid(),
+            'quote_reference' => (string) Str::ulid(),
             'cooperative_id' => $cooperativeId,
             'amount' => '40.00',
             'currency' => 'MAD',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Delivery;
 
+use App\Domains\Delivery\DTOs\DeliveryQuote;
 use App\Domains\Delivery\Services\InitialFlatRateDeliveryQuoteProvider;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -46,7 +47,7 @@ final class InitialFlatRateDeliveryQuoteProviderTest extends TestCase
         $quote = app(InitialFlatRateDeliveryQuoteProvider::class)
             ->quoteForCooperatives(['coop-a'])[0];
 
-        $expired = new \App\Domains\Delivery\DTOs\DeliveryQuote(
+        $expired = new DeliveryQuote(
             cooperativeId: $quote->cooperativeId,
             reference: $quote->reference,
             amount: $quote->amount,

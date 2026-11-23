@@ -19,6 +19,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class CooperativeOrderControllerTest extends TestCase
@@ -168,7 +169,7 @@ final class CooperativeOrderControllerTest extends TestCase
             'idempotency_key' => $key,
             'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
             'delivery_quotes' => [[
-                'quote_reference' => (string) \Illuminate\Support\Str::ulid(),
+                'quote_reference' => (string) Str::ulid(),
                 'cooperative_id' => (string) $cooperative->getKey(),
                 'amount' => '40.00',
                 'currency' => 'MAD',
