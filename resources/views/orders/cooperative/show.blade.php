@@ -4,7 +4,6 @@
 
 @section('content')
 @php
-    $isRoot = auth()->user()->hasRole('super_admin_root');
     $isAdmin = auth()->user()->hasAnyRole(['super_admin_root', 'super_admin']);
     $isAwaiting = $suborder->status === \App\Domains\Orders\Enums\CooperativeOrderStatus::AWAITING_COOPERATIVE;
     $deadlineOpen = $suborder->response_deadline_at !== null && $suborder->response_deadline_at->isFuture();
