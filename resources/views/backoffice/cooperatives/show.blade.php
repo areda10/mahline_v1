@@ -15,9 +15,6 @@
         @can('viewAny', \\App\\Domains\\Products\\Models\\Product::class)
             <a class="button button-secondary" href="{{ route('backoffice.products.index', ['cooperative' => $cooperative->getKey()]) }}">Produits</a>
         @endcan
-        @can('view', \\App\\Domains\\Inventory\\Models\\InventoryStock::class)
-            <a class="button button-secondary" href="{{ route('backoffice.inventory.index') }}">Inventaire</a>
-        @endcan
     </div>
 </section>
 <div class="card"><dl>
