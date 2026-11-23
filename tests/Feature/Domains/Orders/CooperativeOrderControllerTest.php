@@ -117,6 +117,36 @@ final class CooperativeOrderControllerTest extends TestCase
             ->assertSee('INBOX-UNASSIGNED-001');
     }
 
+    public function test_root_can_extend_deadline_and_record_a_reasoned_administrative_decision(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $cooperative = Cooperative::factory()->active()->create();
+        $root = $this->userWithRole('super_admin_root');
+        $order = $this->makeOrder($customer, $cooperative, 'INBOX-ADMIN-001');
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $newDeadline = now()->addHours(20)->startOfMinute();
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.orders.cooperative.extend-deadline', $suborder), [
+                'response_deadline_at' => $newDeadline->format('Y-m-d H:i:s'),
+                'reason' => 'Délai supplémentaire justifié.',
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals($newDeadline->timestamp, $suborder->fresh()->response_deadline_at->timestamp);
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.orders.cooperative.administrative-decision', $suborder), [
+                'accept' => false,
+                'reason' => 'Absence de réponse après vérification.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(CooperativeOrderStatus::REFUSED, $suborder->fresh()->status);
+        $this->assertSame('Absence de réponse après vérification.', $suborder->fresh()->substitution_reason);
+        $this->assertSame((string) $root->getKey(), (string) $suborder->fresh()->substituted_by_admin_id);
+    }
+
     private function makeOrder(User $customer, Cooperative $cooperative, string $key): \\App\\Domains\\Orders\\Models\\Order
     {
         $product = Product::factory()->forCooperative($cooperative)->create([
