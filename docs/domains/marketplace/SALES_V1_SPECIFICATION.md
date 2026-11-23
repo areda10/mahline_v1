@@ -480,6 +480,22 @@ Lorsqu'une coopérative supprime la limite commerciale configurée pour un produ
 Cette règle complète SALES-021, SALES-023 et SALES-024 : en l'absence de limite commerciale configurée, seule la limite technique globale s'applique ; les modifications et suppressions de limite prennent effet immédiatement sur les paniers existants.
 
 
+
+### SALES-038 — Frais de livraison multi-coopératives au tarif initial (décision utilisateur du 23 novembre 2026)
+
+**Statut : VALIDÉ — tarif initial de 40,00 MAD par expédition coopérative.**
+
+- Sales demande à Delivery un devis pour chaque expédition correspondant à une sous-commande coopérative ; Sales ne calcule jamais les frais de livraison.
+- Pour le tarif initial, chaque expédition d'une coopérative vers le client coûte 40,00 MAD, quel que soit le nombre d'articles regroupés dans cette expédition.
+- Le montant de livraison de la commande principale est la somme des frais de toutes ses expéditions coopératives : deux coopératives expédiant au même client entraînent 80,00 MAD ; trois entraînent 120,00 MAD.
+- Chaque sous-commande conserve son propre frais de livraison et son snapshot de devis ; la commande principale conserve le total agrégé.
+- Le tarif de 40,00 MAD est provisoire et doit être remplacé, sans changement de règle d'agrégation, par le montant renvoyé par Delivery selon les sociétés de livraison et leurs grilles de tarifs configurées.
+- Sales affiche au client le détail par expédition coopérative, le total livraison et le total général avant validation finale.
+- Au moment de confirmer, le serveur doit recalculer/valider les devis encore valides et les montants ; il ne fait jamais confiance à un total ou un frais envoyé par le navigateur.
+- Les devis et tarifs acceptés sont figés dans les snapshots Orders ; une modification tarifaire ultérieure ne modifie pas les commandes existantes.
+- Aucun checkout ne doit enregistrer des frais à zéro par défaut ou créer une commande si un devis de livraison requis est absent/expiré.
+
+
 ### Précision de périmètre — transfert de produit entre coopératives
 
 **Décision confirmée — 19 novembre 2026**
