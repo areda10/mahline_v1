@@ -43,6 +43,7 @@ use App\Domains\Media\Http\Controllers\MediaController;
 use App\Domains\Media\Http\Controllers\MediaIncidentController;
 use App\Domains\Notifications\Http\Controllers\NotificationCenterController;
 use App\Domains\Orders\Http\Controllers\CustomerOrderHistoryController;
+use App\Domains\Orders\Http\Controllers\CooperativeOrderController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
@@ -703,6 +704,36 @@ Route::prefix('back-office')
 //         ),
 //     ]);
 // });
+
+Route::prefix('root/back-office/orders/cooperative')
+    ->name('root.backoffice.orders.cooperative.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin_root'])
+    ->group(function (): void {
+        Route::get('/', [CooperativeOrderController::class, 'index'])->name('index');
+        Route::get('/{cooperativeOrderId}', [CooperativeOrderController::class, 'show'])->whereUlid('cooperativeOrderId')->name('show');
+        Route::post('/{cooperativeOrderId}/confirm', [CooperativeOrderController::class, 'confirm'])->whereUlid('cooperativeOrderId')->name('confirm');
+        Route::post('/{cooperativeOrderId}/refuse', [CooperativeOrderController::class, 'refuse'])->whereUlid('cooperativeOrderId')->name('refuse');
+        Route::post('/{cooperativeOrderId}/administrative-decision', [CooperativeOrderController::class, 'administrativeDecision'])->whereUlid('cooperativeOrderId')->name('administrative-decision');
+        Route::post('/{cooperativeOrderId}/extend-deadline', [CooperativeOrderController::class, 'extendDeadline'])->whereUlid('cooperativeOrderId')->name('extend-deadline');
+    });
+
+Route::prefix('back-office/orders/cooperative')
+    ->name('backoffice.orders.cooperative.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
+    ->group(function (): void {
+        Route::get('/', [CooperativeOrderController::class, 'index'])->name('index');
+        Route::get('/{cooperativeOrderId}', [CooperativeOrderController::class, 'show'])->whereUlid('cooperativeOrderId')->name('show');
+        Route::post('/{cooperativeOrderId}/confirm', [CooperativeOrderController::class, 'confirm'])->whereUlid('cooperativeOrderId')->name('confirm');
+        Route::post('/{cooperativeOrderId}/refuse', [CooperativeOrderController::class, 'refuse'])->whereUlid('cooperativeOrderId')->name('refuse');
+    });
+
+Route::prefix('back-office/orders/cooperative')
+    ->name('backoffice.orders.cooperative.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin'])
+    ->group(function (): void {
+        Route::post('/{cooperativeOrderId}/administrative-decision', [CooperativeOrderController::class, 'administrativeDecision'])->whereUlid('cooperativeOrderId')->name('administrative-decision');
+        Route::post('/{cooperativeOrderId}/extend-deadline', [CooperativeOrderController::class, 'extendDeadline'])->whereUlid('cooperativeOrderId')->name('extend-deadline');
+    });
 
 Route::post('/orders/safety-holds/{holdId}/resolve', [OrderSafetyHoldController::class, 'resolve'])
     ->middleware([
