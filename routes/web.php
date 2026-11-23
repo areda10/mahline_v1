@@ -198,6 +198,14 @@ Route::prefix('cart')->name('sales.cart.')->group(function (): void {
         'role:customer',
         EnsureCustomerAccount::class,
     ])->group(function (): void {
+        Route::get('/checkout', [SalesCartController::class, 'checkoutPage'])
+            ->name('checkout.page');
+        Route::post('/checkout/direct', [SalesCartController::class, 'startDirectCheckout'])
+            ->middleware('throttle:20,1')
+            ->name('checkout.direct.start');
+        Route::get('/checkout/direct/{cartId}', [SalesCartController::class, 'directCheckoutPage'])
+            ->whereUlid('cartId')
+            ->name('checkout.direct');
         Route::get('/checkout/preview', [SalesCartController::class, 'checkoutPreview'])
             ->middleware('throttle:30,1')
             ->name('checkout.preview');
