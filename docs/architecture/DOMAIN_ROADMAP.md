@@ -1075,3 +1075,52 @@ Chaque vague se termine par audit des dépendances, tests ciblés, tests de fron
 La spécification Delivery a été mise à jour : après 12 heures, si plusieurs transporteurs sont ex æquo au tarif minimal, le premier à enregistrer une acceptation valide obtient la mission. Le mécanisme devra être atomique et testé contre les courses concurrentes.
 
 Cette création est un scaffold documentaire/applicatif de racine, pas une implémentation métier. Aucun modèle, migration, service, contrôleur, route, Policy ou provider vide n'a été ajouté. Les providers seront enregistrés dans `bootstrap/providers.php` lorsque les premières liaisons réelles du domaine seront définies. Les tests PHP/Pint et l'exécution Laravel restent à faire localement.
+
+
+## 13. Intégration des fonctionnalités dans les écrans — point de contrôle du 23 novembre 2026
+
+**Branche de travail :** `feature/Marketplace`  
+**Référence d'inventaire :** HEAD observé avant cette séquence UI : `ae0fcf18cef85bbda90594cd6b326b33749f68d1`.  
+**Périmètre :** connecter les fonctions réellement présentes aux interfaces des rôles client, cooperative_admin, super_admin et super_admin_root. Cette section suit l'intégration UI ; elle ne vaut pas validation fonctionnelle des domaines.
+
+### 13.1 Écrans et intégrations déjà présentes
+
+- **Boutique publique :** liste et détail produits, recherche, filtres catégorie/coopérative/prix, variantes et ajout au panier.
+- **Panier :** lecture et mise à jour du panier, retrait, acceptation des changements de prix/caractéristiques et détection des conflits de version.
+- **Client :** tableau de bord, profil, carnet d'adresses, changement d'e-mail, historique et détail des commandes, sécurité du mot de passe et appareils.
+- **Back-office coopérative / super_admin :** coopératives, utilisateurs, catalogues, catégories et produits ; inventaire disponible selon le périmètre autorisé.
+- **Root :** gestion globale des coopératives, utilisateurs, catégories globales, catalogues/produits/catégories par coopérative, sessions, appareils, jetons API et verrouillages d'authentification.
+- **Inventory :** espace de stock, comptages, seuils, quarantaine, rapports et signalements de sécurité, sous réserve des permissions et de la portée coopérative.
+
+### 13.2 Intégrations UI réalisées pendant la séquence
+
+- Navigation Boutique → espace client, commandes et profil.
+- Retrait du bloc de photo de profil qui annonçait une fonctionnalité Media dans le profil client. Aucun développement Media n'est inclus dans ce chantier.
+- Navigation back-office enrichie avec notifications, sessions, appareils de confiance et jetons API.
+- Navigation Root enrichie avec inventaire, notifications, appareils de confiance et jetons API.
+- Fiche coopérative enrichie de raccourcis vers catalogues, catégories et produits, sous contrôle des Policies existantes.
+- Tableau de bord du rôle `user` enrichi de raccourcis vers inventaire, adresse personnelle, sessions, appareils, jetons API et mot de passe.
+
+**Fichiers modifiés :** `resources/views/layouts/storefront.blade.php`, `resources/views/customer/profile/edit.blade.php`, `resources/views/layouts/admin.blade.php`, `resources/views/layouts/root.blade.php`, `resources/views/backoffice/cooperatives/show.blade.php`, `resources/views/user/dashboard.blade.php` et tests associés de navigation/profil.
+
+### 13.3 Écarts empêchant une intégration complète à ce stade
+
+| Périmètre | Constat observé dans le dépôt | Conséquence UI |
+|---|---|---|
+| Sales / Checkout | Les endpoints de prévisualisation et confirmation existent, mais le panier présente encore un bouton de finalisation désactivé. | Le parcours checkout n'est pas considéré intégré ; il faut auditer les contrats d'adresse, disponibilité, idempotence et coûts de livraison avant d'activer la confirmation. |
+| Orders — espace coopérative | Les écrans client d'historique/détail et les contrôles d disponibilité existent ; aucun contrôleur d'interface coopérative de traitement des commandes n'a été recensé dans `app/Domains/Orders/Http/Controllers`. | Ne pas ajouter de faux lien « Commandes à traiter » avant la mise en place et l'audit du parcours coopérative. |
+| Delivery | Le dossier de domaine existe, mais aucun contrôleur HTTP, service métier ou route Delivery n'a été recensé dans l'inventaire vérifié. | Pas d'écran de devis, expédition, suivi, preuve de livraison ou retour à relier pour l'instant. |
+| Finance | Le dossier de domaine existe, mais aucun contrôleur HTTP ou service Finance n'a été recensé dans l'inventaire vérifié. | Pas d'écran de factures, paiements, commissions, remboursements, rapprochements ou reversements à relier pour l'instant. |
+| Statistics | Le domaine est présent dans l'arborescence, mais aucun contrôleur HTTP ou service Statistics n'a été recensé dans l'inventaire vérifié. | Les tableaux de bord ne doivent pas afficher de KPI simulés ; les contrats et agrégats doivent d'abord exister. |
+| Audit | Un contrôleur de consultation existe ; son intégration doit rester réservée aux rôles et permissions prévus, notamment Root. | Auditer le lien et les contrôles d'accès avant exposition dans la navigation. |
+
+### 13.4 Prochain ordre d'intégration
+
+1. Auditer les écrans existants et les contrôleurs associés, page par page, pour identifier les actions non reliées, liens morts, formulaires incomplets et vues sans retour d'état.
+2. Terminer l'intégration des fonctions déjà disponibles dans Identity, Cooperatives, Catalog, Categories, Products et Inventory.
+3. Compléter les écrans Sales/Checkout uniquement après validation du parcours de livraison et de l'adresse de commande.
+4. Concevoir les écrans de traitement coopératif des commandes à partir des contrats Orders existants.
+5. Ne créer les écrans Delivery, Finance/Facturation et Statistics qu'après implémentation et audit de leurs services et routes propriétaires.
+6. Exécuter les tests Feature ciblés, la suite complète et Pint localement ; tant que les résultats ne sont pas fournis, l'état reste **À tester**.
+
+**État global de l'intégration UI : En implémentation / audit à poursuivre.** Aucun test n'est déclaré vert dans le cadre de ce point de contrôle. Aucun merge vers `main`, aucune exécution GitHub Actions et aucun développement Media.
