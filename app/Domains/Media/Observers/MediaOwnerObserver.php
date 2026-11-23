@@ -13,6 +13,7 @@ use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 final class MediaOwnerObserver
@@ -92,7 +93,7 @@ final class MediaOwnerObserver
         foreach ($retainedPrivateDocuments as $media) {
             try {
                 app(MediaService::class)->restore($actor, $media);
-            } catch (\Illuminate\Validation\ValidationException) {
+            } catch (ValidationException) {
                 // Missing or altered retained files remain soft-deleted and auditable.
                 continue;
             }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Framework\Domains\Media\Services;
 
-use App\Domains\Audit\Models\AuditEvent;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
