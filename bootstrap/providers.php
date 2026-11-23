@@ -29,6 +29,7 @@ return [
     AuditServiceProvider::class,
     CatalogServiceProvider::class,
     CategoriesServiceProvider::class,
+    DeliveryServiceProvider::class,
     MediaServiceProvider::class,
     ProductsServiceProvider::class,
     SalesServiceProvider::class,
