@@ -572,6 +572,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
                 ['product_id' => (string) $productB->getKey(), 'quantity' => '1'],
             ],
         ];
+        $checkout = $this->withDeliveryQuotes($checkout);
         $preview = app(OrderCreationService::class)->previewFromCheckout($checkout);
         $order = app(OrderCreationService::class)->createFromCheckout(
             $customer,
