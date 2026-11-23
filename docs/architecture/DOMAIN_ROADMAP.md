@@ -1208,3 +1208,24 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 
 **État :** règle métier documentée et validée ; implémentation Delivery / intégration Sales / snapshots Orders et tests restent à construire. Aucun test n'a été exécuté pour cette décision documentaire.
 
+
+
+### 13.9 Checkout DeliveryQuoteProvider et traitement HTTP des sous-commandes (23 novembre 2026)
+
+**Implémentation ajoutée sur `feature/Marketplace` — validation locale encore requise :**
+
+- Delivery expose `DeliveryQuoteProvider` et un DTO immuable `DeliveryQuote`.
+- Le provider initial produit un devis par coopérative distincte, au tarif configurable de 40,00 MAD par expédition ; durée par défaut : 30 minutes.
+- Sales obtient les devis côté serveur dans sa transaction de confirmation et les transmet au contrat public Orders. Aucun montant de livraison transmis par le navigateur n'est utilisé.
+- Orders refuse une création sans devis positif, en MAD, non expiré et correspondant à chaque coopérative réellement créée.
+- Orders conserve le snapshot de chaque devis sur la sous-commande et les snapshots utilisés sur la commande globale ; `delivery_total` est la somme des frais de sous-commandes et `grand_total` inclut ces frais.
+- Le tarif initial est configurable, mais la tarification par transporteur/grille persistée reste à construire dans Delivery. Le bouton de finalisation du panier demeure désactivé ; aucune interface Delivery n'a été créée.
+- Le contrôleur HTTP `CooperativeOrderController`, les routes Root / Backoffice, les vues liste/détail et les tests Feature existent déjà sur cette branche. Ils restent à exécuter et à auditer localement avant clôture.
+
+**Tests ajoutés/ajustés :** vérifications de frais 40 DH par sous-commande, agrégat 80 DH pour deux coopératives, et 40 DH dans le parcours du contrat Orders. Les tests ne sont pas déclarés verts : aucune exécution locale de PHPUnit/Pint n'a été réalisée dans cette session.
+
+**À faire avant clôture :**
+1. Exécuter les tests Sales / Orders / Delivery concernés puis la suite complète.
+2. Ajouter les cas explicites 1, 2 et 3 coopératives, plusieurs articles d'une même coopérative, devis manquant/expiré, modification du tarif après création et rejet d'un montant falsifié.
+3. Auditer l'inbox HTTP coopérative (Root = toutes, Super Admin = coopératives assignées, Cooperative Admin = sa coopérative) et corriger les écarts révélés par les tests.
+4. Seulement après validation, reprendre l'interface client de checkout puis l'interface Delivery transporteurs/tarifs.
