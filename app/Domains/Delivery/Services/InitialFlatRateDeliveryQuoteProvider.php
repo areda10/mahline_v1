@@ -22,7 +22,7 @@ final class InitialFlatRateDeliveryQuoteProvider implements DeliveryQuoteProvide
         }
 
         $amount = (string) config('delivery.initial_fee_per_cooperative', '40.00');
-        if (! preg_match('/^\d+(?:\.\d{1,2})?$/', $amount) || bccomp($amount, '0.00', 2) <= 0) {
+        if (! preg_match('/^\d+(?:\.\d{1,2})?$/', $amount) || (float) $amount <= 0) {
             throw ValidationException::withMessages([
                 'delivery' => ['Le tarif initial de livraison doit être strictement positif.'],
             ]);
