@@ -1172,9 +1172,9 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 - Vues : `e2e699e`, `0979e9c`
 - Routes : `d65e90f`
 - Navigation : `bc924eb`, `c60776e`, correctif de portée du menu : `06daa4c`
-- Tests : `248ab6c`, `6eb8708`
+- Tests : `248ab6c`, `6eb8708`, `d9f49f6`
 - Correctifs de syntaxe PHP / Blade et nettoyage du test : `ac1e0dc`, `6ad246a`, `14bb8db`, `383158a` ; correctif de portée du menu : `06daa4c`.
-- HEAD observé après cette tranche : `383158a38ef54b7540b2086a225b14cd1cb13cf5`.
+- HEAD observé après cette tranche : `d9f49f67aedaf23a84aa4782f3ece2d778a6cdf0`.
 
 **État de validation :** code et tests ajoutés, mais PHPUnit, Pint, compilation Blade et vérification runtime des routes n'ont pas été exécutés dans cet environnement. Le lot reste **À tester** ; ne pas le déclarer terminé avant les validations locales.
 
