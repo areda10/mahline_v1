@@ -260,9 +260,8 @@ final class SalesCartController
             $directToken,
         );
 
-        if ($directCartId !== null) {
-            $request->session()->forget('sales.direct_checkouts.'.$directCartId);
-        }
+        // Keep the opaque direct-cart token in the customer session so a retried
+        // confirmation can replay the idempotent result after a lost response.
 
         return response()->json(['data' => $result]);
     }
