@@ -66,6 +66,53 @@ final class MediaOwnerObserver
         });
     }
 
+    public function restored(Model $owner): void
+    {
+        if (! $owner instanceof Cooperative) {
+            return;
+        }
+
+        $actor = Auth::user();
+        if (! $actor instanceof User || ! $actor->hasRole('super_admin_root') || ! $actor->isAuthorized()) {
+            throw new RuntimeException('La restauration des médias privés d’une coopérative exige un super_admin_root autorisé.');
+        }
+
+        if (! app(AuditWriter::class)->verifyIntegrity()) {
+            throw new RuntimeException('La chaîne d’audit est invalide ; restauration des médias privés refusée.');
+        }
+
+        $retainedPrivateDocuments = $owner->media()
+            ->onlyTrashed()
+            ->where('category', 'document')
+            ->where('visibility', 'private')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($retainedPrivateDocuments as $media) {
+            try {
+                app(MediaService::class)->restore($actor, $media);
+            } catch (\Illuminate\Validation\ValidationException) {
+                // Missing or altered retained files remain soft-deleted and auditable.
+                continue;
+            }
+        }
+
+        app(AuditWriter::class)->record(new AuditEntryDTO(
+            eventKey: 'media.cooperative_private_media_restore_processed',
+            action: 'cooperative_private_media_restore_processed',
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: (string) $owner->getKey(),
+            subjectType: Cooperative::class,
+            subjectId: (string) $owner->getKey(),
+            metadata: [
+                'retained_documents_found' => $retainedPrivateDocuments->count(),
+                'retention_days' => (int) config('media.retention_days', 90),
+            ],
+        ));
+    }
+
     public function deleting(Model $owner): void
     {
         if (! $owner instanceof Product && ! $owner instanceof Cooperative && ! $owner instanceof User) {
@@ -84,6 +131,35 @@ final class MediaOwnerObserver
         if (! method_exists($owner, 'isForceDeleting') || ! $owner->isForceDeleting()) {
             if (! app(AuditWriter::class)->verifyIntegrity()) {
                 throw new RuntimeException('La chaîne d’audit est invalide ; suppression logique du propriétaire refusée.');
+            }
+
+            if ($owner instanceof Cooperative) {
+                $privateDocuments = $owner->media()
+                    ->where('category', 'document')
+                    ->where('visibility', 'private')
+                    ->whereNull('deleted_at')
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($privateDocuments as $media) {
+                    $media->forceFill(['deleted_by' => $actorId])->save();
+                    $media->delete();
+
+                    app(AuditWriter::class)->record(new AuditEntryDTO(
+                        eventKey: 'media.cooperative_private_media_soft_deleted',
+                        action: 'cooperative_private_media_soft_deleted',
+                        actorType: $actor instanceof User ? User::class : null,
+                        actorId: $actorId,
+                        cooperativeId: (string) $owner->getKey(),
+                        subjectType: $media::class,
+                        subjectId: (string) $media->getKey(),
+                        metadata: [
+                            'category' => $media->category,
+                            'retention_days' => (int) config('media.retention_days', 90),
+                            'owner_deleted_at' => now()->toISOString(),
+                        ],
+                    ));
+                }
             }
 
             app(AuditWriter::class)->record(new AuditEntryDTO(
