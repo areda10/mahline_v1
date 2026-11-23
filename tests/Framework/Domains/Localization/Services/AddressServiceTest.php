@@ -263,7 +263,7 @@ final class AddressServiceTest extends TestCase
 
     public function test_cooperative_admin_can_create_a_missing_cooperative_address_without_create_permission(): void
     {
-        $cooperative = Cooperative::factory()->create();
+        $cooperative = Cooperative::factory()->active()->create();
         $admin = $this->userWithRole('cooperative_admin');
         $admin->forceFill(['cooperative_id' => $cooperative->getKey()])->save();
 
@@ -317,7 +317,12 @@ final class AddressServiceTest extends TestCase
 
     private function userWithRole(string $slug): User
     {
-        $user = User::factory()->create();
+        $attributes = [];
+        if (in_array($slug, ['cooperative_admin', 'user'], true)) {
+            $attributes['cooperative_id'] = Cooperative::factory()->active()->create()->getKey();
+        }
+
+        $user = User::factory()->create($attributes);
         $role = Role::query()->firstOrCreate(
             ['slug' => $slug],
             ['name' => $slug, 'is_active' => true],
