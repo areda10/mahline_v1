@@ -5,6 +5,7 @@ use App\Domains\Audit\Providers\AuditServiceProvider;
 use App\Domains\Catalog\Providers\CatalogServiceProvider;
 use App\Domains\Categories\Providers\CategoriesServiceProvider;
 use App\Domains\Cooperatives\Providers\CooperativesServiceProvider;
+use App\Domains\Delivery\Providers\DeliveryServiceProvider;
 use App\Domains\Identity\Authorization\Providers\AuthorizationServiceProvider;
 use App\Domains\Identity\Authorization\Providers\PermissionGateServiceProvider;
 use App\Domains\Identity\Providers\IdentityServiceProvider;
@@ -36,6 +37,7 @@ return [
     InventoryServiceProvider::class,
     OrdersServiceProvider::class,
     CooperativesServiceProvider::class,
+    DeliveryServiceProvider::class,
     LocalizationServiceProvider::class,
     IdentityServiceProvider::class,
     AuthorizationServiceProvider::class,
