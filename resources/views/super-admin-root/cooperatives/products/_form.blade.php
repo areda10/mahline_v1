@@ -33,6 +33,7 @@
 </div>
 
 <div id="simple-fields" @if($selectedType === 'variant') hidden @endif>
+    @if(!$product->exists || $selectedType === 'simple')
     <div class="field">
         <label for="price">Prix de vente (MAD) *</label>
         <input id="price" name="price" type="number" min="0.01" step="0.01" value="{{ old('price', $product->price) }}">
@@ -48,6 +49,7 @@
         </select>
         @error('unit_id') <div class="error">{{ $message }}</div> @enderror
     </div>
+    @endif
 </div>
 
 <div id="variant-fields" @if($selectedType !== 'variant') hidden @endif>
