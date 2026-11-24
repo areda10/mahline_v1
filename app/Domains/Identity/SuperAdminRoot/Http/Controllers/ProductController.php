@@ -73,6 +73,10 @@ final class ProductController
 
         Gate::authorize('create', [Product::class, $cooperativeId]);
 
+        if (! $request->has('product_type')) {
+            $request->merge(['product_type' => 'simple']);
+        }
+
         $data = $request->validate([
             'product_type' => ['required', Rule::in(['simple', 'variant'])],
             'name' => ['required', 'string', 'max:180'],
@@ -92,7 +96,7 @@ final class ProductController
             'variants.*.unit_id' => ['required_if:product_type,variant', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
-            'category_ids' => ['sometimes', 'array'],
+            'category_ids' => ['required_if:product_type,variant', 'sometimes', 'array', 'min:1'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
             'catalog_ids' => ['sometimes', 'array'],
             'catalog_ids.*' => ['required', 'string', 'max:26', 'distinct'],
