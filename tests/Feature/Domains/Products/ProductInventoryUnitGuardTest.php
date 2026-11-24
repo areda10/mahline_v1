@@ -55,6 +55,7 @@ final class ProductInventoryUnitGuardTest extends TestCase
         $unitKg = $this->unit('kg');
         $unitG = $this->unit('g');
         $product = Product::factory()->forCooperative($cooperative)->create([
+            'product_type' => 'variant',
             'unit_id' => null,
         ]);
         $variant = ProductVariant::factory()->for($product)->create([
