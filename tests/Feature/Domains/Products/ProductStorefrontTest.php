@@ -7,6 +7,7 @@ namespace Tests\Feature\Domains\Products;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -158,7 +159,7 @@ final class ProductStorefrontTest extends TestCase
             'location' => $dashboardResponse->headers->get('Location'),
             'test_session_id' => session()->getId(),
             'authentication_session_id' => session()->get('authentication_session_id'),
-            'database_authentication_session' => \App\Domains\Identity\Authentication\Models\AuthenticationSession::query()
+            'database_authentication_session' => AuthenticationSession::query()
                 ->whereKey($authenticationSession->getKey())
                 ->first([
                     'id',
