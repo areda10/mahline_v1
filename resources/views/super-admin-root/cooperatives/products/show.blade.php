@@ -15,8 +15,11 @@
 
 <div class="card">
     <p><strong>Coopérative :</strong> {{ $cooperative->name }}</p>
-    <p><strong>Prix :</strong> {{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
-    <p><strong>Prix :</strong> {{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
+    <p><strong>Type :</strong> {{ ($product->product_type ?? 'simple') === 'variant' ? 'Produit avec variantes' : 'Produit simple' }}</p>
+    @if(($product->product_type ?? 'simple') === 'simple')
+        <p><strong>Prix :</strong> {{ $product->price !== null ? number_format((float) $product->price, 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
+        <p><strong>Unité :</strong> {{ $product->unit?->label ?? 'Non définie' }}</p>
+    @endif
     <p><strong>Slug :</strong> {{ $product->slug }}</p>
     <p><strong>État :</strong> <span class="badge {{ $product->is_active ? '' : 'badge-inactive' }}">{{ $product->is_active ? 'Actif' : 'Inactif' }}</span></p>
 
@@ -34,6 +37,23 @@
         <p class="muted">Aucun catalogue associé.</p>
     @endforelse
 </div>
+
+@if(($product->product_type ?? 'simple') === 'variant')
+<div class="card">
+    <h2>Variantes</h2>
+    @forelse($product->variants()->with('unit')->orderBy('created_at')->get() as $variant)
+        <div style="padding:12px 0;border-bottom:1px solid #444">
+            <strong>{{ $variant->label }}</strong>
+            <p>Prix : {{ number_format((float) $variant->effectivePrice(), 2, ',', ' ') }} MAD</p>
+            <p>Unité : {{ $variant->unit?->label ?? 'Non définie' }}</p>
+            @if($variant->sku)<p>SKU : {{ $variant->sku }}</p>@endif
+            <p>État : {{ $variant->is_active ? 'Active' : 'Inactive' }}</p>
+        </div>
+    @empty
+        <p class="muted">Aucune variante enregistrée.</p>
+    @endforelse
+</div>
+@endif
 
 <div class="card">
     <h2>Actions</h2>
