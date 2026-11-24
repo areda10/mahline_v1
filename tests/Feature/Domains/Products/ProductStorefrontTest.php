@@ -10,6 +10,7 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
@@ -120,8 +121,24 @@ final class ProductStorefrontTest extends TestCase
         $customer = User::factory()->create([
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
+            'must_change_password' => false,
         ]);
         $customer->roles()->attach($role->getKey());
+
+        // A protected customer route requires a real Identity authentication
+        // session whose session_id matches the active Laravel web session.
+        $laravelSessionId = session()->getId();
+        $authenticationSession = app(SessionService::class)->create(
+            user: $customer,
+            sessionId: $laravelSessionId,
+            userAgent: 'PHPUnit',
+            browser: 'Test Browser',
+            device: 'Test Device',
+        );
+
+        $this->withSession([
+            'authentication_session_id' => (string) $authenticationSession->getKey(),
+        ]);
 
         $this->actingAs($customer)
             ->get(route('storefront.products.index'))
