@@ -145,6 +145,9 @@ final class ProductStorefrontTest extends TestCase
         Route::middleware('web')->get(
             '/__tests/customer-authentication-session',
             function (Request $request) use ($customer) {
+                // Mirror the session rotation performed by AuthenticationWorkflow.
+                $request->session()->regenerate();
+
                 $authenticationSession = app(SessionService::class)->create(
                     user: $customer,
                     sessionId: $request->session()->getId(),
