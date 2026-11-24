@@ -229,7 +229,7 @@ final class ProductService implements CheckoutCatalog
                 ]);
             }
 
-            $hasVariants = $product->variants()->exists();
+            $hasVariants = ($product->product_type ?? 'simple') === 'variant';
 
             if ($hasVariants) {
                 if ($product->unit_id !== null) {
