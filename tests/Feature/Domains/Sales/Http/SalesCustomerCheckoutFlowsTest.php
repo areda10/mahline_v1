@@ -11,7 +11,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Localization\Models\Address;
-use App\Domains\Orders\Models\Order;
+use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Sales\Contracts\SalesCartManager;
