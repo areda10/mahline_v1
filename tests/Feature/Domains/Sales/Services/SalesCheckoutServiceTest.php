@@ -38,55 +38,42 @@ final class SalesCheckoutServiceTest extends TestCase
         $this->seed(ProductUnitSeeder::class);
     }
 
-    public function test_confirmation_consumes_only_ordered_lines_and_replay_returns_the_same_order(): void
+    public function test_confirmation_rejects_partial_checkout_and_preserves_the_entire_cart(): void
     {
         $customer = User::factory()->create();
-        $address = Address::factory()->forUser($customer)->create([
-            'street' => 'Avenue Hassan II',
-            'city' => 'Casablanca',
-        ]);
-        [$availableCooperative, $availableProduct] = $this->productWithStock('4.000');
-        [$unavailableCooperative, $unavailableProduct] = $this->productWithStock('0.000');
+        $address = Address::factory()->forUser($customer)->create();
+        [, $availableProduct] = $this->productWithStock('4.000');
+        [, $unavailableProduct] = $this->productWithStock('0.000');
 
-        $cart = app(SalesCartManager::class)->getOrCreateCustomerCart((string) $customer->getKey());
         $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
         $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
         $manager->addItem((string) $cart->getKey(), (string) $unavailableProduct->getKey(), null, '1.000', 2);
 
-        $checkout = app(SalesCheckoutService::class);
-        $result = $checkout->confirm(
-            (string) $customer->getKey(),
-            (string) $cart->getKey(),
-            (string) $address->getKey(),
-            'sales-checkout-replay-0001',
-        );
+        try {
+            app(SalesCheckoutService::class)->confirm(
+                (string) $customer->getKey(),
+                (string) $cart->getKey(),
+                (string) $address->getKey(),
+                'sales-checkout-no-partial-0001',
+            );
+            $this->fail('A cart containing an unavailable line must not create a partial order.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('checkout', $exception->errors());
+        }
 
-        $this->assertDatabaseCount('orders', 1);
-        $this->assertDatabaseHas('orders', ['id' => $result['order_id'], 'delivery_total' => '40.00']);
-        $this->assertDatabaseHas('cooperative_orders', ['order_id' => $result['order_id'], 'delivery_fee' => '40.00']);
-        $this->assertSame((string) $availableCooperative->getKey(), $result['ordered_cooperative_ids'][0]);
-        $this->assertContains((string) $unavailableCooperative->getKey(), $result['excluded_cooperative_ids']);
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(2, $cart->fresh()->activeItems()->count());
         $this->assertDatabaseHas('sales_cart_items', [
             'cart_id' => $cart->getKey(),
             'product_id' => $availableProduct->getKey(),
-            'status' => 'ordered',
+            'status' => 'active',
         ]);
         $this->assertDatabaseHas('sales_cart_items', [
             'cart_id' => $cart->getKey(),
             'product_id' => $unavailableProduct->getKey(),
             'status' => 'active',
         ]);
-
-        $retry = $checkout->confirm(
-            (string) $customer->getKey(),
-            (string) $cart->getKey(),
-            (string) $address->getKey(),
-            'sales-checkout-replay-0001',
-        );
-
-        $this->assertSame($result['order_id'], $retry['order_id']);
-        $this->assertDatabaseCount('orders', 1);
-        $this->assertSame(1, SalesCart::query()->findOrFail($cart->getKey())->activeItems()->count());
     }
 
     public function test_reusing_idempotency_key_with_another_address_is_rejected(): void
@@ -146,7 +133,7 @@ final class SalesCheckoutServiceTest extends TestCase
             ->assertJsonPath('data.unavailable_cooperative_ids', []);
     }
 
-    public function test_checkout_confirm_route_creates_order_and_consumes_only_ordered_cart_lines(): void
+    public function test_checkout_confirm_route_rejects_partial_checkout_and_preserves_all_cart_lines(): void
     {
         $customer = $this->checkoutCustomer();
         $address = Address::factory()->forUser($customer)->create();
@@ -157,30 +144,21 @@ final class SalesCheckoutServiceTest extends TestCase
         $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
         $manager->addItem((string) $cart->getKey(), (string) $unavailableProduct->getKey(), null, '1.000', 2);
 
-        $firstResponse = $this->actingAs($customer)
-            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
-            ->postJson(route('sales.cart.checkout.confirm'), [
-                'delivery_address_id' => (string) $address->getKey(),
-                'idempotency_key' => 'http-checkout-confirm-route-0001',
-            ])
-            ->assertOk()
-            ->assertJsonPath('data.ordered_cooperative_ids.0', (string) $availableProduct->cooperative_id)
-            ->assertJsonCount(1, 'data.excluded_cooperative_ids');
-
         $this->actingAs($customer)
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->postJson(route('sales.cart.checkout.confirm'), [
                 'delivery_address_id' => (string) $address->getKey(),
-                'idempotency_key' => 'http-checkout-confirm-route-0001',
+                'idempotency_key' => 'http-checkout-no-partial-0001',
             ])
-            ->assertOk()
-            ->assertJsonPath('data.order_id', $firstResponse->json('data.order_id'));
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('checkout');
 
-        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertSame(2, $cart->fresh()->activeItems()->count());
         $this->assertDatabaseHas('sales_cart_items', [
             'cart_id' => $cart->getKey(),
             'product_id' => $availableProduct->getKey(),
-            'status' => 'ordered',
+            'status' => 'active',
         ]);
         $this->assertDatabaseHas('sales_cart_items', [
             'cart_id' => $cart->getKey(),
