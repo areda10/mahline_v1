@@ -27,6 +27,7 @@ final class ProductService implements CheckoutCatalog
         private readonly ProductRepository $repository,
         private readonly AuditWriter $audit,
         private readonly StockUnitChangeGuard $stockUnitGuard,
+        private readonly ProductVariantService $variantService,
     ) {}
 
     public function resolveForCheckout(string $productId, ?string $variantId): ?CheckoutProductData
@@ -109,7 +110,26 @@ final class ProductService implements CheckoutCatalog
                 $cooperativeId,
             );
 
-            $unitId = $this->validatedUnitId($attributes['unit_id'] ?? null);
+            $productType = $attributes['product_type'] ?? 'simple';
+            if (! in_array($productType, ['simple', 'variant'], true)) {
+                throw ValidationException::withMessages([
+                    'product_type' => ['Choisissez un type de produit valide.'],
+                ]);
+            }
+
+            $variants = $attributes['variants'] ?? [];
+            if ($productType === 'variant') {
+                if (! is_array($variants) || count($variants) < 1) {
+                    throw ValidationException::withMessages([
+                        'variants' => ['Ajoutez au moins une variante au produit.'],
+                    ]);
+                }
+                $unitId = null;
+                $parentPrice = null;
+            } else {
+                $unitId = $this->validatedUnitId($attributes['unit_id'] ?? null);
+                $parentPrice = $attributes['price'] ?? null;
+            }
 
             $name = trim((string) ($attributes['name'] ?? ''));
 
@@ -123,13 +143,14 @@ final class ProductService implements CheckoutCatalog
 
             $product = $this->repository->create([
                 'cooperative_id' => $cooperativeId,
+                'product_type' => $productType,
                 'name' => $name,
                 'slug' => $this->uniqueSlug(
                     $cooperativeId,
                     $name,
                 ),
                 'description' => $attributes['description'] ?? null,
-                'price' => $attributes['price'] ?? null,
+                'price' => $parentPrice,
                 'currency' => 'MAD',
                 'unit_id' => $unitId,
                 'is_active' => (bool) ($attributes['is_active'] ?? true),
@@ -149,6 +170,17 @@ final class ProductService implements CheckoutCatalog
             ) {
                 $product->is_active = false;
                 $product->save();
+            }
+
+            if ($productType === 'variant') {
+                foreach ($variants as $index => $variantData) {
+                    if (! is_array($variantData)) {
+                        throw ValidationException::withMessages([
+                            "variants.{$index}" => ['Données de variante invalides.'],
+                        ]);
+                    }
+                    $this->variantService->create($product, $variantData);
+                }
             }
 
             $this->record($actor, $product, 'product.created', 'created',
@@ -575,6 +607,7 @@ final class ProductService implements CheckoutCatalog
     {
         return [
             'cooperative_id' => (string) $product->cooperative_id,
+            'product_type' => $product->product_type,
             'name' => $product->name,
             'slug' => $product->slug,
             'description' => $product->description,
