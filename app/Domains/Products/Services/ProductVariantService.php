@@ -29,6 +29,12 @@ final class ProductVariantService
             $product = Product::withTrashed()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             $this->assertProductIsAvailable($product);
 
+            if (($product->product_type ?? 'simple') !== 'variant') {
+                throw ValidationException::withMessages([
+                    'product_type' => ['Les variantes ne peuvent être créées que pour un produit déclaré « avec variantes » dès sa création.'],
+                ]);
+            }
+
             // La conversion d'un produit simple avec unité/stock parent doit passer
             // par le transfert atomique du domaine Inventory avant toute variante.
             if ($product->unit_id !== null) {
@@ -91,6 +97,12 @@ final class ProductVariantService
                 ->whereKey($variantReference->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($product !== null && ($product->product_type ?? 'simple') !== 'variant') {
+                throw ValidationException::withMessages([
+                    'product_type' => ['Ce produit a été créé comme produit simple et ne peut pas recevoir de variantes.'],
+                ]);
+            }
 
             if ($product !== null && $product->unit_id !== null) {
                 throw ValidationException::withMessages([
