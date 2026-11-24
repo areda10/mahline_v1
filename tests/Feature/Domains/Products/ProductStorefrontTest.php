@@ -158,7 +158,7 @@ final class ProductStorefrontTest extends TestCase
             'location' => $dashboardResponse->headers->get('Location'),
             'test_session_id' => session()->getId(),
             'authentication_session_id' => session()->get('authentication_session_id'),
-            'database_authentication_session' => \\App\\Domains\\Identity\\Authentication\\Models\\AuthenticationSession::query()
+            'database_authentication_session' => \App\Domains\Identity\Authentication\Models\AuthenticationSession::query()
                 ->whereKey($authenticationSession->getKey())
                 ->first([
                     'id',
