@@ -32,7 +32,7 @@
     @error('name') <div class="error">{{ $message }}</div> @enderror
 </div>
 
-<div id="simple-fields">
+<div id="simple-fields" @if($selectedType === 'variant') hidden @endif>
     <div class="field">
         <label for="price">Prix de vente (MAD) *</label>
         <input id="price" name="price" type="number" min="0.01" step="0.01" value="{{ old('price', $product->price) }}">
@@ -52,6 +52,7 @@
 
 <div id="variant-fields" @if($selectedType !== 'variant') hidden @endif>
     <p class="muted">Le produit parent ne porte ni prix de vente ni unité de stock. Définissez ces informations sur chaque variante.</p>
+    @if(!$product->exists)
     <div id="variant-rows">
         @foreach($variantRows as $index => $variant)
             <fieldset class="card variant-row" style="margin-bottom:12px">
@@ -85,6 +86,9 @@
     </div>
     @if(!$product->exists)
         <button type="button" class="button button-secondary" id="add-variant">Ajouter une variante</button>
+    </div>
+    @else
+        <p class="muted">Les variantes existantes sont consultables depuis la fiche du produit. Le type du produit ne peut pas être modifié.</p>
     @endif
     @error('variants') <div class="error">{{ $message }}</div> @enderror
     @foreach($errors->getMessages() as $key => $messages)
