@@ -19,7 +19,11 @@ final class ProductLifecycleTest extends TestCase
 
     public function test_soft_deleting_a_product_preserves_variant_rows_and_states(): void
     {
-        $product = Product::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'product_type' => 'variant',
+            'unit_id' => null,
+            'is_active' => true,
+        ]);
         $activeVariant = ProductVariant::factory()->for($product)->create([
             'is_active' => true,
         ]);
@@ -44,7 +48,11 @@ final class ProductLifecycleTest extends TestCase
 
     public function test_restoring_a_product_does_not_change_variant_states(): void
     {
-        $product = Product::factory()->create(['is_active' => true]);
+        $product = Product::factory()->create([
+            'product_type' => 'variant',
+            'unit_id' => null,
+            'is_active' => true,
+        ]);
         $category = Category::factory()
             ->forCooperative((string) $product->cooperative_id)
             ->create();
@@ -80,7 +88,10 @@ final class ProductLifecycleTest extends TestCase
 
     public function test_variant_cannot_be_updated_when_parent_product_is_inactive(): void
     {
-        $product = Product::factory()->inactive()->create();
+        $product = Product::factory()->inactive()->create([
+            'product_type' => 'variant',
+            'unit_id' => null,
+        ]);
         $variant = ProductVariant::factory()->for($product)->create();
 
         try {
@@ -93,7 +104,10 @@ final class ProductLifecycleTest extends TestCase
 
     public function test_variant_cannot_be_updated_when_parent_product_is_soft_deleted(): void
     {
-        $product = Product::factory()->create();
+        $product = Product::factory()->create([
+            'product_type' => 'variant',
+            'unit_id' => null,
+        ]);
         $variant = ProductVariant::factory()->for($product)->create();
         $product->delete();
 
