@@ -155,15 +155,14 @@ final class SalesCustomerCheckoutFlowsTest extends TestCase
         $orderId = $response->json('data.order_id');
 
         $this->assertDatabaseCount('orders', 1);
-        $this->assertSame(1, Order::query()->findOrFail($orderId)->items()->count());
-        $this->assertDatabaseHas('order_items', [
-            'order_id' => $orderId,
-            'product_id' => $directProduct->getKey(),
-        ]);
-        $this->assertDatabaseMissing('order_items', [
-            'order_id' => $orderId,
-            'product_id' => $cartProduct->getKey(),
-        ]);
+        $this->assertSame(1, OrderItem::query()
+            ->whereHas('cooperativeOrder', static fn ($query) => $query->where('order_id', $orderId))
+            ->where('product_id', $directProduct->getKey())
+            ->count());
+        $this->assertSame(0, OrderItem::query()
+            ->whereHas('cooperativeOrder', static fn ($query) => $query->where('order_id', $orderId))
+            ->where('product_id', $cartProduct->getKey())
+            ->count());
 
         $this->assertSame(1, $customerCart->fresh()->activeItems()->count());
         $this->assertDatabaseHas('sales_cart_items', [
