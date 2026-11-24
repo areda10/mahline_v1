@@ -151,8 +151,25 @@ final class ProductStorefrontTest extends TestCase
             ->assertSee(route('customer.orders.index'))
             ->assertSee(route('customer.profile.edit'));
 
-        $this->get(route('customer.dashboard'))
-            ->assertOk()
+        $dashboardResponse = $this->get(route('customer.dashboard'));
+
+        dump([
+            'status' => $dashboardResponse->getStatusCode(),
+            'location' => $dashboardResponse->headers->get('Location'),
+            'test_session_id' => session()->getId(),
+            'authentication_session_id' => session()->get('authentication_session_id'),
+            'database_authentication_session' => \\App\\Domains\\Identity\\Authentication\\Models\\AuthenticationSession::query()
+                ->whereKey($authenticationSession->getKey())
+                ->first([
+                    'id',
+                    'session_id',
+                    'revoked_at',
+                    'last_activity_at',
+                ])
+                ?->toArray(),
+        ]);
+
+        $dashboardResponse->assertOk()
             ->assertSee('Parcourir la boutique')
             ->assertSee('Voir mon panier')
             ->assertSee('Suivre mes commandes')
