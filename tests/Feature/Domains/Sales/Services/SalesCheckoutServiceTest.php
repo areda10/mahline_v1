@@ -18,7 +18,6 @@ use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Sales\Contracts\SalesCartManager;
-use App\Domains\Sales\Models\SalesCart;
 use App\Domains\Sales\Services\SalesCheckoutService;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

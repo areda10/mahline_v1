@@ -6,13 +6,13 @@ namespace Tests\Feature\Domains\Identity\SuperAdminRoot\Http\Controllers;
 
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Products\Models\Product;
-use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Products\Models\ProductVariant;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

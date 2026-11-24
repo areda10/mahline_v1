@@ -6,8 +6,8 @@ namespace App\Providers;
 
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Media\Observers\MediaOwnerObserver;
 use App\Domains\Media\Contracts\MediaVideoInspector;
+use App\Domains\Media\Observers\MediaOwnerObserver;
 use App\Domains\Media\Services\FfprobeMediaVideoInspector;
 use App\Domains\Products\Models\Product;
 use Illuminate\Cache\RateLimiting\Limit;

@@ -7,8 +7,8 @@ namespace Tests\Framework\Domains\Products\Services;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
-use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Services\ProductVariantService;
+use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -88,7 +88,6 @@ final class ProductVariantServiceTest extends TestCase
         $this->assertSame('12.50', $variant->fresh()->price);
         $this->assertSame('12.50', $variant->effectivePrice());
     }
-
 
     public function test_it_blocks_variant_creation_until_parent_stock_transfer_is_available(): void
     {
