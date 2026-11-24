@@ -36,6 +36,8 @@ final class ProductVariantServiceTest extends TestCase
 
         return Product::factory()->create([
             'cooperative_id' => $cooperative->getKey(),
+            'product_type' => 'variant',
+            'unit_id' => null,
             'is_active' => true,
         ]);
     }
