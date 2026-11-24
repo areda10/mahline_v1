@@ -87,7 +87,6 @@
         @endforeach
     </div>
         <button type="button" class="button button-secondary" id="add-variant">Ajouter une variante</button>
-    </div>
     @else
         <p class="muted">Les variantes existantes sont consultables depuis la fiche du produit. Le type du produit ne peut pas être modifié.</p>
     @endif
