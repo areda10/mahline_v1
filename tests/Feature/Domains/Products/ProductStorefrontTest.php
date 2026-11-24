@@ -7,8 +7,8 @@ namespace Tests\Feature\Domains\Products;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Support\DeviceTrustCookie;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
@@ -16,8 +16,6 @@ use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -127,45 +125,41 @@ final class ProductStorefrontTest extends TestCase
         $customer->forceFill(['must_change_password' => false])->save();
         $customer->roles()->attach($role->getKey());
 
-        $this->actingAs($customer);
+        /*
+         * Authenticate through the real customer HTTP endpoint. actingAs()
+         * only injects a user into the test guard and does not exercise the
+         * Laravel session regeneration or the MAHLINE session workflow.
+         */
+        $loginResponse = $this->post(route('customer.login.store'), [
+            'email' => $customer->email,
+            'password' => 'password',
+        ]);
+
+        $loginResponse->assertRedirect(route('customer.dashboard'));
+
+        /*
+         * The real workflow binds the authentication session to the
+         * regenerated Laravel session and issues the device-trust cookie.
+         * Replay that cookie on the next browser request, as a real browser
+         * does, so EnsureActiveAuthenticationSession can validate the device.
+         */
+        $deviceTrustCookie = $loginResponse->getCookie(
+            DeviceTrustCookie::NAME,
+            false,
+        );
+
+        $this->assertNotNull($deviceTrustCookie);
+
+        $this->withCookie(
+            DeviceTrustCookie::NAME,
+            $deviceTrustCookie->getValue(),
+        );
 
         $this->get(route('storefront.products.index'))
             ->assertOk()
             ->assertSee(route('customer.dashboard'))
             ->assertSee(route('customer.orders.index'))
             ->assertSee(route('customer.profile.edit'));
-
-        /*
-         * Establish the Identity session inside a real web request, after
-         * StartSession has attached the browser's Laravel session to the
-         * request. This keeps authentication_sessions.session_id aligned
-         * with the session ID enforced by EnsureActiveAuthenticationSession.
-         */
-        Route::middleware('web')->get(
-            '/__tests/customer-authentication-session',
-            function (Request $request) use ($customer) {
-                // Mirror the session rotation performed by AuthenticationWorkflow.
-                $request->session()->regenerate();
-
-                $authenticationSession = app(SessionService::class)->create(
-                    user: $customer,
-                    sessionId: $request->session()->getId(),
-                    userAgent: 'PHPUnit',
-                    browser: 'Test Browser',
-                    device: 'Test Device',
-                );
-
-                $request->session()->put(
-                    'authentication_session_id',
-                    (string) $authenticationSession->getKey(),
-                );
-
-                return response()->noContent();
-            },
-        );
-
-        $this->get('/__tests/customer-authentication-session')
-            ->assertNoContent();
 
         $this->get(route('customer.dashboard'))
             ->assertOk()
