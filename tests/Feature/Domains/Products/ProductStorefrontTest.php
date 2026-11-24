@@ -17,6 +17,8 @@ use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -126,25 +128,7 @@ final class ProductStorefrontTest extends TestCase
         $customer->forceFill(['must_change_password' => false])->save();
         $customer->roles()->attach($role->getKey());
 
-        // Initialize the authenticated test session before persisting its
-        // matching Identity session. The request middleware must see the same
-        // Laravel session ID that is stored in authentication_sessions.
         $this->actingAs($customer);
-        $this->withSession(['authentication_session_id' => 'pending']);
-
-        $laravelSessionId = session()->getId();
-        $authenticationSession = app(SessionService::class)->create(
-            user: $customer,
-            sessionId: $laravelSessionId,
-            userAgent: 'PHPUnit',
-            browser: 'Test Browser',
-            device: 'Test Device',
-        );
-
-        session()->put(
-            'authentication_session_id',
-            (string) $authenticationSession->getKey(),
-        );
 
         $this->get(route('storefront.products.index'))
             ->assertOk()
@@ -152,25 +136,37 @@ final class ProductStorefrontTest extends TestCase
             ->assertSee(route('customer.orders.index'))
             ->assertSee(route('customer.profile.edit'));
 
-        $dashboardResponse = $this->get(route('customer.dashboard'));
+        /*
+         * Establish the Identity session inside a real web request, after
+         * StartSession has attached the browser's Laravel session to the
+         * request. This keeps authentication_sessions.session_id aligned
+         * with the session ID enforced by EnsureActiveAuthenticationSession.
+         */
+        Route::middleware('web')->get(
+            '/__tests/customer-authentication-session',
+            function (Request $request) use ($customer) {
+                $authenticationSession = app(SessionService::class)->create(
+                    user: $customer,
+                    sessionId: $request->session()->getId(),
+                    userAgent: 'PHPUnit',
+                    browser: 'Test Browser',
+                    device: 'Test Device',
+                );
 
-        dump([
-            'status' => $dashboardResponse->getStatusCode(),
-            'location' => $dashboardResponse->headers->get('Location'),
-            'test_session_id' => session()->getId(),
-            'authentication_session_id' => session()->get('authentication_session_id'),
-            'database_authentication_session' => AuthenticationSession::query()
-                ->whereKey($authenticationSession->getKey())
-                ->first([
-                    'id',
-                    'session_id',
-                    'revoked_at',
-                    'last_activity_at',
-                ])
-                ?->toArray(),
-        ]);
+                $request->session()->put(
+                    'authentication_session_id',
+                    (string) $authenticationSession->getKey(),
+                );
 
-        $dashboardResponse->assertOk()
+                return response()->noContent();
+            },
+        );
+
+        $this->get('/__tests/customer-authentication-session')
+            ->assertNoContent();
+
+        $this->get(route('customer.dashboard'))
+            ->assertOk()
             ->assertSee('Parcourir la boutique')
             ->assertSee('Voir mon panier')
             ->assertSee('Suivre mes commandes')
