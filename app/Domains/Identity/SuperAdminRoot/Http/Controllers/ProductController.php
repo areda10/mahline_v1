@@ -74,10 +74,23 @@ final class ProductController
         Gate::authorize('create', [Product::class, $cooperativeId]);
 
         $data = $request->validate([
+            'product_type' => ['required', Rule::in(['simple', 'variant'])],
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
-            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
+            'price' => ['required_if:product_type,simple', 'nullable', 'numeric', 'gt:0', 'decimal:0,2'],
+            'unit_id' => [
+                'required_if:product_type,simple',
+                'prohibited_if:product_type,variant',
+                'nullable',
+                'string',
+                'size:26',
+                Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES),
+            ],
+            'variants' => ['required_if:product_type,variant', 'array', 'min:1'],
+            'variants.*.name' => ['required_if:product_type,variant', 'string', 'max:180'],
+            'variants.*.price' => ['required_if:product_type,variant', 'numeric', 'gt:0', 'decimal:0,2'],
+            'variants.*.unit_id' => ['required_if:product_type,variant', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
+            'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
