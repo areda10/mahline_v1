@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Tests\\Feature\\Domains\\Sales\\Http;
+namespace Tests\Feature\Domains\Sales\Http;
 
-use App\\Domains\\Cooperatives\\Models\\Cooperative;
-use App\\Domains\\Identity\\Authentication\\Http\\Middleware\\EnsureActiveAuthenticationSession;
-use App\\Domains\\Identity\\Authorization\\Models\\Role;
-use App\\Domains\\Identity\\Enums\\UserStatus;
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Inventory\\Models\\InventoryStock;
-use App\\Domains\\Localization\\Models\\Address;
-use App\\Domains\\Orders\\Models\\Order;
-use App\\Domains\\Products\\Models\\Product;
-use App\\Domains\\Products\\Models\\ProductUnit;
-use App\\Domains\\Sales\\Contracts\\SalesCartManager;
-use App\\Domains\\Sales\\Models\\SalesCart;
-use Database\\Seeders\\ProductUnitSeeder;
-use Illuminate\\Foundation\\Testing\\RefreshDatabase;
-use Tests\\TestCase;
+use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
+use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Enums\UserStatus;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Localization\Models\Address;
+use App\Domains\Orders\Models\Order;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Sales\Contracts\SalesCartManager;
+use App\Domains\Sales\Models\SalesCart;
+use Database\Seeders\ProductUnitSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class SalesCustomerCheckoutFlowsTest extends TestCase
 {
