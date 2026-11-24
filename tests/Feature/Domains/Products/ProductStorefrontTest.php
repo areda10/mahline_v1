@@ -8,9 +8,9 @@ use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authorization\Models\Role;
+use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
@@ -121,8 +121,8 @@ final class ProductStorefrontTest extends TestCase
         $customer = User::factory()->create([
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
-            'must_change_password' => false,
         ]);
+        $customer->forceFill(['must_change_password' => false])->save();
         $customer->roles()->attach($role->getKey());
 
         // A protected customer route requires a real Identity authentication
