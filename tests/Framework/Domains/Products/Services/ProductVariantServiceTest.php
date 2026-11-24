@@ -38,6 +38,7 @@ final class ProductVariantServiceTest extends TestCase
             'cooperative_id' => $cooperative->getKey(),
             'product_type' => 'variant',
             'unit_id' => null,
+            'price' => null,
             'is_active' => true,
         ]);
     }
