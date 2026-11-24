@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -13,6 +14,10 @@ return new class extends Migration
         Schema::table('products', function (Blueprint $table): void {
             $table->string('product_type', 16)->default('simple')->after('cooperative_id');
         });
+
+        DB::table('products')
+            ->whereIn('id', DB::table('product_variants')->select('product_id'))
+            ->update(['product_type' => 'variant']);
     }
 
     public function down(): void
