@@ -28,6 +28,7 @@ final class Product extends BaseModel
 
     protected $fillable = [
         'cooperative_id',
+        'product_type',
         'name',
         'slug',
         'description',
