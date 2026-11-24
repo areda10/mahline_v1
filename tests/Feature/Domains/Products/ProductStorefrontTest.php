@@ -7,7 +7,6 @@ namespace Tests\Feature\Domains\Products;
 use App\Domains\Catalog\Models\Catalog;
 use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
-use App\Domains\Identity\Authentication\Models\AuthenticationSession;
 use App\Domains\Identity\Authentication\Services\SessionService;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
