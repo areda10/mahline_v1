@@ -86,7 +86,6 @@
             </fieldset>
         @endforeach
     </div>
-    @if(!$product->exists)
         <button type="button" class="button button-secondary" id="add-variant">Ajouter une variante</button>
     </div>
     @else
