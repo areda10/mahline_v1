@@ -125,8 +125,12 @@ final class ProductStorefrontTest extends TestCase
         $customer->forceFill(['must_change_password' => false])->save();
         $customer->roles()->attach($role->getKey());
 
-        // A protected customer route requires a real Identity authentication
-        // session whose session_id matches the active Laravel web session.
+        // Initialize the authenticated test session before persisting its
+        // matching Identity session. The request middleware must see the same
+        // Laravel session ID that is stored in authentication_sessions.
+        $this->actingAs($customer);
+        $this->withSession(['authentication_session_id' => 'pending']);
+
         $laravelSessionId = session()->getId();
         $authenticationSession = app(SessionService::class)->create(
             user: $customer,
@@ -136,19 +140,18 @@ final class ProductStorefrontTest extends TestCase
             device: 'Test Device',
         );
 
-        $this->withSession([
-            'authentication_session_id' => (string) $authenticationSession->getKey(),
-        ]);
+        session()->put(
+            'authentication_session_id',
+            (string) $authenticationSession->getKey(),
+        );
 
-        $this->actingAs($customer)
-            ->get(route('storefront.products.index'))
+        $this->get(route('storefront.products.index'))
             ->assertOk()
             ->assertSee(route('customer.dashboard'))
             ->assertSee(route('customer.orders.index'))
             ->assertSee(route('customer.profile.edit'));
 
-        $this->actingAs($customer)
-            ->get(route('customer.dashboard'))
+        $this->get(route('customer.dashboard'))
             ->assertOk()
             ->assertSee('Parcourir la boutique')
             ->assertSee('Voir mon panier')
