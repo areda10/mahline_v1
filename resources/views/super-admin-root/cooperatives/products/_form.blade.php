@@ -106,7 +106,7 @@
 
 <div class="field">
     <label for="category_ids">Catégories *</label>
-    <select id="category_ids" name="category_ids[]" multiple required>
+    <select id="category_ids" name="category_ids[]" multiple>
         @foreach($categories as $category)
             <option value="{{ $category->getKey() }}" @selected(in_array((string) $category->getKey(), $selectedCategories, true))>{{ $category->isGlobal() ? '[Globale] ' : '[Locale] ' }}{{ $category->name }}</option>
         @endforeach
@@ -147,12 +147,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const simple = document.getElementById('simple-fields');
     const variants = document.getElementById('variant-fields');
     const rows = document.getElementById('variant-rows');
+    const categories = document.getElementById('category_ids');
     const syncMode = () => {
         const isVariant = document.getElementById('type_variant').checked;
         simple.hidden = isVariant;
         variants.hidden = !isVariant;
         simple.querySelectorAll('input,select').forEach((el) => el.required = !isVariant && el.name !== '');
         variants.querySelectorAll('input:not([name$="[sku]"]),select').forEach((el) => el.required = isVariant);
+        categories.required = isVariant;
     };
     document.querySelectorAll('input[name="product_type"]').forEach((el) => el.addEventListener('change', syncMode));
     let nextIndex = rows.querySelectorAll('.variant-row').length;
