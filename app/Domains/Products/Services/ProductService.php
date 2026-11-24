@@ -217,6 +217,18 @@ final class ProductService implements CheckoutCatalog
 
             $before = $this->snapshot($product);
 
+            if (array_key_exists('product_type', $attributes) && $attributes['product_type'] !== $product->product_type) {
+                throw ValidationException::withMessages([
+                    'product_type' => ['Le type de produit est définitif après sa création.'],
+                ]);
+            }
+
+            if (($product->product_type ?? 'simple') === 'variant' && array_key_exists('price', $attributes)) {
+                throw ValidationException::withMessages([
+                    'price' => ['Le prix se définit sur chaque variante, pas sur le produit parent.'],
+                ]);
+            }
+
             $hasVariants = $product->variants()->exists();
 
             if ($hasVariants) {
