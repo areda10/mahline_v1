@@ -111,10 +111,10 @@ final class SalesCustomerCheckoutFlowsTest extends TestCase
 
         $location = (string) $start->headers->get('Location');
         $this->assertMatchesRegularExpression(
-            '#/cart/checkout/direct/[0-9A-HJKMNP-TV-Z]{26}$#',
+            '#/cart/checkout/direct/[0-9A-HJKMNP-TV-Z]{26}$i#',
             parse_url($location, PHP_URL_PATH) ?: '',
         );
-        preg_match('#/cart/checkout/direct/([0-9A-HJKMNP-TV-Z]{26})$#', $location, $matches);
+        preg_match('#/cart/checkout/direct/([0-9A-HJKMNP-TV-Z]{26})$i#', $location, $matches);
         $directCartId = $matches[1] ?? null;
         $this->assertIsString($directCartId);
 
