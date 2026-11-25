@@ -126,7 +126,7 @@ final class CooperativeOrderControllerTest extends TestCase
             ->assertSee($orderB->cooperativeOrders->firstOrFail()->reference);
     }
 
-    public function test_root_can_extend_deadline_and_record_a_reasoned_administrative_decision(): void
+    public function test_root_can_extend_cooperative_response_deadline(): void
     {
         $customer = $this->userWithRole('customer');
         $cooperative = Cooperative::factory()->active()->create();
@@ -144,16 +144,73 @@ final class CooperativeOrderControllerTest extends TestCase
 
         $this->assertEquals($newDeadline->timestamp, $suborder->fresh()->response_deadline_at->timestamp);
 
-        $this->actingAs($root)
-            ->post(route('root.backoffice.orders.cooperative.administrative-decision', $suborder), [
+        // Root substitution is tested separately at the H+24 escalation threshold.
+    }
+
+    public function test_assigned_super_admin_can_make_a_reasoned_substitute_decision_after_h12(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $cooperative = Cooperative::factory()->active()->create();
+        $superAdmin = $this->userWithRole('super_admin');
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $order = $this->makeOrder($customer, $cooperative, 'INBOX-H12-ADMIN-001');
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill([
+            'created_at' => now()->subHours(13),
+            'response_deadline_at' => now()->subHour(),
+        ])->save();
+
+        $this->actingAs($superAdmin)
+            ->post(route('backoffice.orders.cooperative.administrative-decision', $suborder), [
                 'accept' => false,
-                'reason' => 'Absence de réponse après vérification.',
+                'reason' => 'Aucune réponse de la coopérative après le délai.',
             ])
             ->assertRedirect();
 
         $this->assertSame(CooperativeOrderStatus::REFUSED, $suborder->fresh()->status);
-        $this->assertSame('Absence de réponse après vérification.', $suborder->fresh()->substitution_reason);
-        $this->assertSame((string) $root->getKey(), (string) $suborder->fresh()->substituted_by_admin_id);
+        $this->assertSame('Aucune réponse de la coopérative après le délai.', $suborder->fresh()->substitution_reason);
+        $this->assertSame((string) $superAdmin->getKey(), (string) $suborder->fresh()->substituted_by_admin_id);
+    }
+
+    public function test_root_cannot_make_a_substitute_decision_before_h24(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $root = $this->userWithRole('super_admin_root');
+        $cooperative = Cooperative::factory()->active()->create();
+        $order = $this->makeOrder($customer, $cooperative, 'INBOX-ROOT-BEFORE-H24');
+        $suborder = $order->cooperativeOrders->firstOrFail();
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.orders.cooperative.administrative-decision', $suborder), [
+                'accept' => false,
+                'reason' => 'Décision prématurée.',
+            ])
+            ->assertSessionHasErrors('cooperative_order');
+
+        $this->assertSame(CooperativeOrderStatus::AWAITING_COOPERATIVE, $suborder->fresh()->status);
+    }
+
+    public function test_root_can_make_a_reasoned_substitute_decision_at_h24(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $root = $this->userWithRole('super_admin_root');
+        $cooperative = Cooperative::factory()->active()->create();
+        $order = $this->makeOrder($customer, $cooperative, 'INBOX-ROOT-H24');
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill([
+            'created_at' => now()->subHours(25),
+            'response_deadline_at' => now()->subHours(13),
+        ])->save();
+
+        $this->actingAs($root)
+            ->post(route('root.backoffice.orders.cooperative.administrative-decision', $suborder), [
+                'accept' => false,
+                'reason' => 'Décision root après escalade H+24.',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(CooperativeOrderStatus::REFUSED, $suborder->fresh()->status);
+        $this->assertSame('Décision root après escalade H+24.', $suborder->fresh()->substitution_reason);
     }
 
     public function test_cooperative_user_can_prepare_only_own_confirmed_suborders_and_customer_is_notified_when_ready(): void
