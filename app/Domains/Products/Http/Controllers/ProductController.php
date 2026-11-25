@@ -9,6 +9,7 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
@@ -123,6 +124,11 @@ final class ProductController
             );
 
         Gate::authorize('view', $productModel);
+        if (($productModel->product_type ?? 'simple') === 'variant') {
+            $productModel->setRelation('variants', ProductVariant::withTrashed()
+                ->where('product_id', $productModel->getKey())
+                ->orderBy('label')->get());
+        }
 
         return view('backoffice.products.show', [
             'cooperative' => $cooperativeModel,
