@@ -92,3 +92,14 @@ Le point de composition Laravel assemble les adaptateurs. Les dépendances doive
 - Tests de caractérisation : à inventorier et compléter.
 - Refactor applicatif : non commencé.
 - Tests PHPUnit/Pint : non exécutés dans ce lot.
+
+
+## 8. Évolution d'intégration — photo Customer (25 novembre 2026)
+
+Le parcours d'interface Customer pour la photo de profil est maintenant présent sur `feature/Marketplace` :
+- Identity/Customer expose des routes dédiées à l'upload et à la suppression ;
+- le contrôleur délègue les opérations au `MediaService` existant ;
+- Media conserve la validation, le stockage, les dérivés, le verrouillage, le remplacement, la suppression logique et l'audit ;
+- les vues Customer affichent la variante miniature via le endpoint privé MEDIA.
+
+Cette intégration fonctionnelle ne clôt pas les violations de frontière décrites dans cet audit : `MediaService`, `MediaPolicy` et `MediaCategory` conservent leurs dépendances concrètes aux modèles Identity / Products / Cooperatives. Le refactor contractuel reste une tâche distincte.
