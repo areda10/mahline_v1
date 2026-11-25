@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Http\Controllers;
 
 use App\Domains\Orders\Enums\OrderStatus;
-use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\CooperativeOrder;
+use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Services\CustomerOrderCancellationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

@@ -17,6 +17,7 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\CustomerOrderCancelledNotification;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -141,7 +142,7 @@ final class CustomerOrderHistoryTest extends TestCase
             'actor_id' => $customer->getKey(),
             'reason' => 'Je souhaite annuler cette coopérative.',
         ]);
-        Notification::assertSentTo($customer, \App\Domains\Orders\Notifications\CustomerOrderCancelledNotification::class);
+        Notification::assertSentTo($customer, CustomerOrderCancelledNotification::class);
     }
 
     public function test_customer_cannot_cancel_a_suborder_after_cooperative_confirmation(): void
