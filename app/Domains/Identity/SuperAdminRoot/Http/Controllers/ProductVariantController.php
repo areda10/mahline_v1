@@ -64,7 +64,7 @@ final class ProductVariantController
             'cooperative' => $coop,
             'product' => $parent,
             'variant' => $item,
-            'productUnits' => $this->units(),
+            'productUnits' => $this->units((string) $item->unit_id),
         ]);
     }
 
@@ -73,7 +73,7 @@ final class ProductVariantController
         [$coop, $parent, $item] = $this->resolveVariant($request, $cooperative, $product, $variant);
         Gate::authorize('update', $parent);
 
-        $data = $request->validate($this->rules());
+        $data = $request->validate($this->rules((string) $item->unit_id));
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
         $this->service->update($item, $data, $request->user());
 
@@ -160,21 +160,35 @@ final class ProductVariantController
     }
 
     /** @return array<string, mixed> */
-    private function rules(): array
+    private function rules(?string $currentUnitId = null): array
     {
         return [
             'name' => ['required', 'string', 'max:180'],
             'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
-            'unit_id' => ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
+            'unit_id' => [
+                'required', 'string', 'size:26',
+                Rule::exists('product_units', 'id')->whereIn('code', ProductUnit::V1_CODES)
+                    ->where(function ($query) use ($currentUnitId): void {
+                        $query->where('is_active', true);
+                        if ($currentUnitId !== null) {
+                            $query->orWhere('id', $currentUnitId);
+                        }
+                    }),
+            ],
             'sku' => ['nullable', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 
-    private function units()
+    private function units(?string $currentUnitId = null)
     {
         return ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)
-            ->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get();
+            ->where(function ($query) use ($currentUnitId): void {
+                $query->where('is_active', true);
+                if ($currentUnitId !== null) {
+                    $query->orWhere('id', $currentUnitId);
+                }
+            })->orderBy('sort_order')->orderBy('label')->get();
     }
 
     private function backToProduct(Cooperative $coop, Product $product, string $message): RedirectResponse
