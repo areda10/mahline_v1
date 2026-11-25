@@ -298,6 +298,30 @@ final class ProductVariantServiceTest extends TestCase
         ]);
     }
 
+
+    public function test_inactive_variant_can_reuse_an_active_variant_label(): void
+    {
+        $product = $this->createProduct();
+
+        $this->service->create($product, [
+            'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
+            'price' => '12.50',
+            'is_active' => true,
+        ]);
+
+        $inactive = $this->service->create($product, [
+            'name' => 'POT 250 G',
+            'unit_id' => $this->unitId,
+            'price' => '13.50',
+            'is_active' => false,
+        ]);
+
+        $this->assertFalse($inactive->is_active);
+        $this->assertSame('pot 250 g', $inactive->normalized_label);
+        $this->assertDatabaseCount('product_variants', 2);
+    }
+
     public function test_it_updates_variant_commercial_fields_without_changing_the_parent_type(): void
     {
         $product = $this->createProduct();
