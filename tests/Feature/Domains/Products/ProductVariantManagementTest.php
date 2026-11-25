@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Domains\Products;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Categories\Models\Category;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -26,6 +27,49 @@ final class ProductVariantManagementTest extends TestCase
     {
         parent::setUp();
         $this->seed(ProductUnitSeeder::class);
+    }
+
+
+    public function test_cooperative_admin_can_create_a_product_with_variants(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithPermissions('cooperative_admin', (string) $cooperative->getKey());
+        $category = Category::factory()->forCooperative($cooperative)->create();
+        $unit = ProductUnit::query()->where('code', 'kg')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('backoffice.products.store', [
+                'cooperative' => $cooperative->getKey(),
+            ]), [
+                'product_type' => 'variant',
+                'name' => 'Produit multi-formats',
+                'description' => 'Produit créé depuis le backoffice coopérative.',
+                'variants' => [[
+                    'name' => 'Format 1 kg',
+                    'price' => '35.00',
+                    'unit_id' => $unit->getKey(),
+                    'sku' => 'MULTI-1KG',
+                ]],
+                'category_ids' => [$category->getKey()],
+                'is_active' => '1',
+            ])
+            ->assertRedirect();
+
+        $product = Product::query()
+            ->where('cooperative_id', $cooperative->getKey())
+            ->where('name', 'Produit multi-formats')
+            ->firstOrFail();
+
+        $this->assertSame('variant', $product->product_type);
+        $this->assertNull($product->price);
+        $this->assertNull($product->unit_id);
+        $this->assertDatabaseHas('product_variants', [
+            'product_id' => $product->getKey(),
+            'label' => 'Format 1 kg',
+            'price' => '35.00',
+            'unit_id' => $unit->getKey(),
+        ]);
     }
 
     public function test_cooperative_admin_can_create_and_edit_variants_in_own_cooperative(): void
@@ -195,7 +239,7 @@ final class ProductVariantManagementTest extends TestCase
         );
 
         $permissionIds = [];
-        foreach (['cooperatives.view', 'products.update', 'products.delete', 'products.restore'] as $slug) {
+        foreach (['cooperatives.view', 'products.create', 'products.update', 'products.delete', 'products.restore'] as $slug) {
             $permission = Permission::query()->firstOrCreate(
                 ['slug' => $slug],
                 ['name' => $slug, 'is_active' => true],
