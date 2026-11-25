@@ -27,7 +27,7 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | Ajouter une adresse depuis le checkout et l'enregistrer | Implémenté |
 | Sélectionner automatiquement au checkout l'adresse nouvellement ajoutée | **Corrigé dans le code** : le endpoint JSON renvoie l'identifiant créé et le checkout le présélectionne après rechargement, sans changer l'adresse principale |
 | Modifier une adresse secondaire depuis le carnet | **Corrigé dans le code** : formulaire individuel, route PATCH et service Localization ciblé par propriétaire/adresse, avec audit |
-| Photo de profil Customer | **Non implémentée dans l'interface Customer** ; le modèle User expose un lien Media, mais aucun flux upload Customer n'a été identifié dans ce périmètre |
+| Photo de profil Customer | **Implémentée dans le code sur `feature/Marketplace`** : upload/remplacement/suppression via MediaService, catégorie privée `profile_image`, affichage de la miniature par route privée et avatar dans la navigation. Tests Feature ajoutés ; exécution locale à confirmer. |
 | Suite de tests Customer exécutée localement | **Non confirmée** par les résultats transmis pour cet audit |
 
 ## 2. Revue fichier par fichier
@@ -45,7 +45,7 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | `app/Domains/Identity/Customer/Notifications/CustomerEmailChangeNotification.php` | Envoie le lien de confirmation à la nouvelle adresse | Implémenté. |
 | `app/Domains/Identity/Customer/Notifications/CustomerEmailChangedNotification.php` | Informe l'ancienne adresse après validation | Implémenté. |
 | `resources/views/customer/profile/edit.blade.php` | Interface profil, adresse principale, carnet, ajout, édition individuelle et changement d'e-mail | Présent. Chaque adresse dispose de son formulaire d'édition. Pas d'upload de photo Customer identifié. Le message de succès peut encore être rendu deux fois par le layout et la vue. |
-| `resources/views/layouts/customer.blade.php` | Navigation Customer vers boutique, panier, commandes, profil, sécurité et appareils | Présent. Le lien profil est accessible depuis la navigation Customer. |
+| `resources/views/layouts/customer.blade.php` | Navigation Customer vers boutique, panier, commandes, profil, sécurité et appareils | Présent. Le lien profil affiche la miniature privée du Customer ou son initiale en l'absence de photo. |
 | `routes/web.php` | Déclare les routes Customer profile et les protège par auth, session active, rôle Customer et middleware de compte Customer | Présent. Routes : `customer.profile.edit`, `customer.profile.update`, `customer.profile.addresses.store`, `customer.profile.addresses.update`, `customer.profile.addresses.primary`, `customer.profile.addresses.destroy`, `customer.profile.email.change`. |
 | `app/Domains/Identity/Customer/Http/Middleware/EnsureCustomerAccount.php` | Empêche les comptes ayant des rôles internes d'utiliser l'espace Customer | Présent et appliqué au groupe de routes du profil. |
 | `tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php` | Consultation, mise à jour, protection des champs sensibles, séparation des rôles, ajout / principale / suppression logique | Présent. Ne prouve pas à lui seul la couverture complète des limites et de la concurrence. |
@@ -142,3 +142,22 @@ Les correctifs ci-dessous ont été poussés sur `feature/Marketplace` après l'
 - **Carnet :** ajout de `PATCH customer/profile/addresses/{address}`, du formulaire d'édition pour chaque adresse et de `UserAddressLifecycleManager::updateAddressForUser()`. `AddressService` verrouille le propriétaire et l'adresse, filtre par `user_id`, applique l'autorisation Identity et réutilise la validation / journalisation existantes.
 - **Tests ajoutés :** modification d'une adresse secondaire sans changer l'adresse principale ; refus d'une adresse appartenant à un autre Customer ; identifiant de la nouvelle adresse renvoyé au checkout et présence dans l'aperçu.
 - **Résultats :** aucun résultat d'exécution n'est encore communiqué pour ces nouveaux tests. Ils doivent être exécutés localement avant de déclarer les deux corrections validées.
+
+
+## 5. Mise à jour — photo de profil Customer (25 novembre 2026)
+
+### Fichiers applicatifs ajoutés / modifiés
+
+- `CustomerProfileController` : chargement de `profileImage`, upload et suppression délégués à `MediaService`.
+- `routes/web.php` : routes `customer.profile.photo.store` et `customer.profile.photo.destroy`, protégées par authentification, session active, rôle Customer et `EnsureCustomerAccount`.
+- `resources/views/customer/profile/edit.blade.php` : aperçu, formulaire multipart et suppression.
+- `resources/views/layouts/customer.blade.php` : avatar dans la navigation Customer.
+- `tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php` : tests upload, remplacement, suppression et rejet d'un format non autorisé.
+
+### Sécurité et cycle de vie
+
+- Catégorie MEDIA `profile_image`, visibilité privée, une seule photo active.
+- Limite HTTP de 5 Mo et validation serveur approfondie maintenue par MEDIA.
+- Le remplacement utilise le verrouillage et la suppression logique déjà implémentés dans `MediaService`.
+- L'affichage passe par `media.private` avec variante `thumbnail` ; aucune URL de stockage n'est exposée.
+- Les tests doivent être exécutés sur l'environnement local ; aucune exécution n'est déclarée dans cet audit.
