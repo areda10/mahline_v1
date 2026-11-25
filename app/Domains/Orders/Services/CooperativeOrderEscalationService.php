@@ -74,7 +74,7 @@ final class CooperativeOrderEscalationService
                     $suborder,
                     'order.cooperative_response_overdue',
                     'Réponse coopérative en retard',
-                    'La coopérative n’a pas répondu dans le délai de 12 heures. Vous pouvez confirmer ou refuser cette sous-commande avec un motif obligatoire tant qu’aucune décision n’est enregistrée.',
+                    'La coopérative n’a pas répondu à l’échéance convenue (12 heures par défaut, prolongation possible jusqu’à 24 heures). Vous pouvez confirmer ou refuser cette sous-commande avec un motif obligatoire tant qu’aucune décision n’est enregistrée.',
                 ));
 
                 $suborder->response_overdue_at ??= now();
