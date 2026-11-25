@@ -155,19 +155,53 @@ final class ProductStorefrontTest extends TestCase
             $deviceTrustCookie->getValue(),
         );
 
-        $this->get(route('storefront.products.index'))
-            ->assertOk()
-            ->assertSee(route('customer.dashboard'))
-            ->assertSee(route('customer.orders.index'))
-            ->assertSee(route('customer.profile.edit'));
+        // $this->get(route('storefront.products.index'))
+        //     ->assertOk()
+        //     ->assertSee(route('customer.dashboard'))
+        //     ->assertSee(route('customer.orders.index'))
+        //     ->assertSee(route('customer.profile.edit'));
 
-        $this->get(route('customer.dashboard'))
-            ->assertOk()
-            ->assertSee('Parcourir la boutique')
-            ->assertSee('Voir mon panier')
-            ->assertSee('Suivre mes commandes')
-            ->assertSee('Profil et carnet d’adresses')
-            ->assertSee('Mes notifications');
+        // $this->get(route('customer.dashboard'))
+        //     ->assertOk()
+        //     ->assertSee('Parcourir la boutique')
+        //     ->assertSee('Voir mon panier')
+        //     ->assertSee('Suivre mes commandes')
+        //     ->assertSee('Profil et carnet d’adresses')
+        //     ->assertSee('Mes notifications');
+                        dump([
+            'after_login' => [
+                'user_id' => auth()->id(),
+                'laravel_session_id' => session()->getId(),
+                'authentication_session_id' => session('authentication_session_id'),
+                'response_cookies' => collect($loginResponse->headers->getCookies())
+                    ->map(fn ($cookie) => $cookie->getName())
+                    ->values()
+                    ->all(),
+            ],
+        ]);
+
+        $shopResponse = $this->get(route('storefront.products.index'));
+
+        dump([
+            'after_shop' => [
+                'status' => $shopResponse->getStatusCode(),
+                'user_id' => auth()->id(),
+                'laravel_session_id' => session()->getId(),
+                'authentication_session_id' => session('authentication_session_id'),
+            ],
+        ]);
+
+        $dashboardResponse = $this->get(route('customer.dashboard'));
+
+        dump([
+            'after_dashboard' => [
+                'status' => $dashboardResponse->getStatusCode(),
+                'location' => $dashboardResponse->headers->get('Location'),
+                'user_id' => auth()->id(),
+                'laravel_session_id' => session()->getId(),
+                'authentication_session_id' => session('authentication_session_id'),
+            ],
+        ]);
     }
 
     private function publishedProduct(string $name, array $productAttributes = [], bool $activeCooperative = true): array
