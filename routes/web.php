@@ -349,6 +349,12 @@ Route::prefix('customer/profile')
     ->group(function (): void {
         Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
         Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
+        Route::post('photo', [CustomerProfileController::class, 'uploadProfileImage'])
+            ->middleware('throttle:10,1')
+            ->name('photo.store');
+        Route::delete('photo', [CustomerProfileController::class, 'deleteProfileImage'])
+            ->middleware('throttle:10,1')
+            ->name('photo.destroy');
         Route::post('addresses', [CustomerProfileController::class, 'storeAddress'])->name('addresses.store');
         Route::patch('addresses/{address}', [CustomerProfileController::class, 'updateAddress'])->name('addresses.update');
         Route::patch('addresses/{address}/primary', [CustomerProfileController::class, 'setPrimaryAddress'])->name('addresses.primary');
