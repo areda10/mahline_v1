@@ -88,7 +88,7 @@
     </div>
         <button type="button" class="button button-secondary" id="add-variant">Ajouter une variante</button>
     @else
-        <p class="muted">Les variantes existantes sont consultables depuis la fiche du produit. Le type du produit ne peut pas être modifié.</p>
+        <p class="muted">Les variantes se créent et se modifient depuis la fiche du produit. Le type du produit ne peut pas être modifié.</p>
     @endif
     @error('variants') <div class="error">{{ $message }}</div> @enderror
     @foreach($errors->getMessages() as $key => $messages)
