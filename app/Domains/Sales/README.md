@@ -1,6 +1,6 @@
 # MAHLINE V1 — Domaine Sales
 
-- **Statut :** socle panier et interfaces Customer V1 présents sur `feature/Marketplace` ; checkout multi-coopératives avec exclusion par coopérative en cas de stock insuffisant implémenté ; validation locale de cette dernière tranche requise.
+- **Statut :** socle panier et interfaces Customer V1 présents sur `feature/Marketplace` ; checkout multi-coopératives et exclusion par coopérative en cas de stock insuffisant implémentés ; tests checkout ciblés déclarés verts localement par l'utilisateur le 25 novembre 2026. Le profil Customer / carnet d'adresses reste en audit, avec deux écarts P0 documentés.
 - **Spécification :** [SALES_V1_SPECIFICATION.md](../../../docs/domains/marketplace/SALES_V1_SPECIFICATION.md)
 - **Architecture :** ADR-021 — monolithe modulaire à contrats explicites.
 
@@ -60,3 +60,23 @@ Les vues Customer existantes et complétées sur `feature/Marketplace` sont :
 ### État de vérification
 
 Le changement de carte catalogue a été enregistré dans le dépôt. Les tests Laravel, Pint et le parcours navigateur n'ont pas été exécutés pendant cette intervention ; cette tranche ne doit donc pas être considérée comme validée par la suite de tests. Les contrats checkout inter-domaines et les tests HTTP/intégration restent à vérifier avant gel technique.
+
+
+## Profil Customer et carnet d'adresses — état du code au 25 novembre 2026
+
+Le profil est porté par Identity / Customer et Localization :
+
+- `resources/views/customer/profile/edit.blade.php` : informations personnelles, adresse principale, carnet, changement d'e-mail.
+- `CustomerProfileController` et `CustomerProfileService` : lecture / mise à jour du profil et journalisation.
+- `CustomerEmailChangeService` : changement d'e-mail avec mot de passe actuel, lien à usage unique valable 30 minutes, puis révocation des sessions et tokens.
+- `AddressService` : carnet d'adresses, limite Customer de cinq adresses actives, adresse principale, suppression logique et audit.
+- `SalesCartController` + `storefront.checkout` : sélection d'une adresse enregistrée et ajout d'une adresse depuis le checkout.
+- `CheckoutAddressSnapshotService` + `OrderCreationService` : validation de l'adresse et copie du snapshot dans la commande.
+
+Écarts P0 connus :
+1. Le formulaire PUT du profil exige actuellement rue, ville et région même lorsqu'un client souhaite modifier uniquement son prénom, son nom ou son téléphone.
+2. Une adresse ajoutée depuis le checkout est enregistrée, mais n'est pas explicitement sélectionnée si une autre adresse principale existe déjà.
+
+L'édition individuelle des adresses secondaires et l'upload d'une photo de profil ne sont pas présents dans l'interface Customer identifiée ; leur inclusion dans V1 reste à confirmer.
+
+Voir [l'audit d'implémentation Customer V1](../../../docs/domains/marketplace/CUSTOMER_V1_IMPLEMENTATION_AUDIT.md) et [les règles du carnet Localization](../../../docs/domains/localization/ADDRESS_BOOK_V1.md).
