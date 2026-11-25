@@ -17,6 +17,9 @@ interface UserAddressLifecycleManager
     /** @param array<string, mixed> $attributes */
     public function updateForUser(string $actorId, string $ownerId, array $attributes): Address;
 
+    /** @param array<string, mixed> $attributes */
+    public function updateAddressForUser(string $actorId, string $ownerId, string $addressId, array $attributes): Address;
+
     public function setPrimaryForUser(string $actorId, string $ownerId, string $addressId): Address;
 
     public function deleteForUser(string $actorId, string $ownerId, string $addressId): void;
