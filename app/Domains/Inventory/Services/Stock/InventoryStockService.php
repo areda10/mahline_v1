@@ -65,7 +65,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $actor,
             $idempotencyKey,
         ): string {
-            $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+            $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId, requireOperational: false);
             if ($stockable->unitCode !== $unitCode) {
                 throw new InvalidArgumentException('The stock unit must match the canonical Products unit.');
             }
@@ -168,7 +168,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
     ): string {
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.receive');
-        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId, requireOperational: false);
         $quantityMilli = $this->milli($quantity);
         if ($quantityMilli <= 0) {
             throw new InvalidArgumentException('A stock receipt quantity must be positive.');
@@ -210,7 +210,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
     ): string {
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.adjust');
-        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId, requireOperational: false);
         $quantityMilli = $this->signedQuantity($signedQuantity);
         $this->requireReasonAndKey($reason, $idempotencyKey);
 
@@ -259,7 +259,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
             $reason,
             $expectedUnitCode,
         ): string {
-            $currentStockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+            $currentStockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId, requireOperational: false);
             if ($currentStockable->unitCode !== $expectedUnitCode) {
                 throw new InventoryReservationConflict('The Products unit changed during the stock operation.');
             }
