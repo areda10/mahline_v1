@@ -47,8 +47,8 @@ final class CooperativeOrderResponseService
     }
 
     /**
-     * Administrative substitution is restricted to root or the super-admin
-     * assigned to this cooperative, before the fixed response deadline (12 hours by default, 24 hours maximum).
+     * The assigned super-admin may substitute the cooperative after its 12-hour
+     * response deadline. Root may intervene only once the 24-hour escalation point is reached.
      */
     public function decideOnBehalf(
         CooperativeOrder $cooperativeOrder,
@@ -155,26 +155,47 @@ final class CooperativeOrderResponseService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($administrative && ($locked->response_deadline_at === null || $locked->response_deadline_at->lessThanOrEqualTo(now()))) {
-                throw ValidationException::withMessages([
-                    'cooperative_order' => ['Une décision administrative de substitution est possible uniquement avant l’expiration des 24 heures.'],
-                ]);
-            }
-
             if ($locked->status !== CooperativeOrderStatus::AWAITING_COOPERATIVE) {
                 throw ValidationException::withMessages([
                     'cooperative_order' => ['Cette sous-commande a déjà reçu une décision.'],
                 ]);
             }
 
-            if (! $administrative && ! $this->canRespondForCooperative($actor, $locked)) {
-                throw new AuthorizationException('Seul un administrateur autorisé de la coopérative peut confirmer ou refuser cette sous-commande.');
-            }
+            if ($administrative) {
+                $deadline = $locked->response_deadline_at;
+                $rootEscalationAt = $locked->created_at?->copy()->addHours(24);
 
-            if ($locked->response_deadline_at !== null && $locked->response_deadline_at->lessThanOrEqualTo(now())) {
-                throw ValidationException::withMessages([
-                    'cooperative_order' => ['Le délai de réponse de 24 heures est expiré. Cette sous-commande ne peut plus être confirmée ni refusée.'],
-                ]);
+                if ($actor->hasRole('super_admin')) {
+                    if ($deadline === null || $deadline->isFuture()) {
+                        throw ValidationException::withMessages([
+                            'cooperative_order' => ['Le super_admin affecté peut intervenir uniquement après l’échéance de réponse de la coopérative (H+12).'],
+                        ]);
+                    }
+
+                    if ($rootEscalationAt === null || $rootEscalationAt->lessThanOrEqualTo(now())) {
+                        throw ValidationException::withMessages([
+                            'cooperative_order' => ['La fenêtre de décision du super_admin est terminée à H+24. Le super_admin_root est désormais habilité.'],
+                        ]);
+                    }
+                } elseif ($actor->hasRole('super_admin_root')) {
+                    if ($rootEscalationAt === null || $rootEscalationAt->isFuture()) {
+                        throw ValidationException::withMessages([
+                            'cooperative_order' => ['Le super_admin_root peut intervenir à partir de H+24, après l’escalade.'],
+                        ]);
+                    }
+                } else {
+                    throw new AuthorizationException('Seul le super_admin affecté ou le super_admin_root peut prendre une décision de substitution.');
+                }
+            } else {
+                if (! $this->canRespondForCooperative($actor, $locked)) {
+                    throw new AuthorizationException('Seul un administrateur autorisé de la coopérative peut confirmer ou refuser cette sous-commande.');
+                }
+
+                if ($locked->response_deadline_at !== null && $locked->response_deadline_at->lessThanOrEqualTo(now())) {
+                    throw ValidationException::withMessages([
+                        'cooperative_order' => ['Le délai de réponse de la coopérative est dépassé. Seul le super_admin affecté peut intervenir jusqu’à H+24, puis le super_admin_root.'],
+                    ]);
+                }
             }
 
             if ($accept) {
