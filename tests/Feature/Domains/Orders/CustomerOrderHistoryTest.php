@@ -19,6 +19,7 @@ use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 final class CustomerOrderHistoryTest extends TestCase
@@ -87,6 +88,108 @@ final class CustomerOrderHistoryTest extends TestCase
         $this->actingAs($customer)
             ->get(route('customer.orders.show', $order))
             ->assertNotFound();
+    }
+
+    public function test_customer_can_cancel_only_a_pending_cooperative_suborder_and_totals_are_recalculated(): void
+    {
+        Notification::fake();
+
+        $customer = $this->customer();
+        $order = $this->order($customer, OrderStatus::AWAITING_COOPERATIVES, 'MH-CANCEL-PARTIAL-001');
+        $suborder = $order->cooperativeOrders()->firstOrFail();
+        $suborder->forceFill([
+            'status' => CooperativeOrderStatus::AWAITING_COOPERATIVE,
+            'items_subtotal' => '25.00',
+            'delivery_fee' => '5.00',
+            'grand_total' => '30.00',
+        ])->save();
+
+        $remainingCooperative = Cooperative::factory()->active()->create();
+        CooperativeOrder::query()->create([
+            'order_id' => (string) $order->getKey(),
+            'cooperative_id' => (string) $remainingCooperative->getKey(),
+            'reference' => 'MH-CANCEL-PARTIAL-001-C2',
+            'status' => CooperativeOrderStatus::AWAITING_COOPERATIVE,
+            'items_subtotal' => '15.00',
+            'delivery_fee' => '8.00',
+            'grand_total' => '23.00',
+            'response_deadline_at' => now()->addHours(12),
+        ]);
+
+        $order->forceFill([
+            'items_subtotal' => '40.00',
+            'delivery_total' => '13.00',
+            'grand_total' => '53.00',
+        ])->save();
+
+        $this->actingAs($customer)
+            ->from(route('customer.orders.show', $order))
+            ->post(route('customer.orders.cooperative-orders.cancel', [$order, $suborder]), [
+                'reason' => 'Je souhaite annuler cette coopérative.',
+            ])
+            ->assertRedirect(route('customer.orders.show', $order));
+
+        $this->assertSame(CooperativeOrderStatus::CANCELLED, $suborder->fresh()->status);
+        $this->assertSame(OrderItemStatus::CANCELLED, $suborder->items()->firstOrFail()->fresh()->status);
+        $this->assertSame(OrderStatus::PARTIALLY_CANCELLED, $order->fresh()->status);
+        $this->assertSame('15.00', $order->fresh()->items_subtotal);
+        $this->assertSame('8.00', $order->fresh()->delivery_total);
+        $this->assertSame('23.00', $order->fresh()->grand_total);
+        $this->assertDatabaseHas('order_status_histories', [
+            'subject_type' => 'cooperative_order',
+            'subject_id' => $suborder->getKey(),
+            'actor_id' => $customer->getKey(),
+            'reason' => 'Je souhaite annuler cette coopérative.',
+        ]);
+        Notification::assertSentTo($customer, \App\Domains\Orders\Notifications\CustomerOrderCancelledNotification::class);
+    }
+
+    public function test_customer_cannot_cancel_a_suborder_after_cooperative_confirmation(): void
+    {
+        $customer = $this->customer();
+        $order = $this->order($customer, OrderStatus::CONFIRMED, 'MH-CANCEL-BLOCKED-001');
+        $suborder = $order->cooperativeOrders()->firstOrFail();
+
+        $this->actingAs($customer)
+            ->from(route('customer.orders.show', $order))
+            ->post(route('customer.orders.cooperative-orders.cancel', [$order, $suborder]), [
+                'reason' => 'Je souhaite annuler.',
+            ])
+            ->assertSessionHasErrors('cooperative_order');
+
+        $this->assertSame(CooperativeOrderStatus::CONFIRMED, $suborder->fresh()->status);
+    }
+
+    public function test_customer_cannot_cancel_another_customers_suborder(): void
+    {
+        $customer = $this->customer();
+        $owner = $this->customer();
+        $order = $this->order($owner, OrderStatus::AWAITING_COOPERATIVES, 'MH-CANCEL-PRIVATE-001');
+        $suborder = $order->cooperativeOrders()->firstOrFail();
+        $suborder->forceFill(['status' => CooperativeOrderStatus::AWAITING_COOPERATIVE])->save();
+
+        $this->actingAs($customer)
+            ->post(route('customer.orders.cooperative-orders.cancel', [$order, $suborder]), [
+                'reason' => 'Tentative non autorisée.',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame(CooperativeOrderStatus::AWAITING_COOPERATIVE, $suborder->fresh()->status);
+    }
+
+    public function test_customer_cancellation_requires_a_reason(): void
+    {
+        $customer = $this->customer();
+        $order = $this->order($customer, OrderStatus::AWAITING_COOPERATIVES, 'MH-CANCEL-REASON-001');
+        $suborder = $order->cooperativeOrders()->firstOrFail();
+        $suborder->forceFill(['status' => CooperativeOrderStatus::AWAITING_COOPERATIVE])->save();
+
+        $this->actingAs($customer)
+            ->from(route('customer.orders.show', $order))
+            ->post(route('customer.orders.cooperative-orders.cancel', [$order, $suborder]), ['reason' => ''])
+            ->assertSessionHasErrors('reason');
+
+        $this->assertSame(CooperativeOrderStatus::AWAITING_COOPERATIVE, $suborder->fresh()->status);
     }
 
     private function customer(): User
