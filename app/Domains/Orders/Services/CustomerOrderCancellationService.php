@@ -96,6 +96,8 @@ final class CustomerOrderCancellationService
             $order->delivery_total = $this->formatMoney($deliveryTotalCents);
             $order->grand_total = $this->formatMoney($itemsSubtotalCents + $deliveryTotalCents);
 
+            $order->forceFill(['updated_by' => (string) $customer->getKey()])->save();
+
             $this->statusAggregation->refresh(
                 $order,
                 $customer,
