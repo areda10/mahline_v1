@@ -9,6 +9,8 @@ use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerEmailChangeService;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Media\Enums\MediaCategory;
+use App\Domains\Media\Services\MediaService;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
@@ -17,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Illuminate\Http\UploadedFile;
 
 final class CustomerProfileController
 {
@@ -24,6 +27,7 @@ final class CustomerProfileController
         private readonly CustomerProfileService $profiles,
         private readonly CustomerEmailChangeService $emailChanges,
         private readonly UserAddressLifecycleManager $addresses,
+        private readonly MediaService $media,
     ) {}
 
     public function edit(Request $request): View
@@ -42,7 +46,7 @@ final class CustomerProfileController
             403,
         );
 
-        $customer->load('primaryAddress.country');
+        $customer->load(['primaryAddress.country', 'profileImage']);
 
         return view('customer.profile.edit', [
             'user' => $customer,
@@ -50,6 +54,65 @@ final class CustomerProfileController
             'addresses' => $customer->addresses,
             'regions' => MoroccanRegion::values(),
         ]);
+    }
+
+    public function uploadProfileImage(Request $request): RedirectResponse
+    {
+        $customer = $request->user();
+
+        abort_unless(
+            $customer instanceof User
+            && $customer->hasRole('customer')
+            && ! $customer->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]),
+            403,
+        );
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp'],
+        ]);
+
+        $file = $request->file('file');
+        abort_unless($file instanceof UploadedFile, 422);
+
+        $this->media->upload(
+            $customer,
+            $customer,
+            $file,
+            MediaCategory::PROFILE_IMAGE->value,
+        );
+
+        return redirect()
+            ->route('customer.profile.edit')
+            ->with('success', 'Votre photo de profil a été mise à jour.');
+    }
+
+    public function deleteProfileImage(Request $request): RedirectResponse
+    {
+        $customer = $request->user();
+
+        abort_unless(
+            $customer instanceof User
+            && $customer->hasRole('customer')
+            && ! $customer->hasAnyRole([
+                'super_admin_root',
+                'super_admin',
+                'cooperative_admin',
+                'user',
+            ]),
+            403,
+        );
+
+        $profileImage = $customer->profileImage()->firstOrFail();
+        $this->media->delete($customer, $profileImage);
+
+        return redirect()
+            ->route('customer.profile.edit')
+            ->with('success', 'Votre photo de profil a été supprimée.');
     }
 
     public function update(UpdateCustomerProfileRequest $request): RedirectResponse
