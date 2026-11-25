@@ -45,9 +45,13 @@
             <h2>Variantes</h2>
             <p class="muted">Gérez les libellés, prix, unités, références SKU et états de chaque variante.</p>
         </div>
-        @can('update', $product)
-            <a class="button" href="{{ route('root.backoffice.cooperatives.products.variants.create', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey()]) }}">Ajouter une variante</a>
-        @endcan
+        @if($product->is_active)
+            @can('update', $product)
+                <a class="button" href="{{ route('root.backoffice.cooperatives.products.variants.create', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey()]) }}">Ajouter une variante</a>
+            @endcan
+        @else
+            <p class="muted">Réactivez le produit parent pour ajouter de nouvelles variantes.</p>
+        @endif
     </div>
 
     @php($variants = $product->variants()->withTrashed()->with('unit')->orderBy('created_at')->get())
