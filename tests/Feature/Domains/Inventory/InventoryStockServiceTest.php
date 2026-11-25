@@ -111,7 +111,6 @@ final class InventoryStockServiceTest extends TestCase
         );
     }
 
-
     public function test_idempotent_stock_replays_remain_safe_after_product_deactivation(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
@@ -158,7 +157,6 @@ final class InventoryStockServiceTest extends TestCase
         $this->assertSame('2.000', InventoryStock::query()->findOrFail($stockId)->quantity_on_hand);
         $this->assertSame(2, InventoryMovement::query()->where('stock_id', $stockId)->count());
     }
-
 
     public function test_new_receipts_and_adjustments_are_blocked_after_product_deactivation(): void
     {
@@ -241,7 +239,6 @@ final class InventoryStockServiceTest extends TestCase
             'stock-parent-with-variants-001',
         );
     }
-
 
     public function test_variant_stock_initialization_is_blocked_when_parent_product_is_inactive(): void
     {
