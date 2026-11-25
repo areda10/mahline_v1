@@ -11,5 +11,6 @@ final readonly class InventoryStockableData
         public string $stockableType,
         public string $stockableId,
         public string $unitCode,
+        public bool $isOperational,
     ) {}
 }
