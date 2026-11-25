@@ -174,11 +174,14 @@ final class ProductController
         $item = $this->productRepository->findForCooperativeOrFail($product, $cooperativeId);
         Gate::authorize('update', $item);
 
+        $isVariantProduct = ($item->product_type ?? 'simple') === 'variant';
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string'],
-            'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
-            'unit_id' => ($item->product_type ?? 'simple') === 'variant'
+            'price' => $isVariantProduct
+                ? ['prohibited']
+                : ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
+            'unit_id' => $isVariantProduct
                 ? ['prohibited']
                 : ['required', 'string', 'size:26'],
             'is_active' => ['sometimes', 'boolean'],
