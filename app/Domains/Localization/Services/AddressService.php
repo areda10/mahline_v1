@@ -145,6 +145,25 @@ final class AddressService extends BaseService implements CooperativeAddressMana
         });
     }
 
+    /** @param array<string, mixed> $attributes */
+    public function updateAddressForUser(string $actorId, string $ownerId, string $addressId, array $attributes): Address
+    {
+        $actor = $this->actors->forUserId($actorId);
+
+        return DB::transaction(function () use ($actor, $actorId, $ownerId, $addressId, $attributes): Address {
+            $owner = $this->userOwners->lock($ownerId);
+            $this->userOwners->authorize($actorId, 'updateUserAddress', $ownerId);
+
+            $address = Address::query()
+                ->whereKey($addressId)
+                ->where('user_id', $owner->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            return $this->updateAddress($actor, $address, $attributes);
+        });
+    }
+
     public function setPrimaryForUser(string $actorId, string $ownerId, string $addressId): Address
     {
         $actor = $this->actors->forUserId($actorId);
