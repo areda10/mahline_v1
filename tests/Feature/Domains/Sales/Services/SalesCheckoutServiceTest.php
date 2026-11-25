@@ -37,42 +37,46 @@ final class SalesCheckoutServiceTest extends TestCase
         $this->seed(ProductUnitSeeder::class);
     }
 
-    public function test_confirmation_rejects_partial_checkout_and_preserves_the_entire_cart(): void
+    public function test_confirmation_creates_partial_order_for_stock_available_cooperatives_and_preserves_excluded_lines(): void
     {
         $customer = User::factory()->create();
         $address = Address::factory()->forUser($customer)->create();
-        [, $availableProduct] = $this->productWithStock('4.000');
-        [, $unavailableProduct] = $this->productWithStock('0.000');
+        [$availableCooperative, $availableProduct] = $this->productWithStock('4.000');
+        [$unavailableCooperative, $unavailableProduct] = $this->productWithStock('0.000');
 
         $manager = app(SalesCartManager::class);
         $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
         $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
         $manager->addItem((string) $cart->getKey(), (string) $unavailableProduct->getKey(), null, '1.000', 2);
 
-        try {
-            app(SalesCheckoutService::class)->confirm(
-                (string) $customer->getKey(),
-                (string) $cart->getKey(),
-                (string) $address->getKey(),
-                'sales-checkout-no-partial-0001',
-            );
-            $this->fail('A cart containing an unavailable line must not create a partial order.');
-        } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('checkout', $exception->errors());
-        }
+        $response = app(SalesCheckoutService::class)->confirm(
+            (string) $customer->getKey(),
+            (string) $cart->getKey(),
+            (string) $address->getKey(),
+            'sales-checkout-partial-stock-0001',
+        );
 
-        $this->assertDatabaseCount('orders', 0);
-        $this->assertSame(2, $cart->fresh()->activeItems()->count());
+        $this->assertSame([(string) $availableCooperative->getKey()], $response['ordered_cooperative_ids']);
+        $this->assertSame([(string) $unavailableCooperative->getKey()], $response['excluded_cooperative_ids']);
+        $this->assertDatabaseCount('orders', 1);
+
+        $order = Order::query()->with('cooperativeOrders.items')->findOrFail($response['order_id']);
+        $this->assertCount(1, $order->cooperativeOrders);
+        $this->assertSame('12.50', $order->items_subtotal);
+        $this->assertSame('40.00', $order->delivery_total);
+        $this->assertCount(1, $order->cooperativeOrders->first()->items);
+
         $this->assertDatabaseHas('sales_cart_items', [
             'cart_id' => $cart->getKey(),
             'product_id' => $availableProduct->getKey(),
-            'status' => 'active',
+            'status' => 'ordered',
         ]);
         $this->assertDatabaseHas('sales_cart_items', [
             'cart_id' => $cart->getKey(),
             'product_id' => $unavailableProduct->getKey(),
             'status' => 'active',
         ]);
+        $this->assertSame(1, $cart->fresh()->activeItems()->count());
     }
 
     public function test_reusing_idempotency_key_with_another_address_is_rejected(): void
@@ -132,12 +136,49 @@ final class SalesCheckoutServiceTest extends TestCase
             ->assertJsonPath('data.unavailable_cooperative_ids', []);
     }
 
-    public function test_checkout_confirm_route_rejects_partial_checkout_and_preserves_all_cart_lines(): void
+    public function test_checkout_confirm_route_creates_partial_order_and_keeps_excluded_lines_in_the_cart(): void
     {
         $customer = $this->checkoutCustomer();
         $address = Address::factory()->forUser($customer)->create();
-        [, $availableProduct] = $this->productWithStock('3.000');
+        [$availableCooperative, $availableProduct] = $this->productWithStock('3.000');
+        [$unavailableCooperative, $unavailableProduct] = $this->productWithStock('0.000');
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
+        $manager->addItem((string) $cart->getKey(), (string) $unavailableProduct->getKey(), null, '1.000', 2);
+
+        $response = $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('sales.cart.checkout.confirm'), [
+                'delivery_address_id' => (string) $address->getKey(),
+                'idempotency_key' => 'http-checkout-partial-stock-0001',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.ordered_cooperative_ids.0', (string) $availableCooperative->getKey())
+            ->assertJsonPath('data.excluded_cooperative_ids.0', (string) $unavailableCooperative->getKey());
+
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseCount('order_items', 1);
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $availableProduct->getKey(),
+            'status' => 'ordered',
+        ]);
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $unavailableProduct->getKey(),
+            'status' => 'active',
+        ]);
+        $this->assertSame(1, $cart->fresh()->activeItems()->count());
+    }
+
+    public function test_checkout_preview_allows_available_cooperatives_and_displays_stock_exclusions(): void
+    {
+        $customer = $this->checkoutCustomer();
+        [$availableCooperative, $availableProduct] = $this->productWithStock('3.000');
+        [$unavailableCooperative] = $this->productWithStock('0.000');
         [, $unavailableProduct] = $this->productWithStock('0.000');
+
         $manager = app(SalesCartManager::class);
         $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
         $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
@@ -145,25 +186,13 @@ final class SalesCheckoutServiceTest extends TestCase
 
         $this->actingAs($customer)
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
-            ->postJson(route('sales.cart.checkout.confirm'), [
-                'delivery_address_id' => (string) $address->getKey(),
-                'idempotency_key' => 'http-checkout-no-partial-0001',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('checkout');
-
-        $this->assertDatabaseCount('orders', 0);
-        $this->assertSame(2, $cart->fresh()->activeItems()->count());
-        $this->assertDatabaseHas('sales_cart_items', [
-            'cart_id' => $cart->getKey(),
-            'product_id' => $availableProduct->getKey(),
-            'status' => 'active',
-        ]);
-        $this->assertDatabaseHas('sales_cart_items', [
-            'cart_id' => $cart->getKey(),
-            'product_id' => $unavailableProduct->getKey(),
-            'status' => 'active',
-        ]);
+            ->getJson(route('sales.cart.checkout.preview'))
+            ->assertOk()
+            ->assertJsonPath('data.checkout_allowed', true)
+            ->assertJsonPath('data.available_cooperative_ids.0', (string) $availableCooperative->getKey())
+            ->assertJsonPath('data.excluded_cooperative_ids.0', (string) $unavailableCooperative->getKey())
+            ->assertJsonCount(1, 'data.groups')
+            ->assertJsonCount(1, 'data.excluded_groups');
     }
 
     public function test_price_increase_after_preview_requires_new_acceptance_and_preserves_cart(): void
