@@ -247,7 +247,7 @@ final class CustomerProfileTest extends TestCase
         $otherCustomer = $this->customer('other-client@example.com');
         $this->actingAs($customer)->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
-        $foreignAddress = app(\\App\\Domains\\Localization\\Contracts\\UserAddressLifecycleManager::class)
+        $foreignAddress = app(\App\Domains\Localization\Contracts\UserAddressLifecycleManager::class)
             ->createForUser((string) $otherCustomer->getKey(), (string) $otherCustomer->getKey(), [
                 'street' => 'Rue privée',
                 'city' => 'Fès',
