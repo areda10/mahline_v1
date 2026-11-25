@@ -1,7 +1,7 @@
 # Audit technique — cycle de vie Orders V1
 
 - **Branche :** `feature/Marketplace`
-- **Révision auditée :** `2e086704cd18db635a8c9cafb09ad86cac4cdf28` (base de l'audit statique)
+- **Révision auditée :** `6914b140c8a402c350d24f2e7e6d139c32660cc2` (base de l'audit statique initial ; complété depuis)
 - **Périmètre :** Sales → Orders → Inventory → Delivery → Finance
 - **Statut :** audit statique et première implémentation de l'annulation client ; tests locaux de cette nouvelle implémentation à exécuter.
 
