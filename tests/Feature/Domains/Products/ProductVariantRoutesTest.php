@@ -22,6 +22,17 @@ final class ProductVariantRoutesTest extends TestCase
             'root.backoffice.cooperatives.products.variants.restore',
         ];
 
+        $names = array_merge($names, [
+            'backoffice.products.variants.create',
+            'backoffice.products.variants.store',
+            'backoffice.products.variants.edit',
+            'backoffice.products.variants.update',
+            'backoffice.products.variants.activate',
+            'backoffice.products.variants.deactivate',
+            'backoffice.products.variants.destroy',
+            'backoffice.products.variants.restore',
+        ]);
+
         foreach ($names as $name) {
             $this->assertTrue(Route::has($name), "La route {$name} doit être enregistrée.");
         }
@@ -33,5 +44,13 @@ final class ProductVariantRoutesTest extends TestCase
 
         $this->assertNotNull($route);
         $this->assertContains('role:super_admin_root', $route->gatherMiddleware());
+    }
+
+    public function test_cooperative_backoffice_variant_routes_are_available_to_staff_roles_only(): void
+    {
+        $route = Route::getRoutes()->getByName('backoffice.products.variants.store');
+
+        $this->assertNotNull($route);
+        $this->assertContains('role:super_admin,cooperative_admin', $route->gatherMiddleware());
     }
 }
