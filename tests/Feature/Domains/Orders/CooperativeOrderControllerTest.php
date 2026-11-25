@@ -187,6 +187,10 @@ final class CooperativeOrderControllerTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($employee)
+            ->post(route('backoffice.orders.cooperative.refuse', $suborder), ['reason' => 'Refus interdit pour un employé.'])
+            ->assertForbidden();
+
+        $this->actingAs($employee)
             ->post(route('backoffice.orders.cooperative.start-preparation', $suborder))
             ->assertRedirect();
 
