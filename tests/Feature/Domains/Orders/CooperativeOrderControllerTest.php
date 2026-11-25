@@ -20,6 +20,8 @@ use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Notification;
+use App\Domains\Orders\Notifications\OrderReadyForShipmentNotification;
 use Tests\TestCase;
 
 final class CooperativeOrderControllerTest extends TestCase
@@ -148,6 +150,54 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->assertSame(CooperativeOrderStatus::REFUSED, $suborder->fresh()->status);
         $this->assertSame('Absence de réponse après vérification.', $suborder->fresh()->substitution_reason);
         $this->assertSame((string) $root->getKey(), (string) $suborder->fresh()->substituted_by_admin_id);
+    }
+
+    public function test_cooperative_user_can_prepare_only_own_confirmed_suborders_and_customer_is_notified_when_ready(): void
+    {
+        Notification::fake();
+
+        $customer = $this->userWithRole('customer');
+        $cooperative = Cooperative::factory()->active()->create();
+        $employee = $this->userWithRole('user', ['cooperative_id' => $cooperative->getKey()]);
+        $otherCooperative = Cooperative::factory()->active()->create();
+        $otherEmployee = $this->userWithRole('user', ['cooperative_id' => $otherCooperative->getKey()]);
+
+        $order = $this->makeOrder($customer, $cooperative, 'INBOX-PREPARATION-001');
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill(['status' => CooperativeOrderStatus::CONFIRMED, 'confirmed_at' => now()])->save();
+
+        $this->actingAs($employee)
+            ->get(route('backoffice.orders.cooperative.show', $suborder))
+            ->assertOk()
+            ->assertSee('Commencer la préparation');
+
+        $this->actingAs($otherEmployee)
+            ->get(route('backoffice.orders.cooperative.show', $suborder))
+            ->assertNotFound();
+
+        $this->actingAs($employee)
+            ->post(route('backoffice.orders.cooperative.confirm', $suborder))
+            ->assertForbidden();
+
+        $this->actingAs($employee)
+            ->post(route('backoffice.orders.cooperative.start-preparation', $suborder))
+            ->assertRedirect();
+
+        $this->assertSame(CooperativeOrderStatus::PREPARING, $suborder->fresh()->status);
+
+        $this->actingAs($employee)
+            ->post(route('backoffice.orders.cooperative.ready-for-shipment', $suborder))
+            ->assertRedirect();
+
+        $this->assertSame(CooperativeOrderStatus::READY_FOR_SHIPMENT, $suborder->fresh()->status);
+        $this->assertDatabaseHas('order_status_histories', [
+            'subject_type' => 'cooperative_order',
+            'subject_id' => $suborder->getKey(),
+            'to_status' => CooperativeOrderStatus::READY_FOR_SHIPMENT->value,
+            'actor_id' => $employee->getKey(),
+        ]);
+
+        Notification::assertSentTo($customer, OrderReadyForShipmentNotification::class);
     }
 
     private function makeOrder(User $customer, Cooperative $cooperative, string $key): Order
