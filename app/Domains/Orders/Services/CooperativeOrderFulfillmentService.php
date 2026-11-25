@@ -14,6 +14,9 @@ use Illuminate\Validation\ValidationException;
 
 final class CooperativeOrderFulfillmentService
 {
+    public function __construct(
+        private readonly OrderStatusAggregationService $statusAggregation,
+    ) {}
     public function startPreparation(CooperativeOrder $cooperativeOrder, User $actor): CooperativeOrder
     {
         return $this->transition($cooperativeOrder, $actor, CooperativeOrderStatus::CONFIRMED, CooperativeOrderStatus::PREPARING);
@@ -60,6 +63,12 @@ final class CooperativeOrderFulfillmentService
                 'metadata' => ['workflow' => 'cooperative_fulfillment'],
                 'occurred_at' => now(),
             ]);
+
+            $this->statusAggregation->refresh(
+                Order::query()->findOrFail($locked->order_id),
+                $actor,
+                'Agrégation après transition de préparation de la sous-commande.',
+            );
 
             if ($to === CooperativeOrderStatus::READY_FOR_SHIPMENT) {
                 $customer = $locked->order()->with('customer')->firstOrFail()->customer;
