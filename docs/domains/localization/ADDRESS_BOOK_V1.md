@@ -92,11 +92,11 @@ Le flux Checkout / Orders est désormais présent dans le code :
 
 Le formulaire de checkout utilise la route Customer d'ajout d'adresse. L'adresse est bien enregistrée dans le carnet.
 
-**Écart restant :** après l'ajout, l'interface recharge l'aperçu et présélectionne l'adresse principale. Si une adresse principale existait déjà, la nouvelle adresse (secondaire) n'est pas automatiquement sélectionnée. La décision fonctionnelle validée exige que l'adresse nouvellement ajoutée soit utilisée pour la commande en cours. Le contrôleur doit retourner l'identifiant créé et l'interface doit le sélectionner explicitement ; il ne faut pas changer l'adresse principale du carnet automatiquement.
+**Correctif ajouté le 25 novembre 2026 :** le endpoint JSON retourne désormais l'identifiant créé dans `data.id`. Le checkout transmet cet identifiant au rechargement de l'aperçu et présélectionne la nouvelle adresse pour la commande en cours. Cette action ne change pas l'adresse principale du carnet. Le test Feature correspondant reste à exécuter localement.
 
 ### Limites d'édition du carnet
 
-L'interface Customer permet d'ajouter, de définir comme principale et de supprimer une adresse. Le formulaire de profil met à jour l'adresse principale / la plus ancienne. Aucun flux d'édition individuelle d'une adresse secondaire n'a été identifié au 25 novembre 2026 ; confirmer si cette capacité fait partie du périmètre V1.
+L'interface Customer permet d'ajouter, de modifier individuellement, de définir comme principale et de supprimer chaque adresse active du carnet. Le formulaire général du profil conserve sa responsabilité sur l'adresse principale / la plus ancienne. Le correctif d'édition individuelle est décrit dans la section 9 ci-dessous.
 
 ## 8. Validation
 
@@ -105,7 +105,7 @@ Les tests de framework couvrent notamment les limites d'adresses Customer (cinq)
 Les tests Checkout / Orders cités dans le compte rendu du 25 novembre 2026 ont été exécutés localement par l'utilisateur et déclarés verts. En revanche, aucun résultat local n'a été communiqué pour `CustomerProfileTest`, `CustomerEmailChangeTest` ou les tests de framework Localization. Ces tests restent donc **à exécuter / confirmer localement** avant de déclarer le carnet d'adresses validé V1.
 
 
-## 8. Correctif carnet Customer — 25 novembre 2026
+## 9. Correctif carnet Customer — 25 novembre 2026
 
 L'édition individuelle des adresses Customer est désormais exposée dans l'interface et la couche applicative :
 
