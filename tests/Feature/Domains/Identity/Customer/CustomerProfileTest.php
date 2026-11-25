@@ -193,6 +193,79 @@ final class CustomerProfileTest extends TestCase
         self::assertTrue($first->fresh()->is_primary);
     }
 
+    public function test_customer_can_update_a_secondary_address_without_changing_the_primary_address(): void
+    {
+        $customer = $this->customer();
+        $this->actingAs($customer)->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+
+        $this->post(route('customer.profile.addresses.store'), [
+            'street' => 'Rue Principale',
+            'city' => 'Casablanca',
+            'region' => 'Casablanca-Settat',
+        ])->assertRedirect(route('customer.profile.edit'));
+
+        $this->post(route('customer.profile.addresses.store'), [
+            'street' => 'Rue Secondaire',
+            'city' => 'Rabat',
+            'region' => 'Rabat-Salé-Kénitra',
+        ])->assertRedirect(route('customer.profile.edit'));
+
+        $primary = $customer->addresses()->where('is_primary', true)->firstOrFail();
+        $secondary = $customer->addresses()->where('street', 'Rue Secondaire')->firstOrFail();
+
+        $this->patch(route('customer.profile.addresses.update', $secondary), [
+            'number' => '25',
+            'street' => 'Avenue Al Massira',
+            'floor' => '3e étage',
+            'city' => 'Rabat',
+            'region' => 'Rabat-Salé-Kénitra',
+            'postal_code' => '10000',
+        ])->assertRedirect(route('customer.profile.edit'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $secondary->getKey(),
+            'user_id' => $customer->getKey(),
+            'number' => '25',
+            'street' => 'Avenue Al Massira',
+            'floor' => '3e étage',
+            'city' => 'Rabat',
+            'postal_code' => '10000',
+            'is_primary' => false,
+        ]);
+        self::assertTrue($primary->fresh()->is_primary);
+
+        $this->assertDatabaseHas('audit_events', [
+            'event_key' => 'localization.address.updated',
+            'subject_id' => $secondary->getKey(),
+        ]);
+    }
+
+    public function test_customer_cannot_update_another_customers_address(): void
+    {
+        $customer = $this->customer();
+        $otherCustomer = $this->customer();
+        $this->actingAs($customer)->withoutMiddleware(EnsureActiveAuthenticationSession::class);
+
+        $foreignAddress = app(\\App\\Domains\\Localization\\Contracts\\UserAddressLifecycleManager::class)
+            ->createForUser((string) $otherCustomer->getKey(), (string) $otherCustomer->getKey(), [
+                'street' => 'Rue privée',
+                'city' => 'Fès',
+                'region' => 'Fès-Meknès',
+            ]);
+
+        $this->patch(route('customer.profile.addresses.update', $foreignAddress), [
+            'street' => 'Tentative',
+            'city' => 'Casablanca',
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $foreignAddress->getKey(),
+            'street' => 'Rue privée',
+            'city' => 'Fès',
+        ]);
+    }
+
     private function customer(): User
     {
         $customer = User::factory()->create([
