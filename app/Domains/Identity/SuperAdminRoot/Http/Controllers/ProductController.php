@@ -143,7 +143,7 @@ final class ProductController
             'cooperative' => $coop,
             'product' => $item,
             'productUnits' => ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
-            'hasVariants' => $item->variants()->exists(),
+            'hasVariants' => ($item->product_type ?? 'simple') === 'variant',
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
                 ->active()
@@ -170,7 +170,7 @@ final class ProductController
             'name' => ['sometimes', 'required', 'string', 'max:180'],
             'description' => ['sometimes', 'nullable', 'string'],
             'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
-            'unit_id' => $item->variants()->exists()
+            'unit_id' => ($item->product_type ?? 'simple') === 'variant'
                 ? ['prohibited']
                 : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
             'is_active' => ['sometimes', 'boolean'],
