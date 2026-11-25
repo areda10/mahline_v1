@@ -128,10 +128,10 @@ final class ProductVariantService
                 ]);
             }
 
-            if ($product === null || $product->trashed()) {
+            if ($product === null || $product->trashed() || ! $product->is_active) {
                 throw ValidationException::withMessages([
                     'product' => [
-                        'Le produit associé n’est pas disponible.',
+                        'Le produit associé est inactif ou n’est pas disponible.',
                     ],
                 ]);
             }
