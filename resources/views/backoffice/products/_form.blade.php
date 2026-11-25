@@ -152,8 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const isVariant = document.getElementById('type_variant').checked;
         simple.hidden = isVariant;
         variants.hidden = !isVariant;
-        simple.querySelectorAll('input,select').forEach((el) => el.required = !isVariant && el.name !== '');
-        variants.querySelectorAll('input:not([name$="[sku]"]),select').forEach((el) => el.required = isVariant);
+        simple.querySelectorAll('input,select').forEach((el) => {
+            el.required = !isVariant && el.name !== '';
+            el.disabled = isVariant;
+        });
+        variants.querySelectorAll('input,select').forEach((el) => {
+            el.required = isVariant && !el.name.endsWith('[sku]');
+            el.disabled = !isVariant;
+        });
         categories.required = isVariant;
     };
     document.querySelectorAll('input[name="product_type"]').forEach((el) => el.addEventListener('change', syncMode));
