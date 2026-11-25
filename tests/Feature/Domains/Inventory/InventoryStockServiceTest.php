@@ -111,6 +111,54 @@ final class InventoryStockServiceTest extends TestCase
         );
     }
 
+
+    public function test_idempotent_stock_replays_remain_safe_after_product_deactivation(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => $unit->getKey(),
+            'price' => '10.00',
+            'currency' => 'MAD',
+            'is_active' => true,
+        ]);
+        $manager = app(InventoryStockManager::class);
+        $cooperativeId = (string) $cooperative->getKey();
+        $productId = (string) $product->getKey();
+        $actorId = (string) $admin->getKey();
+
+        $stockId = $manager->initialize(
+            $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+            'kg', '0.000', 'Initialisation initiale.', $actorId, 'idempotent-inactive-init-001',
+        );
+        $manager->receive(
+            $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+            '2.000', 'Réception initiale.', $actorId, 'idempotent-inactive-receive-001',
+        );
+
+        $product->update(['is_active' => false]);
+
+        $replayedStockId = $manager->initialize(
+            $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+            'kg', '0.000', 'Initialisation initiale.', $actorId, 'idempotent-inactive-init-001',
+        );
+        $replayedReceiveId = $manager->receive(
+            $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+            '2.000', 'Réception initiale.', $actorId, 'idempotent-inactive-receive-001',
+        );
+
+        $this->assertSame($stockId, $replayedStockId);
+        $this->assertSame($stockId, $replayedReceiveId);
+        $this->assertSame('2.000', InventoryStock::query()->findOrFail($stockId)->quantity_on_hand);
+        $this->assertSame(2, InventoryMovement::query()->where('stock_id', $stockId)->count());
+    }
+
     public function test_parent_product_with_variants_cannot_own_a_stock_balance(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
