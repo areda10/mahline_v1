@@ -21,10 +21,10 @@ use App\Shared\Contracts\OrderSafetyHoldManager;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 final class CooperativeOrderResponseServiceTest extends TestCase
@@ -250,7 +250,7 @@ final class CooperativeOrderResponseServiceTest extends TestCase
             'items' => [['product_id' => (string) $productB->getKey(), 'quantity' => '1']],
         ]));
 
-        $this->expectException(HttpException::class);
+        $this->expectException(AuthorizationException::class);
 
         app(CooperativeOrderResponseService::class)
             ->confirmByCooperative($order->cooperativeOrders->firstOrFail(), $adminA);
