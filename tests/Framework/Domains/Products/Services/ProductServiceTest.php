@@ -80,6 +80,29 @@ final class ProductServiceTest extends TestCase
             ->firstOrFail());
     }
 
+
+    public function test_it_creates_initial_variants_for_an_inactive_parent_product(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+
+        $product = $this->service->create((string) $cooperative->getKey(), [
+            'product_type' => 'variant',
+            'name' => 'Produit en préparation',
+            'is_active' => false,
+            'category_ids' => [],
+            'variants' => [[
+                'name' => 'Format 250 g',
+                'unit_id' => $this->unitId,
+                'price' => '15.00',
+                'is_active' => true,
+            ]],
+        ]);
+
+        $this->assertFalse($product->is_active);
+        $this->assertCount(1, $product->variants);
+        $this->assertSame('15.00', $product->variants->first()->price);
+    }
+
     public function test_it_accepts_piece_unit_for_a_simple_product(): void
     {
         $cooperative = Cooperative::factory()->create();
