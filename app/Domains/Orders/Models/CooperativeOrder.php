@@ -21,6 +21,7 @@ final class CooperativeOrder extends BaseModel
     protected $fillable = [
         'order_id', 'cooperative_id', 'reference', 'status', 'items_subtotal',
         'delivery_fee', 'grand_total', 'delivery_quote_snapshot', 'response_deadline_at', 'response_overdue_at',
+        'super_admin_notified_at', 'root_escalated_at',
         'responded_at', 'substituted_by_admin_id', 'substitution_reason',
         'confirmed_at', 'refused_at', 'refusal_reason', 'safety_cancelled_at', 'safety_cancellation_reason',
     ];
@@ -35,6 +36,8 @@ final class CooperativeOrder extends BaseModel
             'grand_total' => 'decimal:2',
             'response_deadline_at' => 'datetime',
             'response_overdue_at' => 'datetime',
+            'super_admin_notified_at' => 'datetime',
+            'root_escalated_at' => 'datetime',
             'responded_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'safety_cancelled_at' => 'datetime',
