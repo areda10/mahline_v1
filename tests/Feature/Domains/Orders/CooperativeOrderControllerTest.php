@@ -116,7 +116,7 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->actingAs($root)
             ->get(route('root.backoffice.orders.cooperative.index'))
             ->assertOk()
-            ->assertSee('INBOX-ASSIGNED-001')
+            ->assertSee($orderA->cooperativeOrders->firstOrFail()->reference)
             ->assertSee($orderB->cooperativeOrders->firstOrFail()->reference);
     }
 
