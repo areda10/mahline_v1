@@ -7,6 +7,48 @@
         <h1>Mon profil</h1>
         <p class="muted">Gérez vos informations personnelles dans votre espace client.</p>
 
+        <section class="profile-photo" aria-labelledby="profile-photo-heading">
+            <h2 id="profile-photo-heading">Photo de profil</h2>
+            <div class="profile-photo-preview">
+                @if ($user->profileImage)
+                    <img
+                        src="{{ route('media.private', $user->profileImage) }}?variant=thumbnail"
+                        alt="Votre photo de profil"
+                        width="120"
+                        height="120"
+                        loading="lazy"
+                    >
+                @else
+                    <div class="profile-photo-placeholder" aria-label="Aucune photo de profil"> {{ mb_strtoupper(mb_substr($user->first_name ?: 'C', 0, 1)) }} </div>
+                @endif
+            </div>
+            <p class="muted">Image privée visible uniquement selon les autorisations de votre compte. JPG, JPEG, PNG ou WebP statique, 5 Mo maximum.</p>
+            <form method="POST" action="{{ route('customer.profile.photo.store') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="form-field">
+                    <label for="profile_photo">Choisir une photo</label>
+                    <input
+                        id="profile_photo"
+                        name="file"
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        required
+                    >
+                    @error('file')
+                        <p class="field-error">{{ $message }}</p>
+                    @enderror
+                </div>
+                <button type="submit">{{ $user->profileImage ? 'Remplacer la photo' : 'Ajouter une photo' }}</button>
+            </form>
+            @if ($user->profileImage)
+                <form method="POST" action="{{ route('customer.profile.photo.destroy') }}" onsubmit="return confirm('Supprimer votre photo de profil ?');">
+                    @csrf
+                    @method('DELETE')
+                    <button class="button-danger" type="submit">Supprimer la photo</button>
+                </form>
+            @endif
+        </section>
+
         @if (session('success'))
             <div class="alert alert-success" role="status">{{ session('success') }}</div>
         @endif
@@ -258,6 +300,10 @@
 @push('styles')
     <style>
         .address-card{padding:12px 0;border-bottom:1px solid #dce5df}.form-field{margin:18px 0}
+        .profile-photo{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin:22px 0;padding:18px;border:1px solid #dce5df;border-radius:9px}
+        .profile-photo-preview img,.profile-photo-placeholder{width:120px;height:120px;border-radius:50%;object-fit:cover}
+        .profile-photo-placeholder{display:flex;align-items:center;justify-content:center;background:#e4eee8;color:#176b57;font-size:42px;font-weight:700}
+        .button-danger{margin-top:12px;background:#8b2635!important}
         .form-field label{display:block;margin-bottom:7px;font-weight:600}
         .form-field input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #cbd7d0;border-radius:7px;font:inherit}
         .form-field input[readonly]{background:#f4f7f5;color:#65736e}
