@@ -46,11 +46,6 @@ final class SalesCheckoutService
 
         $availability = $this->availability($cart->activeItems);
         $items = $cart->activeItems;
-        $cooperativeIds = $items->pluck('cooperative_id')
-            ->map(static fn ($id): string => (string) $id)
-            ->unique()
-            ->values()
-            ->all();
 
         if ($items->isEmpty()) {
             throw ValidationException::withMessages([
@@ -58,7 +53,12 @@ final class SalesCheckoutService
             ]);
         }
 
-        if ($availability['unavailable_cooperative_ids'] !== []) {
+        $cooperativeIds = $availability['available_cooperative_ids'];
+        $excludedCooperativeIds = $availability['stock_unavailable_cooperative_ids'];
+
+        if ($availability['invalid_cooperative_ids'] !== []
+            || $availability['inactive_cooperative_ids'] !== []
+            || $cooperativeIds === []) {
             return $availability + [
                 'items' => $items->map(static fn (SalesCartItem $item): array => [
                     'id' => (string) $item->getKey(),
@@ -68,6 +68,8 @@ final class SalesCheckoutService
                     'cooperative_id' => (string) $item->cooperative_id,
                     'unavailable_reason' => $item->unavailable_reason,
                 ])->values()->all(),
+                'excluded_cooperative_ids' => [],
+                'excluded_groups' => [],
                 'delivery_quotes' => [],
                 'subtotal' => '0.00',
                 'delivery_total' => '0.00',
@@ -94,6 +96,10 @@ final class SalesCheckoutService
         $groups = [];
         foreach ($items as $item) {
             $cooperativeId = (string) $item->cooperative_id;
+            if (! in_array($cooperativeId, $cooperativeIds, true)) {
+                continue;
+            }
+
             $unitPrice = (string) ($item->accepted_unit_price ?? $item->current_unit_price);
             $lineCents = (int) round(((float) $unitPrice) * ((float) $item->quantity) * 100);
             $subtotalCents += $lineCents;
@@ -124,8 +130,28 @@ final class SalesCheckoutService
             array_values($quotesByCooperative),
         ));
 
+        $excludedGroups = $items
+            ->filter(static fn (SalesCartItem $item): bool => in_array(
+                (string) $item->cooperative_id,
+                $excludedCooperativeIds,
+                true,
+            ))
+            ->groupBy(static fn (SalesCartItem $item): string => (string) $item->cooperative_id)
+            ->map(static fn ($cooperativeItems, string $cooperativeId): array => [
+                'cooperative_id' => $cooperativeId,
+                'items' => $cooperativeItems->map(static fn (SalesCartItem $item): array => [
+                    'id' => (string) $item->getKey(),
+                    'product' => $item->current_product_snapshot,
+                    'quantity' => (string) $item->quantity,
+                ])->values()->all(),
+            ])
+            ->values()
+            ->all();
+
         return $availability + [
             'groups' => array_values($groups),
+            'excluded_cooperative_ids' => $excludedCooperativeIds,
+            'excluded_groups' => $excludedGroups,
             'delivery_quotes' => array_values($quotesByCooperative),
             'subtotal' => number_format($subtotalCents / 100, 2, '.', ''),
             'delivery_total' => number_format($deliveryCents / 100, 2, '.', ''),
@@ -188,7 +214,7 @@ final class SalesCheckoutService
             }
 
             $availability = $this->availability($items);
-            $excludedIds = $availability['unavailable_cooperative_ids'];
+            $excludedIds = $availability['stock_unavailable_cooperative_ids'];
             $eligibleIds = $availability['available_cooperative_ids'];
 
             if ($availability['inactive_cooperative_ids'] !== []) {
@@ -197,9 +223,9 @@ final class SalesCheckoutService
                 ]);
             }
 
-            if ($excludedIds !== []) {
+            if ($availability['invalid_cooperative_ids'] !== []) {
                 throw ValidationException::withMessages([
-                    'checkout' => ['Au moins un article du panier est indisponible. Aucune commande partielle ne sera créée : corrigez ou retirez les lignes concernées, puis recommencez. Votre panier a été conservé.'],
+                    'checkout' => ['Au moins un produit ou une ligne de votre panier n’est plus commandable. Corrigez ou retirez les lignes concernées avant de poursuivre. Votre panier a été conservé.'],
                 ]);
             }
 
@@ -262,9 +288,10 @@ final class SalesCheckoutService
             )));
             $orderedIds = array_values(array_diff($orderedIds, $orderExcludedIds));
 
-            if (array_diff($cooperativeIds, $orderedIds) !== []) {
+            $expectedOrderedIds = array_values(array_diff($cooperativeIds, $orderExcludedIds));
+            if (array_diff($expectedOrderedIds, $orderedIds) !== []) {
                 throw ValidationException::withMessages([
-                    'inventory' => ['La disponibilité a changé pendant la confirmation. La commande complète n’a pas été validée et votre panier a été conservé. Actualisez le récapitulatif avant de réessayer.'],
+                    'inventory' => ['La création des sous-commandes ne correspond pas au résultat de la vérification du stock. La transaction est annulée et votre panier est conservé.'],
                 ]);
             }
 
@@ -411,6 +438,8 @@ final class SalesCheckoutService
         return [
             'available_cooperative_ids' => $available,
             'unavailable_cooperative_ids' => $unavailable,
+            'invalid_cooperative_ids' => array_keys($invalidCooperatives),
+            'stock_unavailable_cooperative_ids' => $stockUnavailable,
             'inactive_cooperative_ids' => array_keys($inactiveCooperatives),
             'cooperatives' => array_map(
                 static fn (string $id): array => [
