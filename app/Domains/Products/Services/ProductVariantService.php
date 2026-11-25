@@ -60,10 +60,10 @@ final class ProductVariantService
                 ]);
             }
 
-            $this->assertUniqueActiveLabel(
-                $product,
-                $normalizedLabel,
-            );
+            $isActive = (bool) ($attributes['is_active'] ?? true);
+            if ($isActive) {
+                $this->assertUniqueActiveLabel($product, $normalizedLabel);
+            }
 
             $variant = new ProductVariant;
 
@@ -76,7 +76,7 @@ final class ProductVariantService
             $variant->price = $this->validatedPrice($attributes['price'] ?? null);
             $variant->unit_id = $this->validatedUnitId($attributes['unit_id'] ?? null);
             $variant->attributes = $attributes['attributes'] ?? null;
-            $variant->is_active = $attributes['is_active'] ?? true;
+            $variant->is_active = $isActive;
 
             $variant->save();
             $this->record($actor, $product, $variant, 'product_variant.created', 'created', null, $this->snapshot($variant));
@@ -128,8 +128,9 @@ final class ProductVariantService
             }
 
             $before = $this->snapshot($variant);
+            $newActiveState = (bool) ($attributes['is_active'] ?? $variant->is_active);
 
-            if (array_key_exists('name', $attributes)) {
+            if (array_key_exists('name', $attributes))
                 $name = trim((string) $attributes['name']);
                 $normalizedLabel = $this->normalizeLabel($name);
 
@@ -141,7 +142,7 @@ final class ProductVariantService
                     ]);
                 }
 
-                if ($variant->is_active) {
+                if ($newActiveState) {
                     $this->assertUniqueActiveLabel(
                         $product,
                         $normalizedLabel,
@@ -182,14 +183,8 @@ final class ProductVariantService
             }
 
             if (array_key_exists('is_active', $attributes)) {
-                $newActiveState = (bool) $attributes['is_active'];
-
-                if ($newActiveState && ! $variant->is_active) {
-                    $this->assertUniqueActiveLabel(
-                        $product,
-                        $variant->normalized_label,
-                        $variant,
-                    );
+                if ($newActiveState && ! $variant->is_active && ! array_key_exists('name', $attributes)) {
+                    $this->assertUniqueActiveLabel($product, $variant->normalized_label, $variant);
                 }
 
                 $variant->is_active = $newActiveState;
