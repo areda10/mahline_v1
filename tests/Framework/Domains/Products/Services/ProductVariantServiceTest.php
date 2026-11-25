@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Tests\Framework\Domains\Products\Services;
 
 use App\Domains\Cooperatives\Models\Cooperative;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Services\ProductVariantService;
+use App\Domains\Products\Services\ProductService;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
@@ -385,6 +387,58 @@ final class ProductVariantServiceTest extends TestCase
             'id' => $variantId,
             'deleted_at' => null,
         ]);
+    }
+
+
+    public function test_it_preserves_a_disabled_unit_when_editing_variant_details(): void
+    {
+        $product = $this->createProduct();
+        $variant = $this->service->create($product, [
+            'name' => 'Variante initiale',
+            'unit_id' => $this->unitId,
+            'price' => '10.00',
+        ]);
+        ProductUnit::query()->whereKey($this->unitId)->update(['is_active' => false]);
+
+        $updated = $this->service->update($variant, ['name' => 'Variante renommée']);
+
+        $this->assertSame('Variante renommée', $updated->label);
+        $this->assertSame($this->unitId, (string) $updated->unit_id);
+    }
+
+    public function test_variant_lifecycle_persists_audit_actor_columns(): void
+    {
+        $product = $this->createProduct();
+        $actor = User::factory()->create();
+        $variant = $this->service->create($product, [
+            'name' => 'Variante auditée',
+            'unit_id' => $this->unitId,
+            'price' => '10.00',
+        ], $actor);
+
+        $this->assertSame((string) $actor->getKey(), (string) $variant->created_by);
+
+        $this->service->update($variant, ['name' => 'Variante auditée modifiée'], $actor);
+        $this->assertSame((string) $actor->getKey(), (string) $variant->fresh()->updated_by);
+
+        $this->service->delete($variant->fresh(), $actor);
+        $this->assertSame((string) $actor->getKey(), (string) ProductVariant::withTrashed()->findOrFail($variant->getKey())->deleted_by);
+
+        $this->service->restore(ProductVariant::withTrashed()->findOrFail($variant->getKey()), $actor);
+        $this->assertSame((string) $actor->getKey(), (string) $variant->fresh()->updated_by);
+    }
+
+    public function test_variant_effective_price_never_falls_back_to_parent_price(): void
+    {
+        $product = $this->createProduct();
+        $product->update(['price' => '99.00']);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'unit_id' => $this->unitId,
+            'price' => null,
+        ]);
+
+        $this->assertNull($variant->effectivePrice());
     }
 
     public function test_it_rejects_restoring_an_active_variant_when_its_label_is_already_used(): void
