@@ -352,10 +352,6 @@ final class CooperativeOrderResponseService
             return (string) $actor->cooperative_id === (string) $cooperativeOrder->cooperative_id;
         }
 
-        if ($actor->hasRole('super_admin_root')) {
-            return true;
-        }
-
         return $this->isAssignedSuperAdmin($actor, $cooperativeOrder);
     }
 
