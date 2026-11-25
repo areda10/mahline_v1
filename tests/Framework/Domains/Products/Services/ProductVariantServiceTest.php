@@ -296,4 +296,93 @@ final class ProductVariantServiceTest extends TestCase
             'id' => $variantId,
         ]);
     }
+
+    public function test_it_updates_variant_commercial_fields_without_changing_the_parent_type(): void
+    {
+        $product = $this->createProduct();
+        $variant = $this->service->create($product, [
+            'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
+            'price' => '12.50',
+            'sku' => 'POT-250',
+            'is_active' => true,
+        ]);
+
+        $updated = $this->service->update($variant, [
+            'name' => 'Pot 500 g',
+            'unit_id' => $this->unitId,
+            'price' => '19.90',
+            'sku' => 'POT-500',
+            'is_active' => true,
+        ]);
+
+        $this->assertSame('Pot 500 g', $updated->label);
+        $this->assertSame('pot 500 g', $updated->normalized_label);
+        $this->assertSame('19.90', $updated->price);
+        $this->assertSame('POT-500', $updated->sku);
+        $this->assertSame('variant', $product->fresh()->product_type);
+    }
+
+    public function test_it_can_deactivate_and_reactivate_a_variant(): void
+    {
+        $product = $this->createProduct();
+        $variant = $this->service->create($product, [
+            'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
+            'price' => '12.50',
+            'is_active' => true,
+        ]);
+
+        $this->service->deactivate($variant);
+        $this->assertFalse($variant->fresh()->is_active);
+
+        $this->service->activate($variant->fresh());
+        $this->assertTrue($variant->fresh()->is_active);
+    }
+
+    public function test_it_soft_deletes_and_restores_a_variant(): void
+    {
+        $product = $this->createProduct();
+        $variant = $this->service->create($product, [
+            'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
+            'price' => '12.50',
+            'is_active' => true,
+        ]);
+        $variantId = (string) $variant->getKey();
+
+        $this->assertTrue($this->service->delete($variant));
+        $this->assertSoftDeleted('product_variants', ['id' => $variantId]);
+        $this->assertDatabaseHas('product_variants', ['id' => $variantId]);
+
+        $trashed = ProductVariant::withTrashed()->findOrFail($variantId);
+        $this->assertTrue($this->service->restore($trashed));
+        $this->assertDatabaseHas('product_variants', [
+            'id' => $variantId,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_it_rejects_restoring_an_active_variant_when_its_label_is_already_used(): void
+    {
+        $product = $this->createProduct();
+        $deleted = $this->service->create($product, [
+            'name' => 'Pot 250 g',
+            'unit_id' => $this->unitId,
+            'price' => '12.50',
+            'is_active' => true,
+        ]);
+        $this->service->delete($deleted);
+
+        $this->service->create($product, [
+            'name' => 'POT 250 G',
+            'unit_id' => $this->unitId,
+            'price' => '13.50',
+            'is_active' => true,
+        ]);
+
+        $this->expectException(ValidationException::class);
+        $this->service->restore(ProductVariant::withTrashed()->findOrFail($deleted->getKey()));
+    }
+
 }
