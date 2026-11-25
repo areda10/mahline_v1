@@ -22,6 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Notification;
 use App\Domains\Orders\Notifications\OrderReadyForShipmentNotification;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use Tests\TestCase;
 
 final class CooperativeOrderControllerTest extends TestCase
@@ -159,11 +160,14 @@ final class CooperativeOrderControllerTest extends TestCase
         $customer = $this->userWithRole('customer');
         $cooperative = Cooperative::factory()->active()->create();
         $employee = $this->userWithRole('user', ['cooperative_id' => $cooperative->getKey()]);
+        $cooperativeAdmin = $this->userWithRole('cooperative_admin', ['cooperative_id' => $cooperative->getKey()]);
         $otherCooperative = Cooperative::factory()->active()->create();
         $otherEmployee = $this->userWithRole('user', ['cooperative_id' => $otherCooperative->getKey()]);
 
         $order = $this->makeOrder($customer, $cooperative, 'INBOX-PREPARATION-001');
         $suborder = $order->cooperativeOrders->firstOrFail();
+        Notification::assertSentTo($cooperativeAdmin, CooperativeOrderWorkflowNotification::class);
+        $this->assertSame('cash_on_delivery', $order->fresh()->payment_method);
         $suborder->forceFill(['status' => CooperativeOrderStatus::CONFIRMED, 'confirmed_at' => now()])->save();
 
         $this->actingAs($employee)
