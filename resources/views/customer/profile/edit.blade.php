@@ -133,6 +133,43 @@
                         {{ $savedAddress->city }} — {{ $savedAddress->region ?? 'Région non précisée' }}
                         @if($savedAddress->postal_code) ({{ $savedAddress->postal_code }}) @endif
                     </p>
+                    <details>
+                        <summary>Modifier cette adresse</summary>
+                        <form method="POST" action="{{ route('customer.profile.addresses.update', $savedAddress) }}">
+                            @csrf
+                            @method('PATCH')
+                            <div class="form-field">
+                                <label for="address_{{ $savedAddress->id }}_number">Numéro</label>
+                                <input id="address_{{ $savedAddress->id }}_number" name="number" maxlength="50" value="{{ $savedAddress->number }}">
+                            </div>
+                            <div class="form-field">
+                                <label for="address_{{ $savedAddress->id }}_street">Rue</label>
+                                <input id="address_{{ $savedAddress->id }}_street" name="street" maxlength="255" required value="{{ $savedAddress->street }}">
+                            </div>
+                            <div class="form-field">
+                                <label for="address_{{ $savedAddress->id }}_floor">Étage / Complément</label>
+                                <input id="address_{{ $savedAddress->id }}_floor" name="floor" maxlength="50" value="{{ $savedAddress->floor }}">
+                            </div>
+                            <div class="form-field">
+                                <label for="address_{{ $savedAddress->id }}_city">Ville</label>
+                                <input id="address_{{ $savedAddress->id }}_city" name="city" maxlength="120" required value="{{ $savedAddress->city }}">
+                            </div>
+                            <div class="form-field">
+                                <label for="address_{{ $savedAddress->id }}_region">Région</label>
+                                <select id="address_{{ $savedAddress->id }}_region" name="region">
+                                    <option value="">Sélectionner une région</option>
+                                    @foreach($regions as $region)
+                                        <option value="{{ $region }}" @selected($savedAddress->region === $region)>{{ $region }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-field">
+                                <label for="address_{{ $savedAddress->id }}_postal_code">Code postal</label>
+                                <input id="address_{{ $savedAddress->id }}_postal_code" name="postal_code" maxlength="20" value="{{ $savedAddress->postal_code }}">
+                            </div>
+                            <button type="submit">Enregistrer cette adresse</button>
+                        </form>
+                    </details>
                     @if($savedAddress->is_primary)
                         <strong>Adresse principale</strong>
                     @else
