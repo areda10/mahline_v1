@@ -771,7 +771,7 @@ Route::prefix('back-office/orders/cooperative')
 
 Route::prefix('back-office/orders/cooperative')
     ->name('backoffice.orders.cooperative.')
-    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:cooperative_admin'])
     ->group(function (): void {
         Route::post('/{cooperativeOrderId}/confirm', [CooperativeOrderController::class, 'confirm'])->whereUlid('cooperativeOrderId')->name('confirm');
         Route::post('/{cooperativeOrderId}/refuse', [CooperativeOrderController::class, 'refuse'])->whereUlid('cooperativeOrderId')->name('refuse');
