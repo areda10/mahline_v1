@@ -9,6 +9,7 @@ use App\Domains\Categories\Models\Category;
 use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
@@ -124,6 +125,11 @@ final class ProductController
             (string) $coop->getKey(),
         );
         Gate::authorize('view', $item);
+        if (($item->product_type ?? 'simple') === 'variant') {
+            $item->setRelation('variants', ProductVariant::withTrashed()
+                ->where('product_id', $item->getKey())
+                ->orderBy('label')->get());
+        }
 
         return view('super-admin-root.cooperatives.products.show', [
             'cooperative' => $coop,
