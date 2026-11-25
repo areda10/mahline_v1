@@ -16,6 +16,8 @@ use App\Domains\Inventory\Models\InventoryCountItemEvent;
 use App\Domains\Inventory\Models\InventoryCountSession;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -210,10 +212,21 @@ final class InventoryCountServiceTest extends TestCase
 
     private function stock(Cooperative $cooperative, string $quantity): InventoryStock
     {
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => $unit->getKey(),
+            'price' => '10.00',
+            'currency' => 'MAD',
+            'is_active' => true,
+        ]);
+
         return InventoryStock::query()->create([
             'cooperative_id' => (string) $cooperative->getKey(),
             'stockable_type' => InventoryStockableType::PRODUCT->value,
-            'stockable_id' => (string) Str::ulid(),
+            'stockable_id' => (string) $product->getKey(),
             'unit_code' => 'kg',
             'quantity_on_hand' => $quantity,
         ]);
