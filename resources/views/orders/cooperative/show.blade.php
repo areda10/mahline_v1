@@ -118,7 +118,7 @@
         <div class="card">
             <h2>Intervention administrative</h2>
             @if(auth()->user()->hasRole('super_admin_root'))
-                <p class="muted">Le délai de 24 heures est dépassé. Vous pouvez prendre la décision finale à la place de la coopérative. Un motif est obligatoire.</p>
+                <p class="muted">Le délai de 24 heures est dépassé. Vous pouvez également prendre une décision à la place de la coopérative. Un motif est obligatoire.</p>
             @else
                 <p class="muted">Le délai de 12 heures de la coopérative est dépassé. En tant que super_admin affecté, vous pouvez confirmer ou refuser cette sous-commande tant qu'aucune décision n'a été enregistrée. Un motif est obligatoire.</p>
             @endif
