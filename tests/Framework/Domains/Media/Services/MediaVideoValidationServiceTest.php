@@ -62,7 +62,7 @@ final class MediaVideoValidationServiceTest extends TestCase
 
     public function test_rejects_an_extension_that_does_not_match_the_actual_mime_type(): void
     {
-        $this->bindInspector($this->validMetadata());
+        // MIME mismatch is rejected before FFprobe; no inspector call is expected.
         $file = UploadedFile::fake()->createWithContent('fake.mp4', "not a video\n");
 
         $this->expectException(ValidationException::class);
@@ -119,7 +119,7 @@ final class MediaVideoValidationServiceTest extends TestCase
 
     public function test_rejects_a_video_over_twenty_megabytes(): void
     {
-        $this->bindInspector($this->validMetadata());
+        // Oversized files are rejected before FFprobe; no inspector call is expected.
         $file = UploadedFile::fake()->create('large.mp4', 20 * 1024 + 1, 'video/mp4');
 
         $this->expectException(ValidationException::class);
