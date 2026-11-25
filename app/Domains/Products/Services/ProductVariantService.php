@@ -11,8 +11,9 @@ use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Shared\Contracts\StockUnitChangeGuard;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use App\Shared\DTOs\AuditEntryDTO;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class ProductVariantService
