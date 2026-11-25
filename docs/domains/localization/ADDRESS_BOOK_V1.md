@@ -71,10 +71,10 @@ La migration d'initialisation crée le modèle V1 directement, car le dépôt n'
 
 ## 6. Services et interfaces
 
-- `AddressService` : création, mise à jour, changement de principale, suppression volontaire, suppression/restauration avec le propriétaire.
+- `AddressService` : création, mise à jour de l'adresse principale ou d'une adresse ciblée par identifiant, changement de principale, suppression volontaire, suppression/restauration avec le propriétaire.
 - `UserManagementService` : déclenche la suppression/restauration du carnet avec le cycle de vie du compte.
 - `CooperativeService` : déclenche la suppression/restauration de l'adresse avec le cycle de vie de la coopérative.
-- `CustomerProfileController` : carnet client, ajout, choix de principale et suppression.
+- `CustomerProfileController` : carnet client, ajout, édition individuelle, choix de principale et suppression. La route `PATCH customer/profile/addresses/{address}` délègue la modification ciblée à Localization.
 - `PersonalAddressController` : adresse personnelle des comptes internes.
 - Les contrôleurs de coopérative ne reçoivent plus d'`address_id` et passent par `AddressService`.
 
@@ -103,3 +103,16 @@ L'interface Customer permet d'ajouter, de définir comme principale et de suppri
 Les tests de framework couvrent notamment les limites d'adresses Customer (cinq), la suppression logique, la libération d'une place, la promotion de l'adresse la plus ancienne, la restauration et les règles d'autorisation.
 
 Les tests Checkout / Orders cités dans le compte rendu du 25 novembre 2026 ont été exécutés localement par l'utilisateur et déclarés verts. En revanche, aucun résultat local n'a été communiqué pour `CustomerProfileTest`, `CustomerEmailChangeTest` ou les tests de framework Localization. Ces tests restent donc **à exécuter / confirmer localement** avant de déclarer le carnet d'adresses validé V1.
+
+
+## 8. Correctif carnet Customer — 25 novembre 2026
+
+L'édition individuelle des adresses Customer est désormais exposée dans l'interface et la couche applicative :
+
+- Chaque adresse active du carnet affiche son propre formulaire de modification.
+- La route `customer.profile.addresses.update` accepte une requête PATCH et valide les champs d'adresse.
+- Le contrat `UserAddressLifecycleManager` expose `updateAddressForUser(actorId, ownerId, addressId, attributes)`.
+- `AddressService` verrouille le propriétaire puis l'adresse, exige que l'adresse appartienne à ce propriétaire, délègue à la validation centralisée et écrit l'événement d'audit `localization.address.updated`.
+- Une adresse secondaire peut être modifiée sans devenir principale. Une adresse d'un autre client est introuvable dans le périmètre du propriétaire et ne peut pas être modifiée.
+
+Les tests Feature ajoutés sont à exécuter localement ; leur présence dans le dépôt ne vaut pas résultat vert.
