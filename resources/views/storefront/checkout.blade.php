@@ -78,7 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (preview.checkout_allowed !== true) {
                 feedback.className = 'shop-alert shop-error';
-                feedback.textContent = 'Certains articles ne sont pas commandables. Consultez votre panier, acceptez les changements nécessaires ou retirez les lignes indisponibles avant de recommencer.';
+                feedback.textContent = preview.excluded_groups?.length
+                    ? 'Le stock est insuffisant dans toutes les coopératives du panier. Aucun article ne sera commandé. Ajustez les quantités ou réessayez plus tard.'
+                    : 'Certains articles ne sont pas commandables. Consultez votre panier, acceptez les changements nécessaires ou retirez les lignes indisponibles avant de recommencer.';
                 confirmButton.disabled = true;
             } else if (preview.excluded_groups?.length) {
                 feedback.className = 'shop-alert';
