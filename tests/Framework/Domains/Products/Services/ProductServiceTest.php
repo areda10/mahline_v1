@@ -10,6 +10,8 @@ use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
+use App\Domains\Products\Models\ProductVariant;
+use App\Domains\Products\Services\ProductVariantService;
 use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
@@ -122,6 +124,61 @@ final class ProductServiceTest extends TestCase
 
         $this->assertSame('Produit renommé', $updated->name);
         $this->assertSame($this->unitId, (string) $updated->unit_id);
+    }
+
+
+    public function test_variant_product_remains_editable_after_all_variants_are_soft_deleted(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = $this->service->create((string) $cooperative->getKey(), [
+            'product_type' => 'variant',
+            'name' => 'Produit à variantes',
+            'is_active' => true,
+            'category_ids' => [],
+            'variants' => [[
+                'name' => 'Format initial',
+                'unit_id' => $this->unitId,
+                'price' => '12.00',
+            ]],
+        ]);
+        $variant = $product->variants->firstOrFail();
+        app(ProductVariantService::class)->delete($variant);
+
+        $updated = $this->service->update(
+            $product,
+            (string) $cooperative->getKey(),
+            ['name' => 'Produit à variantes modifié'],
+        );
+
+        $this->assertSame('variant', $updated->product_type);
+        $this->assertSame('Produit à variantes modifié', $updated->name);
+        $this->assertSame(0, $updated->variants->count());
+    }
+
+    public function test_checkout_does_not_fall_back_to_parent_price_for_a_variant(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = $this->service->create((string) $cooperative->getKey(), [
+            'product_type' => 'variant',
+            'name' => 'Produit sans prix parent',
+            'is_active' => true,
+            'category_ids' => [],
+            'variants' => [[
+                'name' => 'Format',
+                'unit_id' => $this->unitId,
+                'price' => '12.00',
+            ]],
+        ]);
+        $variant = $product->variants->firstOrFail();
+        Product::query()->whereKey($product->getKey())->update(['price' => '99.00']);
+        ProductVariant::query()->whereKey($variant->getKey())->update(['price' => null]);
+
+        $resolved = $this->service->resolveForCheckout(
+            (string) $product->getKey(),
+            (string) $variant->getKey(),
+        );
+
+        $this->assertNull($resolved?->effectivePrice);
     }
 
     public function test_it_accepts_piece_unit_for_a_simple_product(): void
