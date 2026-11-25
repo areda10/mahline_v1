@@ -83,7 +83,8 @@
     </p>
 </div>
 
-@if($isAwaiting && $isCooperativeAdmin)
+@if($isAwaiting)
+    @if($isCooperativeAdmin)
     <div class="card">
         <h2>Réponse de la coopérative</h2>
         @if($deadlineOpen)
@@ -105,6 +106,7 @@
             <p class="muted">Le délai de réponse est dépassé. La confirmation ou le refus par la coopérative n'est plus disponible.</p>
         @endif
     </div>
+    @endif
 
     @if($isAdmin && $deadlineOpen)
         <div class="card">
@@ -152,6 +154,28 @@
             </form>
         </div>
     @endif
+@endif
+
+@if($isEmployee && $suborder->status === \\App\\Domains\\Orders\\Enums\\CooperativeOrderStatus::CONFIRMED)
+    <div class="card">
+        <h2>Préparation de la commande</h2>
+        <p>La commande a été confirmée par le responsable de la coopérative. Vous pouvez commencer sa préparation.</p>
+        <form method="POST" action="{{ route($routeBase.'.start-preparation', $suborder) }}">
+            @csrf
+            <button class="button" type="submit">Commencer la préparation</button>
+        </form>
+    </div>
+@endif
+
+@if($isEmployee && $suborder->status === \\App\\Domains\\Orders\\Enums\\CooperativeOrderStatus::PREPARING)
+    <div class="card">
+        <h2>Préparation en cours</h2>
+        <p>Lorsque tous les articles sont préparés, indiquez que la commande est prête à être livrée.</p>
+        <form method="POST" action="{{ route($routeBase.'.ready-for-shipment', $suborder) }}">
+            @csrf
+            <button class="button" type="submit">Marquer comme prête à livrer</button>
+        </form>
+    </div>
 @endif
 
 <div class="card">
