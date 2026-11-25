@@ -161,6 +161,10 @@ final class CooperativeOrderResponseService
                 ]);
             }
 
+            if ($administrative && $actor->hasRole('super_admin') && ! $this->isAssignedSuperAdmin($actor, $locked)) {
+                abort(403);
+            }
+
             if ($administrative) {
                 $deadline = $locked->response_deadline_at;
                 $rootEscalationAt = $locked->created_at?->copy()->addHours(24);
