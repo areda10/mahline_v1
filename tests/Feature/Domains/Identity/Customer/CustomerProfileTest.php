@@ -8,6 +8,7 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Models\Country;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -247,7 +248,7 @@ final class CustomerProfileTest extends TestCase
         $otherCustomer = $this->customer('other-client@example.com');
         $this->actingAs($customer)->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
-        $foreignAddress = app(\App\Domains\Localization\Contracts\UserAddressLifecycleManager::class)
+        $foreignAddress = app(UserAddressLifecycleManager::class)
             ->createForUser((string) $otherCustomer->getKey(), (string) $otherCustomer->getKey(), [
                 'street' => 'Rue privée',
                 'city' => 'Fès',
