@@ -192,7 +192,7 @@ final class SalesCartController
         $directCartId = $request->query('direct_cart_id');
         $directToken = null;
         if ($directCartId !== null) {
-            abort_unless(is_string($directCartId) && preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/', $directCartId) === 1, 404);
+            abort_unless(is_string($directCartId) && preg_match('/^[0-9A-HJKMNP-TV-Z]{26}$/i', $directCartId) === 1, 404);
             $directToken = $request->session()->get('sales.direct_checkouts.'.$directCartId);
             abort_unless(is_string($directToken), 404);
             $cartId = $directCartId;
