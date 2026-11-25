@@ -102,12 +102,7 @@ final class ProductPolicy extends BasePolicy
                 ->exists();
         }
 
-        if (
-            $user->hasAnyRole([
-                'cooperative_admin',
-                'user',
-            ])
-        ) {
+        if ($user->hasRole('cooperative_admin')) {
             return $user->cooperative_id !== null
                 && (string) $user->cooperative_id === $cooperativeId;
         }
