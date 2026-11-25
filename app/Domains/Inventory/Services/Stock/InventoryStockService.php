@@ -48,7 +48,7 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         $actor = $this->actors->forUserId($actorId);
         $this->authorize($actor, $cooperativeId, 'inventory.stock.initialize');
 
-        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId);
+        $stockable = $this->resolveStockable($cooperativeId, $stockableType, $stockableId, requireOperational: false);
         if ($stockable->unitCode !== $unitCode) {
             throw new InvalidArgumentException('The stock unit must match the canonical Products unit.');
         }
@@ -89,6 +89,10 @@ final class InventoryStockService extends BaseService implements InventoryStockM
                 }
 
                 throw new InventoryReservationConflict('The stock balance has already been initialized.');
+            }
+
+            if (! $stockable->isOperational) {
+                throw new InvalidArgumentException('Inactive or deleted products and variants cannot receive a new stock initialization.');
             }
 
             $stock = InventoryStock::query()->create([
@@ -276,6 +280,10 @@ final class InventoryStockService extends BaseService implements InventoryStockM
                 return (string) $stock->getKey();
             }
 
+            if (! $currentStockable->isOperational) {
+                throw new InvalidArgumentException('Inactive or deleted products and variants cannot receive new stock movements.');
+            }
+
             if ($stock->active_count_session_id !== null) {
                 throw new InventoryReservationConflict('This stock is locked by an active physical inventory count.');
             }
@@ -347,13 +355,14 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         string $cooperativeId,
         InventoryStockableType $stockableType,
         string $stockableId,
+        bool $requireOperational = true,
     ): InventoryStockableData {
         $stockable = $this->products->resolveForInventory($stockableType->value, $stockableId);
         if ($stockable === null
             || $stockable->cooperativeId !== $cooperativeId
             || $stockable->stockableType !== $stockableType->value
             || $stockable->stockableId !== $stockableId
-            || ! $stockable->isOperational) {
+            || ($requireOperational && ! $stockable->isOperational)) {
             throw new InvalidArgumentException('The product or variant is not a valid stockable item for this cooperative.');
         }
 
