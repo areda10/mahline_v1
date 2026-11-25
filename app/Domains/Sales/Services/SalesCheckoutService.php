@@ -56,9 +56,26 @@ final class SalesCheckoutService
         $cooperativeIds = $availability['available_cooperative_ids'];
         $excludedCooperativeIds = $availability['stock_unavailable_cooperative_ids'];
 
+        $excludedGroups = $items
+            ->filter(static fn (SalesCartItem $item): bool => in_array(
+                (string) $item->cooperative_id,
+                $excludedCooperativeIds,
+                true,
+            ))
+            ->groupBy(static fn (SalesCartItem $item): string => (string) $item->cooperative_id)
+            ->map(static fn ($cooperativeItems, string $cooperativeId): array => [
+                'cooperative_id' => $cooperativeId,
+                'items' => $cooperativeItems->map(static fn (SalesCartItem $item): array => [
+                    'id' => (string) $item->getKey(),
+                    'product' => $item->current_product_snapshot,
+                    'quantity' => (string) $item->quantity,
+                ])->values()->all(),
+            ])
+            ->values()
+            ->all();
+
         if ($availability['invalid_cooperative_ids'] !== []
-            || $availability['inactive_cooperative_ids'] !== []
-            || $cooperativeIds === []) {
+            || $availability['inactive_cooperative_ids'] !== []) {
             return $availability + [
                 'items' => $items->map(static fn (SalesCartItem $item): array => [
                     'id' => (string) $item->getKey(),
@@ -70,6 +87,20 @@ final class SalesCheckoutService
                 ])->values()->all(),
                 'excluded_cooperative_ids' => [],
                 'excluded_groups' => [],
+                'delivery_quotes' => [],
+                'subtotal' => '0.00',
+                'delivery_total' => '0.00',
+                'grand_total' => '0.00',
+                'checkout_allowed' => false,
+            ];
+        }
+
+        if ($cooperativeIds === []) {
+            return $availability + [
+                'items' => [],
+                'excluded_cooperative_ids' => $excludedCooperativeIds,
+                'excluded_groups' => $excludedGroups,
+                'groups' => [],
                 'delivery_quotes' => [],
                 'subtotal' => '0.00',
                 'delivery_total' => '0.00',
@@ -129,24 +160,6 @@ final class SalesCheckoutService
             static fn (array $quote): int => (int) round(((float) $quote['amount']) * 100),
             array_values($quotesByCooperative),
         ));
-
-        $excludedGroups = $items
-            ->filter(static fn (SalesCartItem $item): bool => in_array(
-                (string) $item->cooperative_id,
-                $excludedCooperativeIds,
-                true,
-            ))
-            ->groupBy(static fn (SalesCartItem $item): string => (string) $item->cooperative_id)
-            ->map(static fn ($cooperativeItems, string $cooperativeId): array => [
-                'cooperative_id' => $cooperativeId,
-                'items' => $cooperativeItems->map(static fn (SalesCartItem $item): array => [
-                    'id' => (string) $item->getKey(),
-                    'product' => $item->current_product_snapshot,
-                    'quantity' => (string) $item->quantity,
-                ])->values()->all(),
-            ])
-            ->values()
-            ->all();
 
         return $availability + [
             'groups' => array_values($groups),
