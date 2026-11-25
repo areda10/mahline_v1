@@ -38,7 +38,7 @@ final class ProductVariantRoutesTest extends TestCase
         }
     }
 
-    public function test_variant_management_routes_are_restricted_to_the_root_backoffice(): void
+    public function test_root_variant_routes_are_restricted_to_the_root_backoffice(): void
     {
         $route = Route::getRoutes()->getByName('root.backoffice.cooperatives.products.variants.store');
 
