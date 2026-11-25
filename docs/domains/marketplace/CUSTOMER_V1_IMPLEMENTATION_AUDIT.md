@@ -95,8 +95,8 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 ### P1 — Fonctionnalités à arbitrer / compléter
 
 4. **Photo de profil.** Aucun contrôle d'affichage ou d'upload Customer n'a été identifié dans l'écran. Le modèle User possède une relation `profileImage()` vers Media, mais cela ne prouve pas que le flux Customer soit implémenté. À classer selon le périmètre fonctionnel V1 confirmé.
-6. **Nettoyage UI.** Éviter le double affichage du message de succès par le layout et la vue profil.
-7. **Robustesse et tests d'intégration.** Couvrir l'adresse d'un autre client, l'accès par compte multi-rôle, compte inactif / non vérifié, dépassement des cinq adresses par HTTP, ajout concurrent, suppression de l'adresse principale, restauration et adresse supprimée utilisée au checkout.
+5. **Nettoyage UI.** Éviter le double affichage du message de succès par le layout et la vue profil.
+6. **Robustesse et tests d'intégration.** Couvrir l'adresse d'un autre client, l'accès par compte multi-rôle, compte inactif / non vérifié, dépassement des cinq adresses par HTTP, ajout concurrent, suppression de l'adresse principale, restauration et adresse supprimée utilisée au checkout.
 
 ## 4. Règles fonctionnelles confirmées à appliquer
 
