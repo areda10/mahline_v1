@@ -740,3 +740,25 @@ Pour un panier contenant des produits de plusieurs coopératives, l'insuffisance
 - Cette exclusion automatique ne s'applique pas à une coopérative inactive/supprimée, à un produit ou une variante non vendable, à une hausse de prix non acceptée ou à une modification commerciale non acceptée : ces situations continuent de bloquer le checkout jusqu'à résolution explicite par le client.
 - Cette décision complète et précise SALES-009 et SALES-013. Elle ne remplace pas SALES-031 : une coopérative inactive continue de bloquer l'ensemble du checkout conformément à cette règle.
 
+
+
+## 17. Mise à jour d'implémentation Customer / adresse — 25 novembre 2026
+
+Cette mise à jour complète les sections Checkout et interfaces Customer après vérification du code actuel.
+
+### Fonctionnalités présentes
+
+- Le profil Customer est disponible sous `customer.profile.edit`.
+- Le carnet d'adresses permet l'ajout, la définition d'une adresse principale et la suppression logique ; Localization applique la limite de cinq adresses actives.
+- Le checkout charge les adresses actives du Customer, affiche l'adresse principale en premier et exige une sélection `delivery_address_id`.
+- Le checkout permet aussi d'ajouter une adresse via le endpoint du carnet Customer ; cette adresse est persistée dans le carnet.
+- Localization valide l'appartenance et l'activité de l'adresse et produit un DTO de snapshot.
+- Orders conserve le snapshot dans `orders.delivery_address_snapshot`.
+
+### Écarts encore ouverts
+
+1. **Adresse ajoutée au checkout :** l'interface recharge l'aperçu après création et présélectionne l'adresse principale. Si une adresse principale existait déjà, la nouvelle adresse secondaire n'est pas automatiquement choisie. La décision validée est que l'adresse ajoutée pendant le checkout doit être utilisée pour cette commande. Le endpoint doit renvoyer l'identifiant de l'adresse créée et le frontend doit sélectionner cet identifiant après le rafraîchissement. L'adresse principale du carnet ne doit pas être changée par cette action.
+2. **Modification des données personnelles :** le formulaire Customer PUT rend obligatoires les champs rue, ville et région avec prénom, nom et téléphone. La modification des seules données personnelles doit être possible sans devoir saisir une adresse.
+3. **Édition d'une adresse secondaire :** aucune action d'édition individuelle n'est présente dans l'interface du carnet ; périmètre V1 à confirmer.
+
+L'audit fichier par fichier, les statuts et la couverture des tests sont consignés dans [CUSTOMER_V1_IMPLEMENTATION_AUDIT.md](CUSTOMER_V1_IMPLEMENTATION_AUDIT.md).
