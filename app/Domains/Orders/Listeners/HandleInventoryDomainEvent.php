@@ -11,18 +11,12 @@ use App\Domains\Orders\Services\CooperativeOrderExpirationService;
 final class HandleInventoryDomainEvent
 {
     public function __construct(
-        private readonly CooperativeOrderExpirationService $expirations,
         private readonly OrderSafetyHoldManager $safetyHolds,
     ) {}
 
     public function handle(InventoryDomainEvent $event): void
     {
         if ($event->eventKey === 'inventory.reservation.expired') {
-            $cooperativeOrderId = $event->payload['cooperative_order_id'] ?? null;
-            if (is_string($cooperativeOrderId) && $cooperativeOrderId !== '') {
-                $this->expirations->expireIfAwaiting($cooperativeOrderId);
-            }
-
             return;
         }
 
