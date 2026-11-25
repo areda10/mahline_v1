@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\DTOs\InventoryReservationLineData;
 use App\Domains\Inventory\Enums\InventoryStockableType;
@@ -17,6 +16,7 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
