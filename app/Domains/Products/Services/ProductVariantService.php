@@ -4,27 +4,33 @@ declare(strict_types=1);
 
 namespace App\Domains\Products\Services;
 
+use App\Domains\Audit\Contracts\AuditWriter;
+use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Shared\Contracts\StockUnitChangeGuard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Validation\ValidationException;
 
 final class ProductVariantService
 {
     public function __construct(
         private readonly StockUnitChangeGuard $stockUnitGuard,
+        private readonly AuditWriter $audit,
     ) {}
 
     public function create(
         Product $product,
         array $attributes,
+        ?User $actor = null,
     ): ProductVariant {
         return DB::transaction(function () use (
             $product,
             $attributes,
+            $actor,
         ): ProductVariant {
             $product = Product::withTrashed()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
             $this->assertProductIsAvailable($product);
@@ -73,6 +79,7 @@ final class ProductVariantService
             $variant->is_active = $attributes['is_active'] ?? true;
 
             $variant->save();
+            $this->record($actor, $product, $variant, 'product_variant.created', 'created', null, $this->snapshot($variant));
 
             return $variant;
         });
@@ -81,10 +88,12 @@ final class ProductVariantService
     public function update(
         ProductVariant $variant,
         array $attributes,
+        ?User $actor = null,
     ): ProductVariant {
         return DB::transaction(function () use (
             $variant,
             $attributes,
+            $actor,
         ): ProductVariant {
             $variantReference = ProductVariant::query()
                 ->whereKey($variant->getKey())
@@ -117,6 +126,8 @@ final class ProductVariantService
                     ],
                 ]);
             }
+
+            $before = $this->snapshot($variant);
 
             if (array_key_exists('name', $attributes)) {
                 $name = trim((string) $attributes['name']);
@@ -185,9 +196,113 @@ final class ProductVariantService
             }
 
             $variant->save();
+            $variant->refresh();
 
-            return $variant->refresh();
+            $after = $this->snapshot($variant);
+            if ($before !== $after) {
+                $this->record($actor, $product, $variant, 'product_variant.updated', 'updated', $before, $after);
+            }
+
+            return $variant;
         });
+    }
+
+
+    public function deactivate(ProductVariant $variant, ?User $actor = null): ProductVariant
+    {
+        return $this->update($variant, ['is_active' => false], $actor);
+    }
+
+    public function activate(ProductVariant $variant, ?User $actor = null): ProductVariant
+    {
+        return $this->update($variant, ['is_active' => true], $actor);
+    }
+
+    public function delete(ProductVariant $variant, ?User $actor = null): bool
+    {
+        return DB::transaction(function () use ($variant, $actor): bool {
+            $locked = ProductVariant::query()->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
+            $product = Product::withTrashed()->whereKey($locked->product_id)->lockForUpdate()->firstOrFail();
+            $this->assertProductIsAvailable($product);
+
+            $before = $this->snapshot($locked);
+            $deleted = (bool) $locked->delete();
+
+            if ($deleted) {
+                $this->record($actor, $product, $locked, 'product_variant.deleted', 'deleted', $before, $this->snapshot($locked) + ['deleted' => true]);
+            }
+
+            return $deleted;
+        });
+    }
+
+    public function restore(ProductVariant $variant, ?User $actor = null): bool
+    {
+        return DB::transaction(function () use ($variant, $actor): bool {
+            $locked = ProductVariant::withTrashed()->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
+            $product = Product::withTrashed()->whereKey($locked->product_id)->lockForUpdate()->firstOrFail();
+            $this->assertProductIsAvailable($product);
+
+            if (! $locked->trashed()) {
+                return false;
+            }
+
+            if ($locked->is_active) {
+                $this->assertUniqueActiveLabel($product, $locked->normalized_label, $locked);
+            }
+
+            $before = $this->snapshot($locked);
+            $locked->restore();
+            $locked->refresh();
+
+            $this->record($actor, $product, $locked, 'product_variant.restored', 'restored',
+                ['deleted' => true] + $before,
+                ['deleted' => false] + $this->snapshot($locked));
+
+            return true;
+        });
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshot(ProductVariant $variant): array
+    {
+        return [
+            'product_id' => (string) $variant->product_id,
+            'label' => $variant->label,
+            'normalized_label' => $variant->normalized_label,
+            'sku' => $variant->sku,
+            'price' => $variant->price,
+            'unit_id' => $variant->unit_id,
+            'attributes' => $variant->attributes,
+            'is_active' => (bool) $variant->is_active,
+            'deleted' => $variant->trashed(),
+        ];
+    }
+
+    private function record(
+        ?User $actor,
+        Product $product,
+        ProductVariant $variant,
+        string $eventKey,
+        string $action,
+        ?array $oldValues,
+        ?array $newValues,
+    ): void {
+        if ($actor === null) {
+            return;
+        }
+
+        $this->audit->record(new AuditEntryDTO(
+            eventKey: $eventKey,
+            action: $action,
+            actorType: User::class,
+            actorId: (string) $actor->getKey(),
+            cooperativeId: (string) $product->cooperative_id,
+            subjectType: ProductVariant::class,
+            subjectId: (string) $variant->getKey(),
+            oldValues: $oldValues,
+            newValues: $newValues,
+        ));
     }
 
     private function validatedUnitId(mixed $unitId): string
