@@ -15,6 +15,7 @@ use App\Domains\Inventory\Models\InventoryCountItem;
 use App\Domains\Inventory\Models\InventoryCountItemEvent;
 use App\Domains\Inventory\Models\InventoryCountSession;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -105,6 +106,62 @@ final class InventoryCountServiceTest extends TestCase
         $this->assertSame('completed', $session->status);
         $this->assertSame('21.000', $second->quantity_on_hand);
         $this->assertNull($second->active_count_session_id);
+    }
+
+
+    public function test_count_discrepancy_cannot_adjust_a_product_that_became_inactive(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $stock = $this->stock($cooperative, '5.000');
+        $manager = app(InventoryCountManager::class);
+        $sessionId = $manager->createSession(
+            (string) $cooperative->getKey(),
+            [(string) $stock->getKey()],
+            (string) $admin->getKey(),
+            'inactive-count-create-001',
+        );
+        $item = InventoryCountItem::query()->where('session_id', $sessionId)->firstOrFail();
+        $manager->recordCount(
+            (string) $item->getKey(),
+            '4.000',
+            'Écart physique constaté.',
+            (string) $admin->getKey(),
+        );
+        Product::query()->whereKey($stock->stockable_id)->update(['is_active' => false]);
+
+        $this->expectException(InventoryReservationConflict::class);
+        $manager->validateSession($sessionId, (string) $admin->getKey());
+    }
+
+    public function test_count_without_discrepancy_can_finalize_after_product_deactivation(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $stock = $this->stock($cooperative, '5.000');
+        $manager = app(InventoryCountManager::class);
+        $sessionId = $manager->createSession(
+            (string) $cooperative->getKey(),
+            [(string) $stock->getKey()],
+            (string) $admin->getKey(),
+            'inactive-count-create-002',
+        );
+        $item = InventoryCountItem::query()->where('session_id', $sessionId)->firstOrFail();
+        $manager->recordCount(
+            (string) $item->getKey(),
+            '5.000',
+            null,
+            (string) $admin->getKey(),
+        );
+        Product::query()->whereKey($stock->stockable_id)->update(['is_active' => false]);
+
+        $manager->validateSession($sessionId, (string) $admin->getKey());
+
+        $this->assertSame('completed', InventoryCountSession::query()->findOrFail($sessionId)->status);
     }
 
     public function test_cancelled_count_session_preserves_records_and_releases_all_locks(): void
