@@ -28,6 +28,16 @@ final class ProductVariantRepository
             ->findOrFail($variantId);
     }
 
+    public function findTrashedForProductOrFail(
+        string $variantId,
+        string $productId,
+    ): ProductVariant {
+        return ProductVariant::withTrashed()
+            ->where('product_id', $productId)
+            ->onlyTrashed()
+            ->findOrFail($variantId);
+    }
+
     public function delete(ProductVariant $variant): bool
     {
         return (bool) $variant->delete();
