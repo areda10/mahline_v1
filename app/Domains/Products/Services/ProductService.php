@@ -179,7 +179,7 @@ final class ProductService implements CheckoutCatalog
                             "variants.{$index}" => ['Données de variante invalides.'],
                         ]);
                     }
-                    $this->variantService->create($product, $variantData);
+                    $this->variantService->create($product, $variantData, $actor);
                 }
             }
 
