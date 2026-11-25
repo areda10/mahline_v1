@@ -319,6 +319,12 @@ final class OrderCreationService
             }
 
             $forcedUnavailableCooperativeIds = array_values(array_unique($forcedUnavailableCooperativeIds));
+            if ($forcedUnavailableCooperativeIds !== []) {
+                throw ValidationException::withMessages([
+                    'checkout' => ['Un produit, une coopérative ou une condition commerciale a changé pendant la confirmation. Le checkout doit être revérifié avant toute création de commande.'],
+                ]);
+            }
+
             $prepared = array_values(array_filter(
                 $prepared,
                 static fn (array $line): bool => ! in_array($line['cooperative_id'], $forcedUnavailableCooperativeIds, true),
