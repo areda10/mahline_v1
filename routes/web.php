@@ -755,8 +755,6 @@ Route::prefix('root/back-office/orders/cooperative')
     ->group(function (): void {
         Route::get('/', [CooperativeOrderController::class, 'index'])->name('index');
         Route::get('/{cooperativeOrderId}', [CooperativeOrderController::class, 'show'])->whereUlid('cooperativeOrderId')->name('show');
-        Route::post('/{cooperativeOrderId}/confirm', [CooperativeOrderController::class, 'confirm'])->whereUlid('cooperativeOrderId')->name('confirm');
-        Route::post('/{cooperativeOrderId}/refuse', [CooperativeOrderController::class, 'refuse'])->whereUlid('cooperativeOrderId')->name('refuse');
         Route::post('/{cooperativeOrderId}/administrative-decision', [CooperativeOrderController::class, 'administrativeDecision'])->whereUlid('cooperativeOrderId')->name('administrative-decision');
         Route::post('/{cooperativeOrderId}/extend-deadline', [CooperativeOrderController::class, 'extendDeadline'])->whereUlid('cooperativeOrderId')->name('extend-deadline');
     });
