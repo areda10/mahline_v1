@@ -6,6 +6,8 @@ namespace App\Domains\Orders\Http\Controllers;
 
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\Order;
+use App\Domains\Orders\Models\CooperativeOrder;
+use App\Domains\Orders\Services\CustomerOrderCancellationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -70,6 +72,29 @@ final class CustomerOrderHistoryController
             'order' => $order,
             'statusLabels' => $this->statusLabels(),
         ]);
+    }
+
+    public function cancelSuborder(Request $request, string $orderId, string $cooperativeOrderId, CustomerOrderCancellationService $cancellations)
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:2000'],
+        ]);
+
+        $order = Order::query()
+            ->where('customer_id', (string) $request->user()->getKey())
+            ->whereKey($orderId)
+            ->firstOrFail();
+
+        $suborder = CooperativeOrder::query()
+            ->where('order_id', (string) $order->getKey())
+            ->whereKey($cooperativeOrderId)
+            ->firstOrFail();
+
+        $cancellations->cancel($suborder, $request->user(), $data['reason']);
+
+        return redirect()
+            ->route('customer.orders.show', $order)
+            ->with('success', 'La sous-commande a été annulée. Les frais et le total de la commande ont été recalculés.');
     }
 
     /**
