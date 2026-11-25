@@ -1,7 +1,7 @@
 # MAHLINE V1 — Localization / Carnet d'adresses
 
 - **Version :** V1
-- **Mise à jour :** 17 novembre 2026
+- **Mise à jour :** 25 novembre 2026
 - **Dépôt :** `areda10/mahline_v1`
 - **Branche :** `feature/Marketplace`
 - **Statut :** implémentation écrite ; tests d'exécution à réaliser dans l'environnement local
@@ -78,10 +78,28 @@ La migration d'initialisation crée le modèle V1 directement, car le dépôt n'
 - `PersonalAddressController` : adresse personnelle des comptes internes.
 - Les contrôleurs de coopérative ne reçoivent plus d'`address_id` et passent par `AddressService`.
 
-## 7. Historique commercial futur
+## 7. Intégration Checkout / Orders constatée au 25 novembre 2026
 
-Les domaines Orders, Finance/Facturation et Delivery ne sont pas encore présents. Lors de leur implémentation, chaque commande, facture ou livraison devra conserver un snapshot d'adresse immuable, indépendant du carnet courant du client ou de la coopérative.
+Le flux Checkout / Orders est désormais présent dans le code :
+
+- `CheckoutAddressSnapshotService::snapshotForCustomer()` vérifie que l'adresse est active, appartient au client et possède les champs minimaux de livraison.
+- Le contrat `CheckoutAddressReader` et le DTO `CheckoutAddressSnapshot` exposent le snapshot à Sales sans transmettre le modèle Eloquent Address.
+- Sales liste les adresses actives du client au checkout et exige un `delivery_address_id` à la confirmation.
+- `OrderCheckoutData` transmet le snapshot à Orders ; `OrderCreationService` le persiste dans `orders.delivery_address_snapshot`.
+- Le snapshot est une copie des données d'adresse de la commande. Une modification ou suppression ultérieure du carnet ne doit pas réécrire l'historique de commande.
+
+### Ajout d'adresse depuis le checkout
+
+Le formulaire de checkout utilise la route Customer d'ajout d'adresse. L'adresse est bien enregistrée dans le carnet.
+
+**Écart restant :** après l'ajout, l'interface recharge l'aperçu et présélectionne l'adresse principale. Si une adresse principale existait déjà, la nouvelle adresse (secondaire) n'est pas automatiquement sélectionnée. La décision fonctionnelle validée exige que l'adresse nouvellement ajoutée soit utilisée pour la commande en cours. Le contrôleur doit retourner l'identifiant créé et l'interface doit le sélectionner explicitement ; il ne faut pas changer l'adresse principale du carnet automatiquement.
+
+### Limites d'édition du carnet
+
+L'interface Customer permet d'ajouter, de définir comme principale et de supprimer une adresse. Le formulaire de profil met à jour l'adresse principale / la plus ancienne. Aucun flux d'édition individuelle d'une adresse secondaire n'a été identifié au 25 novembre 2026 ; confirmer si cette capacité fait partie du périmètre V1.
 
 ## 8. Validation
 
-Les tests ont été adaptés pour couvrir les relations, les limites, l'adresse principale, la suppression logique, les lots de restauration et les contraintes SQL. Ils restent **à exécuter localement** ; aucun résultat vert n'est déclaré dans ce document.
+Les tests de framework couvrent notamment les limites d'adresses Customer (cinq), la suppression logique, la libération d'une place, la promotion de l'adresse la plus ancienne, la restauration et les règles d'autorisation.
+
+Les tests Checkout / Orders cités dans le compte rendu du 25 novembre 2026 ont été exécutés localement par l'utilisateur et déclarés verts. En revanche, aucun résultat local n'a été communiqué pour `CustomerProfileTest`, `CustomerEmailChangeTest` ou les tests de framework Localization. Ces tests restent donc **à exécuter / confirmer localement** avant de déclarer le carnet d'adresses validé V1.
