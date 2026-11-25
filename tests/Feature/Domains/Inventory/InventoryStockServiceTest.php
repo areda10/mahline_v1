@@ -82,6 +82,36 @@ final class InventoryStockServiceTest extends TestCase
         $this->assertSame(2, InventoryMovement::query()->where('stock_id', $stockId)->count());
     }
 
+
+    public function test_new_stock_initialization_is_blocked_for_an_inactive_product(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => $unit->getKey(),
+            'is_active' => false,
+        ]);
+
+        $this->expectException(\\InvalidArgumentException::class);
+
+        app(InventoryStockManager::class)->initialize(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::PRODUCT,
+            (string) $product->getKey(),
+            'kg',
+            '0.000',
+            'Initialisation refusée pour un produit inactif.',
+            (string) $admin->getKey(),
+            'inactive-product-stock-init-001',
+        );
+    }
+
     public function test_parent_product_with_variants_cannot_own_a_stock_balance(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
