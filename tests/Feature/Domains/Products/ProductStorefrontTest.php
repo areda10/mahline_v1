@@ -168,7 +168,7 @@ final class ProductStorefrontTest extends TestCase
         //     ->assertSee('Suivre mes commandes')
         //     ->assertSee('Profil et carnet d’adresses')
         //     ->assertSee('Mes notifications');
-                        dump([
+        dump([
             'after_login' => [
                 'user_id' => auth()->id(),
                 'laravel_session_id' => session()->getId(),
