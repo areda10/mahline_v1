@@ -186,7 +186,7 @@ final class ProductController
             'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
             'unit_id' => ($productModel->product_type ?? 'simple') === 'variant'
                 ? ['prohibited']
-                : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->whereIn('code', ProductUnit::V1_CODES)->where(function ($query) use ($productModel): void { $query->where('is_active', true)->orWhere('id', $productModel->unit_id); })],
+                : ['required', 'string', 'size:26'],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
