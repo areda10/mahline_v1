@@ -183,6 +183,12 @@ final class SalesCustomerCheckoutFlowsTest extends TestCase
             'city' => 'Casablanca',
         ]);
 
+        // Le checkout preview exige un panier persistant contenant au moins un article.
+        [, $product] = $this->productWithStock('5.000');
+        $cartManager = app(SalesCartManager::class);
+        $cart = $cartManager->getOrCreateCustomerCart((string) $customer->getKey());
+        $cartManager->addItem((string) $cart->getKey(), (string) $product->getKey(), null, '1.000', 1);
+
         $this->actingAs($customer)
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
             ->get(route('sales.cart.checkout.page'))
