@@ -98,7 +98,7 @@ final class InventoryStockServiceTest extends TestCase
             'is_active' => false,
         ]);
 
-        $this->expectException(\\InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         app(InventoryStockManager::class)->initialize(
             (string) $cooperative->getKey(),
