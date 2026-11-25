@@ -57,7 +57,7 @@ Les clés étrangères des produits, variantes, coopératives et utilisateurs pr
 Fonctions actuellement présentes :
 - `confirmByCooperative()` : demande de confirmation d'une sous-commande par un acteur autorisé.
 - `refuseByCooperative()` : refus avec motif.
-- `decideOnBehalf()` : décision de substitution motivée, avec deux fenêtres strictes : `super_admin` affecté de H+12 à avant H+24 ; `super_admin_root` à partir de H+24.
+- `decideOnBehalf()` : décision de substitution motivée, avec deux fenêtres strictes : `super_admin` affecté à partir de H+12 tant qu'aucune décision n'est enregistrée ; `super_admin_root` à partir de H+24.
 - `extendResponseDeadline()` : prolongation motivée, réservée à root ou au super_admin affecté, avec échéance future et plafond de 24 heures.
 - `refreshGlobalOrderStatus()` : agrégation du statut de la commande globale à partir des décisions des sous-commandes.
 
@@ -81,10 +81,10 @@ Une annulation de sécurité avant expédition libère cette réservation ; elle
 - Une proposition de réduction ou remplacement doit être acceptée explicitement par le client avant modification de la ligne. Une confirmation ne peut pas réduire silencieusement la quantité.
 - Le refus d'une proposition ou son expiration concerne la ligne concernée selon les règles fonctionnelles Orders ; les autres lignes continuent.
 - Le délai de réponse coopérative de référence est de 12 heures, avec plafond absolu de 24 heures. Une échéance dépassée ne provoque ni refus ni expiration automatique ; la sous-commande reste `AWAITING_COOPERATIVE`.
-- À H+12, MAHLINE notifie le `super_admin` affecté, qui peut confirmer ou refuser à la place de la coopérative jusqu'à H+24. Le motif de substitution est obligatoire.
-- À H+24 sans décision, MAHLINE notifie le `super_admin_root`, qui peut confirmer ou refuser à son tour avec un motif obligatoire. Le `super_admin` affecté perd alors sa fenêtre de substitution.
+- À H+12, MAHLINE notifie le `super_admin` affecté, qui peut confirmer ou refuser à la place de la coopérative tant qu'aucune décision n'est enregistrée. Le motif de substitution est obligatoire.
+- À H+24 sans décision, MAHLINE notifie le `super_admin_root`, qui peut confirmer ou refuser à son tour avec un motif obligatoire. Le `super_admin_root` acquiert également le droit d'intervenir ; le `super_admin` affecté conserve son droit jusqu'à ce qu'une décision concurrente soit enregistrée. Le verrouillage transactionnel garantit qu'une seule décision gagne.
 - Les deux escalades sont idempotentes, historisées dans `order_status_histories` et exécutées par `orders:escalate-overdue-cooperative-orders` chaque minute. Elles ne modifient jamais le statut commercial de la sous-commande.
-- Une intervention administrative après échéance est attribuée et motivée : `super_admin` affecté entre H+12 et H+24, puis `super_admin_root` à partir de H+24.
+- Une intervention administrative après échéance est attribuée et motivée : `super_admin` affecté à partir de H+12, puis `super_admin_root` à partir de H+24 ; les deux peuvent intervenir après H+24 tant qu'aucune décision n'est enregistrée.
 - L'annulation client COD est permise jusqu'à confirmation de la sous-commande, selon le périmètre prévu ; après remise au transporteur, le parcours passe par le retour.
 - Le retour ne remet jamais automatiquement le produit en stock : la coopérative contrôle et décide via Inventory.
 
