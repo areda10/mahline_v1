@@ -156,6 +156,7 @@ final class ProductVariantController
     private function assertVariantProduct(Product $product): void
     {
         abort_unless(($product->product_type ?? 'simple') === 'variant', 422, 'Ce produit n’a pas été créé avec des variantes.');
+        abort_if(! $product->is_active, 422, 'Un produit inactif ne peut pas recevoir de nouvelle variante.');
     }
 
     /** @return array<string, mixed> */
