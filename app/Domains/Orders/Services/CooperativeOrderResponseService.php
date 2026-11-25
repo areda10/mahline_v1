@@ -172,11 +172,6 @@ final class CooperativeOrderResponseService
                         ]);
                     }
 
-                    if ($rootEscalationAt === null || $rootEscalationAt->lessThanOrEqualTo(now())) {
-                        throw ValidationException::withMessages([
-                            'cooperative_order' => ['La fenêtre de décision du super_admin est terminée à H+24. Le super_admin_root est désormais habilité.'],
-                        ]);
-                    }
                 } elseif ($actor->hasRole('super_admin_root')) {
                     if ($rootEscalationAt === null || $rootEscalationAt->isFuture()) {
                         throw ValidationException::withMessages([
