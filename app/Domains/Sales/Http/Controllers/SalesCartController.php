@@ -205,14 +205,23 @@ final class SalesCartController
         }
 
         $preview = $this->checkout->preview((string) $user->getKey(), $cartId, $directToken);
+        $cooperativeIds = collect($preview['groups'] ?? [])
+            ->pluck('cooperative_id')
+            ->merge(collect($preview['excluded_groups'] ?? [])->pluck('cooperative_id'))
+            ->unique()
+            ->values()
+            ->all();
         $cooperativeNames = Cooperative::query()
-            ->whereIn('id', collect($preview['groups'] ?? [])->pluck('cooperative_id')->all())
+            ->whereIn('id', $cooperativeIds)
             ->pluck('name', 'id');
-        $preview['groups'] = array_map(static function (array $group) use ($cooperativeNames): array {
-            $group['cooperative_name'] = (string) ($cooperativeNames[$group['cooperative_id']] ?? 'Coopérative');
 
-            return $group;
-        }, $preview['groups'] ?? []);
+        foreach (['groups', 'excluded_groups'] as $groupKey) {
+            $preview[$groupKey] = array_map(static function (array $group) use ($cooperativeNames): array {
+                $group['cooperative_name'] = (string) ($cooperativeNames[$group['cooperative_id']] ?? 'Coopérative');
+
+                return $group;
+            }, $preview[$groupKey] ?? []);
+        }
 
         $addresses = Address::query()
             ->with('country')
