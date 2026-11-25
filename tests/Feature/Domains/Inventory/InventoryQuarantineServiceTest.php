@@ -17,6 +17,8 @@ use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
 use App\Domains\Inventory\Models\InventoryReservation;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
+use App\Domains\Products\Models\Product;
+use App\Domains\Products\Models\ProductUnit;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -42,7 +44,7 @@ final class InventoryQuarantineServiceTest extends TestCase
             'cooperative_id' => $cooperative->getKey(),
         ]);
         $customer = $this->userWithRole('customer');
-        $stockableId = (string) Str::ulid();
+        $stockableId = (string) $this->stockableProduct($cooperative)->getKey();
 
         $stock = InventoryStock::query()->create([
             'cooperative_id' => (string) $cooperative->getKey(),
@@ -152,7 +154,7 @@ final class InventoryQuarantineServiceTest extends TestCase
             'cooperative_id' => $cooperative->getKey(),
         ]);
         $customer = $this->userWithRole('customer');
-        $stockableId = (string) Str::ulid();
+        $stockableId = (string) $this->stockableProduct($cooperative)->getKey();
         $stock = InventoryStock::query()->create([
             'cooperative_id' => (string) $cooperative->getKey(),
             'stockable_type' => InventoryStockableType::PRODUCT->value,
@@ -233,7 +235,7 @@ final class InventoryQuarantineServiceTest extends TestCase
         $admin = $this->userWithRole('cooperative_admin', [
             'cooperative_id' => $cooperative->getKey(),
         ]);
-        $stockableId = (string) Str::ulid();
+        $stockableId = (string) $this->stockableProduct($cooperative)->getKey();
         InventoryStock::query()->create([
             'cooperative_id' => (string) $cooperative->getKey(),
             'stockable_type' => InventoryStockableType::PRODUCT->value,
@@ -263,6 +265,21 @@ final class InventoryQuarantineServiceTest extends TestCase
         $this->assertSame('pending_inspection', $rows[0]['status']);
         $this->assertSame('1.000', $rows[0]['quantity_remaining']);
         $this->assertSame($stockableId, $rows[0]['stockable_id']);
+    }
+
+    private function stockableProduct(Cooperative $cooperative): Product
+    {
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+
+        return Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => $unit->getKey(),
+            'price' => '10.00',
+            'currency' => 'MAD',
+            'is_active' => true,
+        ]);
     }
 
     private function userWithRole(string $roleSlug, array $attributes = []): User
