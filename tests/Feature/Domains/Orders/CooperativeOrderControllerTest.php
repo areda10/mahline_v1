@@ -156,6 +156,11 @@ final class CooperativeOrderControllerTest extends TestCase
         $superAdmin->cooperatives()->attach($cooperative->getKey());
         $order = $this->makeOrder($customer, $cooperative, 'INBOX-H12-ADMIN-001');
         $suborder = $order->cooperativeOrders->firstOrFail();
+
+        $this->actingAs($superAdmin)
+            ->post(route('backoffice.orders.cooperative.confirm', $suborder))
+            ->assertForbidden();
+
         $suborder->forceFill([
             'created_at' => now()->subHours(13),
             'response_deadline_at' => now()->subHour(),
