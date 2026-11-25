@@ -25,6 +25,7 @@ use App\Domains\Identity\SuperAdminRoot\Http\Controllers\CooperativeController a
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\DashboardController as SuperAdminRootDashboardController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\GlobalCategoryController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductController as SuperAdminRootProductController;
+use App\Domains\Identity\SuperAdminRoot\Http\Controllers\ProductVariantController as SuperAdminRootProductVariantController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserApiTokenController;
 use App\Domains\Identity\SuperAdminRoot\Http\Controllers\UserManagementController as SuperAdminRootUserManagementController;
 use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAssignmentController;
