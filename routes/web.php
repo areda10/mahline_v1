@@ -517,6 +517,27 @@ Route::prefix('root/back-office')
                     'products/{product}/restore',
                     [SuperAdminRootProductController::class, 'restore'],
                 )->name('products.restore');
+
+                Route::prefix('products/{product}/variants')
+                    ->name('products.variants.')
+                    ->group(function (): void {
+                        Route::get('create', [SuperAdminRootProductVariantController::class, 'create'])
+                            ->whereUlid('product')->name('create');
+                        Route::post('/', [SuperAdminRootProductVariantController::class, 'store'])
+                            ->whereUlid('product')->name('store');
+                        Route::get('{variant}/edit', [SuperAdminRootProductVariantController::class, 'edit'])
+                            ->whereUlid('product')->whereUlid('variant')->name('edit');
+                        Route::put('{variant}', [SuperAdminRootProductVariantController::class, 'update'])
+                            ->whereUlid('product')->whereUlid('variant')->name('update');
+                        Route::patch('{variant}/activate', [SuperAdminRootProductVariantController::class, 'activate'])
+                            ->whereUlid('product')->whereUlid('variant')->name('activate');
+                        Route::patch('{variant}/deactivate', [SuperAdminRootProductVariantController::class, 'deactivate'])
+                            ->whereUlid('product')->whereUlid('variant')->name('deactivate');
+                        Route::patch('{variant}/restore', [SuperAdminRootProductVariantController::class, 'restore'])
+                            ->whereUlid('product')->whereUlid('variant')->name('restore');
+                        Route::delete('{variant}', [SuperAdminRootProductVariantController::class, 'destroy'])
+                            ->whereUlid('product')->whereUlid('variant')->name('destroy');
+                    });
             });
 
         Route::resource('categories', GlobalCategoryController::class)
