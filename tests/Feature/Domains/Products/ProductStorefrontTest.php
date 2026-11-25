@@ -163,15 +163,15 @@ final class ProductStorefrontTest extends TestCase
         $this->assertNotNull($deviceTrustCookie);
 
         $this->withUnencryptedCookie(
-                config('session.cookie'),
-                $sessionCookie->getValue(),
+            config('session.cookie'),
+            $sessionCookie->getValue(),
         );
 
         $this->withUnencryptedCookie(
             DeviceTrustCookie::NAME,
             $deviceTrustCookie->getValue(),
         );
-        
+
         $sessionCookieName = config('session.cookie');
 
         $shopResponse = $this->get(route('storefront.products.index'));
