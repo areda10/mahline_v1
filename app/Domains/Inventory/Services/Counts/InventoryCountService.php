@@ -7,6 +7,7 @@ namespace App\Domains\Inventory\Services\Counts;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Inventory\Contracts\InventoryCountManager;
+use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Models\InventoryCountItem;
@@ -33,6 +34,7 @@ final class InventoryCountService extends BaseService implements InventoryCountM
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
+        private readonly CheckoutCatalog $products,
     ) {}
 
     public function createSession(
@@ -262,6 +264,16 @@ final class InventoryCountService extends BaseService implements InventoryCountM
                 $counted = $this->milli((string) $item->counted_quantity);
                 $expected = $this->milli((string) $item->expected_quantity);
                 $difference = $counted - $expected;
+                if ($difference !== 0) {
+                    $stockable = $this->products->resolveForInventory(
+                        (string) $stock->stockable_type,
+                        (string) $stock->stockable_id,
+                    );
+                    if ($stockable === null || ! $stockable->isOperational) {
+                        throw new InventoryReservationConflict('A count discrepancy cannot adjust stock after its product or variant became inactive or deleted.');
+                    }
+                }
+
                 if ($difference !== 0 && trim((string) $item->difference_reason) === '') {
                     throw new InvalidArgumentException('A reason is required for every physical count discrepancy.');
                 }
