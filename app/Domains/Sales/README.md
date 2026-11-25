@@ -1,6 +1,6 @@
 # MAHLINE V1 — Domaine Sales
 
-- **Statut :** socle panier et interfaces Customer V1 présents sur `feature/Marketplace` ; checkout techniquement implémenté mais à valider par exécution de la suite de tests et revue intégrée.
+- **Statut :** socle panier et interfaces Customer V1 présents sur `feature/Marketplace` ; checkout multi-coopératives avec exclusion par coopérative en cas de stock insuffisant implémenté ; validation locale de cette dernière tranche requise.
 - **Spécification :** [SALES_V1_SPECIFICATION.md](../../../docs/domains/marketplace/SALES_V1_SPECIFICATION.md)
 - **Architecture :** ADR-021 — monolithe modulaire à contrats explicites.
 
@@ -23,6 +23,9 @@ Sales ne possède ni le catalogue et les prix de référence (Products), ni le s
 - Contrôle du statut actif/non supprimé de la coopérative via `CooperativeStatusReader` à l'ajout et au rafraîchissement du panier.
 - Rafraîchissement des produits/variantes existants : désactivation/suppression bloquante sans suppression de ligne ; réactivation reconnue automatiquement.
 - Détection des hausses de prix et changements commerciaux, acceptation explicite via `sales.cart.items.accept-current` ; baisse de prix appliquée automatiquement.
+- Checkout panier et commande directe orchestrés vers Orders avec clé d'idempotence, snapshot d'adresse et devis Delivery par coopérative.
+- En cas de stock insuffisant dans une coopérative d'un panier multi-coopératives, toutes ses lignes sont exclues ensemble de la tentative ; les autres coopératives disponibles peuvent être commandées et les lignes exclues restent actives dans le panier.
+- Les coopératives inactives, produits/variantes non vendables et changements commerciaux non acceptés continuent de bloquer le checkout global ; l'exclusion automatique est réservée à l'insuffisance de stock.
 - Précision validée : `DECIMAL(15,3)` ; validation HTTP et service limitées à trois décimales.
 
 ## Limites actuelles
