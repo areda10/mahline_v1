@@ -6,7 +6,6 @@ namespace App\Domains\Orders\Listeners;
 
 use App\Domains\Inventory\Events\InventoryDomainEvent;
 use App\Domains\Orders\Contracts\OrderSafetyHoldManager;
-use App\Domains\Orders\Services\CooperativeOrderExpirationService;
 
 final class HandleInventoryDomainEvent
 {
