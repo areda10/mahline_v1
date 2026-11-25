@@ -19,6 +19,9 @@ use Illuminate\Validation\ValidationException;
 
 final class CustomerOrderCancellationService
 {
+    public function __construct(
+        private readonly OrderStatusAggregationService $statusAggregation,
+    ) {}
     public function cancel(CooperativeOrder $cooperativeOrder, User $customer, string $reason): CooperativeOrder
     {
         $reason = trim($reason);
@@ -94,52 +97,12 @@ final class CustomerOrderCancellationService
             $order->delivery_total = $this->formatMoney($deliveryTotalCents);
             $order->grand_total = $this->formatMoney($itemsSubtotalCents + $deliveryTotalCents);
 
-            $statuses = $order->cooperativeOrders()->pluck('status')->map(
-                static fn ($status): string => $status instanceof CooperativeOrderStatus ? $status->value : (string) $status,
-            );
-            $total = $statuses->count();
-            $cancelled = $statuses->filter(static fn (string $status): bool => $status === CooperativeOrderStatus::CANCELLED->value)->count();
-            $confirmed = $statuses->filter(static fn (string $status): bool => $status === CooperativeOrderStatus::CONFIRMED->value)->count();
-            $closed = $statuses->filter(static fn (string $status): bool => in_array($status, [
-                CooperativeOrderStatus::REFUSED->value,
-                CooperativeOrderStatus::EXPIRED->value,
-                CooperativeOrderStatus::CANCELLED->value,
-            ], true))->count();
-
-            $nextStatus = match (true) {
-                $total > 0 && $cancelled === $total => OrderStatus::CANCELLED,
-                $cancelled > 0 => OrderStatus::PARTIALLY_CANCELLED,
-                $total > 0 && $confirmed === $total => OrderStatus::CONFIRMED,
-                $total > 0 && $closed === $total => OrderStatus::REFUSED,
-                $confirmed > 0 && $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
-                $confirmed > 0 => OrderStatus::PARTIALLY_CONFIRMED,
-                $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
-                default => $order->status,
-            };
-
             $previousOrderStatus = $order->status->value;
-            $order->status = $nextStatus;
-
-            if ($nextStatus === OrderStatus::CANCELLED) {
-                $order->cancelled_at = now();
-                $order->cancellation_reason = $reason;
-            }
-
-            $order->forceFill(['updated_by' => (string) $customer->getKey()])->save();
-
-            if ($previousOrderStatus !== $nextStatus->value) {
-                OrderStatusHistory::query()->create([
-                    'subject_type' => 'order',
-                    'subject_id' => (string) $order->getKey(),
-                    'from_status' => $previousOrderStatus,
-                    'to_status' => $nextStatus->value,
-                    'actor_id' => (string) $customer->getKey(),
-                    'actor_role' => 'customer',
-                    'reason' => $reason,
-                    'metadata' => ['action' => 'customer_suborder_cancellation'],
-                    'occurred_at' => now(),
-                ]);
-            }
+            $this->statusAggregation->refresh(
+                $order,
+                $customer,
+                'Annulation client d’une sous-commande encore en attente.',
+            );
 
             return $locked->refresh();
         }, 3);
