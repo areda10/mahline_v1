@@ -7,6 +7,7 @@ namespace App\Domains\Inventory\Services\Quarantine;
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Inventory\Contracts\InventoryQuarantineManager;
+use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Inventory\Enums\InventoryInspectionResult;
 use App\Domains\Inventory\Enums\InventoryMovementType;
 use App\Domains\Inventory\Enums\InventoryStockableType;
@@ -33,6 +34,7 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
         private readonly ActorContextProvider $actors,
         private readonly SuperAdminCooperativeAssignmentReader $assignments,
         private readonly AuditWriter $audit,
+        private readonly CheckoutCatalog $products,
     ) {}
 
     public function receiveReturn(
@@ -90,6 +92,12 @@ final class InventoryQuarantineService extends BaseService implements InventoryQ
             );
             if ($existing !== null) {
                 return (string) $existing->result['quarantine_id'];
+            }
+
+            $stockable = $this->products->resolveForInventory($stockableType->value, $stockableId);
+            if ($stockable === null || ! $stockable->isOperational
+                || $stockable->cooperativeId !== $cooperativeId) {
+                throw new InventoryReservationConflict('A return cannot add stock to an inactive or deleted product or variant.');
             }
 
             if ($stock->active_count_session_id !== null) {
