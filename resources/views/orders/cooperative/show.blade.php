@@ -12,6 +12,11 @@
     $routeBase = $routePrefix.'.orders.cooperative';
     $address = $suborder->order?->delivery_address_snapshot ?? [];
     $fixedMaximum = $suborder->created_at?->copy()->addHours(24);
+    $rootEscalationReached = $fixedMaximum !== null && $fixedMaximum->lessThanOrEqualTo(now());
+    $adminDecisionAvailable = $isAdmin && (
+        ($isRoot = auth()->user()->hasRole('super_admin_root')) && $rootEscalationReached
+        || auth()->user()->hasRole('super_admin') && !$deadlineOpen && !$rootEscalationReached
+    );
 @endphp
 
 <div class="page-header">
@@ -108,10 +113,14 @@
     </div>
     @endif
 
-    @if($isAdmin && $deadlineOpen)
+    @if($adminDecisionAvailable)
         <div class="card">
             <h2>Intervention administrative</h2>
-            <p class="muted">Cette action remplace la réponse de la coopérative et exige un motif. Elle reste possible uniquement avant l'expiration du délai.</p>
+            @if(auth()->user()->hasRole('super_admin_root'))
+                <p class="muted">Le délai de 24 heures est dépassé. Vous pouvez prendre la décision finale à la place de la coopérative. Un motif est obligatoire.</p>
+            @else
+                <p class="muted">Le délai de 12 heures de la coopérative est dépassé. En tant que super_admin affecté, vous pouvez confirmer ou refuser cette sous-commande jusqu'à H+24. Un motif est obligatoire.</p>
+            @endif
             <div class="form-grid">
                 <form method="POST" action="{{ route($routeBase.'.administrative-decision', $suborder) }}">
                     @csrf
