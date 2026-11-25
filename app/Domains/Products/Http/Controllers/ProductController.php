@@ -140,7 +140,7 @@ final class ProductController
 
         Gate::authorize('view', $productModel);
         if (($productModel->product_type ?? 'simple') === 'variant') {
-            $productModel->setRelation('variants', ProductVariant::withTrashed()
+            $productModel->setRelation('variants', ProductVariant::withTrashed()->with('unit')
                 ->where('product_id', $productModel->getKey())
                 ->orderBy('label')->get());
         }
