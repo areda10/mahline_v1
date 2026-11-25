@@ -54,7 +54,7 @@ final class CustomerProfileTest extends TestCase
             ->assertSee('Salma')
             ->assertSee('client@example.com')
             ->assertSee('Photo de profil')
-            ->assertSee('customer.profile.photo.store')
+            ->assertSee(route('customer.profile.photo.store'))
             ->assertDontSee('domaine Media');
     }
 
