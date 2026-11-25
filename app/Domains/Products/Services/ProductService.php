@@ -683,6 +683,7 @@ final class ProductService implements CheckoutCatalog
                 stockableType: 'product',
                 stockableId: (string) $product->getKey(),
                 unitCode: (string) $product->unit->code,
+                isOperational: $product->is_active && ! $product->trashed(),
             );
         }
 
@@ -721,6 +722,8 @@ final class ProductService implements CheckoutCatalog
                 stockableType: 'variant',
                 stockableId: (string) $variant->getKey(),
                 unitCode: (string) $unitCode,
+                isOperational: $product->is_active && ! $product->trashed()
+                    && $variant->is_active && ! $variant->trashed(),
             );
         }
 
