@@ -352,7 +352,8 @@ final class InventoryStockService extends BaseService implements InventoryStockM
         if ($stockable === null
             || $stockable->cooperativeId !== $cooperativeId
             || $stockable->stockableType !== $stockableType->value
-            || $stockable->stockableId !== $stockableId) {
+            || $stockable->stockableId !== $stockableId
+            || ! $stockable->isOperational) {
             throw new InvalidArgumentException('The product or variant is not a valid stockable item for this cooperative.');
         }
 
