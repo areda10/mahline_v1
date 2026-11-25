@@ -29,8 +29,8 @@
 | `app/Domains/Orders/Services/OrderCheckoutService.php` | Adaptateur du contrat checkout | Implémente `OrderCheckoutCreator` et délègue à OrderCreationService. |
 | `app/Domains/Orders/Services/CooperativeOrderResponseService.php` | Confirmation/refus, substitution, réservation | Réserve toutes les lignes avant confirmation ; refus et décisions administratives motivés ; verrouillage transactionnel. |
 | `app/Domains/Orders/Services/CooperativeOrderEscalationService.php` | Alertes H+12/H+24 | Notifications idempotentes et journalisées ; ne modifie pas le statut en attente. |
-| `app/Domains/Orders/Services/CooperativeOrderFulfillmentService.php` | Préparation et prêt à expédier | Transitions sous-commande confirmée → préparation → prête ; aucune transition transport/livraison. L'agrégat global n'est pas recalculé ici : écart à traiter avant clôture du cycle. |
-| `app/Domains/Orders/Services/OrderSafetyHoldService.php` | Blocage de sécurité et annulation administrative | Distinct de l'annulation client ; libération/restauration Inventory selon décision de sécurité. |
+| `app/Domains/Orders/Services/CooperativeOrderFulfillmentService.php` | Préparation et prêt à expédier | Transitions sous-commande confirmée → préparation → prête ; appelle désormais l'agrégateur global. Aucune transition transport/livraison V1 n'est encore raccordée. |
+| `app/Domains/Orders/Services/OrderSafetyHoldService.php` | Blocage de sécurité et annulation administrative | Distinct de l'annulation client ; libération/restauration Inventory selon décision de sécurité. |\n| `app/Domains/Orders/Services/OrderStatusAggregationService.php` | Agrégation commande globale | Centralise les statuts préparation, expédition partielle/totale et livraison complète ; appelé après décision, annulation client et transition de préparation. |
 | `app/Domains/Orders/Http/Controllers/CooperativeOrderController.php` | Inbox et actions coopératives/admin | Scopes par rôle et coopérative ; routes distinctes pour root. |
 | `app/Domains/Orders/Http/Controllers/CustomerOrderHistoryController.php` | Historique client | Liste et détail limités au propriétaire ; endpoint d'annulation client ajouté. |
 | `app/Domains/Orders/Notifications/CooperativeOrderWorkflowNotification.php` | Notifications workflow | Canal base de données pour notifications coopératives. |
@@ -90,7 +90,7 @@ Le service verrouille la sous-commande puis la commande globale, dans le même o
 
 ## 4. Écarts bloquants avant clôture Orders V1
 
-1. **Agrégation des statuts :** le service de fulfillment fait évoluer les sous-commandes mais ne recalcule pas le statut de la commande globale. Il faut centraliser l'agrégation et valider les règles des états mixtes.
+1. **Transport/livraison :** le domaine Delivery ne pilote pas encore les transitions `SHIPPED` / `DELIVERED`. L'agrégateur est prêt à recalculer ces états dès que les événements de livraison V1 seront raccordés.
 2. **Finance V1 absent :** factures et encaissements COD non implémentés.
 3. **Facture :** choisir entre facture unique globale avec allocations/sections coopératives, ou facture par sous-commande. Le choix impacte numérotation, permissions, PDF et annulation.
 4. **Delivery :** mission transporteur, acceptation, collecte, preuve de remise et événement de livraison non implémentés ; ces transitions ne doivent pas être simulées dans Orders.
@@ -101,3 +101,18 @@ Le service verrouille la sous-commande puis la commande globale, dans le même o
 - Propositions de réduction/remplacement et réponse client : V2.
 - Refus à la livraison et retours : V2.
 - Remboursements : V2.
+
+
+## 6. Règle d'agrégation validée et implémentée
+
+Règle validée par l'utilisateur le 25 novembre 2026 :
+
+- `PREPARING` : au moins une sous-commande est en préparation ou prête à expédier, tant qu'aucune sous-commande active n'est expédiée.
+- `PARTIALLY_SHIPPED` : au moins une sous-commande active est expédiée/livrée, mais pas toutes.
+- `SHIPPED` : toutes les sous-commandes exécutables sont expédiées ou livrées.
+- `COMPLETED` : toutes les sous-commandes exécutables sont livrées.
+- Les sous-commandes refusées et annulées sont exclues du calcul de progression logistique.
+- L'agrégateur est centralisé dans `OrderStatusAggregationService` et appelé après les décisions coopératives/administratives, l'annulation client et les transitions de préparation.
+- Les transitions réelles `SHIPPED` et `DELIVERED` restent à fournir par le domaine Delivery ; aucun faux événement de livraison n'est créé par Orders.
+
+Un test Feature couvre les étapes préparation, expédition partielle, expédition complète et livraison complète. Son exécution locale est requise avant validation finale.
