@@ -193,6 +193,43 @@ final class InventoryStockServiceTest extends TestCase
         );
     }
 
+
+    public function test_variant_stock_initialization_is_blocked_when_parent_product_is_inactive(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'product_type' => 'variant',
+            'unit_id' => null,
+            'price' => null,
+            'is_active' => false,
+        ]);
+        $variant = ProductVariant::factory()->create([
+            'product_id' => $product->getKey(),
+            'unit_id' => $unit->getKey(),
+            'is_active' => true,
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        app(InventoryStockManager::class)->initialize(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::VARIANT,
+            (string) $variant->getKey(),
+            'kg',
+            '0.000',
+            'Initialisation refusée car le parent est inactif.',
+            (string) $admin->getKey(),
+            'inactive-parent-variant-stock-001',
+        );
+    }
+
     public function test_variant_owns_its_own_stock_balance(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
