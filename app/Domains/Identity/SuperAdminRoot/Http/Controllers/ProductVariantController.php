@@ -14,7 +14,6 @@ use App\Domains\Products\Services\ProductVariantService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 final class ProductVariantController
@@ -73,7 +72,7 @@ final class ProductVariantController
         [$coop, $parent, $item] = $this->resolveVariant($request, $cooperative, $product, $variant);
         Gate::authorize('update', $parent);
 
-        $data = $request->validate($this->rules((string) $item->unit_id));
+        $data = $request->validate($this->rules());
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
         $this->service->update($item, $data, $request->user());
 
@@ -160,7 +159,7 @@ final class ProductVariantController
     }
 
     /** @return array<string, mixed> */
-    private function rules(?string $currentUnitId = null): array
+    private function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:180'],
