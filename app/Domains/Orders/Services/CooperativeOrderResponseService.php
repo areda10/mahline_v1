@@ -342,11 +342,8 @@ final class CooperativeOrderResponseService
 
     private function canRespondForCooperative(User $actor, CooperativeOrder $cooperativeOrder): bool
     {
-        if ($actor->hasRole('cooperative_admin')) {
-            return (string) $actor->cooperative_id === (string) $cooperativeOrder->cooperative_id;
-        }
-
-        return $this->isAssignedSuperAdmin($actor, $cooperativeOrder);
+        return $actor->hasRole('cooperative_admin')
+            && (string) $actor->cooperative_id === (string) $cooperativeOrder->cooperative_id;
     }
 
     private function isAssignedSuperAdmin(User $actor, CooperativeOrder $cooperativeOrder): bool
