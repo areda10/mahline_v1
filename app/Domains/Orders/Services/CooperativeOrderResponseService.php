@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domains\Orders\Services;
 
 use App\Domains\Identity\Users\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\DTOs\InventoryReservationLineData;
 use App\Domains\Inventory\Enums\InventoryStockableType;
@@ -167,7 +168,7 @@ final class CooperativeOrderResponseService
             }
 
             if (! $administrative && ! $this->canRespondForCooperative($actor, $locked)) {
-                abort(403);
+                throw new AuthorizationException('Seul un administrateur autorisé de la coopérative peut confirmer ou refuser cette sous-commande.');
             }
 
             if ($locked->response_deadline_at !== null && $locked->response_deadline_at->lessThanOrEqualTo(now())) {
