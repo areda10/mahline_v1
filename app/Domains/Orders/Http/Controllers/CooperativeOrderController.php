@@ -8,6 +8,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Services\CooperativeOrderResponseService;
+use App\Domains\Orders\Services\CooperativeOrderFulfillmentService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,6 +19,7 @@ final class CooperativeOrderController
 {
     public function __construct(
         private readonly CooperativeOrderResponseService $responses,
+        private readonly CooperativeOrderFulfillmentService $fulfillment,
     ) {}
 
     public function index(Request $request): View
@@ -117,6 +119,22 @@ final class CooperativeOrderController
         return back()->with('success', 'Le délai de réponse a été prolongé.');
     }
 
+    public function startPreparation(Request $request, string $cooperativeOrderId)
+    {
+        $suborder = $this->visibleSuborders($request->user())->whereKey($cooperativeOrderId)->firstOrFail();
+        $this->fulfillment->startPreparation($suborder, $request->user());
+
+        return back()->with('success', 'La préparation de la commande a commencé.');
+    }
+
+    public function markReadyForShipment(Request $request, string $cooperativeOrderId)
+    {
+        $suborder = $this->visibleSuborders($request->user())->whereKey($cooperativeOrderId)->firstOrFail();
+        $this->fulfillment->markReadyForShipment($suborder, $request->user());
+
+        return back()->with('success', 'La commande est prête à être livrée. Le client a été notifié.');
+    }
+
     private function visibleSuborders(User $actor): Builder
     {
         $query = CooperativeOrder::query()->with([
@@ -137,7 +155,7 @@ final class CooperativeOrderController
             );
         }
 
-        if ($actor->hasRole('cooperative_admin') && $actor->cooperative_id !== null) {
+        if (($actor->hasRole('cooperative_admin') || $actor->hasRole('user')) && $actor->cooperative_id !== null) {
             return $query->where('cooperative_id', (string) $actor->cooperative_id);
         }
 
