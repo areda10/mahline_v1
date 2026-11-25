@@ -14,7 +14,6 @@ use App\Domains\Products\Services\ProductVariantService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 final class ProductVariantController
@@ -70,7 +69,7 @@ final class ProductVariantController
         [$coop, $parent] = $this->parent($cooperative, $product);
         Gate::authorize('update', $parent);
         $item = $this->variants->findForProductOrFail($variant, (string) $parent->getKey());
-        $data = $request->validate($this->rules((string) $item->unit_id));
+        $data = $request->validate($this->rules());
         $data['is_active'] = (bool) ($data['is_active'] ?? false);
         $this->service->update($item, $data, $request->user());
 
@@ -133,7 +132,7 @@ final class ProductVariantController
         abort_if(! $product->is_active, 422, 'Un produit inactif ne peut pas recevoir de nouvelle variante.');
     }
 
-    private function rules(?string $currentUnitId = null): array
+    private function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:180'],
