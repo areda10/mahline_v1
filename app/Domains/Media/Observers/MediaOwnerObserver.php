@@ -73,6 +73,20 @@ final class MediaOwnerObserver
             return;
         }
 
+        $retainedPrivateDocuments = $owner->media()
+            ->onlyTrashed()
+            ->where('category', 'document')
+            ->where('visibility', 'private')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        // Une coopérative sans document privé conservé n'a aucune restauration
+        // média privilégiée à effectuer : la restauration du propriétaire suffit.
+        if ($retainedPrivateDocuments->isEmpty()) {
+            return;
+        }
+
         $actor = Auth::user();
         if (! $actor instanceof User || ! $actor->hasRole('super_admin_root') || ! $actor->isAuthorized()) {
             throw new RuntimeException('La restauration des médias privés d’une coopérative exige un super_admin_root autorisé.');
@@ -81,14 +95,6 @@ final class MediaOwnerObserver
         if (! app(AuditWriter::class)->verifyIntegrity()) {
             throw new RuntimeException('La chaîne d’audit est invalide ; restauration des médias privés refusée.');
         }
-
-        $retainedPrivateDocuments = $owner->media()
-            ->onlyTrashed()
-            ->where('category', 'document')
-            ->where('visibility', 'private')
-            ->orderBy('id')
-            ->lockForUpdate()
-            ->get();
 
         foreach ($retainedPrivateDocuments as $media) {
             try {
