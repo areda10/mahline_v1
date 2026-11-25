@@ -15,10 +15,6 @@ final class HandleInventoryDomainEvent
 
     public function handle(InventoryDomainEvent $event): void
     {
-        if ($event->eventKey === 'inventory.reservation.expired') {
-            return;
-        }
-
         if ($event->eventKey !== 'inventory.quarantine.authorization.revoked') {
             return;
         }
