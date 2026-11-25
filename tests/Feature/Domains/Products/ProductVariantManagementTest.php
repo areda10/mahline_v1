@@ -147,6 +147,36 @@ final class ProductVariantManagementTest extends TestCase
         $this->assertSame('Format 250 g assigné', $variant->fresh()->label);
     }
 
+
+    public function test_variant_parent_remains_editable_when_all_variants_are_soft_deleted(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithPermissions('cooperative_admin', (string) $cooperative->getKey());
+        $product = $this->variantProduct($cooperative);
+        $variant = app(ProductVariantService::class)->create($product, [
+            'name' => 'Variante supprimée',
+            'price' => '10.00',
+            'unit_id' => (string) ProductUnit::query()->where('code', 'kg')->value('id'),
+        ]);
+        app(ProductVariantService::class)->delete($variant);
+
+        $this->actingAs($admin)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->put(route('backoffice.products.update', [
+                'cooperative' => $cooperative->getKey(),
+                'product' => $product->getKey(),
+            ]), [
+                'name' => 'Produit parent modifié',
+            ])
+            ->assertRedirect(route('backoffice.products.show', [
+                'cooperative' => $cooperative->getKey(),
+                'product' => $product->getKey(),
+            ]));
+
+        $this->assertSame('Produit parent modifié', $product->fresh()->name);
+        $this->assertSame('variant', $product->fresh()->product_type);
+    }
+
     private function variantProduct(Cooperative $cooperative): Product
     {
         return Product::factory()->forCooperative($cooperative)->create([
