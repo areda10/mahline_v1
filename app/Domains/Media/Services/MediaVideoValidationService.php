@@ -103,9 +103,13 @@ final class MediaVideoValidationService
             $this->reject('La résolution maximale autorisée pour une vidéo est de 1080p.');
         }
 
+        // Fileinfo's generic result is not a useful public MIME value once the
+        // binary signature and inspected container have both been verified.
+        $verifiedMime = $mimeIsExact ? $mime : $mimeTypes[$extension];
+
         return [
             'extension' => $extension,
-            'mime_type' => $mime,
+            'mime_type' => $verifiedMime,
             'size' => $size,
             'original_name' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
             'video' => $metadata,
