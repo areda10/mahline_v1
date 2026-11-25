@@ -12,6 +12,8 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Models\Order;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
+use App\Domains\Orders\Notifications\OrderReadyForShipmentNotification;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -19,10 +21,8 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Notification;
-use App\Domains\Orders\Notifications\OrderReadyForShipmentNotification;
-use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class CooperativeOrderControllerTest extends TestCase

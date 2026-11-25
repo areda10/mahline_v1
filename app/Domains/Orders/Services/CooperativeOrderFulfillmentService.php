@@ -8,6 +8,7 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\OrderReadyForShipmentNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -62,7 +63,7 @@ final class CooperativeOrderFulfillmentService
 
             if ($to === CooperativeOrderStatus::READY_FOR_SHIPMENT) {
                 $customer = $locked->order()->with('customer')->firstOrFail()->customer;
-                $customer?->notify(new \App\Domains\Orders\Notifications\OrderReadyForShipmentNotification($locked));
+                $customer?->notify(new OrderReadyForShipmentNotification($locked));
             }
 
             return $locked->refresh();

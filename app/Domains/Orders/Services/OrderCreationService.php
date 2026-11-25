@@ -6,7 +6,6 @@ namespace App\Domains\Orders\Services;
 
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
@@ -18,6 +17,7 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
 use Illuminate\Support\Carbon;
