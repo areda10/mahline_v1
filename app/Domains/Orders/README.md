@@ -136,3 +136,12 @@ La stratégie d'atomicité inter-domaines (transaction DB commune ou orchestrati
 Le cadrage Orders documente désormais les fonctions effectivement présentes et les fonctions restant à livrer. La prochaine étape est le domaine Inventory : audit des conventions de données et autorisations, validation du modèle de stock, puis migrations, modèles, services, policies, tests et raccordement contrôlé à Orders.
 
 **Orders n'est pas déclaré terminé.** Le domaine ne sera clos qu'après livraison des parcours requis, intégration Inventory, exécution des tests ciblés et de la suite de non-régression.
+
+
+## 3.3 Annulation client V1 — `CustomerOrderCancellationService`
+
+Le client peut annuler une sous-commande uniquement tant qu'elle est `AWAITING_COOPERATIVE`. La décision de la coopérative ou une décision administrative rend l'annulation client impossible. Le motif est obligatoire.
+
+Le traitement verrouille la sous-commande puis la commande globale, annule logiquement les lignes actives, écrit l'historique, recalcule les totaux globaux à partir des sous-commandes restantes et notifie le client ainsi que les administrateurs de la coopérative. Une commande multi-coopératives conserve les autres sous-commandes indépendantes. Aucun stock n'est libéré : aucune réservation n'existe avant confirmation.
+
+La route client est `customer.orders.cooperative-orders.cancel`. Le parcours est couvert par `CustomerOrderHistoryTest` (à valider localement).
