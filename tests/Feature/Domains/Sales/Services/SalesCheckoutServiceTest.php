@@ -10,6 +10,9 @@ use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticati
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
+use App\Domains\Inventory\DTOs\InventoryCheckoutCooperativeResult;
+use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
 use App\Domains\Inventory\Models\InventoryStock;
 use App\Domains\Localization\Models\Address;
 use App\Domains\Orders\Contracts\OrderCheckoutCreator;
@@ -77,6 +80,59 @@ final class SalesCheckoutServiceTest extends TestCase
             'status' => 'active',
         ]);
         $this->assertSame(1, $cart->fresh()->activeItems()->count());
+    }
+
+    public function test_stock_shortage_detected_during_order_creation_still_creates_other_cooperative_suborders(): void
+    {
+        $customer = User::factory()->create();
+        $address = Address::factory()->forUser($customer)->create();
+        [$availableCooperative, $availableProduct] = $this->productWithStock('5.000');
+        [$newlyUnavailableCooperative, $newlyUnavailableProduct] = $this->productWithStock('5.000');
+
+        $this->mock(InventoryCheckoutAvailabilityReader::class, function ($mock) use (
+            $availableCooperative,
+            $newlyUnavailableCooperative,
+        ): void {
+            $mock->shouldReceive('preview')
+                ->twice()
+                ->andReturn(
+                    new InventoryCheckoutPreview([
+                        new InventoryCheckoutCooperativeResult((string) $availableCooperative->getKey(), true, []),
+                        new InventoryCheckoutCooperativeResult((string) $newlyUnavailableCooperative->getKey(), true, []),
+                    ], str_repeat('a', 64)),
+                    new InventoryCheckoutPreview([
+                        new InventoryCheckoutCooperativeResult((string) $availableCooperative->getKey(), true, []),
+                        new InventoryCheckoutCooperativeResult((string) $newlyUnavailableCooperative->getKey(), false, ['line-2']),
+                    ], str_repeat('b', 64)),
+                );
+        });
+
+        $manager = app(SalesCartManager::class);
+        $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
+        $manager->addItem((string) $cart->getKey(), (string) $availableProduct->getKey(), null, '1.000', 1);
+        $manager->addItem((string) $cart->getKey(), (string) $newlyUnavailableProduct->getKey(), null, '1.000', 2);
+
+        $response = app(SalesCheckoutService::class)->confirm(
+            (string) $customer->getKey(),
+            (string) $cart->getKey(),
+            (string) $address->getKey(),
+            'sales-checkout-stock-race-0001',
+        );
+
+        $this->assertSame([(string) $availableCooperative->getKey()], $response['ordered_cooperative_ids']);
+        $this->assertSame([(string) $newlyUnavailableCooperative->getKey()], $response['excluded_cooperative_ids']);
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertDatabaseCount('cooperative_orders', 1);
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $availableProduct->getKey(),
+            'status' => 'ordered',
+        ]);
+        $this->assertDatabaseHas('sales_cart_items', [
+            'cart_id' => $cart->getKey(),
+            'product_id' => $newlyUnavailableProduct->getKey(),
+            'status' => 'active',
+        ]);
     }
 
     public function test_reusing_idempotency_key_with_another_address_is_rejected(): void
