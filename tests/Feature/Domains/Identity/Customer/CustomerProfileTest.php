@@ -244,7 +244,7 @@ final class CustomerProfileTest extends TestCase
     public function test_customer_cannot_update_another_customers_address(): void
     {
         $customer = $this->customer();
-        $otherCustomer = $this->customer();
+        $otherCustomer = $this->customer('other-client@example.com');
         $this->actingAs($customer)->withoutMiddleware(EnsureActiveAuthenticationSession::class);
 
         $foreignAddress = app(\\App\\Domains\\Localization\\Contracts\\UserAddressLifecycleManager::class)
@@ -266,13 +266,13 @@ final class CustomerProfileTest extends TestCase
         ]);
     }
 
-    private function customer(): User
+    private function customer(string $email = 'client@example.com'): User
     {
         $customer = User::factory()->create([
             'first_name' => 'Salma',
             'last_name' => 'Client',
             'display_name' => 'Salma Client',
-            'email' => 'client@example.com',
+            'email' => $email,
             'telephone' => '+212 612345678',
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
