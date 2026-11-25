@@ -7,11 +7,9 @@ namespace App\Domains\Orders\Services;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderItemStatus;
-use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
-use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use App\Domains\Orders\Notifications\CustomerOrderCancelledNotification;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +20,7 @@ final class CustomerOrderCancellationService
     public function __construct(
         private readonly OrderStatusAggregationService $statusAggregation,
     ) {}
+
     public function cancel(CooperativeOrder $cooperativeOrder, User $customer, string $reason): CooperativeOrder
     {
         $reason = trim($reason);
@@ -97,7 +96,6 @@ final class CustomerOrderCancellationService
             $order->delivery_total = $this->formatMoney($deliveryTotalCents);
             $order->grand_total = $this->formatMoney($itemsSubtotalCents + $deliveryTotalCents);
 
-            $previousOrderStatus = $order->status->value;
             $this->statusAggregation->refresh(
                 $order,
                 $customer,
