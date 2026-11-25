@@ -63,7 +63,7 @@ final class ProductService implements CheckoutCatalog
             productName: (string) $product->name,
             productSlug: (string) $product->slug,
             currency: (string) $product->currency,
-            effectivePrice: $variant === null ? $product->price : ($variant->price ?? $product->price),
+            effectivePrice: $variant === null ? $product->price : $variant->price,
             hasVariants: $hasVariants,
             hasParentUnit: $product->unit_id !== null,
             variantRequested: $variantRequested,
@@ -179,7 +179,7 @@ final class ProductService implements CheckoutCatalog
                             "variants.{$index}" => ['Données de variante invalides.'],
                         ]);
                     }
-                    $this->variantService->create($product, $variantData, $actor);
+                    $this->variantService->create($product, $variantData, $actor, allowInactiveParent: true);
                 }
             }
 
@@ -467,12 +467,17 @@ final class ProductService implements CheckoutCatalog
         });
     }
 
-    private function validatedUnitId(mixed $unitId): string
+    private function validatedUnitId(mixed $unitId, ?string $currentUnitId = null): string
     {
         if (! is_string($unitId) || $unitId === '' || ! ProductUnit::query()
             ->whereKey($unitId)
-            ->where('is_active', true)
             ->whereIn('code', ProductUnit::V1_CODES)
+            ->where(function ($query) use ($currentUnitId, $unitId): void {
+                $query->where('is_active', true);
+                if ($currentUnitId !== null && $unitId === $currentUnitId) {
+                    $query->orWhere('id', $currentUnitId);
+                }
+            })
             ->exists()) {
             throw ValidationException::withMessages([
                 'unit_id' => ['Sélectionnez une unité de stock active parmi les unités autorisées.'],
