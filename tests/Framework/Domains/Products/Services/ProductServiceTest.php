@@ -103,6 +103,27 @@ final class ProductServiceTest extends TestCase
         $this->assertSame('15.00', $product->variants->first()->price);
     }
 
+
+    public function test_it_preserves_an_inactive_current_unit_when_updating_a_product(): void
+    {
+        $cooperative = Cooperative::factory()->create();
+        $product = $this->service->create((string) $cooperative->getKey(), [
+            'name' => 'Produit avec unité conservée',
+            'unit_id' => $this->unitId,
+            'is_active' => true,
+        ]);
+        ProductUnit::query()->whereKey($this->unitId)->update(['is_active' => false]);
+
+        $updated = $this->service->update(
+            $product,
+            (string) $cooperative->getKey(),
+            ['name' => 'Produit renommé'],
+        );
+
+        $this->assertSame('Produit renommé', $updated->name);
+        $this->assertSame($this->unitId, (string) $updated->unit_id);
+    }
+
     public function test_it_accepts_piece_unit_for_a_simple_product(): void
     {
         $cooperative = Cooperative::factory()->create();
