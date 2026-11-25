@@ -48,6 +48,7 @@ use App\Domains\Orders\Http\Controllers\CustomerOrderHistoryController;
 use App\Domains\Orders\Http\Controllers\OrderAvailabilityController;
 use App\Domains\Orders\Http\Controllers\OrderSafetyHoldController;
 use App\Domains\Products\Http\Controllers\ProductController;
+use App\Domains\Products\Http\Controllers\ProductVariantController as BackofficeProductVariantController;
 use App\Domains\Products\Http\Controllers\ProductStorefrontController;
 use App\Domains\Sales\Http\Controllers\SalesCartController;
 use App\Domains\Sales\Http\Controllers\SalesCartPageController;
@@ -721,6 +722,19 @@ Route::prefix('back-office')
                     'products/{product}/restore',
                     [ProductController::class, 'restore'],
                 )->name('products.restore');
+
+                Route::prefix('products/{product}/variants')
+                    ->name('products.variants.')
+                    ->group(function (): void {
+                        Route::get('create', [BackofficeProductVariantController::class, 'create'])->whereUlid('product')->name('create');
+                        Route::post('/', [BackofficeProductVariantController::class, 'store'])->whereUlid('product')->name('store');
+                        Route::get('{variant}/edit', [BackofficeProductVariantController::class, 'edit'])->whereUlid('product')->whereUlid('variant')->name('edit');
+                        Route::put('{variant}', [BackofficeProductVariantController::class, 'update'])->whereUlid('product')->whereUlid('variant')->name('update');
+                        Route::patch('{variant}/activate', [BackofficeProductVariantController::class, 'activate'])->whereUlid('product')->whereUlid('variant')->name('activate');
+                        Route::patch('{variant}/deactivate', [BackofficeProductVariantController::class, 'deactivate'])->whereUlid('product')->whereUlid('variant')->name('deactivate');
+                        Route::delete('{variant}', [BackofficeProductVariantController::class, 'destroy'])->whereUlid('product')->whereUlid('variant')->name('destroy');
+                        Route::patch('{variant}/restore', [BackofficeProductVariantController::class, 'restore'])->whereUlid('product')->whereUlid('variant')->name('restore');
+                    });
             });
     });
 
