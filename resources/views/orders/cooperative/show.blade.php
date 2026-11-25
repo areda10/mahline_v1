@@ -7,6 +7,7 @@
     $isAdmin = auth()->user()->hasAnyRole(['super_admin_root', 'super_admin']);
     $isCooperativeAdmin = auth()->user()->hasRole('cooperative_admin');
     $isEmployee = auth()->user()->hasRole('user');
+    $isRoot = auth()->user()->hasRole('super_admin_root');
     $isAwaiting = $suborder->status === \App\Domains\Orders\Enums\CooperativeOrderStatus::AWAITING_COOPERATIVE;
     $deadlineOpen = $suborder->response_deadline_at !== null && $suborder->response_deadline_at->isFuture();
     $routeBase = $routePrefix.'.orders.cooperative';
@@ -14,7 +15,7 @@
     $fixedMaximum = $suborder->created_at?->copy()->addHours(24);
     $rootEscalationReached = $fixedMaximum !== null && $fixedMaximum->lessThanOrEqualTo(now());
     $adminDecisionAvailable = $isAdmin && (
-        ($isRoot = auth()->user()->hasRole('super_admin_root')) && $rootEscalationReached
+        $isRoot && $rootEscalationReached
         || auth()->user()->hasRole('super_admin') && !$deadlineOpen && !$rootEscalationReached
     );
 @endphp
