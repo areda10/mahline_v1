@@ -176,8 +176,7 @@ final class SalesCheckoutServiceTest extends TestCase
     {
         $customer = $this->checkoutCustomer();
         [$availableCooperative, $availableProduct] = $this->productWithStock('3.000');
-        [$unavailableCooperative] = $this->productWithStock('0.000');
-        [, $unavailableProduct] = $this->productWithStock('0.000');
+        [$unavailableCooperative, $unavailableProduct] = $this->productWithStock('0.000');
 
         $manager = app(SalesCartManager::class);
         $cart = $manager->getOrCreateCustomerCart((string) $customer->getKey());
