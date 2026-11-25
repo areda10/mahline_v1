@@ -82,7 +82,6 @@ final class ProductPolicyTest extends TestCase
         $this->assertFalse($this->policy->update($admin, $product));
     }
 
-
     public function test_user_role_cannot_update_products_even_with_a_cooperative_match(): void
     {
         $cooperative = Cooperative::factory()->active()->create();

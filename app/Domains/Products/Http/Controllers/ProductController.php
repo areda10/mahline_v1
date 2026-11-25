@@ -166,7 +166,9 @@ final class ProductController
         return view('backoffice.products.edit', [
             'cooperative' => $cooperativeModel,
             'product' => $productModel,
-            'productUnits' => ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)->where(function ($query) use ($productModel): void { $query->where('is_active', true)->orWhere('id', $productModel->unit_id); })->orderBy('sort_order')->orderBy('label')->get(),
+            'productUnits' => ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)->where(function ($query) use ($productModel): void {
+                $query->where('is_active', true)->orWhere('id', $productModel->unit_id);
+            })->orderBy('sort_order')->orderBy('label')->get(),
             'hasVariants' => ($productModel->product_type ?? 'simple') === 'variant',
             'categories' => Category::query()
                 ->availableFor($cooperativeId)

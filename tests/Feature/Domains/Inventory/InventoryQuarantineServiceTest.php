@@ -12,11 +12,11 @@ use App\Domains\Inventory\Contracts\InventoryReservationManager;
 use App\Domains\Inventory\DTOs\InventoryReservationLineData;
 use App\Domains\Inventory\Enums\InventoryInspectionResult;
 use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Models\InventoryQuarantine;
 use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
 use App\Domains\Inventory\Models\InventoryReservation;
 use App\Domains\Inventory\Models\InventoryStock;
-use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -229,7 +229,6 @@ final class InventoryQuarantineServiceTest extends TestCase
         $this->assertSame('0.000', $authorization->quantity_remaining);
         $this->assertSame('exhausted', $authorization->status);
     }
-
 
     public function test_return_quarantine_cannot_add_stock_to_an_inactive_product(): void
     {

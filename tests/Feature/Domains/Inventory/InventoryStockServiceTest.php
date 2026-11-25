@@ -82,7 +82,6 @@ final class InventoryStockServiceTest extends TestCase
         $this->assertSame(2, InventoryMovement::query()->where('stock_id', $stockId)->count());
     }
 
-
     public function test_new_stock_initialization_is_blocked_for_an_inactive_product(): void
     {
         $cooperative = Cooperative::factory()->active()->create();

@@ -11,10 +11,10 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
-use App\Domains\Products\Services\ProductVariantService;
-use Database\Seeders\ProductUnitSeeder;
 use App\Domains\Products\Repositories\ProductRepository;
 use App\Domains\Products\Services\ProductService;
+use App\Domains\Products\Services\ProductVariantService;
+use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -66,7 +66,7 @@ final class ProductServiceTest extends TestCase
             'id' => $product->getKey(),
             'cooperative_id' => $cooperative->getKey(),
             'name' => 'Miel naturel',
-                'unit_id' => $this->unitId,
+            'unit_id' => $this->unitId,
             'is_active' => true,
         ]);
 
@@ -81,7 +81,6 @@ final class ProductServiceTest extends TestCase
             ->where('subject_id', $product->getKey())
             ->firstOrFail());
     }
-
 
     public function test_it_creates_initial_variants_for_an_inactive_parent_product(): void
     {
@@ -105,7 +104,6 @@ final class ProductServiceTest extends TestCase
         $this->assertSame('15.00', $product->variants->first()->price);
     }
 
-
     public function test_it_preserves_an_inactive_current_unit_when_updating_a_product(): void
     {
         $cooperative = Cooperative::factory()->create();
@@ -125,7 +123,6 @@ final class ProductServiceTest extends TestCase
         $this->assertSame('Produit renommé', $updated->name);
         $this->assertSame($this->unitId, (string) $updated->unit_id);
     }
-
 
     public function test_variant_product_remains_editable_after_all_variants_are_soft_deleted(): void
     {

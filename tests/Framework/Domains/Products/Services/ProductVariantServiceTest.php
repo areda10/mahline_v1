@@ -388,7 +388,6 @@ final class ProductVariantServiceTest extends TestCase
         ]);
     }
 
-
     public function test_it_preserves_a_disabled_unit_when_editing_variant_details(): void
     {
         $product = $this->createProduct();

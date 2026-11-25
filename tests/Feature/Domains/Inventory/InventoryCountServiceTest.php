@@ -11,11 +11,11 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Contracts\InventoryCountManager;
 use App\Domains\Inventory\Enums\InventoryStockableType;
+use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Models\InventoryCountItem;
 use App\Domains\Inventory\Models\InventoryCountItemEvent;
 use App\Domains\Inventory\Models\InventoryCountSession;
 use App\Domains\Inventory\Models\InventoryStock;
-use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Services\Counts\InventoryCountQueryService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -23,7 +23,6 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 final class InventoryCountServiceTest extends TestCase
@@ -107,7 +106,6 @@ final class InventoryCountServiceTest extends TestCase
         $this->assertSame('21.000', $second->quantity_on_hand);
         $this->assertNull($second->active_count_session_id);
     }
-
 
     public function test_count_discrepancy_cannot_adjust_a_product_that_became_inactive(): void
     {
