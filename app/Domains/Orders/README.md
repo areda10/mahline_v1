@@ -57,7 +57,7 @@ Les clés étrangères des produits, variantes, coopératives et utilisateurs pr
 Fonctions actuellement présentes :
 - `confirmByCooperative()` : demande de confirmation d'une sous-commande par un acteur autorisé.
 - `refuseByCooperative()` : refus avec motif.
-- `decideOnBehalf()` : décision administrative root ou super_admin affecté, avec motif obligatoire et uniquement après échéance.
+- `decideOnBehalf()` : décision de substitution motivée, avec deux fenêtres strictes : `super_admin` affecté de H+12 à avant H+24 ; `super_admin_root` à partir de H+24.
 - `extendResponseDeadline()` : prolongation motivée, réservée à root ou au super_admin affecté, avec échéance future et plafond de 24 heures.
 - `refreshGlobalOrderStatus()` : agrégation du statut de la commande globale à partir des décisions des sous-commandes.
 
@@ -80,8 +80,11 @@ Une annulation de sécurité avant expédition libère cette réservation ; elle
 - La disponibilité est contrôlée à nouveau au moment de confirmer. Seule une confirmation validée déclenche la réservation, dans une transaction avec verrouillage.
 - Une proposition de réduction ou remplacement doit être acceptée explicitement par le client avant modification de la ligne. Une confirmation ne peut pas réduire silencieusement la quantité.
 - Le refus d'une proposition ou son expiration concerne la ligne concernée selon les règles fonctionnelles Orders ; les autres lignes continuent.
-- Le délai de réponse coopérative de référence est de 12 heures, avec plafond absolu de 24 heures. Une échéance dépassée ne provoque pas de refus automatique.
-- Une intervention administrative après échéance est attribuée et motivée ; elle est réservée à `super_admin_root` ou au `super_admin` affecté.
+- Le délai de réponse coopérative de référence est de 12 heures, avec plafond absolu de 24 heures. Une échéance dépassée ne provoque ni refus ni expiration automatique ; la sous-commande reste `AWAITING_COOPERATIVE`.
+- À H+12, MAHLINE notifie le `super_admin` affecté, qui peut confirmer ou refuser à la place de la coopérative jusqu'à H+24. Le motif de substitution est obligatoire.
+- À H+24 sans décision, MAHLINE notifie le `super_admin_root`, qui peut confirmer ou refuser à son tour avec un motif obligatoire. Le `super_admin` affecté perd alors sa fenêtre de substitution.
+- Les deux escalades sont idempotentes, historisées dans `order_status_histories` et exécutées par `orders:escalate-overdue-cooperative-orders` chaque minute. Elles ne modifient jamais le statut commercial de la sous-commande.
+- Une intervention administrative après échéance est attribuée et motivée : `super_admin` affecté entre H+12 et H+24, puis `super_admin_root` à partir de H+24.
 - L'annulation client COD est permise jusqu'à confirmation de la sous-commande, selon le périmètre prévu ; après remise au transporteur, le parcours passe par le retour.
 - Le retour ne remet jamais automatiquement le produit en stock : la coopérative contrôle et décide via Inventory.
 
@@ -106,11 +109,11 @@ La stratégie d'atomicité inter-domaines (transaction DB commune ou orchestrati
 - Pas de contrôleurs, routes ou vues de gestion des commandes repérés dans le périmètre audité.
 - Pas de parcours client complet pour consulter les commandes, annuler, accepter/refuser une proposition ou suivre les sous-commandes.
 - Les propositions de modification sont modélisées, mais leur cycle complet (création, réponse client, expiration, notifications et concurrence) reste à implémenter.
-- Pas de jobs d'expiration/relance ni de système complet de notifications raccordé.
+- Le mécanisme d'escalade H+12/H+24 est implémenté avec notifications in-app, horodatages idempotents et historique ; les notifications email et le tableau de bord global de supervision restent à compléter.
 - Pas de gestion complète des annulations, retours et événements de livraison.
 - Les frais de livraison restent à intégrer avec Delivery.
 - Pas de facture ou de logique financière dans Orders, conformément aux frontières de domaine.
-- Les tests de service existent, mais n'ont pas été exécutés dans cette session ; aucune validation PHPUnit, migration ou Pint n'est revendiquée.
+- Des tests Feature couvrent les décisions H+12/H+24, l'idempotence des escalades et l'absence d'expiration automatique ; ils doivent encore être exécutés localement par l'utilisateur. Aucune validation PHPUnit, migration ou Pint n'est revendiquée dans cette session.
 
 ## 7. Fichiers principaux vérifiés
 
