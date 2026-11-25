@@ -17,7 +17,7 @@ final class CooperativeOrderEscalationService
     /**
      * Escalate overdue cooperative responses without changing the suborder status.
      * The cooperative has 12 hours; its assigned super-admin is alerted at that
-     * deadline and may decide until H+24. Root is alerted at H+24.
+     * deadline and may decide until a decision is recorded. Root is alerted at H+24.
      */
     public function escalateOverdue(): int
     {
@@ -77,7 +77,9 @@ final class CooperativeOrderEscalationService
                     'La coopérative n’a pas répondu à l’échéance convenue (12 heures par défaut, prolongation possible jusqu’à 24 heures). Vous pouvez confirmer ou refuser cette sous-commande avec un motif obligatoire tant qu’aucune décision n’est enregistrée.',
                 ));
 
-                $suborder->response_overdue_at ??= now();
+                if ($suborder->response_overdue_at === null) {
+                    $suborder->response_overdue_at = now();
+                }
                 $suborder->super_admin_notified_at = now();
                 $suborder->forceFill(['updated_by' => null])->save();
 
