@@ -43,3 +43,7 @@ Schedule::command('inventory:reconcile-alerts')
 Schedule::command('inventory:escalate-security-reports')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('orders:escalate-overdue-cooperative-orders')
+    ->everyMinute()
+    ->withoutOverlapping();
