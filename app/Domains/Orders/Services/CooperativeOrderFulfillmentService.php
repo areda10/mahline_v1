@@ -7,6 +7,7 @@ namespace App\Domains\Orders\Services;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
+use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Orders\Notifications\OrderReadyForShipmentNotification;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ final class CooperativeOrderFulfillmentService
     public function __construct(
         private readonly OrderStatusAggregationService $statusAggregation,
     ) {}
+
     public function startPreparation(CooperativeOrder $cooperativeOrder, User $actor): CooperativeOrder
     {
         return $this->transition($cooperativeOrder, $actor, CooperativeOrderStatus::CONFIRMED, CooperativeOrderStatus::PREPARING);
