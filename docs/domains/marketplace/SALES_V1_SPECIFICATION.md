@@ -762,3 +762,14 @@ Cette mise à jour complète les sections Checkout et interfaces Customer après
 3. **Édition d'une adresse secondaire :** aucune action d'édition individuelle n'est présente dans l'interface du carnet ; périmètre V1 à confirmer.
 
 L'audit fichier par fichier, les statuts et la couverture des tests sont consignés dans [CUSTOMER_V1_IMPLEMENTATION_AUDIT.md](CUSTOMER_V1_IMPLEMENTATION_AUDIT.md).
+
+
+## 18. Correctif de sélection d'adresse au checkout — 25 novembre 2026
+
+Lorsqu'un Customer ajoute une adresse depuis le formulaire intégré au checkout :
+
+- Le endpoint JSON du carnet retourne l'identifiant de l'adresse créée dans `data.id`.
+- Après actualisation de l'aperçu serveur, le frontend sélectionne explicitement cette adresse dans le sélecteur de livraison.
+- Cette sélection ne modifie pas l'adresse principale du carnet : une nouvelle adresse reste secondaire si une adresse principale existait déjà.
+- La commande confirmée transmet toujours le `delivery_address_id` sélectionné au serveur ; Localization vérifie propriété et activité, puis Orders conserve le snapshot d'adresse.
+- Le test Feature associé vérifie le retour de l'identifiant, la présence de l'adresse dans l'aperçu et la conservation de l'adresse principale. Il reste à exécuter localement.
