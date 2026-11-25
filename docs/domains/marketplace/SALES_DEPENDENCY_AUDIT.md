@@ -216,3 +216,30 @@ Dans `ProductService::resolveForCheckout()`, `hasVariants` était calculé avec 
 - Revue statique du diff : effectuée.
 - PHPUnit/Pint/boot du conteneur/MySQL : non exécutés depuis cette session ; exécution locale requise.
 - Ce correctif ne résout pas encore le contrat commercial versionné nécessaire aux états historiques du panier. Ce chantier reste P0.
+
+
+## 10. Revalidation ciblée Customer / Localization / Orders — 25 novembre 2026
+
+Cette section complète et, pour les points ci-dessous, remplace les constats historiques des sections 3.3 à 3.5 établis le 19 novembre. Elle a été rédigée après inspection de la branche `feature/Marketplace`, HEAD `8dfd554c60f17f93cc09904ce9b51b306210ad2d`.
+
+### Localization — adresse de livraison
+
+Le contrat n'est plus absent : `CheckoutAddressReader`, `CheckoutAddressSnapshot` et `CheckoutAddressSnapshotService` existent. Le service vérifie l'identifiant, le propriétaire Customer, l'absence de suppression logique, l'état actif du pays et les champs minimaux, puis retourne un snapshot DTO.
+
+### Orders — création et snapshot
+
+Le chemin de checkout transmet le snapshot d'adresse par `OrderCheckoutData`. `OrderCreationService` écrit le snapshot dans `orders.delivery_address_snapshot` avec la commande, dans sa transaction de création. La description historique disant que les frais étaient initialisés à zéro ou qu'aucune idempotence n'était présente ne décrit plus l'implémentation actuelle : le code actuel utilise les devis Delivery et une clé d'idempotence avec hash de requête.
+
+### Inventory et Delivery
+
+Les constats historiques « absents du code » sont dépassés à cette référence : le code Sales appelle désormais des contrats de disponibilité Inventory et de devis Delivery. Le checkout ne réserve toujours pas le stock ; la réservation intervient à la confirmation de la sous-commande. Les tarifs / devis Delivery sont validés et intégrés au total transmis à Orders.
+
+### Écart Customer identifié
+
+Le formulaire de checkout peut enregistrer une adresse via la route Customer du carnet. Toutefois, après le rechargement de l'aperçu, l'interface sélectionne l'adresse principale. Si une autre adresse principale existait, la nouvelle adresse ajoutée n'est pas sélectionnée automatiquement. Cela ne respecte pas encore la décision Customer validée : une adresse ajoutée depuis le checkout doit être utilisée pour la commande en cours, sans changer la principale du carnet.
+
+Le formulaire PUT du profil Customer exige aussi les champs de l'adresse alors qu'un client peut vouloir modifier uniquement ses données personnelles. Ce point est suivi dans `CUSTOMER_V1_IMPLEMENTATION_AUDIT.md`.
+
+### Tests
+
+Le 25 novembre 2026, l'utilisateur a déclaré verts localement les tests SalesCheckoutService, OrderCreationService, SalesCustomerCheckoutFlows, CooperativeOrderResponseService, CooperativeOrderController et CustomerOrderHistory. Cela ne confirme pas les tests CustomerProfile / CustomerEmailChange ni la suite complète.
