@@ -151,7 +151,7 @@ final class ProductController
         return view('backoffice.products.edit', [
             'cooperative' => $cooperativeModel,
             'product' => $productModel,
-            'productUnits' => ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)->where('is_active', true)->orderBy('sort_order')->orderBy('label')->get(),
+            'productUnits' => ProductUnit::query()->whereIn('code', ProductUnit::V1_CODES)->where(function ($query) use ($productModel): void { $query->where('is_active', true)->orWhere('id', $productModel->unit_id); })->orderBy('sort_order')->orderBy('label')->get(),
             'hasVariants' => ($productModel->product_type ?? 'simple') === 'variant',
             'categories' => Category::query()
                 ->availableFor($cooperativeId)
@@ -186,7 +186,7 @@ final class ProductController
             'price' => ['sometimes', 'required', 'numeric', 'gt:0', 'decimal:0,2'],
             'unit_id' => ($productModel->product_type ?? 'simple') === 'variant'
                 ? ['prohibited']
-                : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->where('is_active', true)->whereIn('code', ProductUnit::V1_CODES)],
+                : ['required', 'string', 'size:26', Rule::exists('product_units', 'id')->whereIn('code', ProductUnit::V1_CODES)->where(function ($query) use ($productModel): void { $query->where('is_active', true)->orWhere('id', $productModel->unit_id); })],
             'is_active' => ['sometimes', 'boolean'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['required', 'string', 'max:26', 'distinct'],
