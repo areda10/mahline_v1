@@ -5,6 +5,8 @@
 @section('content')
 @php
     $isAdmin = auth()->user()->hasAnyRole(['super_admin_root', 'super_admin']);
+    $isCooperativeAdmin = auth()->user()->hasRole('cooperative_admin');
+    $isEmployee = auth()->user()->hasRole('user');
     $isAwaiting = $suborder->status === \App\Domains\Orders\Enums\CooperativeOrderStatus::AWAITING_COOPERATIVE;
     $deadlineOpen = $suborder->response_deadline_at !== null && $suborder->response_deadline_at->isFuture();
     $routeBase = $routePrefix.'.orders.cooperative';
@@ -81,7 +83,7 @@
     </p>
 </div>
 
-@if($isAwaiting)
+@if($isAwaiting && $isCooperativeAdmin)
     <div class="card">
         <h2>Réponse de la coopérative</h2>
         @if($deadlineOpen)
