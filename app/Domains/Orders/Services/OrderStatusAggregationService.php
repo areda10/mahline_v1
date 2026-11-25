@@ -121,7 +121,9 @@ final class OrderStatusAggregationService
         ], true))->count();
 
         if ($confirmed === $count) {
-            return OrderStatus::CONFIRMED;
+            return $cancelled > 0
+                ? OrderStatus::PARTIALLY_CANCELLED
+                : ($refused > 0 ? OrderStatus::PARTIALLY_REFUSED : OrderStatus::CONFIRMED);
         }
 
         if ($confirmed > 0 || $refused > 0) {
