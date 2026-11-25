@@ -159,6 +159,55 @@ final class InventoryStockServiceTest extends TestCase
         $this->assertSame(2, InventoryMovement::query()->where('stock_id', $stockId)->count());
     }
 
+
+    public function test_new_receipts_and_adjustments_are_blocked_after_product_deactivation(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $unit = ProductUnit::query()->firstOrCreate(
+            ['code' => 'kg'],
+            ['label' => 'Kilogramme', 'dimension' => 'weight', 'sort_order' => 10, 'is_active' => true],
+        );
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'unit_id' => $unit->getKey(),
+            'is_active' => true,
+        ]);
+        $manager = app(InventoryStockManager::class);
+        $cooperativeId = (string) $cooperative->getKey();
+        $productId = (string) $product->getKey();
+        $actorId = (string) $admin->getKey();
+        $stockId = $manager->initialize(
+            $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+            'kg', '5.000', 'Initialisation avant désactivation.', $actorId, 'inactive-stock-op-init-001',
+        );
+        $product->update(['is_active' => false]);
+
+        try {
+            $manager->receive(
+                $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+                '1.000', 'Réception interdite.', $actorId, 'inactive-stock-op-receive-001',
+            );
+            $this->fail('Une nouvelle réception doit être refusée.');
+        } catch (\InvalidArgumentException) {
+            $this->assertTrue(true);
+        }
+
+        try {
+            $manager->adjust(
+                $cooperativeId, InventoryStockableType::PRODUCT, $productId,
+                '1.000', 'Ajustement interdit.', $actorId, 'inactive-stock-op-adjust-001',
+            );
+            $this->fail('Un nouvel ajustement doit être refusé.');
+        } catch (\InvalidArgumentException) {
+            $this->assertTrue(true);
+        }
+
+        $this->assertSame('5.000', InventoryStock::query()->findOrFail($stockId)->quantity_on_hand);
+        $this->assertSame(1, InventoryMovement::query()->where('stock_id', $stockId)->count());
+    }
+
     public function test_parent_product_with_variants_cannot_own_a_stock_balance(): void
     {
         $cooperative = Cooperative::factory()->active()->create();
