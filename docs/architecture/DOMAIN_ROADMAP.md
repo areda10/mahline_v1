@@ -1096,7 +1096,7 @@ Cette création est un scaffold documentaire/applicatif de racine, pas une impl�
 
 - Navigation Boutique → espace client, commandes et profil.
 - Correctif de robustesse du panier : le script ne manipule le lien de checkout que lorsqu'il est présent (ce lien n'existe pas dans le rendu client connecté). Commit `fad149b` ; tests runtime non exécutés.
-- Retrait du bloc de photo de profil qui annonçait une fonctionnalité Media dans le profil client. Aucun développement Media n'est inclus dans ce chantier.
+- Le bloc photo avait été retiré lors de cette séquence car le flux Media n'était pas encore disponible. **Évolution du 25 novembre 2026 :** le flux photo de profil Customer est désormais implémenté sur `feature/Marketplace` via le domaine Media (upload, remplacement, suppression logique, aperçu privé et avatar dans la navigation). Voir `docs/domains/marketplace/CUSTOMER_V1_IMPLEMENTATION_AUDIT.md` et `app/Domains/Media/README.md`.
 - Navigation back-office enrichie avec notifications, sessions, appareils de confiance et jetons API.
 - Navigation Root enrichie avec inventaire, notifications, appareils de confiance et jetons API.
 - Fiche coopérative enrichie de raccourcis vers catalogues, catégories et produits, sous contrôle des Policies existantes.
