@@ -26,14 +26,20 @@ final class ProductVariantService
         Product $product,
         array $attributes,
         ?User $actor = null,
+        bool $allowInactiveParent = false,
     ): ProductVariant {
         return DB::transaction(function () use (
             $product,
             $attributes,
             $actor,
+            $allowInactiveParent,
         ): ProductVariant {
             $product = Product::withTrashed()->whereKey($product->getKey())->lockForUpdate()->firstOrFail();
-            $this->assertProductIsAvailable($product);
+            if ($product->trashed() || (! $allowInactiveParent && ! $product->is_active)) {
+                throw ValidationException::withMessages([
+                    'product' => ['Impossible de gérer une variante d’un produit inactif ou supprimé.'],
+                ]);
+            }
 
             if (($product->product_type ?? 'simple') !== 'variant') {
                 throw ValidationException::withMessages([
@@ -77,6 +83,9 @@ final class ProductVariantService
             $variant->unit_id = $this->validatedUnitId($attributes['unit_id'] ?? null);
             $variant->attributes = $attributes['attributes'] ?? null;
             $variant->is_active = $isActive;
+            if ($actor !== null) {
+                $variant->forceFill(['created_by' => (string) $actor->getKey()]);
+            }
 
             $variant->save();
             $this->record($actor, $product, $variant, 'product_variant.created', 'created', null, $this->snapshot($variant));
@@ -160,6 +169,7 @@ final class ProductVariantService
 
             $unitId = $this->validatedUnitId(
                 $attributes['unit_id'] ?? $variant->unit_id,
+                (string) $variant->unit_id,
             );
 
             if ($unitId !== $variant->unit_id
@@ -190,6 +200,9 @@ final class ProductVariantService
                 $variant->is_active = $newActiveState;
             }
 
+            if ($actor !== null) {
+                $variant->forceFill(['updated_by' => (string) $actor->getKey()]);
+            }
             $variant->save();
             $variant->refresh();
 
@@ -224,6 +237,9 @@ final class ProductVariantService
             }
 
             $before = $this->snapshot($locked);
+            if ($actor !== null) {
+                $locked->forceFill(['deleted_by' => (string) $actor->getKey()])->save();
+            }
             $deleted = (bool) $locked->delete();
 
             if ($deleted) {
@@ -255,6 +271,9 @@ final class ProductVariantService
 
             $before = $this->snapshot($locked);
             $locked->restore();
+            if ($actor !== null) {
+                $locked->forceFill(['updated_by' => (string) $actor->getKey()])->save();
+            }
             $locked->refresh();
 
             $this->record($actor, $product, $locked, 'product_variant.restored', 'restored',
@@ -307,12 +326,17 @@ final class ProductVariantService
         ));
     }
 
-    private function validatedUnitId(mixed $unitId): string
+    private function validatedUnitId(mixed $unitId, ?string $currentUnitId = null): string
     {
         if (! is_string($unitId) || $unitId === '' || ! ProductUnit::query()
             ->whereKey($unitId)
-            ->where('is_active', true)
             ->whereIn('code', ProductUnit::V1_CODES)
+            ->where(function ($query) use ($currentUnitId, $unitId): void {
+                $query->where('is_active', true);
+                if ($currentUnitId !== null && $unitId === $currentUnitId) {
+                    $query->orWhere('id', $currentUnitId);
+                }
+            })
             ->exists()) {
             throw ValidationException::withMessages([
                 'unit_id' => ['Sélectionnez une unité de stock active parmi les unités autorisées.'],
