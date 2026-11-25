@@ -6,6 +6,7 @@ namespace App\Domains\Orders\Services;
 
 use App\Domains\Cooperatives\Contracts\CooperativeStatusReader;
 use App\Domains\Identity\Users\Models\User;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use App\Domains\Inventory\Contracts\InventoryCheckoutAvailabilityReader;
 use App\Domains\Inventory\DTOs\InventoryCheckoutLineData;
 use App\Domains\Inventory\DTOs\InventoryCheckoutPreview;
@@ -416,6 +417,17 @@ final class OrderCreationService
                     'delivery_quote_snapshot' => $quotesByCooperative[$cooperativeId],
                 ]);
                 $cooperativeOrder->forceFill(['created_by' => (string) $customer->getKey()])->save();
+
+                User::query()
+                    ->where('cooperative_id', $cooperativeId)
+                    ->whereHas('roles', static fn ($query) => $query->where('slug', 'cooperative_admin'))
+                    ->get()
+                    ->each(fn (User $recipient) => $recipient->notify(new CooperativeOrderWorkflowNotification(
+                        $cooperativeOrder,
+                        'order.awaiting_cooperative',
+                        'Nouvelle commande à valider',
+                        'Une nouvelle commande attend votre décision.',
+                    )));
 
                 $cooperativeOrders[$cooperativeId] = $cooperativeOrder;
                 $this->recordHistory(
