@@ -767,10 +767,16 @@ Route::prefix('back-office/orders/cooperative')
     ->group(function (): void {
         Route::get('/', [CooperativeOrderController::class, 'index'])->name('index');
         Route::get('/{cooperativeOrderId}', [CooperativeOrderController::class, 'show'])->whereUlid('cooperativeOrderId')->name('show');
-        Route::post('/{cooperativeOrderId}/confirm', [CooperativeOrderController::class, 'confirm'])->whereUlid('cooperativeOrderId')->name('confirm');
-        Route::post('/{cooperativeOrderId}/refuse', [CooperativeOrderController::class, 'refuse'])->whereUlid('cooperativeOrderId')->name('refuse');
         Route::post('/{cooperativeOrderId}/start-preparation', [CooperativeOrderController::class, 'startPreparation'])->whereUlid('cooperativeOrderId')->name('start-preparation');
         Route::post('/{cooperativeOrderId}/ready-for-shipment', [CooperativeOrderController::class, 'markReadyForShipment'])->whereUlid('cooperativeOrderId')->name('ready-for-shipment');
+    });
+
+Route::prefix('back-office/orders/cooperative')
+    ->name('backoffice.orders.cooperative.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:super_admin,cooperative_admin'])
+    ->group(function (): void {
+        Route::post('/{cooperativeOrderId}/confirm', [CooperativeOrderController::class, 'confirm'])->whereUlid('cooperativeOrderId')->name('confirm');
+        Route::post('/{cooperativeOrderId}/refuse', [CooperativeOrderController::class, 'refuse'])->whereUlid('cooperativeOrderId')->name('refuse');
     });
 
 Route::prefix('back-office/orders/cooperative')
