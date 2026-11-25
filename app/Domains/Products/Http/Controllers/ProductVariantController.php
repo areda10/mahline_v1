@@ -140,14 +140,8 @@ final class ProductVariantController
             'price' => ['required', 'numeric', 'gt:0', 'decimal:0,2'],
             'unit_id' => [
                 'required', 'string', 'size:26',
-                Rule::exists('product_units', 'id')
-                    ->whereIn('code', ProductUnit::V1_CODES)
-                    ->where(function ($query) use ($currentUnitId): void {
-                        $query->where('is_active', true);
-                        if ($currentUnitId !== null) {
-                            $query->orWhere('id', $currentUnitId);
-                        }
-                    }),
+                // ProductVariantService validates active units and permits only
+                // the currently assigned unit when it has since been disabled.
             ],
             'sku' => ['nullable', 'string', 'max:100'],
             'is_active' => ['sometimes', 'boolean'],
