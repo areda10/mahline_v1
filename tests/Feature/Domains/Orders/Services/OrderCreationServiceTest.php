@@ -111,6 +111,98 @@ final class OrderCreationServiceTest extends TestCase
         ]);
     }
 
+    public function test_checkout_excludes_every_line_of_a_cooperative_when_any_line_has_insufficient_stock(): void
+    {
+        $customer = $this->customer();
+        $availableCooperative = Cooperative::factory()->active()->create();
+        $unavailableCooperative = Cooperative::factory()->active()->create();
+
+        $availableProduct = Product::factory()->forCooperative($availableCooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $unavailableProduct = Product::factory()->forCooperative($unavailableCooperative)->create([
+            'price' => '10.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $otherProductFromUnavailableCooperative = Product::factory()->forCooperative($unavailableCooperative)->create([
+            'price' => '15.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+
+        $this->stock($availableCooperative, 'product', (string) $availableProduct->getKey(), 'u', '5.000');
+        $this->stock($unavailableCooperative, 'product', (string) $unavailableProduct->getKey(), 'u', '0.000');
+        $this->stock($unavailableCooperative, 'product', (string) $otherProductFromUnavailableCooperative->getKey(), 'u', '5.000');
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
+            'idempotency_key' => 'test-order-creation-partial-stock-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [
+                ['product_id' => (string) $availableProduct->getKey(), 'quantity' => '1.000'],
+                ['product_id' => (string) $unavailableProduct->getKey(), 'quantity' => '1.000'],
+                ['product_id' => (string) $otherProductFromUnavailableCooperative->getKey(), 'quantity' => '1.000'],
+            ],
+        ]));
+
+        $this->assertCount(1, $order->cooperativeOrders);
+        $this->assertSame([(string) $unavailableCooperative->getKey()], $order->inventory_excluded_cooperative_ids);
+        $this->assertSame('20.00', $order->items_subtotal);
+        $this->assertSame('40.00', $order->delivery_total);
+        $this->assertDatabaseCount('order_items', 1);
+        $this->assertDatabaseHas('order_items', ['product_id' => $availableProduct->getKey()]);
+        $this->assertDatabaseMissing('order_items', ['product_id' => $unavailableProduct->getKey()]);
+        $this->assertDatabaseMissing('order_items', ['product_id' => $otherProductFromUnavailableCooperative->getKey()]);
+    }
+
+    public function test_product_or_commercial_change_does_not_become_an_automatic_partial_checkout(): void
+    {
+        $customer = $this->customer();
+        $availableCooperative = Cooperative::factory()->active()->create();
+        $changedCooperative = Cooperative::factory()->active()->create();
+
+        $availableProduct = Product::factory()->forCooperative($availableCooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $inactiveProduct = Product::factory()->forCooperative($changedCooperative)->create([
+            'price' => '10.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+            'is_active' => false,
+        ]);
+
+        $this->stock($availableCooperative, 'product', (string) $availableProduct->getKey(), 'u', '5.000');
+        $this->stock($changedCooperative, 'product', (string) $inactiveProduct->getKey(), 'u', '5.000');
+
+        try {
+            app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
+                'idempotency_key' => 'test-order-creation-invalid-product-01',
+                'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+                'items' => [
+                    [
+                        'product_id' => (string) $availableProduct->getKey(),
+                        'cooperative_id' => (string) $availableCooperative->getKey(),
+                        'quantity' => '1.000',
+                    ],
+                    [
+                        'product_id' => (string) $inactiveProduct->getKey(),
+                        'cooperative_id' => (string) $changedCooperative->getKey(),
+                        'quantity' => '1.000',
+                    ],
+                ],
+            ]));
+            $this->fail('An inactive product must block the checkout instead of being silently excluded.');
+        } catch (ValidationException) {
+            $this->assertDatabaseCount('orders', 0);
+            $this->assertDatabaseCount('cooperative_orders', 0);
+            $this->assertDatabaseCount('order_items', 0);
+        }
+    }
+
     public function test_checkout_uses_variant_override_price_and_rejects_unpriced_products(): void
     {
         $customer = $this->customer();
