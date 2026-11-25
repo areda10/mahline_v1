@@ -174,6 +174,46 @@ final class SalesCustomerCheckoutFlowsTest extends TestCase
         $this->assertSame(0, $directCart->fresh()->activeItems()->count());
     }
 
+    public function test_new_address_created_during_checkout_is_returned_for_selection_without_becoming_primary(): void
+    {
+        $customer = $this->checkoutCustomer();
+        $primary = Address::factory()->forUser($customer)->create([
+            'is_primary' => true,
+            'street' => 'Adresse principale',
+            'city' => 'Casablanca',
+        ]);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('sales.cart.checkout.page'))
+            ->assertOk()
+            ->assertSee('loadPreview(createdAddressId)', false);
+
+        $created = $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->postJson(route('customer.profile.addresses.store'), [
+                'street' => 'Nouvelle adresse checkout',
+                'city' => 'Rabat',
+                'region' => 'Rabat-Salé-Kénitra',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('message', 'Adresse ajoutée à votre carnet.');
+
+        $newAddressId = $created->json('data.id');
+        $this->assertIsString($newAddressId);
+        $this->assertNotSame('', $newAddressId);
+
+        $newAddress = Address::query()->findOrFail($newAddressId);
+        self::assertFalse($newAddress->is_primary);
+        self::assertTrue($primary->fresh()->is_primary);
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->getJson(route('sales.cart.checkout.preview'))
+            ->assertOk()
+            ->assertJsonFragment(['id' => $newAddressId]);
+    }
+
     private function checkoutCustomer(): User
     {
         $role = Role::query()->firstOrCreate(
