@@ -66,6 +66,7 @@ final class CooperativeOrderEscalationService
                 && $suborder->response_deadline_at->lessThanOrEqualTo(now())
                 && $suborder->super_admin_notified_at === null) {
                 $recipients = User::query()
+                    ->where('status', 'active')
                     ->whereHas('roles', static fn ($query) => $query->where('slug', 'super_admin'))
                     ->whereHas('cooperatives', static fn ($query) => $query->whereKey($suborder->cooperative_id))
                     ->get();
@@ -106,6 +107,7 @@ final class CooperativeOrderEscalationService
                 && $suborder->created_at->copy()->addHours(24)->lessThanOrEqualTo(now())
                 && $suborder->root_escalated_at === null) {
                 $recipients = User::query()
+                    ->where('status', 'active')
                     ->whereHas('roles', static fn ($query) => $query->where('slug', 'super_admin_root'))
                     ->get();
 
