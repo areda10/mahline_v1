@@ -80,10 +80,17 @@ final class ProductCatalogCategoryPolicyTest extends TestCase
                 $this->cooperativeA,
             );
 
-            $this->assertTrue(
-                app(ProductPolicy::class)->update($user, $productA),
-                "{$roleSlug} doit pouvoir modifier un produit de sa coopérative.",
-            );
+            if ($roleSlug === 'user') {
+                $this->assertFalse(
+                    app(ProductPolicy::class)->update($user, $productA),
+                    'Un user ne doit pas pouvoir modifier un produit, même dans sa coopérative.',
+                );
+            } else {
+                $this->assertTrue(
+                    app(ProductPolicy::class)->update($user, $productA),
+                    'Un cooperative_admin doit pouvoir modifier un produit de sa coopérative.',
+                );
+            }
 
             $this->assertFalse(
                 app(ProductPolicy::class)->update($user, $productB),
