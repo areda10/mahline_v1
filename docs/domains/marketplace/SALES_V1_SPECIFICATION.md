@@ -755,11 +755,12 @@ Cette mise à jour complète les sections Checkout et interfaces Customer après
 - Localization valide l'appartenance et l'activité de l'adresse et produit un DTO de snapshot.
 - Orders conserve le snapshot dans `orders.delivery_address_snapshot`.
 
-### Écarts encore ouverts
+### État après correctifs du 25 novembre 2026
 
-1. **Adresse ajoutée au checkout :** l'interface recharge l'aperçu après création et présélectionne l'adresse principale. Si une adresse principale existait déjà, la nouvelle adresse secondaire n'est pas automatiquement choisie. La décision validée est que l'adresse ajoutée pendant le checkout doit être utilisée pour cette commande. Le endpoint doit renvoyer l'identifiant de l'adresse créée et le frontend doit sélectionner cet identifiant après le rafraîchissement. L'adresse principale du carnet ne doit pas être changée par cette action.
-2. **Modification des données personnelles :** le formulaire Customer PUT rend obligatoires les champs rue, ville et région avec prénom, nom et téléphone. La modification des seules données personnelles doit être possible sans devoir saisir une adresse.
-3. **Édition d'une adresse secondaire :** aucune action d'édition individuelle n'est présente dans l'interface du carnet ; périmètre V1 à confirmer.
+- **Adresse ajoutée au checkout : corrigé dans le code.** Le endpoint JSON retourne `data.id` et le frontend sélectionne l'adresse créée après actualisation de l'aperçu, sans modifier l'adresse principale du carnet.
+- **Édition d'une adresse secondaire : corrigé dans le code.** Le carnet présente un formulaire par adresse ; la route PATCH délègue à Localization qui verrouille le propriétaire et l'adresse, vérifie la propriété et journalise la modification.
+- **Modification des données personnelles : reste à corriger.** Le formulaire Customer PUT rend encore obligatoires les champs rue, ville et région avec prénom, nom et téléphone. La modification des seules données personnelles doit être possible sans devoir saisir une adresse.
+- Les tests Feature ajoutés pour les deux corrections sont à exécuter localement ; ils ne sont pas déclarés verts tant que le résultat n'a pas été communiqué.
 
 L'audit fichier par fichier, les statuts et la couverture des tests sont consignés dans [CUSTOMER_V1_IMPLEMENTATION_AUDIT.md](CUSTOMER_V1_IMPLEMENTATION_AUDIT.md).
 
