@@ -298,6 +298,11 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         ]));
 
         $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill([
+            'created_at' => now()->subHours(25),
+            'response_deadline_at' => now()->subHours(13),
+        ])->save();
+
         $updated = app(CooperativeOrderResponseService::class)
             ->decideOnBehalf($suborder, $root, false, 'Absence de réponse coopérative');
 
@@ -305,6 +310,61 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertSame((string) $root->getKey(), (string) $updated->substituted_by_admin_id);
         $this->assertSame('Absence de réponse coopérative', $updated->substitution_reason);
         $this->assertSame(OrderStatus::REFUSED, $order->fresh()->status);
+    }
+
+    public function test_assigned_super_admin_can_substitute_cooperative_after_12_hours_with_a_reason(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $superAdmin = $this->userWithRole('super_admin');
+        $cooperative = Cooperative::factory()->active()->create();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
+            'idempotency_key' => 'test-response-super-admin-h12',
+            'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
+        ]));
+
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill([
+            'created_at' => now()->subHours(13),
+            'response_deadline_at' => now()->subHour(),
+        ])->save();
+
+        $updated = app(CooperativeOrderResponseService::class)
+            ->decideOnBehalf($suborder, $superAdmin, false, 'Absence de réponse après relance');
+
+        $this->assertSame(CooperativeOrderStatus::REFUSED, $updated->status);
+        $this->assertSame((string) $superAdmin->getKey(), (string) $updated->substituted_by_admin_id);
+        $this->assertSame('Absence de réponse après relance', $updated->substitution_reason);
+    }
+
+    public function test_assigned_super_admin_cannot_substitute_before_the_12_hour_deadline(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $superAdmin = $this->userWithRole('super_admin');
+        $cooperative = Cooperative::factory()->active()->create();
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $product = Product::factory()->forCooperative($cooperative)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperative, $product);
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
+            'idempotency_key' => 'test-response-super-admin-before-h12',
+            'delivery_address_snapshot' => ['city' => 'Fès', 'country' => 'Maroc'],
+            'items' => [['product_id' => (string) $product->getKey(), 'quantity' => '1']],
+        ]));
+
+        $this->expectException(ValidationException::class);
+        app(CooperativeOrderResponseService::class)
+            ->decideOnBehalf($order->cooperativeOrders->firstOrFail(), $superAdmin, true, 'Intervention anticipée');
     }
 
     public function test_root_can_extend_cooperative_response_deadline_by_at_most_24_hours(): void
