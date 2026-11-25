@@ -47,8 +47,8 @@ final class CooperativeOrderResponseService
     }
 
     /**
-     * The assigned super-admin may substitute the cooperative after its 12-hour
-     * response deadline. Root may intervene only once the 24-hour escalation point is reached.
+     * The assigned super-admin may substitute the cooperative after its response
+     * deadline. Root may intervene once the 24-hour escalation point is reached.
      */
     public function decideOnBehalf(
         CooperativeOrder $cooperativeOrder,
@@ -171,7 +171,6 @@ final class CooperativeOrderResponseService
                             'cooperative_order' => ['Le super_admin affecté peut intervenir uniquement après l’échéance de réponse de la coopérative (H+12).'],
                         ]);
                     }
-
                 } elseif ($actor->hasRole('super_admin_root')) {
                     if ($rootEscalationAt === null || $rootEscalationAt->isFuture()) {
                         throw ValidationException::withMessages([
@@ -188,7 +187,7 @@ final class CooperativeOrderResponseService
 
                 if ($locked->response_deadline_at !== null && $locked->response_deadline_at->lessThanOrEqualTo(now())) {
                     throw ValidationException::withMessages([
-                        'cooperative_order' => ['Le délai de réponse de la coopérative est dépassé. Seul le super_admin affecté peut intervenir jusqu’à H+24, puis le super_admin_root.'],
+                        'cooperative_order' => ['Le délai de réponse de la coopérative est dépassé. Le super_admin affecté peut intervenir avec un motif ; le super_admin_root peut également intervenir à partir de H+24.'],
                     ]);
                 }
             }
