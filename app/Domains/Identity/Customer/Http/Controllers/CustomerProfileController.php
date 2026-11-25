@@ -91,13 +91,40 @@ final class CustomerProfileController
             'region' => ['nullable', 'string', 'in:'.implode(',', MoroccanRegion::values())],
             'postal_code' => ['nullable', 'string', 'max:20'],
         ]);
-        $this->addresses->createForUser((string) $customer->getKey(), (string) $customer->getKey(), $data);
+        $address = $this->addresses->createForUser((string) $customer->getKey(), (string) $customer->getKey(), $data);
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Adresse ajoutée à votre carnet.'], 201);
+            return response()->json([
+                'message' => 'Adresse ajoutée à votre carnet.',
+                'data' => ['id' => (string) $address->getKey()],
+            ], 201);
         }
 
         return redirect()->route('customer.profile.edit')->with('success', 'Adresse ajoutée à votre carnet.');
+    }
+
+    public function updateAddress(Request $request, Address $address): RedirectResponse
+    {
+        $customer = $request->user();
+        abort_unless($customer instanceof User && $customer->hasRole('customer'), 403);
+
+        $data = $request->validate([
+            'number' => ['nullable', 'string', 'max:50'],
+            'street' => ['required', 'string', 'max:255'],
+            'floor' => ['nullable', 'string', 'max:50'],
+            'city' => ['required', 'string', 'max:120'],
+            'region' => ['nullable', 'string', 'in:'.implode(',', MoroccanRegion::values())],
+            'postal_code' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $this->addresses->updateAddressForUser(
+            (string) $customer->getKey(),
+            (string) $customer->getKey(),
+            (string) $address->getKey(),
+            $data,
+        );
+
+        return redirect()->route('customer.profile.edit')->with('success', 'Adresse mise à jour.');
     }
 
     public function setPrimaryAddress(Request $request, Address $address): RedirectResponse
