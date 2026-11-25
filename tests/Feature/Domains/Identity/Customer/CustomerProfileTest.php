@@ -11,6 +11,8 @@ use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Models\Country;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class CustomerProfileTest extends TestCase
@@ -51,7 +53,8 @@ final class CustomerProfileTest extends TestCase
             ->assertSee('Mon profil')
             ->assertSee('Salma')
             ->assertSee('client@example.com')
-            ->assertDontSee('Photo de profil')
+            ->assertSee('Photo de profil')
+            ->assertSee('customer.profile.photo.store')
             ->assertDontSee('domaine Media');
     }
 
@@ -264,6 +267,84 @@ final class CustomerProfileTest extends TestCase
             'id' => $foreignAddress->getKey(),
             'street' => 'Rue privée',
             'city' => 'Fès',
+        ]);
+    }
+
+    public function test_customer_can_upload_and_replace_their_private_profile_photo(): void
+    {
+        Storage::fake('local');
+        $customer = $this->customer();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('customer.profile.photo.store'), [
+                'file' => UploadedFile::fake()->image('portrait.png', 120, 120),
+            ])
+            ->assertRedirect(route('customer.profile.edit'))
+            ->assertSessionHas('success');
+
+        $firstPhoto = $customer->profileImage()->firstOrFail();
+
+        self::assertSame('profile_image', $firstPhoto->category);
+        self::assertSame('private', $firstPhoto->visibility);
+        self::assertTrue($firstPhoto->is_primary);
+        self::assertSame('local', $firstPhoto->disk);
+        self::assertTrue(Storage::disk('local')->exists($firstPhoto->path));
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('customer.profile.photo.store'), [
+                'file' => UploadedFile::fake()->image('new-portrait.jpg', 160, 160),
+            ])
+            ->assertRedirect(route('customer.profile.edit'))
+            ->assertSessionHas('success');
+
+        $secondPhoto = $customer->profileImage()->firstOrFail();
+
+        self::assertNotSame($firstPhoto->getKey(), $secondPhoto->getKey());
+        self::assertTrue($secondPhoto->is_primary);
+        $this->assertSoftDeleted('media', ['id' => $firstPhoto->getKey()]);
+        self::assertSame(1, $customer->media()->where('category', 'profile_image')->count());
+    }
+
+    public function test_customer_can_remove_their_profile_photo(): void
+    {
+        Storage::fake('local');
+        $customer = $this->customer();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('customer.profile.photo.store'), [
+                'file' => UploadedFile::fake()->image('portrait.png', 120, 120),
+            ])
+            ->assertRedirect(route('customer.profile.edit'));
+
+        $photo = $customer->profileImage()->firstOrFail();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->delete(route('customer.profile.photo.destroy'))
+            ->assertRedirect(route('customer.profile.edit'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('media', ['id' => $photo->getKey()]);
+        self::assertNull($customer->fresh()->profileImage);
+    }
+
+    public function test_customer_profile_photo_upload_rejects_unsupported_files(): void
+    {
+        $customer = $this->customer();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->post(route('customer.profile.photo.store'), [
+                'file' => UploadedFile::fake()->create('avatar.svg', 20, 'image/svg+xml'),
+            ])
+            ->assertSessionHasErrors('file');
+
+        self::assertDatabaseMissing('media', [
+            'mediable_id' => $customer->getKey(),
+            'category' => 'profile_image',
         ]);
     }
 
