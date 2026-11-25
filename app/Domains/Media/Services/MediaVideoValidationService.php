@@ -77,7 +77,7 @@ final class MediaVideoValidationService
 
         try {
             $metadata = $this->inspector->inspect($path);
-        } catch (\\Throwable) {
+        } catch (\Throwable) {
             $this->reject('La vidéo est illisible ou ses métadonnées ne peuvent pas être vérifiées.');
         }
 
@@ -131,7 +131,7 @@ final class MediaVideoValidationService
         }
 
         return match ($extension) {
-            'webm' => str_starts_with($header, "\\x1A\\x45\\xDF\\xA3"),
+            'webm' => str_starts_with($header, "\x1A\x45\xDF\xA3"),
             'mov' => str_contains($header, 'ftypqt  '),
             'mp4' => str_contains($header, 'ftyp')
                 && preg_match('/ftyp(?:isom|iso[2-9]|mp4[12]|avc1|M4V |MSNV|dash)/', $header) === 1,
