@@ -213,6 +213,41 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->assertSame('Décision root après escalade H+24.', $suborder->fresh()->substitution_reason);
     }
 
+    public function test_overdue_escalations_notify_super_admin_at_h12_and_root_at_h24_without_expiring_suborder(): void
+    {
+        Notification::fake();
+
+        $customer = $this->userWithRole('customer');
+        $cooperative = Cooperative::factory()->active()->create();
+        $superAdmin = $this->userWithRole('super_admin');
+        $superAdmin->cooperatives()->attach($cooperative->getKey());
+        $root = $this->userWithRole('super_admin_root');
+        $order = $this->makeOrder($customer, $cooperative, 'INBOX-ESCALATION-H24');
+        $suborder = $order->cooperativeOrders->firstOrFail();
+        $suborder->forceFill([
+            'created_at' => now()->subHours(25),
+            'response_deadline_at' => now()->subHours(13),
+        ])->save();
+
+        $processed = app(CooperativeOrderEscalationService::class)->escalateOverdue();
+
+        $this->assertSame(1, $processed);
+        $suborder->refresh();
+        $this->assertSame(CooperativeOrderStatus::AWAITING_COOPERATIVE, $suborder->status);
+        $this->assertNotNull($suborder->response_overdue_at);
+        $this->assertNotNull($suborder->super_admin_notified_at);
+        $this->assertNotNull($suborder->root_escalated_at);
+        Notification::assertSentTo($superAdmin, CooperativeOrderWorkflowNotification::class);
+        Notification::assertSentTo($root, CooperativeOrderWorkflowNotification::class);
+        $this->assertDatabaseHas('order_status_histories', [
+            'subject_type' => 'cooperative_order',
+            'subject_id' => $suborder->getKey(),
+            'to_status' => CooperativeOrderStatus::AWAITING_COOPERATIVE->value,
+        ]);
+
+        $this->assertSame(0, app(CooperativeOrderEscalationService::class)->escalateOverdue());
+    }
+
     public function test_cooperative_user_can_prepare_only_own_confirmed_suborders_and_customer_is_notified_when_ready(): void
     {
         Notification::fake();
