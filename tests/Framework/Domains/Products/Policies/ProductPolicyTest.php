@@ -82,6 +82,20 @@ final class ProductPolicyTest extends TestCase
         $this->assertFalse($this->policy->update($admin, $product));
     }
 
+
+    public function test_user_role_cannot_update_products_even_with_a_cooperative_match(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $product = Product::factory()->forCooperative($cooperative)->create();
+        $user = $this->userWithPermission(
+            'products.update',
+            'user',
+            (string) $cooperative->getKey(),
+        );
+
+        $this->assertFalse($this->policy->update($user, $product));
+    }
+
     public function test_access_is_denied_without_required_permission_even_for_root(): void
     {
         $cooperative = Cooperative::factory()->create();
