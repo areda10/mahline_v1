@@ -15,6 +15,7 @@ use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -244,6 +245,19 @@ final class CooperativeOrderResponseService
             ]);
 
             $this->refreshGlobalOrderStatus($locked->order_id, $actor);
+
+            if ($accept) {
+                User::query()
+                    ->where('cooperative_id', (string) $locked->cooperative_id)
+                    ->whereHas('roles', static fn ($query) => $query->where('slug', 'user'))
+                    ->get()
+                    ->each(fn (User $recipient) => $recipient->notify(new CooperativeOrderWorkflowNotification(
+                        $locked,
+                        'order.confirmed_for_preparation',
+                        'Commande à préparer',
+                        'Une commande a été confirmée et attend sa préparation.',
+                    )));
+            }
 
             return $locked->refresh();
         }, 3);
