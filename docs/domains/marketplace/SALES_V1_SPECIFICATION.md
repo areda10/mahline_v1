@@ -4,7 +4,7 @@
 - **Version :** 1.0 — cadrage initial
 - **Date :** 19 novembre 2026
 - **Branche :** `feature/Marketplace`
-- **Statut :** EN COURS — décisions fonctionnelles SALES-001 à SALES-037 validées ; socle panier et interfaces Customer V1 présents ; validation technique intégrée encore requise.
+- **Statut :** EN COURS — décisions fonctionnelles SALES-001 à SALES-040 consignées ; socle panier et checkout Customer V1 présents ; validation technique intégrée encore requise.
 - **Référence d'architecture :** [ADR-021 — Architecture hybride du monolithe modulaire](../../architecture/decisions/ADR-021-hybrid-modular-monolith.md)
 
 > Ce document est le registre des décisions fonctionnelles et techniques du domaine Sales. Une règle non validée reste explicitement ouverte. Aucune migration ou implémentation ne doit être créée sur la base d'une supposition.
@@ -317,8 +317,11 @@ Lorsqu'une coopérative réduit le stock disponible après qu'un client a ajout�
 
 - Sales conserve la quantité demandée par le client ; aucune réduction automatique n'est effectuée.
 - La ligne est signalée comme insuffisamment disponible au regard du stock courant.
-- Le checkout est bloqué tant que la quantité demandée dépasse la disponibilité vérifiée.
-- Le client doit lui-même réduire la quantité à un niveau disponible ou retirer la ligne.
+- La disponibilité de chaque ligne est affichée et revérifiée au checkout.
+- Si une seule coopérative est concernée, aucune commande n'est créée tant que son stock ne permet pas de servir toutes les lignes.
+- Dans un panier multi-coopératives, si le stock est insuffisant pour au moins une ligne d'une coopérative, toutes les lignes de cette coopérative sont exclues ensemble de cette tentative de commande ; les lignes des autres coopératives disposant du stock requis peuvent être commandées.
+- Les lignes exclues restent actives dans le panier. Le client peut ajuster leurs quantités ou réessayer ultérieurement.
+- Une quantité n'est jamais réduite automatiquement et aucune ligne d'une coopérative insuffisamment stockée n'est commandée partiellement.
 - Sales ne réserve pas le stock et ne garantit pas qu'il restera disponible entre l'affichage et la validation.
 - La disponibilité doit être revérifiée auprès d'Inventory au checkout, puis selon le processus de confirmation défini par Inventory.
 
@@ -706,7 +709,7 @@ Cette règle couvre les changements tels que la contenance, le poids, le conditi
 
 MAHLINE V1 expose deux parcours d'achat indépendants, réservés au rôle `customer` :
 
-1. **Parcours panier** : le client ajoute plusieurs produits au panier, consulte et modifie les lignes, puis choisit « Commander » depuis la page du panier. La validation porte sur l'ensemble du panier actif. Le récapitulatif regroupe les lignes par coopérative et affiche les frais de livraison de chaque expédition, le total livraison et le total général avant confirmation.
+1. **Parcours panier** : le client ajoute plusieurs produits au panier, consulte et modifie les lignes, puis choisit « Commander » depuis la page du panier. Le récapitulatif distingue les coopératives commandables et celles exclues pour stock insuffisant. Si au moins une coopérative dispose du stock nécessaire, le client peut confirmer les seules sous-commandes commandables ; toutes les lignes des coopératives exclues restent actives dans le panier. Les frais de livraison et le total sont calculés uniquement pour les sous-commandes effectivement commandables. Si aucune coopérative ne peut être commandée, la confirmation est bloquée.
 2. **Parcours commande directe** : depuis une carte de produit ou sa fiche, le client choisit la quantité et, si nécessaire, la variante, puis choisit « Commander ». Cette commande porte exclusivement sur le produit, la variante et la quantité sélectionnés. Elle ne lit, ne fusionne, ne modifie et ne consomme jamais les lignes du panier client existant.
 
 Les deux parcours utilisent les mêmes validations serveur de produit, variante, coopérative, disponibilité Inventory, adresse client, devis Delivery et création idempotente Orders. Le navigateur ne détermine jamais le prix, les frais de livraison ou le total accepté.
@@ -721,4 +724,19 @@ Le parcours direct utilise un contexte temporaire de checkout distinct, lié à 
 - Ajout d'un contexte temporaire isolé pour la commande directe, avec vérification du jeton côté serveur et clé d'idempotence.
 - Ajout de l'action « Commander » sur les cartes de produits simples et de l'action « Commander directement » sur la fiche produit ; les produits avec variantes demandent leur sélection sur la fiche.
 - Les fichiers modifiés nécessitent encore une revue technique et l'exécution des tests Laravel, Pint et des tests HTTP/checkout avant déclaration de livraison validée.
+
+### SALES-040 — Checkout partiel en cas de stock insuffisant par coopérative
+
+**Statut : VALIDÉ — décision utilisateur du 22 novembre 2026**
+
+Pour un panier contenant des produits de plusieurs coopératives, l'insuffisance de stock est traitée au niveau de la coopérative :
+
+- Si une ou plusieurs lignes d'une coopérative ne peuvent pas être servies intégralement, toutes les lignes de cette coopérative sont exclues de la tentative de commande. Aucune quantité ni ligne de cette coopérative n'est commandée partiellement.
+- Les lignes des autres coopératives disposant du stock requis peuvent être commandées dans la même opération.
+- Les lignes exclues restent actives et inchangées dans le panier du client ; elles ne sont ni supprimées ni marquées comme commandées.
+- L'aperçu affiche explicitement les coopératives et les lignes exclues pour stock insuffisant. Les frais de livraison et totaux affichés ne portent que sur les coopératives incluses.
+- Si toutes les coopératives sont insuffisamment approvisionnées, aucune commande n'est créée et le panier est conservé.
+- La disponibilité est recalculée dans la transaction de création Orders. Si le stock devient insuffisant après l'aperçu, Orders exclut atomiquement la coopérative concernée et Sales ne consomme que les lignes des sous-commandes réellement créées.
+- Cette exclusion automatique ne s'applique pas à une coopérative inactive/supprimée, à un produit ou une variante non vendable, à une hausse de prix non acceptée ou à une modification commerciale non acceptée : ces situations continuent de bloquer le checkout jusqu'à résolution explicite par le client.
+- Cette décision complète et précise SALES-009 et SALES-013. Elle ne remplace pas SALES-031 : une coopérative inactive continue de bloquer l'ensemble du checkout conformément à cette règle.
 
