@@ -25,6 +25,7 @@ final class CooperativeOrderResponseService
 {
     public function __construct(
         private readonly InventoryReservationManager $inventoryReservations,
+        private readonly OrderStatusAggregationService $statusAggregation,
     ) {}
 
     public function confirmByCooperative(CooperativeOrder $cooperativeOrder, User $actor): CooperativeOrder
@@ -285,63 +286,13 @@ final class CooperativeOrderResponseService
 
     private function refreshGlobalOrderStatus(string $orderId, User $actor): void
     {
-        $order = Order::query()->whereKey($orderId)->lockForUpdate()->firstOrFail();
-        $statuses = $order->cooperativeOrders()->pluck('status')->map(
-            static fn ($status): string => $status instanceof CooperativeOrderStatus
-                ? $status->value
-                : (string) $status,
+        $order = Order::query()->whereKey($orderId)->firstOrFail();
+
+        $this->statusAggregation->refresh(
+            $order,
+            $actor,
+            'Agrégation des décisions des sous-commandes coopératives.',
         );
-
-        $confirmed = $statuses->filter(
-            static fn (string $status): bool => $status === CooperativeOrderStatus::CONFIRMED->value,
-        )->count();
-        $cancelled = $statuses->filter(
-            static fn (string $status): bool => $status === CooperativeOrderStatus::CANCELLED->value,
-        )->count();
-        $closed = $statuses->filter(
-            static fn (string $status): bool => in_array($status, [
-                CooperativeOrderStatus::REFUSED->value,
-                CooperativeOrderStatus::EXPIRED->value,
-                CooperativeOrderStatus::CANCELLED->value,
-            ], true),
-        )->count();
-        $total = $statuses->count();
-
-        $next = match (true) {
-            $total > 0 && $cancelled === $total => OrderStatus::CANCELLED,
-            $total > 0 && $confirmed === $total => OrderStatus::CONFIRMED,
-            $cancelled > 0 => OrderStatus::PARTIALLY_CANCELLED,
-            $total > 0 && $closed === $total => OrderStatus::REFUSED,
-            $confirmed > 0 && $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
-            $confirmed > 0 => OrderStatus::PARTIALLY_CONFIRMED,
-            $closed > 0 => OrderStatus::PARTIALLY_REFUSED,
-            default => $order->status,
-        };
-
-        if ($next === $order->status) {
-            return;
-        }
-
-        $fromStatus = $order->status->value;
-        $order->status = $next;
-        if ($next === OrderStatus::CONFIRMED) {
-            $order->confirmed_at = now();
-        }
-        $order->forceFill(['updated_by' => (string) $actor->getKey()])->save();
-
-        OrderStatusHistory::query()->create([
-            'subject_type' => 'order',
-            'subject_id' => (string) $order->getKey(),
-            'from_status' => $fromStatus,
-            'to_status' => $next->value,
-            'actor_id' => (string) $actor->getKey(),
-            'actor_role' => $actor->hasRole('super_admin_root')
-                ? 'super_admin_root'
-                : ($actor->hasRole('super_admin') ? 'super_admin' : 'cooperative_admin'),
-            'reason' => 'Agrégation des décisions des sous-commandes coopératives.',
-            'metadata' => null,
-            'occurred_at' => now(),
-        ]);
     }
 
     private function canRespondForCooperative(User $actor, CooperativeOrder $cooperativeOrder): bool
