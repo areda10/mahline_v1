@@ -52,8 +52,8 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->actingAs($adminA)
             ->get(route('backoffice.orders.cooperative.index'))
             ->assertOk()
-            ->assertSee('INBOX-OWN-001')
-            ->assertDontSee('INBOX-OTHER-001');
+            ->assertSee($suborderA->reference)
+            ->assertDontSee($suborderB->reference);
 
         $this->actingAs($adminA)
             ->get(route('backoffice.orders.cooperative.show', $suborderB))
@@ -110,14 +110,14 @@ final class CooperativeOrderControllerTest extends TestCase
         $this->actingAs($superAdmin)
             ->get(route('backoffice.orders.cooperative.index'))
             ->assertOk()
-            ->assertSee('INBOX-ASSIGNED-001')
-            ->assertDontSee('INBOX-UNASSIGNED-001');
+            ->assertSee($orderA->cooperativeOrders->firstOrFail()->reference)
+            ->assertDontSee($orderB->cooperativeOrders->firstOrFail()->reference);
 
         $this->actingAs($root)
             ->get(route('root.backoffice.orders.cooperative.index'))
             ->assertOk()
             ->assertSee('INBOX-ASSIGNED-001')
-            ->assertSee('INBOX-UNASSIGNED-001');
+            ->assertSee($orderB->cooperativeOrders->firstOrFail()->reference);
     }
 
     public function test_root_can_extend_deadline_and_record_a_reasoned_administrative_decision(): void
