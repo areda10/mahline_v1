@@ -71,6 +71,8 @@
         <div class="variant-row" style="border-top:1px solid #e5e7eb;padding:12px 0">
             <strong>{{ $variant->label }}</strong>
             <span>{{ number_format((float) $variant->price, 2, ',', ' ') }} MAD</span>
+            <span>{{ $variant->unit?->label ?? 'Unité indisponible' }}</span>
+            @if($variant->sku)<span>SKU : {{ $variant->sku }}</span>@endif
             <span class="badge {{ $variant->trashed() || !$variant->is_active ? 'badge-inactive' : '' }}">{{ $variant->trashed() ? 'Supprimée' : ($variant->is_active ? 'Active' : 'Inactive') }}</span>
             @if(!$variant->trashed())
                 @can('update', $product)
