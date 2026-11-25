@@ -712,8 +712,8 @@ final class ProductService implements CheckoutCatalog
                 return null;
             }
 
-            $unitCode = $variant->unit?->code ?? $product->unit?->code;
-            if ($unitCode === null) {
+            $unitCode = $variant->unit?->code;
+            if ($unitCode === null || $product->unit_id !== null) {
                 return null;
             }
 
