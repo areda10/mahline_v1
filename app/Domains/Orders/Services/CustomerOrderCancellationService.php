@@ -12,6 +12,8 @@ use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
+use App\Domains\Orders\Notifications\CustomerOrderCancelledNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -27,7 +29,7 @@ final class CustomerOrderCancellationService
             ]);
         }
 
-        return DB::transaction(function () use ($cooperativeOrder, $customer, $reason): CooperativeOrder {
+        $cancelledSuborder = DB::transaction(function () use ($cooperativeOrder, $customer, $reason): CooperativeOrder {
             // Lock order rows in the same order as the cooperative response workflow:
             // suborder first, then parent order. This serializes a concurrent confirm/cancel.
             $locked = CooperativeOrder::query()
@@ -85,12 +87,12 @@ final class CustomerOrderCancellationService
                 ])
                 ->get(['items_subtotal', 'delivery_fee']);
 
-            $itemsSubtotal = $remaining->sum(static fn (CooperativeOrder $item): float => (float) $item->items_subtotal);
-            $deliveryTotal = $remaining->sum(static fn (CooperativeOrder $item): float => (float) $item->delivery_fee);
+            $itemsSubtotalCents = $remaining->sum(fn (CooperativeOrder $item): int => $this->moneyToCents((string) $item->items_subtotal));
+            $deliveryTotalCents = $remaining->sum(fn (CooperativeOrder $item): int => $this->moneyToCents((string) $item->delivery_fee));
 
-            $order->items_subtotal = number_format($itemsSubtotal, 2, '.', '');
-            $order->delivery_total = number_format($deliveryTotal, 2, '.', '');
-            $order->grand_total = number_format($itemsSubtotal + $deliveryTotal, 2, '.', '');
+            $order->items_subtotal = $this->formatMoney($itemsSubtotalCents);
+            $order->delivery_total = $this->formatMoney($deliveryTotalCents);
+            $order->grand_total = $this->formatMoney($itemsSubtotalCents + $deliveryTotalCents);
 
             $statuses = $order->cooperativeOrders()->pluck('status')->map(
                 static fn ($status): string => $status instanceof CooperativeOrderStatus ? $status->value : (string) $status,
@@ -141,5 +143,33 @@ final class CustomerOrderCancellationService
 
             return $locked->refresh();
         }, 3);
+
+        $cancelledSuborder->load(['order', 'cooperative']);
+        $customer->notify(new CustomerOrderCancelledNotification($cancelledSuborder));
+
+        User::query()
+            ->where('cooperative_id', (string) $cancelledSuborder->cooperative_id)
+            ->whereHas('roles', static fn ($query) => $query->where('slug', 'cooperative_admin'))
+            ->get()
+            ->each(fn (User $recipient) => $recipient->notify(new CooperativeOrderWorkflowNotification(
+                $cancelledSuborder,
+                'order.cancelled_by_customer',
+                'Sous-commande annulée par le client',
+                'Le client a annulé cette sous-commande avant votre décision.',
+            )));
+
+        return $cancelledSuborder;
+    }
+
+    private function moneyToCents(string $amount): int
+    {
+        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '0');
+
+        return ((int) $whole * 100) + (int) str_pad($fraction, 2, '0');
+    }
+
+    private function formatMoney(int $cents): string
+    {
+        return intdiv($cents, 100).'.'.str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
     }
 }
