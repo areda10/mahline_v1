@@ -15,6 +15,7 @@ use App\Domains\Orders\Exceptions\OrderFulfillmentBlocked;
 use App\Domains\Orders\Services\CooperativeOrderResponseService;
 use App\Domains\Orders\Services\OrderAvailabilityQueryService;
 use App\Domains\Orders\Services\OrderCreationService;
+use App\Domains\Orders\Services\OrderStatusAggregationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Shared\Contracts\OrderSafetyHoldManager;
@@ -654,6 +655,60 @@ final class CooperativeOrderResponseServiceTest extends TestCase
         $this->assertCount(1, $availability['suborders']);
         $this->assertSame([], $availability['suborders'][0]['lines']);
         $this->assertTrue($availability['suborders'][0]['available']);
+    }
+
+    public function test_global_order_status_tracks_preparation_shipment_and_delivery_progress(): void
+    {
+        $customer = $this->userWithRole('customer');
+        $cooperativeA = Cooperative::factory()->active()->create();
+        $cooperativeB = Cooperative::factory()->active()->create();
+        $productA = Product::factory()->forCooperative($cooperativeA)->create([
+            'price' => '20.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $productB = Product::factory()->forCooperative($cooperativeB)->create([
+            'price' => '25.00',
+            'currency' => 'MAD',
+            'unit_id' => ProductUnit::query()->where('code', 'u')->value('id'),
+        ]);
+        $this->stockFor($cooperativeA, $productA);
+        $this->stockFor($cooperativeB, $productB);
+
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
+            'idempotency_key' => 'test-status-aggregation-fulfillment-01',
+            'delivery_address_snapshot' => ['city' => 'Casablanca', 'country' => 'Maroc'],
+            'items' => [
+                ['product_id' => (string) $productA->getKey(), 'quantity' => '1'],
+                ['product_id' => (string) $productB->getKey(), 'quantity' => '1'],
+            ],
+        ]));
+
+        $suborders = $order->cooperativeOrders()->orderBy('cooperative_id')->get();
+        $first = $suborders[0];
+        $second = $suborders[1];
+
+        $first->forceFill(['status' => CooperativeOrderStatus::PREPARING])->save();
+        $second->forceFill(['status' => CooperativeOrderStatus::CONFIRMED])->save();
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'Test agrégation préparation.');
+        $this->assertSame(OrderStatus::PREPARING, $order->fresh()->status);
+
+        $first->forceFill(['status' => CooperativeOrderStatus::SHIPPED])->save();
+        $second->forceFill(['status' => CooperativeOrderStatus::READY_FOR_SHIPMENT])->save();
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'Test agrégation expédition partielle.');
+        $this->assertSame(OrderStatus::PARTIALLY_SHIPPED, $order->fresh()->status);
+
+        $second->forceFill(['status' => CooperativeOrderStatus::SHIPPED])->save();
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'Test agrégation expédition complète.');
+        $this->assertSame(OrderStatus::SHIPPED, $order->fresh()->status);
+
+        $first->forceFill(['status' => CooperativeOrderStatus::DELIVERED])->save();
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'Test livraison partielle.');
+        $this->assertSame(OrderStatus::SHIPPED, $order->fresh()->status);
+
+        $second->forceFill(['status' => CooperativeOrderStatus::DELIVERED])->save();
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'Test livraison complète.');
+        $this->assertSame(OrderStatus::COMPLETED, $order->fresh()->status);
     }
 
     /** @param array<string, mixed> $checkout */
