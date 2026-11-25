@@ -64,13 +64,20 @@ final class MediaVideoValidationService
         $finfo = new \finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($path);
 
-        if (! is_string($mime) || $mime !== $mimeTypes[$extension]) {
+        // Certains builds de Fileinfo (notamment Windows) classent les petits
+        // fichiers vidéo ou certains conteneurs comme application/octet-stream.
+        // Dans ce cas uniquement, on exige une signature binaire cohérente puis
+        // on confirme le conteneur avec l'inspecteur vidéo avant d'accepter.
+        $mimeIsExact = is_string($mime) && $mime === $mimeTypes[$extension];
+        $mimeIsGeneric = $mime === 'application/octet-stream';
+
+        if (! $mimeIsExact && (! $mimeIsGeneric || ! $this->hasExpectedContainerSignature($path, $extension))) {
             $this->reject('Le contenu réel de la vidéo ne correspond pas à son extension.');
         }
 
         try {
             $metadata = $this->inspector->inspect($path);
-        } catch (\Throwable) {
+        } catch (\\Throwable) {
             $this->reject('La vidéo est illisible ou ses métadonnées ne peuvent pas être vérifiées.');
         }
 
@@ -103,6 +110,33 @@ final class MediaVideoValidationService
             'original_name' => mb_substr(basename($file->getClientOriginalName()), 0, 255),
             'video' => $metadata,
         ];
+    }
+
+    private function hasExpectedContainerSignature(string $path, string $extension): bool
+    {
+        $handle = @fopen($path, 'rb');
+
+        if ($handle === false) {
+            return false;
+        }
+
+        try {
+            $header = fread($handle, 64);
+        } finally {
+            fclose($handle);
+        }
+
+        if (! is_string($header)) {
+            return false;
+        }
+
+        return match ($extension) {
+            'webm' => str_starts_with($header, "\\x1A\\x45\\xDF\\xA3"),
+            'mov' => str_contains($header, 'ftypqt  '),
+            'mp4' => str_contains($header, 'ftyp')
+                && preg_match('/ftyp(?:isom|iso[2-9]|mp4[12]|avc1|M4V |MSNV|dash)/', $header) === 1,
+            default => false,
+        };
     }
 
     private function reject(string $message): never
