@@ -10,7 +10,6 @@ use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Domains\Products\Services\ProductVariantService;
-use App\Domains\Products\Services\ProductService;
 use Database\Seeders\ProductUnitSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
