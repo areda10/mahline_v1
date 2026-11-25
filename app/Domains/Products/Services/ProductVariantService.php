@@ -130,7 +130,7 @@ final class ProductVariantService
             $before = $this->snapshot($variant);
             $newActiveState = (bool) ($attributes['is_active'] ?? $variant->is_active);
 
-            if (array_key_exists('name', $attributes))
+            if (array_key_exists('name', $attributes)) {
                 $name = trim((string) $attributes['name']);
                 $normalizedLabel = $this->normalizeLabel($name);
 
