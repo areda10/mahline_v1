@@ -40,14 +40,65 @@
 
 @if(($product->product_type ?? 'simple') === 'variant')
 <div class="card">
-    <h2>Variantes</h2>
-    @forelse($product->variants()->with('unit')->orderBy('created_at')->get() as $variant)
-        <div style="padding:12px 0;border-bottom:1px solid #444">
-            <strong>{{ $variant->label }}</strong>
-            <p>Prix : {{ number_format((float) $variant->effectivePrice(), 2, ',', ' ') }} MAD</p>
-            <p>Unité : {{ $variant->unit?->label ?? 'Non définie' }}</p>
-            @if($variant->sku)<p>SKU : {{ $variant->sku }}</p>@endif
-            <p>État : {{ $variant->is_active ? 'Active' : 'Inactive' }}</p>
+    <div class="page-header">
+        <div>
+            <h2>Variantes</h2>
+            <p class="muted">Gérez les libellés, prix, unités, références SKU et états de chaque variante.</p>
+        </div>
+        @can('update', $product)
+            <a class="button" href="{{ route('root.backoffice.cooperatives.products.variants.create', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey()]) }}">Ajouter une variante</a>
+        @endcan
+    </div>
+
+    @php($variants = $product->variants()->withTrashed()->with('unit')->orderBy('created_at')->get())
+    @forelse($variants as $variant)
+        <div style="padding:14px 0;border-bottom:1px solid #444">
+            <div class="page-header">
+                <div>
+                    <strong>{{ $variant->label }}</strong>
+                    @if($variant->sku)<p class="muted">SKU : {{ $variant->sku }}</p>@endif
+                    <p>Prix : {{ $variant->effectivePrice() !== null ? number_format((float) $variant->effectivePrice(), 2, ',', ' ') . ' MAD' : 'Non défini' }}</p>
+                    <p>Unité : {{ $variant->unit?->label ?? 'Non définie' }}</p>
+                    <p>État :
+                        @if($variant->trashed())
+                            <span class="badge badge-inactive">Supprimée</span>
+                        @else
+                            <span class="badge {{ $variant->is_active ? '' : 'badge-inactive' }}">{{ $variant->is_active ? 'Active' : 'Inactive' }}</span>
+                        @endif
+                    </p>
+                </div>
+                <div class="actions">
+                    @if($variant->trashed())
+                        @can('restore', $product)
+                            <form method="POST" action="{{ route('root.backoffice.cooperatives.products.variants.restore', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey(), 'variant' => $variant->getKey()]) }}">
+                                @csrf @method('PATCH')
+                                <button class="button button-secondary button-small" type="submit">Restaurer</button>
+                            </form>
+                        @endcan
+                    @else
+                        @can('update', $product)
+                            <a class="button button-secondary button-small" href="{{ route('root.backoffice.cooperatives.products.variants.edit', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey(), 'variant' => $variant->getKey()]) }}">Modifier</a>
+                            @if($variant->is_active)
+                                <form method="POST" action="{{ route('root.backoffice.cooperatives.products.variants.deactivate', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey(), 'variant' => $variant->getKey()]) }}">
+                                    @csrf @method('PATCH')
+                                    <button class="button button-secondary button-small" type="submit">Désactiver</button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('root.backoffice.cooperatives.products.variants.activate', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey(), 'variant' => $variant->getKey()]) }}">
+                                    @csrf @method('PATCH')
+                                    <button class="button button-secondary button-small" type="submit">Activer</button>
+                                </form>
+                            @endif
+                        @endcan
+                        @can('delete', $product)
+                            <form method="POST" action="{{ route('root.backoffice.cooperatives.products.variants.destroy', ['cooperative' => $cooperative->getKey(), 'product' => $product->getKey(), 'variant' => $variant->getKey()]) }}" onsubmit="return confirm('Supprimer cette variante ?');">
+                                @csrf @method('DELETE')
+                                <button class="button button-danger button-small" type="submit">Supprimer</button>
+                            </form>
+                        @endcan
+                    @endif
+                </div>
+            </div>
         </div>
     @empty
         <p class="muted">Aucune variante enregistrée.</p>
