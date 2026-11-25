@@ -6,7 +6,7 @@
 
 - Galerie de produits, une image principale au maximum et 10 images actives maximum par produit.
 - Logo et galerie de photos de coopérative.
-- Photo de profil privée.
+- Photo de profil privée, avec upload/remplacement/suppression depuis l'espace Customer et affichage via le flux privé authentifié.
 - Documents privés PDF, JPG, JPEG et PNG ; catégories contrôlées : `identity`, `legal`, `administrative`, `certification`, `other`.
 - Quota de 20 documents actifs maximum par propriétaire.
 - Stockage physique privé pour les originaux et dérivés ; accès public uniquement via le contrôleur qui revérifie la visibilité à chaque requête.
@@ -67,7 +67,7 @@ document_category: identity | legal | administrative | certification | other (ob
 file: fichier
 ```
 
-Le serveur détermine la collection, le disque, la visibilité, le chemin et les dérivés. Le client ne fournit jamais de chemin physique.
+Le serveur détermine la collection, le disque, la visibilité, le chemin et les dérivés. Le client ne fournit jamais de chemin physique. Pour le profil Customer, l'interface utilise `POST /customer/profile/photo` et `DELETE /customer/profile/photo` ; ces routes dédiées réutilisent `MediaService` et imposent le rôle `customer`, une session active et l'isolation du compte Customer. Le flux générique `POST /media` reste disponible selon les Policies Media.
 
 ```http
 GET    /media/{media}
@@ -85,7 +85,7 @@ DELETE /media/{media}
 - `super_admin` : coopératives affectées uniquement.
 - `cooperative_admin` : sa coopérative uniquement.
 - `user` : consultation des images publiques uniquement pour les médias de produits ; aucun droit de gestion des images de produits.
-- Le propriétaire d’une photo de profil peut gérer sa propre photo ; les documents privés sont soumis aux Policies et au périmètre du propriétaire.
+- Le propriétaire d’une photo de profil peut gérer sa propre photo ; les documents privés sont soumis aux Policies et au périmètre du propriétaire. Le parcours Customer expose uniquement sa propre photo et la diffuse par `GET /media/{media}/private?variant=thumbnail` ; aucun fichier ni dérivé n'est public.
 - Les journaux d’audit complets sont réservés à `super_admin_root`.
 
 Les contrôles d’autorisation sont toujours exécutés côté serveur et ne sont jamais remplacés par les contrôles d’interface.
@@ -124,3 +124,13 @@ vendor/bin/pint --test
 ```
 
 Ne déclarer MEDIA V1 conforme qu’après exécution réussie des tests ciblés, de la suite complète et de Pint sur la branche de travail.
+
+
+## Intégration de la photo de profil Customer — 25 novembre 2026
+
+- `CustomerProfileController` délègue l'upload et la suppression à `MediaService` ; aucune écriture directe de fichier ou de ligne `media` n'est ajoutée dans Identity.
+- `POST /customer/profile/photo` accepte JPG, JPEG, PNG et WebP statique, avec une limite HTTP de 5 Mo ; le validateur MEDIA vérifie à nouveau le MIME réel, l'extension, la signature, les dimensions et l'animation.
+- `MediaCategory::PROFILE_IMAGE` produit un média privé unique et principal. Le remplacement conserve l'ancien média en suppression logique et l'historique MEDIA.
+- `DELETE /customer/profile/photo` effectue une suppression logique auditée.
+- L'espace Customer affiche la variante `thumbnail` via la route privée authentifiée ; le stockage physique n'est jamais exposé.
+- Les tests Feature couvrent upload, remplacement, suppression, refus de format non autorisé et affichage de la section photo. Ils doivent être exécutés localement avant de déclarer la fonctionnalité validée.
