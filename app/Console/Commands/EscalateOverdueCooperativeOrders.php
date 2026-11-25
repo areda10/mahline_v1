@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\\Console\\Commands;
+namespace App\Console\Commands;
 
-use App\\Domains\\Orders\\Services\\CooperativeOrderEscalationService;
-use Illuminate\\Console\\Command;
+use App\Domains\Orders\Services\CooperativeOrderEscalationService;
+use Illuminate\Console\Command;
 
 final class EscalateOverdueCooperativeOrders extends Command
 {
