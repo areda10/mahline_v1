@@ -298,7 +298,6 @@ final class ProductVariantServiceTest extends TestCase
         ]);
     }
 
-
     public function test_inactive_variant_can_reuse_an_active_variant_label(): void
     {
         $product = $this->createProduct();
@@ -409,5 +408,4 @@ final class ProductVariantServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->service->restore(ProductVariant::withTrashed()->findOrFail($deleted->getKey()));
     }
-
 }

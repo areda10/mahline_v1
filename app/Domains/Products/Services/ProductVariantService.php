@@ -202,7 +202,6 @@ final class ProductVariantService
         });
     }
 
-
     public function deactivate(ProductVariant $variant, ?User $actor = null): ProductVariant
     {
         return $this->update($variant, ['is_active' => false], $actor);
