@@ -67,9 +67,11 @@ final class CooperativeOrderControllerTest extends TestCase
 
     public function test_cooperative_admin_can_confirm_and_refuse_own_suborders_with_a_required_reason(): void
     {
+        Notification::fake();
         $customer = $this->userWithRole('customer');
         $cooperative = Cooperative::factory()->active()->create();
         $admin = $this->userWithRole('cooperative_admin', ['cooperative_id' => $cooperative->getKey()]);
+        $employee = $this->userWithRole('user', ['cooperative_id' => $cooperative->getKey()]);
         $confirmOrder = $this->makeOrder($customer, $cooperative, 'INBOX-CONFIRM-001');
         $refuseOrder = $this->makeOrder($customer, $cooperative, 'INBOX-REFUSE-001');
         $toConfirm = $confirmOrder->cooperativeOrders->firstOrFail();
@@ -80,6 +82,7 @@ final class CooperativeOrderControllerTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(CooperativeOrderStatus::CONFIRMED, $toConfirm->fresh()->status);
+        Notification::assertSentTo($employee, CooperativeOrderWorkflowNotification::class);
         $this->assertDatabaseHas('inventory_reservations', [
             'cooperative_order_id' => $toConfirm->getKey(),
             'status' => 'active',
