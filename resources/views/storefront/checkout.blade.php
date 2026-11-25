@@ -80,6 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 feedback.className = 'shop-alert shop-error';
                 feedback.textContent = 'Certains articles ne sont pas commandables. Consultez votre panier, acceptez les changements nécessaires ou retirez les lignes indisponibles avant de recommencer.';
                 confirmButton.disabled = true;
+            } else if (preview.excluded_groups?.length) {
+                feedback.className = 'shop-alert';
+                feedback.textContent = 'Le stock est insuffisant dans certaines coopératives. Leurs articles ne seront pas inclus dans cette commande et resteront dans votre panier.';
             }
 
             groupsElement.innerHTML = (preview.groups || []).map(group => {
@@ -98,6 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     const name = snapshot.name || snapshot.product_name || 'Produit';
                     return '<article class="shop-alert shop-error" style="margin:0"><strong>'+escapeHtml(name)+'</strong><div style="font-size:12px;margin-top:4px">Cet article ne peut pas être commandé dans son état actuel. Retournez au panier pour le corriger ou le retirer.</div></article>';
                 }).join('');
+            }
+
+            if (preview.excluded_groups?.length) {
+                const excludedHtml = preview.excluded_groups.map(group => {
+                    const lines = (group.items || []).map(item => {
+                        const snapshot = item.product || {};
+                        const name = snapshot.name || snapshot.product_name || 'Produit';
+                        const variant = snapshot.variant_label || snapshot.variant || '';
+                        return '<div style="padding:7px 0;border-top:1px solid var(--shop-line)"><strong>'+escapeHtml(name)+'</strong>'+(variant ? '<div class="shop-muted" style="font-size:11px">'+escapeHtml(variant)+'</div>' : '')+'<div class="shop-muted" style="font-size:11px">Quantité conservée dans le panier : '+escapeHtml(item.quantity)+'</div></div>';
+                    }).join('');
+                    return '<article class="shop-alert" style="margin:0"><h3 style="font-size:14px;margin:0 0 8px">'+escapeHtml(group.cooperative_name || 'Coopérative')+' — stock insuffisant</h3>'+lines+'</article>';
+                }).join('');
+                groupsElement.innerHTML += excludedHtml;
             }
 
             document.getElementById('checkout-subtotal').textContent = money(preview.subtotal);
@@ -167,7 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(payload.message || Object.values(payload.errors || {}).flat().join(' ') || 'La commande n’a pas pu être confirmée.');
             content.style.display = 'none';
             document.getElementById('checkout-success').style.display = 'block';
-            document.getElementById('checkout-success-reference').textContent = 'Référence : '+(payload.data.order_reference || payload.data.order_id);
+            const excludedCooperatives = payload.data.excluded_cooperative_ids || [];
+            document.getElementById('checkout-success-reference').textContent =
+                'Référence : '+(payload.data.order_reference || payload.data.order_id)
+                +(excludedCooperatives.length ? ' — Certains articles restent dans votre panier car leur coopérative ne disposait pas du stock suffisant.' : '');
         } catch (error) {
             feedback.className = 'shop-alert shop-error';
             feedback.textContent = error.message;
