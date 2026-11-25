@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Domains\Products;
 
-use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Categories\Models\Category;
+use App\Domains\Cooperatives\Models\Cooperative;
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Permission;
 use App\Domains\Identity\Authorization\Models\Role;
@@ -28,7 +28,6 @@ final class ProductVariantManagementTest extends TestCase
         parent::setUp();
         $this->seed(ProductUnitSeeder::class);
     }
-
 
     public function test_cooperative_admin_can_create_a_product_with_variants(): void
     {
@@ -190,7 +189,6 @@ final class ProductVariantManagementTest extends TestCase
 
         $this->assertSame('Format 250 g assigné', $variant->fresh()->label);
     }
-
 
     public function test_variant_parent_remains_editable_when_all_variants_are_soft_deleted(): void
     {
