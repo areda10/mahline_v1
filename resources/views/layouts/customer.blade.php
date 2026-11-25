@@ -13,6 +13,8 @@
         .brand{font-size:22px;font-weight:700;letter-spacing:.04em}
         nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
         nav form{margin:0}
+        .customer-profile-link{display:inline-flex;align-items:center;gap:8px}
+        .customer-profile-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;vertical-align:middle}
         nav button{border:1px solid #d9e9e2;border-radius:6px;padding:8px 12px;background:transparent;color:#fff;cursor:pointer}
         main{max-width:1100px;margin:28px auto;padding:0 20px}
         .card{padding:22px;margin-bottom:18px;background:#fff;border:1px solid #e0e8e3;border-radius:10px}
@@ -30,6 +32,7 @@
     @stack('styles')
 </head>
 <body>
+@php($customerAvatar = auth()->user()?->profileImage)
 <header>
     <a class="brand" href="{{ route('customer.dashboard') }}">MAHLINE</a>
     @include('notifications._bell')
@@ -38,7 +41,14 @@
         <a href="{{ route('sales.cart.page') }}">Mon panier</a>
         <a href="{{ route('customer.orders.index') }}">Mes commandes</a>
         <a href="{{ route('customer.dashboard') }}">Mon espace</a>
-        <a href="{{ route('customer.profile.edit') }}">Mon profil</a>
+        <a class="customer-profile-link" href="{{ route('customer.profile.edit') }}">
+            @if ($customerAvatar)
+                <img class="customer-profile-avatar" src="{{ route('media.private', $customerAvatar) }}?variant=thumbnail" alt="" width="30" height="30">
+            @else
+                <span class="customer-profile-avatar" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;background:#e4eee8;color:#153d34;font-weight:700">{{ mb_strtoupper(mb_substr(auth()->user()->first_name ?: 'C', 0, 1)) }}</span>
+            @endif
+            <span>Mon profil</span>
+        </a>
         <a href="{{ route('customer.security.password.edit') }}">Sécurité</a>
         <a href="{{ route('customer.security.devices.index') }}">Mes appareils</a>
         <form method="POST" action="{{ route('customer.logout') }}">
