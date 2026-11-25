@@ -3,7 +3,8 @@
 - **Date de revue :** 25 novembre 2026
 - **Dépôt :** `areda10/mahline_v1`
 - **Branche auditée :** `feature/Marketplace`
-- **Référence auditée :** `8dfd554c60f17f93cc09904ce9b51b306210ad2d`
+- **Référence audit initiale :** `8dfd554c60f17f93cc09904ce9b51b306210ad2d`
+- **Correctifs code ajoutés :** `ab849e46d89eca65288320fa4fa691e3d698b5dc`
 - **Périmètre :** profil Customer, carnet d'adresses, changement d'e-mail et liaison avec le checkout Sales / snapshot Orders.
 - **Nature :** revue statique des fichiers du dépôt. Les résultats de tests ci-dessous sont ceux communiqués par l'utilisateur et exécutés localement.
 
@@ -24,8 +25,8 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | Suppression logique et promotion d'une adresse restante | Implémenté dans Localization |
 | Choisir une adresse existante au checkout | Implémenté |
 | Ajouter une adresse depuis le checkout et l'enregistrer | Implémenté |
-| Sélectionner automatiquement au checkout l'adresse nouvellement ajoutée | **Écart** : le checkout recharge la liste et présélectionne l'adresse principale ; une nouvelle adresse secondaire n'est pas automatiquement sélectionnée |
-| Modifier une adresse secondaire depuis le carnet | **Non implémenté** : seul le formulaire du profil met à jour l'adresse principale / la plus ancienne |
+| Sélectionner automatiquement au checkout l'adresse nouvellement ajoutée | **Corrigé dans le code** : le endpoint JSON renvoie l'identifiant créé et le checkout le présélectionne après rechargement, sans changer l'adresse principale |
+| Modifier une adresse secondaire depuis le carnet | **Corrigé dans le code** : formulaire individuel, route PATCH et service Localization ciblé par propriétaire/adresse, avec audit |
 | Photo de profil Customer | **Non implémentée dans l'interface Customer** ; le modèle User expose un lien Media, mais aucun flux upload Customer n'a été identifié dans ce périmètre |
 | Suite de tests Customer exécutée localement | **Non confirmée** par les résultats transmis pour cet audit |
 
@@ -35,7 +36,7 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 
 | Fichier | Responsabilité constatée | État / observation |
 |---|---|---|
-| `app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php` | Affiche le profil, met à jour les données, ajoute / définit / supprime les adresses et initie le changement d'e-mail | Implémenté. Les actions carnet sont déléguées au contrat Localization. |
+| `app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php` | Affiche le profil, met à jour les données, ajoute / modifie / définit / supprime les adresses et initie le changement d'e-mail | Implémenté. Les actions carnet sont déléguées au contrat Localization ; l'ajout JSON renvoie l'identifiant créé. |
 | `app/Domains/Identity/Customer/Http/Requests/UpdateCustomerProfileRequest.php` | Valide les champs du profil et l'adresse affichée avec le profil | Écart UX/fonctionnel : rue, ville et région sont obligatoires dans le même PUT que prénom/nom/téléphone. Un client sans adresse ne peut donc pas modifier uniquement ses informations personnelles. |
 | `app/Domains/Identity/Customer/Http/Requests/RequestCustomerEmailChange.php` | Autorise uniquement un compte Customer et valide nouvel e-mail / mot de passe | Implémenté. |
 | `app/Domains/Identity/Customer/Services/CustomerProfileService.php` | Met à jour prénom, nom, display_name et téléphone sous verrou ; écrit un événement d'audit | Implémenté. Refuse les comptes non Customer, les comptes avec rôle interne, inactifs ou non vérifiés. |
@@ -43,9 +44,9 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | `app/Domains/Identity/Customer/Models/CustomerEmailChangeRequest.php` | Persiste la demande de changement d'e-mail | Implémenté. |
 | `app/Domains/Identity/Customer/Notifications/CustomerEmailChangeNotification.php` | Envoie le lien de confirmation à la nouvelle adresse | Implémenté. |
 | `app/Domains/Identity/Customer/Notifications/CustomerEmailChangedNotification.php` | Informe l'ancienne adresse après validation | Implémenté. |
-| `resources/views/customer/profile/edit.blade.php` | Interface profil, adresse principale, carnet, ajout et changement d'e-mail | Présent. Pas d'édition individuelle des adresses secondaires ni d'upload de photo. Le message de succès est aussi rendu par le layout, ce qui peut afficher deux fois le même message. |
+| `resources/views/customer/profile/edit.blade.php` | Interface profil, adresse principale, carnet, ajout, édition individuelle et changement d'e-mail | Présent. Chaque adresse dispose de son formulaire d'édition. Pas d'upload de photo Customer identifié. Le message de succès peut encore être rendu deux fois par le layout et la vue. |
 | `resources/views/layouts/customer.blade.php` | Navigation Customer vers boutique, panier, commandes, profil, sécurité et appareils | Présent. Le lien profil est accessible depuis la navigation Customer. |
-| `routes/web.php` | Déclare les routes Customer profile et les protège par auth, session active, rôle Customer et middleware de compte Customer | Présent. Routes : `customer.profile.edit`, `customer.profile.update`, `customer.profile.addresses.store`, `customer.profile.addresses.primary`, `customer.profile.addresses.destroy`, `customer.profile.email.change`. |
+| `routes/web.php` | Déclare les routes Customer profile et les protège par auth, session active, rôle Customer et middleware de compte Customer | Présent. Routes : `customer.profile.edit`, `customer.profile.update`, `customer.profile.addresses.store`, `customer.profile.addresses.update`, `customer.profile.addresses.primary`, `customer.profile.addresses.destroy`, `customer.profile.email.change`. |
 | `app/Domains/Identity/Customer/Http/Middleware/EnsureCustomerAccount.php` | Empêche les comptes ayant des rôles internes d'utiliser l'espace Customer | Présent et appliqué au groupe de routes du profil. |
 | `tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php` | Consultation, mise à jour, protection des champs sensibles, séparation des rôles, ajout / principale / suppression logique | Présent. Ne prouve pas à lui seul la couverture complète des limites et de la concurrence. |
 | `tests/Feature/Domains/Identity/Customer/CustomerEmailChangeTest.php` | Mot de passe incorrect, e-mail déjà utilisé, révocation des demandes précédentes, expiration, sessions/tokens et audit | Présent. Exécution locale non communiquée pour cet audit. |
@@ -57,10 +58,10 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 |---|---|---|
 | `app/Domains/Localization/Models/Address.php` | Modèle d'adresse avec propriétaire User ou coopérative, pays, adresse principale et SoftDeletes | Implémenté. |
 | `app/Domains/Identity/Users/Models/User.php` | Relations `addresses()` et `primaryAddress()` | Implémenté. |
-| `app/Domains/Localization/Contracts/UserAddressLifecycleManager.php` | Contrat public de cycle de vie des adresses User | Implémenté. |
+| `app/Domains/Localization/Contracts/UserAddressLifecycleManager.php` | Contrat public de cycle de vie des adresses User | Implémenté ; expose aussi la mise à jour d'une adresse par son identifiant. |
 | `app/Domains/Localization/Contracts/UserAddressOwnerGateway.php` | Frontière vers Identity pour verrouiller / autoriser le propriétaire | Implémenté. |
 | `app/Domains/Identity/Users/Services/IdentityUserAddressOwnerGateway.php` | Adaptateur Identity et application de AddressPolicy | Implémenté. |
-| `app/Domains/Localization/Services/AddressService.php` | Création, mise à jour, principale, suppression logique, restauration et audit | Implémenté. La création verrouille le propriétaire et applique la limite Customer de cinq adresses actives. |
+| `app/Domains/Localization/Services/AddressService.php` | Création, mise à jour ciblée, principale, suppression logique, restauration et audit | Implémenté. La mise à jour ciblée verrouille le propriétaire et l'adresse, vérifie l'appartenance et journalise les changements. |
 | `app/Domains/Localization/Policies/AddressPolicy.php` | Autorisation de gestion d'une adresse personnelle | Implémenté ; les tests de policy couvrent les rôles et la propriété. |
 | `app/Domains/Localization/Services/CheckoutAddressSnapshotService.php` | Vérifie l'appartenance et l'activité de l'adresse, puis construit le DTO de snapshot | Implémenté. Refuse une adresse qui n'appartient pas au Customer ou qui est incomplète / indisponible. |
 | `app/Domains/Localization/Providers/LocalizationServiceProvider.php` | Lie les contrats d'adresse à AddressService et CheckoutAddressSnapshotService | Implémenté. |
@@ -74,26 +75,26 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | Fichier | Responsabilité constatée | État / observation |
 |---|---|---|
 | `app/Domains/Sales/Http/Controllers/SalesCartController.php` | Fournit au checkout la liste des adresses Customer actives ; exige un `delivery_address_id` à la confirmation | Implémenté. Les adresses sont filtrées par propriétaire et pays actif, avec la principale en premier. |
-| `resources/views/storefront/checkout.blade.php` | Choix d'une adresse existante et formulaire d'ajout d'une adresse | Présent. Le formulaire poste vers `customer.profile.addresses.store`, puis recharge l'aperçu. Il ne conserve pas l'identifiant de la nouvelle adresse pour la sélectionner explicitement. |
+| `resources/views/storefront/checkout.blade.php` | Choix d'une adresse existante et formulaire d'ajout d'une adresse | Présent. Le formulaire poste vers `customer.profile.addresses.store`, récupère l'identifiant créé et le transmet au rechargement de l'aperçu pour présélectionner cette adresse. |
 | `app/Domains/Sales/Services/SalesCheckoutService.php` | Demande le snapshot Localization avant création de commande | Implémenté. |
 | `app/Domains/Localization/Contracts/CheckoutAddressReader.php` | Contrat de lecture / snapshot pour Sales | Implémenté. |
 | `app/Domains/Localization/DTOs/CheckoutAddressSnapshot.php` | Transporte les champs du snapshot sans exposer le modèle Address | Implémenté. |
 | `app/Domains/Orders/DTOs/OrderCheckoutData.php` | Transporte le snapshot d'adresse à Orders | Implémenté. |
 | `app/Domains/Orders/Services/OrderCreationService.php` | Persiste le snapshot dans `orders.delivery_address_snapshot` | Implémenté. La commande conserve une copie des données ; elle ne dépend pas de la lecture ultérieure du carnet courant. |
-| `tests/Feature/Domains/Sales/Http/SalesCustomerCheckoutFlowsTest.php` | Parcours checkout panier et commande directe | Présent ; résultat vert communiqué par l'utilisateur. Le test transmis ne vérifie pas le cas précis « ajouter une adresse alors qu'une autre est principale, puis confirmer avec la nouvelle ». |
+| `tests/Feature/Domains/Sales/Http/SalesCustomerCheckoutFlowsTest.php` | Parcours checkout panier et commande directe | Présent ; résultat vert communiqué par l'utilisateur. Un test de non-régression a été ajouté pour vérifier le retour de l'identifiant de la nouvelle adresse, son ajout à l'aperçu et la préservation de l'adresse principale ; l'exécution locale reste à confirmer. |
 
 ## 3. Écarts et tâches V1 à traiter
 
 ### P0 — Corriger avant de considérer le profil V1 terminé
 
-1. **Découpler la mise à jour du profil de l'adresse.** Le PUT du profil ne doit pas exiger une rue, une ville et une région pour modifier seulement prénom, nom ou téléphone. Séparer les données personnelles et la mise à jour d'adresse, ou rendre l'adresse conditionnelle sans perdre la validation stricte lorsqu'elle est réellement soumise.
-2. **Respecter la décision Customer validée pour le checkout (option A).** Une adresse ajoutée depuis le checkout doit être enregistrée dans le carnet ET devenir l'adresse sélectionnée pour la commande en cours. Le serveur doit retourner l'identifiant de l'adresse créée et le client doit le sélectionner après le rafraîchissement de l'aperçu. Ne pas changer automatiquement l'adresse principale du carnet si ce n'est pas demandé.
-3. **Ajouter les tests HTTP de ces deux comportements.** Inclure un scénario avec adresse principale existante, ajout d'une seconde adresse depuis le checkout, sélection de cette seconde adresse, confirmation et vérification du snapshot Orders.
+1. **Découpler la mise à jour du profil de l'adresse.** Toujours ouvert : le PUT du profil ne doit pas exiger une rue, une ville et une région pour modifier seulement prénom, nom ou téléphone.
+2. **Checkout — sélection de la nouvelle adresse.** Corrigé dans le code : le endpoint retourne `data.id`, puis le frontend sélectionne cette adresse après actualisation de l'aperçu ; le drapeau `is_primary` du carnet n'est pas modifié.
+3. **Édition individuelle des adresses.** Corrigée dans le code : formulaire et route PATCH dédiés, méthode `updateAddressForUser()` avec verrouillage, contrôle d'appartenance, validation centralisée et audit.
+4. **Tests de non-régression ajoutés, à exécuter localement.** Le test Sales vérifie l'identifiant retourné, la présence de la nouvelle adresse dans l'aperçu et la conservation de l'adresse principale. Le test Identity vérifie la modification d'une adresse secondaire, l'absence de promotion implicite et le rejet d'une adresse appartenant à un autre client.
 
 ### P1 — Fonctionnalités à arbitrer / compléter
 
-4. **Édition des adresses secondaires.** Aucun bouton ni endpoint d'édition individuelle n'a été identifié. Le formulaire actuel ne met à jour que l'adresse principale / la plus ancienne. Confirmer si l'édition de chacune des cinq adresses fait partie du V1 ; si oui, ajouter route, validation, autorisation par propriétaire et tests.
-5. **Photo de profil.** Aucun contrôle d'affichage ou d'upload Customer n'a été identifié dans l'écran. Le modèle User possède une relation `profileImage()` vers Media, mais cela ne prouve pas que le flux Customer soit implémenté. À classer selon le périmètre fonctionnel V1 confirmé.
+4. **Photo de profil.** Aucun contrôle d'affichage ou d'upload Customer n'a été identifié dans l'écran. Le modèle User possède une relation `profileImage()` vers Media, mais cela ne prouve pas que le flux Customer soit implémenté. À classer selon le périmètre fonctionnel V1 confirmé.
 6. **Nettoyage UI.** Éviter le double affichage du message de succès par le layout et la vue profil.
 7. **Robustesse et tests d'intégration.** Couvrir l'adresse d'un autre client, l'accès par compte multi-rôle, compte inactif / non vérifié, dépassement des cinq adresses par HTTP, ajout concurrent, suppression de l'adresse principale, restauration et adresse supprimée utilisée au checkout.
 
@@ -131,3 +132,13 @@ Les commandes répétées dans le compte rendu ont été regroupées ici.
 - Suite complète `php artisan test`
 
 Aucun test n'est déclaré exécuté par l'assistant. Le profil Customer et le carnet ne doivent pas être déclarés validés V1 avant exécution locale des tests ciblés et correction des écarts P0.
+
+
+## 6. Révalidation après correctifs — 25 novembre 2026
+
+Les correctifs ci-dessous ont été poussés sur `feature/Marketplace` après l'audit initial :
+
+- **Checkout :** `CustomerProfileController::storeAddress()` retourne désormais `data.id` pour les requêtes JSON. `checkout.blade.php` transmet cet identifiant à `loadPreview()` et sélectionne la nouvelle adresse, même si une autre adresse est principale. La création ne modifie pas `is_primary`.
+- **Carnet :** ajout de `PATCH customer/profile/addresses/{address}`, du formulaire d'édition pour chaque adresse et de `UserAddressLifecycleManager::updateAddressForUser()`. `AddressService` verrouille le propriétaire et l'adresse, filtre par `user_id`, applique l'autorisation Identity et réutilise la validation / journalisation existantes.
+- **Tests ajoutés :** modification d'une adresse secondaire sans changer l'adresse principale ; refus d'une adresse appartenant à un autre Customer ; identifiant de la nouvelle adresse renvoyé au checkout et présence dans l'aperçu.
+- **Résultats :** aucun résultat d'exécution n'est encore communiqué pour ces nouveaux tests. Ils doivent être exécutés localement avant de déclarer les deux corrections validées.
