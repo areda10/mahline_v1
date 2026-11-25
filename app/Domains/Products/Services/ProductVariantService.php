@@ -10,7 +10,6 @@ use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
 use App\Domains\Products\Models\ProductVariant;
 use App\Shared\Contracts\StockUnitChangeGuard;
-use Illuminate\Support\Facades\DB;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -120,7 +119,7 @@ final class ProductVariantService
                 ]);
             }
 
-            if ($product === null || $product->trashed() || ! $product->is_active) {
+            if ($product === null || $product->trashed()) {
                 throw ValidationException::withMessages([
                     'product' => [
                         'Le produit associé n’est pas disponible.',
@@ -224,7 +223,11 @@ final class ProductVariantService
         return DB::transaction(function () use ($variant, $actor): bool {
             $locked = ProductVariant::query()->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
             $product = Product::withTrashed()->whereKey($locked->product_id)->lockForUpdate()->firstOrFail();
-            $this->assertProductIsAvailable($product);
+            if ($product->trashed()) {
+                throw ValidationException::withMessages([
+                    'product' => ['Impossible de gérer une variante dont le produit parent est supprimé.'],
+                ]);
+            }
 
             $before = $this->snapshot($locked);
             $deleted = (bool) $locked->delete();
@@ -242,7 +245,11 @@ final class ProductVariantService
         return DB::transaction(function () use ($variant, $actor): bool {
             $locked = ProductVariant::withTrashed()->whereKey($variant->getKey())->lockForUpdate()->firstOrFail();
             $product = Product::withTrashed()->whereKey($locked->product_id)->lockForUpdate()->firstOrFail();
-            $this->assertProductIsAvailable($product);
+            if ($product->trashed()) {
+                throw ValidationException::withMessages([
+                    'product' => ['Impossible de restaurer une variante dont le produit parent est supprimé.'],
+                ]);
+            }
 
             if (! $locked->trashed()) {
                 return false;
