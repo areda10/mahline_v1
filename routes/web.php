@@ -350,6 +350,7 @@ Route::prefix('customer/profile')
         Route::get('/', [CustomerProfileController::class, 'edit'])->name('edit');
         Route::put('/', [CustomerProfileController::class, 'update'])->name('update');
         Route::post('addresses', [CustomerProfileController::class, 'storeAddress'])->name('addresses.store');
+        Route::patch('addresses/{address}', [CustomerProfileController::class, 'updateAddress'])->name('addresses.update');
         Route::patch('addresses/{address}/primary', [CustomerProfileController::class, 'setPrimaryAddress'])->name('addresses.primary');
         Route::delete('addresses/{address}', [CustomerProfileController::class, 'deleteAddress'])->name('addresses.destroy');
         Route::post('email', [CustomerProfileController::class, 'requestEmailChange'])
