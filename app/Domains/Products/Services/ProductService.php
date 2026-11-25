@@ -248,6 +248,7 @@ final class ProductService implements CheckoutCatalog
             } else {
                 $unitId = $this->validatedUnitId(
                     $attributes['unit_id'] ?? $product->unit_id,
+                    (string) $product->unit_id,
                 );
             }
 
