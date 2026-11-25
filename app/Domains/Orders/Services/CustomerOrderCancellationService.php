@@ -10,6 +10,7 @@ use App\Domains\Orders\Enums\OrderItemStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
+use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
 use App\Domains\Orders\Notifications\CustomerOrderCancelledNotification;
 use Illuminate\Support\Facades\DB;
