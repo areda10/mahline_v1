@@ -16,6 +16,7 @@ use App\Domains\Inventory\Models\InventoryQuarantine;
 use App\Domains\Inventory\Models\InventoryQuarantineAuthorization;
 use App\Domains\Inventory\Models\InventoryReservation;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Inventory\Services\Quarantine\InventoryQuarantineQueryService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -227,6 +228,38 @@ final class InventoryQuarantineServiceTest extends TestCase
         $this->assertSame('non_compliant', $quarantine->status);
         $this->assertSame('0.000', $authorization->quantity_remaining);
         $this->assertSame('exhausted', $authorization->status);
+    }
+
+
+    public function test_return_quarantine_cannot_add_stock_to_an_inactive_product(): void
+    {
+        $cooperative = Cooperative::factory()->active()->create();
+        $admin = $this->userWithRole('cooperative_admin', [
+            'cooperative_id' => $cooperative->getKey(),
+        ]);
+        $product = $this->stockableProduct($cooperative);
+        $stock = InventoryStock::query()->create([
+            'cooperative_id' => (string) $cooperative->getKey(),
+            'stockable_type' => InventoryStockableType::PRODUCT->value,
+            'stockable_id' => (string) $product->getKey(),
+            'unit_code' => 'kg',
+            'quantity_on_hand' => '3.000',
+        ]);
+        $product->update(['is_active' => false]);
+
+        $this->expectException(InventoryReservationConflict::class);
+
+        app(InventoryQuarantineManager::class)->receiveReturn(
+            (string) $cooperative->getKey(),
+            InventoryStockableType::PRODUCT,
+            (string) $product->getKey(),
+            '1.000',
+            'customer_return',
+            (string) Str::ulid(),
+            'Retour à isoler mais produit inactif.',
+            (string) $admin->getKey(),
+            'inactive-product-return-001',
+        );
     }
 
     public function test_quarantine_listing_is_scoped_to_authorized_managers(): void
