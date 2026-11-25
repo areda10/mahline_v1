@@ -61,7 +61,7 @@ final class OrderStatusAggregationService
     }
 
     /**
-     * @param Collection<int, string> $statuses
+     * @param  Collection<int, string>  $statuses
      */
     private function aggregate(Collection $statuses): OrderStatus
     {

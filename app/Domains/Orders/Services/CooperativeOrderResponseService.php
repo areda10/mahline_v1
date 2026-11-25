@@ -11,7 +11,6 @@ use App\Domains\Inventory\Enums\InventoryStockableType;
 use App\Domains\Inventory\Exceptions\InsufficientInventoryStock;
 use App\Domains\Inventory\Exceptions\InventoryReservationConflict;
 use App\Domains\Orders\Enums\CooperativeOrderStatus;
-use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\CooperativeOrder;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderStatusHistory;
