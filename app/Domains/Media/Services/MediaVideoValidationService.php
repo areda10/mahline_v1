@@ -11,8 +11,10 @@ use Illuminate\Validation\ValidationException;
 final class MediaVideoValidationService
 {
     private const ALLOWED_CONTAINERS = [
-        'mp4' => ['mp4', 'mov,mp4,m4a,3gp,3g2,mj2'],
-        'mov' => ['mov,mp4,m4a,3gp,3g2,mj2'],
+        // FFprobe reports QuickTime/MP4-family containers as a comma-separated list.
+        // The MIME check below distinguishes MOV from MP4 uploads.
+        'mp4' => ['mp4', 'mov', 'm4a', '3gp', '3g2', 'mj2'],
+        'mov' => ['mov', 'mp4', 'm4a', '3gp', '3g2', 'mj2'],
         'webm' => ['webm'],
     ];
 
@@ -86,7 +88,11 @@ final class MediaVideoValidationService
             $this->reject('La durée maximale autorisée pour une vidéo est de 60 secondes.');
         }
 
-        if (max($metadata['width'], $metadata['height']) > $maxResolution) {
+        $longSide = max((int) $metadata['width'], (int) $metadata['height']);
+        $shortSide = min((int) $metadata['width'], (int) $metadata['height']);
+        $maxLongSide = (int) floor($maxResolution * 16 / 9);
+
+        if ($longSide > $maxLongSide || $shortSide > $maxResolution) {
             $this->reject('La résolution maximale autorisée pour une vidéo est de 1080p.');
         }
 
