@@ -156,7 +156,7 @@
     @endif
 @endif
 
-@if($isEmployee && $suborder->status === \\App\\Domains\\Orders\\Enums\\CooperativeOrderStatus::CONFIRMED)
+@if($isEmployee && $suborder->status === \App\Domains\Orders\Enums\CooperativeOrderStatus::CONFIRMED)
     <div class="card">
         <h2>Préparation de la commande</h2>
         <p>La commande a été confirmée par le responsable de la coopérative. Vous pouvez commencer sa préparation.</p>
@@ -167,7 +167,7 @@
     </div>
 @endif
 
-@if($isEmployee && $suborder->status === \\App\\Domains\\Orders\\Enums\\CooperativeOrderStatus::PREPARING)
+@if($isEmployee && $suborder->status === \App\Domains\Orders\Enums\CooperativeOrderStatus::PREPARING)
     <div class="card">
         <h2>Préparation en cours</h2>
         <p>Lorsque tous les articles sont préparés, indiquez que la commande est prête à être livrée.</p>
