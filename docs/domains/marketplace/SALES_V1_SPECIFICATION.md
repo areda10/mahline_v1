@@ -151,7 +151,7 @@ Les interfaces Blade Customer sont présentes sur `feature/Marketplace` :
 #### Deux parcours indépendants
 
 1. **Commande directe depuis catalogue/fiche** : la demande crée un panier technique invité distinct, dont le jeton opaque est conservé dans la session Customer. Ce panier technique contient uniquement le produit/variante et la quantité demandés. Le panier client préexistant n'est ni lu pour composer la commande ni modifié par ce parcours.
-2. **Commande depuis le panier** : le checkout utilise le panier authentifié et toutes ses lignes actives. Une ligne indisponible bloque la confirmation globale ; aucune ligne n'est écartée silencieusement.
+2. **Commande depuis le panier** : le checkout examine toutes les lignes actives. Si le stock est insuffisant dans une coopérative, toutes les lignes de cette coopérative sont explicitement exclues et restent actives dans le panier ; les autres coopératives disponibles peuvent être commandées. Une coopérative inactive, un produit/une variante non vendable ou un changement commercial non accepté bloque toujours le checkout global.
 
 Les deux parcours utilisent les contrôles serveur communs (Products, Cooperatives, Inventory, Localization, Delivery et Orders), l'adresse unique de livraison, le paiement COD et la clé d'idempotence. Les actions de commande sont réservées au rôle `customer`. Le panier invité reste accessible aux visiteurs, conformément à SALES-001.
 
