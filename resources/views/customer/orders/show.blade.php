@@ -67,6 +67,19 @@
                 <strong>{{ number_format((float) $suborder->grand_total, 2, ',', ' ') }} {{ $order->currency }}</strong>
             </div>
 
+            @if ($suborder->status->value === 'awaiting_cooperative')
+                <form method="POST" action="{{ route('customer.orders.cooperative-orders.cancel', [$order, $suborder]) }}" class="mt-3">
+                    @csrf
+                    <label for="cancel-reason-{{ $suborder->getKey() }}">Motif de l'annulation</label>
+                    <textarea id="cancel-reason-{{ $suborder->getKey() }}" name="reason" required minlength="3" maxlength="2000" rows="3"></textarea>
+                    @error('reason')
+                        <p role="alert">{{ $message }}</p>
+                    @enderror
+                    <button type="submit" onclick="return confirm('Confirmer l’annulation de cette sous-commande ?')">Annuler cette sous-commande</button>
+                </form>
+                <p class="muted">L'annulation client est possible uniquement avant la décision de la coopérative.</p>
+            @endif
+
             @if ($suborder->statusHistories->isNotEmpty())
                 <h3>Suivi de la coopérative</h3>
                 <div class="timeline">
