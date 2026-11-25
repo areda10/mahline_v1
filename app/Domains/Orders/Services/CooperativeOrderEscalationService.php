@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Orders\\Services;
+namespace App\Domains\Orders\Services;
 
-use App\\Domains\\Identity\\Users\\Models\\User;
-use App\\Domains\\Orders\\Enums\\CooperativeOrderStatus;
-use App\\Domains\\Orders\\Models\\CooperativeOrder;
-use App\\Domains\\Orders\\Models\\OrderStatusHistory;
-use App\\Domains\\Orders\\Notifications\\CooperativeOrderWorkflowNotification;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Notification;
+use App\Domains\Identity\Users\Models\User;
+use App\Domains\Orders\Enums\CooperativeOrderStatus;
+use App\Domains\Orders\Models\CooperativeOrder;
+use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 final class CooperativeOrderEscalationService
 {
