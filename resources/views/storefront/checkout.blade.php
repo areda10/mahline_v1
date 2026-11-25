@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewUrl = @json(route('sales.cart.checkout.preview')) + (directCartId ? '?direct_cart_id=' + encodeURIComponent(directCartId) : '');
     let preview = null;
 
-    async function loadPreview() {
+    async function loadPreview(preferredAddressId = null) {
         try {
             const response = await fetch(previewUrl, {headers:{'Accept':'application/json'}});
             const payload = await response.json();
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!preview.addresses || preview.addresses.length === 0) {
                 addressesElement.innerHTML = '<p class="shop-alert shop-error">Vous devez ajouter une adresse de livraison avant de commander.</p>';
             } else {
-                addressesElement.innerHTML = '<label class="shop-label" for="delivery-address">Choisir une adresse</label><select class="shop-input" id="delivery-address" required>'+preview.addresses.map(address => '<option value="'+escapeHtml(address.id)+'" '+(address.is_primary ? 'selected' : '')+'>'+escapeHtml(address.label)+(address.is_primary ? ' — principale' : '')+'</option>').join('')+'</select>';
+                addressesElement.innerHTML = '<label class="shop-label" for="delivery-address">Choisir une adresse</label><select class="shop-input" id="delivery-address" required>'+preview.addresses.map(address => '<option value="'+escapeHtml(address.id)+'" '+((preferredAddressId !== null ? String(address.id) === String(preferredAddressId) : address.is_primary) ? 'selected' : '')+'>'+escapeHtml(address.label)+(address.is_primary ? ' — principale' : '')+'</option>').join('')+'</select>';
             }
             confirmButton.disabled = preview.checkout_allowed !== true || !preview.addresses?.length;
         } catch (error) {
@@ -150,9 +150,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.message || Object.values(payload.errors || {}).flat().join(' ') || 'Impossible d’enregistrer cette adresse.');
+            const createdAddressId = payload.data?.id;
+            if (!createdAddressId) throw new Error('L’adresse a été enregistrée, mais son identifiant est manquant. Actualisez la page avant de confirmer.');
             form.reset();
-            addressFeedback.textContent = 'Adresse enregistrée. Actualisation du récapitulatif…';
-            await loadPreview();
+            addressFeedback.textContent = 'Adresse enregistrée et sélectionnée pour cette commande.';
+            await loadPreview(createdAddressId);
         } catch (error) {
             addressFeedback.textContent = error.message;
         } finally {
