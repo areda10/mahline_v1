@@ -332,6 +332,11 @@ Route::prefix('customer/orders')
         Route::get('/{orderId}', [CustomerOrderHistoryController::class, 'show'])
             ->whereUlid('orderId')
             ->name('show');
+        Route::post('/{orderId}/cooperatives/{cooperativeOrderId}/cancel', [CustomerOrderHistoryController::class, 'cancelSuborder'])
+            ->whereUlid('orderId')
+            ->whereUlid('cooperativeOrderId')
+            ->middleware('throttle:10,1')
+            ->name('cooperative-orders.cancel');
     });
 
 Route::get('/customer/dashboard', [CustomerDashboardController::class, '__invoke'])
