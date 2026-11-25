@@ -18,7 +18,7 @@ final class Order extends BaseModel
     protected $table = 'orders';
 
     protected $fillable = [
-        'customer_id', 'reference', 'status', 'currency', 'items_subtotal',
+        'customer_id', 'reference', 'status', 'currency', 'payment_method', 'items_subtotal',
         'delivery_total', 'grand_total', 'delivery_address_snapshot', 'delivery_snapshot',
         'placed_at', 'confirmed_at', 'cancelled_at', 'cancellation_reason',
         'checkout_idempotency_key', 'checkout_request_hash', 'inventory_excluded_cooperative_ids',
