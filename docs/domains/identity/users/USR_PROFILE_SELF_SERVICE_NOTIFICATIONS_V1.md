@@ -87,6 +87,10 @@ Les notifications de commandes, de stock et de sécurité contiennent un titre, 
 - php artisan test tests/Feature/Domains/Identity/Users/PersonalAddressControllerTest.php
 - php artisan test tests/Feature/Domains/Notifications/InternalNotificationCenterTest.php
 - php artisan test tests/Feature/Domains/Notifications/NotificationCenterTest.php
+- php artisan test tests/Feature/Domains/Inventory/InventoryNotificationRoutingTest.php
+- php artisan test tests/Feature/Domains/Identity/UserManagement/Http/Controllers/UserManagementControllerTest.php
+- php artisan test tests/Framework/Domains/Identity/Authorization/Policies/UserPolicyTest.php
+- php artisan test tests/Framework/Domains/Localization/Policies/AddressPolicyTest.php
 - php vendor/bin/pint --test
 - php artisan test
 
