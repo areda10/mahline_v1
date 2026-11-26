@@ -71,7 +71,16 @@ Corrections de ce lot :
 - L'écran complet permet la lecture individuelle et globale.
 - Les notifications restent dans le domaine Notifications ; aucun second système n'est créé dans Identity.
 
-## 5. Tests locaux à exécuter
+## 5. Producteurs métier des notifications vérifiés
+
+- Création de commande : OrderCreationService adresse une notification à l'administrateur actif et vérifié de la coopérative concernée, avec un lien vers la sous-commande.
+- Alertes de stock : InventoryStockAlertNotificationDispatcher adresse les notifications aux rôles cooperative_admin et user de la coopérative active, ainsi qu'aux super_admin qui lui sont affectés, avec un lien vers l'inventaire.
+- Signalements de sécurité Inventory : InventorySecurityReportNotificationDispatcher notifie Root, l'administrateur de la coopérative et les super_admin affectés ; le rôle user n'est pas destinataire. Le lien mène au centre des rapports de sécurité.
+- Cycle de vie des commandes client : CustomerOrderLifecycleNotification est destiné au customer, pas aux comptes internes.
+
+Les notifications de commandes, de stock et de sécurité contiennent un titre, un message et un lien interne vers l'écran concerné. La cloche affiche le message lorsqu'il existe ; la liste complète affiche les champs message/body/description. Les dispatchers de stock et de sécurité excluent les comptes inactifs, non vérifiés ou verrouillés d'urgence ; les alertes de stock sont limitées à une coopérative active et à des rôles actifs.
+
+## 6. Tests locaux à exécuter
 
 - php artisan test tests/Feature/Domains/Identity/Users/UserProfileControllerTest.php
 - php artisan test tests/Feature/Domains/Identity/Users/PersonalAddressControllerTest.php
@@ -82,7 +91,7 @@ Corrections de ce lot :
 
 Les tests n'ont pas été exécutés par ce changement distant. La fonctionnalité ne doit pas être déclarée clôturée avant les tests ciblés, Pint et la suite complète verts en local.
 
-## 6. Points restant à confirmer
+## 7. Points restant à confirmer
 
 - Vérifier localement PHP GD/WebP, requis par le traitement d'images Media déjà en place.
 - Vérifier le rendu de la cloche et du menu sur desktop et mobile.

@@ -32,6 +32,7 @@ final class CooperativeOrderWorkflowNotification extends Notification
             'cooperative_order_id' => (string) $this->cooperativeOrder->getKey(),
             'cooperative_order_reference' => (string) $this->cooperativeOrder->reference,
             'cooperative_id' => (string) $this->cooperativeOrder->cooperative_id,
+            'url' => route('backoffice.orders.cooperative.show', $this->cooperativeOrder->getKey()),
         ];
     }
 }

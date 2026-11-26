@@ -26,6 +26,9 @@
                         <a href="{{ data_get($notification->data, 'url', route('notifications.index')) }}">
                             {{ data_get($notification->data, 'title', data_get($notification->data, 'message', class_basename($notification->type))) }}
                         </a>
+                        @if(data_get($notification->data, 'message'))
+                            <small>{{ data_get($notification->data, 'message') }}</small>
+                        @endif
                         <small>{{ $notification->created_at?->diffForHumans() }}</small>
                     </div>
                 </div>

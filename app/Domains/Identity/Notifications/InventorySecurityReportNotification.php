@@ -28,6 +28,15 @@ final class InventorySecurityReportNotification extends Notification
         return [
             'domain' => 'inventory',
             'event' => $this->eventKey,
+            'title' => match ($this->eventKey) {
+                'inventory.security_report.created' => 'Nouveau signalement de sécurité',
+                'inventory.security_report.escalated' => 'Signalement de sécurité escaladé',
+                'inventory.security_report.closed' => 'Signalement de sécurité clôturé',
+                'inventory.security_report.reopened' => 'Signalement de sécurité réouvert',
+                default => 'Mise à jour d’un signalement de sécurité',
+            },
+            'message' => 'Un signalement de sécurité concernant votre coopérative a été mis à jour.',
+            'url' => route('inventory.security-reports.index'),
             'report_id' => $this->payload['report_id'] ?? null,
             'cooperative_id' => $this->payload['cooperative_id'] ?? null,
             'cooperative_order_id' => $this->payload['cooperative_order_id'] ?? null,

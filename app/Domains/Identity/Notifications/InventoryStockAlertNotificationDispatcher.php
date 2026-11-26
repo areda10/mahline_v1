@@ -24,12 +24,19 @@ final class InventoryStockAlertNotificationDispatcher implements InventoryAlertN
 
         $recipients = User::query()
             ->where('status', 'active')
+            ->whereNotNull('email_verified_at')
+            ->whereNull('emergency_locked_at')
             ->where(function ($query) use ($cooperativeId): void {
                 $query->where(function ($users) use ($cooperativeId): void {
                     $users->where('cooperative_id', $cooperativeId)
-                        ->whereHas('roles', static fn ($roles) => $roles->whereIn('slug', ['cooperative_admin', 'user']));
+                        ->whereHas('cooperative', static fn ($cooperatives) => $cooperatives->where('status', 'active'))
+                        ->whereHas('roles', static fn ($roles) => $roles
+                            ->whereIn('slug', ['cooperative_admin', 'user'])
+                            ->where('roles.is_active', true));
                 })->orWhere(function ($admins) use ($cooperativeId): void {
-                    $admins->whereHas('roles', static fn ($roles) => $roles->where('slug', 'super_admin'))
+                    $admins->whereHas('roles', static fn ($roles) => $roles
+                        ->where('slug', 'super_admin')
+                        ->where('roles.is_active', true))
                         ->whereHas('cooperatives', static fn ($cooperatives) => $cooperatives->whereKey($cooperativeId));
                 });
             })

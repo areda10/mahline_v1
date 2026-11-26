@@ -28,6 +28,9 @@ final class InventoryStockAlertNotification extends Notification
         return [
             'domain' => 'inventory',
             'event' => $this->eventKey,
+            'title' => 'Alerte de stock',
+            'message' => 'Un produit de votre coopérative a atteint le seuil de stock configuré. Consultez le module Inventaire.',
+            'url' => route('backoffice.inventory.index'),
             'alert_type' => $this->payload['alert_type'] ?? null,
             'stock_id' => $this->payload['stock_id'] ?? null,
             'cooperative_id' => $this->payload['cooperative_id'] ?? null,

@@ -32,19 +32,24 @@ final class InternalNotificationCenterTest extends TestCase
             $notification = $user->notifications()->create([
                 'id' => (string) Str::uuid(),
                 'type' => 'profile_notice',
-                'data' => ['title' => 'Votre profil est disponible'],
+                'data' => [
+                    'title' => 'Votre profil est disponible',
+                    'message' => 'Une action est requise sur votre compte.',
+                ],
             ]);
 
             $this->actingAs($user)
                 ->get(route('notifications.index'))
                 ->assertOk()
                 ->assertSee('Votre profil est disponible')
+                ->assertSee('Une action est requise sur votre compte.')
                 ->assertSee('Notifications du compte');
 
             $html = view('notifications._bell')->render();
 
             $this->assertStringContainsString('mahline-notification-icon', $html);
             $this->assertStringContainsString('Votre profil est disponible', $html);
+            $this->assertStringContainsString('Une action est requise sur votre compte.', $html);
 
             $this->actingAs($user)
                 ->post(route('notifications.read', $notification->getKey()))

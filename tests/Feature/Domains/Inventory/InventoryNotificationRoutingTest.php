@@ -44,7 +44,13 @@ final class InventoryNotificationRoutingTest extends TestCase
             ['cooperative_id' => (string) $cooperative->getKey(), 'stock_id' => 'stock-1'],
         );
 
-        Notification::assertSentTo($cooperativeAdmin, InventoryStockAlertNotification::class, static fn (InventoryStockAlertNotification $notification, array $channels): bool => $channels === ['database']);
+        Notification::assertSentTo(
+            $cooperativeAdmin,
+            InventoryStockAlertNotification::class,
+            static fn (InventoryStockAlertNotification $notification, array $channels): bool => $channels === ['database']
+                && $notification->toDatabase($cooperativeAdmin)['title'] === 'Alerte de stock'
+                && $notification->toDatabase($cooperativeAdmin)['url'] === route('backoffice.inventory.index'),
+        );
         Notification::assertSentTo($cooperativeUser, InventoryStockAlertNotification::class);
         Notification::assertSentTo($assignedSuperAdmin, InventoryStockAlertNotification::class);
         Notification::assertNotSentTo($customer, InventoryStockAlertNotification::class);
@@ -69,7 +75,12 @@ final class InventoryNotificationRoutingTest extends TestCase
         );
 
         Notification::assertSentTo($root, InventorySecurityReportNotification::class, static fn (InventorySecurityReportNotification $notification, array $channels): bool => $channels === ['database']);
-        Notification::assertSentTo($cooperativeAdmin, InventorySecurityReportNotification::class);
+        Notification::assertSentTo(
+            $cooperativeAdmin,
+            InventorySecurityReportNotification::class,
+            static fn (InventorySecurityReportNotification $notification): bool => $notification->toDatabase($cooperativeAdmin)['title'] === 'Nouveau signalement de sécurité'
+                && $notification->toDatabase($cooperativeAdmin)['url'] === route('inventory.security-reports.index'),
+        );
         Notification::assertSentTo($assignedSuperAdmin, InventorySecurityReportNotification::class);
         Notification::assertNotSentTo($cooperativeUser, InventorySecurityReportNotification::class);
         Notification::assertNotSentTo($customer, InventorySecurityReportNotification::class);

@@ -29,14 +29,22 @@ final class InventorySecurityReportNotificationDispatcher implements DispatcherC
 
         $recipients = User::query()
             ->where('status', 'active')
+            ->whereNotNull('email_verified_at')
+            ->whereNull('emergency_locked_at')
             ->where(function ($query) use ($cooperativeId): void {
-                $query->whereHas('roles', static fn ($roles) => $roles->where('slug', 'super_admin_root'))
+                $query->whereHas('roles', static fn ($roles) => $roles
+                    ->where('slug', 'super_admin_root')
+                    ->where('roles.is_active', true))
                     ->orWhere(function ($scoped) use ($cooperativeId): void {
                         $scoped->where('cooperative_id', $cooperativeId)
-                            ->whereHas('roles', static fn ($roles) => $roles->where('slug', 'cooperative_admin'));
+                            ->whereHas('roles', static fn ($roles) => $roles
+                            ->where('slug', 'cooperative_admin')
+                            ->where('roles.is_active', true));
                     })
                     ->orWhere(function ($assigned) use ($cooperativeId): void {
-                        $assigned->whereHas('roles', static fn ($roles) => $roles->where('slug', 'super_admin'))
+                        $assigned->whereHas('roles', static fn ($roles) => $roles
+                            ->where('slug', 'super_admin')
+                            ->where('roles.is_active', true))
                             ->whereHas('cooperatives', static fn ($cooperatives) => $cooperatives->whereKey($cooperativeId));
                     });
             })

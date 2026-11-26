@@ -431,7 +431,12 @@ final class OrderCreationService
 
                 User::query()
                     ->where('cooperative_id', $cooperativeId)
-                    ->whereHas('roles', static fn ($query) => $query->where('slug', 'cooperative_admin'))
+                    ->where('status', 'active')
+                    ->whereNotNull('email_verified_at')
+                    ->whereNull('emergency_locked_at')
+                    ->whereHas('roles', static fn ($query) => $query
+                        ->where('slug', 'cooperative_admin')
+                        ->where('roles.is_active', true))
                     ->get()
                     ->each(fn (User $recipient) => $recipient->notify(new CooperativeOrderWorkflowNotification(
                         $cooperativeOrder,
