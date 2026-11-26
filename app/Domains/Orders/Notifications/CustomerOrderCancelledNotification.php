@@ -35,6 +35,7 @@ final class CustomerOrderCancelledNotification extends Notification implements S
             'cooperative_order_id' => (string) $this->cooperativeOrder->getKey(),
             'cooperative_order_reference' => (string) $this->cooperativeOrder->reference,
             'cancellation_reason' => $this->reason,
+            'priority' => 'high',
             'url' => route('customer.orders.show', $this->cooperativeOrder->order_id),
         ];
     }
