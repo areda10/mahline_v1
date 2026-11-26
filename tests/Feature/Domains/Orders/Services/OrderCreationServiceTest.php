@@ -9,6 +9,7 @@ use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Inventory\Models\InventoryStock;
+use App\Domains\Orders\Notifications\CustomerOrderLifecycleNotification;
 use App\Domains\Orders\Services\OrderCreationService;
 use App\Domains\Products\Models\Product;
 use App\Domains\Products\Models\ProductUnit;
@@ -18,6 +19,7 @@ use Database\Seeders\ProductUnitSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -34,6 +36,8 @@ final class OrderCreationServiceTest extends TestCase
 
     public function test_checkout_creates_one_order_with_cooperative_segments_and_price_snapshots(): void
     {
+        Notification::fake();
+
         $customer = $this->customer();
         $cooperativeA = Cooperative::factory()->active()->create();
         $cooperativeB = Cooperative::factory()->active()->create();
@@ -73,6 +77,7 @@ final class OrderCreationServiceTest extends TestCase
         ]));
 
         $this->assertCount(2, $order->cooperativeOrders);
+        Notification::assertSentTo($customer, CustomerOrderLifecycleNotification::class);
         $this->assertDatabaseCount('inventory_reservations', 0);
         $this->assertTrue($order->cooperativeOrders->every(
             static fn ($suborder): bool => abs($suborder->created_at->diffInSeconds($suborder->response_deadline_at) - 43200) <= 2,
