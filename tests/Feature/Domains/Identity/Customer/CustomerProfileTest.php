@@ -305,6 +305,14 @@ final class CustomerProfileTest extends TestCase
         self::assertTrue($secondPhoto->is_primary);
         $this->assertSoftDeleted('media', ['id' => $firstPhoto->getKey()]);
         self::assertSame(1, $customer->media()->where('category', 'profile_image')->count());
+
+        $this->get(route('media.private', $secondPhoto).'?variant=thumbnail')
+            ->assertOk()
+            ->assertHeader('Cache-Control', 'private, no-store');
+
+        $this->get(route('customer.profile.edit'))
+            ->assertOk()
+            ->assertSee(route('media.private', $secondPhoto));
     }
 
     public function test_customer_can_remove_their_profile_photo(): void
@@ -329,6 +337,27 @@ final class CustomerProfileTest extends TestCase
 
         $this->assertSoftDeleted('media', ['id' => $photo->getKey()]);
         self::assertNull($customer->fresh()->profileImage);
+    }
+
+    public function test_customer_cannot_view_another_customers_private_profile_photo(): void
+    {
+        Storage::fake('local');
+        $owner = $this->customer();
+        $otherCustomer = $this->customer('other-client@example.com');
+
+        app(\App\Domains\Media\Services\MediaService::class)->upload(
+            $owner,
+            $owner,
+            UploadedFile::fake()->image('private-portrait.png', 120, 120),
+            'profile_image',
+        );
+
+        $photo = $owner->profileImage()->firstOrFail();
+
+        $this->actingAs($otherCustomer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->get(route('media.private', $photo))
+            ->assertForbidden();
     }
 
     public function test_customer_profile_photo_upload_rejects_unsupported_files(): void
