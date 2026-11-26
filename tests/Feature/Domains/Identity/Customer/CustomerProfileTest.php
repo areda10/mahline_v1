@@ -59,9 +59,20 @@ final class CustomerProfileTest extends TestCase
             ->assertDontSee('domaine Media');
     }
 
-    public function test_customer_can_update_their_personal_information(): void
+    public function test_customer_can_update_their_personal_information_without_changing_their_address(): void
     {
         $customer = $this->customer();
+        $existingAddress = app(UserAddressLifecycleManager::class)->createForUser(
+            (string) $customer->getKey(),
+            (string) $customer->getKey(),
+            [
+                'number' => '10',
+                'street' => 'Rue déjà enregistrée',
+                'city' => 'Rabat',
+                'region' => 'Rabat-Salé-Kénitra',
+                'postal_code' => '10000',
+            ],
+        );
 
         $this->actingAs($customer)
             ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
@@ -69,12 +80,6 @@ final class CustomerProfileTest extends TestCase
                 'first_name' => 'Nadia',
                 'last_name' => 'Amrani',
                 'telephone' => '+212 612345679',
-                'number' => '10',
-                'street' => 'Avenue Hassan II',
-                'floor' => '2e étage',
-                'city' => 'Casablanca',
-                'region' => 'Casablanca-Settat',
-                'postal_code' => '20000',
             ])
             ->assertRedirect(route('customer.profile.edit'))
             ->assertSessionHas('success');
@@ -86,17 +91,37 @@ final class CustomerProfileTest extends TestCase
         $this->assertSame('Nadia Amrani', $customer->display_name);
         $this->assertSame('+212 612345679', $customer->telephone);
         $this->assertDatabaseHas('addresses', [
+            'id' => $existingAddress->getKey(),
             'user_id' => $customer->getKey(),
             'number' => '10',
-            'street' => 'Avenue Hassan II',
-            'city' => 'Casablanca',
-            'region' => 'Casablanca-Settat',
+            'street' => 'Rue déjà enregistrée',
+            'city' => 'Rabat',
+            'region' => 'Rabat-Salé-Kénitra',
+            'postal_code' => '10000',
         ]);
 
         $this->assertDatabaseHas('audit_events', [
             'event_key' => 'identity.customer.profile_updated',
             'subject_id' => $customer->getKey(),
         ]);
+    }
+
+    public function test_customer_can_update_personal_information_without_having_an_address(): void
+    {
+        $customer = $this->customer();
+
+        $this->actingAs($customer)
+            ->withoutMiddleware(EnsureActiveAuthenticationSession::class)
+            ->put(route('customer.profile.update'), [
+                'first_name' => 'Nadia',
+                'last_name' => 'Amrani',
+                'telephone' => '+212 612345679',
+            ])
+            ->assertRedirect(route('customer.profile.edit'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseCount('addresses', 0);
+        $this->assertSame('Nadia', $customer->fresh()->first_name);
     }
 
     public function test_profile_update_cannot_change_email_status_or_role(): void
