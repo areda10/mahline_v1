@@ -23,7 +23,7 @@
                 <div class="mahline-notification-item {{ $notification->read_at ? '' : 'is-unread' }}">
                     <span class="mahline-notification-dot" aria-hidden="true"></span>
                     <div>
-                        <a href="{{ route('notifications.index') }}">
+                        <a href="{{ data_get($notification->data, 'url', route('notifications.index')) }}">
                             {{ data_get($notification->data, 'title', data_get($notification->data, 'message', class_basename($notification->type))) }}
                         </a>
                         <small>{{ $notification->created_at?->diffForHumans() }}</small>
