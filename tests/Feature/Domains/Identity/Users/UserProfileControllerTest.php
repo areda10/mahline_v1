@@ -105,6 +105,47 @@ final class UserProfileControllerTest extends TestCase
         ]);
     }
 
+    public function test_cooperative_admin_can_update_their_own_personal_information(): void
+    {
+        $user = $this->userWithRole('cooperative_admin');
+
+        $this->actingAs($user)
+            ->put(route('backoffice.profile.update'), [
+                'first_name' => 'Amina',
+                'last_name' => 'El Idrissi',
+                'telephone' => '+212 612345680',
+            ])
+            ->assertRedirect(route('backoffice.profile.edit'))
+            ->assertSessionHas('success');
+
+        $user->refresh();
+
+        $this->assertSame('Amina', $user->first_name);
+        $this->assertSame('El Idrissi', $user->last_name);
+        $this->assertSame('Amina El Idrissi', $user->display_name);
+        $this->assertSame('+212 612345680', $user->telephone);
+    }
+
+    public function test_cooperative_admin_can_upload_their_own_private_profile_photo(): void
+    {
+        Storage::fake('local');
+
+        $user = $this->userWithRole('cooperative_admin');
+
+        $this->actingAs($user)
+            ->post(route('backoffice.profile.photo.store'), [
+                'file' => UploadedFile::fake()->image('cooperative-admin.png', 120, 120),
+            ])
+            ->assertRedirect(route('backoffice.profile.edit'))
+            ->assertSessionHas('success');
+
+        $photo = $user->profileImage()->firstOrFail();
+
+        $this->assertSame('profile_image', $photo->category);
+        $this->assertSame('private', $photo->visibility);
+        $this->assertTrue($photo->is_primary);
+    }
+
     public function test_cooperative_admin_can_update_their_own_personal_address_from_profile(): void
     {
         $user = $this->userWithRole('cooperative_admin');
