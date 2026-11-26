@@ -18,6 +18,8 @@ use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Orders\Notifications\CustomerOrderCancelledNotification;
+use App\Domains\Orders\Notifications\CustomerOrderLifecycleNotification;
+use App\Domains\Orders\Services\OrderStatusAggregationService;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -146,6 +148,48 @@ final class CustomerOrderHistoryTest extends TestCase
             $customer,
             CustomerOrderCancelledNotification::class,
             static fn (CustomerOrderCancelledNotification $notification): bool => $notification->toDatabase($customer)['cancellation_reason'] === 'Je souhaite annuler cette coopérative.',
+        );
+    }
+
+    public function test_customer_is_notified_once_when_order_becomes_confirmed(): void
+    {
+        Notification::fake();
+
+        $customer = $this->customer();
+        $otherCustomer = $this->customer();
+        $order = $this->order($customer, OrderStatus::AWAITING_COOPERATIVES, 'MH-NOTIFY-CONFIRMED-001');
+
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'Toutes les coopératives ont confirmé.');
+        app(OrderStatusAggregationService::class)->refresh($order->fresh(), $customer, 'Nouvel appel idempotent.');
+
+        Notification::assertSentToTimes($customer, CustomerOrderLifecycleNotification::class, 1);
+        Notification::assertNotSentTo($otherCustomer, CustomerOrderLifecycleNotification::class);
+        Notification::assertSentTo(
+            $customer,
+            CustomerOrderLifecycleNotification::class,
+            static fn (CustomerOrderLifecycleNotification $notification): bool => $notification->toDatabase($customer)['event'] === 'order.confirmed',
+        );
+    }
+
+    public function test_customer_is_notified_when_order_enters_preparation(): void
+    {
+        Notification::fake();
+
+        $customer = $this->customer();
+        $otherCustomer = $this->customer();
+        $order = $this->order($customer, OrderStatus::CONFIRMED, 'MH-NOTIFY-PREPARING-001');
+        $order->cooperativeOrders()->firstOrFail()->forceFill([
+            'status' => CooperativeOrderStatus::PREPARING,
+        ])->save();
+
+        app(OrderStatusAggregationService::class)->refresh($order, $customer, 'La préparation commence.');
+
+        Notification::assertSentTo($customer, CustomerOrderLifecycleNotification::class);
+        Notification::assertNotSentTo($otherCustomer, CustomerOrderLifecycleNotification::class);
+        Notification::assertSentTo(
+            $customer,
+            CustomerOrderLifecycleNotification::class,
+            static fn (CustomerOrderLifecycleNotification $notification): bool => $notification->toDatabase($customer)['event'] === 'order.preparing',
         );
     }
 
