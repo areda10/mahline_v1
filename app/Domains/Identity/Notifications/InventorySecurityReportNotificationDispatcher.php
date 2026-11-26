@@ -38,8 +38,8 @@ final class InventorySecurityReportNotificationDispatcher implements DispatcherC
                     ->orWhere(function ($scoped) use ($cooperativeId): void {
                         $scoped->where('cooperative_id', $cooperativeId)
                             ->whereHas('roles', static fn ($roles) => $roles
-                            ->where('slug', 'cooperative_admin')
-                            ->where('roles.is_active', true));
+                                ->where('slug', 'cooperative_admin')
+                                ->where('roles.is_active', true));
                     })
                     ->orWhere(function ($assigned) use ($cooperativeId): void {
                         $assigned->whereHas('roles', static fn ($roles) => $roles
