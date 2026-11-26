@@ -20,11 +20,14 @@
         @forelse($notifications as $notification)
             @php
                 $title = data_get($notification->data, 'title', data_get($notification->data, 'message', class_basename($notification->type)));
-                $message = data_get($notification->data, 'body', data_get($notification->data, 'description'));
+                $message = data_get($notification->data, 'message', data_get($notification->data, 'body', data_get($notification->data, 'description')));
             @endphp
             <article class="notification-row {{ $notification->read_at ? 'is-read' : 'is-unread' }}">
                 <div class="notification-content">
                     <strong>{{ $title }}</strong>
+                    @if($url = data_get($notification->data, 'url'))
+                        <a href="{{ $url }}" class="notification-destination">Consulter</a>
+                    @endif
                     @if($message)<p>{{ $message }}</p>@endif
                     <small class="muted">{{ $notification->created_at?->format('d/m/Y à H:i') }}</small>
                 </div>
@@ -50,6 +53,7 @@
 .notification-row.is-unread{border-left:3px solid #176b57;padding-left:13px}
 .notification-content{min-width:0}
 .notification-content p{margin:7px 0}
+.notification-destination{display:inline-block;margin-top:7px;color:#176b57;font-weight:600}
 .notification-content small{display:block}
 @media(max-width:600px){.notification-row{align-items:flex-start;flex-direction:column}}
 </style>
