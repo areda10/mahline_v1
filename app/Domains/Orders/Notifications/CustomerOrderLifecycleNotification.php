@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\\Domains\\Orders\\Notifications;
+namespace App\Domains\Orders\Notifications;
 
-use App\\Domains\\Orders\\Models\\Order;
-use Illuminate\\Bus\\Queueable;
-use Illuminate\\Contracts\\Queue\\ShouldQueue;
-use Illuminate\\Notifications\\Messages\\MailMessage;
-use Illuminate\\Notifications\\Notification;
+use App\Domains\Orders\Models\Order;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 final class CustomerOrderLifecycleNotification extends Notification implements ShouldQueue
 {
