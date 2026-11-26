@@ -1,11 +1,11 @@
-# MAHLINE V1 — Audit d'implémentation Customer (profil et adresses)
+# MAHLINE V1 — Audit des écrans et parcours Customer
 
-- **Date de revue :** 25 novembre 2026
+- **Date de revue :** 26 novembre 2026
 - **Dépôt :** `areda10/mahline_v1`
 - **Branche auditée :** `feature/Marketplace`
 - **Référence audit initiale :** `8dfd554c60f17f93cc09904ce9b51b306210ad2d`
 - **Correctifs code ajoutés :** `ab849e46d89eca65288320fa4fa691e3d698b5dc`
-- **Périmètre :** profil Customer, carnet d'adresses, changement d'e-mail et liaison avec le checkout Sales / snapshot Orders.
+- **Périmètre :** inventaire des écrans Customer V1, routes, contrôleurs, authentification, boutique, panier, checkout, commandes, profil, carnet d'adresses, sécurité, notifications et liaison Sales / Orders.
 - **Nature :** revue statique des fichiers du dépôt. Les résultats de tests ci-dessous sont ceux communiqués par l'utilisateur et exécutés localement.
 
 ## 1. Synthèse
@@ -15,7 +15,7 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | Fonction | État constaté dans le code |
 |---|---|
 | Consulter le profil | Implémenté |
-| Modifier prénom, nom, téléphone | Implémenté |
+| Modifier prénom, nom, téléphone indépendamment des adresses | Implémenté après correctif du 26 novembre 2026 ; tests de non-régression ajoutés, exécution locale à confirmer |
 | Changer l'e-mail avec confirmation par lien | Implémenté |
 | Vérifier le mot de passe actuel avant demande de changement d'e-mail | Implémenté |
 | Révoquer sessions et jetons après changement d'e-mail | Implémenté |
@@ -27,7 +27,7 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 | Ajouter une adresse depuis le checkout et l'enregistrer | Implémenté |
 | Sélectionner automatiquement au checkout l'adresse nouvellement ajoutée | **Corrigé dans le code** : le endpoint JSON renvoie l'identifiant créé et le checkout le présélectionne après rechargement, sans changer l'adresse principale |
 | Modifier une adresse secondaire depuis le carnet | **Corrigé dans le code** : formulaire individuel, route PATCH et service Localization ciblé par propriétaire/adresse, avec audit |
-| Photo de profil Customer | **Implémentée dans le code sur `feature/Marketplace`** : upload/remplacement/suppression via MediaService, catégorie privée `profile_image`, affichage de la miniature par route privée et avatar dans la navigation. Tests Feature ajoutés ; exécution locale à confirmer. |
+| Photo de profil Customer | **Implémentée** : upload/remplacement/suppression via MediaService, catégorie privée `profile_image`, miniature privée et avatar dans la navigation. Tests ciblés déclarés verts par l'utilisateur avant l'ajout des nouveaux tests de découplage. |
 | Suite de tests Customer exécutée localement | **Non confirmée** par les résultats transmis pour cet audit |
 
 ## 2. Revue fichier par fichier
@@ -36,19 +36,19 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 
 | Fichier | Responsabilité constatée | État / observation |
 |---|---|---|
-| `app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php` | Affiche le profil, met à jour les données, ajoute / modifie / définit / supprime les adresses et initie le changement d'e-mail | Implémenté. Les actions carnet sont déléguées au contrat Localization ; l'ajout JSON renvoie l'identifiant créé. |
-| `app/Domains/Identity/Customer/Http/Requests/UpdateCustomerProfileRequest.php` | Valide les champs du profil et l'adresse affichée avec le profil | Écart UX/fonctionnel : rue, ville et région sont obligatoires dans le même PUT que prénom/nom/téléphone. Un client sans adresse ne peut donc pas modifier uniquement ses informations personnelles. |
+| `app/Domains/Identity/Customer/Http/Controllers/CustomerProfileController.php` | Affiche le profil, met à jour les données personnelles, gère les photos, adresses et changement d'e-mail | Implémenté. `update()` ne traite désormais que les données personnelles ; les opérations d'adresse restent déléguées à Localization. |
+| `app/Domains/Identity/Customer/Http/Requests/UpdateCustomerProfileRequest.php` | Valide les seules données personnelles modifiables | Corrigé le 26 novembre 2026 : prénom, nom et téléphone uniquement. Aucun champ d'adresse n'est requis ni validé par ce PUT. |
 | `app/Domains/Identity/Customer/Http/Requests/RequestCustomerEmailChange.php` | Autorise uniquement un compte Customer et valide nouvel e-mail / mot de passe | Implémenté. |
 | `app/Domains/Identity/Customer/Services/CustomerProfileService.php` | Met à jour prénom, nom, display_name et téléphone sous verrou ; écrit un événement d'audit | Implémenté. Refuse les comptes non Customer, les comptes avec rôle interne, inactifs ou non vérifiés. |
 | `app/Domains/Identity/Customer/Services/CustomerEmailChangeService.php` | Demande et confirme le changement d'e-mail | Implémenté : mot de passe actuel, jeton aléatoire stocké sous forme hashée, expiration 30 minutes, usage unique, vérification d'unicité, révocation des sessions et jetons, audit et notification de l'ancienne adresse. |
 | `app/Domains/Identity/Customer/Models/CustomerEmailChangeRequest.php` | Persiste la demande de changement d'e-mail | Implémenté. |
 | `app/Domains/Identity/Customer/Notifications/CustomerEmailChangeNotification.php` | Envoie le lien de confirmation à la nouvelle adresse | Implémenté. |
 | `app/Domains/Identity/Customer/Notifications/CustomerEmailChangedNotification.php` | Informe l'ancienne adresse après validation | Implémenté. |
-| `resources/views/customer/profile/edit.blade.php` | Interface profil, adresse principale, carnet, ajout, édition individuelle et changement d'e-mail | Présent. Chaque adresse dispose de son formulaire d'édition. Pas d'upload de photo Customer identifié. Le message de succès peut encore être rendu deux fois par le layout et la vue. |
+| `resources/views/customer/profile/edit.blade.php` | Interface profil, photo, carnet d'adresses, édition individuelle et changement d'e-mail | Présent. Formulaire personnel indépendant ; carnet séparé avec ajout, édition, sélection principale et suppression. Les notifications de succès sont rendues par le layout pour éviter les doublons. |
 | `resources/views/layouts/customer.blade.php` | Navigation Customer vers boutique, panier, commandes, profil, sécurité et appareils | Présent. Le lien profil affiche la miniature privée du Customer ou son initiale en l'absence de photo. |
-| `routes/web.php` | Déclare les routes Customer profile et les protège par auth, session active, rôle Customer et middleware de compte Customer | Présent. Routes : `customer.profile.edit`, `customer.profile.update`, `customer.profile.addresses.store`, `customer.profile.addresses.update`, `customer.profile.addresses.primary`, `customer.profile.addresses.destroy`, `customer.profile.email.change`. |
+| `routes/web.php` | Déclare les routes Customer profile et les protège par auth, session active, rôle Customer et middleware de compte Customer | Présent. Routes : `customer.profile.edit`, `customer.profile.update`, `customer.profile.photo.store`, `customer.profile.photo.destroy`, `customer.profile.addresses.store`, `customer.profile.addresses.update`, `customer.profile.addresses.primary`, `customer.profile.addresses.destroy`, `customer.profile.email.change`. |
 | `app/Domains/Identity/Customer/Http/Middleware/EnsureCustomerAccount.php` | Empêche les comptes ayant des rôles internes d'utiliser l'espace Customer | Présent et appliqué au groupe de routes du profil. |
-| `tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php` | Consultation, mise à jour, protection des champs sensibles, séparation des rôles, ajout / principale / suppression logique | Présent. Ne prouve pas à lui seul la couverture complète des limites et de la concurrence. |
+| `tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php` | Consultation, profil, adresses, photo, protection des champs sensibles et séparation des rôles | Présent. Deux tests ajoutés pour prouver la mise à jour personnelle sans adresse et la préservation d'une adresse existante ; ces nouveaux tests doivent être exécutés localement. |
 | `tests/Feature/Domains/Identity/Customer/CustomerEmailChangeTest.php` | Mot de passe incorrect, e-mail déjà utilisé, révocation des demandes précédentes, expiration, sessions/tokens et audit | Présent. Exécution locale non communiquée pour cet audit. |
 | `tests/Feature/Domains/Identity/Customer/CustomerAuthenticationIsolationTest.php` | Séparation des parcours d'authentification, sécurité et déconnexion Customer | Présent. |
 
@@ -87,15 +87,15 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 
 ### P0 — Corriger avant de considérer le profil V1 terminé
 
-1. **Découpler la mise à jour du profil de l'adresse.** Toujours ouvert : le PUT du profil ne doit pas exiger une rue, une ville et une région pour modifier seulement prénom, nom ou téléphone.
+1. **Découpler la mise à jour du profil de l'adresse.** Corrigé le 26 novembre 2026 : validation, contrôleur et formulaire ne traitent plus que les informations personnelles. Les adresses restent gérées dans le carnet dédié. Tests de régression ajoutés ; exécution locale à confirmer.
 2. **Checkout — sélection de la nouvelle adresse.** Corrigé dans le code : le endpoint retourne `data.id`, puis le frontend sélectionne cette adresse après actualisation de l'aperçu ; le drapeau `is_primary` du carnet n'est pas modifié.
 3. **Édition individuelle des adresses.** Corrigée dans le code : formulaire et route PATCH dédiés, méthode `updateAddressForUser()` avec verrouillage, contrôle d'appartenance, validation centralisée et audit.
 4. **Tests de non-régression ajoutés, à exécuter localement.** Le test Sales vérifie l'identifiant retourné, la présence de la nouvelle adresse dans l'aperçu et la conservation de l'adresse principale. Le test Identity vérifie la modification d'une adresse secondaire, l'absence de promotion implicite et le rejet d'une adresse appartenant à un autre client.
 
 ### P1 — Fonctionnalités à arbitrer / compléter
 
-4. **Photo de profil.** Aucun contrôle d'affichage ou d'upload Customer n'a été identifié dans l'écran. Le modèle User possède une relation `profileImage()` vers Media, mais cela ne prouve pas que le flux Customer soit implémenté. À classer selon le périmètre fonctionnel V1 confirmé.
-5. **Nettoyage UI.** Éviter le double affichage du message de succès par le layout et la vue profil.
+4. **Photo de profil.** Implémentée sur `feature/Marketplace` et testée dans `CustomerProfileTest` ; les tests ciblés ont été déclarés verts par l'utilisateur avant l'ajout des tests de découplage.
+5. **Nettoyage UI.** Corrigé le 26 novembre 2026 : le message de succès du profil est rendu une seule fois par le layout Customer.
 6. **Robustesse et tests d'intégration.** Couvrir l'adresse d'un autre client, l'accès par compte multi-rôle, compte inactif / non vérifié, dépassement des cinq adresses par HTTP, ajout concurrent, suppression de l'adresse principale, restauration et adresse supprimée utilisée au checkout.
 
 ## 4. Règles fonctionnelles confirmées à appliquer
@@ -110,7 +110,7 @@ Le profil Customer n'est pas à créer de zéro. Les écrans, routes, contrôleu
 - L'adresse de livraison est validée par Localization puis copiée dans `orders.delivery_address_snapshot`. La modification ultérieure du carnet ne doit pas réécrire ce snapshot.
 - Une commande V1 requiert une adresse de livraison ; le checkout ne doit pas accepter une adresse d'un autre propriétaire ni une adresse supprimée.
 
-## 5. Résultats de tests locaux communiqués
+## 5. Résultats de tests locaux communiqués (historique avant le dernier correctif)
 
 Les commandes ci-dessous ont été exécutées localement par l'utilisateur et déclarées vertes :
 
@@ -161,3 +161,57 @@ Les correctifs ci-dessous ont été poussés sur `feature/Marketplace` après l'
 - Le remplacement utilise le verrouillage et la suppression logique déjà implémentés dans `MediaService`.
 - L'affichage passe par `media.private` avec variante `thumbnail` ; aucune URL de stockage n'est exposée.
 - Les tests doivent être exécutés sur l'environnement local ; aucune exécution n'est déclarée dans cet audit.
+
+
+## 7. Audit exhaustif des écrans Customer V1 — 26 novembre 2026
+
+L'inventaire ci-dessous est établi à partir de l'arbre des fichiers de **feature/Marketplace**, des routes déclarées dans **routes/web.php** et des contrôleurs associés. Un écran partagé avec les autres rôles est indiqué comme réutilisé, et non comme une vue Customer dédiée.
+
+### 7.1 Écrans existants
+
+| Parcours / écran | Vue réelle | Route(s) / contrôleur principal | État constaté |
+|---|---|---|---|
+| Connexion Customer | resources/views/auth/login.blade.php (vue partagée) | customer.login, customer.login.store / AuthenticationController | Implémenté ; formulaire partagé avec parcours d'authentification. |
+| Inscription Customer | resources/views/customer/auth/register.blade.php | customer.register, customer.register.store / CustomerRegistrationController | Implémenté. |
+| Vérification d'e-mail | resources/views/customer/auth/verification-notice.blade.php | customer.verification.notice, customer.verification.verify, customer.verification.resend / CustomerRegistrationController | Implémenté. |
+| Mot de passe oublié / réinitialisation | resources/views/auth/forgot-password.blade.php, resources/views/auth/reset-password.blade.php (vues partagées) | customer.password.request, customer.password.email, customer.password.reset, customer.password.update / PasswordResetController | Implémenté ; vues partagées. |
+| Tableau de bord Customer | resources/views/customer/dashboard.blade.php | customer.dashboard / CustomerDashboardController | Implémenté comme page d'accueil et hub de navigation ; pas de tableau de bord analytique. |
+| Catalogue boutique | resources/views/storefront/products/index.blade.php | storefront.products.index / ProductStorefrontController@index | Implémenté et partagé aux visiteurs/clients. |
+| Fiche produit | resources/views/storefront/products/show.blade.php | storefront.products.show / ProductStorefrontController@show | Implémenté et partagé. |
+| Panier | resources/views/storefront/cart.blade.php | sales.cart.page / SalesCartPageController et routes sales.cart.* | Implémenté ; actions ajout, modification, suppression et vidage. |
+| Checkout panier / achat direct | resources/views/storefront/checkout.blade.php | sales.cart.checkout.page, sales.cart.checkout.direct, sales.cart.checkout.preview, sales.cart.checkout.confirm / SalesCartController | Implémenté ; sélection/adjonction d'adresse et confirmation. |
+| Historique des commandes | resources/views/customer/orders/index.blade.php | customer.orders.index / CustomerOrderHistoryController | Implémenté ; recherche, filtre par statut et pagination. |
+| Détail d'une commande | resources/views/customer/orders/show.blade.php | customer.orders.show / CustomerOrderHistoryController | Implémenté ; sous-commandes, articles, statuts, chronologie et annulation dans les conditions autorisées. |
+| Profil et photo | resources/views/customer/profile/edit.blade.php | customer.profile.edit, customer.profile.update, customer.profile.photo.store, customer.profile.photo.destroy / CustomerProfileController | Implémenté ; données personnelles séparées des adresses, photo privée. |
+| Carnet d'adresses | Même vue profil, section #address-book | customer.profile.addresses.store, addresses.update, addresses.primary, addresses.destroy / CustomerProfileController et UserAddressLifecycleManager | Implémenté ; formulaires indépendants par adresse. |
+| Changement d'e-mail | Même vue profil ; vérification par lien | customer.profile.email.change, customer.email.change.verify / CustomerProfileController et CustomerEmailChangeService | Implémenté ; confirmation séparée, expiration 30 minutes et révocation des sessions/jetons. |
+| Mot de passe / changement forcé | resources/views/auth/force-password-change.blade.php (vue partagée) | customer.security.password.edit, customer.security.password.update, customer.password.force-change.* / ForcedPasswordChangeController | Implémenté ; parcours de sécurité partagé. |
+| Appareils de confiance | resources/views/identity/security/devices/index.blade.php (vue partagée) | customer.security.devices.* / DeviceTrustController | Implémenté ; liste et actions de gestion des appareils. |
+| Centre de notifications | resources/views/notifications/index.blade.php et _bell.blade.php (vues partagées) | notifications.index, notifications.read, notifications.read-all / NotificationCenterController | Implémenté ; consultation et marquage comme lu. |
+
+### 7.2 Écrans non identifiés ou à arbitrer
+
+| Élément | Constat statique | Suite recommandée |
+|---|---|---|
+| Liste des sessions web actives du Customer et révocation individuelle depuis son espace | Aucune route de sessions sous le groupe customer n'a été identifiée ; la page appareils de confiance existe mais n'est pas nécessairement équivalente à une liste de sessions Laravel. | Vérifier si l'écran Appareils couvre le besoin fonctionnel de gestion des sessions simultanées ; sinon créer l'écran et les routes Customer propres. |
+| Factures et téléchargement PDF côté Customer | Aucun écran customer/invoices ni route Customer de consultation/téléchargement de facture n'a été identifié dans cet inventaire. | À confirmer avec le périmètre Finance/Facturation V1 et les règles d'accès aux factures client. |
+| Historique des paiements / moyens de paiement | Aucun écran Customer dédié n'a été identifié dans les vues inventoriées. | À arbitrer selon le parcours d'encaissement retenu pour V1 ; ne pas créer sans décision fonctionnelle. |
+| Préférences de notifications | Le centre de notifications est présent, mais aucun écran de préférences Customer n'a été identifié. | À arbitrer ; le centre de consultation ne vaut pas écran de préférences. |
+| Tableau de bord avec indicateurs personnels | Le dashboard actuel est un hub de navigation simple. | À considérer comme option UX, pas comme écran manquant obligatoire sans exigence métier. |
+
+### 7.3 Résultat de l'audit d'exhaustivité
+
+- Les écrans structurants du parcours d'achat sont présents : boutique, fiche produit, panier, checkout, historique et détail de commande.
+- Les écrans d'identité Customer sont présents : inscription, vérification, profil, changement d'e-mail, mot de passe et appareils.
+- Le profil et le carnet d'adresses sont désormais séparés au niveau des formulaires, de la validation et du contrôleur.
+- Les éléments à arbitrer avant une déclaration « Customer V1 complet » sont la gestion des sessions web, les factures/paiements et les préférences de notifications. Leur absence d'une vue Customer dédiée est un constat de l'arbre de fichiers et des routes examinées, pas une décision de les inclure automatiquement dans V1.
+
+### 7.4 Validation après le correctif du 26 novembre
+
+L'utilisateur a communiqué les résultats verts suivants avant l'ajout des deux nouveaux tests de découplage :
+
+- php artisan test tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php
+- php artisan test tests/Framework/Domains/Media
+- php artisan test tests/Framework/Database/Migrations/MediaCategoryIndexMigrationTest.php
+
+Comme CustomerProfileTest.php vient d'être enrichi avec les tests de mise à jour sans adresse et de préservation d'adresse, il doit être relancé. Pint --test et la suite complète n'ont pas encore été déclarés verts.
