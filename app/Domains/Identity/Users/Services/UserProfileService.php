@@ -22,7 +22,7 @@ final class UserProfileService extends BaseService
      *
      * Email, password, role, status and cooperative assignment use dedicated workflows.
      *
-     * @param array{first_name: string, last_name: string, telephone: string} $attributes
+     * @param  array{first_name: string, last_name: string, telephone: string}  $attributes
      */
     public function updateOwnProfile(User $user, array $attributes): User
     {
