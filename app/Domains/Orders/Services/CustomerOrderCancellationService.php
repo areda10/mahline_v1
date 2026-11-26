@@ -109,7 +109,7 @@ final class CustomerOrderCancellationService
         }, 3);
 
         $cancelledSuborder->load(['order', 'cooperative']);
-        $customer->notify(new CustomerOrderCancelledNotification($cancelledSuborder));
+        $customer->notify(new CustomerOrderCancelledNotification($cancelledSuborder, $reason));
 
         User::query()
             ->where('cooperative_id', (string) $cancelledSuborder->cooperative_id)
