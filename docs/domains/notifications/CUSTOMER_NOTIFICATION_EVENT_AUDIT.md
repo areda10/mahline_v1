@@ -39,7 +39,7 @@ Audit des notifications existantes :
 - La révocation d'un appareil de confiance utilise déjà Database + Mail.
 - Les notifications Inventory ne ciblent pas le rôle `customer`. Aucun envoi global à tous les utilisateurs n'a été ajouté.
 
-Conclusion du lot C : aucun changement de routage n'est nécessaire pour les événements Inventory audités ; leur périmètre est opérationnel et l'isolation par coopérative/affectation est conservée. Les notifications de sécurité Identity restent distinctes des notifications commerciales Customer.
+Conclusion du lot C : aucun changement de routage n'est nécessaire pour les événements Inventory audités ; leur périmètre est opérationnel et l'isolation par coopérative/affectation est conservée. Un test Feature dédié vérifie les destinataires opérationnels et exclut explicitement Customer. Les notifications de sécurité Identity restent distinctes des notifications commerciales Customer.
 
 ### Lot D — Finance
 
@@ -51,7 +51,9 @@ Non implémenté : Finance est actuellement un domaine documentaire, sans modèl
 
 - Sales ne possède pas de notification métier distincte dans le flux checkout ; il délègue la création à Orders. La notification `order.created` est donc centralisée dans `OrderCreationService`, sans double envoi depuis Sales.
 - `CooperativeOrderWorkflowNotification` sert aux acteurs opérationnels (coopérative / administrateurs) et n'est pas une notification Customer.
-- `OrderReadyForShipmentNotification` est déclenchée à la transition `READY_FOR_SHIPMENT`, et utilise Database seulement.
+- `OrderReadyForShipmentNotification` est déclenchée à la transition `READY_FOR_SHIPMENT`, utilise Database seulement et contient maintenant un lien vers la commande. Cet état reste distinct de SHIPPED.
+- Identity : `CustomerEmailChangeNotification`, `CustomerEmailChangedNotification`, `CustomerEmailVerificationNotification`, `NewDeviceLoginNotification`, `PasswordResetLinkNotification` et `UserInvitationNotification` sont des notifications Mail. `DeviceTrustRevokedNotification` utilise Database + Mail. Les événements de vérification/réinitialisation conservent leurs liens exclusivement dans le canal Mail.
+- Inventory : `InventoryStockAlertNotification` et `InventorySecurityReportNotification` sont Database-only ; leurs dispatchers déterminent les destinataires par coopérative et affectation.
 - Les tâches planifiées identifiées comprennent `orders:escalate-overdue-cooperative-orders` (chaque minute), `inventory:publish-outbox` (chaque minute), `inventory:reconcile-alerts` (toutes les cinq minutes) et `inventory:escalate-security-reports` (toutes les cinq minutes). Elles alimentent les workflows d'escalade/outbox opérationnels ; elles ne constituent pas un événement d'expédition ni un événement Finance.
 
 ## 3. Règles transversales
