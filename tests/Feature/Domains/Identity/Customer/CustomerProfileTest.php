@@ -10,6 +10,7 @@ use App\Domains\Identity\Enums\UserStatus;
 use App\Domains\Identity\Users\Models\User;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Models\Country;
+use App\Domains\Media\Services\MediaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -345,7 +346,7 @@ final class CustomerProfileTest extends TestCase
         $owner = $this->customer();
         $otherCustomer = $this->customer('other-client@example.com');
 
-        app(\App\Domains\Media\Services\MediaService::class)->upload(
+        app(MediaService::class)->upload(
             $owner,
             $owner,
             UploadedFile::fake()->image('private-portrait.png', 120, 120),
