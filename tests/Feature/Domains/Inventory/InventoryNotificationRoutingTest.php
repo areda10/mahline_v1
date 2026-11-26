@@ -38,6 +38,15 @@ final class InventoryNotificationRoutingTest extends TestCase
         $assignedSuperAdmin->cooperatives()->attach($cooperative->getKey());
         $customer = $this->userWithRole('customer', (string) $cooperative->getKey());
         $root = $this->userWithRole('super_admin_root');
+        $inactiveAdmin = $this->userWithRole('cooperative_admin', (string) $cooperative->getKey(), [
+            'status' => UserStatus::Inactive,
+        ]);
+        $unverifiedUser = $this->userWithRole('user', (string) $cooperative->getKey(), [
+            'email_verified_at' => null,
+        ]);
+        $lockedUser = $this->userWithRole('user', (string) $cooperative->getKey(), [
+            'emergency_locked_at' => now(),
+        ]);
 
         app(InventoryStockAlertNotificationDispatcher::class)->dispatch(
             'inventory.stock_alert.triggered',
@@ -55,6 +64,9 @@ final class InventoryNotificationRoutingTest extends TestCase
         Notification::assertSentTo($assignedSuperAdmin, InventoryStockAlertNotification::class);
         Notification::assertNotSentTo($customer, InventoryStockAlertNotification::class);
         Notification::assertNotSentTo($root, InventoryStockAlertNotification::class);
+        Notification::assertNotSentTo($inactiveAdmin, InventoryStockAlertNotification::class);
+        Notification::assertNotSentTo($unverifiedUser, InventoryStockAlertNotification::class);
+        Notification::assertNotSentTo($lockedUser, InventoryStockAlertNotification::class);
     }
 
     public function test_inventory_security_reports_reach_root_cooperative_admin_and_assigned_super_admin_only(): void
@@ -68,6 +80,15 @@ final class InventoryNotificationRoutingTest extends TestCase
         $assignedSuperAdmin->cooperatives()->attach($cooperative->getKey());
         $customer = $this->userWithRole('customer', (string) $cooperative->getKey());
         $root = $this->userWithRole('super_admin_root');
+        $inactiveAdmin = $this->userWithRole('cooperative_admin', (string) $cooperative->getKey(), [
+            'status' => UserStatus::Inactive,
+        ]);
+        $unverifiedAdmin = $this->userWithRole('cooperative_admin', (string) $cooperative->getKey(), [
+            'email_verified_at' => null,
+        ]);
+        $lockedAdmin = $this->userWithRole('cooperative_admin', (string) $cooperative->getKey(), [
+            'emergency_locked_at' => now(),
+        ]);
 
         app(InventorySecurityReportNotificationDispatcher::class)->dispatch(
             'inventory.security_report.created',
@@ -84,16 +105,23 @@ final class InventoryNotificationRoutingTest extends TestCase
         Notification::assertSentTo($assignedSuperAdmin, InventorySecurityReportNotification::class);
         Notification::assertNotSentTo($cooperativeUser, InventorySecurityReportNotification::class);
         Notification::assertNotSentTo($customer, InventorySecurityReportNotification::class);
+        Notification::assertNotSentTo($inactiveAdmin, InventorySecurityReportNotification::class);
+        Notification::assertNotSentTo($unverifiedAdmin, InventorySecurityReportNotification::class);
+        Notification::assertNotSentTo($lockedAdmin, InventorySecurityReportNotification::class);
     }
 
-    private function userWithRole(string $slug, ?string $cooperativeId = null): User
-    {
+    private function userWithRole(
+        string $slug,
+        ?string $cooperativeId = null,
+        array $overrides = [],
+    ): User {
         $role = Role::query()->where('slug', $slug)->firstOrFail();
 
         $user = User::factory()->create([
             'status' => UserStatus::Active,
             'email_verified_at' => now(),
             'cooperative_id' => $cooperativeId,
+            ...$overrides,
         ]);
         $user->roles()->attach($role->getKey());
 
