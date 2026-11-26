@@ -309,7 +309,7 @@ final class CustomerProfileTest extends TestCase
 
         $this->get(route('media.private', $secondPhoto).'?variant=thumbnail')
             ->assertOk()
-            ->assertHeader('Cache-Control', 'private, no-store');
+            ->assertHeader('Cache-Control', 'no-store, private');
 
         $this->get(route('customer.profile.edit'))
             ->assertOk()
