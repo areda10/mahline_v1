@@ -132,7 +132,9 @@ final class OrderCreationService
             'delivery_quotes' => $deliveryQuotes,
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
 
-        return DB::transaction(function () use ($customer, $address, $items, $deliveryQuotes, $idempotencyKey, $checkoutRequestHash): Order {
+        $created = false;
+
+        $order = DB::transaction(function () use ($customer, $address, $items, $deliveryQuotes, $idempotencyKey, $checkoutRequestHash, &$created): Order {
             $existingOrder = Order::query()
                 ->where('checkout_idempotency_key', $idempotencyKey)
                 ->lockForUpdate()
@@ -464,8 +466,21 @@ final class OrderCreationService
                 $orderItem->forceFill(['created_by' => (string) $customer->getKey()])->save();
             }
 
+            $created = true;
+
             return $order->load(['cooperativeOrders.items']);
         }, 3);
+
+        if ($created) {
+            $customer->notify(new \\App\\Domains\\Orders\\Notifications\\CustomerOrderLifecycleNotification(
+                $order,
+                'order.created',
+                'Votre commande a été créée',
+                'Votre commande a bien été enregistrée et attend la décision des coopératives.',
+            ));
+        }
+
+        return $order;
     }
 
     private function recordHistory(
