@@ -65,6 +65,9 @@
         .pagination { margin-top: 18px; }
         .inline-form { display: inline; }
         .footer { padding: 24px; color: #65737e; text-align: center; font-size: 13px; }
+        .profile-nav-link { display: inline-flex; align-items: center; gap: 7px; }
+        .profile-nav-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+        .profile-nav-placeholder { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: #e4eee8; color: #153d34; font-weight: 700; }
 
         @media (max-width: 650px) {
             .container { padding: 0 12px; margin-top: 18px; }
@@ -106,7 +109,18 @@
             @endif
 
             <a href="{{ route('notifications.index') }}">Notifications</a>
-            <a href="{{ route('backoffice.profile.address.edit') }}">Mon adresse</a>
+            @if($currentUser->hasAnyRole(['cooperative_admin', 'user']))
+                <a class="profile-nav-link" href="{{ route('backoffice.profile.edit') }}">
+                    @if($currentUser->profileImage)
+                        <img class="profile-nav-avatar" src="{{ route('media.private', $currentUser->profileImage) }}?variant=thumbnail" alt="" width="28" height="28">
+                    @else
+                        <span class="profile-nav-placeholder" aria-hidden="true">{{ mb_strtoupper(mb_substr($currentUser->first_name ?: 'U', 0, 1)) }}</span>
+                    @endif
+                    <span>Mon profil</span>
+                </a>
+            @else
+                <a href="{{ route('backoffice.profile.address.edit') }}">Mon adresse</a>
+            @endif
             <a href="{{ route('security.password.edit') }}">Mot de passe</a>
             <a href="{{ route('backoffice.security.sessions.index') }}">Sessions</a>
             <a href="{{ route('backoffice.security.devices.index') }}">Appareils de confiance</a>

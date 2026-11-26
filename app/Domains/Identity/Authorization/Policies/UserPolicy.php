@@ -23,6 +23,33 @@ final class UserPolicy extends BasePolicy
 
     private const ROLE_COOPERATIVE_ADMIN = 'cooperative_admin';
 
+    /**
+     * A cooperative administrator or ordinary internal user may view only their own profile.
+     */
+    public function viewOwnProfile(User $actor, User $target): bool
+    {
+        return $this->canManageOwnProfile($actor, $target);
+    }
+
+    /**
+     * Self-service profile edits never grant access to another user's account.
+     */
+    public function updateOwnProfile(User $actor, User $target): bool
+    {
+        return $this->canManageOwnProfile($actor, $target);
+    }
+
+    private function canManageOwnProfile(User $actor, User $target): bool
+    {
+        return $actor->is($target)
+            && ! $target->trashed()
+            && $actor->isAuthorized()
+            && $actor->hasAnyRole([
+                self::ROLE_COOPERATIVE_ADMIN,
+                'user',
+            ]);
+    }
+
     public function viewAny(User $actor): bool
     {
         return $actor->hasAnyRole([

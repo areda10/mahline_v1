@@ -32,6 +32,7 @@ use App\Domains\Identity\UserManagement\Http\Controllers\SuperAdminCooperativeAs
 use App\Domains\Identity\UserManagement\Http\Controllers\UserInvitationController;
 use App\Domains\Identity\UserManagement\Http\Controllers\UserManagementController;
 use App\Domains\Identity\Users\Http\Controllers\PersonalAddressController;
+use App\Domains\Identity\Users\Http\Controllers\UserProfileController;
 use App\Domains\Inventory\Http\Controllers\InventoryCountController;
 use App\Domains\Inventory\Http\Controllers\InventoryCountWorkspaceController;
 use App\Domains\Inventory\Http\Controllers\InventoryQuarantineController;
@@ -557,6 +558,20 @@ Route::prefix('root/back-office')
         Route::resource('categories', GlobalCategoryController::class)
             ->except(['show'])
             ->names('categories');
+    });
+
+Route::prefix('back-office/profile')
+    ->name('backoffice.profile.')
+    ->middleware(['auth', EnsureActiveAuthenticationSession::class, 'role:cooperative_admin,user'])
+    ->group(function (): void {
+        Route::get('/', [UserProfileController::class, 'edit'])->name('edit');
+        Route::put('/', [UserProfileController::class, 'update'])->name('update');
+        Route::post('/photo', [UserProfileController::class, 'storePhoto'])
+            ->middleware('throttle:10,1')
+            ->name('photo.store');
+        Route::delete('/photo', [UserProfileController::class, 'deletePhoto'])
+            ->middleware('throttle:10,1')
+            ->name('photo.destroy');
     });
 
 /*
