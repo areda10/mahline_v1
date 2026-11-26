@@ -187,7 +187,7 @@ L'inventaire ci-dessous est établi à partir de l'arbre des fichiers de **featu
 | Changement d'e-mail | Même vue profil ; vérification par lien | customer.profile.email.change, customer.email.change.verify / CustomerProfileController et CustomerEmailChangeService | Implémenté ; confirmation séparée, expiration 30 minutes et révocation des sessions/jetons. |
 | Mot de passe / changement forcé | resources/views/auth/force-password-change.blade.php (vue partagée) | customer.security.password.edit, customer.security.password.update, customer.password.force-change.* / ForcedPasswordChangeController | Implémenté ; parcours de sécurité partagé. |
 | Appareils de confiance | resources/views/identity/security/devices/index.blade.php (vue partagée) | customer.security.devices.* / DeviceTrustController | Implémenté ; liste et actions de gestion des appareils. |
-| Centre de notifications | resources/views/notifications/index.blade.php et _bell.blade.php (vues partagées) | notifications.index, notifications.read, notifications.read-all / NotificationCenterController | Implémenté ; consultation et marquage comme lu. |
+| Centre de notifications et cloche en haut à droite | resources/views/notifications/index.blade.php et _bell.blade.php (vues partagées ; cloche incluse dans le layout Customer) | notifications.index, notifications.read, notifications.read-all / NotificationCenterController | Implémenté ; icône cloche en haut à droite, compteur non lu, aperçu des cinq dernières notifications du Customer connecté, accès à la liste complète et marquage comme lu. Le contenu provient exclusivement de la relation notifications de l'utilisateur authentifié. |
 
 ### 7.2 Écrans à développer par release (décisions fonctionnelles validées le 26 novembre 2026)
 
@@ -217,3 +217,8 @@ L'utilisateur a communiqué les résultats verts suivants avant l'ajout des deux
 - php artisan test tests/Framework/Database/Migrations/MediaCategoryIndexMigrationTest.php
 
 Comme CustomerProfileTest.php vient d'être enrichi avec les tests de mise à jour sans adresse et de préservation d'adresse, il doit être relancé. Pint --test et la suite complète n'ont pas encore été déclarés verts.
+
+
+### 7.5 Icône de notifications Customer — 26 novembre 2026
+
+Le layout Customer affiche une icône cloche dans la zone supérieure droite. Le badge indique le nombre de notifications non lues (plafonné visuellement à 99+). L'aperçu au survol ou au focus clavier présente les cinq notifications les plus récentes et un lien vers le centre complet. La requête utilise uniquement les notifications du compte authentifié ; les notifications d'un autre utilisateur ne sont jamais mélangées. Un test Feature dédié vérifie le rendu de la cloche, le compteur et l'isolation entre deux utilisateurs. L'exécution locale de ce nouveau test reste requise.
