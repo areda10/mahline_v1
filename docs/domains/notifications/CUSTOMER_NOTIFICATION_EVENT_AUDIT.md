@@ -17,7 +17,7 @@ Les notifications Customer sont désormais émises pour les transitions réellem
 | Commande en préparation | Agrégation globale vers `OrderStatus::PREPARING` | `orders.customer_id` | Database + Mail | `customer.orders.show` |
 | Sous-commande annulée | Annulation client d'une sous-commande encore en attente | Client propriétaire de la commande | Database + Mail | `customer.orders.show` |
 
-Les trois événements de cycle de vie utilisent `CustomerOrderLifecycleNotification`. La notification est mise en file d'attente après commit. La création ne notifie pas lors de la relecture d'une commande existante par clé d'idempotence. Les transitions CONFIRMED/PREPARING ne notifient que lorsque le statut agrégé change.
+Les trois événements de cycle de vie utilisent `CustomerOrderLifecycleNotification`. La notification est mise en file d'attente après commit et expose le lien interne vers `customer.orders.show`. La cloche et la liste des notifications affichent maintenant le message et proposent ce lien de destination. La création ne notifie pas lors de la relecture d'une commande existante par clé d'idempotence. Les transitions CONFIRMED/PREPARING ne notifient que lorsque le statut agrégé change.
 
 L'annulation conserve `CustomerOrderCancelledNotification` et transmet maintenant le motif obligatoire dans le contenu Database et Mail. Le destinataire est vérifié par le service contre `orders.customer_id`.
 
@@ -68,6 +68,7 @@ Non implémenté : Finance est actuellement un domaine documentaire, sans modèl
 - `php artisan test tests/Feature/Domains/Orders/Services/OrderCreationServiceTest.php`
 - `php artisan test tests/Feature/Domains/Orders/CustomerOrderHistoryTest.php`
 - `php artisan test tests/Feature/Domains/Orders/Services/CooperativeOrderResponseServiceTest.php`
+- `php artisan test tests/Feature/Domains/Inventory/InventoryNotificationRoutingTest.php`
 - `php artisan test tests/Feature/Domains/Inventory`
 - `php artisan test tests/Feature/Domains/Identity`
 - `php vendor/bin/pint --test`
