@@ -167,7 +167,7 @@ final class UserManagementControllerTest extends TestCase
             ->assertDontSee('Renvoyer l’invitation');
     }
 
-    public function test_cooperative_admin_does_not_see_resend_invitation_button(): void
+    public function test_cooperative_admin_cannot_open_another_users_detail_page(): void
     {
         $cooperative = Cooperative::factory()->create();
 
@@ -183,8 +183,7 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.show', $target))
-            ->assertOk()
-            ->assertDontSee('Renvoyer l’invitation');
+            ->assertForbidden();
     }
 
     public function test_root_can_view_super_admin_cooperative_assignments(): void
