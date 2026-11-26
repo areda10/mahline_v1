@@ -44,8 +44,14 @@ final class PersonalAddressController
 
         $addresses->savePrimaryAddressForUser((string) $user->getKey(), (string) $user->getKey(), $data);
 
+        $destination = match (true) {
+            $user->hasRole('super_admin_root') => 'root.backoffice.profile.address.edit',
+            $user->hasAnyRole(['cooperative_admin', 'user']) => 'backoffice.profile.edit',
+            default => 'backoffice.profile.address.edit',
+        };
+
         return redirect()
-            ->route($user->hasRole('super_admin_root') ? 'root.backoffice.profile.address.edit' : 'backoffice.profile.address.edit')
+            ->route($destination)
             ->with('success', 'Votre adresse personnelle a été mise à jour.');
     }
 

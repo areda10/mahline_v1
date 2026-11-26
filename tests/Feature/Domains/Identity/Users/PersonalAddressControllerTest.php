@@ -51,7 +51,7 @@ final class PersonalAddressControllerTest extends TestCase
 
         $this->actingAs($user)
             ->put(route('backoffice.profile.address.update'), $this->addressAttributes())
-            ->assertRedirect(route('backoffice.profile.address.edit'))
+            ->assertRedirect(route('backoffice.profile.edit'))
             ->assertSessionHas('success');
 
         $this->assertDatabaseHas('addresses', [
