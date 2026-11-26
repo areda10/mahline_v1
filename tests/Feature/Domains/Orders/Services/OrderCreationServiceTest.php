@@ -82,7 +82,13 @@ final class OrderCreationServiceTest extends TestCase
         Notification::assertSentToTimes($customer, CustomerOrderLifecycleNotification::class, 1);
 
         $this->assertCount(2, $order->cooperativeOrders);
-        Notification::assertSentTo($customer, CustomerOrderLifecycleNotification::class);
+        Notification::assertSentTo(
+            $customer,
+            CustomerOrderLifecycleNotification::class,
+            static fn (CustomerOrderLifecycleNotification $notification, array $channels): bool => $channels === ['database', 'mail']
+                && $notification->toDatabase($customer)['event'] === 'order.created'
+                && $notification->toDatabase($customer)['url'] === route('customer.orders.show', $order->getKey()),
+        );
         $this->assertDatabaseCount('inventory_reservations', 0);
         $this->assertTrue($order->cooperativeOrders->every(
             static fn ($suborder): bool => abs($suborder->created_at->diffInSeconds($suborder->response_deadline_at) - 43200) <= 2,
