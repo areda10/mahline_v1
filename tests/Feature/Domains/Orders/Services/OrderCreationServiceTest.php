@@ -55,7 +55,7 @@ final class OrderCreationServiceTest extends TestCase
         $this->stock($cooperativeA, 'product', (string) $productA->getKey(), 'u', '10.000');
         $this->stock($cooperativeB, 'product', (string) $productB->getKey(), 'kg', '10.000');
 
-        $order = app(OrderCreationService::class)->createFromCheckout($customer, $this->withDeliveryQuotes([
+        $checkout = $this->withDeliveryQuotes([
             'idempotency_key' => 'test-order-creation-01',
             'delivery_address_snapshot' => [
                 'street' => 'Avenue Hassan II',
@@ -74,7 +74,12 @@ final class OrderCreationServiceTest extends TestCase
                     'quantity' => '1.000',
                 ],
             ],
-        ]));
+        ]);
+        $order = app(OrderCreationService::class)->createFromCheckout($customer, $checkout);
+        $replayedOrder = app(OrderCreationService::class)->createFromCheckout($customer, $checkout);
+
+        $this->assertSame($order->getKey(), $replayedOrder->getKey());
+        Notification::assertSentToTimes($customer, CustomerOrderLifecycleNotification::class, 1);
 
         $this->assertCount(2, $order->cooperativeOrders);
         Notification::assertSentTo($customer, CustomerOrderLifecycleNotification::class);
