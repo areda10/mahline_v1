@@ -13,7 +13,7 @@
         .brand{font-size:22px;font-weight:700;letter-spacing:.04em}
         nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
         nav form{margin:0}
-        .customer-profile-link{display:inline-flex;align-items:center;gap:8px}
+        .customer-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:18px;flex:1;min-width:0}\n        .customer-profile-link{display:inline-flex;align-items:center;gap:8px}
         .customer-profile-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;vertical-align:middle}
         nav button{border:1px solid #d9e9e2;border-radius:6px;padding:8px 12px;background:transparent;color:#fff;cursor:pointer}
         main{max-width:1100px;margin:28px auto;padding:0 20px}
@@ -35,8 +35,9 @@
 @php($customerAvatar = auth()->user()?->profileImage)
 <header>
     <a class="brand" href="{{ route('customer.dashboard') }}">MAHLINE</a>
-    @include('notifications._bell')
-    <nav aria-label="Espace client">
+    <div class="customer-header-actions">
+        @include('notifications._bell')
+        <nav aria-label="Espace client">
         <a href="{{ route('storefront.products.index') }}">Boutique</a>
         <a href="{{ route('sales.cart.page') }}">Mon panier</a>
         <a href="{{ route('customer.orders.index') }}">Mes commandes</a>
@@ -55,7 +56,8 @@
             @csrf
             <button type="submit">Déconnexion</button>
         </form>
-    </nav>
+        </nav>
+    </div>
 </header>
 <main>
     @if (session('success'))
