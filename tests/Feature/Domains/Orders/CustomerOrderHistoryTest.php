@@ -142,7 +142,11 @@ final class CustomerOrderHistoryTest extends TestCase
             'actor_id' => $customer->getKey(),
             'reason' => 'Je souhaite annuler cette coopérative.',
         ]);
-        Notification::assertSentTo($customer, CustomerOrderCancelledNotification::class);
+        Notification::assertSentTo(
+            $customer,
+            CustomerOrderCancelledNotification::class,
+            static fn (CustomerOrderCancelledNotification $notification): bool => $notification->toDatabase($customer)['cancellation_reason'] === 'Je souhaite annuler cette coopérative.',
+        );
     }
 
     public function test_customer_cannot_cancel_a_suborder_after_cooperative_confirmation(): void
