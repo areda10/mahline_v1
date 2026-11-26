@@ -40,6 +40,32 @@ final class NotificationCenterTest extends TestCase
         $this->assertSame(1, $response->getData()['notifications']->total());
     }
 
+    public function test_notification_bell_shows_the_authenticated_users_unread_count(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+
+        $owner->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'customer_order_update',
+            'data' => ['title' => 'Commande expédiée'],
+        ]);
+        $other->notifications()->create([
+            'id' => (string) Str::uuid(),
+            'type' => 'private_event',
+            'data' => ['title' => 'Notification privée'],
+        ]);
+
+        Auth::login($owner);
+
+        $html = view('notifications._bell')->render();
+
+        $this->assertStringContainsString('mahline-notification-icon', $html);
+        $this->assertStringContainsString('Notifications, 1 non lue(s)', $html);
+        $this->assertStringContainsString('Commande expédiée', $html);
+        $this->assertStringNotContainsString('Notification privée', $html);
+    }
+
     public function test_user_cannot_mark_another_users_notification_as_read(): void
     {
         $owner = User::factory()->create();
