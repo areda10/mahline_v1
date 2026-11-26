@@ -46,11 +46,10 @@ final class CustomerProfileController
             403,
         );
 
-        $customer->load(['primaryAddress.country', 'profileImage']);
+        $customer->load(['addresses.country', 'profileImage']);
 
         return view('customer.profile.edit', [
             'user' => $customer,
-            'address' => $customer->primaryAddress,
             'addresses' => $customer->addresses,
             'regions' => MoroccanRegion::values(),
         ]);
@@ -121,25 +120,11 @@ final class CustomerProfileController
 
         abort_unless($customer instanceof User, 403);
 
-        $validated = $request->validated();
-        $addressAttributes = array_intersect_key($validated, array_flip([
-            'number', 'street', 'floor', 'city', 'region', 'postal_code',
-        ]));
-        $profileAttributes = array_diff_key($validated, $addressAttributes);
-
-        DB::transaction(function () use ($customer, $profileAttributes, $addressAttributes): void {
-            $this->profiles->update($customer, $profileAttributes);
-
-            if ($customer->addresses()->exists()) {
-                $this->addresses->updateForUser((string) $customer->getKey(), (string) $customer->getKey(), $addressAttributes);
-            } else {
-                $this->addresses->createForUser((string) $customer->getKey(), (string) $customer->getKey(), $addressAttributes);
-            }
-        });
+        $this->profiles->update($customer, $request->validated());
 
         return redirect()
             ->route('customer.profile.edit')
-            ->with('success', 'Votre profil a été mis à jour.');
+            ->with('success', 'Vos informations personnelles ont été mises à jour.');
     }
 
     public function storeAddress(Request $request): RedirectResponse|JsonResponse
