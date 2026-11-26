@@ -9,17 +9,17 @@ use App\Domains\Identity\Customer\Http\Requests\UpdateCustomerProfileRequest;
 use App\Domains\Identity\Customer\Services\CustomerEmailChangeService;
 use App\Domains\Identity\Customer\Services\CustomerProfileService;
 use App\Domains\Identity\Users\Models\User;
-use App\Domains\Media\Enums\MediaCategory;
-use App\Domains\Media\Services\MediaService;
 use App\Domains\Localization\Contracts\UserAddressLifecycleManager;
 use App\Domains\Localization\Enums\MoroccanRegion;
 use App\Domains\Localization\Models\Address;
+use App\Domains\Media\Enums\MediaCategory;
+use App\Domains\Media\Services\MediaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use Illuminate\Http\UploadedFile;
 
 final class CustomerProfileController
 {
