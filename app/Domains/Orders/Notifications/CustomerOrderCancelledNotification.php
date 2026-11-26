@@ -14,7 +14,10 @@ final class CustomerOrderCancelledNotification extends Notification implements S
 {
     use Queueable;
 
-    public function __construct(private readonly CooperativeOrder $cooperativeOrder) {}
+    public function __construct(
+        private readonly CooperativeOrder $cooperativeOrder,
+        private readonly string $reason,
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -26,11 +29,13 @@ final class CustomerOrderCancelledNotification extends Notification implements S
         return [
             'event' => 'order.customer_cancelled',
             'title' => 'Sous-commande annulée',
-            'message' => 'Votre sous-commande '.$this->cooperativeOrder->reference.' a été annulée.',
+            'message' => 'Votre sous-commande '.$this->cooperativeOrder->reference.' a été annulée. Motif : '.$this->reason,
             'order_id' => (string) $this->cooperativeOrder->order_id,
             'order_reference' => (string) $this->cooperativeOrder->order?->reference,
             'cooperative_order_id' => (string) $this->cooperativeOrder->getKey(),
             'cooperative_order_reference' => (string) $this->cooperativeOrder->reference,
+            'cancellation_reason' => $this->reason,
+            'url' => route('customer.orders.show', $this->cooperativeOrder->order_id),
         ];
     }
 
@@ -40,6 +45,7 @@ final class CustomerOrderCancelledNotification extends Notification implements S
             ->subject('Annulation de votre sous-commande MAHLINE')
             ->greeting('Bonjour,')
             ->line('Votre sous-commande '.$this->cooperativeOrder->reference.' a été annulée à votre demande.')
+            ->line('Motif : '.$this->reason)
             ->line('Commande : '.$this->cooperativeOrder->order?->reference)
             ->line('Le total de votre commande a été recalculé.')
             ->action('Consulter ma commande', route('customer.orders.show', $this->cooperativeOrder->order_id))
