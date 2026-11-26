@@ -56,6 +56,7 @@ Corrections de ce lot :
 
 - Seuls cooperative_admin et user utilisent les routes de self-service.
 - Les autorisations sont strictement limitées à l'utilisateur authentifié lui-même.
+- Conformément à la décision 91, cooperative_admin ne consulte ni ne modifie les données personnelles des autres utilisateurs, même de sa coopérative ; ses accès self-service sont limités à son propre compte. UserPolicy et AddressPolicy appliquent cette frontière.
 - Les informations modifiables sont prénom, nom et téléphone.
 - L'e-mail reste en lecture seule et conserve son workflow de changement/vérification dédié.
 - Mot de passe, statut, rôles et affectation à la coopérative ne sont jamais modifiables via le formulaire.
