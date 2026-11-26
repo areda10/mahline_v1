@@ -472,7 +472,7 @@ final class OrderCreationService
         }, 3);
 
         if ($created) {
-            $customer->notify(new \\App\\Domains\\Orders\\Notifications\\CustomerOrderLifecycleNotification(
+            $customer->notify(new \App\Domains\Orders\Notifications\CustomerOrderLifecycleNotification(
                 $order,
                 'order.created',
                 'Votre commande a été créée',
