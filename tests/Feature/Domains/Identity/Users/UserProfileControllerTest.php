@@ -1,6 +1,9 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Tests\Feature\Domains\Identity\Users;
+
 use App\Domains\Identity\Authentication\Http\Middleware\EnsureActiveAuthenticationSession;
 use App\Domains\Identity\Authorization\Models\Role;
 use App\Domains\Identity\Enums\UserStatus;
@@ -10,14 +13,17 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+
 final class UserProfileControllerTest extends TestCase
 {
     use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->withoutMiddleware(EnsureActiveAuthenticationSession::class);
     }
+
     public function test_cooperative_admin_and_user_can_view_their_own_profile_and_address_form(): void
     {
         foreach (['cooperative_admin', 'user'] as $role) {
@@ -28,6 +34,7 @@ final class UserProfileControllerTest extends TestCase
                 ->assertSee('Enregistrer mon adresse');
         }
     }
+
     public function test_internal_user_can_update_personal_information_without_changing_email_security_or_address(): void
     {
         $user = $this->userWithRole('user');
@@ -53,6 +60,7 @@ final class UserProfileControllerTest extends TestCase
         $this->assertSame($address->getKey(), $user->primaryAddress()->value('id'));
         $this->assertDatabaseHas('audit_events', ['event_key' => 'identity.user.profile_updated', 'subject_id' => $user->getKey()]);
     }
+
     public function test_profile_update_rejects_an_invalid_telephone_number(): void
     {
         $user = $this->userWithRole('cooperative_admin');
@@ -60,6 +68,7 @@ final class UserProfileControllerTest extends TestCase
             'first_name' => 'Nadia', 'last_name' => 'Amrani', 'telephone' => 'not-a-phone',
         ])->assertSessionHasErrors(['telephone']);
     }
+
     public function test_internal_user_can_upload_replace_and_delete_their_private_profile_photo(): void
     {
         Storage::fake('local');
@@ -82,6 +91,7 @@ final class UserProfileControllerTest extends TestCase
         $this->assertSoftDeleted('media', ['id' => $secondPhoto->getKey()]);
         $this->assertNull($user->fresh()->profileImage);
     }
+
     public function test_profile_photo_is_private_and_visible_only_to_its_owner(): void
     {
         Storage::fake('local');
@@ -94,11 +104,13 @@ final class UserProfileControllerTest extends TestCase
         $this->actingAs($owner)->get(route('media.private', $photo).'?variant=thumbnail')->assertOk();
         $this->actingAs($other)->get(route('media.private', $photo).'?variant=thumbnail')->assertForbidden();
     }
+
     public function test_other_roles_cannot_use_the_internal_self_service_profile_routes(): void
     {
         $superAdmin = $this->userWithRole('super_admin');
         $this->actingAs($superAdmin)->get(route('backoffice.profile.edit'))->assertForbidden();
     }
+
     private function userWithRole(string $slug): User
     {
         $user = User::factory()->create([
@@ -110,6 +122,7 @@ final class UserProfileControllerTest extends TestCase
             'name' => str($slug)->replace('_', ' ')->title()->toString(), 'is_active' => true,
         ]);
         $user->roles()->syncWithoutDetaching([$role->getKey()]);
+
         return $user;
     }
 }

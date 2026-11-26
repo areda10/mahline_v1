@@ -1,19 +1,25 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Domains\Identity\Users\Services;
+
 use App\Core\Foundation\Services\BaseService;
 use App\Domains\Audit\Contracts\AuditWriter;
 use App\Domains\Identity\Users\Models\User;
 use App\Shared\DTOs\AuditEntryDTO;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+
 final class UserProfileService extends BaseService
 {
     public function __construct(private readonly AuditWriter $audit) {}
+
     /**
      * Update only the authenticated internal user's personal information.
      * Email, password, role, status and cooperative assignment use dedicated workflows.
-     * @param array{first_name: string, last_name: string, telephone: string} $attributes
+     *
+     * @param  array{first_name: string, last_name: string, telephone: string}  $attributes
      */
     public function updateOwnProfile(User $user, array $attributes): User
     {
@@ -53,6 +59,7 @@ final class UserProfileService extends BaseService
                     'telephone' => $telephone,
                 ],
             ));
+
             return $lockedUser->fresh();
         });
     }

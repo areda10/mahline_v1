@@ -18,6 +18,7 @@ use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderItem;
 use App\Domains\Orders\Models\OrderStatusHistory;
 use App\Domains\Orders\Notifications\CooperativeOrderWorkflowNotification;
+use App\Domains\Orders\Notifications\CustomerOrderLifecycleNotification;
 use App\Domains\Products\Contracts\CheckoutCatalog;
 use App\Domains\Products\DTOs\CheckoutProductData;
 use Illuminate\Support\Carbon;
@@ -474,7 +475,7 @@ final class OrderCreationService
         }, 3);
 
         if ($created) {
-            $customer->notify(new \App\Domains\Orders\Notifications\CustomerOrderLifecycleNotification(
+            $customer->notify(new CustomerOrderLifecycleNotification(
                 $order,
                 'order.created',
                 'Votre commande a été créée',
