@@ -147,7 +147,8 @@ final class CustomerOrderHistoryTest extends TestCase
         Notification::assertSentTo(
             $customer,
             CustomerOrderCancelledNotification::class,
-            static fn (CustomerOrderCancelledNotification $notification): bool => $notification->toDatabase($customer)['cancellation_reason'] === 'Je souhaite annuler cette coopérative.',
+            static fn (CustomerOrderCancelledNotification $notification, array $channels): bool => $channels === ['database', 'mail']
+                && $notification->toDatabase($customer)['cancellation_reason'] === 'Je souhaite annuler cette coopérative.',
         );
     }
 
