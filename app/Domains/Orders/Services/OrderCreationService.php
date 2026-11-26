@@ -135,6 +135,8 @@ final class OrderCreationService
         $created = false;
 
         $order = DB::transaction(function () use ($customer, $address, $items, $deliveryQuotes, $idempotencyKey, $checkoutRequestHash, &$created): Order {
+            $created = false;
+
             $existingOrder = Order::query()
                 ->where('checkout_idempotency_key', $idempotencyKey)
                 ->lockForUpdate()
