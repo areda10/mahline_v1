@@ -167,7 +167,8 @@ final class CustomerOrderHistoryTest extends TestCase
         Notification::assertSentTo(
             $customer,
             CustomerOrderLifecycleNotification::class,
-            static fn (CustomerOrderLifecycleNotification $notification): bool => $notification->toDatabase($customer)['event'] === 'order.confirmed',
+            static fn (CustomerOrderLifecycleNotification $notification, array $channels): bool => $channels === ['database', 'mail']
+                && $notification->toDatabase($customer)['event'] === 'order.confirmed',
         );
     }
 
