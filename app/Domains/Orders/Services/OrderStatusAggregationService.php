@@ -9,6 +9,7 @@ use App\Domains\Orders\Enums\CooperativeOrderStatus;
 use App\Domains\Orders\Enums\OrderStatus;
 use App\Domains\Orders\Models\Order;
 use App\Domains\Orders\Models\OrderStatusHistory;
+use App\Domains\Orders\Notifications\CustomerOrderLifecycleNotification;
 use Illuminate\Support\Collection;
 
 final class OrderStatusAggregationService
@@ -56,6 +57,21 @@ final class OrderStatusAggregationService
             'metadata' => ['workflow' => 'cooperative_suborder_aggregation'],
             'occurred_at' => now(),
         ]);
+
+        if (in_array($next, [OrderStatus::CONFIRMED, OrderStatus::PREPARING], true)) {
+            $customer = $lockedOrder->customer;
+            if ($customer !== null) {
+                $event = $next === OrderStatus::CONFIRMED ? 'order.confirmed' : 'order.preparing';
+                $customer->notify(new CustomerOrderLifecycleNotification(
+                    $lockedOrder,
+                    $event,
+                    $next === OrderStatus::CONFIRMED ? 'Votre commande a été validée' : 'Votre commande est en préparation',
+                    $next === OrderStatus::CONFIRMED
+                        ? 'Les coopératives ont confirmé votre commande.'
+                        : 'La préparation de votre commande a commencé.',
+                ));
+            }
+        }
 
         return $lockedOrder->refresh();
     }
