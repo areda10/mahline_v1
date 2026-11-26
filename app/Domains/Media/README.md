@@ -118,6 +118,7 @@ Les contrôles d’autorisation sont toujours exécutés côté serveur et ne so
 ## Tests
 
 ```bash
+php artisan test tests/Feature/Domains/Identity/Customer/CustomerProfileTest.php
 php artisan test tests/Framework/Domains/Media
 php artisan test tests/Framework/Database/Migrations/MediaCategoryIndexMigrationTest.php
 vendor/bin/pint --test
