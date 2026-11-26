@@ -14,14 +14,14 @@ final class CustomerOrderLifecycleNotification extends Notification implements S
 {
     use Queueable;
 
-    public bool $afterCommit = true;
-
     public function __construct(
         private readonly Order $order,
         private readonly string $event,
         private readonly string $title,
         private readonly string $message,
-    ) {}
+    ) {
+        $this->afterCommit();
+    }
 
     public function via(object $notifiable): array
     {
