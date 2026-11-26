@@ -30,6 +30,7 @@ final class OrderReadyForShipmentNotification extends Notification
             'cooperative_order_id' => (string) $this->cooperativeOrder->getKey(),
             'cooperative_order_reference' => (string) $this->cooperativeOrder->reference,
             'cooperative_id' => (string) $this->cooperativeOrder->cooperative_id,
+            'url' => route('customer.orders.show', $this->cooperativeOrder->order_id),
         ];
     }
 }
