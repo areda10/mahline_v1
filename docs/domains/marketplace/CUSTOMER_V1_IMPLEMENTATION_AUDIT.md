@@ -189,14 +189,14 @@ L'inventaire ci-dessous est établi à partir de l'arbre des fichiers de **featu
 | Appareils de confiance | resources/views/identity/security/devices/index.blade.php (vue partagée) | customer.security.devices.* / DeviceTrustController | Implémenté ; liste et actions de gestion des appareils. |
 | Centre de notifications | resources/views/notifications/index.blade.php et _bell.blade.php (vues partagées) | notifications.index, notifications.read, notifications.read-all / NotificationCenterController | Implémenté ; consultation et marquage comme lu. |
 
-### 7.2 Écrans non identifiés ou à arbitrer
+### 7.2 Écrans à développer par release (décisions fonctionnelles validées le 26 novembre 2026)
 
 | Élément | Constat statique | Suite recommandée |
 |---|---|---|
-| Liste des sessions web actives du Customer et révocation individuelle depuis son espace | Aucune route de sessions sous le groupe customer n'a été identifiée ; la page appareils de confiance existe mais n'est pas nécessairement équivalente à une liste de sessions Laravel. | Vérifier si l'écran Appareils couvre le besoin fonctionnel de gestion des sessions simultanées ; sinon créer l'écran et les routes Customer propres. |
-| Factures et téléchargement PDF côté Customer | Aucun écran customer/invoices ni route Customer de consultation/téléchargement de facture n'a été identifié dans cet inventaire. | À confirmer avec le périmètre Finance/Facturation V1 et les règles d'accès aux factures client. |
-| Historique des paiements / moyens de paiement | Aucun écran Customer dédié n'a été identifié dans les vues inventoriées. | À arbitrer selon le parcours d'encaissement retenu pour V1 ; ne pas créer sans décision fonctionnelle. |
-| Préférences de notifications | Le centre de notifications est présent, mais aucun écran de préférences Customer n'a été identifié. | À arbitrer ; le centre de consultation ne vaut pas écran de préférences. |
+| Liste des sessions web actives du Customer et révocation individuelle depuis son espace | Aucune route dédiée n'a été identifiée dans le groupe customer ; la page appareils de confiance existe mais n'est pas nécessairement équivalente à une liste de sessions Laravel. | **Release V2** — hors périmètre V1. Prévoir une page dédiée et la révocation individuelle des sessions web. |
+| Consultation et téléchargement des factures côté Customer | Aucun écran customer/invoices ni route Customer de consultation/téléchargement de facture n'a été identifié dans cet inventaire. | **Release V1 — obligatoire.** Développer la liste des factures du client, le détail si requis par le parcours et le téléchargement PDF privé, avec contrôle strict de propriété/autorisation. |
+| Historique des paiements et moyens de paiement | Aucun écran Customer dédié n'a été identifié dans les vues inventoriées. | **Release V1 — obligatoire.** Développer l'historique des paiements et la consultation/gestion des moyens de paiement conformément aux méthodes autorisées par Finance V1. |
+| Préférences de notifications | Le centre de notifications est présent, mais aucun écran de préférences Customer n'a été identifié. | **Release V2** — hors périmètre V1. Prévoir les préférences client sans désactiver les notifications métier/sécurité obligatoires. |
 | Tableau de bord avec indicateurs personnels | Le dashboard actuel est un hub de navigation simple. | À considérer comme option UX, pas comme écran manquant obligatoire sans exigence métier. |
 
 ### 7.3 Résultat de l'audit d'exhaustivité
@@ -204,7 +204,9 @@ L'inventaire ci-dessous est établi à partir de l'arbre des fichiers de **featu
 - Les écrans structurants du parcours d'achat sont présents : boutique, fiche produit, panier, checkout, historique et détail de commande.
 - Les écrans d'identité Customer sont présents : inscription, vérification, profil, changement d'e-mail, mot de passe et appareils.
 - Le profil et le carnet d'adresses sont désormais séparés au niveau des formulaires, de la validation et du contrôleur.
-- Les éléments à arbitrer avant une déclaration « Customer V1 complet » sont la gestion des sessions web, les factures/paiements et les préférences de notifications. Leur absence d'une vue Customer dédiée est un constat de l'arbre de fichiers et des routes examinées, pas une décision de les inclure automatiquement dans V1.
+- Les écrans Customer V1 obligatoires encore à développer sont la consultation/téléchargement des factures et l'historique des paiements/moyens de paiement.
+- La gestion des sessions web et les préférences de notifications sont explicitement affectées à la Release V2 ; leur absence ne bloque donc pas la complétude du périmètre V1.
+- Le centre de notifications existant reste distinct de l'écran de préférences V2.
 
 ### 7.4 Validation après le correctif du 26 novembre
 
