@@ -25,7 +25,12 @@ final class UserProfileController
     public function edit(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->can('viewOwnProfile', $user), 403);
+
+        abort_unless(
+            $user instanceof User && $user->can('viewOwnProfile', $user),
+            403,
+        );
+
         $user->load(['profileImage', 'primaryAddress.country']);
 
         return view('identity.profile.edit', [
@@ -38,34 +43,60 @@ final class UserProfileController
     public function update(UpdateOwnProfileRequest $request): RedirectResponse
     {
         $user = $request->user();
+
         abort_unless($user instanceof User, 403);
+
         $this->profiles->updateOwnProfile($user, $request->validated());
 
-        return redirect()->route('backoffice.profile.edit')
+        return redirect()
+            ->route('backoffice.profile.edit')
             ->with('success', 'Vos informations personnelles ont été mises à jour.');
     }
 
     public function storePhoto(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->can('updateOwnProfile', $user), 403);
-        $request->validate(['file' => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp']]);
-        $file = $request->file('file');
-        abort_unless($file instanceof UploadedFile, 422);
-        $this->media->upload($user, $user, $file, MediaCategory::PROFILE_IMAGE->value);
 
-        return redirect()->route('backoffice.profile.edit')
+        abort_unless(
+            $user instanceof User && $user->can('updateOwnProfile', $user),
+            403,
+        );
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:5120', 'mimes:jpg,jpeg,png,webp'],
+        ]);
+
+        $file = $request->file('file');
+
+        abort_unless($file instanceof UploadedFile, 422);
+
+        $this->media->upload(
+            $user,
+            $user,
+            $file,
+            MediaCategory::PROFILE_IMAGE->value,
+        );
+
+        return redirect()
+            ->route('backoffice.profile.edit')
             ->with('success', 'Votre photo de profil a été mise à jour.');
     }
 
     public function deletePhoto(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user instanceof User && $user->can('updateOwnProfile', $user), 403);
+
+        abort_unless(
+            $user instanceof User && $user->can('updateOwnProfile', $user),
+            403,
+        );
+
         $photo = $user->profileImage()->firstOrFail();
+
         $this->media->delete($user, $photo);
 
-        return redirect()->route('backoffice.profile.edit')
+        return redirect()
+            ->route('backoffice.profile.edit')
             ->with('success', 'Votre photo de profil a été supprimée.');
     }
 }

@@ -21,12 +21,19 @@ final class UpdateOwnProfileRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
-            'telephone' => ['required', 'string', 'max:30', 'regex:/^\\+?[0-9][0-9\\s().-]{6,24}$/'],
+            'telephone' => [
+                'required',
+                'string',
+                'max:30',
+                'regex:/^\\+?[0-9][0-9\\s().-]{6,24}$/',
+            ],
         ];
     }
 
     public function messages(): array
     {
-        return ['telephone.regex' => 'Veuillez saisir un numéro de téléphone valide.'];
+        return [
+            'telephone.regex' => 'Veuillez saisir un numéro de téléphone valide.',
+        ];
     }
 }
