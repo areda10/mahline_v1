@@ -44,7 +44,7 @@ final class InventoryNotificationRoutingTest extends TestCase
             ['cooperative_id' => (string) $cooperative->getKey(), 'stock_id' => 'stock-1'],
         );
 
-        Notification::assertSentTo($cooperativeAdmin, InventoryStockAlertNotification::class);
+        Notification::assertSentTo($cooperativeAdmin, InventoryStockAlertNotification::class, static fn (InventoryStockAlertNotification $notification, array $channels): bool => $channels === ['database']);
         Notification::assertSentTo($cooperativeUser, InventoryStockAlertNotification::class);
         Notification::assertSentTo($assignedSuperAdmin, InventoryStockAlertNotification::class);
         Notification::assertNotSentTo($customer, InventoryStockAlertNotification::class);
@@ -68,7 +68,7 @@ final class InventoryNotificationRoutingTest extends TestCase
             ['cooperative_id' => (string) $cooperative->getKey(), 'report_id' => 'report-1'],
         );
 
-        Notification::assertSentTo($root, InventorySecurityReportNotification::class);
+        Notification::assertSentTo($root, InventorySecurityReportNotification::class, static fn (InventorySecurityReportNotification $notification, array $channels): bool => $channels === ['database']);
         Notification::assertSentTo($cooperativeAdmin, InventorySecurityReportNotification::class);
         Notification::assertSentTo($assignedSuperAdmin, InventorySecurityReportNotification::class);
         Notification::assertNotSentTo($cooperativeUser, InventorySecurityReportNotification::class);
