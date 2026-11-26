@@ -125,7 +125,7 @@ final class UserPolicyTest extends TestCase
         ));
     }
 
-    public function test_cooperative_admin_can_view_only_users_in_own_cooperative(): void
+    public function test_cooperative_admin_cannot_view_personal_data_of_other_users(): void
     {
         $cooperative = $this->createCooperative();
         $otherCooperative = $this->createCooperative();
@@ -142,8 +142,9 @@ final class UserPolicyTest extends TestCase
             'cooperative_id' => $otherCooperative->getKey(),
         ]);
 
-        self::assertTrue(Gate::forUser($admin)->allows('view', $ownUser));
+        self::assertFalse(Gate::forUser($admin)->allows('view', $ownUser));
         self::assertFalse(Gate::forUser($admin)->allows('view', $otherUser));
+        self::assertFalse(Gate::forUser($admin)->allows('viewAny', User::class));
     }
 
     public function test_only_root_can_create_managed_accounts(): void
@@ -477,7 +478,7 @@ final class UserPolicyTest extends TestCase
         self::assertFalse(Gate::forUser($actor)->allows('update', $cooperativeAdmin));
     }
 
-    public function test_cooperative_admin_can_update_only_users_in_own_cooperative(): void
+    public function test_cooperative_admin_cannot_update_personal_data_of_other_users(): void
     {
         $own = $this->createCooperative();
         $other = $this->createCooperative();
@@ -495,7 +496,7 @@ final class UserPolicyTest extends TestCase
             'cooperative_id' => $own->getKey(),
         ]);
 
-        self::assertTrue(Gate::forUser($actor)->allows('update', $ownUser));
+        self::assertFalse(Gate::forUser($actor)->allows('update', $ownUser));
         self::assertFalse(Gate::forUser($actor)->allows('update', $otherUser));
         self::assertFalse(Gate::forUser($actor)->allows('update', $peerAdmin));
         self::assertFalse(Gate::forUser($actor)->allows('view', $peerAdmin));

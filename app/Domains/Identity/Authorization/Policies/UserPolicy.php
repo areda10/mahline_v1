@@ -55,13 +55,13 @@ final class UserPolicy extends BasePolicy
         return $actor->hasAnyRole([
             self::ROLE_SUPER_ADMIN_ROOT,
             self::ROLE_SUPER_ADMIN,
-            self::ROLE_COOPERATIVE_ADMIN,
         ]) && $this->hasPermission($actor, 'users.view');
     }
 
     public function view(User $actor, User $target): bool
     {
         return ! $target->trashed()
+            && ! $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)
             && $this->canAccessUser($actor, $target)
             && ! (
                 $actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)
@@ -140,10 +140,6 @@ final class UserPolicy extends BasePolicy
         }
 
         if ($actor->hasRole(self::ROLE_SUPER_ADMIN)) {
-            return $this->targetHasActiveRole($target, 'user');
-        }
-
-        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
             return $this->targetHasActiveRole($target, 'user');
         }
 

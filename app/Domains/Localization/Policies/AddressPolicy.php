@@ -59,12 +59,6 @@ final class AddressPolicy
             return $this->assignments->isAssigned($actor->id, $target->cooperativeId);
         }
 
-        if ($actor->hasRole(self::ROLE_COOPERATIVE_ADMIN)) {
-            return $target->hasRole(self::ROLE_USER)
-                && $actor->cooperativeId !== null
-                && $actor->cooperativeId === $target->cooperativeId;
-        }
-
         return false;
     }
 

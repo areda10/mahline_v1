@@ -253,7 +253,7 @@ final class UserManagementControllerTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_cooperative_admin_can_view_user_detail_in_own_cooperative(): void
+    public function test_cooperative_admin_cannot_view_user_detail_even_in_own_cooperative(): void
     {
         $cooperative = Cooperative::factory()->create();
         $actor = $this->actor('cooperative_admin', ['users.view'], [
@@ -266,8 +266,7 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.show', $target))
-            ->assertOk()
-            ->assertSee('Utilisateur de ma coopérative');
+            ->assertForbidden();
     }
 
     public function test_cooperative_admin_cannot_view_user_detail_from_another_cooperative(): void
@@ -673,7 +672,7 @@ final class UserManagementControllerTest extends TestCase
             ->assertDontSee('Utilisateur hors périmètre');
     }
 
-    public function test_cooperative_admin_list_is_limited_to_own_cooperative(): void
+    public function test_cooperative_admin_cannot_list_other_users_personal_data(): void
     {
         $own = Cooperative::factory()->create();
         $other = Cooperative::factory()->create();
@@ -691,9 +690,7 @@ final class UserManagementControllerTest extends TestCase
 
         $this->actingAs($actor)
             ->get(route('backoffice.users.index'))
-            ->assertOk()
-            ->assertSee('Utilisateur de ma coopérative')
-            ->assertDontSee('Utilisateur autre coopérative');
+            ->assertForbidden();
     }
 
     public function test_non_root_user_cannot_request_deleted_users(): void
